@@ -1,5 +1,5 @@
 [package]
-name = "tauri-tailwind"
+name = "anything"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]
@@ -21,3 +21,8 @@ serde_json = "1.0"
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[dependencies.tauri-plugin-sql]
+git = "https://github.com/tauri-apps/plugins-workspace"
+branch = "v1"
+features = ["sqlite"] # or "postgres", or "mysql"
