@@ -18,6 +18,7 @@ specifiers:
   react-dom: ^18.2.0
   react-icons: ^4.10.1
   react-router-dom: ^6.14.1
+  reactflow: ^11.7.4
   sort-by: ^1.2.0
   tailwindcss: ^3.3.2
   tauri-plugin-sql-api: github:tauri-apps/tauri-plugin-sql#v1
@@ -35,9 +36,10 @@ dependencies:
   react-dom: 18.2.0_react@18.2.0
   react-icons: 4.10.1_react@18.2.0
   react-router-dom: 6.14.1_biqbaboplfbrettd7655fr4n2y
+  reactflow: 11.7.4_biqbaboplfbrettd7655fr4n2y
   sort-by: 1.2.0
   tailwindcss: 3.3.2
-  tauri-plugin-sql-api: github.com/tauri-apps/tauri-plugin-sql/f8125e517d9de2a567a2eaa14f7b1b32e456278b
+  tauri-plugin-sql-api: github.com/tauri-apps/tauri-plugin-sql/953f2ab9f05ef131b55af065b0596c4c2136b37e
 
 devDependencies:
   '@tailwindcss/typography': 0.5.9_tailwindcss@3.3.2
@@ -540,6 +542,108 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
 
+  /@reactflow/background/11.2.4_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-SYQbCRCU0GuxT/40Tm7ZK+l5wByGnNJSLtZhbL9C/Hl7JhsJXV3UGXr0vrlhVZUBEtkWA7XhZM/5S9XEA5XSFA==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@reactflow/core': 11.7.4_biqbaboplfbrettd7655fr4n2y
+      classcat: 5.0.4
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      zustand: 4.3.9_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
+  /@reactflow/controls/11.1.15_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-//33XfBYu8vQ6brfmlZwKrDoh+8hh93xO2d88XiqfIbrPEEb32SYjsb9mS9VuHKNlSIW+eB27fBA1Gt00mEj5w==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@reactflow/core': 11.7.4_biqbaboplfbrettd7655fr4n2y
+      classcat: 5.0.4
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      zustand: 4.3.9_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
+  /@reactflow/core/11.7.4_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-nt0T8ERp8TE7YCDQViaoEY9lb0StDPrWHVx3zBjhStFYET3wc88t8QRasZdf99xRTmyNtI3U3M40M5EBLNUpMw==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@types/d3': 7.4.0
+      '@types/d3-drag': 3.0.2
+      '@types/d3-selection': 3.0.5
+      '@types/d3-zoom': 3.0.3
+      classcat: 5.0.4
+      d3-drag: 3.0.0
+      d3-selection: 3.0.0
+      d3-zoom: 3.0.0
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      zustand: 4.3.9_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
+  /@reactflow/minimap/11.5.4_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-1tDBj2zX2gxu2oHU6qvH5RGNrOWRfRxu8369KhDotuuBN5yJrGXJzWIKikwhzjsNsQJYOB+B0cS44yWAfwSwzw==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@reactflow/core': 11.7.4_biqbaboplfbrettd7655fr4n2y
+      '@types/d3-selection': 3.0.5
+      '@types/d3-zoom': 3.0.3
+      classcat: 5.0.4
+      d3-selection: 3.0.0
+      d3-zoom: 3.0.0
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      zustand: 4.3.9_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
+  /@reactflow/node-resizer/2.1.1_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-5Q+IBmZfpp/bYsw3+KRVJB1nUbj6W3XAp5ycx4uNWH+K98vbssymyQsW0vvKkIhxEPg6tkiMzO4UWRWvwBwt1g==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@reactflow/core': 11.7.4_biqbaboplfbrettd7655fr4n2y
+      classcat: 5.0.4
+      d3-drag: 3.0.0
+      d3-selection: 3.0.0
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      zustand: 4.3.9_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
+  /@reactflow/node-toolbar/1.2.3_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-uFQy9xpog92s0G1wsPLniwV9nyH4i/MmL7QoMsWdnKaOi7XMhd8SJcCzUdHC3imR21HltsuQITff/XQ51ApMbg==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@reactflow/core': 11.7.4_biqbaboplfbrettd7655fr4n2y
+      classcat: 5.0.4
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      zustand: 4.3.9_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
   /@remix-run/router/1.7.1:
     resolution: {integrity: sha512-bgVQM4ZJ2u2CM8k1ey70o1ePFXsEzYVZoWghh6WjM8p59jQ7HxzbHW4SbnWFG7V9ig9chLawQxDTZ3xzOF8MkQ==}
     engines: {node: '>=14'}
@@ -668,6 +772,189 @@ packages:
       '@tauri-apps/cli-win32-ia32-msvc': 1.4.0
       '@tauri-apps/cli-win32-x64-msvc': 1.4.0
     dev: true
+
+  /@types/d3-array/3.0.5:
+    resolution: {integrity: sha512-Qk7fpJ6qFp+26VeQ47WY0mkwXaiq8+76RJcncDEfMc2ocRzXLO67bLFRNI4OX1aGBoPzsM5Y2T+/m1pldOgD+A==}
+    dev: false
+
+  /@types/d3-axis/3.0.2:
+    resolution: {integrity: sha512-uGC7DBh0TZrU/LY43Fd8Qr+2ja1FKmH07q2FoZFHo1eYl8aj87GhfVoY1saJVJiq24rp1+wpI6BvQJMKgQm8oA==}
+    dependencies:
+      '@types/d3-selection': 3.0.5
+    dev: false
+
+  /@types/d3-brush/3.0.2:
+    resolution: {integrity: sha512-2TEm8KzUG3N7z0TrSKPmbxByBx54M+S9lHoP2J55QuLU0VSQ9mE96EJSAOVNEqd1bbynMjeTS9VHmz8/bSw8rA==}
+    dependencies:
+      '@types/d3-selection': 3.0.5
+    dev: false
+
+  /@types/d3-chord/3.0.2:
+    resolution: {integrity: sha512-abT/iLHD3sGZwqMTX1TYCMEulr+wBd0SzyOQnjYNLp7sngdOHYtNkMRI5v3w5thoN+BWtlHVDx2Osvq6fxhZWw==}
+    dev: false
+
+  /@types/d3-color/3.1.0:
+    resolution: {integrity: sha512-HKuicPHJuvPgCD+np6Se9MQvS6OCbJmOjGvylzMJRlDwUXjKTTXs6Pwgk79O09Vj/ho3u1ofXnhFOaEWWPrlwA==}
+    dev: false
+
+  /@types/d3-contour/3.0.2:
+    resolution: {integrity: sha512-k6/bGDoAGJZnZWaKzeB+9glgXCYGvh6YlluxzBREiVo8f/X2vpTEdgPy9DN7Z2i42PZOZ4JDhVdlTSTSkLDPlQ==}
+    dependencies:
+      '@types/d3-array': 3.0.5
+      '@types/geojson': 7946.0.10
+    dev: false
+
+  /@types/d3-delaunay/6.0.1:
+    resolution: {integrity: sha512-tLxQ2sfT0p6sxdG75c6f/ekqxjyYR0+LwPrsO1mbC9YDBzPJhs2HbJJRrn8Ez1DBoHRo2yx7YEATI+8V1nGMnQ==}
+    dev: false
+
+  /@types/d3-dispatch/3.0.2:
+    resolution: {integrity: sha512-rxN6sHUXEZYCKV05MEh4z4WpPSqIw+aP7n9ZN6WYAAvZoEAghEK1WeVZMZcHRBwyaKflU43PCUAJNjFxCzPDjg==}
+    dev: false
+
+  /@types/d3-drag/3.0.2:
+    resolution: {integrity: sha512-qmODKEDvyKWVHcWWCOVcuVcOwikLVsyc4q4EBJMREsoQnR2Qoc2cZQUyFUPgO9q4S3qdSqJKBsuefv+h0Qy+tw==}
+    dependencies:
+      '@types/d3-selection': 3.0.5
+    dev: false
+
+  /@types/d3-dsv/3.0.1:
+    resolution: {integrity: sha512-76pBHCMTvPLt44wFOieouXcGXWOF0AJCceUvaFkxSZEu4VDUdv93JfpMa6VGNFs01FHfuP4a5Ou68eRG1KBfTw==}
+    dev: false
+
+  /@types/d3-ease/3.0.0:
+    resolution: {integrity: sha512-aMo4eaAOijJjA6uU+GIeW018dvy9+oH5Y2VPPzjjfxevvGQ/oRDs+tfYC9b50Q4BygRR8yE2QCLsrT0WtAVseA==}
+    dev: false
+
+  /@types/d3-fetch/3.0.2:
+    resolution: {integrity: sha512-gllwYWozWfbep16N9fByNBDTkJW/SyhH6SGRlXloR7WdtAaBui4plTP+gbUgiEot7vGw/ZZop1yDZlgXXSuzjA==}
+    dependencies:
+      '@types/d3-dsv': 3.0.1
+    dev: false
+
+  /@types/d3-force/3.0.4:
+    resolution: {integrity: sha512-q7xbVLrWcXvSBBEoadowIUJ7sRpS1yvgMWnzHJggFy5cUZBq2HZL5k/pBSm0GdYWS1vs5/EDwMjSKF55PDY4Aw==}
+    dev: false
+
+  /@types/d3-format/3.0.1:
+    resolution: {integrity: sha512-5KY70ifCCzorkLuIkDe0Z9YTf9RR2CjBX1iaJG+rgM/cPP+sO+q9YdQ9WdhQcgPj1EQiJ2/0+yUkkziTG6Lubg==}
+    dev: false
+
+  /@types/d3-geo/3.0.3:
+    resolution: {integrity: sha512-bK9uZJS3vuDCNeeXQ4z3u0E7OeJZXjUgzFdSOtNtMCJCLvDtWDwfpRVWlyt3y8EvRzI0ccOu9xlMVirawolSCw==}
+    dependencies:
+      '@types/geojson': 7946.0.10
+    dev: false
+
+  /@types/d3-hierarchy/3.1.2:
+    resolution: {integrity: sha512-9hjRTVoZjRFR6xo8igAJyNXQyPX6Aq++Nhb5ebrUF414dv4jr2MitM2fWiOY475wa3Za7TOS2Gh9fmqEhLTt0A==}
+    dev: false
+
+  /@types/d3-interpolate/3.0.1:
+    resolution: {integrity: sha512-jx5leotSeac3jr0RePOH1KdR9rISG91QIE4Q2PYTu4OymLTZfA3SrnURSLzKH48HmXVUru50b8nje4E79oQSQw==}
+    dependencies:
+      '@types/d3-color': 3.1.0
+    dev: false
+
+  /@types/d3-path/3.0.0:
+    resolution: {integrity: sha512-0g/A+mZXgFkQxN3HniRDbXMN79K3CdTpLsevj+PXiTcb2hVyvkZUBg37StmgCQkaD84cUJ4uaDAWq7UJOQy2Tg==}
+    dev: false
+
+  /@types/d3-polygon/3.0.0:
+    resolution: {integrity: sha512-D49z4DyzTKXM0sGKVqiTDTYr+DHg/uxsiWDAkNrwXYuiZVd9o9wXZIo+YsHkifOiyBkmSWlEngHCQme54/hnHw==}
+    dev: false
+
+  /@types/d3-quadtree/3.0.2:
+    resolution: {integrity: sha512-QNcK8Jguvc8lU+4OfeNx+qnVy7c0VrDJ+CCVFS9srBo2GL9Y18CnIxBdTF3v38flrGy5s1YggcoAiu6s4fLQIw==}
+    dev: false
+
+  /@types/d3-random/3.0.1:
+    resolution: {integrity: sha512-IIE6YTekGczpLYo/HehAy3JGF1ty7+usI97LqraNa8IiDur+L44d0VOjAvFQWJVdZOJHukUJw+ZdZBlgeUsHOQ==}
+    dev: false
+
+  /@types/d3-scale-chromatic/3.0.0:
+    resolution: {integrity: sha512-dsoJGEIShosKVRBZB0Vo3C8nqSDqVGujJU6tPznsBJxNJNwMF8utmS83nvCBKQYPpjCzaaHcrf66iTRpZosLPw==}
+    dev: false
+
+  /@types/d3-scale/4.0.3:
+    resolution: {integrity: sha512-PATBiMCpvHJSMtZAMEhc2WyL+hnzarKzI6wAHYjhsonjWJYGq5BXTzQjv4l8m2jO183/4wZ90rKvSeT7o72xNQ==}
+    dependencies:
+      '@types/d3-time': 3.0.0
+    dev: false
+
+  /@types/d3-selection/3.0.5:
+    resolution: {integrity: sha512-xCB0z3Hi8eFIqyja3vW8iV01+OHGYR2di/+e+AiOcXIOrY82lcvWW8Ke1DYE/EUVMsBl4Db9RppSBS3X1U6J0w==}
+    dev: false
+
+  /@types/d3-shape/3.1.1:
+    resolution: {integrity: sha512-6Uh86YFF7LGg4PQkuO2oG6EMBRLuW9cbavUW46zkIO5kuS2PfTqo2o9SkgtQzguBHbLgNnU90UNsITpsX1My+A==}
+    dependencies:
+      '@types/d3-path': 3.0.0
+    dev: false
+
+  /@types/d3-time-format/4.0.0:
+    resolution: {integrity: sha512-yjfBUe6DJBsDin2BMIulhSHmr5qNR5Pxs17+oW4DoVPyVIXZ+m6bs7j1UVKP08Emv6jRmYrYqxYzO63mQxy1rw==}
+    dev: false
+
+  /@types/d3-time/3.0.0:
+    resolution: {integrity: sha512-sZLCdHvBUcNby1cB6Fd3ZBrABbjz3v1Vm90nysCQ6Vt7vd6e/h9Lt7SiJUoEX0l4Dzc7P5llKyhqSi1ycSf1Hg==}
+    dev: false
+
+  /@types/d3-timer/3.0.0:
+    resolution: {integrity: sha512-HNB/9GHqu7Fo8AQiugyJbv6ZxYz58wef0esl4Mv828w1ZKpAshw/uFWVDUcIB9KKFeFKoxS3cHY07FFgtTRZ1g==}
+    dev: false
+
+  /@types/d3-transition/3.0.3:
+    resolution: {integrity: sha512-/S90Od8Id1wgQNvIA8iFv9jRhCiZcGhPd2qX0bKF/PS+y0W5CrXKgIiELd2CvG1mlQrWK/qlYh3VxicqG1ZvgA==}
+    dependencies:
+      '@types/d3-selection': 3.0.5
+    dev: false
+
+  /@types/d3-zoom/3.0.3:
+    resolution: {integrity: sha512-OWk1yYIIWcZ07+igN6BeoG6rqhnJ/pYe+R1qWFM2DtW49zsoSjgb9G5xB0ZXA8hh2jAzey1XuRmMSoXdKw8MDA==}
+    dependencies:
+      '@types/d3-interpolate': 3.0.1
+      '@types/d3-selection': 3.0.5
+    dev: false
+
+  /@types/d3/7.4.0:
+    resolution: {integrity: sha512-jIfNVK0ZlxcuRDKtRS/SypEyOQ6UHaFQBKv032X45VvxSJ6Yi5G9behy9h6tNTHTDGh5Vq+KbmBjUWLgY4meCA==}
+    dependencies:
+      '@types/d3-array': 3.0.5
+      '@types/d3-axis': 3.0.2
+      '@types/d3-brush': 3.0.2
+      '@types/d3-chord': 3.0.2
+      '@types/d3-color': 3.1.0
+      '@types/d3-contour': 3.0.2
+      '@types/d3-delaunay': 6.0.1
+      '@types/d3-dispatch': 3.0.2
+      '@types/d3-drag': 3.0.2
+      '@types/d3-dsv': 3.0.1
+      '@types/d3-ease': 3.0.0
+      '@types/d3-fetch': 3.0.2
+      '@types/d3-force': 3.0.4
+      '@types/d3-format': 3.0.1
+      '@types/d3-geo': 3.0.3
+      '@types/d3-hierarchy': 3.1.2
+      '@types/d3-interpolate': 3.0.1
+      '@types/d3-path': 3.0.0
+      '@types/d3-polygon': 3.0.0
+      '@types/d3-quadtree': 3.0.2
+      '@types/d3-random': 3.0.1
+      '@types/d3-scale': 4.0.3
+      '@types/d3-scale-chromatic': 3.0.0
+      '@types/d3-selection': 3.0.5
+      '@types/d3-shape': 3.1.1
+      '@types/d3-time': 3.0.0
+      '@types/d3-time-format': 4.0.0
+      '@types/d3-timer': 3.0.0
+      '@types/d3-transition': 3.0.3
+      '@types/d3-zoom': 3.0.3
+    dev: false
+
+  /@types/geojson/7946.0.10:
+    resolution: {integrity: sha512-Nmh0K3iWQJzniTuPRcJn5hxXkfB1T1pgB89SBig5PlJQU5yocazeu4jATJlaA0GYFKWMqDdvYemoSnF2pXgLVA==}
+    dev: false
 
   /@types/node/18.16.19:
     resolution: {integrity: sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==}
@@ -806,6 +1093,10 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
 
+  /classcat/5.0.4:
+    resolution: {integrity: sha512-sbpkOw6z413p+HDGcBENe498WM9woqWHiJxCq7nvmxe9WmrUmqfAcxpIwAiMtM5Q3AhYkzXcNQHqsWq0mND51g==}
+    dev: false
+
   /clsx/1.2.1:
     resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
     engines: {node: '>=6'}
@@ -851,6 +1142,71 @@ packages:
   /csstype/3.1.2:
     resolution: {integrity: sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==}
     dev: true
+
+  /d3-color/3.1.0:
+    resolution: {integrity: sha512-zg/chbXyeBtMQ1LbD/WSoW2DpC3I0mpmPdW+ynRTj/x2DAWYrIY7qeZIHidozwV24m4iavr15lNwIwLxRmOxhA==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /d3-dispatch/3.0.1:
+    resolution: {integrity: sha512-rzUyPU/S7rwUflMyLc1ETDeBj0NRuHKKAcvukozwhshr6g6c5d8zh4c2gQjY2bZ0dXeGLWc1PF174P2tVvKhfg==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /d3-drag/3.0.0:
+    resolution: {integrity: sha512-pWbUJLdETVA8lQNJecMxoXfH6x+mO2UQo8rSmZ+QqxcbyA3hfeprFgIT//HW2nlHChWeIIMwS2Fq+gEARkhTkg==}
+    engines: {node: '>=12'}
+    dependencies:
+      d3-dispatch: 3.0.1
+      d3-selection: 3.0.0
+    dev: false
+
+  /d3-ease/3.0.1:
+    resolution: {integrity: sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /d3-interpolate/3.0.1:
+    resolution: {integrity: sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g==}
+    engines: {node: '>=12'}
+    dependencies:
+      d3-color: 3.1.0
+    dev: false
+
+  /d3-selection/3.0.0:
+    resolution: {integrity: sha512-fmTRWbNMmsmWq6xJV8D19U/gw/bwrHfNXxrIN+HfZgnzqTHp9jOmKMhsTUjXOJnZOdZY9Q28y4yebKzqDKlxlQ==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /d3-timer/3.0.1:
+    resolution: {integrity: sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /d3-transition/3.0.1_d3-selection@3.0.0:
+    resolution: {integrity: sha512-ApKvfjsSR6tg06xrL434C0WydLr7JewBB3V+/39RMHsaXTOG0zmt/OAXeng5M5LBm0ojmxJrpomQVZ1aPvBL4w==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      d3-selection: 2 - 3
+    dependencies:
+      d3-color: 3.1.0
+      d3-dispatch: 3.0.1
+      d3-ease: 3.0.1
+      d3-interpolate: 3.0.1
+      d3-selection: 3.0.0
+      d3-timer: 3.0.1
+    dev: false
+
+  /d3-zoom/3.0.0:
+    resolution: {integrity: sha512-b8AmV3kfQaqWAuacbPuNbL6vahnOJflOhexLzMMNLga62+/nh0JzvJ0aO/5a5MVgUFGS7Hu1P9P03o3fJkDCyw==}
+    engines: {node: '>=12'}
+    dependencies:
+      d3-dispatch: 3.0.1
+      d3-drag: 3.0.0
+      d3-interpolate: 3.0.1
+      d3-selection: 3.0.0
+      d3-transition: 3.0.1_d3-selection@3.0.0
+    dev: false
 
   /daisyui/3.2.1:
     resolution: {integrity: sha512-gIqE6wiqoJt9G8+n3R/SwLeUnpNCE2eDhT73rP0yZYVaM7o6zVcakBH3aEW5RGpx3UkonPiLuvcgxRcb2lE8TA==}
@@ -1336,6 +1692,24 @@ packages:
       loose-envify: 1.4.0
     dev: false
 
+  /reactflow/11.7.4_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-QI6+oc1Ft6oFeLSdHlp+SmgymbI5Tm49wj5JyE84O4A54yN/ImfYaBhLit9Cmfzxn9Tz6tDqmGMGbk4bdtB8/w==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@reactflow/background': 11.2.4_biqbaboplfbrettd7655fr4n2y
+      '@reactflow/controls': 11.1.15_biqbaboplfbrettd7655fr4n2y
+      '@reactflow/core': 11.7.4_biqbaboplfbrettd7655fr4n2y
+      '@reactflow/minimap': 11.5.4_biqbaboplfbrettd7655fr4n2y
+      '@reactflow/node-resizer': 2.1.1_biqbaboplfbrettd7655fr4n2y
+      '@reactflow/node-toolbar': 1.2.3_biqbaboplfbrettd7655fr4n2y
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    transitivePeerDependencies:
+      - immer
+    dev: false
+
   /read-cache/1.0.0:
     resolution: {integrity: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==}
     dependencies:
@@ -1492,6 +1866,14 @@ packages:
       escalade: 3.1.1
       picocolors: 1.0.0
 
+  /use-sync-external-store/1.2.0_react@18.2.0:
+    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+    dev: false
+
   /util-deprecate/1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
@@ -1542,8 +1924,24 @@ packages:
     resolution: {integrity: sha512-2eHWfjaoXgTBC2jNM1LRef62VQa0umtvRiDSk6HSzW7RvS5YtkabJrwYLLEKWBc8a5U2PTSCs+dJjUTJdlHsWQ==}
     engines: {node: '>= 14'}
 
-  github.com/tauri-apps/tauri-plugin-sql/f8125e517d9de2a567a2eaa14f7b1b32e456278b:
-    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-sql/tar.gz/f8125e517d9de2a567a2eaa14f7b1b32e456278b}
+  /zustand/4.3.9_react@18.2.0:
+    resolution: {integrity: sha512-Tat5r8jOMG1Vcsj8uldMyqYKC5IZvQif8zetmLHs9WoZlntTHmIoNM8TpLRY31ExncuUvUOXehd0kvahkuHjDw==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      immer: '>=9.0'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      immer:
+        optional: true
+      react:
+        optional: true
+    dependencies:
+      react: 18.2.0
+      use-sync-external-store: 1.2.0_react@18.2.0
+    dev: false
+
+  github.com/tauri-apps/tauri-plugin-sql/953f2ab9f05ef131b55af065b0596c4c2136b37e:
+    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-sql/tar.gz/953f2ab9f05ef131b55af065b0596c4c2136b37e}
     name: tauri-plugin-sql-api
     version: 0.0.0
     dependencies:

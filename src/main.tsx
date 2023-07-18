@@ -5,6 +5,7 @@ import Layout from "./layout";
 import ErrorPage from "./error-page";
 import Home from "./routes/home";
 import Settings from "./routes/settings";
+import Flows from "./routes/flows";
 import { TauriProvider } from "./context/TauriProvider";
 import "./styles.css";
 import { SettingsProvider } from "./context/SettingsProvider";
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "/flows",
+        element: <Flows />,
       },
       {
         path: "/settings",

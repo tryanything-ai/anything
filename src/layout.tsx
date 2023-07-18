@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { AiOutlineSetting, AiOutlineHome } from "react-icons/ai";
+import { AiOutlineSetting, AiOutlineHome, AiOutlineFork } from "react-icons/ai";
 import clsx from "clsx";
 
 export default function Layout() {
@@ -16,6 +16,13 @@ export default function Layout() {
           <AiOutlineHome
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname === "/",
+            })}
+          />
+        </Link>
+        <Link className={linkClass} to="/flows">
+          <AiOutlineFork
+            className={clsx(defaultClass, {
+              [selectedClass]: location.pathname === "/flows",
             })}
           />
         </Link>
