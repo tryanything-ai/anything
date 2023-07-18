@@ -25,7 +25,10 @@ const router = createBrowserRouter([
         path: "/flows",
         element: <Flows />,
       },
-      { path: "yaml", element: <Yaml /> },
+      {
+        path: "/yaml",
+        element: <Yaml />,
+      },
       {
         path: "/settings",
         element: <Settings />,
