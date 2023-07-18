@@ -3,7 +3,6 @@ import CustomControls from "../components/customControls";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import ReactFlow, {
   MiniMap,
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -26,7 +25,7 @@ const initialNodes = [
     id: "2",
     position: { x: 200, y: 300 },
     type: "vectorNode",
-    data: { value: "SQLite Vector" },
+    data: { value: "Memory VectorStore" },
   },
   {
     id: "3",
@@ -38,7 +37,7 @@ const initialNodes = [
     id: "4",
     position: { x: 600, y: 400 },
     type: "polyNode",
-    data: { value: "Local Obsidian Notes" },
+    data: { value: "Obsidian Notes" },
   },
   {
     id: "5",
