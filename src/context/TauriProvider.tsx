@@ -54,7 +54,28 @@ export function TauriProvider({ children }: { children: ReactNode }) {
         setOsType(_osType);
         const _fileSep = _osType === "Windows_NT" ? "\\" : "/";
         setFileSep(_fileSep);
+        //Create App Folder
         await fs.createDir(APP_NAME, {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Flows Folder
+        await fs.createDir(APP_NAME + "/flows", {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Nodes Folder
+        await fs.createDir(APP_NAME + "/nodes", {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Settings Folder
+        await fs.createDir(APP_NAME + "/settings", {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Assets Folder
+        await fs.createDir(APP_NAME + "/assets", {
           dir: fs.BaseDirectory.Document,
           recursive: true,
         });

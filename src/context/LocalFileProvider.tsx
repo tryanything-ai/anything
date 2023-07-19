@@ -8,22 +8,42 @@ import React, {
 
 import { useTauriContext } from "./TauriProvider";
 import { watch } from "tauri-plugin-fs-watch-api";
+import { readDir, readTextFile, FileEntry } from "@tauri-apps/api/fs";
+
+//TODO: create demo flow that is loaded on first run
 
 interface LocalFileContextInterface {
-  filePaths: string[];
+  flowPaths: FileEntry[];
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
-  filePaths: [],
+  flowPaths: [],
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
 
 export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments, loading } = useTauriContext();
-  const [filePaths, setFilePaths] = useState<string[]>([]);
+  const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
 
-  useEffect();
+  const getLocalFiles = async () => {
+    try {
+      if (appDocuments !== undefined) {
+        const entries = await readDir(appDocuments + "/flows", {
+          recursive: true,
+        });
+
+        setFlowPaths(entries);
+        //open the first one and set the filePath I think
+        // setFilePath(entries[0].path);
+        //TODO: hydrate the state of theh file tree into a react component
+      } else {
+        console.log("appDocuments is undefined still");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
   useEffect(() => {
     // Your watch function
     if (!loading) {
@@ -51,8 +71,14 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loading]);
 
+  useEffect(() => {
+    if (!loading) {
+      getLocalFiles();
+    }
+  }, [loading]);
+
   return (
-    <LocalFileContext.Provider value={{ filePaths }}>
+    <LocalFileContext.Provider value={{ flowPaths }}>
       {children}
     </LocalFileContext.Provider>
   );
