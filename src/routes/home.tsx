@@ -1,39 +1,27 @@
 import { useState } from "react";
-import reactLogo from "../assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
+import { useLocalFileContext } from "../context/LocalFileProvider";
+
 export default function Home() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
+  const { flowPaths } = useLocalFileContext();
   return (
-    <div className="flex flex-row h-full w-full m-10">
-      <div>
-        <div className="flex flex-col">
-          <h1>Welcome to Tauri!</h1>
-
-          <form
-            className="flex flex-row pt-5 gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              greet();
-            }}
-          >
-            <input
-              id="greet-input"
-              onChange={(e) => setName(e.currentTarget.value)}
-              placeholder="Enter a name..."
-            />
-            <button type="submit">Greet</button>
-          </form>
-
-          <p>{greetMsg}</p>
-        </div>
-      </div>
+    <div className="flex flex-col h-full w-full m-10">
+      <div className="text-5xl text-white m-5">Flows</div>
+      <ul>
+        {flowPaths.map((flow) => {
+          return (
+            <li className="card w-96 bg-base-300 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">{flow.name}</h2>
+                {/* <p>Flow Description</p> */}
+                {/* <div className="card-actions justify-end">
+                  <button className="btn btn-primary">Buy Now</button>
+                </div> */}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

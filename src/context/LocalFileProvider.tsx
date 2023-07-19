@@ -33,6 +33,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
           recursive: true,
         });
 
+        console.log("entries", entries);
         setFlowPaths(entries);
         //open the first one and set the filePath I think
         // setFilePath(entries[0].path);
