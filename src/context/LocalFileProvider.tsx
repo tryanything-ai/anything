@@ -14,10 +14,14 @@ import { readDir, readTextFile, FileEntry } from "@tauri-apps/api/fs";
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
+  toml: string;
+  setCurrentFlow: (flowName: string) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
+  toml: "",
+  setCurrentFlow: () => {},
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -25,6 +29,15 @@ export const useLocalFileContext = () => useContext(LocalFileContext);
 export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments, loading } = useTauriContext();
   const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
+  const [toml, setToml] = useState<string>("");
+
+  const setCurrentFlow = async (flowName: string) => {
+    let content = await readTextFile(
+      appDocuments + "/flows/" + flowName + "/flow.toml"
+    );
+    console.log("content", content);
+    setToml(content);
+  };
 
   const getLocalFiles = async () => {
     try {
@@ -79,7 +92,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   }, [loading]);
 
   return (
-    <LocalFileContext.Provider value={{ flowPaths }}>
+    <LocalFileContext.Provider value={{ flowPaths, toml, setCurrentFlow }}>
       {children}
     </LocalFileContext.Provider>
   );

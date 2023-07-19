@@ -24,7 +24,7 @@ export default function Layout() {
           <Link className={linkClass} to="/flows">
             <AiOutlineFork
               className={clsx(defaultClass, {
-                [selectedClass]: location.pathname === "/flows",
+                [selectedClass]: location.pathname.includes("/flows"),
               })}
             />
           </Link>
