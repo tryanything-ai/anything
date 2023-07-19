@@ -7,10 +7,11 @@ import Home from "./routes/home";
 import Settings from "./routes/settings";
 import Flows from "./routes/flows";
 import { TauriProvider } from "./context/TauriProvider";
-import "./styles.css";
 import { SettingsProvider } from "./context/SettingsProvider";
+import { LocalFileProvider } from "./context/LocalFileProvider";
 import YamlEditor from "./routes/yamlEditor";
 import FlowEditor from "./routes/flowEditor";
+import "./styles.css";
 
 const router = createBrowserRouter([
   {
@@ -47,9 +48,11 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
-      <SettingsProvider>
-        <RouterProvider router={router} />
-      </SettingsProvider>
+      <LocalFileProvider>
+        <SettingsProvider>
+          <RouterProvider router={router} />
+        </SettingsProvider>
+      </LocalFileProvider>
     </TauriProvider>
   </React.StrictMode>
 );
