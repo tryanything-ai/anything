@@ -6,10 +6,11 @@ import ErrorPage from "./error-page";
 import Home from "./routes/home";
 import Settings from "./routes/settings";
 import Flows from "./routes/flows";
-import Yaml from "./routes/yaml";
 import { TauriProvider } from "./context/TauriProvider";
 import "./styles.css";
 import { SettingsProvider } from "./context/SettingsProvider";
+import YamlEditor from "./routes/yamlEditor";
+import FlowEditor from "./routes/flowEditor";
 
 const router = createBrowserRouter([
   {
@@ -24,10 +25,16 @@ const router = createBrowserRouter([
       {
         path: "/flows",
         element: <Flows />,
-      },
-      {
-        path: "/yaml",
-        element: <Yaml />,
+        children: [
+          {
+            path: "/flows/:id",
+            element: <FlowEditor />,
+          },
+          {
+            path: "/flows/:id/yaml",
+            element: <YamlEditor />,
+          },
+        ],
       },
       {
         path: "/settings",
