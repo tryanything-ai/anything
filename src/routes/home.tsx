@@ -12,6 +12,7 @@ export default function Home() {
         {flowPaths.map((flow) => {
           return (
             <Link
+              key={flow.name}
               to={`flows/${flow.name}`}
               className="card w-96 bg-base-300 shadow-xl"
             >

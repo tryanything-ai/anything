@@ -4,7 +4,7 @@ import { useLocalFileContext } from "../context/LocalFileProvider";
 // import { useFileContext } from "../context/FileProvider";
 
 export default function TomlEditor() {
-  const { toml, setToml } = useLocalFileContext();
+  const { toml, writeToml } = useLocalFileContext();
   // const { filePath, fileContent, updateFile } = useFileContext();
 
   // const [markdown, setMarkdown] = useState("");
@@ -39,7 +39,7 @@ export default function TomlEditor() {
 
   const handleEditorChange = (value: any, event: any) => {
     console.log("EditorChanged", value);
-    setToml(value);
+    writeToml(value);
     // setUserInteraction(true);
   };
 

@@ -45,7 +45,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     let content = await readTextFile(
       appDocuments + "/flows/" + flowName + "/flow.toml"
     );
-    console.log("content", content);
+    // console.log("content", content);
     setToml(content);
     setCurrentFlow(flowName);
   };
@@ -73,8 +73,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     console.log("writing toml", toml);
 
     //TODO: write toml to file location with tauri
-    let content = await readTextFile(
-      appDocuments + "/flows/" + currentFlow + "/flow.toml"
+    let content = await writeTextFile(
+      appDocuments + "/flows/" + currentFlow + "/flow.toml",
+      toml
     );
   };
 
