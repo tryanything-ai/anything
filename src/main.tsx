@@ -9,7 +9,7 @@ import Flows from "./routes/flows";
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
-import YamlEditor from "./routes/yamlEditor";
+import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import "./styles.css";
 
@@ -32,8 +32,8 @@ const router = createBrowserRouter([
             element: <FlowEditor />,
           },
           {
-            path: "/flows/:id/yaml",
-            element: <YamlEditor />,
+            path: "/flows/:id/toml",
+            element: <TomlEditor />,
           },
         ],
       },

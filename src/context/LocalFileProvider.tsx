@@ -8,19 +8,28 @@ import React, {
 
 import { useTauriContext } from "./TauriProvider";
 import { watch } from "tauri-plugin-fs-watch-api";
-import { readDir, readTextFile, FileEntry } from "@tauri-apps/api/fs";
+import {
+  readDir,
+  readTextFile,
+  writeTextFile,
+  FileEntry,
+} from "@tauri-apps/api/fs";
 
 //TODO: create demo flow that is loaded on first run
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
   toml: string;
+  writeToml: (toml: string) => void;
+  currentFlow: string;
   setCurrentFlow: (flowName: string) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
   toml: "",
+  writeToml: () => {},
+  currentFlow: "",
   setCurrentFlow: () => {},
 });
 
@@ -30,27 +39,28 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments, loading } = useTauriContext();
   const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
   const [toml, setToml] = useState<string>("");
+  const [currentFlow, setCurrentFlow] = useState<string>("");
 
-  const setCurrentFlow = async (flowName: string) => {
+  const setCurrentFlowLocal = async (flowName: string) => {
     let content = await readTextFile(
       appDocuments + "/flows/" + flowName + "/flow.toml"
     );
     console.log("content", content);
     setToml(content);
+    setCurrentFlow(flowName);
   };
 
   const getLocalFiles = async () => {
     try {
       if (appDocuments !== undefined) {
-        const entries = await readDir(appDocuments + "/flows", {
+        let entries = await readDir(appDocuments + "/flows", {
           recursive: true,
         });
+        // filter out .DS_Store files
+        entries = entries.filter((entry) => !entry.path.endsWith(".DS_Store"));
 
         console.log("entries", entries);
         setFlowPaths(entries);
-        //open the first one and set the filePath I think
-        // setFilePath(entries[0].path);
-        //TODO: hydrate the state of theh file tree into a react component
       } else {
         console.log("appDocuments is undefined still");
       }
@@ -58,6 +68,16 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       console.error(error);
     }
   };
+
+  const writeToml = async (toml: string) => {
+    console.log("writing toml", toml);
+
+    //TODO: write toml to file location with tauri
+    let content = await readTextFile(
+      appDocuments + "/flows/" + currentFlow + "/flow.toml"
+    );
+  };
+
   useEffect(() => {
     // Your watch function
     if (!loading) {
@@ -92,7 +112,15 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   }, [loading]);
 
   return (
-    <LocalFileContext.Provider value={{ flowPaths, toml, setCurrentFlow }}>
+    <LocalFileContext.Provider
+      value={{
+        flowPaths,
+        toml,
+        writeToml,
+        currentFlow,
+        setCurrentFlow: setCurrentFlowLocal,
+      }}
+    >
       {children}
     </LocalFileContext.Provider>
   );
