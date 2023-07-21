@@ -7,7 +7,7 @@ import React, {
 } from "react";
 
 import { useTauriContext } from "./TauriProvider";
-import { watch } from "tauri-plugin-fs-watch-api";
+import { watch, watchImmediate } from "tauri-plugin-fs-watch-api";
 import {
   readDir,
   readTextFile,
@@ -91,10 +91,10 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       let stopWatching = () => {};
       console.log("Wathcing ", appDocuments, " for changes");
       const watchThisFile = async () => {
-        stopWatching = await watch(
+        stopWatching = await watchImmediate(
           appDocuments,
           (event) => {
-            const { kind, path } = event;
+            // const { kind, path } = event;
             //TODO: filter out .DS_Store files from mac.
             // Handle event logic here
             console.log("File changed: ", JSON.stringify(event, null, 3));
