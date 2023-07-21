@@ -21,7 +21,7 @@
       },
       "fs": {
         "all": true,
-        "scope": ["$APP/*", "$DOWNLOAD/*", "$DOCUMENT/**/*"]
+        "scope": ["$APP/**/*", "$DOWNLOAD/**/*", "$DOCUMENT/**/*"]
       },
       "shell": {
         "all": false,

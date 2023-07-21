@@ -9,6 +9,7 @@ import Flows from "./routes/flows";
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
+import { TomlFlowProvider } from "./context/TomlFlowProvider";
 import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import "./styles.css";
@@ -49,9 +50,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
       <LocalFileProvider>
-        <SettingsProvider>
-          <RouterProvider router={router} />
-        </SettingsProvider>
+        <TomlFlowProvider>
+          <SettingsProvider>
+            <RouterProvider router={router} />
+          </SettingsProvider>
+        </TomlFlowProvider>
       </LocalFileProvider>
     </TauriProvider>
   </React.StrictMode>

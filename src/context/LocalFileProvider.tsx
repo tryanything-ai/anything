@@ -45,7 +45,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     let content = await readTextFile(
       appDocuments + "/flows/" + flowName + "/flow.toml"
     );
-    // console.log("content", content);
+
     setToml(content);
     setCurrentFlow(flowName);
   };

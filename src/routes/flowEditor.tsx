@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import CustomControls from "../components/customControls";
-import { Outlet, Link, useLocation } from "react-router-dom";
 import ReactFlow, {
   MiniMap,
   Background,
@@ -13,71 +12,74 @@ import ReactFlow, {
 } from "reactflow";
 
 import "reactflow/dist/style.css";
+import { useTomlFlowContext } from "../context/TomlFlowProvider";
 
-const initialNodes = [
-  {
-    id: "1",
-    type: "inboxNode",
-    position: { x: 100, y: 50 },
-    data: { value: "B2B Leads ✉️" },
-  },
-  {
-    id: "2",
-    position: { x: 200, y: 300 },
-    type: "vectorNode",
-    data: { value: "Memory VectorStore" },
-  },
-  {
-    id: "3",
-    position: { x: 600, y: 200 },
-    type: "pushNode",
-    data: { value: "Gmail Inbox" },
-  },
-  {
-    id: "4",
-    position: { x: 600, y: 400 },
-    type: "polyNode",
-    data: { value: "Obsidian Notes" },
-  },
-  {
-    id: "5",
-    position: { x: 200, y: 550 },
-    type: "llmNode",
-    data: { value: "OpenAI GPT LLM" },
-  },
-  {
-    id: "6",
-    type: "outboxNode",
-    position: { x: 100, y: 700 },
-    data: { value: "Outbound Sales ⌲" },
-  },
+const initialNodes: any = [
+  // {
+  //   id: "1",
+  //   type: "inboxNode",
+  //   position: { x: 100, y: 50 },
+  //   data: { value: "B2B Leads ✉️" },
+  // },
+  // {
+  //   id: "2",
+  //   position: { x: 200, y: 300 },
+  //   type: "vectorNode",
+  //   data: { value: "Memory VectorStore" },
+  // },
+  // {
+  //   id: "3",
+  //   position: { x: 600, y: 200 },
+  //   type: "pushNode",
+  //   data: { value: "Gmail Inbox" },
+  // },
+  // {
+  //   id: "4",
+  //   position: { x: 600, y: 400 },
+  //   type: "polyNode",
+  //   data: { value: "Obsidian Notes" },
+  // },
+  // {
+  //   id: "5",
+  //   position: { x: 200, y: 550 },
+  //   type: "llmNode",
+  //   data: { value: "OpenAI GPT LLM" },
+  // },
+  // {
+  //   id: "6",
+  //   type: "outboxNode",
+  //   position: { x: 100, y: 700 },
+  //   data: { value: "Outbound Sales ⌲" },
+  // },
 ];
 
-const initialEdges = [
-  { id: "1", source: "1", target: "2", sourceHandle: "b", targetHandle: "a" },
-  {
-    id: "2",
-    source: "3",
-    target: "2",
-    sourceHandle: "a",
-    targetHandle: "b",
-    animated: true,
-  },
-  {
-    id: "3",
-    source: "4",
-    target: "2",
-    sourceHandle: "a",
-    targetHandle: "b",
-    animated: true,
-  },
-  { id: "4", source: "2", target: "5", sourceHandle: "c", targetHandle: "a" },
-  { id: "5", source: "5", target: "6", sourceHandle: "b", targetHandle: "a" },
+const initialEdges: any = [
+  // { id: "1", source: "1", target: "2", sourceHandle: "b", targetHandle: "a" },
+  // {
+  //   id: "2",
+  //   source: "3",
+  //   target: "2",
+  //   sourceHandle: "a",
+  //   targetHandle: "b",
+  //   animated: true,
+  // },
+  // {
+  //   id: "3",
+  //   source: "4",
+  //   target: "2",
+  //   sourceHandle: "a",
+  //   targetHandle: "b",
+  //   animated: true,
+  // },
+  // { id: "4", source: "2", target: "5", sourceHandle: "c", targetHandle: "a" },
+  // { id: "5", source: "5", target: "6", sourceHandle: "b", targetHandle: "a" },
 ];
 
 export default function Flows() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const { toml_nodes } = useTomlFlowContext();
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
   const nodeTypes = useMemo(
     () => ({
       inboxNode: InboxNode,
@@ -89,6 +91,22 @@ export default function Flows() {
     }),
     []
   );
+
+  useEffect(() => {
+    console.log("toml_nodes", toml_nodes);
+    if (toml_nodes !== undefined) {
+      setNodes(toml_nodes);
+    }
+  }, [toml_nodes]);
+
+  const _onNodesChange = useCallback(
+    (node: any) => {
+      console.log("node changed", node);
+      onNodesChange(node);
+    },
+    [setNodes]
+  );
+
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -101,7 +119,7 @@ export default function Flows() {
         nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={_onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
       >
