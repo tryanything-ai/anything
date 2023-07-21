@@ -42,12 +42,19 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const [currentFlow, setCurrentFlow] = useState<string>("");
 
   const setCurrentFlowLocal = async (flowName: string) => {
-    let content = await readTextFile(
-      appDocuments + "/flows/" + flowName + "/flow.toml"
-    );
+    // let content = await readTextFile(
+    //   appDocuments + "/flows/" + flowName + "/flow.toml"
+    // );
 
-    setToml(content);
     setCurrentFlow(flowName);
+    readToml();
+  };
+
+  const readToml = async () => {
+    let content = await readTextFile(
+      appDocuments + "/flows/" + currentFlow + "/flow.toml"
+    );
+    setToml(content);
   };
 
   const getLocalFiles = async () => {
@@ -72,8 +79,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const writeToml = async (toml: string) => {
     console.log("writing toml", toml);
 
-    //TODO: write toml to file location with tauri
-    let content = await writeTextFile(
+    await writeTextFile(
       appDocuments + "/flows/" + currentFlow + "/flow.toml",
       toml
     );
@@ -92,6 +98,15 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
             //TODO: filter out .DS_Store files from mac.
             // Handle event logic here
             console.log("File changed: ", JSON.stringify(event, null, 3));
+
+            // const ext = path.slice(
+            //   (Math.max(0, path.lastIndexOf(".")) || Infinity) + 1
+            // );
+
+            // if (ext === "toml") {
+            console.log("toml file changed, sniffed in file watcher");
+            readToml();
+            // }
           },
           { recursive: true }
         );

@@ -5,10 +5,8 @@ import React, {
   useContext,
   ReactNode,
 } from "react";
-// import toml from "@tauri-apps/toml";
-import { stringify, parse } from "iarna-toml-esm";
 
-// import toml from "toml";
+import { stringify, parse } from "iarna-toml-esm";
 import { useLocalFileContext } from "./LocalFileProvider";
 
 interface TomlFlowContextInterface {
@@ -24,7 +22,6 @@ export const TomlFlowContext = createContext<TomlFlowContextInterface>({
 export const useTomlFlowContext = () => useContext(TomlFlowContext);
 
 export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const { toml: tomlFromFile, writeToml } = useLocalFileContext();
   const [toml_nodes, setTomlNodes] = useState<any[]>([]);
   const [toml_edges, setTomlEdges] = useState<any[]>([]);
