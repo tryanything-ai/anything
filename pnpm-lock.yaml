@@ -12,6 +12,7 @@ specifiers:
   autoprefixer: ^10.4.14
   clsx: ^1.2.1
   daisyui: ^3.2.1
+  iarna-toml-esm: ^3.0.5
   localforage: ^1.10.0
   match-sorter: ^6.3.1
   monaco-editor: ^0.40.0
@@ -34,6 +35,7 @@ dependencies:
   '@tauri-apps/api': 1.4.0
   autoprefixer: 10.4.14_postcss@8.4.25
   clsx: 1.2.1
+  iarna-toml-esm: 3.0.5
   localforage: 1.10.0
   match-sorter: 6.3.1
   monaco-editor: 0.40.0
@@ -1272,6 +1274,10 @@ packages:
   /electron-to-chromium/1.4.457:
     resolution: {integrity: sha512-/g3UyNDmDd6ebeWapmAoiyy+Sy2HyJ+/X8KyvNeHfKRFfHaA2W8oF5fxD5F3tjBDcjpwo0iek6YNgxNXDBoEtA==}
 
+  /emitter-component/1.1.1:
+    resolution: {integrity: sha512-G+mpdiAySMuB7kesVRLuyvYRqDmshB7ReKEVuyBPkzQlmiDiLrt7hHHIy4Aff552bgknVN7B2/d3lzhGO5dvpQ==}
+    dev: false
+
   /esbuild/0.18.11:
     resolution: {integrity: sha512-i8u6mQF0JKJUlGR3OdFLKldJQMMs8OqM9Cc3UCi9XXziJ9WERM5bfkHaEAy0YAvPRMgqSW55W7xYn84XtEFTtA==}
     engines: {node: '>=12'}
@@ -1395,6 +1401,12 @@ packages:
     engines: {node: '>= 0.4.0'}
     dependencies:
       function-bind: 1.1.1
+
+  /iarna-toml-esm/3.0.5:
+    resolution: {integrity: sha512-CgeDbPohnFG827UoRaCqKxJ8idiIDZDWlcHf5hUReQnZ8jHnNnhN4QJFiY12fKvr0LvuDuKAimqQfrmQnacbtw==}
+    dependencies:
+      stream: 0.0.2
+    dev: false
 
   /immediate/3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
@@ -1806,6 +1818,12 @@ packages:
 
   /state-local/1.0.7:
     resolution: {integrity: sha512-HTEHMNieakEnoe33shBYcZ7NX83ACUjCu8c40iOGEZsngj9zRnkqS9j1pqQPXwobB0ZcVTk27REb7COQ0UR59w==}
+    dev: false
+
+  /stream/0.0.2:
+    resolution: {integrity: sha512-gCq3NDI2P35B2n6t76YJuOp7d6cN/C7Rt0577l91wllh0sY9ZBuw9KaSGqH/b0hzn3CWWJbpbW0W0WvQ1H/Q7g==}
+    dependencies:
+      emitter-component: 1.1.1
     dev: false
 
   /sucrase/3.32.0:
