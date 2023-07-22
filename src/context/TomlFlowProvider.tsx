@@ -44,12 +44,17 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
   // };
 
   useEffect(() => {
-    if (tomlFromFile === "") return;
-    var data = parse(tomlFromFile);
-    console.log("ParsedToml");
-    console.dir(data);
-    setTomlNodes(data.nodes as any);
-    setTomlEdges(data.edges as any);
+    try {
+      if (tomlFromFile === "") return;
+      var data = parse(tomlFromFile);
+      console.log("ParsedToml");
+      console.dir(data);
+      setTomlNodes(data.nodes as any);
+      setTomlEdges(data.edges as any);
+    } catch (e) {
+      console.log("Error parsing toml. Toml is probably incorrect");
+      console.dir(e);
+    }
   }, [tomlFromFile]);
 
   return (
