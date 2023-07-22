@@ -82,12 +82,14 @@ const initialEdges: any = [
 ];
 
 export default function Flows() {
-  const { toml_nodes, set_toml_nodes } = useTomlFlowContext();
+  const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
+  //flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [nodesLoaded, setNodesLoaded] = useState(false);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [tomlLoaded, setTomlLoaded] = useState(false);
 
   const prevNodesRef = useRef<any>(); // To store the previous nodes
+  const prevEdgesRef = useRef<any>(); // To store the previous edges
 
   const nodeTypes = useMemo(
     () => ({
@@ -105,40 +107,64 @@ export default function Flows() {
     console.log("toml_nodes", toml_nodes);
     if (toml_nodes !== undefined) {
       setNodes(toml_nodes);
-      setNodesLoaded(true);
     }
-  }, [toml_nodes]);
+    if (toml_edges !== undefined) {
+      setEdges(toml_edges);
+    }
+    setTomlLoaded(true);
+  }, [toml_nodes, toml_edges]);
 
-  // const _onNodesChange = useCallback(
-  //   (node: any) => {
-  //     console.log("node changed", node);
-  //     onNodesChange(node);
-  //     // console.log("nodes", nodes);
-  //   },
-  //   [setNodes]
-  // );
-
+  //wysiwyg to toml
   useEffect(() => {
     // At the time this effect runs, our ref now points to the old nodes value
     const prevNodes = prevNodesRef.current;
+    const prevEdges = prevEdgesRef.current;
 
-    if (JSON.stringify(prevNodes) !== JSON.stringify(nodes)) {
+    if (
+      JSON.stringify(prevNodes) !== JSON.stringify(nodes) ||
+      JSON.stringify(prevEdges) !== JSON.stringify(edges)
+    ) {
       // Simple comparison - consider a deep equality check for complex state
       // If nodes are different, write new state to the file
-      if (nodesLoaded) {
+      if (tomlLoaded) {
         //but only if the nodes are loaded. First hit is empty nodes..
-        console.log("State Nodes:", JSON.stringify(nodes));
-        console.log("Toml Nodes:", JSON.stringify(toml_nodes));
-        if (JSON.stringify(nodes) !== JSON.stringify(toml_nodes)) {
-          //and not same as file
-          set_toml_nodes(nodes);
-        }
+        // console.log("State Nodes:", JSON.stringify(nodes));
+        // console.log("Toml Nodes:", JSON.stringify(toml_nodes));
+        // if (JSON.stringify(nodes) !== JSON.stringify(toml_nodes)) {
+        //and not same as file
+        set_toml({ nodes, edges });
+        // }
       }
     }
 
     // After our comparison, update the old value to the current one for the next effect run
     prevNodesRef.current = nodes;
-  }, [nodes]); // Re-run this effect every time nodes changes
+    prevEdgesRef.current = edges;
+  }, [nodes, edges]); // Re-run this effect every time nodes changes
+
+  //Edges to toml
+  // useEffect(() => {
+  //   // console.log("edges")
+  //   // At the time this effect runs, our ref now points to the old nodes value
+  //   const prevEdges = prevEdgesRef.current;
+
+  //   if (JSON.stringify(prevEdges) !== JSON.stringify(edges)) {
+  //     // Simple comparison - consider a deep equality check for complex state
+  //     // If nodes are different, write new state to the file
+  //     if (edgesLoaded) {
+  //       //but only if the nodes are loaded. First hit is empty nodes..
+  //       console.log("State Nodes:", JSON.stringify(edges));
+  //       console.log("Toml Nodes:", JSON.stringify(toml_edges));
+  //       if (JSON.stringify(edges) !== JSON.stringify(toml_edges)) {
+  //         //and not same as file
+  //         set_toml_edges(edges);
+  //       }
+  //     }
+  //   }
+
+  //   // After our comparison, update the old value to the current one for the next effect run
+  //   prevEdgesRef.current = edges;
+  // }, [edges]); // Re-run this effect every time nodes changes
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -147,7 +173,6 @@ export default function Flows() {
 
   return (
     <div style={{ width: "96vw", height: "100vh" }}>
-      {/* <button className="btn absolute bg-pink-200 z-10">Edit Text</button> */}
       <ReactFlow
         nodeTypes={nodeTypes}
         nodes={nodes}
