@@ -5,9 +5,7 @@ import React, {
   useState,
   useRef,
 } from "react";
-import CustomControls from "../components/customControls";
 import ReactFlow, {
-  MiniMap,
   Background,
   useNodesState,
   useEdgesState,
@@ -15,8 +13,7 @@ import ReactFlow, {
   Handle,
   Position,
   BackgroundVariant,
-  ReactFlowProvider,
-  useReactFlow,
+  Controls,
 } from "reactflow";
 
 import "reactflow/dist/style.css";
@@ -25,38 +22,16 @@ import Header from "../components/header";
 import SidePanel from "../components/sidePanel";
 import { useNavigationContext } from "../context/NavigationProvider";
 
-function findNextNodeId(nodes: any): string {
-  // Initialize the maxId to 0
-  let maxId = 0;
-
-  console.log("nodes in FindNextNodeId", nodes);
-
-  // Loop through the nodes and find the maximum numeric ID value
-  nodes.forEach((node: any) => {
-    const numericId = parseInt(node.id, 10);
-    console.log("numericId", numericId);
-    if (!isNaN(numericId) && numericId > maxId) {
-      maxId = numericId;
-    }
-  });
-
-  // Increment the maxId to get the next ID for the new node
-  const nextId = (maxId + 1).toString();
-
-  return nextId;
-}
-
 export default function Flows() {
   const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
   const { sidePanel } = useNavigationContext();
   //flow state
-  const reactFlowInstance = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [tomlLoaded, setTomlLoaded] = useState(false);
 
-  const prevNodesRef = useRef<any>(); // To store the previous nodes
-  const prevEdgesRef = useRef<any>(); // To store the previous edges
+  const prevNodesRef = useRef<any>();
+  const prevEdgesRef = useRef<any>();
 
   const nodeTypes = useMemo(
     () => ({
@@ -69,21 +44,6 @@ export default function Flows() {
     }),
     []
   );
-
-  const onClick = () => {
-    const id = findNextNodeId(nodes);
-    const newNode = {
-      id,
-      position: {
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-      },
-      data: {
-        label: `Node ${id}`,
-      },
-    };
-    reactFlowInstance.addNodes(newNode);
-  };
 
   useEffect(() => {
     console.log("toml_nodes", toml_nodes);
@@ -98,29 +58,20 @@ export default function Flows() {
 
   //wysiwyg to toml
   useEffect(() => {
-    // At the time this effect runs, our ref now points to the old nodes value
     const prevNodes = prevNodesRef.current;
     const prevEdges = prevEdgesRef.current;
-
     if (
       JSON.stringify(prevNodes) !== JSON.stringify(nodes) ||
       JSON.stringify(prevEdges) !== JSON.stringify(edges)
     ) {
-      // Simple comparison - consider a deep equality check for complex state
-      // If nodes are different, write new state to the file
       if (tomlLoaded) {
-        //but only if the nodes are loaded. First hit is empty nodes..
-        // if (JSON.stringify(nodes) !== JSON.stringify(toml_nodes)) {
-        //and not same as file
         set_toml({ nodes, edges });
-        // }
       }
     }
 
-    // After our comparison, update the old value to the current one for the next effect run
     prevNodesRef.current = nodes;
     prevEdgesRef.current = edges;
-  }, [nodes, edges]); // Re-run this effect every time nodes changes
+  }, [nodes, edges]);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -139,7 +90,7 @@ export default function Flows() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
         >
-          <CustomControls />
+          <Controls />
           <Background
             variant={BackgroundVariant.Dots}
             gap={30}
@@ -147,9 +98,6 @@ export default function Flows() {
             color="gray"
           />
         </ReactFlow>
-        <button className="absolute top-10" onClick={onClick}>
-          Add node
-        </button>
         {sidePanel ? (
           <div className="w-72">
             <SidePanel />

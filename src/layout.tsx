@@ -1,5 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { VscHome, VscRepoForked, VscSettingsGear } from "react-icons/vsc";
+import {
+  VscHome,
+  VscRepoForked,
+  VscSettingsGear,
+  VscTable,
+} from "react-icons/vsc";
 import clsx from "clsx";
 import { NavigationProvider } from "./context/NavigationProvider";
 
@@ -25,6 +30,13 @@ export default function Layout() {
             <VscRepoForked
               className={clsx(defaultClass, {
                 [selectedClass]: location.pathname.includes("/drag"),
+              })}
+            />
+          </Link>
+          <Link className={linkClass} to="/tables">
+            <VscTable
+              className={clsx(defaultClass, {
+                [selectedClass]: location.pathname.includes("/table"),
               })}
             />
           </Link>

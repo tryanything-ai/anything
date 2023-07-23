@@ -1,7 +1,12 @@
+import { useTomlFlowContext } from "../context/TomlFlowProvider";
+
 const SidePanel = () => {
+  const { addNode } = useTomlFlowContext();
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
-      <button className="btn btn-neutral"> Add Node </button>
+      <button onClick={addNode} className="btn btn-neutral">
+        Add Node
+      </button>
     </div>
   );
 };

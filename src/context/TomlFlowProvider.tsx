@@ -8,17 +8,41 @@ import React, {
 
 import { stringify, parse } from "iarna-toml-esm";
 import { useLocalFileContext } from "./LocalFileProvider";
+import { useNodes, useReactFlow } from "reactflow";
+
+function findNextNodeId(nodes: any): string {
+  // Initialize the maxId to 0
+  let maxId = 0;
+
+  console.log("nodes in FindNextNodeId", nodes);
+
+  // Loop through the nodes and find the maximum numeric ID value
+  nodes.forEach((node: any) => {
+    const numericId = parseInt(node.id, 10);
+    console.log("numericId", numericId);
+    if (!isNaN(numericId) && numericId > maxId) {
+      maxId = numericId;
+    }
+  });
+
+  // Increment the maxId to get the next ID for the new node
+  const nextId = (maxId + 1).toString();
+
+  return nextId;
+}
 
 interface TomlFlowContextInterface {
   toml_nodes: any[];
   toml_edges: any[];
   set_toml: (data: any) => void;
+  addNode: () => void;
 }
 
 export const TomlFlowContext = createContext<TomlFlowContextInterface>({
   toml_nodes: [],
   toml_edges: [],
   set_toml: () => {},
+  addNode: () => {},
 });
 
 export const useTomlFlowContext = () => useContext(TomlFlowContext);
@@ -28,6 +52,24 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
   const [toml_nodes, setTomlNodes] = useState<any[]>([]);
   const [toml_edges, setTomlEdges] = useState<any[]>([]);
 
+  const nodes = useNodes();
+  const reactFlowInstance = useReactFlow();
+
+  const addNode = () => {
+    const id = findNextNodeId(nodes);
+    const newNode = {
+      id,
+      position: {
+        x: Math.random() * 500,
+        y: Math.random() * 500,
+      },
+      data: {
+        label: `Node ${id}`,
+      },
+    };
+    reactFlowInstance.addNodes(newNode);
+  };
+
   const _setToml = (data: any) => {
     //write file to disk
     console.log("_setTomlNodes", data);
@@ -35,13 +77,6 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
     const { nodes, edges } = data;
     writeToml(stringify({ nodes, edges }));
   };
-
-  // const _setTomlEdges = (data: any) => {
-  //   //write file to disk
-  //   console.log("_setTomlEdges", data);
-  //   console.log("stringify", stringify({ edges: data }));
-  //   writeToml(stringify({ edges: data }));
-  // };
 
   useEffect(() => {
     try {
@@ -63,6 +98,7 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
         toml_nodes,
         set_toml: _setToml,
         toml_edges,
+        addNode,
         // set_toml_edges: _setTomlEdges,
       }}
     >

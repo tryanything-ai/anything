@@ -40,9 +40,6 @@ export default function Header() {
           </Link>
         </div>
       </div>
-      {/* <div className="-mt-6">
-        <Outlet />
-      </div> */}
     </div>
   );
 }
