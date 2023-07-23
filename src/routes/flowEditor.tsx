@@ -15,75 +15,42 @@ import ReactFlow, {
   Handle,
   Position,
   BackgroundVariant,
+  ReactFlowProvider,
+  useReactFlow,
 } from "reactflow";
 
 import "reactflow/dist/style.css";
 import { useTomlFlowContext } from "../context/TomlFlowProvider";
+import Header from "../components/header";
+import SidePanel from "../components/sidePanel";
+import { useNavigationContext } from "../context/NavigationProvider";
 
-const initialNodes: any = [
-  // {
-  //   id: "1",
-  //   type: "inboxNode",
-  //   position: { x: 100, y: 50 },
-  //   data: { value: "B2B Leads ✉️" },
-  // },
-  // {
-  //   id: "2",
-  //   position: { x: 200, y: 300 },
-  //   type: "vectorNode",
-  //   data: { value: "Memory VectorStore" },
-  // },
-  // {
-  //   id: "3",
-  //   position: { x: 600, y: 200 },
-  //   type: "pushNode",
-  //   data: { value: "Gmail Inbox" },
-  // },
-  // {
-  //   id: "4",
-  //   position: { x: 600, y: 400 },
-  //   type: "polyNode",
-  //   data: { value: "Obsidian Notes" },
-  // },
-  // {
-  //   id: "5",
-  //   position: { x: 200, y: 550 },
-  //   type: "llmNode",
-  //   data: { value: "OpenAI GPT LLM" },
-  // },
-  // {
-  //   id: "6",
-  //   type: "outboxNode",
-  //   position: { x: 100, y: 700 },
-  //   data: { value: "Outbound Sales ⌲" },
-  // },
-];
+function findNextNodeId(nodes: any): string {
+  // Initialize the maxId to 0
+  let maxId = 0;
 
-const initialEdges: any = [
-  // { id: "1", source: "1", target: "2", sourceHandle: "b", targetHandle: "a" },
-  // {
-  //   id: "2",
-  //   source: "3",
-  //   target: "2",
-  //   sourceHandle: "a",
-  //   targetHandle: "b",
-  //   animated: true,
-  // },
-  // {
-  //   id: "3",
-  //   source: "4",
-  //   target: "2",
-  //   sourceHandle: "a",
-  //   targetHandle: "b",
-  //   animated: true,
-  // },
-  // { id: "4", source: "2", target: "5", sourceHandle: "c", targetHandle: "a" },
-  // { id: "5", source: "5", target: "6", sourceHandle: "b", targetHandle: "a" },
-];
+  console.log("nodes in FindNextNodeId", nodes);
+
+  // Loop through the nodes and find the maximum numeric ID value
+  nodes.forEach((node: any) => {
+    const numericId = parseInt(node.id, 10);
+    console.log("numericId", numericId);
+    if (!isNaN(numericId) && numericId > maxId) {
+      maxId = numericId;
+    }
+  });
+
+  // Increment the maxId to get the next ID for the new node
+  const nextId = (maxId + 1).toString();
+
+  return nextId;
+}
 
 export default function Flows() {
   const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
+  const { sidePanel } = useNavigationContext();
   //flow state
+  const reactFlowInstance = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [tomlLoaded, setTomlLoaded] = useState(false);
@@ -102,6 +69,21 @@ export default function Flows() {
     }),
     []
   );
+
+  const onClick = () => {
+    const id = findNextNodeId(nodes);
+    const newNode = {
+      id,
+      position: {
+        x: Math.random() * 500,
+        y: Math.random() * 500,
+      },
+      data: {
+        label: `Node ${id}`,
+      },
+    };
+    reactFlowInstance.addNodes(newNode);
+  };
 
   useEffect(() => {
     console.log("toml_nodes", toml_nodes);
@@ -128,8 +110,6 @@ export default function Flows() {
       // If nodes are different, write new state to the file
       if (tomlLoaded) {
         //but only if the nodes are loaded. First hit is empty nodes..
-        // console.log("State Nodes:", JSON.stringify(nodes));
-        // console.log("Toml Nodes:", JSON.stringify(toml_nodes));
         // if (JSON.stringify(nodes) !== JSON.stringify(toml_nodes)) {
         //and not same as file
         set_toml({ nodes, edges });
@@ -142,55 +122,40 @@ export default function Flows() {
     prevEdgesRef.current = edges;
   }, [nodes, edges]); // Re-run this effect every time nodes changes
 
-  //Edges to toml
-  // useEffect(() => {
-  //   // console.log("edges")
-  //   // At the time this effect runs, our ref now points to the old nodes value
-  //   const prevEdges = prevEdgesRef.current;
-
-  //   if (JSON.stringify(prevEdges) !== JSON.stringify(edges)) {
-  //     // Simple comparison - consider a deep equality check for complex state
-  //     // If nodes are different, write new state to the file
-  //     if (edgesLoaded) {
-  //       //but only if the nodes are loaded. First hit is empty nodes..
-  //       console.log("State Nodes:", JSON.stringify(edges));
-  //       console.log("Toml Nodes:", JSON.stringify(toml_edges));
-  //       if (JSON.stringify(edges) !== JSON.stringify(toml_edges)) {
-  //         //and not same as file
-  //         set_toml_edges(edges);
-  //       }
-  //     }
-  //   }
-
-  //   // After our comparison, update the old value to the current one for the next effect run
-  //   prevEdgesRef.current = edges;
-  // }, [edges]); // Re-run this effect every time nodes changes
-
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
   return (
-    <div style={{ width: "96vw", height: "100vh" }}>
-      <ReactFlow
-        nodeTypes={nodeTypes}
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-      >
-        <CustomControls />
-        {/* <Controls style={{ backgroundColor: "darkgray" }} /> */}
-        <MiniMap style={{ backgroundColor: "darkgray" }} />
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={30}
-          size={1}
-          color="gray"
-        />
-      </ReactFlow>
+    <div className="h-full w-full pb-5">
+      <Header />
+      <div className="flex flex-row h-full w-full">
+        <ReactFlow
+          nodeTypes={nodeTypes}
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+        >
+          <CustomControls />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={30}
+            size={1}
+            color="gray"
+          />
+        </ReactFlow>
+        <button className="absolute top-10" onClick={onClick}>
+          Add node
+        </button>
+        {sidePanel ? (
+          <div className="w-72">
+            <SidePanel />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

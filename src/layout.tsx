@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { AiOutlineSetting, AiOutlineHome, AiOutlineFork } from "react-icons/ai";
+import { VscHome, VscRepoForked, VscSettingsGear } from "react-icons/vsc";
 import clsx from "clsx";
 import { NavigationProvider } from "./context/NavigationProvider";
 
@@ -15,22 +15,22 @@ export default function Layout() {
       <div className="flex flex-row min-w-screen min-h-screen overflow-hidden">
         <div className="w-14 bg-base-200 flex flex-col gap-3 px-2 pt-3">
           <Link className={linkClass} to="/">
-            <AiOutlineHome
+            <VscHome
               className={clsx(defaultClass, {
                 [selectedClass]: location.pathname === "/",
               })}
             />
           </Link>
           <Link className={linkClass} to="/flows">
-            <AiOutlineFork
+            <VscRepoForked
               className={clsx(defaultClass, {
-                [selectedClass]: location.pathname.includes("/flows"),
+                [selectedClass]: location.pathname.includes("/drag"),
               })}
             />
           </Link>
           <div className="flex-grow" />
           <Link className={linkClass} to="/settings">
-            <AiOutlineSetting
+            <VscSettingsGear
               className={clsx(defaultClass, {
                 [selectedClass]: location.pathname === "/settings",
               })}

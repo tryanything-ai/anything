@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { useLocalFileContext } from "../context/LocalFileProvider";
+import Header from "../components/header";
 // import { useFileContext } from "../context/FileProvider";
 
 export default function TomlEditor() {
@@ -52,20 +53,24 @@ export default function TomlEditor() {
   // }, [filePath, fileContent]);
 
   return (
-    <div className="flex flex-row h-full w-full mt-6">
-      <div className="flex flex-col w-full h-full">
-        <Editor
-          height="100vh"
-          theme="vs-dark"
-          className=""
-          defaultLanguage="markdown"
-          value={toml}
-          onChange={handleEditorChange}
-          options={{
-            fontSize: 15,
-          }}
-        />
-      </div>
+    <div>
+      {/* <div className="flex flex-row h-full w-full"> */}
+      {/* // <div style={{ width: "96vw", height: "80vh", marginTop: "24px" }}> */}
+      {/* <div className="flex flex-col w-full h-full"> */}
+      <Header />
+      <Editor
+        language="toml"
+        height="100vh"
+        theme="vs-dark"
+        className=""
+        defaultLanguage="markdown"
+        value={toml}
+        onChange={handleEditorChange}
+        options={{
+          fontSize: 15,
+        }}
+      />
+      {/* </div> */}
     </div>
   );
 }

@@ -5,11 +5,13 @@ import Layout from "./layout";
 import ErrorPage from "./error-page";
 import Home from "./routes/home";
 import Settings from "./routes/settings";
-import Flows from "./routes/flows";
+import Flows from "./components/header";
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { TomlFlowProvider } from "./context/TomlFlowProvider";
+//TODO: Move to managing the state ourselves
+import { ReactFlowProvider } from "reactflow";
 import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import "./styles.css";
@@ -25,19 +27,27 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/flows",
-        element: <Flows />,
-        children: [
-          {
-            path: "/flows/:id",
-            element: <FlowEditor />,
-          },
-          {
-            path: "/flows/:id/toml",
-            element: <TomlEditor />,
-          },
-        ],
+        path: "/:id/drag",
+        element: <FlowEditor />,
       },
+      {
+        path: "/:id/toml",
+        element: <TomlEditor />,
+      },
+      // {
+      //   path: "/flows",
+      //   element: <Flows />,
+      //   children: [
+      //     {
+      //       path: "/flows/:id",
+      //       element: <FlowEditor />,
+      //     },
+      //     {
+      //       path: "/flows/:id/toml",
+      //       element: <TomlEditor />,
+      //     },
+      //   ],
+      // },
       {
         path: "/settings",
         element: <Settings />,
@@ -52,7 +62,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <LocalFileProvider>
         <TomlFlowProvider>
           <SettingsProvider>
-            <RouterProvider router={router} />
+            <ReactFlowProvider>
+              <RouterProvider router={router} />
+            </ReactFlowProvider>
           </SettingsProvider>
         </TomlFlowProvider>
       </LocalFileProvider>
