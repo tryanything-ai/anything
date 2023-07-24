@@ -90,7 +90,7 @@ export default function Flows() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
         >
-          <Controls />
+          <Controls style={{ background: "darkgray" }} />
           <Background
             variant={BackgroundVariant.Dots}
             gap={30}
