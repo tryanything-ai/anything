@@ -24,14 +24,17 @@ import { useNavigationContext } from "../context/NavigationProvider";
 import TomlPanel from "../components/tomlPanel";
 import ChatPanel from "../components/chatPanel";
 import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useFlowContext } from "../context/FlowProvider";
 
 export default function Flows() {
+  const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
+    useFlowContext();
   const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
   const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
-  const { setCurrentFlow } = useLocalFileContext();
+  // const { setCurrentFlow } = useLocalFileContext();
   //flow state
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  // const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  // const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [tomlLoaded, setTomlLoaded] = useState(false);
 
   const prevNodesRef = useRef<any>();
@@ -46,16 +49,16 @@ export default function Flows() {
     []
   );
 
-  useEffect(() => {
-    console.log("toml_nodes", toml_nodes);
-    if (toml_nodes !== undefined) {
-      setNodes(toml_nodes);
-    }
-    if (toml_edges !== undefined) {
-      setEdges(toml_edges);
-    }
-    setTomlLoaded(true);
-  }, [toml_nodes, toml_edges]);
+  // useEffect(() => {
+  //   console.log("toml_nodes", toml_nodes);
+  //   if (toml_nodes !== undefined) {
+  //     setNodes(toml_nodes);
+  //   }
+  //   if (toml_edges !== undefined) {
+  //     setEdges(toml_edges);
+  //   }
+  //   setTomlLoaded(true);
+  // }, [toml_nodes, toml_edges]);
 
   //wysiwyg to toml
   useEffect(() => {
@@ -84,10 +87,10 @@ export default function Flows() {
   //   };
   // }, []);
 
-  const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  // const onConnect = useCallback(
+  //   (params: any) => setEdges((eds) => addEdge(params, eds)),
+  //   [setEdges]
+  // );
 
   return (
     <div className="h-full w-full pb-5">
@@ -95,8 +98,8 @@ export default function Flows() {
       <div className="flex flex-row h-full w-full">
         <ReactFlow
           nodeTypes={nodeTypes}
-          nodes={nodes}
-          edges={edges}
+          nodes={nodes} //new
+          edges={edges} //new
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
