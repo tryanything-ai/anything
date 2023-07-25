@@ -42,6 +42,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const [currentFlow, setCurrentFlow] = useState<string>("");
 
   const setCurrentFlowLocal = async (flowName: string) => {
+    console.log("setting current flow in localFileProvider -> ", flowName);
     setCurrentFlow(flowName);
     readToml();
   };
@@ -73,7 +74,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const writeToml = async (toml: string) => {
-    console.log("writing toml", toml);
+    console.log("writing toml to", currentFlow);
 
     await writeTextFile(
       appDocuments + "/flows/" + currentFlow + "/flow.toml",
@@ -81,6 +82,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  //get local files to show in UI when files change
+  //read the exact toml file that is being editedf
+  //TODO: make this less brute force
   useEffect(() => {
     // Your watch function
     if (!loading) {
@@ -90,19 +94,10 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         stopWatching = await watchImmediate(
           appDocuments,
           (event) => {
-            // const { kind, path } = event;
-            //TODO: filter out .DS_Store files from mac.
-            // Handle event logic here
             console.log("File changed: ", JSON.stringify(event, null, 3));
-
-            // const ext = path.slice(
-            //   (Math.max(0, path.lastIndexOf(".")) || Infinity) + 1
-            // );
-
-            // if (ext === "toml") {
             console.log("toml file changed, sniffed in file watcher");
             readToml();
-            // }
+            getLocalFiles();
           },
           { recursive: true }
         );

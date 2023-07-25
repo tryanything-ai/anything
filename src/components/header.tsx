@@ -11,7 +11,7 @@ import { useNavigationContext } from "../context/NavigationProvider";
 import { useTomlFlowContext } from "../context/TomlFlowProvider";
 
 export default function Header() {
-  const { setCurrentFlow, currentFlow } = useLocalFileContext();
+  const { currentFlow } = useLocalFileContext();
   const {
     nodePanel,
     setNodePanel,
@@ -27,7 +27,7 @@ export default function Header() {
     let splitLocation = location.pathname.split("/");
     console.log("splitLocation", splitLocation);
     setEditor(splitLocation[3]);
-    setCurrentFlow(decodeURIComponent(splitLocation[2]));
+    console.log("setting Current FLow", decodeURIComponent(splitLocation[2]));
   }, [location]);
 
   return (
