@@ -19,7 +19,15 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from "reactflow";
-
+import { useLocalFileContext } from "./LocalFileProvider";
+import { useTauriContext } from "./TauriProvider";
+import {
+  readDir,
+  readTextFile,
+  writeTextFile,
+  FileEntry,
+} from "@tauri-apps/api/fs";
+import { useParams } from "react-router-dom";
 interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
@@ -66,6 +74,10 @@ const initialEdges: Edge[] = [
 export const useFlowContext = () => useContext(FlowContext);
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
+  const { appDocuments } = useTauriContext();
+  const { flow_name } = useParams();
+  const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
+
   const [nodes, setNodes] = useState<Node[]>(initalNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
@@ -78,14 +90,32 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //When the edge is changed
   const onEdgesChange: OnEdgesChange = (edgeChanges: any) => {
     console.log("edgeChanges", edgeChanges);
+    //TODO: write TOML
     setEdges((edges) => applyEdgeChanges(edgeChanges, edges));
   };
 
   //When a node is connected to an edge etc
   const onConnect: OnConnect = (params: any) => {
     console.log("params on Connect", params);
+    //TODO: write TOML
     setEdges((edges) => addEdge(params, edges));
   };
+
+  const loadToml = async () => {
+    let content = await readTextFile(
+      appDocuments + "/flows/" + flow_name + "/flow.toml"
+    );
+    // setToml(content);
+  };
+
+  //TODO: Listen To TOML files changes and update state
+
+  //Load TOML into State the first time
+  useEffect(() => {
+    if (flow_name && !initalTomlLoaded) {
+      loadToml();
+    }
+  }, [flow_name]);
 
   return (
     <FlowContext.Provider

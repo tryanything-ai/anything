@@ -20,15 +20,15 @@ export default function Header() {
     chatPanel,
     setChatPanel,
   } = useNavigationContext();
-  const { editor, setEditor } = useTomlFlowContext();
-  const location = useLocation();
 
-  useEffect(() => {
-    let splitLocation = location.pathname.split("/");
-    console.log("splitLocation", splitLocation);
-    setEditor(splitLocation[3]);
-    console.log("setting Current FLow", decodeURIComponent(splitLocation[2]));
-  }, [location]);
+  // const location = useLocation();
+
+  // useEffect(() => {
+  //   let splitLocation = location.pathname.split("/");
+  //   console.log("splitLocation", splitLocation);
+  //   setEditor(splitLocation[3]);
+  //   console.log("setting Current FLow", decodeURIComponent(splitLocation[2]));
+  // }, [location]);
 
   return (
     <div className="w-full z-10 bg-primary pl-2 text-white overflow-hidden">
@@ -44,17 +44,6 @@ export default function Header() {
         <button onClick={() => setTomlPanel(!tomlPanel)}>
           <VscCode className="mr-2 h-5 w-5" />
         </button>
-        {/* <div>
-          <Link
-            to={`/flows/${currentFlow}${editor === "drag" ? "/toml" : "/drag"}`}
-          >
-            {editor === "drag" ? (
-              <VscCode className="mr-2 h-5 w-5" />
-            ) : (
-              <VscRepoForked className="mr-2 h-5 w-5" />
-            )}
-          </Link> 
-        </div> */}
       </div>
     </div>
   );
