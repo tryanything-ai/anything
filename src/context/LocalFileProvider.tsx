@@ -96,8 +96,8 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
           (event) => {
             console.log("File changed: ", JSON.stringify(event, null, 3));
             console.log("toml file changed, sniffed in file watcher");
-            readToml();
-            getLocalFiles();
+            // readToml(); //TODO: do this in a less chatty way
+            // getLocalFiles();
           },
           { recursive: true }
         );

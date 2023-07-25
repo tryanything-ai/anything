@@ -10,8 +10,9 @@ import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { TomlFlowProvider } from "./context/TomlFlowProvider";
+import { FlowProvider } from "./context/FlowProvider";
 
-import { ReactFlowProvider } from "reactflow";
+// import { ReactFlowProvider } from "reactflow";
 import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import TableData from "./routes/tableData";
@@ -62,13 +63,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <TauriProvider>
       <LocalFileProvider>
         <SqlProvider>
-          <ReactFlowProvider>
+          <FlowProvider>
+            {/* <ReactFlowProvider> */}
             <TomlFlowProvider>
               <SettingsProvider>
                 <RouterProvider router={router} />
               </SettingsProvider>
             </TomlFlowProvider>
-          </ReactFlowProvider>
+            {/* </ReactFlowProvider> */}
+          </FlowProvider>
         </SqlProvider>
       </LocalFileProvider>
     </TauriProvider>

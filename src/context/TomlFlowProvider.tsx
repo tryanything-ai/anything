@@ -57,22 +57,22 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
   const [toml_nodes, setTomlNodes] = useState<any[]>([]);
   const [toml_edges, setTomlEdges] = useState<any[]>([]);
   const [editor, setEditor] = useState<string>("drag");
-  const nodes = useNodes();
-  const reactFlowInstance = useReactFlow();
+  // const nodes = useNodes();
+  // const reactFlowInstance = useReactFlow();
 
   const addNode = () => {
-    const id = findNextNodeId(nodes);
-    const newNode = {
-      id,
-      position: {
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-      },
-      data: {
-        label: `Node ${id}`,
-      },
-    };
-    reactFlowInstance.addNodes(newNode);
+    // const id = findNextNodeId(nodes);
+    // const newNode = {
+    //   id,
+    //   position: {
+    //     x: Math.random() * 500,
+    //     y: Math.random() * 500,
+    //   },
+    //   data: {
+    //     label: `Node ${id}`,
+    //   },
+    // };
+    // reactFlowInstance.addNodes(newNode); //TODO: fix this
   };
 
   const _setToml = (data: any) => {
