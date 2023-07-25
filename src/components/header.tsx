@@ -5,15 +5,21 @@ import {
   VscLayoutSidebarRightOff,
   VscRepoForked,
   VscCode,
+  VscComment,
 } from "react-icons/vsc";
 import { useNavigationContext } from "../context/NavigationProvider";
 import { useTomlFlowContext } from "../context/TomlFlowProvider";
 
 export default function Header() {
-  // const [editor, setEditor] = useState<string>("wysiwyg");
-
   const { setCurrentFlow, currentFlow } = useLocalFileContext();
-  const { sidePanel, setSidePanel } = useNavigationContext();
+  const {
+    nodePanel,
+    setNodePanel,
+    tomlPanel,
+    setTomlPanel,
+    chatPanel,
+    setChatPanel,
+  } = useNavigationContext();
   const { editor, setEditor } = useTomlFlowContext();
   const location = useLocation();
 
@@ -29,10 +35,16 @@ export default function Header() {
       <div className="flex flex-row">
         <div className="">flows/{currentFlow}</div>
         <div className="flex-grow" />
-        <button onClick={() => setSidePanel(!sidePanel)}>
-          <VscLayoutSidebarRightOff className="mr-2 h-5 w-5" />
+        <button onClick={() => setNodePanel(!nodePanel)}>
+          <VscRepoForked className="mr-2 h-5 w-5" />
         </button>
-        <div>
+        <button onClick={() => setChatPanel(!chatPanel)}>
+          <VscComment className="mr-2 h-5 w-5" />
+        </button>
+        <button onClick={() => setTomlPanel(!tomlPanel)}>
+          <VscCode className="mr-2 h-5 w-5" />
+        </button>
+        {/* <div>
           <Link
             to={`/flows/${currentFlow}${editor === "drag" ? "/toml" : "/drag"}`}
           >
@@ -41,8 +53,8 @@ export default function Header() {
             ) : (
               <VscRepoForked className="mr-2 h-5 w-5" />
             )}
-          </Link>
-        </div>
+          </Link> 
+        </div> */}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useTomlFlowContext } from "../context/TomlFlowProvider";
 
-const SidePanel = () => {
+const NodePanel = () => {
   const { addNode } = useTomlFlowContext();
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
@@ -11,4 +11,4 @@ const SidePanel = () => {
   );
 };
 
-export default SidePanel;
+export default NodePanel;
