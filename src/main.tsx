@@ -9,11 +9,11 @@ import Tables from "./routes/tables";
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
-import { TomlFlowProvider } from "./context/TomlFlowProvider";
-import { FlowProvider } from "./context/FlowProvider";
+// import { TomlFlowProvider } from "./context/TomlFlowProvider";
+// import { FlowProvider } from "./context/FlowProvider";
 
 // import { ReactFlowProvider } from "reactflow";
-import TomlEditor from "./routes/tomlEditor";
+// import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import TableData from "./routes/tableData";
 import Flows from "./routes/flows";
@@ -35,12 +35,8 @@ const router = createBrowserRouter([
         element: <Flows />,
       },
       {
-        path: "flows/:id/drag",
+        path: "flows/:flow_name",
         element: <FlowEditor />,
-      },
-      {
-        path: "flows/:id/toml",
-        element: <TomlEditor />,
       },
       {
         path: "/tables",
@@ -63,15 +59,13 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <TauriProvider>
       <LocalFileProvider>
         <SqlProvider>
-          <FlowProvider>
-            {/* <ReactFlowProvider> */}
-            <TomlFlowProvider>
-              <SettingsProvider>
-                <RouterProvider router={router} />
-              </SettingsProvider>
-            </TomlFlowProvider>
-            {/* </ReactFlowProvider> */}
-          </FlowProvider>
+          {/* <FlowProvider> */}
+          {/* <TomlFlowProvider> */}
+          <SettingsProvider>
+            <RouterProvider router={router} />
+          </SettingsProvider>
+          {/* </TomlFlowProvider> */}
+          {/* </FlowProvider> */}
         </SqlProvider>
       </LocalFileProvider>
     </TauriProvider>

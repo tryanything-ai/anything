@@ -34,8 +34,8 @@ function findNextNodeId(nodes: any): string {
 interface TomlFlowContextInterface {
   toml_nodes: any[];
   toml_edges: any[];
-  editor: string;
-  setEditor: (editor: string) => void;
+  // editor: string;
+  // setEditor: (editor: string) => void;
   set_toml: (data: any) => void;
   addNode: () => void;
 }
@@ -43,8 +43,8 @@ interface TomlFlowContextInterface {
 export const TomlFlowContext = createContext<TomlFlowContextInterface>({
   toml_nodes: [],
   toml_edges: [],
-  editor: "drag",
-  setEditor: () => {},
+  // editor: "drag",
+  // setEditor: () => {},
   set_toml: () => {},
   addNode: () => {},
 });
@@ -56,7 +56,7 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
 
   const [toml_nodes, setTomlNodes] = useState<any[]>([]);
   const [toml_edges, setTomlEdges] = useState<any[]>([]);
-  const [editor, setEditor] = useState<string>("drag");
+  // const [editor, setEditor] = useState<string>("drag");
   // const nodes = useNodes();
   // const reactFlowInstance = useReactFlow();
 
@@ -104,8 +104,8 @@ export const TomlFlowProvider = ({ children }: { children: ReactNode }) => {
         set_toml: _setToml,
         toml_edges,
         addNode,
-        editor,
-        setEditor,
+        // editor,
+        // setEditor,
       }}
     >
       {children}

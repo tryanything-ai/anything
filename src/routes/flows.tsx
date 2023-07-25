@@ -11,7 +11,7 @@ export default function Flows() {
           return (
             <Link
               key={flow.name}
-              to={`${flow.name}/drag`}
+              to={`${flow.name}`}
               className="card w-96 bg-base-300 shadow-xl"
             >
               <div className="card-body">

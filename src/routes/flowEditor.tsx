@@ -24,9 +24,9 @@ import { useNavigationContext } from "../context/NavigationProvider";
 import TomlPanel from "../components/tomlPanel";
 import ChatPanel from "../components/chatPanel";
 import { useLocalFileContext } from "../context/LocalFileProvider";
-import { useFlowContext } from "../context/FlowProvider";
+import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 
-export default function Flows() {
+function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
     useFlowContext();
   const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
@@ -40,14 +40,14 @@ export default function Flows() {
   const prevNodesRef = useRef<any>();
   const prevEdgesRef = useRef<any>();
 
-  const nodeTypes = useMemo(
-    () => ({
-      inboxNode: InboxNode,
-      vectorNode: VectorNode,
-      llmNode: LLMNode,
-    }),
-    []
-  );
+  // const nodeTypes = useMemo(
+  //   () => ({
+  //     inboxNode: InboxNode,
+  //     vectorNode: VectorNode,
+  //     llmNode: LLMNode,
+  //   }),
+  //   []
+  // );
 
   // useEffect(() => {
   //   console.log("toml_nodes", toml_nodes);
@@ -97,7 +97,7 @@ export default function Flows() {
       <Header />
       <div className="flex flex-row h-full w-full">
         <ReactFlow
-          nodeTypes={nodeTypes}
+          // nodeTypes={nodeTypes}
           nodes={nodes} //new
           edges={edges} //new
           onNodesChange={onNodesChange}
@@ -133,60 +133,10 @@ export default function Flows() {
   );
 }
 
-function InboxNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
-
+export default function FlowEditor() {
   return (
-    <div
-      className={
-        "bg-secondary w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
-      <div className="text-center text-xl">{data.value}</div>
-
-      <Handle type="source" position={Position.Bottom} id="a" />
-    </div>
-  );
-}
-
-function VectorNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
-
-  return (
-    <div
-      className={
-        "bg-primary-200 w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
-      <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-center text-xl">{data.value}</div>
-      <Handle type="target" position={Position.Right} id="b" />
-      <Handle type="source" position={Position.Bottom} id="c" />
-    </div>
-  );
-}
-
-function LLMNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
-
-  return (
-    <div
-      className={
-        "bg-primary-200 w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
-      <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-center text-xl">{data.value}</div>
-      <Handle type="source" position={Position.Bottom} id="b" />
-    </div>
+    <FlowProvider>
+      <Flows />
+    </FlowProvider>
   );
 }
