@@ -88,6 +88,7 @@ export default function Flows() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          fitView
         >
           <Controls style={{ background: "darkgray" }} />
           <Background
