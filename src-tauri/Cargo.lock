@@ -99,6 +99,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-fs-watch",
  "tauri-plugin-sql",
+ "toml 0.5.11",
 ]
 
 [[package]]

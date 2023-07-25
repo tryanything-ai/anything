@@ -17,7 +17,7 @@ export default function Layout() {
 
   return (
     <NavigationProvider>
-      <div className="flex flex-row min-w-screen min-h-screen overflow-hidden">
+      <div className="flex flex-row min-w-screen min-h-screen overflow-hidden overscroll-none">
         <div className="w-14 bg-base-200 flex flex-col gap-3 px-2 pt-3">
           <Link className={linkClass} to="/">
             <VscHome
@@ -29,7 +29,7 @@ export default function Layout() {
           <Link className={linkClass} to="/flows">
             <VscRepoForked
               className={clsx(defaultClass, {
-                [selectedClass]: location.pathname.includes("/drag"),
+                [selectedClass]: location.pathname.includes("/flows"),
               })}
             />
           </Link>

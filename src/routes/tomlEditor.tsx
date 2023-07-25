@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import Header from "../components/header";
-// import { useFileContext } from "../context/FileProvider";
 
 export default function TomlEditor() {
   const { toml, writeToml } = useLocalFileContext();
@@ -11,10 +10,10 @@ export default function TomlEditor() {
   // const [markdown, setMarkdown] = useState("");
   // const [userInteraction, setUserInteraction] = useState(false);
 
-  const updateContext = () => {
-    // console.log("updateContext");
-    // updateFile(filePath, markdown);
-  };
+  // const updateContext = () => {
+  // console.log("updateContext");
+  // updateFile(filePath, markdown);
+  // };
 
   //from GPT
   // useEffect(() => {

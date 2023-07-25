@@ -19,12 +19,14 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { useTomlFlowContext } from "../context/TomlFlowProvider";
 import Header from "../components/header";
-import SidePanel from "../components/sidePanel";
+import NodePanel from "../components/nodePanel";
 import { useNavigationContext } from "../context/NavigationProvider";
+import TomlPanel from "../components/tomlPanel";
+import ChatPanel from "../components/chatPanel";
 
 export default function Flows() {
   const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
-  const { sidePanel } = useNavigationContext();
+  const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
   //flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -36,11 +38,8 @@ export default function Flows() {
   const nodeTypes = useMemo(
     () => ({
       inboxNode: InboxNode,
-      outboxNode: OutBoxNode,
       vectorNode: VectorNode,
       llmNode: LLMNode,
-      pushNode: PushNode,
-      polyNode: PolyNode,
     }),
     []
   );
@@ -89,8 +88,9 @@ export default function Flows() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          fitView
         >
-          <Controls />
+          <Controls style={{ background: "darkgray" }} />
           <Background
             variant={BackgroundVariant.Dots}
             gap={30}
@@ -98,9 +98,19 @@ export default function Flows() {
             color="gray"
           />
         </ReactFlow>
-        {sidePanel ? (
-          <div className="w-72">
-            <SidePanel />
+        {nodePanel ? (
+          <div className="w-1/4">
+            <NodePanel />
+          </div>
+        ) : null}
+        {chatPanel ? (
+          <div className="w-1/4">
+            <ChatPanel />
+          </div>
+        ) : null}
+        {tomlPanel ? (
+          <div className="w-1/4">
+            <TomlPanel />
           </div>
         ) : null}
       </div>
@@ -120,48 +130,9 @@ function InboxNode({ data }: { data: any }) {
         data.classNames
       }
     >
-      {/* <Handle type="target" position={Position.Top} /> */}
       <div className="text-center text-xl">{data.value}</div>
-      {/* <div>
-        <value htmlFor="text">Text:</label>
-        <input id="text" name="text" onChange={onChange} className="nodrag" />
-      </div> */}
-      {/* <Handle type="source" position={Position.Bottom} id="a" /> */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="a"
-        // style={handleStyle}
-      />
-    </div>
-  );
-}
 
-function OutBoxNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
-
-  return (
-    <div
-      className={
-        "bg-purple-700 w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
-      <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-center text-xl">{data.value}</div>
-      {/* <div>
-        <label htmlFor="text">Text:</label>
-        <input id="text" name="text" onChange={onChange} className="nodrag" />
-      </div> */}
-      {/* <Handle type="source" position={Position.Bottom} id="a" />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="b"
-        // style={handleStyle}
-      /> */}
+      <Handle type="source" position={Position.Bottom} id="a" />
     </div>
   );
 }
@@ -182,71 +153,6 @@ function VectorNode({ data }: { data: any }) {
       <div className="text-center text-xl">{data.value}</div>
       <Handle type="target" position={Position.Right} id="b" />
       <Handle type="source" position={Position.Bottom} id="c" />
-
-      {/* <Handle type="source" position={Position.Bottom} id="a" />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="b"
-      /> */}
-    </div>
-  );
-}
-
-function PushNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
-
-  return (
-    <div
-      className={
-        "bg-secondary w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
-      <Handle type="source" position={Position.Left} id="a" />
-      <div className="text-center text-xl">{data.value}</div>
-      {/* <div>
-        <label htmlFor="text">Text:</label>
-        <input id="text" name="text" onChange={onChange} className="nodrag" />
-      </div> */}
-      {/* <Handle type="source" position={Position.Bottom} id="a" />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="b"
-        // style={handleStyle}
-      /> */}
-    </div>
-  );
-}
-
-function PolyNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
-
-  return (
-    <div
-      className={
-        "bg-secondary w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
-      <Handle type="source" position={Position.Left} id="a" />
-      <div className="text-center text-xl">{data.value}</div>
-      {/* <div>
-        <label htmlFor="text">Text:</label>
-        <input id="text" name="text" onChange={onChange} className="nodrag" />
-      </div> */}
-      {/* <Handle type="source" position={Position.Bottom} id="a" />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="b"
-        // style={handleStyle}
-      /> */}
     </div>
   );
 }
@@ -266,14 +172,6 @@ function LLMNode({ data }: { data: any }) {
       <Handle type="target" position={Position.Top} id="a" />
       <div className="text-center text-xl">{data.value}</div>
       <Handle type="source" position={Position.Bottom} id="b" />
-      {/* <Handle type="target" position={Position.Bottom} id="c" /> */}
-
-      {/* <Handle type="source" position={Position.Bottom} id="a" />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="b"
-      /> */}
     </div>
   );
 }
