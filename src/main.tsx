@@ -15,6 +15,7 @@ import { ReactFlowProvider } from "reactflow";
 import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import TableData from "./routes/tableData";
+import Flows from "./routes/flows";
 import "./styles.css";
 import { SqlProvider } from "./context/SqlProvider";
 
@@ -29,11 +30,15 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/:id/drag",
+        path: "/flows",
+        element: <Flows />,
+      },
+      {
+        path: "flows/:id/drag",
         element: <FlowEditor />,
       },
       {
-        path: "/:id/toml",
+        path: "flows/:id/toml",
         element: <TomlEditor />,
       },
       {

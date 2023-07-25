@@ -1,9 +1,7 @@
-import { useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { Link } from "react-router-dom";
 
-export default function Home() {
+export default function Flows() {
   const { flowPaths } = useLocalFileContext();
   return (
     <div className="flex flex-col h-full w-full m-10">
@@ -13,7 +11,7 @@ export default function Home() {
           return (
             <Link
               key={flow.name}
-              to={`flows/${flow.name}/drag`}
+              to={`${flow.name}/drag`}
               className="card w-96 bg-base-300 shadow-xl"
             >
               <div className="card-body">

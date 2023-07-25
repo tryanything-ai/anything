@@ -29,7 +29,7 @@ export default function Layout() {
           <Link className={linkClass} to="/flows">
             <VscRepoForked
               className={clsx(defaultClass, {
-                [selectedClass]: location.pathname.includes("/drag"),
+                [selectedClass]: location.pathname.includes("/flows"),
               })}
             />
           </Link>
