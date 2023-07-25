@@ -23,10 +23,12 @@ import NodePanel from "../components/nodePanel";
 import { useNavigationContext } from "../context/NavigationProvider";
 import TomlPanel from "../components/tomlPanel";
 import ChatPanel from "../components/chatPanel";
+import { useLocalFileContext } from "../context/LocalFileProvider";
 
 export default function Flows() {
   const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
   const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
+  const { setCurrentFlow } = useLocalFileContext();
   //flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -71,6 +73,16 @@ export default function Flows() {
     prevNodesRef.current = nodes;
     prevEdgesRef.current = edges;
   }, [nodes, edges]);
+
+  // useEffect(() => {
+  //   // This is where you can do something when the component is mounted
+
+  //   return () => {
+  //     // This function will be called when the component is about to be unmounted
+  //     // console.log('The component is about to be unmounted');
+  //     // setCurrentFlow("");
+  //   };
+  // }, []);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
