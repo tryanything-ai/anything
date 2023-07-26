@@ -21,12 +21,10 @@ import {
 } from "reactflow";
 import { useLocalFileContext } from "./LocalFileProvider";
 import { useTauriContext } from "./TauriProvider";
-import {
-  readDir,
-  readTextFile,
-  writeTextFile,
-  FileEntry,
-} from "@tauri-apps/api/fs";
+import { readTextFile } from "@tauri-apps/api/fs";
+import { stringify, parse } from "iarna-toml-esm";
+import { watchImmediate } from "tauri-plugin-fs-watch-api";
+
 import { useParams } from "react-router-dom";
 interface FlowContextInterface {
   nodes: Node[];
@@ -34,6 +32,7 @@ interface FlowContextInterface {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  toml: string;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -42,34 +41,8 @@ export const FlowContext = createContext<FlowContextInterface>({
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
+  toml: "",
 });
-
-const initalNodes: Node[] = [
-  {
-    id: "1",
-    // type: "colorChooser",
-    data: { color: "#4FD1C5" },
-    position: { x: 250, y: 25 },
-  },
-
-  {
-    id: "2",
-    // type: "colorChooser",
-    data: { color: "#F6E05E" },
-    position: { x: 100, y: 125 },
-  },
-  {
-    id: "3",
-    // type: "colorChooser",
-    data: { color: "#B794F4" },
-    position: { x: 250, y: 250 },
-  },
-];
-
-const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2" },
-  { id: "e2-3", source: "2", target: "3" },
-];
 
 export const useFlowContext = () => useContext(FlowContext);
 
@@ -78,38 +51,43 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { flow_name } = useParams();
   const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
 
-  const [nodes, setNodes] = useState<Node[]>(initalNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [toml, setToml] = useState<string>("");
 
-  const onNodesChange: OnNodesChange = (nodeChanges: any) => {
-    console.log("nodeChanges", nodeChanges);
-    //TODO: write TOML
+  const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
     setNodes((nodes) => applyNodeChanges(nodeChanges, nodes));
   };
 
   //When the edge is changed
   const onEdgesChange: OnEdgesChange = (edgeChanges: any) => {
-    console.log("edgeChanges", edgeChanges);
-    //TODO: write TOML
     setEdges((edges) => applyEdgeChanges(edgeChanges, edges));
   };
 
   //When a node is connected to an edge etc
   const onConnect: OnConnect = (params: any) => {
-    console.log("params on Connect", params);
-    //TODO: write TOML
     setEdges((edges) => addEdge(params, edges));
   };
 
-  const loadToml = async () => {
-    let content = await readTextFile(
+  const readToml = async () => {
+    return await readTextFile(
       appDocuments + "/flows/" + flow_name + "/flow.toml"
     );
-    setToml(content);
   };
 
-  //TODO: Listen To TOML files changes and update state
+  const loadToml = async () => {
+    try {
+      let new_toml = await readToml();
+      if (toml === new_toml) return; //don't update if the toml is the same
+      setToml(new_toml);
+      let parsedToml = parse(new_toml);
+      setNodes(parsedToml.nodes as any);
+      setEdges(parsedToml.edges as any);
+      setInitialTomlLoaded(true);
+    } catch (error) {
+      console.log("error loading toml in FlowProvider", error);
+    }
+  };
 
   //Load TOML into State the first time
   useEffect(() => {
@@ -119,9 +97,43 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [flow_name]);
 
+  //Update Toml as side effect of nodes and edges changing
+  useEffect(() => {
+    //this will probably have some duplications
+    let newToml = stringify({ nodes: nodes as any, edges: edges as any });
+    console.log(
+      "Updating toml in useEffect in flowProvider as side effect of drag editor"
+    );
+    //TODO: take numbers and make them not so long
+    setToml(newToml);
+  }, [edges, nodes]);
+
+  useEffect(() => {
+    let stopWatching = () => {};
+    let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
+
+    console.log(`Watching ${path} for changes`);
+
+    const watchThisFile = async () => {
+      stopWatching = await watchImmediate(path, (event) => {
+        console.log(
+          "File watchImmediate in FlowProvider triggered: ",
+          JSON.stringify(event, null, 3)
+        );
+        console.log("Updating Node State as Side Effect of Updated TOML file");
+        loadToml();
+      });
+    };
+
+    watchThisFile();
+    return () => {
+      stopWatching();
+    };
+  }, []);
+
   return (
     <FlowContext.Provider
-      value={{ nodes, edges, onConnect, onNodesChange, onEdgesChange }}
+      value={{ nodes, edges, onConnect, onNodesChange, onEdgesChange, toml }}
     >
       {children}
     </FlowContext.Provider>
