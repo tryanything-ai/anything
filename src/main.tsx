@@ -6,19 +6,15 @@ import ErrorPage from "./error-page";
 import Home from "./routes/home";
 import Settings from "./routes/settings";
 import Tables from "./routes/tables";
-import { TauriProvider } from "./context/TauriProvider";
-import { SettingsProvider } from "./context/SettingsProvider";
-import { LocalFileProvider } from "./context/LocalFileProvider";
-// import { TomlFlowProvider } from "./context/TomlFlowProvider";
-// import { FlowProvider } from "./context/FlowProvider";
-
-// import { ReactFlowProvider } from "reactflow";
-// import TomlEditor from "./routes/tomlEditor";
 import FlowEditor from "./routes/flowEditor";
 import TableData from "./routes/tableData";
 import Flows from "./routes/flows";
-import "./styles.css";
+import { TauriProvider } from "./context/TauriProvider";
+import { SettingsProvider } from "./context/SettingsProvider";
+import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
+import { NavigationProvider } from "./context/NavigationProvider";
+import "./styles.css";
 
 const router = createBrowserRouter([
   {
@@ -59,13 +55,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <TauriProvider>
       <LocalFileProvider>
         <SqlProvider>
-          {/* <FlowProvider> */}
-          {/* <TomlFlowProvider> */}
           <SettingsProvider>
-            <RouterProvider router={router} />
+            <NavigationProvider>
+              <RouterProvider router={router} />
+            </NavigationProvider>
           </SettingsProvider>
-          {/* </TomlFlowProvider> */}
-          {/* </FlowProvider> */}
         </SqlProvider>
       </LocalFileProvider>
     </TauriProvider>
