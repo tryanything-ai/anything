@@ -95,7 +95,7 @@ function Flows() {
 
   return (
     <div className="h-full w-full pb-5">
-      <Header currentFlow={} />
+      <Header />
       <div className="flex flex-row h-full w-full">
         <ReactFlow
           // nodeTypes={nodeTypes}
