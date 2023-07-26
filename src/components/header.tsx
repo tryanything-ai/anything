@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { VscRepoForked, VscCode, VscComment } from "react-icons/vsc";
 import { useNavigationContext } from "../context/NavigationProvider";
 
-export default function Header({ currentFlow }: { currentFlow: string }) {
+export default function Header() {
   const {
     nodePanel,
     setNodePanel,
