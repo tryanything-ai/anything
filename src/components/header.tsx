@@ -1,17 +1,8 @@
-import { useEffect, useState } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { useLocalFileContext } from "../context/LocalFileProvider";
-import {
-  VscLayoutSidebarRightOff,
-  VscRepoForked,
-  VscCode,
-  VscComment,
-} from "react-icons/vsc";
+import { useParams } from "react-router-dom";
+import { VscRepoForked, VscCode, VscComment } from "react-icons/vsc";
 import { useNavigationContext } from "../context/NavigationProvider";
-import { useTomlFlowContext } from "../context/TomlFlowProvider";
 
-export default function Header() {
-  const { currentFlow } = useLocalFileContext();
+export default function Header({ currentFlow }: { currentFlow: string }) {
   const {
     nodePanel,
     setNodePanel,
@@ -21,19 +12,12 @@ export default function Header() {
     setChatPanel,
   } = useNavigationContext();
 
-  // const location = useLocation();
-
-  // useEffect(() => {
-  //   let splitLocation = location.pathname.split("/");
-  //   console.log("splitLocation", splitLocation);
-  //   setEditor(splitLocation[3]);
-  //   console.log("setting Current FLow", decodeURIComponent(splitLocation[2]));
-  // }, [location]);
+  const { flow_name } = useParams();
 
   return (
     <div className="w-full z-10 bg-primary pl-2 text-white overflow-hidden">
       <div className="flex flex-row">
-        <div className="">flows/{currentFlow}</div>
+        <div className="">flows/{flow_name}</div>
         <div className="flex-grow" />
         <button onClick={() => setNodePanel(!nodePanel)}>
           <VscRepoForked className="mr-2 h-5 w-5" />

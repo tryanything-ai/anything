@@ -29,8 +29,9 @@ import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
     useFlowContext();
-  const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
+  // const { toml_nodes, toml_edges, set_toml } = useTomlFlowContext();
   const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
+
   // const { setCurrentFlow } = useLocalFileContext();
   //flow state
   // const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -94,7 +95,7 @@ function Flows() {
 
   return (
     <div className="h-full w-full pb-5">
-      <Header />
+      <Header currentFlow={} />
       <div className="flex flex-row h-full w-full">
         <ReactFlow
           // nodeTypes={nodeTypes}
