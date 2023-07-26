@@ -80,6 +80,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const [nodes, setNodes] = useState<Node[]>(initalNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [toml, setToml] = useState<string>("");
 
   const onNodesChange: OnNodesChange = (nodeChanges: any) => {
     console.log("nodeChanges", nodeChanges);
@@ -105,13 +106,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     let content = await readTextFile(
       appDocuments + "/flows/" + flow_name + "/flow.toml"
     );
-    // setToml(content);
+    setToml(content);
   };
 
   //TODO: Listen To TOML files changes and update state
 
   //Load TOML into State the first time
   useEffect(() => {
+    console.log("Flow Name");
     if (flow_name && !initalTomlLoaded) {
       loadToml();
     }
