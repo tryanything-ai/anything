@@ -49,6 +49,24 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // const createNewFlow = async (flowName: string) => {
+  //   try {
+  //     //TODO: use from template of basic flow
+  //     if (appDocuments !== undefined) {
+  //       await writeTextFile(
+  //         appDocuments + "/flows/" + flowName + "/flow.toml",
+  //         ""
+  //       );
+  //       await writeTextFile(
+  //         appDocuments + "/flows/" + flowName + "/settings.toml",
+  //         ""
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
   //get local files to show in UI when files change
   //read the exact toml file that is being editedf
   //TODO: make this less brute force

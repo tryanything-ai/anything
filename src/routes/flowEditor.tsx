@@ -13,15 +13,6 @@ function Flows() {
     useFlowContext();
   const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
 
-  // const nodeTypes = useMemo(
-  //   () => ({
-  //     inboxNode: InboxNode,
-  //     vectorNode: VectorNode,
-  //     llmNode: LLMNode,
-  //   }),
-  //   []
-  // );
-
   return (
     <div className="h-full w-full pb-5">
       <Header />

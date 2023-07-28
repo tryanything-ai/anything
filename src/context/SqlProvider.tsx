@@ -45,19 +45,23 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     created_at: string,
     data: any
   ) => {
-    await db.execute(
-      "INSERT INTO events (event_id, flow_id, flow_name, flow_version, stage, status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-      [
-        event_id,
-        flow_id,
-        flow_name,
-        flow_version,
-        stage,
-        status,
-        created_at,
-        data,
-      ]
-    );
+    try {
+      await db.execute(
+        "INSERT INTO events (event_id, flow_id, flow_name, flow_version, stage, status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [
+          event_id,
+          flow_id,
+          flow_name,
+          flow_version,
+          stage,
+          status,
+          created_at,
+          data,
+        ]
+      );
+    } catch (error) {
+      console.log("error adding event to db", error);
+    }
   };
 
   const getTables = async () => {
