@@ -24,17 +24,38 @@ export default function Tables() {
   }, []);
   return (
     <div className="flex flex-col h-full w-full m-10">
-      <div className="text-5xl text-white mx-5">{table}</div>
-      <div className="text-2xl my-2 mx-5">The Data</div>
-      <ul>
-        {data.map((dat) => {
-          return (
-            <li key={dat.id} className="text-2xl my-2 mx-5">
-              {JSON.stringify(dat)}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="text-5xl text-white m-5">table/{table}</div>
+
+      <table className="table table-xs">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Created At</th>
+            <th>Flow ID</th>
+            <th>Flow Name</th>
+            <th>Flow Version</th>
+            <th>Stage</th>
+            <th>Status</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((event: any) => {
+            return (
+              <tr>
+                <th>{event.event_id}</th>
+                <th>{event.created_at}</th>
+                <th>{event.flow_id}</th>
+                <th>{event.flow_name}</th>
+                <th>{event.flow_version}</th>
+                <th>{event.stage}</th>
+                <th>{event.status}</th>
+                <th>{JSON.stringify(event.data)}</th>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

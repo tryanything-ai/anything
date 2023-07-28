@@ -5,6 +5,7 @@ specifiers:
   '@tailwindcss/typography': ^0.5.9
   '@tauri-apps/api': ^1.4.0
   '@tauri-apps/cli': ^1.4.0
+  '@types/lodash': ^4.14.196
   '@types/node': ^18.7.10
   '@types/react': ^18.0.15
   '@types/react-dom': ^18.0.6
@@ -15,6 +16,7 @@ specifiers:
   daisyui: ^3.2.1
   iarna-toml-esm: ^3.0.5
   localforage: ^1.10.0
+  lodash: ^4.17.21
   match-sorter: ^6.3.1
   monaco-editor: ^0.40.0
   postcss: ^8.4.25
@@ -38,6 +40,7 @@ dependencies:
   clsx: 1.2.1
   iarna-toml-esm: 3.0.5
   localforage: 1.10.0
+  lodash: 4.17.21
   match-sorter: 6.3.1
   monaco-editor: 0.40.0
   postcss: 8.4.27
@@ -55,6 +58,7 @@ dependencies:
 devDependencies:
   '@tailwindcss/typography': 0.5.9_tailwindcss@3.3.3
   '@tauri-apps/cli': 1.4.0
+  '@types/lodash': 4.14.196
   '@types/node': 18.17.1
   '@types/react': 18.2.17
   '@types/react-dom': 18.2.7
@@ -983,6 +987,10 @@ packages:
     resolution: {integrity: sha512-Nmh0K3iWQJzniTuPRcJn5hxXkfB1T1pgB89SBig5PlJQU5yocazeu4jATJlaA0GYFKWMqDdvYemoSnF2pXgLVA==}
     dev: false
 
+  /@types/lodash/4.14.196:
+    resolution: {integrity: sha512-22y3o88f4a94mKljsZcanlNWPzO0uBsBdzLAngf2tp533LzZcQzb6+eZPJ+vCTt+bqF2XnvT9gejTLsAcJAJyQ==}
+    dev: true
+
   /@types/node/18.17.1:
     resolution: {integrity: sha512-xlR1jahfizdplZYRU59JlUx9uzF1ARa8jbhM11ccpCJya8kvos5jwdm2ZAgxSCwOl0fq21svP18EVwPBXMQudw==}
     dev: true
@@ -1494,6 +1502,10 @@ packages:
   /lodash.merge/4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
     dev: true
+
+  /lodash/4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+    dev: false
 
   /loose-envify/1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}

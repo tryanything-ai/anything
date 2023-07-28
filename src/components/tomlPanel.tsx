@@ -12,6 +12,7 @@ const TomlPanel = () => {
 
   const handleEditorChange = async (value: any, event: any) => {
     try {
+      //TODO: manage coding errors differently. Can't add random stuff right now
       let parseable = parse(value);
       if (parseable) {
         console.log(
