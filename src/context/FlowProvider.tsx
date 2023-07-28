@@ -72,7 +72,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments } = useTauriContext();
   const { flow_name } = useParams();
   const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
-
+  const [loadingToml, setLoadingToml] = useState<boolean>(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [toml, setToml] = useState<string>("");
@@ -92,20 +92,41 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
-    console.log("onNodesChange", nodeChanges);
-    setNodes((nodes) => applyNodeChanges(nodeChanges, nodes));
+    setNodes((nodes) => {
+      let new_nodes = applyNodeChanges(nodeChanges, nodes);
+      let new_toml = stringify({
+        nodes: new_nodes as any,
+        edges: edges as any,
+      });
+      writeToml(new_toml);
+      return new_nodes;
+    });
   };
 
   //When the edge is changed
   const onEdgesChange: OnEdgesChange = (edgeChanges: any) => {
-    console.log("onEdgesChange", edgeChanges);
-    setEdges((edges) => applyEdgeChanges(edgeChanges, edges));
+    setEdges((edges) => {
+      let new_edges = applyEdgeChanges(edgeChanges, edges);
+      let new_toml = stringify({
+        nodes: nodes as any,
+        edges: new_edges as any,
+      });
+      writeToml(new_toml);
+      return new_edges;
+    });
   };
 
   //When a node is connected to an edge etc
   const onConnect: OnConnect = (params: any) => {
-    console.log("onConnect", params);
-    setEdges((edges) => addEdge(params, edges));
+    setEdges((edges) => {
+      let new_edges = addEdge(params, edges);
+      let new_toml = stringify({
+        nodes: nodes as any,
+        edges: new_edges as any,
+      });
+      writeToml(new_toml);
+      return new_edges;
+    });
   };
 
   const readToml = async () => {
@@ -133,10 +154,34 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const loadToml = async () => {
+  //we have heard there is new toml
+  const updateToml = async () => {
     try {
       let new_toml = await readToml();
-      // if (toml === new_toml) return; //don't update if the toml is the same
+      if (toml === new_toml) return; //don't update if the toml is the same
+      if (!new_toml) {
+        console.log("new_toml is undefined in updateTomle");
+        setToml("");
+        setNodes([]);
+        setEdges([]);
+      } else {
+        console.log("updating toml from file watcher");
+        setToml(new_toml);
+        let parsedToml = parse(new_toml);
+        console.log("parsedToml", parsedToml);
+
+        setNodes(parsedToml.nodes as any);
+        setEdges(parsedToml.edges as any);
+      }
+    } catch (error) {
+      console.log("error loading toml in FlowProvider", error);
+    }
+  };
+
+  const loadTomlOnStart = async () => {
+    try {
+      setLoadingToml(true);
+      let new_toml = await readToml();
       if (!new_toml) {
         console.log("new_toml is undefined");
         setToml("");
@@ -160,62 +205,36 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   //Load TOML into State the first time
   useEffect(() => {
-    // console.log("Flow Name");
-    if (flow_name && !initalTomlLoaded && appDocuments) {
-      loadToml();
+    if (flow_name && !initalTomlLoaded && appDocuments && !loadingToml) {
+      loadTomlOnStart();
     }
   }, [flow_name, appDocuments, initalTomlLoaded]);
 
-  //Update Toml as side effect of nodes and edges changing
   useEffect(() => {
-    //this will probably have some duplications
-    if (initalTomlLoaded) {
-      const debouncedSave = debounce(({ edges, nodes }) => {
-        // Replace this with the function you want to debounce
-        // console.log(`Saving value ${newValue} to the database...`);
-        let newToml = stringify({ nodes: nodes as any, edges: edges as any });
+    if (!initalTomlLoaded) return;
+    let stopWatching = () => {};
+    let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
+
+    console.log(`Watching ${path} for changes`);
+
+    const watchThisFile = async () => {
+      stopWatching = await watchImmediate(path, (event) => {
         console.log(
-          "Updating toml in useEffect in flowProvider as side effect of drag editor"
+          "File watchImmediate in FlowProvider triggered: ",
+          JSON.stringify(event, null, 3)
         );
-        //TODO: take numbers and make them not so long
-        //TODO: allow for other fields to be added to the toml
-        setToml(newToml);
-        writeToml(newToml);
-      }, 100); // we debounce with a delay of 500ms
+        console.log(
+          "Want to update Node State as Side Effect of Updated TOML file"
+        );
+        updateToml();
+      });
+    };
 
-      // Call the debounced function every time the value changes
-      debouncedSave({ edges, nodes });
-
-      // Cleanup function. This will be called when the component is unmounted or before the next effect function is called
-      return () => {
-        debouncedSave.cancel(); // Cancel any pending debounced function call
-      };
-    }
-  }, [edges, nodes]);
-
-  // useEffect(() => {
-  //   if (!initalTomlLoaded) return;
-  //   let stopWatching = () => {};
-  //   let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
-
-  //   console.log(`Watching ${path} for changes`);
-
-  //   const watchThisFile = async () => {
-  //     stopWatching = await watchImmediate(path, (event) => {
-  //       console.log(
-  //         "File watchImmediate in FlowProvider triggered: ",
-  //         JSON.stringify(event, null, 3)
-  //       );
-  //       console.log("Updating Node State as Side Effect of Updated TOML file");
-  //       loadToml();
-  //     });
-  //   };
-
-  //   watchThisFile();
-  //   return () => {
-  //     stopWatching();
-  //   };
-  // }, [initalTomlLoaded]);
+    watchThisFile();
+    return () => {
+      stopWatching();
+    };
+  }, [initalTomlLoaded]);
 
   return (
     <FlowContext.Provider
