@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import ReactFlow, { Handle, Position } from "reactflow";
 
-function VectorNode({ data }: { data: any }) {
+export default function VectorNode({ data }: { data: any }) {
   const onChange = useCallback((evt: any) => {
     console.log(evt.target.value);
   }, []);

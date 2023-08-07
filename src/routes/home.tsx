@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="flex flex-row h-full w-full m-10">
       {/* FLows */}
-      <div className="flex flex-col text-5xl text-white m-5">
+      <div className="flex flex-col text-5xl text-white m-5 ">
         <div className="m-2">Flows</div>
         <ul>
           {flowPaths.map((flow) => {
@@ -16,7 +16,7 @@ export default function Home() {
               <Link
                 key={flow.name}
                 to={`flows/${flow.name}`}
-                className="card w-96 bg-base-300 shadow-xl"
+                className="card w-96 bg-base-300 shadow-xl my-2"
               >
                 <div className="card-body">
                   <h2 className="card-title">{flow.name}</h2>
@@ -31,6 +31,11 @@ export default function Home() {
         </ul>
       </div>
       {/* Tables */}
+      <div className="flex flex-col text-5xl text-white m- w-96">
+        <div className="m-2">Vectors</div>
+        <ul></ul>
+      </div>
+      {/* Tables */}
       <div className="flex flex-col text-5xl text-white m-5">
         <div className="m-2">Tables</div>
         <ul>
@@ -39,7 +44,7 @@ export default function Home() {
               <Link
                 key={table.name}
                 to={`tables/${table.name}`}
-                className="card w-96 bg-base-300 shadow-xl"
+                className="card w-96 bg-base-300 shadow-xl my-2"
               >
                 <div className="card-body">
                   <h2 className="card-title">{table.name}</h2>
