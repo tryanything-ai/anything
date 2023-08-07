@@ -53,7 +53,7 @@ interface FlowContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
-  addNode: () => void;
+  addNode: (type: string) => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -63,7 +63,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   onEdgesChange: () => {},
   onConnect: () => {},
   toml: "",
-  addNode: () => {},
+  addNode: (type: string) => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -77,11 +77,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [toml, setToml] = useState<string>("");
 
-  const addNode = () => {
+  const addNode = (type: string) => {
     const nextId = findNextNodeId(nodes);
     const newNode: Node = {
       id: nextId,
-      type: "default",
+      type,
       position: {
         x: Math.random() * 500,
         y: Math.random() * 500,
@@ -115,9 +115,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return new_edges;
     });
   };
+  //TODO: need to protect against "undefined" as a state we sync anywhere.
 
   //When a node is connected to an edge etc
   const onConnect: OnConnect = (params: any) => {
+    console.log("onConnect params", params);
     setEdges((edges) => {
       let new_edges = addEdge(params, edges);
       let new_toml = stringify({
