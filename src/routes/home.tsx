@@ -1,38 +1,57 @@
-import { useState } from "react";
-import reactLogo from "../assets/react.svg";
-import { invoke } from "@tauri-apps/api/tauri";
+import { useLocalFileContext } from "../context/LocalFileProvider";
+import { Link } from "react-router-dom";
+import { useSqlContext } from "../context/SqlProvider";
+
 export default function Home() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
+  const { flowPaths } = useLocalFileContext();
+  const { tables } = useSqlContext();
   return (
     <div className="flex flex-row h-full w-full m-10">
-      <div>
-        <div className="flex flex-col">
-          <h1>Welcome to Tauri!</h1>
-
-          <form
-            className="flex flex-row pt-5 gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              greet();
-            }}
-          >
-            <input
-              id="greet-input"
-              onChange={(e) => setName(e.currentTarget.value)}
-              placeholder="Enter a name..."
-            />
-            <button type="submit">Greet</button>
-          </form>
-
-          <p>{greetMsg}</p>
-        </div>
+      {/* FLows */}
+      <div className="flex flex-col text-5xl text-white m-5">
+        <div className="m-2">Flows</div>
+        <ul>
+          {flowPaths.map((flow) => {
+            return (
+              <Link
+                key={flow.name}
+                to={`flows/${flow.name}`}
+                className="card w-96 bg-base-300 shadow-xl"
+              >
+                <div className="card-body">
+                  <h2 className="card-title">{flow.name}</h2>
+                  {/* <p>Flow Description</p> */}
+                  {/* <div className="card-actions justify-end">
+                  <button className="btn btn-primary">Buy Now</button>
+                </div> */}
+                </div>
+              </Link>
+            );
+          })}
+        </ul>
+      </div>
+      {/* Tables */}
+      <div className="flex flex-col text-5xl text-white m-5">
+        <div className="m-2">Tables</div>
+        <ul>
+          {tables.map((table) => {
+            return (
+              <Link
+                key={table.name}
+                to={`tables/${table.name}`}
+                className="card w-96 bg-base-300 shadow-xl"
+              >
+                <div className="card-body">
+                  <h2 className="card-title">{table.name}</h2>
+                  {/* <p>Flow Description</p> */}
+                  {/* <div className="card-actions justify-end">
+                  <button className="btn btn-primary">Buy Now</button>
+                </div> */}
+                </div>
+              </Link>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );

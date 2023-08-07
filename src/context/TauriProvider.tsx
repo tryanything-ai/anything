@@ -16,27 +16,33 @@ export const RUNNING_IN_TAURI = window.__TAURI__ !== undefined;
 // NOTE: Add cacheable Tauri calls in this file
 interface TauriContextInterface {
   loading: boolean;
-  downloads: string | undefined;
-  documents: string | undefined;
-  appDocuments: string | undefined;
-  osType: string | undefined;
+  downloads: string;
+  documents: string;
+  appDocuments: string;
+  osType: string;
   fileSep: string;
 }
 
-const TauriContext = React.createContext<TauriContextInterface | undefined>(
-  undefined
-);
+const TauriContext = React.createContext<TauriContextInterface>({
+  loading: true,
+  downloads: "",
+  documents: "",
+  appDocuments: "",
+  osType: "",
+  fileSep: "/",
+});
 
 export const useTauriContext = () => useContext(TauriContext);
 
 export function TauriProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
-  const [downloads, setDownloadDir] = useState<string | undefined>();
-  const [documents, setDocumentDir] = useState<string | undefined>();
-  const [osType, setOsType] = useState<string | undefined>();
+  const [downloads, setDownloadDir] = useState<string>("");
+  const [documents, setDocumentDir] = useState<string>("");
+  const [osType, setOsType] = useState<string>("");
   const [fileSep, setFileSep] = useState<string>("/");
-  const [appDocuments, setAppDocuments] = useState<string | undefined>();
+  const [appDocuments, setAppDocuments] = useState<string>("");
 
+  //TODO: fix why this is running twice on startup
   useEffect(() => {
     if (RUNNING_IN_TAURI) {
       const callTauriAPIs = async () => {
@@ -48,7 +54,28 @@ export function TauriProvider({ children }: { children: ReactNode }) {
         setOsType(_osType);
         const _fileSep = _osType === "Windows_NT" ? "\\" : "/";
         setFileSep(_fileSep);
+        //Create App Folder
         await fs.createDir(APP_NAME, {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Flows Folder
+        await fs.createDir(APP_NAME + "/flows", {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Nodes Folder
+        await fs.createDir(APP_NAME + "/nodes", {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Settings Folder
+        await fs.createDir(APP_NAME + "/settings", {
+          dir: fs.BaseDirectory.Document,
+          recursive: true,
+        });
+        //Create Assets Folder
+        await fs.createDir(APP_NAME + "/assets", {
           dir: fs.BaseDirectory.Document,
           recursive: true,
         });
