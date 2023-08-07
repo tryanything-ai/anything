@@ -1,4 +1,3 @@
-import { Outlet } from "react-router-dom";
 import themes from "../utils/themes";
 import { useSettingsContext } from "../context/SettingsProvider";
 import clsx from "clsx";

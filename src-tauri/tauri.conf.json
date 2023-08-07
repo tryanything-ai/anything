@@ -7,12 +7,22 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "tauri-tailwind",
+    "productName": "Anything",
     "version": "0.0.0"
   },
   "tauri": {
     "allowlist": {
       "all": false,
+      "path": {
+        "all": true
+      },
+      "os": {
+        "all": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["$APP/**/*", "$DOWNLOAD/**/*", "$DOCUMENT/**/*"]
+      },
       "shell": {
         "all": false,
         "open": true

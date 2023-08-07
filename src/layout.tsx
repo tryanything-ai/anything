@@ -1,5 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { AiOutlineSetting, AiOutlineHome } from "react-icons/ai";
+import {
+  VscHome,
+  VscRepoForked,
+  VscSettingsGear,
+  VscTable,
+} from "react-icons/vsc";
 import clsx from "clsx";
 
 export default function Layout() {
@@ -10,18 +15,32 @@ export default function Layout() {
   const linkClass = "hover:text-primary w-10 h-10";
 
   return (
-    <div className="flex flex-row min-w-screen min-h-screen overflow-hidden">
+    <div className="flex flex-row min-w-screen min-h-screen overflow-hidden overscroll-none">
       <div className="w-14 bg-base-200 flex flex-col gap-3 px-2 pt-3">
         <Link className={linkClass} to="/">
-          <AiOutlineHome
+          <VscHome
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname === "/",
             })}
           />
         </Link>
+        <Link className={linkClass} to="/flows">
+          <VscRepoForked
+            className={clsx(defaultClass, {
+              [selectedClass]: location.pathname.includes("/flows"),
+            })}
+          />
+        </Link>
+        <Link className={linkClass} to="/tables">
+          <VscTable
+            className={clsx(defaultClass, {
+              [selectedClass]: location.pathname.includes("/table"),
+            })}
+          />
+        </Link>
         <div className="flex-grow" />
         <Link className={linkClass} to="/settings">
-          <AiOutlineSetting
+          <VscSettingsGear
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname === "/settings",
             })}
