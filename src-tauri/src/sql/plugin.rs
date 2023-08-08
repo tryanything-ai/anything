@@ -29,20 +29,13 @@ use tokio::sync::Mutex;
 
 use std::collections::HashMap;
 
-// #[cfg(feature = "sqlite")]
 use std::{fs::create_dir_all, path::PathBuf};
 
-// #[cfg(feature = "sqlite")]
-type Db = sqlx::sqlite::Sqlite;
-// #[cfg(feature = "mysql")]
-// type Db = sqlx::mysql::MySql;
-// #[cfg(feature = "postgres")]
-// type Db = sqlx::postgres::Postgres;
+use crate::sql::decode; 
+// use decode; 
 
-// #[cfg(feature = "sqlite")]
+type Db = sqlx::sqlite::Sqlite;
 type LastInsertId = i64;
-// #[cfg(not(feature = "sqlite"))]
-type LastInsertId = u64;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -163,7 +156,7 @@ async fn load<R: Runtime>(
     // #[cfg(feature = "sqlite")]
     let fqdb = path_mapper(app_path(&app), &db);
     // #[cfg(not(feature = "sqlite"))]
-    let fqdb = db.clone();
+    // let fqdb = db.clone();
 
     // #[cfg(feature = "sqlite")]
     create_dir_all(app_path(&app)).expect("Problem creating App directory!");
@@ -262,8 +255,8 @@ async fn select(
         for (i, column) in row.columns().iter().enumerate() {
             let v = row.try_get_raw(i)?;
 
-            let v = crate::decode::to_json(v)?;
-
+            let v = decode::to_json(v)?;
+            
             value.insert(column.name().to_string(), v);
         }
 
@@ -306,7 +299,7 @@ impl Builder {
                         // #[cfg(feature = "sqlite")]
                         let fqdb = path_mapper(app_path(app), &db);
                         // #[cfg(not(feature = "sqlite"))]
-                        let fqdb = db.clone();
+                        // let fqdb = db.clone();
 
                         if !Db::database_exists(&fqdb).await.unwrap_or(false) {
                             Db::create_database(&fqdb).await?;

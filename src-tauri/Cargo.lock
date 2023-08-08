@@ -102,6 +102,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-fs-watch",
  "tauri-plugin-sql",
+ "thiserror",
  "time",
  "tokio",
  "toml 0.5.11",
