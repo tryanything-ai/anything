@@ -23,6 +23,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "json", "time"] } 
 tokio = { version = "1", features = ["full"] } #for use in db also
 futures-core = "0.3"
 time = "0.3" # for parsing sql
+thiserror = "1.0" # for sql plugin adopted from tauri example
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

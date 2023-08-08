@@ -5,13 +5,14 @@ use std::{thread, time::Duration};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::process::Command as ProcessCommand;
 
-mod db; 
-
-// fn do_work() {
-//     //TODO: make it so we can also call this from teh front end. 
-//     //or that it listens to emitted events so that we can call it from the front end
-//     println!("Hello, world from do_work!");
+// mod sql {
+//     pub mod plugin; 
+//     pub mod decode;
 // }
+mod sql; 
+
+use sql::plugin::Builder; 
+ 
 // Thoughts on events based architefture
 //https://discord.com/channels/616186924390023171/731495028677148753/1133165388981620837
 fn task_to_run_every_minute() {
@@ -46,22 +47,17 @@ fn task_to_run_every_minute() {
 //     format!("Hello, {}! You've been greeted from Rust!", name)
 // }
 
-#[tokio::main]
-async fn main() {
-    tauri::async_runtime::set(tokio::runtime::Handle::current());
+// #[tokio::main]
+fn main() {
+    // tauri::async_runtime::set(tokio::runtime::Handle::current());
     
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
-        .plugin(tauri_plugin_sql::Builder::default().build())
+        .plugin(Builder::default().build())
         .setup(|_app| {
             thread::spawn(task_to_run_every_minute);
             Ok(())
         })
-        .setup(|_app| {
-            db::init();
-            Ok(())
-        })
-        // .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

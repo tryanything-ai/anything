@@ -2,9 +2,10 @@ use serde_json::Value as JsonValue;
 use sqlx::{sqlite::SqliteValueRef, TypeInfo, Value, ValueRef};
 use time::{Date, PrimitiveDateTime, Time};
 // from https://github.com/tauri-apps/plugins-workspace/blob/v1/plugins/sql/src/decode/sqlite.rs
-use crate::Error;
+// use crate::Error;
+use crate::sql::plugin::Error; 
 
-pub(crate) fn to_json(v: SqliteValueRef) -> Result<JsonValue, Error> {
+pub fn to_json(v: SqliteValueRef) -> Result<JsonValue, Error> {
     if v.is_null() {
         return Ok(JsonValue::Null);
     }
