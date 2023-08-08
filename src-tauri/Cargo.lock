@@ -94,6 +94,7 @@ name = "anything"
 version = "0.0.0"
 dependencies = [
  "dirs",
+ "futures-core",
  "serde",
  "serde_json",
  "sqlx",
@@ -101,6 +102,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-fs-watch",
  "tauri-plugin-sql",
+ "time",
  "tokio",
  "toml 0.5.11",
 ]
