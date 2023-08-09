@@ -151,7 +151,7 @@ async fn load<R: Runtime>(
     migrations: State<'_, Migrations>,
     db: String,
 ) -> Result<String> {
-
+    println!("Loading db"); 
     let fqdb = path_mapper(app_path(&app), &db);
   
     create_dir_all(app_path(&app)).expect("Problem creating App directory!");
@@ -201,6 +201,7 @@ async fn execute(
     query: String,
     values: Vec<JsonValue>,
 ) -> Result<(u64, LastInsertId)> {
+   
     let mut instances = db_instances.0.lock().await;
 
     let db = instances.get_mut(&db).ok_or(Error::DatabaseNotLoaded(db))?;
@@ -274,7 +275,7 @@ impl Builder {
     }
 
     pub fn build<R: Runtime>(mut self) -> TauriPlugin<R, Option<PluginConfig>> {
-        PluginBuilder::new("sql")
+        PluginBuilder::new("sqlite")
             .invoke_handler(tauri::generate_handler![load, execute, select, close])
             .setup_with_config(|app, config: Option<PluginConfig>| {
                 let config = config.unwrap_or_default();
