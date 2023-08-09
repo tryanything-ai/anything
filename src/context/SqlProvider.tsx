@@ -5,9 +5,9 @@ import React, {
   useContext,
   ReactNode,
 } from "react";
-// import Database from "tauri-plugin-sql-api";
+import { invoke } from '@tauri-apps/api'
+invoke('plugin:awesome|do_something')
 
-// const db = await Database.load("sqlite:test.db");
 
 interface SqlContextInterface {
   tables: any[];
