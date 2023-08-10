@@ -1,27 +1,29 @@
-🚀 Anything
+# 🚀 Anything
 
 ✨ The next-generation local automation tool: Think Zapier, but on your Mac, supercharged with AI!
-
-[https://tryanything.xyz](https://tryanything.xyz/)
 
 ![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/dev/docs/anyhting_aug_10.gif)
 
 
-🌟 Introduction
-Welcome to Anything - the future of local automation! Built for developers who dream big. If you've been seeking a tool that blends the simplicity of Zapier, the flexibility of AI, and the power of a code editor, look no further.
+### 🌟 Welcome to Anything - the future of local automation! 
 
-💡 Why Anything?
-Local Power: Why get locked into some SaaS when you've got Apple Silicon under the sheets?
-AI Integration: Boost your workflows with integrated AI models.
-WYSIWYG Designer: Visualize your automation workflows like never before.
-Open Source: Freedom to modify, integrate, and extend.
+If you've been seeking a tool that blends the simplicity of Zapier, the flexibility of AI, and the power of a code editor, look no further.
+
+### 💡 Why Anything?
+
+- Local Power: Why get locked into some SaaS when you've got Apple Silicon under the sheets?
+- AI Integration: Boost your workflows with integrated AI models.
+- WYSIWYG Designer: Visualize your automation workflows like never before.
+- 100% Open Source: Freedom to modify, integrate, and extend.
 
 🛠 Technologies Used
-React: For our intuitive and seamless UI.
-Rust: Ensuring robust and lightning-fast operations.
-Tauri: Local apps that aren't a whole chrome browser. 
+
+- React: For our intuitive and seamless UI.
+- Rust: Ensuring robust and lightning-fast operations.
+- Tauri: Local apps that aren't a whole chrome browser. 
 
 🤝 Contribute
+
 We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build. 
 
 🔧 Setting Up
@@ -31,7 +33,7 @@ pnpm i
 pnpm start 
 ```
 
-🤖 Roadmap
+### 🤖 Roadmap
 - [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
 - [x] Embeded Sqlite DB
 - [ ] Event System ( in progress )
@@ -45,7 +47,7 @@ More AI models and customizability.
 
 Share your ideas!
 
-💌 Feedback
+### 💌 Feedback
 Love Anything? Give us a star ⭐️! 
 
 Contact us: 
