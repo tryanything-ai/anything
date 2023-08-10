@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { VscRepoForked, VscCode, VscComment } from "react-icons/vsc";
+import { VscRepoForked, VscCode, VscComment, VscDebug } from "react-icons/vsc";
 import { useNavigationContext } from "../context/NavigationProvider";
 
 export default function Header() {
@@ -23,7 +23,7 @@ export default function Header() {
           <VscRepoForked className="mr-2 h-5 w-5" />
         </button>
         <button onClick={() => setChatPanel(!chatPanel)}>
-          <VscComment className="mr-2 h-5 w-5" />
+          <VscDebug className="mr-2 h-4 w-5" />
         </button>
         <button onClick={() => setTomlPanel(!tomlPanel)}>
           <VscCode className="mr-2 h-5 w-5" />
