@@ -38,6 +38,8 @@ use crate::sql::decode;
 type Db = sqlx::sqlite::Sqlite;
 type LastInsertId = i64;
 
+pub const DB_STRING: &'static str = "sqlite:test.db";
+ 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -88,7 +90,7 @@ fn path_mapper(mut app_path: PathBuf, connection_string: &str) -> String {
 }
 
 #[derive(Default)]
-struct DbInstances(Mutex<HashMap<String, Pool<Db>>>);
+pub struct DbInstances(Mutex<HashMap<String, Pool<Db>>>);
 
 struct Migrations(Mutex<HashMap<String, MigrationList>>);
 
@@ -149,9 +151,10 @@ async fn load<R: Runtime>(
     #[allow(unused_variables)] app: AppHandle<R>,
     db_instances: State<'_, DbInstances>,
     migrations: State<'_, Migrations>,
-    db: String,
+    // db: String,
 ) -> Result<String> {
     println!("Loading db"); 
+    let db = DB_STRING.to_string();
     let fqdb = path_mapper(app_path(&app), &db);
   
     create_dir_all(app_path(&app)).expect("Problem creating App directory!");
@@ -195,7 +198,7 @@ async fn close(db_instances: State<'_, DbInstances>, db: Option<String>) -> Resu
 
 /// Execute a command against the database
 #[command]
-async fn execute(
+pub async fn execute(
     db_instances: State<'_, DbInstances>,
     db: String,
     query: String,
@@ -221,7 +224,7 @@ async fn execute(
 }
 
 #[command]
-async fn select(
+pub async fn select(
     db_instances: State<'_, DbInstances>,
     db: String,
     query: String,

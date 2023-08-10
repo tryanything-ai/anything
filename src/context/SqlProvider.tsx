@@ -9,7 +9,7 @@ import { invoke } from "@tauri-apps/api";
 
 const DB_STRING = "sqlite:test.db";
 //Load Database once
-invoke("plugin:sqlite|load", { db: DB_STRING });
+invoke("plugin:sqlite|load");
 
 interface SqlContextInterface {
   tables: any[];
