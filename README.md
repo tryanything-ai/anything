@@ -4,6 +4,10 @@
 
 [https://tryanything.xyz](https://tryanything.xyz/)
 
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/dev/docs/anyhting_aug_10.gif)
+
+
+
 Langchain, BabyAGI, LLamaIndex etc all require you to build with code all the time and don't have any system for simple things like repeating tasks, crons, queues, or databases to store *normal* data.
 
 Anything is built with the core principles of LLM chaining frameworks with a twist.
