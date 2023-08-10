@@ -1,11 +1,15 @@
+import { useMemo } from "react";
 import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
-
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
 import ChatPanel from "../components/chatPanel";
 import { useNavigationContext } from "../context/NavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
+import VectorNode from "../components/nodes/vectorNode";
+import PythonNode from "../components/nodes/pythonNode";
+import JavascriptNode from "../components/nodes/javascriptNode";
+
 import "reactflow/dist/style.css";
 
 function Flows() {
@@ -13,12 +17,21 @@ function Flows() {
     useFlowContext();
   const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
 
+  const nodeTypes = useMemo(
+    () => ({
+      vectorNode: VectorNode,
+      pythonNode: PythonNode,
+      javascriptNode: JavascriptNode,
+    }),
+    []
+  );
+
   return (
     <div className="h-full w-full pb-5">
       <Header />
       <div className="flex flex-row h-full w-full">
         <ReactFlow
-          // nodeTypes={nodeTypes}
+          nodeTypes={nodeTypes}
           nodes={nodes} //new
           edges={edges} //new
           onNodesChange={onNodesChange}
