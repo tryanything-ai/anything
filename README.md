@@ -38,12 +38,10 @@ pnpm start
 - [x] Embeded Sqlite DB
 - [ ] Event System ( in progress )
 - [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
-- [ ] Integrate [Rustformers](https://github.com/rustformers/llm) for local AI models 
-- [ ] Pythong Interpreter
+- [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models 
+- [ ] Python Interpreter
 - [ ] Javascript Runtime w/ [Deno](https://github.com/denoland/deno)
-
-Integration with popular local apps and services.
-More AI models and customizability.
+- [ ] Integration with popular local apps and services
 
 Share your ideas!
 
