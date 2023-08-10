@@ -15,6 +15,7 @@ import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
 import { NavigationProvider } from "./context/NavigationProvider";
 import "./styles.css";
+import { EventLoopProvider } from "./context/EventLoopProvider";
 
 const router = createBrowserRouter([
   {
@@ -55,11 +56,13 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <TauriProvider>
       <LocalFileProvider>
         <SqlProvider>
-          <SettingsProvider>
-            <NavigationProvider>
-              <RouterProvider router={router} />
-            </NavigationProvider>
-          </SettingsProvider>
+          <EventLoopProvider>
+            <SettingsProvider>
+              <NavigationProvider>
+                <RouterProvider router={router} />
+              </NavigationProvider>
+            </SettingsProvider>
+          </EventLoopProvider>
         </SqlProvider>
       </LocalFileProvider>
     </TauriProvider>

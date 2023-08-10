@@ -1,16 +1,53 @@
-# Anything
+# 🚀 Anything
 
-## A simple tool for using AI in your life.
+✨ The next-generation local automation tool: Think Zapier, but on your Mac, supercharged with AI!
 
-[https://tryanything.xyz](https://tryanything.xyz/)
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/dev/docs/anyhting_aug_10.gif)
 
-Langchain, BabyAGI, LLamaIndex etc all require you to jacl with code all the time and don't have any system for repeating tasks, simple things like crons, queues, or databases to store *normal* data.
 
-Anything is built with the core principles of LLM chaining frameworks with a twist.
+### 🌟 Welcome to Anything - the future of local automation! 
 
-Low Code.
-Local First.
-Simple AF.
-Hackable.
+If you've been seeking a tool that blends the simplicity of Zapier, the flexibility of AI, and the power of a code editor, look no further.
 
-Taking inspiration from Open Source SOP ( Standard Operating Procedure ) WYSIWYG Doucmenting Systems like BPMN ( Business Process Modeling Notaion ) mixed with the fundamentals of distributed architecture ( serverless, processing queues ) were building the NextJS of "Blue Collar AI" or AI systems meant to do reptitive tasks that we can free humanity from.
+### 💡 Why Anything?
+
+- Local Power: Why get locked into some SaaS when you've got Apple Silicon under the sheets?
+- AI Integration: Boost your workflows with integrated AI models.
+- WYSIWYG Designer: Visualize your automation workflows like never before.
+- 100% Open Source: Freedom to modify, integrate, and extend.
+
+🛠 Technologies Used
+
+- React: For our intuitive and seamless UI.
+- Rust: Ensuring robust and lightning-fast operations.
+- Tauri: Local apps that aren't a whole chrome browser. 
+
+🤝 Contribute
+
+We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build. 
+
+🔧 Setting Up
+```bash
+git clone https://github.com/tryanything-ai/anything.git
+pnpm i
+pnpm start 
+```
+
+### 🤖 Roadmap
+- [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
+- [x] Embeded Sqlite DB
+- [ ] Event System ( in progress )
+- [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
+- [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models 
+- [ ] Python Interpreter
+- [ ] Javascript Runtime w/ [Deno](https://github.com/denoland/deno)
+- [ ] Integration with popular local apps and services
+
+Share your ideas!
+
+### 💌 Feedback
+Love Anything? Give us a star ⭐️! 
+
+Contact us: 
+Carl Lippert on [Twitter](https://twitter.com/carllippert)
+

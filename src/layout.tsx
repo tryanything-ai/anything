@@ -4,6 +4,7 @@ import {
   VscRepoForked,
   VscSettingsGear,
   VscTable,
+  VscDebug,
 } from "react-icons/vsc";
 import clsx from "clsx";
 
