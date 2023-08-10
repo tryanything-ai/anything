@@ -1,25 +1,53 @@
-# Anything
+🚀 Anything
 
-## A simple tool for using AI in your life.
+✨ The next-generation local automation tool: Think Zapier, but on your Mac, supercharged with AI!
 
 [https://tryanything.xyz](https://tryanything.xyz/)
 
 ![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/dev/docs/anyhting_aug_10.gif)
 
 
+🌟 Introduction
+Welcome to Anything - the future of local automation! Built for developers who dream big. If you've been seeking a tool that blends the simplicity of Zapier, the flexibility of AI, and the power of a code editor, look no further.
 
-Langchain, BabyAGI, LLamaIndex etc all require you to build with code all the time and don't have any system for simple things like repeating tasks, crons, queues, or databases to store *normal* data.
+💡 Why Anything?
+Local Power: Why get locked into some SaaS when you've got Apple Silicon under the sheets?
+AI Integration: Boost your workflows with integrated AI models.
+WYSIWYG Designer: Visualize your automation workflows like never before.
+Open Source: Freedom to modify, integrate, and extend.
 
-Anything is built with the core principles of LLM chaining frameworks with a twist.
+🛠 Technologies Used
+React: For our intuitive and seamless UI.
+Rust: Ensuring robust and lightning-fast operations.
+Tauri: Local apps that aren't a whole chrome browser. 
 
-### Low Code.
-### Local First.
-### Extendable. 
+🤝 Contribute
+We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build. 
 
-The flows built in the wysiwyg designer are just TOML files. 
-The nodes/tools/actions are built in the same way. 
+🔧 Setting Up
+```bash
+git clone https://github.com/tryanything-ai/anything.git
+pnpm i
+pnpm start 
+```
 
-### Design the automations you love locally. 
-### Deploy your automations wherevery you host usually. 
+🤖 Roadmap
+- [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
+- [x] Embeded Sqlite DB
+- [ ] Event System ( in progress )
+- [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
+- [ ] Integrate [Rustformers](https://github.com/rustformers/llm) for local AI models 
+- [ ] Pythong Interpreter
+- [ ] Javascript Runtime w/ [Deno](https://github.com/denoland/deno)
 
-The projects goal is to create massive upside through making it easy and enjoyable for individuals to share their AI automtations so that others can use them for free or for hire.
+Integration with popular local apps and services.
+More AI models and customizability.
+
+Share your ideas!
+
+💌 Feedback
+Love Anything? Give us a star ⭐️! 
+
+Contact us: 
+Carl Lippert on [Twitter](https://twitter.com/carllippert)
+
