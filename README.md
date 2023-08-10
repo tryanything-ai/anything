@@ -48,6 +48,6 @@ Share your ideas!
 ### 💌 Feedback
 Love Anything? Give us a star ⭐️! 
 
-Contact us: 
+Contact: 
 Carl Lippert on [Twitter](https://twitter.com/carllippert)
 
