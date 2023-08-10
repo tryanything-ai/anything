@@ -16,10 +16,10 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
         .plugin(Builder::default().build())
-        .setup(|app| {
-            thread::spawn(task_to_run_every_minute);
-            Ok(())
-        })
+        // .setup(|app| {
+        //     thread::spawn(task_to_run_every_minute);
+        //     Ok(())
+        // })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
