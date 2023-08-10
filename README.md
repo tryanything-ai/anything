@@ -16,17 +16,17 @@ If you've been seeking a tool that blends the simplicity of Zapier, the flexibil
 - WYSIWYG Designer: Visualize your automation workflows like never before.
 - 100% Open Source: Freedom to modify, integrate, and extend.
 
-🛠 Technologies Used
+### 🛠 Technologies Used
 
 - React: For our intuitive and seamless UI.
 - Rust: Ensuring robust and lightning-fast operations.
 - Tauri: Local apps that aren't a whole chrome browser. 
 
-🤝 Contribute
+### 🤝 Contribute
 
 We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build. 
 
-🔧 Setting Up
+### 🔧 Setting Up
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
 pnpm i
@@ -48,6 +48,6 @@ Share your ideas!
 ### 💌 Feedback
 Love Anything? Give us a star ⭐️! 
 
-Contact us: 
+### Contact: 
 Carl Lippert on [Twitter](https://twitter.com/carllippert)
 
