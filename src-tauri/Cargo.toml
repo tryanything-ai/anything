@@ -18,8 +18,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 toml = "0.5"
-dirs = "5.0" #for file access on rust side like making db
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "json", "time"] } #for use in db also
+dirs = "5.0"
+sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls" ] } #trying this for sql2.rs
+# sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "json", "time"] } #for use in db also
 tokio = { version = "1", features = ["full"] } #for use in db also
 futures-core = "0.3"
 time = "0.3" # for parsing sql
