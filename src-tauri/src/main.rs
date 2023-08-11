@@ -3,24 +3,24 @@
 
 use std::{thread, time::Duration};
 
-mod sql; 
+mod sql;
 mod events;
+mod events2; 
 
-use sql::plugin::Builder; 
-use events::task_to_run_every_minute;
+// use sql::plugin::Builder; 
+use events2::scheduler; 
 
-// #[tokio::main]
-fn main() {
-    // tauri::async_runtime::set(tokio::runtime::Handle::current());
+#[tokio::main]
+async fn main() {
+    tauri::async_runtime::set(tokio::runtime::Handle::current());
     
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
-        .plugin(Builder::default().build())
-        // .setup(|app| {
-        //     thread::spawn(task_to_run_every_minute);
-        //     Ok(())
-        // })
-        .run(tauri::generate_context!())
+        .setup(|_app| {
+            tokio::task::spawn(scheduler()); 
+            Ok(())
+        })
+        .run(tauri::generate_context!())    
         .expect("error while running tauri application");
 }
 
