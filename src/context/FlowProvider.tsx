@@ -24,7 +24,6 @@ import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { stringify, parse } from "iarna-toml-esm";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
-import { debounce } from "lodash";
 
 function findNextNodeId(nodes: any): string {
   // Initialize the maxId to 0
