@@ -7,6 +7,13 @@ use crate::sql::plugin::{select, DbInstances, Error, DB_STRING, execute};
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 
+// the payload type must implement `Serialize` and `Clone`.
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+  message: String,
+  name: String
+}
+
 pub async fn scheduler<R: Runtime>(app: &AppHandle<R>){
     loop {
         let app_handle = app.clone(); 
@@ -32,13 +39,22 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
             if let Some(item) = items.get(0) {
                 if let Some(event_id) = item.get("event_id") {
                     sql_event_id = event_id.as_str().unwrap();
-                 
-
                     mark_as_done(app, sql_event_id.to_string()).await;
 
                     println!("event_id: {} marked as COMPLETE", event_id);
+                      // emit the `event-name` event to all webview windows on the frontend
                     
-                } else {
+                    if let Some(flow_name) = item.get("flow_name") {
+                        app.emit_all("current_task", 
+                        Payload { name: flow_name.to_string(),  message: "Tauri is awesome! it automated my work!".into() })
+                        .unwrap();
+                        println!("flow_name: {}", flow_name);
+                    } else {
+                        println!("event_name not found in the item.");
+                    }
+                 
+                    
+                } else { 
                     println!("event_id not found in the item.");
                 }
             } else {
