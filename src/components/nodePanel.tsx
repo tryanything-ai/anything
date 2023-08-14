@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useParams } from "react-router-dom";
 
 type Node = {
   nodeType: string;
@@ -31,15 +32,21 @@ const NodePanel = () => {
   const [nodes, setNodes] = useState<Node[]>(default_nodes);
   const [flows, setFlows] = useState<Node[]>([]);
   const { flowPaths } = useLocalFileContext();
+  const { flow_name } = useParams();
 
   useEffect(() => {
+    let flows: Node[] = [];
+
     //make flows nodes
-    const flows = flowPaths.map((path) => {
-      return {
-        nodeType: "flow",
-        title: path.name ? path.name : "",
-        alt: path.name ? path.name : "",
-      };
+    flowPaths.forEach((path) => {
+      //do not return the current flow
+      if (path.name !== flow_name) {
+        flows.push({
+          nodeType: "flow",
+          title: path.name ? path.name : "",
+          alt: path.name ? path.name : "",
+        });
+      }
     });
 
     setFlows(flows);
