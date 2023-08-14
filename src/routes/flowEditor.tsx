@@ -9,13 +9,14 @@ import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 import VectorNode from "../components/nodes/vectorNode";
 import PythonNode from "../components/nodes/pythonNode";
 import JavascriptNode from "../components/nodes/javascriptNode";
+import SettingsPanel from "../components/settingsPanel";
 
 import "reactflow/dist/style.css";
 
 function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
     useFlowContext();
-  const { nodePanel, chatPanel, tomlPanel } = useNavigationContext();
+  const { nodePanel, chatPanel, tomlPanel, settingsPanel } = useNavigationContext();
 
   const nodeTypes = useMemo(
     () => ({
@@ -57,6 +58,12 @@ function Flows() {
             <ChatPanel />
           </div>
         ) : null}
+         {settingsPanel ? (
+          <div className="w-1/4">
+            <SettingsPanel />
+          </div>
+          ) : null    
+          }
         {tomlPanel ? (
           <div className="w-1/2">
             <TomlPanel />

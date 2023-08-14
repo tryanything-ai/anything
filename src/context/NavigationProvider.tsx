@@ -7,6 +7,8 @@ interface NavigationContextInterface {
   setTomlPanel: (option: boolean) => void;
   chatPanel: boolean;
   setChatPanel: (option: boolean) => void;
+  settingsPanel: boolean;
+  setSettingsPanel: (option: boolean) => void;
 }
 
 export const NavigationContext = createContext<NavigationContextInterface>({
@@ -15,7 +17,9 @@ export const NavigationContext = createContext<NavigationContextInterface>({
   tomlPanel: true,
   setTomlPanel: () => {},
   chatPanel: true,
-  setChatPanel: () => {},
+  setChatPanel: () => { },
+  settingsPanel: true,
+  setSettingsPanel: () => { },
 });
 
 export const useNavigationContext = () => useContext(NavigationContext);
@@ -25,6 +29,7 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
   const [nodePanel, setNodePanel] = useState<boolean>(false);
   const [tomlPanel, setTomlPanel] = useState<boolean>(false);
   const [chatPanel, setChatPanel] = useState<boolean>(false);
+  const [settingsPanel, setSettingsPanel] = useState<boolean>(false);
 
   return (
     <NavigationContext.Provider
@@ -35,6 +40,8 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
         setTomlPanel,
         chatPanel,
         setChatPanel,
+        settingsPanel,
+        setSettingsPanel,
       }}
     >
       {children}

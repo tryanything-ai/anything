@@ -13,14 +13,18 @@ import {
   readTextFile,
   writeTextFile,
   FileEntry,
+  createDir
 } from "@tauri-apps/api/fs";
+
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
+  createNewFlow: () => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
+  createNewFlow: () => {},
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -49,23 +53,30 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // const createNewFlow = async (flowName: string) => {
-  //   try {
-  //     //TODO: use from template of basic flow
-  //     if (appDocuments !== undefined) {
-  //       await writeTextFile(
-  //         appDocuments + "/flows/" + flowName + "/flow.toml",
-  //         ""
-  //       );
-  //       await writeTextFile(
-  //         appDocuments + "/flows/" + flowName + "/settings.toml",
-  //         ""
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
+  const createNewFlow = async () => {
+    try {
+
+      let flowName = "Flow" + " " + flowPaths.length; 
+      //TODO: use from template of basic flow
+      if (appDocuments !== undefined) {
+        await createDir(appDocuments + "/flows/" + flowName, { recursive: true });
+
+        await writeTextFile(
+          appDocuments + "/flows/" + flowName + "/flow.toml",
+          ""
+        );
+        await writeTextFile(
+          appDocuments + "/flows/" + flowName + "/settings.toml",
+          ""
+        );
+
+        // get local files for ui again
+        await getLocalFiles();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   //get local files to show in UI when files change
   //read the exact toml file that is being editedf
@@ -107,6 +118,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     <LocalFileContext.Provider
       value={{
         flowPaths,
+        createNewFlow
       }}
     >
       {children}
