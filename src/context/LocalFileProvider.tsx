@@ -13,19 +13,23 @@ import {
   writeTextFile,
   FileEntry,
   createDir,
-  removeDir
+  removeDir,
+  copyFile,
+  exists,
 } from "@tauri-apps/api/fs";
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
+  renameFlow: (flowName: string, newFlowName: string) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
-  createNewFlow: () => { },
-  deleteFlow: () => { },
+  createNewFlow: () => {},
+  deleteFlow: () => {},
+  renameFlow: () => {},
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -56,11 +60,12 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
 
   const createNewFlow = async () => {
     try {
-
-      let flowName = "Flow" + " " + flowPaths.length; 
+      let flowName = "Flow" + " " + flowPaths.length;
       //TODO: use from template of basic flow
       if (appDocuments !== undefined) {
-        await createDir(appDocuments + "/flows/" + flowName, { recursive: true });
+        await createDir(appDocuments + "/flows/" + flowName, {
+          recursive: true,
+        });
 
         await writeTextFile(
           appDocuments + "/flows/" + flowName + "/flow.toml",
@@ -83,13 +88,56 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     //TODO: deal with situation where there are flow events in the db
     try {
       if (appDocuments !== undefined) {
-        await removeDir(appDocuments + "/flows/" + flowName, { recursive: true });
+        await removeDir(appDocuments + "/flows/" + flowName, {
+          recursive: true,
+        });
       }
     } catch (error) {
       console.error(error);
     }
   };
 
+  const allPathsExist = async (paths: string[]) => {
+    const results = await Promise.all(paths.map(path => exists(path)));
+    return results.every(result => result);
+  };
+
+  const renameFlow = async (flowName: string, newFlowName: string) => {
+    console.log("renameFlow", flowName, newFlowName);
+    try {
+      // if(true) throw Error("Not implemented yet");
+      if (appDocuments === undefined) throw Error("AppDocuments Undefiend");
+      if (flowName === newFlowName) throw Error("Flow names are the same");
+
+      let allExist = await allPathsExist([
+        appDocuments + "/flows/" + flowName + "/flow.toml",
+        appDocuments + "/flows/" + flowName + "/settings.toml",
+      ]);
+
+      if (!allExist) throw Error("Flow files do not all exist");
+
+      //make new dir first
+      await createDir(appDocuments + "/flows/" + newFlowName, {
+        recursive: true,
+      });
+      //copy files over
+      await copyFile(
+        appDocuments + "/flows/" + flowName + "/flow.toml",
+        appDocuments + "/flows/" + newFlowName + "/flow.toml"
+      );
+      await copyFile(
+        appDocuments + "/flows/" + flowName + "/settings.toml",
+        appDocuments + "/flows/" + newFlowName + "/settings.toml"
+      );
+
+      //delete old dir
+      await removeDir(appDocuments + "/flows/" + flowName, {
+        recursive: true,
+      });
+    } catch (error) {
+      console.error("Error renaming flow" + error);
+    }
+  };
   //get local files to show in UI when files change
   //read the exact toml file that is being editedf
   //TODO: make this less brute force
@@ -131,7 +179,8 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       value={{
         flowPaths,
         createNewFlow,
-        deleteFlow
+        deleteFlow,
+        renameFlow,
       }}
     >
       {children}
