@@ -49,10 +49,6 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
             println!("Error: {}", err);
         }
     }
-
-
-
-
 }
 
 async fn fetch_event<R: tauri::Runtime>(
@@ -92,7 +88,6 @@ async fn mark_as_done<R: tauri::Runtime>(
         }
     }
 }
-
 
 
 // Thoughts on events based architefture
