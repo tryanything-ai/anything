@@ -48,7 +48,3 @@ async fn fetch_event<R: tauri::Runtime>(
 //         }
 //     }
 // }
-
-
-// Thoughts on events based architefture
-//https://discord.com/channels/616186924390023171/731495028677148753/1133165388981620837
