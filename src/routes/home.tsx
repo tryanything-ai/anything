@@ -3,13 +3,24 @@ import { Link } from "react-router-dom";
 import { useSqlContext } from "../context/SqlProvider";
 
 export default function Home() {
-  const { flowPaths } = useLocalFileContext();
+  const { flowPaths, createNewFlow } = useLocalFileContext();
   const { tables } = useSqlContext();
   return (
     <div className="flex flex-row h-full w-full m-10">
       {/* FLows */}
       <div className="flex flex-col text-5xl text-white m-5 ">
-        <div className="m-2">Flows</div>
+        <div className="flex flex-row justify-between">
+          <div>Flows</div>
+          <button
+            className="btn btn-primary m-1 ml-4"
+            onClick={() => {
+              createNewFlow();
+            }}
+          >
+            New Flow
+          </button>
+        </div>
+
         <ul>
           {flowPaths.map((flow) => {
             return (
