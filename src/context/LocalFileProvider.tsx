@@ -91,6 +91,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         await removeDir(appDocuments + "/flows/" + flowName, {
           recursive: true,
         });
+
+        // get local files for ui again
+        await getLocalFiles();
       }
     } catch (error) {
       console.error(error);
