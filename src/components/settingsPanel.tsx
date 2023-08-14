@@ -20,18 +20,24 @@ const FlowSettingsPanel = () => {
     formState: { errors },
   } = useForm<Inputs>();
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
-    setLoading(true);
-    if (flow_name && data.flow_name != flow_name) {
-      renameFlow(flow_name, data.flow_name);
-      //wait for 2 seconds
-      setTimeout(() => {
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    try {
+      setLoading(true);
+      if (flow_name && data.flow_name != flow_name) {
+        let res = renameFlow(flow_name, data.flow_name);
+        //wait for 2 seconds
         navigate(`/flows/${data.flow_name}`);
-        setLoading(false);
-      }, 2000);
+        // setTimeout(() => {
+        //  
+        //   setLoading(false);
+        // }, 2000);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      console.log(data);
+      setLoading(false);
     }
-    console.log(data);
-    setLoading(false);
   };
 
   // console.log(watch("example")); // watch input value

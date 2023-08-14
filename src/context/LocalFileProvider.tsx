@@ -134,6 +134,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       await removeDir(appDocuments + "/flows/" + flowName, {
         recursive: true,
       });
+      await getLocalFiles();
     } catch (error) {
       console.error("Error renaming flow" + error);
     }
