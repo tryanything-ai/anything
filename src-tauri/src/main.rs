@@ -2,10 +2,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod sql;
-mod events2;
+mod events;
 
 use sql::plugin::Builder; 
-use events2::scheduler; 
+use events::scheduler; 
 
 fn main() {
     
