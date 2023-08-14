@@ -20,17 +20,19 @@ const FlowSettingsPanel = () => {
     formState: { errors },
   } = useForm<Inputs>();
 
+  const _deleteFlow = async () => {
+      if (flow_name) {
+        await deleteFlow(flow_name);
+        navigate("/");
+      }
+    }
+  
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
       if (flow_name && data.flow_name != flow_name) {
-        let res = renameFlow(flow_name, data.flow_name);
-        //wait for 2 seconds
+        await renameFlow(flow_name, data.flow_name);
         navigate(`/flows/${data.flow_name}`);
-        // setTimeout(() => {
-        //  
-        //   setLoading(false);
-        // }, 2000);
       }
     } catch (error) {
       console.log(error);
@@ -64,12 +66,7 @@ const FlowSettingsPanel = () => {
       </form>
       <button
         className="btn btn-error mt-4"
-        onClick={() => {
-          if (flow_name) {
-            deleteFlow(flow_name);
-            navigate("/");
-          }
-        }}
+        onClick={_deleteFlow}
       >
         Delete Flow
       </button>
