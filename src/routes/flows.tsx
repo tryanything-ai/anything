@@ -5,7 +5,7 @@ export default function Flows() {
   const { flowPaths } = useLocalFileContext();
   return (
     <div className="flex flex-col h-full w-full m-10">
-      <div className="text-5xl text-white m-5">Flows</div>
+      <div className="text-5xl text-primary-content m-5">Flows</div>
       <ul>
         {flowPaths.map((flow) => {
           return (
