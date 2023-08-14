@@ -75,7 +75,7 @@ const NodeButton = ({ nodeType, image_src, title, alt }: Node) => {
   return (
     <button
       onClick={() => addNode(nodeType)}
-      className="btn btn-neutral mt-2 pb-2"
+      className="btn btn-neutral mt-2 pb-2 max-w-md"
     >
       {image_src ? (
         <img
@@ -84,7 +84,7 @@ const NodeButton = ({ nodeType, image_src, title, alt }: Node) => {
           className="max-w-full max-h-full mt-2 ml-4"
         />
       ) : (
-        <h1 className="text-lg">{title}</h1>
+        <h1 className="text-lg truncate overflow-ellipsis">{title}</h1>
       )}
     </button>
   );

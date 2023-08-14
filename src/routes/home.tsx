@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="flex flex-row h-full w-full m-10">
       {/* FLows */}
-      <div className="flex flex-col text-5xl text-white m-5 ">
+      <div className="flex flex-col text-5xl text-primary-content m-5 ">
         <div className="flex flex-row justify-between">
           <div>Flows</div>
           <button
@@ -42,12 +42,12 @@ export default function Home() {
         </ul>
       </div>
       {/* Tables */}
-      <div className="flex flex-col text-5xl text-white m- w-96 m-5">
+      <div className="flex flex-col text-5xl text-primary-content m- w-96 m-5">
         <div className="m-2">Vectors</div>
         <ul></ul>
       </div>
       {/* Tables */}
-      <div className="flex flex-col text-5xl text-white m-5">
+      <div className="flex flex-col text-5xl text-primary-content m-5">
         <div className="m-2">Tables</div>
         <ul>
           {tables.map((table) => {
