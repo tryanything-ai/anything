@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useState,
   useEffect,
@@ -7,24 +7,25 @@ import React, {
 } from "react";
 
 import { useTauriContext } from "./TauriProvider";
-import { watch, watchImmediate } from "tauri-plugin-fs-watch-api";
+import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import {
   readDir,
-  readTextFile,
   writeTextFile,
   FileEntry,
-  createDir
+  createDir,
+  removeDir
 } from "@tauri-apps/api/fs";
-
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
   createNewFlow: () => void;
+  deleteFlow: (flowName: string) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
-  createNewFlow: () => {},
+  createNewFlow: () => { },
+  deleteFlow: () => { },
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -78,6 +79,17 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteFlow = async (flowName: string) => {
+    //TODO: deal with situation where there are flow events in the db
+    try {
+      if (appDocuments !== undefined) {
+        await removeDir(appDocuments + "/flows/" + flowName, { recursive: true });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   //get local files to show in UI when files change
   //read the exact toml file that is being editedf
   //TODO: make this less brute force
@@ -118,7 +130,8 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     <LocalFileContext.Provider
       value={{
         flowPaths,
-        createNewFlow
+        createNewFlow,
+        deleteFlow
       }}
     >
       {children}
