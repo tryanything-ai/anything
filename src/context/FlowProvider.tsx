@@ -52,7 +52,7 @@ interface FlowContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
-  addNode: (type: string) => void;
+  addNode: (type: string, specialData?: any) => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -62,7 +62,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   onEdgesChange: () => {},
   onConnect: () => {},
   toml: "",
-  addNode: (type: string) => {},
+  addNode: (type: string, specialData?: any) => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -76,7 +76,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [toml, setToml] = useState<string>("");
 
-  const addNode = (type: string) => {
+  const addNode = (type: string, specialData?: any) => {
     const nextId = findNextNodeId(nodes);
     const newNode: Node = {
       id: nextId,
@@ -85,7 +85,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         x: Math.random() * 500,
         y: Math.random() * 500,
       },
-      data: { label: `Node ${nextId}` },
+      data: { label: `Node ${nextId}`, ...specialData},
     };
     setNodes((nodes) => [...nodes, newNode]);
   };
@@ -119,6 +119,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //When a node is connected to an edge etc
   const onConnect: OnConnect = (params: any) => {
     console.log("onConnect params", params);
+    //TODO: protect against multiple connections to the same node
     setEdges((edges) => {
       let new_edges = addEdge(params, edges);
       let new_toml = stringify({
