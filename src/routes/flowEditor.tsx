@@ -12,6 +12,8 @@ import JavascriptNode from "../components/nodes/javascriptNode";
 import SettingsPanel from "../components/settingsPanel";
 
 import "reactflow/dist/style.css";
+import CronNode from "../components/nodes/cronNode";
+import TerminalNode from "../components/nodes/terminalNode";
 
 function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
@@ -23,6 +25,8 @@ function Flows() {
       vectorNode: VectorNode,
       pythonNode: PythonNode,
       javascriptNode: JavascriptNode,
+      cronNode: CronNode,
+      terminalNode: TerminalNode
     }),
     []
   );

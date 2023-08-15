@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useParams } from "react-router-dom";
+import TerminalNode from "./nodes/terminalNode";
 
-type Node = {
+export type Node = {
   nodeType: string;
   image_src?: string;
   title?: string;
   alt: string;
+  specialData?: any;
 };
 
 export const default_nodes: Node[] = [
@@ -17,15 +19,15 @@ export const default_nodes: Node[] = [
     alt: "Default Node",
   },
   {
-    nodeType: "pythonNode",
-    image_src: "/python-logo.svg",
-    alt: "Python Logo",
-  },
-  {
     nodeType: "javascriptNode",
     image_src: "/js-logo.svg",
     alt: "JS Logo",
   },
+  {
+    nodeType: 'cronNode', 
+    title: 'Cron Node',
+    alt: 'Cron Node'
+  },TerminalNode.Node
 ];
 
 const NodePanel = () => {
@@ -62,6 +64,7 @@ const NodePanel = () => {
           image_src={node.image_src}
           title={node.title}
           alt={node.alt}
+          specialData={node.specialData}
         />
       ))}
       <h1 className="text-2xl font-bold mt-2">Flows</h1>
@@ -77,11 +80,11 @@ const NodePanel = () => {
   );
 };
 
-const NodeButton = ({ nodeType, image_src, title, alt }: Node) => {
+const NodeButton = ({ nodeType, image_src, title, alt, specialData }: Node) => {
   const { addNode } = useFlowContext();
   return (
     <button
-      onClick={() => addNode(nodeType)}
+      onClick={() => addNode(nodeType, specialData)}
       className="btn btn-neutral mt-2 pb-2 max-w-md"
     >
       {image_src ? (
