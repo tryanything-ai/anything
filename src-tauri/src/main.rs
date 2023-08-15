@@ -3,6 +3,7 @@
 
 mod sql;
 mod events;
+mod rustformers; 
 
 use sql::plugin::Builder; 
 use events::scheduler; 
@@ -12,6 +13,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
         .plugin(Builder::default().build())
+        .plugin(rustformers::init())
         .setup(|app| {
 
             let app_handle = app.handle();
