@@ -16,6 +16,7 @@ import { SqlProvider } from "./context/SqlProvider";
 import { NavigationProvider } from "./context/NavigationProvider";
 import "./styles.css";
 import { EventLoopProvider } from "./context/EventLoopProvider";
+import { ModelProvider } from "./context/ModelsProvider";
 
 const router = createBrowserRouter([
   {
@@ -55,15 +56,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
       <LocalFileProvider>
-        <SqlProvider>
-          <EventLoopProvider>
-            <SettingsProvider>
-              <NavigationProvider>
-                <RouterProvider router={router} />
-              </NavigationProvider>
-            </SettingsProvider>
-          </EventLoopProvider>
-        </SqlProvider>
+        <ModelProvider>
+          <SqlProvider>
+            <EventLoopProvider>
+              <SettingsProvider>
+                <NavigationProvider>
+                  <RouterProvider router={router} />
+                </NavigationProvider>
+              </SettingsProvider>
+            </EventLoopProvider>
+          </SqlProvider>
+        </ModelProvider>
       </LocalFileProvider>
     </TauriProvider>
   </React.StrictMode>

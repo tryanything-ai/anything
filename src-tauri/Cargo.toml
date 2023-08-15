@@ -2,7 +2,7 @@
 name = "anything"
 version = "0.0.0"
 description = "A local app to do anything"
-authors = ["you"]
+authors = ["Carl Lippert"]
 license = ""
 repository = ""
 edition = "2021"
@@ -25,6 +25,21 @@ tokio = { version = "1", features = ["full"] } #for use in db also
 futures-core = "0.3"
 time = "0.3" # for parsing sql
 thiserror = "1.0" # for sql plugin adopted from tauri example
+lazy_static = "1.4.0"
+llm = "0.1.1"
+
+# inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
+# [target.'cfg(target_os = "macos")'.dependencies]
+# llm = { git = "https://github.com/rustformers/llm", branch = "main", features = ["metal"] }
+# cocoa = "0.24.1"
+
+# TODO: Figure out how to get CUDA working on Linux without ruining CUDA-less testing
+# [target.'cfg(target_os = "windows")'.dependencies]
+# llm = { git = "https://github.com/rustformers/llm", branch = "main", features = ["cublas"] }
+
+# [target.'cfg(all(not(target_os = "macos"), not(target_os = "windows")))'.dependencies]
+# llm = { git = "https://github.com/rustformers/llm", branch = "main", features = [] }
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
