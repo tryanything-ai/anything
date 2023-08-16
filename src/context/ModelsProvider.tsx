@@ -30,13 +30,15 @@ interface ModelContextInterface {
   architectures: any[];
   modelPromptTemplates: ModelPromptTemplate[];
   downloadModel: (fileName: string) => Promise<any>;
+  callModel: (prompt: string) => Promise<any>;
 }
 
 export const ModelContext = createContext<ModelContextInterface>({
   models: [],
   architectures: [],
   modelPromptTemplates: [],
-  downloadModel: async (fileName: string) => {},
+  downloadModel: async (fileName: string) => { },
+  callModel: async (prompt: string) => { },
 });
 
 export const useModelContext = () => useContext(ModelContext);
@@ -52,6 +54,13 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
   const downloadModel = async (filename: string) => {
     const result = await invoke("plugin:local_models|download_model", {
       filename,
+    });
+    return result;
+  }
+
+  const callModel = async (prompt: string) => {
+    const result = await invoke("plugin:local_models|call_model", {
+      prompt,
     });
     return result;
   }
@@ -75,7 +84,7 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ModelContext.Provider
-      value={{ models, modelPromptTemplates, architectures, downloadModel }}
+      value={{ models, modelPromptTemplates, architectures, downloadModel, callModel }}
     >
       {children}
     </ModelContext.Provider>
