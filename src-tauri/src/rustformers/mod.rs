@@ -199,6 +199,6 @@ async fn start(
   
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("rustformers")
-      .invoke_handler(tauri::generate_handler![get_prompt_templates, get_architectures, get_models, start])
+      .invoke_handler(tauri::generate_handler![get_prompt_templates, get_architectures, get_models])
       .build()
   }

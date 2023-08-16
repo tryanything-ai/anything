@@ -37,17 +37,17 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
   const [architectures, setArchitectures] = useState<any[]>([]);
 
   useEffect(() => {
-    invoke("plugin:rustformers|get_prompt_templates").then((result) => {
+    invoke("plugin:local_models|get_prompt_templates").then((result) => {
       console.log("Prompt Templates from plugin" + JSON.stringify(result));
       setModelPromptTemplates(result as ModelPromptTemplate[]);
     });
 
-    invoke("plugin:rustformers|get_architectures").then((result) => {
+    invoke("plugin:local_models|get_architectures").then((result) => {
       console.log("Architectures from plugin" + JSON.stringify(result));
       setArchitectures(result as any[]);
     });
 
-    invoke("plugin:rustformers|get_models").then((result) => {
+    invoke("plugin:local_models|get_models").then((result) => {
       console.log("Models from plugin" + JSON.stringify(result));
       setModels(result as string[]);
     });
