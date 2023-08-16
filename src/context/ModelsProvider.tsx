@@ -32,8 +32,8 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
   const [models, setModels] = useState<string[]>([]);
   const [modelPromptTemplates, setModelPromptTemplates] = useState<
     ModelPromptTemplate[]
-    >([]);
-  
+  >([]);
+
   const [architectures, setArchitectures] = useState<any[]>([]);
 
   useEffect(() => {
@@ -46,10 +46,17 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
       console.log("Architectures from plugin" + JSON.stringify(result));
       setArchitectures(result as any[]);
     });
+
+    invoke("plugin:rustformers|get_models").then((result) => {
+      console.log("Models from plugin" + JSON.stringify(result));
+      setModels(result as string[]);
+    });
   }, []);
 
   return (
-    <ModelContext.Provider value={{ models, modelPromptTemplates, architectures }}>
+    <ModelContext.Provider
+      value={{ models, modelPromptTemplates, architectures }}
+    >
       {children}
     </ModelContext.Provider>
   );
