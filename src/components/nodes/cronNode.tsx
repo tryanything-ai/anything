@@ -7,9 +7,11 @@ let node: Node = {
   nodeType: "cronNode",
   title: "Cron Node",
   alt: "Cron Node",
+  nodeData: {
+    start: true,
+  },
   specialData: {
     pattern: "",
-    start: true, //a node that can be the start of a flow
   },
 };
 

@@ -6,12 +6,18 @@ import TerminalNode from "./nodes/terminalNode";
 import ModelNode from "./nodes/modelNode";
 import CronNode from "./nodes/cronNode";
 import JavascriptNode from "./nodes/javascriptNode";
+import ManualNode from "./nodes/manualNode";
+
+export type NodeData = {
+  start: boolean, //is this a starting point for the flow?
+}; 
 
 export type Node = {
   nodeType: string;
   image_src?: string;
   title?: string;
   alt: string;
+  nodeData: NodeData;
   specialData?: any;
 };
 
@@ -20,6 +26,7 @@ export const default_nodes: Node[] = [
   CronNode.Node,
   TerminalNode.Node,
   ModelNode.Node,
+  ManualNode.Node
 ];
 
 const NodePanel = () => {
@@ -39,6 +46,7 @@ const NodePanel = () => {
           nodeType: "flow",
           title: path.name ? path.name : "",
           alt: path.name ? path.name : "",
+          nodeData: { start: false },
         });
       }
     });
@@ -56,6 +64,7 @@ const NodePanel = () => {
           image_src={node.image_src}
           title={node.title}
           alt={node.alt}
+          nodeData={node.nodeData}
           specialData={node.specialData}
         />
       ))}
@@ -66,17 +75,18 @@ const NodePanel = () => {
           title={node.title}
           image_src={node.image_src}
           alt={node.alt}
+          nodeData={node.nodeData}
         />
       ))}
     </div>
   );
 };
 
-const NodeButton = ({ nodeType, image_src, title, alt, specialData }: Node) => {
+const NodeButton = ({ nodeType, image_src, title, alt, specialData, nodeData }: Node) => {
   const { addNode } = useFlowContext();
   return (
     <button
-      onClick={() => addNode(nodeType, specialData)}
+      onClick={() => addNode(nodeType, { ...specialData, ...nodeData })}
       className="btn btn-neutral mt-2 pb-2 max-w-md"
     >
       {image_src ? (

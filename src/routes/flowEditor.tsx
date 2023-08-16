@@ -15,11 +15,13 @@ import "reactflow/dist/style.css";
 import CronNode from "../components/nodes/cronNode";
 import TerminalNode from "../components/nodes/terminalNode";
 import ModelNode from "../components/nodes/modelNode";
+import ManualNode from "../components/nodes/manualNode";
 
 function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
     useFlowContext();
-  const { nodePanel, chatPanel, tomlPanel, settingsPanel } = useNavigationContext();
+  const { nodePanel, chatPanel, tomlPanel, settingsPanel } =
+    useNavigationContext();
 
   const nodeTypes = useMemo(
     () => ({
@@ -29,6 +31,7 @@ function Flows() {
       cronNode: CronNode,
       terminalNode: TerminalNode,
       modelNode: ModelNode,
+      manualNode: ManualNode,
     }),
     []
   );
@@ -64,12 +67,11 @@ function Flows() {
             <ChatPanel />
           </div>
         ) : null}
-         {settingsPanel ? (
+        {settingsPanel ? (
           <div className="w-1/4">
             <SettingsPanel />
           </div>
-          ) : null    
-          }
+        ) : null}
         {tomlPanel ? (
           <div className="w-1/2">
             <TomlPanel />

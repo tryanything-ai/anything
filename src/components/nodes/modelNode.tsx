@@ -8,6 +8,9 @@ let node: Node = {
   nodeType: "modelNode",
   title: "Model Node",
   alt: "Model Node",
+  nodeData: {
+    start: false,
+  },
   specialData: {
     filename: "",
   },

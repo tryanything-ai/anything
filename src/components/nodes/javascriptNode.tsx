@@ -24,6 +24,9 @@ let node: Node = {
   title: "JS Node",
   image_src: "/js-logo.svg",
   alt: "JS Logo",
+  nodeData: {
+    start: false,
+  },
   specialData: {
     code: "",
     start: false,

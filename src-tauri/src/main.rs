@@ -3,8 +3,7 @@
 
 mod sql;
 mod events;
-// mod rustformers; 
-mod local_models; 
+mod local_models;
 
 use sql::plugin::Builder; 
 use events::scheduler; 
