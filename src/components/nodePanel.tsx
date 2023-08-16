@@ -3,6 +3,7 @@ import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useParams } from "react-router-dom";
 import TerminalNode from "./nodes/terminalNode";
+import ModelNode from "./nodes/modelNode";
 
 export type Node = {
   nodeType: string;
@@ -27,7 +28,8 @@ export const default_nodes: Node[] = [
     nodeType: 'cronNode', 
     title: 'Cron Node',
     alt: 'Cron Node'
-  },TerminalNode.Node
+  }, TerminalNode.Node, 
+  ModelNode.Node,
 ];
 
 const NodePanel = () => {

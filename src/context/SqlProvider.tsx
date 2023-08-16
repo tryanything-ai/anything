@@ -8,6 +8,7 @@ import React, {
 import { invoke } from "@tauri-apps/api";
 
 const DB_STRING = "sqlite:test.db";
+
 //Load Database once
 invoke("plugin:sqlite|load");
 
