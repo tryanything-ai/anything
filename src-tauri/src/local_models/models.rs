@@ -6,6 +6,8 @@ use std::fs;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::cmp::min;
+// use std::io::Write;
+use llm::Model as LLMModel;
 
 use futures_util::StreamExt;
 // use lazy_static::lazy_static;
@@ -169,4 +171,51 @@ where
         downloaded = new_downloaded;
     }
     Ok(PathBuf::from(destination))
+}
+
+
+pub async fn run_model(prompt: String) {
+
+    let models_dir = get_models_dir().expect("didnt find models dir"); 
+    let path = models_dir.join("llama-2-7b-chat.ggmlv3.q2_K.bin");
+    println!("models dir: {:?}", models_dir);
+    println!("path: {:?}", path);
+    let llama: llm::models::Llama = llm::load::<llm::models::Llama>(
+        &path,
+        Default::default(),
+        llm::load_progress_callback_stdout
+    )
+    .unwrap_or_else(|err| panic!("Failed to load model: {}", err));
+
+    println!("Model loaded successfully");
+
+// use the model to generate text from a prompt
+let mut session = llama.start_session(Default::default());
+let res = session.infer::<std::convert::Infallible>(
+    // model to use for text generation
+    &llama,
+    // randomness provider
+    &mut rand::thread_rng(),
+    // the prompt to use for text generation, as well as other
+    // inference parameters
+    &llm::InferenceRequest {
+        prompt: &prompt,
+        ..Default::default()
+    },
+    // llm::OutputRequest
+    &mut Default::default(),
+    // output callback
+    |t| {
+        print!("{t}");
+        std::io::stdout().flush().unwrap();
+
+        Ok(())
+    }
+);
+
+match res {
+    Ok(result) => println!("\n\nInference stats:\n{result}"),
+    Err(err) => println!("\n{err}"),
+}
+
 }

@@ -6,15 +6,17 @@
 use tauri::{
     plugin::{Builder, TauriPlugin},
     Runtime,
-    Window,
+    // Window,
   };
+
+extern crate llm;
 
 pub mod config; 
 pub mod prompt;
 pub mod models; 
 pub mod events;
 
-use events::Event; 
+// use events::Event; 
 use prompt::Template; 
 use models::{ Architecture, Model };
 use bytesize::ByteSize;
@@ -36,11 +38,18 @@ async fn get_models() -> Result<Vec<Model>, String> {
 }
 
 #[tauri::command]
+async fn call_model(prompt: String) -> Result<(), String> {
+    models::run_model(prompt)
+        .await; 
+    Ok(())
+}
+
+#[tauri::command]
 async fn download_model(  
     // window: Window,
     filename: &str
 ) -> Result<(), String> { 
-    let path = models::get_local_model(filename, |downloaded, total, progress| {
+    let path = models::get_local_model(filename, |downloaded, total, _progress| {
         let message = format!(
             "Downloading model ({} / {})",
             ByteSize(downloaded),
@@ -54,10 +63,8 @@ async fn download_model(
     Ok(())
 }
 
-
-
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("local_models")
-      .invoke_handler(tauri::generate_handler![get_architectures, get_models, get_prompt_templates, download_model])
+      .invoke_handler(tauri::generate_handler![get_architectures, get_models, get_prompt_templates, download_model, call_model])
       .build()
 }

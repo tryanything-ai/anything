@@ -35,11 +35,17 @@ tracing-appender = "0.2.2"
 bytesize = { version = "1.1.0", features = ["serde"] }
 reqwest = { version = "0.11.17", features = ["stream"] }
 futures-util = "0.3.28"
+rand = "0.8"
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]
+# llm = { git = "https://github.com/rustformers/llm", branch = "main", features= ["metal"] }
+# [target.'cfg(target_os = "macos")'.dependencies]
+# llm = { git = "https://github.com/rustformers/llm", features = ["models"] }
+# cocoa = "0.24.1"
+# llm-base = { git = "https://github.com/rustformers/llm/tree/main/crates/llm-base", branch = "main" }
 # llm = { git = "https://github.com/rustformers/llm", rev = "bdd9c7d7c2ccaf61d392ab1e5feb312302aa8ff5", features = ["metal"] }
 # cocoa = "0.24.1"
-
+# llm = { git= "https://github.com/carllippert/llm-base-fix"}
 # TODO: Figure out how to get CUDA working on Linux without ruining CUDA-less testing
 # [target.'cfg(target_os = "windows")'.dependencies]
 # llm = { git = "https://github.com/rustformers/llm", branch = "main", features = ["cublas"] }
