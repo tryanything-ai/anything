@@ -14,6 +14,7 @@ import SettingsPanel from "../components/settingsPanel";
 import "reactflow/dist/style.css";
 import CronNode from "../components/nodes/cronNode";
 import TerminalNode from "../components/nodes/terminalNode";
+import ModelNode from "../components/nodes/modelNode";
 
 function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
@@ -26,7 +27,8 @@ function Flows() {
       pythonNode: PythonNode,
       javascriptNode: JavascriptNode,
       cronNode: CronNode,
-      terminalNode: TerminalNode
+      terminalNode: TerminalNode,
+      modelNode: ModelNode,
     }),
     []
   );

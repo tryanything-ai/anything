@@ -5,6 +5,7 @@ import { useSqlContext } from "../context/SqlProvider";
 export default function Home() {
   const { flowPaths, createNewFlow } = useLocalFileContext();
   const { tables } = useSqlContext();
+
   return (
     <div className="flex flex-row h-full w-full m-10">
       {/* FLows */}
@@ -43,12 +44,33 @@ export default function Home() {
       </div>
       {/* Tables */}
       <div className="flex flex-col text-5xl text-primary-content m- w-96 m-5">
-        <div className="m-2">Vectors</div>
+        <div className="flex flex-row justify-between">
+          <div>Vectors</div>
+          <button
+            className="btn btn-primary m-1 ml-4"
+            onClick={() => {
+              // createNewFlow();
+            }}
+          >
+            New Vector
+          </button>
+        </div>
+
         <ul></ul>
       </div>
       {/* Tables */}
       <div className="flex flex-col text-5xl text-primary-content m-5">
-        <div className="m-2">Tables</div>
+        <div className="flex flex-row justify-between">
+          <div>Tables</div>
+          <button
+            className="btn btn-primary m-1 ml-4"
+            onClick={() => {
+              // createNewFlow();
+            }}
+          >
+            New Table
+          </button>
+        </div>
         <ul>
           {tables.map((table) => {
             return (
