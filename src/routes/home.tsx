@@ -1,10 +1,13 @@
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { Link } from "react-router-dom";
 import { useSqlContext } from "../context/SqlProvider";
+import { useModelContext } from "../context/ModelsProvider";
 
 export default function Home() {
   const { flowPaths, createNewFlow } = useLocalFileContext();
   const { tables } = useSqlContext();
+  const { models } = useModelContext(); 
+
   return (
     <div className="flex flex-row h-full w-full m-10">
       {/* FLows */}
@@ -43,8 +46,37 @@ export default function Home() {
       </div>
       {/* Tables */}
       <div className="flex flex-col text-5xl text-primary-content m- w-96 m-5">
-        <div className="m-2">Vectors</div>
-        <ul></ul>
+      <div className="flex flex-row justify-between">
+          <div>Models</div>
+          {/* <button
+            className="btn btn-primary m-1 ml-4"
+            onClick={() => {
+              createNewFlow();
+            }}
+          >
+            New Flow
+          </button> */}
+        </div>
+
+        <ul>
+          {models.map((model) => {
+            return (
+              <Link
+                key={model.name}
+                to={`modelss/${model.name}`}
+                className="card w-96 bg-base-300 shadow-xl my-2"
+              >
+                <div className="card-body">
+                  <h2 className="card-title">{model.name}</h2>
+                  {/* <p>Flow Description</p> */}
+                  {/* <div className="card-actions justify-end">
+                  <button className="btn btn-primary">Buy Now</button>
+                </div> */}
+                </div>
+              </Link>
+            );
+          })}
+        </ul>
       </div>
       {/* Tables */}
       <div className="flex flex-col text-5xl text-primary-content m-5">
