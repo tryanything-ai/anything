@@ -32,10 +32,10 @@ flume = "0.10.14"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["json", "fmt", "env-filter"] }
 tracing-appender = "0.2.2"
-
+bytesize = { version = "1.1.0", features = ["serde"] }
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]
-# llm = { git = "https://github.com/rustformers/llm", branch = "main", features = ["metal"] }
+# llm = { git = "https://github.com/rustformers/llm", rev = "bdd9c7d7c2ccaf61d392ab1e5feb312302aa8ff5", features = ["metal"] }
 # cocoa = "0.24.1"
 
 # TODO: Figure out how to get CUDA working on Linux without ruining CUDA-less testing
