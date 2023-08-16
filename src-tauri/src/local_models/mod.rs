@@ -49,7 +49,7 @@ async fn download_model(
     // window: Window,
     filename: &str
 ) -> Result<(), String> { 
-    let path = models::get_local_model(filename, |downloaded, total, _progress| {
+    let _path = models::get_local_model(filename, |downloaded, total, _progress| {
         let message = format!(
             "Downloading model ({} / {})",
             ByteSize(downloaded),
