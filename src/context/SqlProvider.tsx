@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import { invoke } from "@tauri-apps/api";
+import { v4 as uuidv4 } from "uuid";
 
 const DB_STRING = "sqlite:test.db";
 
@@ -15,7 +16,6 @@ invoke("plugin:sqlite|load");
 interface SqlContextInterface {
   tables: any[];
   addEvent: (
-    event_id: string,
     flow_id: string,
     flow_name: string,
     flow_version: string,
@@ -58,7 +58,6 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addEvent = async (
-    event_id: string,
     flow_id: string,
     flow_name: string,
     flow_version: string,
@@ -67,12 +66,11 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     created_at: string,
     data: any
   ) => {
-    // return true;
     try {
       await db.execute(
         "INSERT INTO events (event_id, flow_id, flow_name, flow_version, stage, status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
         [
-          event_id,
+          uuidv4(),
           flow_id,
           flow_name,
           flow_version,

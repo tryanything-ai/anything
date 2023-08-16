@@ -1,6 +1,5 @@
 import { useSqlContext } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 const ChatPanel = () => {
   const { addEvent } = useSqlContext();
@@ -12,7 +11,6 @@ const ChatPanel = () => {
     if (flow_name === undefined) return;
 
     addEvent(
-      uuidv4(),
       "1",
       flow_name,
       "0.0.1",
