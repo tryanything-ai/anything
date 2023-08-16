@@ -7,7 +7,8 @@ use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::cmp::min;
 // use std::io::Write;
-use llm::Model as LLMModel;
+// use std::io::Write;
+use llm::Model;
 
 use futures_util::StreamExt;
 // use lazy_static::lazy_static;
@@ -21,7 +22,7 @@ use std::io::Write;
 // use tracing::info;
 
 lazy_static! {
-    pub static ref AVAILABLE_MODELS: Vec<Model> =
+    pub static ref AVAILABLE_MODELS: Vec<MyModel> =
         serde_json::from_str(include_str!("./data/models.json")).unwrap();
     pub static ref AVAILABLE_ARCHITECTURES: Vec<Architecture> = vec![
         Architecture {
@@ -57,7 +58,7 @@ lazy_static! {
     ];
 }
 
-pub async fn get_available_models() -> Result<Vec<Model>> {
+pub async fn get_available_models() -> Result<Vec<MyModel>> {
     let dir = get_models_dir()?;
     let mut known_models = AVAILABLE_MODELS.clone();
     let mut models = fs::read_dir(dir)?
@@ -67,7 +68,7 @@ pub async fn get_available_models() -> Result<Vec<Model>> {
                     if filename.ends_with(".bin")
                         && !known_models.iter().any(|m| m.filename.as_str() == filename)
                     {
-                        return Some(Model {
+                        return Some(MyModel {
                             name: filename.to_string(),
                             filename: filename.to_string(),
                             custom: true,
@@ -102,7 +103,7 @@ where
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Model {
+pub struct MyModel {
     name: String,
     url: String,
     #[serde(default)]
@@ -182,8 +183,18 @@ pub async fn run_model(prompt: String) {
     println!("path: {:?}", path);
     let llama: llm::models::Llama = llm::load::<llm::models::Llama>(
         &path,
-        Default::default(),
-        llm::load_progress_callback_stdout
+        llm::ModelParameters::Default::default(),
+        llm::load_progress_callback_stdout,
+        |_progress| {
+            // let message = format!(
+            //     "Downloading model ({} / {})",
+            //     ByteSize(downloaded),
+            //     ByteSize(total)
+            // );
+            // println!("{}", progress::bar(progress, 50))
+            // Event::ModelLoading { message, progress }.send(&window);
+        }
+        
     )
     .unwrap_or_else(|err| panic!("Failed to load model: {}", err));
 
