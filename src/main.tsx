@@ -9,6 +9,8 @@ import Tables from "./routes/tables";
 import FlowEditor from "./routes/flowEditor";
 import TableData from "./routes/tableData";
 import Flows from "./routes/flows";
+import Models from "./routes/models";
+import Vectors from "./routes/vectors";
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
@@ -31,6 +33,14 @@ const router = createBrowserRouter([
       {
         path: "/flows",
         element: <Flows />,
+      },
+      {
+        path: "/models",
+        element: <Models />,
+      },
+      {
+        path: "/vectors",
+        element: <Vectors />,
       },
       {
         path: "flows/:flow_name",
