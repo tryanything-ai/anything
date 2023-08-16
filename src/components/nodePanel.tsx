@@ -4,6 +4,8 @@ import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useParams } from "react-router-dom";
 import TerminalNode from "./nodes/terminalNode";
 import ModelNode from "./nodes/modelNode";
+import CronNode from "./nodes/cronNode";
+import JavascriptNode from "./nodes/javascriptNode";
 
 export type Node = {
   nodeType: string;
@@ -14,21 +16,9 @@ export type Node = {
 };
 
 export const default_nodes: Node[] = [
-  {
-    nodeType: "default",
-    title: "Default Node",
-    alt: "Default Node",
-  },
-  {
-    nodeType: "javascriptNode",
-    image_src: "/js-logo.svg",
-    alt: "JS Logo",
-  },
-  {
-    nodeType: 'cronNode', 
-    title: 'Cron Node',
-    alt: 'Cron Node'
-  }, TerminalNode.Node, 
+  JavascriptNode.Node,
+  CronNode.Node,
+  TerminalNode.Node,
   ModelNode.Node,
 ];
 
