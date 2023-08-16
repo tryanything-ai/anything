@@ -14,8 +14,19 @@ type ModelPromptTemplate = {
   template: string;
 };
 
+type Model = {
+  recommended: boolean;
+  name: string;
+  description: string;
+  filename: string;
+  url: string;
+  parameterCount: string;
+  quantization: string;
+  labels: string[]; // Assuming the labels array contains strings
+};
+
 interface ModelContextInterface {
-  models: any[];
+  models: Model[];
   architectures: any[];
   modelPromptTemplates: ModelPromptTemplate[];
 }
@@ -29,7 +40,7 @@ export const ModelContext = createContext<ModelContextInterface>({
 export const useModelContext = () => useContext(ModelContext);
 
 export const ModelProvider = ({ children }: { children: ReactNode }) => {
-  const [models, setModels] = useState<string[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [modelPromptTemplates, setModelPromptTemplates] = useState<
     ModelPromptTemplate[]
   >([]);
@@ -49,7 +60,7 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
 
     invoke("plugin:local_models|get_models").then((result) => {
       console.log("Models from plugin" + JSON.stringify(result));
-      setModels(result as string[]);
+      setModels(result as Model[]);
     });
   }, []);
 
