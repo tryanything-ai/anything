@@ -29,12 +29,14 @@ interface ModelContextInterface {
   models: Model[];
   architectures: any[];
   modelPromptTemplates: ModelPromptTemplate[];
+  downloadModel: (fileName: string) => Promise<any>;
 }
 
 export const ModelContext = createContext<ModelContextInterface>({
   models: [],
   architectures: [],
   modelPromptTemplates: [],
+  downloadModel: async (fileName: string) => {},
 });
 
 export const useModelContext = () => useContext(ModelContext);
@@ -46,6 +48,13 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
   >([]);
 
   const [architectures, setArchitectures] = useState<any[]>([]);
+
+  const downloadModel = async (filename: string) => {
+    const result = await invoke("plugin:local_models|download_model", {
+      filename,
+    });
+    return result;
+  }
 
   useEffect(() => {
     invoke("plugin:local_models|get_prompt_templates").then((result) => {
@@ -66,7 +75,7 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ModelContext.Provider
-      value={{ models, modelPromptTemplates, architectures }}
+      value={{ models, modelPromptTemplates, architectures, downloadModel }}
     >
       {children}
     </ModelContext.Provider>

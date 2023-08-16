@@ -3,6 +3,20 @@ use anyhow::Result;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::fs; 
+use std::fs::create_dir_all;
+use std::path::PathBuf;
+use std::cmp::min;
+
+use futures_util::StreamExt;
+// use lazy_static::lazy_static;
+// use serde::{Deserialize, Serialize};
+// use std::cmp::min;
+// use std::convert::Infallible;
+// use std::fs;
+// use std::fs::create_dir_all;
+use std::io::Write;
+// use std::path::PathBuf;
+// use tracing::info;
 
 lazy_static! {
     pub static ref AVAILABLE_MODELS: Vec<Model> =
@@ -68,21 +82,21 @@ pub async fn get_available_models() -> Result<Vec<Model>> {
     Ok(models)
 }
 
-// pub async fn get_local_model<F>(filename: &str, progress: F) -> Result<PathBuf>
-// where
-//     F: Fn(u64, u64, f32),
-// {
-//     let models_dir = get_models_dir()?;
-//     if !models_dir.join(filename).exists() {
-//         let model = AVAILABLE_MODELS
-//             .iter()
-//             .find(|m| m.filename == filename)
-//             .ok_or(anyhow::anyhow!("Model not found"))?;
-//         download_file(&model.url, &models_dir, &model.filename, progress).await?;
-//         // info!(filename = model.filename, "finished downloading model");
-//     }
-//     Ok(models_dir.join(filename))
-// }
+pub async fn get_local_model<F>(filename: &str, progress: F) -> Result<PathBuf>
+where
+    F: Fn(u64, u64, f32),
+{
+    let models_dir = get_models_dir()?;
+    if !models_dir.join(filename).exists() {
+        let model = AVAILABLE_MODELS
+            .iter()
+            .find(|m| m.filename == filename)
+            .ok_or(anyhow::anyhow!("Model not found"))?;
+        download_file(&model.url, &models_dir, &model.filename, progress).await?;
+        // info!(filename = model.filename, "finished downloading model");
+    }
+    Ok(models_dir.join(filename))
+}
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -126,33 +140,33 @@ pub struct Architecture {
     pub inner: llm::ModelArchitecture,
 }
 
-// async fn download_file<F>(
-//     url: &str,
-//     destination: &PathBuf,
-//     filename: &str,
-//     progress: F,
-// ) -> Result<PathBuf>
-// where
-//     F: Fn(u64, u64, f32),
-// {
-//     create_dir_all(destination)?;
-//     let destination = destination.join(filename);
-//     let destination = destination.to_str().unwrap();
-//     // info!("downloading model to {}", destination);
-//     let response = reqwest::get(url).await?;
-//     let total_size = response.content_length().unwrap_or(0);
-//     let mut stream = response.bytes_stream();
-//     let mut file = std::fs::File::create(destination)?;
-//     let mut downloaded: u64 = 0;
-//     while let Some(item) = stream.next().await {
-//         let chunk = item?;
-//         file.write_all(&chunk)?;
-//         let new_downloaded = min(downloaded + chunk.len() as u64, total_size);
-//         if total_size > 0 {
-//             let p = new_downloaded as f32 / total_size as f32;
-//             progress(downloaded, total_size, p);
-//         }
-//         downloaded = new_downloaded;
-//     }
-//     Ok(PathBuf::from(destination))
-// }
+async fn download_file<F>(
+    url: &str,
+    destination: &PathBuf,
+    filename: &str,
+    progress: F,
+) -> Result<PathBuf>
+where
+    F: Fn(u64, u64, f32),
+{
+    create_dir_all(destination)?;
+    let destination = destination.join(filename);
+    let destination = destination.to_str().unwrap();
+    println!("downloading model to {}", destination);
+    let response = reqwest::get(url).await?;
+    let total_size = response.content_length().unwrap_or(0);
+    let mut stream = response.bytes_stream();
+    let mut file = std::fs::File::create(destination)?;
+    let mut downloaded: u64 = 0;
+    while let Some(item) = stream.next().await {
+        let chunk = item?;
+        file.write_all(&chunk)?;
+        let new_downloaded = min(downloaded + chunk.len() as u64, total_size);
+        if total_size > 0 {
+            let p = new_downloaded as f32 / total_size as f32;
+            progress(downloaded, total_size, p);
+        }
+        downloaded = new_downloaded;
+    }
+    Ok(PathBuf::from(destination))
+}
