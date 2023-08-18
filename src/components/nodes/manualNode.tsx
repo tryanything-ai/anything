@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import ReactFlow, { Handle, Position } from "reactflow";
 import { Node } from "../nodePanel";
-import { useSqlContext } from "../../context/SqlProvider";
+import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
 
 let node: Node = {
@@ -22,16 +22,20 @@ export default function ManualNode({ data }: { data: any }) {
 
   const createEvent = async () => {
     if (flow_name === undefined) return;
-
-    addEvent(
-      "1",
-      flow_name,
-      "0.0.0",
-      "dev",
-      "PENDING",
-      new Date().toISOString(),
-      {}
-    );
+    let event: EventInput = {
+      flow_id: flow_name, //flow_id
+      flow_name: flow_name,
+      flow_version: "0.0.1",
+      node_id: "node_id",
+      node_type: "manualNode", //node type, lets the machine know it should boostrap the
+      stage: "dev",
+      worker_type: "start",
+      event_status: "PENDING", //EVENT STATUS
+      session_status: "PENDING", //SESSION STATUS
+      created_at: new Date().toISOString(),
+      data: { test: true },
+    };
+    addEvent(event);
 
     //send event to sql
     //let event system process it by running something in rust
