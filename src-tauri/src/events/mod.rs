@@ -1,85 +1,17 @@
 use tokio::time::{sleep, Duration};
 use tauri::{
-    AppHandle,  Runtime, Manager
+    AppHandle, Runtime, Manager
 };
 
-use std::{collections::{HashSet, HashMap, VecDeque}, fs};
+use std::{collections::{HashMap, VecDeque}, fs};
 
 use crate::sql::plugin::{select, DbInstances, DB_STRING, execute, Error};
 use serde_json::Value as JsonValue;
 
 use tauri::api::path::document_dir;
 
-use serde::Deserialize;
-
 use std::io::{Result, Error as IOError, ErrorKind};
 
-
-fn read_from_documents(flow_name: &str) -> Result<String> {
-    // Get the user's Documents directory
-    let mut path = document_dir()
-        .ok_or_else(|| IOError::new(ErrorKind::NotFound, "Documents directory not found"))?;
-    
-    // Append the required subdirectories and filename
-    path.push("Anything");
-    path.push("flows");
-    path.push(flow_name); 
-    path.push("flow.toml"); 
-
-    // Check if the file exists
-    if !path.exists() {
-        return Err(IOError::new(ErrorKind::NotFound, format!("File not found at {:?}", path)));
-    }
-
-    // Read and return the file's contents
-    fs::read_to_string(path)
-}
-
-#[derive(Debug, Deserialize)]
-struct Position {
-    x: f64,
-    y: f64,
-}
-
-#[derive(Debug, Deserialize)]
-struct Data {
-    label: String,
-    start: Option<bool>,
-    command: Option<String>,
-    filename: Option<String>,
-    code: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct Node {
-    id: String,
-    #[serde(rename = "type")]
-    type_: String,
-    width: u32,
-    height: u32,
-    selected: bool,
-    dragging: bool,
-    position: Position,
-    data: Data,
-    positionAbsolute: Position,
-}
-
-#[derive(Debug, Deserialize)]
-struct Edge {
-    source: String,
-    source_handle: String,
-    target: String,
-    target_handle: String,
-    id: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct Graph {
-    nodes: Vec<Node>,
-    edges: Vec<Edge>,
-}
-
-// the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
  struct Payload {
   message: String,
@@ -101,8 +33,6 @@ pub async fn scheduler<R: Runtime>(app: &AppHandle<R>){
 async fn process<R: Runtime>(app: &AppHandle<R>) {
 
     let res = fetch_event(app).await; 
-    println!("Processesed this time blocks tasks.");
-    println!("res: {:?}", res);
     
     let sql_event_id: &str;
 
@@ -110,26 +40,23 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
         Ok(items) => {
             if let Some(item) = items.get(0) {
                 if let Some(event_id) = item.get("event_id") {
-                
-                      // emit the `event-name` event to all webview windows on the frontend
                     
-                    // if let Some(flow_name) = item.get("flow_name") {
+                    //TODO: let frontend know wtf is going on
+                      // emit the `event-name` event to all webview windows on the frontend
                     //     app.emit_all("current_task", 
                     //     Payload { name: flow_name.to_string(),  message: "Tauri is awesome! it automated my work!".into() })
                     //     .unwrap();
-                    //     println!("flow_name: {}", flow_name);
-                    // } else {
-                    //     println!("event_name not found in the item.");
-                    // }
-                        //TODO: change name upstream to "node_type" to avoid conflict
-                    if let Some(node_type) = item.get("node_type") {
+                   
+                    if let Some(worker_type) = item.get("worker_type") {
                         sql_event_id = event_id.as_str().unwrap();
 
-                        if node_type != "start" {
+                        if worker_type != "start" {
+                            println!("Worker type is not Start. Doing Work."); 
                             //TODO: if node type is "START" create the other events
                             mark_as_done(app, sql_event_id.to_string()).await;
                             println!("event_id: {} marked as COMPLETE", event_id);
                         } else {
+                            println!("Worker type is START. Determining what to build"); 
                             if let Some(flow_name_value) = item.get("flow_name") {
                                 if let Some(flow_name_str) = flow_name_value.as_str() {
                                     // Assuming create_events_from_graph expects a &str
@@ -142,19 +69,10 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
                                 }
                             }
                         }
-                       
-                        // app.emit_all("current_task", 
-                        // Payload { name: flow_name.to_string(),  message: "Tauri is awesome! it automated my work!".into() })
-                        // .unwrap();
-                        // println!("flow_name: {}", flow_name);
-                        //TODO: if type = "start" -> make new events
-                        // else just mark done
                         
                     } else {
                         println!("event_name not found in the item.");
                     }
-                 
-                    
                 } else { 
                     println!("event_id not found in the item.");
                 }
@@ -177,7 +95,8 @@ async fn fetch_event<R: tauri::Runtime>(
     let db = DB_STRING.to_string();
     let query = "SELECT * FROM events WHERE event_status = $1 ORDER BY created_at ASC LIMIT 1".to_string(); 
     let values = vec![JsonValue::String("PENDING".to_string())];
-  
+    
+    println!("Fetched Event"); 
     // Call the select function with the fetched dbInstances state
     select(db_instances, db, query, values).await
 }
@@ -216,7 +135,11 @@ async fn create_events_from_graph(file_name: &str){
       let json_data = serde_json::to_value(parsed_toml).expect("Failed to convert to JSON");
 
       let work_order = bfs_traversal(&json_data);
+
+      println!("Found {} pieces of work to build out", work_order.len()); 
       for work in &work_order {
+        //TODO make new events for each thing. //TODO: determine how this works with "decisions"
+        //TODO: would rather do this "JIT" so that decision nodes "results" can be taken into context. 
           println!("ID: {} is created as the next item in the work order", work.get("id").unwrap());
       }
 }
@@ -270,6 +193,26 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
     work_list
 }
 
+fn read_from_documents(flow_name: &str) -> Result<String> {
+    // Get the user's Documents directory
+    let mut path = document_dir()
+        .ok_or_else(|| IOError::new(ErrorKind::NotFound, "Documents directory not found"))?;
+    
+    // Append the required subdirectories and filename
+    path.push("Anything");
+    path.push("flows");
+    path.push(flow_name); 
+    path.push("flow.toml"); 
+
+    // Check if the file exists
+    if !path.exists() {
+        return Err(IOError::new(ErrorKind::NotFound, format!("File not found at {:?}", path)));
+    }
+
+    // Read and return the file's contents
+    fs::read_to_string(path)
+}
+
 // Function to determine the next piece of work based on the graph
 // fn next_piece_of_work(nodes: Vec<Node>, edges: Vec<Edge>) -> Option<String> {
 //     let mut visited = HashSet::new();
@@ -309,9 +252,6 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
 //     queue.back().cloned().cloned()
 // }
 
-// fn parse_toml(input: &str) -> std::result::Result<Graph, toml::de::Error> {
-//     toml::from_str(input)
-// }
 
 // Thoughts on events based architefture
 //https://discord.com/channels/616186924390023171/731495028677148753/1133165388981620837
