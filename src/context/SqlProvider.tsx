@@ -10,20 +10,25 @@ import { v4 as uuidv4 } from "uuid";
 
 const DB_STRING = "sqlite:test.db";
 
+export type EventInput = {
+  flow_id: string; //flow needs a computer friendly name that can be changed without changing processing
+  flow_name: string; //flow needs a user friendly name
+  flow_version: string; //flows will have versions so you can have confidence messing arround in future
+  node_id: string; //represents exact_id inside a flow
+  node_type: string; //represents front_end representation of node
+  worker_type: string; //worker type === "start" or "javascript interpreter" or "rest" etc
+  stage: string;
+  event_status: string;
+  session_status: string;
+  created_at: string;
+  data: any;
+};
 //Load Database once
 invoke("plugin:sqlite|load");
 
 interface SqlContextInterface {
   tables: any[];
-  addEvent: (
-    flow_id: string,
-    flow_name: string,
-    flow_version: string,
-    stage: string,
-    status: string,
-    created_at: string,
-    data: any
-  ) => void;
+  addEvent: (event: EventInput) => void;
   getTableData: (tableName: string) => any;
 }
 
@@ -57,27 +62,24 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     },
   };
 
-  const addEvent = async (
-    flow_id: string,
-    flow_name: string,
-    flow_version: string,
-    stage: string,
-    status: string,
-    created_at: string,
-    data: any
-  ) => {
+  const addEvent = async (event: EventInput) => {
     try {
       await db.execute(
-        "INSERT INTO events (event_id, flow_id, flow_name, flow_version, stage, status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        "INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage,worker_type, event_status, session_status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
         [
           uuidv4(),
-          flow_id,
-          flow_name,
-          flow_version,
-          stage,
-          status,
-          created_at,
-          data,
+          uuidv4(),
+          event.node_id,
+          event.node_type,
+          event.flow_id,
+          event.flow_name,
+          event.flow_version,
+          event.stage,
+          event.worker_type,
+          event.event_status,
+          event.session_status,
+          event.created_at,
+          event.data,
         ]
       );
     } catch (error) {
@@ -105,14 +107,18 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
 
   const initDb = async () => {
     try {
-      // return true;
       await db.execute(`CREATE TABLE IF NOT EXISTS events (
       event_id TEXT PRIMARY KEY,
+      session_id TEXT,
+      node_id TEXT,
+      node_type TEXT,
       flow_id TEXT,
       flow_name TEXT,
       flow_version TEXT,
+      worker_type TEXT,
       stage TEXT,
-      status TEXT,
+      event_status TEXT,
+      session_status TEXT,
       created_at DATETIME,
       data TEXT
       )`);
