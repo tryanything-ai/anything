@@ -2,16 +2,15 @@ use tokio::time::{sleep, Duration};
 use tauri::{
     AppHandle, Runtime, Manager
 };
-
 use std::{collections::{HashMap, VecDeque}, fs};
-
 use crate::sql::plugin::{select, DbInstances, DB_STRING, execute, Error};
 use serde_json::Value as JsonValue;
-
 use tauri::api::path::document_dir;
-
 use std::io::{Result, Error as IOError, ErrorKind};
 use uuid::Uuid;
+
+extern crate chrono;
+use chrono::{Utc, DateTime};
 
 #[derive(Clone, serde::Serialize)]
  struct Payload {
@@ -27,7 +26,7 @@ pub async fn scheduler<R: Runtime>(app: &AppHandle<R>){
             process(&app_handle).await;
         });
 
-       sleep(Duration::from_secs(5)).await; 
+       sleep(Duration::from_secs(2)).await; 
     }
 }
 
@@ -129,8 +128,8 @@ async fn fetch_event<R: tauri::Runtime>(
 
 async fn create_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
-    node: &HashMap<String, JsonValue>,
-    flow_info: &HashMap<String, JsonValue>, // Assuming you have some flow-specific data
+    node: &JsonValue,
+    flow_info: &JsonValue,
 ) -> std::result::Result<(), Error> {
     let db_instances = app.state::<DbInstances>(); 
 
@@ -139,16 +138,16 @@ async fn create_event<R: tauri::Runtime>(
     // Extract node details and other required information
     let node_id = node.get("id").and_then(|v| v.as_str()).unwrap_or_default();
     let node_type = node.get("type").and_then(|v| v.as_str()).unwrap_or_default();
+    let data = node.get("data").and_then(|v| v.as_str()).unwrap_or_default();
     let worker_type = node.get("data")
                           .and_then(|data| data.get("worker_type"))
                           .and_then(|wt| wt.as_str())
                           .unwrap_or_default();
-    // ... (Add other data extraction as needed) ...
 
     // Flow specific info (adjust as per your requirement)
-    let flow_id = flow_info.get("flow_id").and_then(|v| v.as_str()).unwrap_or_default();
-    let flow_name = flow_info.get("flow_name").and_then(|v| v.as_str()).unwrap_or_default();
-    let flow_version = flow_info.get("flow_version").and_then(|v| v.as_str()).unwrap_or_default();
+    let flow_id = flow_info.get("id").and_then(|v| v.as_str()).unwrap_or_default();
+    let flow_name = flow_info.get("name").and_then(|v| v.as_str()).unwrap_or_default();
+    let flow_version = flow_info.get("version").and_then(|v| v.as_str()).unwrap_or_default();
     // ... (Add other data extraction as needed) ...
 
     let query = "
@@ -157,14 +156,19 @@ async fn create_event<R: tauri::Runtime>(
     ";
 
     let values = vec![
-        JsonValue::String(Uuid::new_v4().to_string()), // event_id
-        JsonValue::String(Uuid::new_v4().to_string()), // session_id
+        JsonValue::String(Uuid::new_v4().to_string()),       // event_id
+        JsonValue::String(Uuid::new_v4().to_string()),       // session_id
         JsonValue::String(node_id.to_string()),              // node_id
         JsonValue::String(node_type.to_string()),            // node_type
         JsonValue::String(flow_id.to_string()),              // flow_id
         JsonValue::String(flow_name.to_string()),            // flow_name
         JsonValue::String(flow_version.to_string()),         // flow_version
-        // ... (Add other values as needed) ...
+        JsonValue::String("stage".to_string()),              // stage
+        JsonValue::String(worker_type.to_string()),          // worker_type
+        JsonValue::String("PENDING".to_string()),            // event_status
+        JsonValue::String("PENDING".to_string()),            // session_status
+        JsonValue::String(Utc::now().to_rfc3339()),          // created_at
+        JsonValue::String(data.to_string()),                 // data
     ];
 
     match execute(db_instances, db, query.to_string(), values).await {
@@ -208,9 +212,9 @@ async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_na
 
       println!("{}", parsed_toml); 
       // Convert parsed TOML into JSON Value
-      let json_data = serde_json::to_value(parsed_toml).expect("Failed to convert to JSON");
+      let flow_json_data = serde_json::to_value(parsed_toml).expect("Failed to convert to JSON");
 
-      let work_order = bfs_traversal(&json_data);
+      let work_order = bfs_traversal(&flow_json_data);
       //We now have all the events but including the start event. 
 
       println!("Found {} pieces of work to build out", work_order.len()); 
@@ -218,18 +222,15 @@ async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_na
       //this loop skips the first item
       for work in work_order.iter().skip(1){
         println!("{}", work); 
-        // create_event(app, work,)
-        //SKip first one -> its the start node. don't make it again. 
-        //make events via sql in the rest of the tasks. 
-        //TODO: make event
-        // create_event(app, event_name, event_status, created_at); 
-        
-       
-       
-       
-        //TODO make new events for each thing. //TODO: determine how this works with "decisions"
-        //TODO: would rather do this "JIT" so that decision nodes "results" can be taken into context. 
-          println!("ID: {} is created as the next item in the work order", work.get("id").unwrap());
+   
+        if let Some(flow) = flow_json_data.get("flow") {
+       let _res =  create_event(app, work, flow).await;
+       println!("ID: {} is created as the next item in the work order", work.get("id").unwrap());
+       //TODO: give the user the update?
+        } else {
+            println!("Flow not found in the json_data");
+        }
+     
       }
 }
 
