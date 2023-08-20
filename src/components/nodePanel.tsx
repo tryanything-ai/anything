@@ -60,6 +60,7 @@ const NodePanel = () => {
 
       {nodes.map((node) => (
         <NodeButton
+          key={node.nodeType}
           nodeType={node.nodeType}
           image_src={node.image_src}
           title={node.title}
