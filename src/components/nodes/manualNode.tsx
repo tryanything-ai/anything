@@ -1,5 +1,4 @@
-import React, { useCallback } from "react";
-import ReactFlow, { Handle, Position } from "reactflow";
+import { Handle, Position } from "reactflow";
 import { Node } from "../nodePanel";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
@@ -36,10 +35,6 @@ export default function ManualNode({ data }: { data: any }) {
       data: { test: true },
     };
     addEvent(event);
-
-    //send event to sql
-    //let event system process it by running something in rust
-    //at end of that last event it will create the next event if more work exists in the flow to be done.
   };
 
   return (
