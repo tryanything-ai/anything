@@ -130,7 +130,8 @@ async fn create_events_from_graph(file_name: &str){
 
       // Convert TOML to serde_json::Value
       let parsed_toml: JsonValue = toml::from_str(&toml_document).expect("Failed to parse TOML");
-    
+
+      println!("{}", parsed_toml); 
       // Convert parsed TOML into JSON Value
       let json_data = serde_json::to_value(parsed_toml).expect("Failed to convert to JSON");
 
@@ -162,12 +163,14 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
     // Use a BFS queue
     let mut queue = VecDeque::new();
 
-    // Find and enqueue the "start" node
+    // Find and enqueue the node with "data.worker_type" = "start"
     if let Some(nodes) = json_data.get("nodes") {
         for node in nodes.as_array().unwrap() {
-            if node.get("start").map_or(false, |s| s.as_bool().unwrap()) {
-                queue.push_back(node.clone());
-                break;  // Since there should be only one start node
+            if let Some(data) = node.get("data") {
+                if data.get("worker_type").map_or(false, |w| w.as_str().unwrap_or("") == "start") {
+                    queue.push_back(node.clone());
+                    break;  // Since there should be only one start node based on the context
+                }
             }
         }
     }

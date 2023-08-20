@@ -9,7 +9,7 @@ let node: Node = {
   title: "Model Node",
   alt: "Model Node",
   nodeData: {
-    start: false,
+    worker_type: "local_model", 
   },
   specialData: {
     filename: "",

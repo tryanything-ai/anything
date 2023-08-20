@@ -9,7 +9,7 @@ let node: Node = {
   title: "Manual Node",
   alt: "Manual Node",
   nodeData: {
-    start: true,
+    worker_type: "start", 
   },
   specialData: {},
 };

@@ -25,7 +25,7 @@ let node: Node = {
   image_src: "/js-logo.svg",
   alt: "JS Logo",
   nodeData: {
-    start: false,
+    worker_type: "javascript", 
   },
   specialData: {
     code: "",

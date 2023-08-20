@@ -7,7 +7,7 @@ let node: Node = {
   title: "Terminal Node",
   alt: "Terminal Node",
   nodeData: {
-    start: false,
+    worker_type: "terminal", 
   },
   specialData: {
     command: "",
