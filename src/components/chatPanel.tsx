@@ -1,6 +1,5 @@
-import { useSqlContext } from "../context/SqlProvider";
+import { useSqlContext, EventInput } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 const ChatPanel = () => {
   const { addEvent } = useSqlContext();
@@ -10,17 +9,22 @@ const ChatPanel = () => {
     console.log("createMockEvent");
 
     if (flow_name === undefined) return;
-
-    addEvent(
-      uuidv4(),
-      "1",
-      flow_name,
-      "0.0.1",
-      "dev",
-      "PENDING", //COMPLETE, ERROR, PENDING
-      new Date().toISOString(),
-      { test: true }
-    );
+    //TODO: make unique flow_id's so name changes don't fuck up processing side
+    //TODO: node_name might also be nice cause then users can see names not id's in TOML
+    let event: EventInput = {
+      flow_id: flow_name, //flow_id
+      flow_name: flow_name,
+      flow_version: "0.0.1",
+      node_id: "node_id",
+      node_type: "manualNode", //node type, lets the machine know it should boostrap the
+      worker_type: "start",
+      stage: "dev",
+      event_status: "PENDING", //EVENT STATUS
+      session_status: "PENDING", //SESSION STATUS
+      created_at: new Date().toISOString(),
+      data: { test: true },
+    };
+    addEvent(event);
   };
 
   return (

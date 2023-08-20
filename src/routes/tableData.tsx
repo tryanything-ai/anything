@@ -44,7 +44,7 @@ export default function Tables() {
               <th>Flow Name</th>
               <th>Flow Version</th>
               <th>Stage</th>
-              <th>Status</th>
+              <th>Event Status</th>
               <th>Data</th>
             </tr>
           </thead>
@@ -58,7 +58,7 @@ export default function Tables() {
                   <th>{event.flow_name}</th>
                   <th>{event.flow_version}</th>
                   <th>{event.stage}</th>
-                  <th>{event.status}</th>
+                  <th>{event.event_status}</th>
                   <th>{JSON.stringify(event.data)}</th>
                 </tr>
               );
