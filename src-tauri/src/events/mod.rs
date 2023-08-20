@@ -101,31 +101,6 @@ async fn fetch_event<R: tauri::Runtime>(
     select(db_instances, db, query, values).await
 }
 
-// async fn create_event<R: tauri::Runtime>(
-//     app: &AppHandle<R>,
-//     event_name: &str,
-//     event_status: &str,
-//     created_at: &str, // or whatever the type for created_at is in your context
-// ) -> std::result::Result<(u64, i64), Error>{
-//     // Access the dbInstances from the app's state
-//     let db_instances = app.state::<DbInstances>();
-    
-//     // Construct the insert query
-//     let db = DB_STRING.to_string();
-//     let query = "INSERT INTO events (event_name, event_status, created_at) VALUES ($1, $2, $3)".to_string();
-//     let values = vec![
-//         JsonValue::String(event_name.to_string()),
-//         JsonValue::String(event_status.to_string()),
-//         JsonValue::String(created_at.to_string())
-//     ];
-
-//     println!("Creating Event"); 
-
-//     // Call the insert function with the fetched dbInstances state
-//     // Note: I'm assuming you have a function called insert similar to select. Adjust if different.
-//     execute(db_instances, db, query, values).await
-// }
-
 async fn create_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
     node: &JsonValue,
@@ -163,7 +138,7 @@ async fn create_event<R: tauri::Runtime>(
         JsonValue::String(flow_id.to_string()),              // flow_id
         JsonValue::String(flow_name.to_string()),            // flow_name
         JsonValue::String(flow_version.to_string()),         // flow_version
-        JsonValue::String("stage".to_string()),              // stage
+        JsonValue::String("dev".to_string()),              // stage
         JsonValue::String(worker_type.to_string()),          // worker_type
         JsonValue::String("PENDING".to_string()),            // event_status
         JsonValue::String("PENDING".to_string()),            // session_status
