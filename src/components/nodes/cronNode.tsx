@@ -8,7 +8,7 @@ let node: Node = {
   title: "Cron Node",
   alt: "Cron Node",
   nodeData: {
-    start: true,
+    worker_type: "start", 
   },
   specialData: {
     pattern: "",

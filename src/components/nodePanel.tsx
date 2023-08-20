@@ -9,7 +9,7 @@ import JavascriptNode from "./nodes/javascriptNode";
 import ManualNode from "./nodes/manualNode";
 
 export type NodeData = {
-  start: boolean, //is this a starting point for the flow?
+  worker_type: string, 
 }; 
 
 export type Node = {
@@ -46,7 +46,7 @@ const NodePanel = () => {
           nodeType: "flow",
           title: path.name ? path.name : "",
           alt: path.name ? path.name : "",
-          nodeData: { start: false },
+          nodeData: { worker_type: "flow" },
         });
       }
     });
