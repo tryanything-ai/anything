@@ -26,6 +26,11 @@ import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
 
 function findNextNodeId(nodes: any): string {
+  // Return 1 if there are no nodes
+  if (!nodes) {
+    console.log("no nodes in FindNextNodeId, returning id 1");
+    return "1";
+  }
   // Initialize the maxId to 0
   let maxId = 0;
 
@@ -48,6 +53,7 @@ function findNextNodeId(nodes: any): string {
 interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
+  flowFrontmatter: any;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -58,6 +64,7 @@ interface FlowContextInterface {
 export const FlowContext = createContext<FlowContextInterface>({
   nodes: [],
   edges: [],
+  flowFrontmatter: {},
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
@@ -74,6 +81,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [flowFrontmatter, setFlowFrontmatter] = useState<any>({});
   const [toml, setToml] = useState<string>("");
 
   const addNode = (type: string, specialData?: any) => {
@@ -85,15 +93,22 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         x: Math.random() * 500,
         y: Math.random() * 500,
       },
-      data: { label: `Node ${nextId}`, ...specialData},
+      data: { label: `Node ${nextId}`, ...specialData },
     };
-    setNodes((nodes) => [...nodes, newNode]);
+
+    setNodes((nodes) => {
+      console.log(
+        "nodes in setNodes in addNode" + JSON.stringify(nodes, null, 3)
+      );
+      return [...nodes, newNode];
+    });
   };
 
   const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
     setNodes((nodes) => {
       let new_nodes = applyNodeChanges(nodeChanges, nodes);
       let new_toml = stringify({
+        flow: flowFrontmatter,
         nodes: new_nodes as any,
         edges: edges as any,
       });
@@ -107,6 +122,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setEdges((edges) => {
       let new_edges = applyEdgeChanges(edgeChanges, edges);
       let new_toml = stringify({
+        flow: flowFrontmatter,
         nodes: nodes as any,
         edges: new_edges as any,
       });
@@ -123,6 +139,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setEdges((edges) => {
       let new_edges = addEdge(params, edges);
       let new_toml = stringify({
+        flow: flowFrontmatter,
         nodes: nodes as any,
         edges: new_edges as any,
       });
@@ -162,7 +179,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       let new_toml = await readToml();
       if (toml === new_toml) return; //don't update if the toml is the same
       if (!new_toml) {
-        console.log("new_toml is undefined in updateTomle");
+        console.log("new_toml is undefined in updateToml");
         setToml("");
         setNodes([]);
         setEdges([]);
@@ -172,8 +189,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         let parsedToml = parse(new_toml);
         console.log("parsedToml", parsedToml);
 
+        if (!parsedToml.nodes) {
+          console.log("no nodes in parsedToml");
+          parsedToml.nodes = [];
+        }
         setNodes(parsedToml.nodes as any);
+        if (!parsedToml.edges) {
+          console.log("no edges in parsedToml");
+          parsedToml.edges = [];
+        }
         setEdges(parsedToml.edges as any);
+        setFlowFrontmatter(parsedToml.flow);
       }
     } catch (error) {
       console.log("error loading toml in FlowProvider", error);
@@ -196,8 +222,21 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         let parsedToml = parse(new_toml);
         console.log("parsedToml", parsedToml);
 
+        //TODO: this should be a function since we do it here and in UpdateToml
+        if (!parsedToml.nodes) {
+          console.log("no nodes in parsedToml");
+          parsedToml.nodes = [];
+        }
+        setNodes(parsedToml.nodes as any);
+        if (!parsedToml.edges) {
+          console.log("no edges in parsedToml");
+          parsedToml.edges = [];
+        }
+
         setNodes(parsedToml.nodes as any);
         setEdges(parsedToml.edges as any);
+        //TODO: handle missing frontmatter
+        setFlowFrontmatter(parsedToml.flow);
         setInitialTomlLoaded(true);
       }
     } catch (error) {
@@ -243,6 +282,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       value={{
         nodes,
         edges,
+        flowFrontmatter,
         onConnect,
         onNodesChange,
         onEdgesChange,
