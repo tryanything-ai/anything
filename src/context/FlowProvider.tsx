@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useContext,
   ReactNode,
+  useCallback,
 } from "react";
 
 import {
@@ -58,7 +59,10 @@ interface FlowContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
+  onDragOver: (event: any) => void;
+  onDrop: (event: any) => void;
   addNode: (type: string, specialData?: any) => void;
+  // setReactFlowInstance: (instance: any) => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -68,8 +72,11 @@ export const FlowContext = createContext<FlowContextInterface>({
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
+  onDragOver: () => {},
+  onDrop: () => {},
   toml: "",
   addNode: (type: string, specialData?: any) => {},
+  // setReactFlowInstance: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -83,16 +90,22 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [flowFrontmatter, setFlowFrontmatter] = useState<any>({});
   const [toml, setToml] = useState<string>("");
+  // const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  const addNode = (type: string, specialData?: any) => {
+  const addNode = (
+    type: string,
+    position: { x: number; y: number },
+    specialData?: any
+  ) => {
     const nextId = findNextNodeId(nodes);
     const newNode: Node = {
       id: nextId,
       type,
-      position: {
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-      },
+      position,
+      // position: {
+      //   x: Math.random() * 500,
+      //   y: Math.random() * 500,
+      // },
       data: { label: `Node ${nextId}`, ...specialData },
     };
 
@@ -105,6 +118,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
+    console.log("onNodesChange nodeChanges", nodeChanges);
     setNodes((nodes) => {
       let new_nodes = applyNodeChanges(nodeChanges, nodes);
       let new_toml = stringify({
@@ -147,6 +161,55 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return new_edges;
     });
   };
+
+  const onDragOver = useCallback((event: DragEvent) => {
+    // event.stopPropagation();
+    event.preventDefault();
+    if (event.dataTransfer === null) return;
+    console.log("drag over");
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  // const onDrop = (event: any) => {
+  //   console.log("onDrop");
+  // }
+  const onDrop = useCallback(
+    (event: DragEvent) => {
+      event.preventDefault();
+      console.log("onDrop event", event);
+
+      // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      if (event.dataTransfer === null) return;
+      const type = event.dataTransfer.getData("application/reactflow");
+
+      // check if the dropped element is valid
+      if (typeof type === "undefined" || !type) {
+        return;
+      }
+
+      // const position = reactFlowInstance.project({
+      //   x: event.clientX - reactFlowBounds.left,
+      //   y: event.clientY - reactFlowBounds.top,
+      // });
+      // const newNode = {
+      //   id: getId(),
+      //   type,
+      //   position,
+      //   data: { label: `${type} node` },
+      // };
+
+      // setNodes((nds) => nds.concat(newNode));
+      // addNode(
+      //   // "manualNode",
+      //   // {
+      //   //   x: event.clientX - reactFlowBounds.left,
+      //   //   y: event.clientY - reactFlowBounds.top,
+      //   // },
+      //   { label: `${type} node` }
+      // );
+    },
+    [addNode]
+  );
 
   const readToml = async () => {
     try {
@@ -286,8 +349,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         onConnect,
         onNodesChange,
         onEdgesChange,
+        onDragOver,
+        onDrop,
         toml,
         addNode,
+        // setReactFlowInstance,
       }}
     >
       {children}
