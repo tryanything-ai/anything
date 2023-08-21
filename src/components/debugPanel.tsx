@@ -31,9 +31,9 @@ const DebugPanel = () => {
 
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
-      <button onClick={createMockEvent} className="btn btn-neutral">
+      {/* <button onClick={createMockEvent} className="btn btn-neutral">
         Add Event
-      </button>
+      </button> */}
     </div>
   );
 };
