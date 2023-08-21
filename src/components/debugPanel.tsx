@@ -1,9 +1,11 @@
+import { useFlowContext } from "../context/FlowProvider";
 import { useSqlContext, EventInput } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
 
-const ChatPanel = () => {
+const DebugPanel = () => {
   const { addEvent } = useSqlContext();
   const { flow_name } = useParams();
+  const { flowFrontmatter } = useFlowContext();
 
   const createMockEvent = () => {
     console.log("createMockEvent");
@@ -12,7 +14,7 @@ const ChatPanel = () => {
     //TODO: make unique flow_id's so name changes don't fuck up processing side
     //TODO: node_name might also be nice cause then users can see names not id's in TOML
     let event: EventInput = {
-      flow_id: flow_name, //flow_id
+      flow_id: flowFrontmatter.id, //flow_id
       flow_name: flow_name,
       flow_version: "0.0.1",
       node_id: "node_id",
@@ -36,4 +38,4 @@ const ChatPanel = () => {
   );
 };
 
-export default ChatPanel;
+export default DebugPanel;
