@@ -8,8 +8,8 @@ export default function Header() {
     setNodePanel,
     tomlPanel,
     setTomlPanel,
-    chatPanel,
-    setChatPanel,
+    debugPanel, 
+    setDebugPanel,
     setSettingsPanel,
     settingsPanel,
   } = useNavigationContext();
@@ -24,7 +24,7 @@ export default function Header() {
         <button onClick={() => setNodePanel(!nodePanel)}>
           <VscRepoForked className="mr-2 h-5 w-5" />
         </button>
-        <button onClick={() => setChatPanel(!chatPanel)}>
+        <button onClick={() => setDebugPanel(!debugPanel)}>
           <VscDebug className="mr-2 h-4 w-5" />
         </button>
         <button onClick={() => setTomlPanel(!tomlPanel)}>

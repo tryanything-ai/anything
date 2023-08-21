@@ -3,7 +3,7 @@ import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
-import ChatPanel from "../components/chatPanel";
+import DebugPanel from "../components/debugPanel";
 import { useNavigationContext } from "../context/NavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 import VectorNode from "../components/nodes/vectorNode";
@@ -20,8 +20,12 @@ import ManualNode from "../components/nodes/manualNode";
 function Flows() {
   const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
     useFlowContext();
-  const { nodePanel, chatPanel, tomlPanel, settingsPanel } =
-    useNavigationContext();
+  const {
+    nodePanel,
+    debugPanel, 
+    tomlPanel,
+    settingsPanel,
+  } = useNavigationContext();
 
   const nodeTypes = useMemo(
     () => ({
@@ -62,9 +66,9 @@ function Flows() {
             <NodePanel />
           </div>
         ) : null}
-        {chatPanel ? (
+        {debugPanel ? (
           <div className="w-1/4">
-            <ChatPanel />
+            <DebugPanel />
           </div>
         ) : null}
         {settingsPanel ? (
