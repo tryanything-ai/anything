@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { Handle, Position } from "reactflow";
 import { Node } from "../nodePanel";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
+import { VscPlayCircle } from "react-icons/vsc";
+import clsx from "clsx";
 
 let node: Node = {
   nodeType: "manualNode",
   title: "Manual Node",
   alt: "Manual Node",
   nodeData: {
-    worker_type: "start", 
+    worker_type: "start",
   },
   specialData: {},
 };
@@ -18,9 +21,10 @@ ManualNode.Node = node;
 export default function ManualNode({ data }: { data: any }) {
   const { addEvent } = useSqlContext();
   const { flow_name } = useParams();
-
+  const [loading, setLoading] = useState(false);
   const createEvent = async () => {
     if (flow_name === undefined) return;
+    setLoading(true);
     let event: EventInput = {
       flow_id: flow_name, //flow_id
       flow_name: flow_name,
@@ -35,19 +39,33 @@ export default function ManualNode({ data }: { data: any }) {
       data: { test: true },
     };
     addEvent(event);
+
+    //TODO: real user feedback on loading state
+    //set loading for 1 second for fun
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
   };
 
   return (
     <div
       className={
-        "bg-secondary w-40 h-20 p-4 border rounded-md text-primary-content flex flex-col justify-center align-middle" +
+        "bg-secondary w-60 h-20 p-4 border rounded-md text-primary-content flex flex-col justify-center align-middle" +
         data.classNames
       }
     >
-      <div className="text-left text-xl">Manual Node</div>
-      <button className="btn btn-secondary" onClick={() => createEvent()}>
-        Call
-      </button>
+      <div className="flex flex-row items-center">
+        <div className="h-full w-16">
+          <button
+            className={clsx(loading && "bg-green-500 rounded-full")}
+            onClick={() => createEvent()}
+          >
+            <VscPlayCircle className=" h-12 w-12" />
+          </button>
+        </div>
+        <div className="text-left text-lg">Manual Trigger</div>
+      </div>
+
       <Handle
         type="source"
         position={Position.Bottom}
