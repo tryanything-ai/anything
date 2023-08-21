@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useCallback, DragEvent, useEffect } from "react";
 import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
@@ -16,16 +16,21 @@ import CronNode from "../components/nodes/cronNode";
 import TerminalNode from "../components/nodes/terminalNode";
 import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
+import { q } from "@tauri-apps/api/path-c062430b";
 
 function Flows() {
-  const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
-    useFlowContext();
   const {
-    nodePanel,
-    debugPanel, 
-    tomlPanel,
-    settingsPanel,
-  } = useNavigationContext();
+    nodes,
+    edges,
+    onConnect,
+    onNodesChange,
+    onEdgesChange,
+    onDragOver,
+    onDrop,
+  } = useFlowContext();
+  const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
+    useNavigationContext();
+  const reactFlowWrapper = useRef(null);
 
   const nodeTypes = useMemo(
     () => ({
@@ -44,23 +49,45 @@ function Flows() {
     <div className="h-full w-full pb-5">
       <Header />
       <div className="flex flex-row h-full w-full">
-        <ReactFlow
-          nodeTypes={nodeTypes}
-          nodes={nodes} //new
-          edges={edges} //new
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          fitView
-        >
-          <Controls style={{ background: "darkgray" }} />
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={30}
-            size={1}
-            color="gray"
-          />
-        </ReactFlow>
+        <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodeTypes={nodeTypes}
+            nodes={nodes} //new
+            edges={edges} //new
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            // onDragEnter={(e) => {
+            //   e.preventDefault();
+            //   // Handle the drop action
+            //   console.log("Drag Enter!");
+            // }}
+            // onDragLeave={(e) => {
+            //   e.preventDefault();
+            //   // Handle the drop action
+            //   console.log("Drag Leave!");
+            // }}
+            // onDragOver={(e) => {
+            //   e.preventDefault();
+            //   console.log("Drag over");
+            // }}
+            // onDrop={(e) => {
+            //   // Handle the drop action
+            //   console.log("Item dropped!");
+            // }}
+            onConnect={onConnect}
+            fitView
+          >
+            <Controls style={{ background: "darkgray" }} />
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={30}
+              size={1}
+              color="gray"
+            />
+          </ReactFlow>
+        </div>
         {nodePanel ? (
           <div className="w-1/4">
             <NodePanel />

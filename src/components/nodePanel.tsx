@@ -9,8 +9,8 @@ import JavascriptNode from "./nodes/javascriptNode";
 import ManualNode from "./nodes/manualNode";
 
 export type NodeData = {
-  worker_type: string, 
-}; 
+  worker_type: string;
+};
 
 export type Node = {
   nodeType: string;
@@ -26,7 +26,7 @@ export const default_nodes: Node[] = [
   CronNode.Node,
   TerminalNode.Node,
   ModelNode.Node,
-  ManualNode.Node
+  ManualNode.Node,
 ];
 
 const NodePanel = () => {
@@ -57,7 +57,6 @@ const NodePanel = () => {
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
       <h1 className="text-2xl font-bold">Nodes</h1>
-
       {nodes.map((node) => (
         <NodeButton
           key={node.nodeType}
@@ -72,6 +71,7 @@ const NodePanel = () => {
       <h1 className="text-2xl font-bold mt-2">Flows</h1>
       {flows.map((node) => (
         <NodeButton
+          key={node.nodeType + node.title}
           nodeType={node.nodeType}
           title={node.title}
           image_src={node.image_src}
@@ -83,12 +83,26 @@ const NodePanel = () => {
   );
 };
 
-const NodeButton = ({ nodeType, image_src, title, alt, specialData, nodeData }: Node) => {
-  const { addNode } = useFlowContext();
+const NodeButton = ({
+  nodeType,
+  image_src,
+  title,
+  alt,
+  specialData,
+  nodeData,
+}: Node) => {
+  const onDragStart = (event: any, nodeType: any) => {
+    console.log("drag started", nodeType);
+    event.dataTransfer.setData("application/reactflow", nodeType);
+    //TODO: add special data
+    event.dataTransfer.effectAllowed = "move";
+  };
+
   return (
-    <button
-      onClick={() => addNode(nodeType, { ...specialData, ...nodeData })}
-      className="btn btn-neutral mt-2 pb-2 max-w-md"
+    <div
+      className="btn btn-neutral mt-2 pb-2 max-w-md cursor-grab"
+      onDragStart={(event) => onDragStart(event, nodeType)}
+      draggable
     >
       {image_src ? (
         <img
@@ -99,7 +113,7 @@ const NodeButton = ({ nodeType, image_src, title, alt, specialData, nodeData }: 
       ) : (
         <h1 className="text-lg truncate overflow-ellipsis">{title}</h1>
       )}
-    </button>
+    </div>
   );
 };
 

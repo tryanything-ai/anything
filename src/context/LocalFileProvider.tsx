@@ -59,10 +59,13 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  //BUG: there is a bug where when you add new flows the names colide because we write files as names.
+  //TODO: more sophisticated way of determining new flow name
   const createNewFlow = async () => {
     try {
-      let flowName = "Flow" + " " + flowPaths.length;
-      let flowId = uuidv4(); 
+      let flowName = "Flow" + " " + (flowPaths.length + 1);
+      console.log("new flow name", flowName);
+      let flowId = uuidv4();
       // Basic TOML structure for the flow.toml file
       const flowTomlContent = `
     [flow]
