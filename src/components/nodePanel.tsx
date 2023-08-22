@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useParams } from "react-router-dom";
 import TerminalNode from "./nodes/terminalNode";
@@ -91,17 +90,19 @@ const NodeButton = ({
   specialData,
   nodeData,
 }: Node) => {
-  const onDragStart = (event: any, nodeType: any) => {
+
+  const onDragStart = (event: any) => {
     console.log("drag started", nodeType);
-    event.dataTransfer.setData("application/reactflow", nodeType);
-    //TODO: add special data
+    event.dataTransfer.setData("nodeType", nodeType);
+    event.dataTransfer.setData("nodeData", JSON.stringify(nodeData));
+    event.dataTransfer.setData("specialData", JSON.stringify(specialData));
     event.dataTransfer.effectAllowed = "move";
   };
 
   return (
     <div
       className="btn btn-neutral mt-2 pb-2 max-w-md cursor-grab"
-      onDragStart={(event) => onDragStart(event, nodeType)}
+      onDragStart={(event) => onDragStart(event)}
       draggable
     >
       {image_src ? (
