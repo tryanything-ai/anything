@@ -4,9 +4,12 @@ import React, {
   useEffect,
   useContext,
   ReactNode,
+  useCallback,
 } from "react";
 
 import {
+  // ReactFlowInstance,
+  Project,
   Connection,
   Edge,
   EdgeChange,
@@ -18,6 +21,7 @@ import {
   OnConnect,
   applyNodeChanges,
   applyEdgeChanges,
+  ReactFlowInstance,
 } from "reactflow";
 import { useTauriContext } from "./TauriProvider";
 import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
@@ -58,7 +62,10 @@ interface FlowContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
+  onDragOver: (event: any) => void;
+  onDrop: (event: any, reactFlowWrapper: any) => void;
   addNode: (type: string, specialData?: any) => void;
+  setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -68,8 +75,11 @@ export const FlowContext = createContext<FlowContextInterface>({
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
+  onDragOver: () => {},
+  onDrop: () => {},
   toml: "",
   addNode: (type: string, specialData?: any) => {},
+  setReactFlowInstance: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -83,16 +93,19 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [flowFrontmatter, setFlowFrontmatter] = useState<any>({});
   const [toml, setToml] = useState<string>("");
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
 
-  const addNode = (type: string, specialData?: any) => {
+  const addNode = (
+    type: string,
+    position: { x: number; y: number },
+    specialData?: any
+  ) => {
     const nextId = findNextNodeId(nodes);
     const newNode: Node = {
       id: nextId,
       type,
-      position: {
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-      },
+      position,
       data: { label: `Node ${nextId}`, ...specialData },
     };
 
@@ -103,8 +116,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return [...nodes, newNode];
     });
   };
-
+  //TODO: some sort of bug when we have no nodes but we don't remove all edges
   const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
+    console.log("onNodesChange nodeChanges", nodeChanges);
     setNodes((nodes) => {
       let new_nodes = applyNodeChanges(nodeChanges, nodes);
       let new_toml = stringify({
@@ -147,6 +161,49 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return new_edges;
     });
   };
+
+  const onDragOver = useCallback((event: DragEvent) => {
+    event.preventDefault();
+    if (event.dataTransfer === null) return;
+    console.log("dragging over");
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event: DragEvent, reactFlowWrapper: any) => {
+      event.preventDefault();
+      console.log("onDrop event", event);
+
+      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      if (event.dataTransfer === null) return;
+      const nodeType = event.dataTransfer.getData("nodeType");
+      const nodeData = JSON.parse(event.dataTransfer.getData("nodeData"));
+      const specialData = JSON.parse(event.dataTransfer.getData("specialData"));
+
+      // console.log("data from drop event", JSON.stringify(data, null, 3));
+      // console.log("reactFlowBounds", reactFlowBounds);
+      // check if the dropped element is valid
+      if (typeof nodeType === "undefined" || !nodeType) {
+        return;
+      }
+      if (typeof nodeData === "undefined" || !nodeData) {
+        return;
+      }
+      if (typeof specialData === "undefined" || !specialData) {
+        return;
+      }
+   
+      if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
+
+      let position = reactFlowInstance.project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
+
+      addNode(nodeType, position, { ...nodeData, ...specialData });
+    },
+    [addNode]
+  );
 
   const readToml = async () => {
     try {
@@ -286,8 +343,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         onConnect,
         onNodesChange,
         onEdgesChange,
+        onDragOver,
+        onDrop,
         toml,
         addNode,
+        setReactFlowInstance,
       }}
     >
       {children}
