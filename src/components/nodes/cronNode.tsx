@@ -1,5 +1,22 @@
 import React, { useCallback } from "react";
 import ReactFlow, { Handle, Position } from "reactflow";
+import { Node } from "../nodePanel";
+
+
+let node: Node = {
+  nodeType: "cronNode",
+  title: "Cron Node",
+  alt: "Cron Node",
+  nodeData: {
+    worker_type: "start", 
+  },
+  specialData: {
+    pattern: "",
+  },
+};
+
+CronNode.Node = node;
+
 
 export default function CronNode({ data }: { data: any }) {
   // const onChange = useCallback((evt: any) => {

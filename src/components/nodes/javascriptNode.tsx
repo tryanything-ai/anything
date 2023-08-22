@@ -16,9 +16,26 @@ import ReactFlow, {
   BackgroundVariant,
   Controls,
 } from "reactflow";
+import { Node } from "../nodePanel";
 
+
+let node: Node = {
+  nodeType: "javascriptNode",
+  title: "JS Node",
+  image_src: "/js-logo.svg",
+  alt: "JS Logo",
+  nodeData: {
+    worker_type: "javascript", 
+  },
+  specialData: {
+    code: "",
+    start: false,
+  },
+};
+
+JavascriptNode.Node = node;
 //Node that acts as the beginning of a flow or one of many beginnings of a flow
-const JavascriptNode = ({ data }: any) => {
+export default function JavascriptNode({ data }: any){
   return (
     <div
       className={
@@ -54,4 +71,3 @@ const JavascriptNode = ({ data }: any) => {
   );
 };
 
-export default JavascriptNode;

@@ -4,9 +4,12 @@ import React, {
   useEffect,
   useContext,
   ReactNode,
+  useCallback,
 } from "react";
 
 import {
+  // ReactFlowInstance,
+  Project,
   Connection,
   Edge,
   EdgeChange,
@@ -18,14 +21,21 @@ import {
   OnConnect,
   applyNodeChanges,
   applyEdgeChanges,
+  ReactFlowInstance,
 } from "reactflow";
 import { useTauriContext } from "./TauriProvider";
 import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { stringify, parse } from "iarna-toml-esm";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
+import { useLocalFileContext } from "./LocalFileProvider";
 
 function findNextNodeId(nodes: any): string {
+  // Return 1 if there are no nodes
+  if (!nodes) {
+    console.log("no nodes in FindNextNodeId, returning id 1");
+    return "1";
+  }
   // Initialize the maxId to 0
   let maxId = 0;
 
@@ -48,52 +58,76 @@ function findNextNodeId(nodes: any): string {
 interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
+  flowFrontmatter: any;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
+  onDragOver: (event: any) => void;
+  onDrop: (event: any, reactFlowWrapper: any) => void;
   addNode: (type: string, specialData?: any) => void;
+  setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
+  updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
   nodes: [],
   edges: [],
+  flowFrontmatter: {},
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
+  onDragOver: () => {},
+  onDrop: () => {},
   toml: "",
-  addNode: (type: string, specialData?: any) => {},
+  addNode: () => {},
+  setReactFlowInstance: () => { },
+  updateFlowFrontmatter: () => { },
 });
 
 export const useFlowContext = () => useContext(FlowContext);
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments } = useTauriContext();
+  const { renameFlowFiles } = useLocalFileContext();
   const { flow_name } = useParams();
   const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [flowFrontmatter, setFlowFrontmatter] = useState<any>({});
   const [toml, setToml] = useState<string>("");
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
 
-  const addNode = (type: string, specialData?: any) => {
+  const addNode = (
+    type: string,
+    position: { x: number; y: number },
+    specialData?: any
+  ) => {
     const nextId = findNextNodeId(nodes);
     const newNode: Node = {
       id: nextId,
       type,
-      position: {
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-      },
-      data: { label: `Node ${nextId}`, ...specialData},
+      position,
+      data: { label: `Node ${nextId}`, ...specialData },
     };
-    setNodes((nodes) => [...nodes, newNode]);
+
+    setNodes((nodes) => {
+      console.log(
+        "nodes in setNodes in addNode" + JSON.stringify(nodes, null, 3)
+      );
+      return [...nodes, newNode];
+    });
   };
 
+  //TODO: some sort of bug when we have no nodes but we don't remove all edges
   const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
+    console.log("onNodesChange nodeChanges", nodeChanges);
     setNodes((nodes) => {
       let new_nodes = applyNodeChanges(nodeChanges, nodes);
       let new_toml = stringify({
+        flow: flowFrontmatter,
         nodes: new_nodes as any,
         edges: edges as any,
       });
@@ -107,6 +141,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setEdges((edges) => {
       let new_edges = applyEdgeChanges(edgeChanges, edges);
       let new_toml = stringify({
+        flow: flowFrontmatter,
         nodes: nodes as any,
         edges: new_edges as any,
       });
@@ -123,6 +158,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setEdges((edges) => {
       let new_edges = addEdge(params, edges);
       let new_toml = stringify({
+        flow: flowFrontmatter,
         nodes: nodes as any,
         edges: new_edges as any,
       });
@@ -130,6 +166,46 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return new_edges;
     });
   };
+
+  const onDragOver = useCallback((event: DragEvent) => {
+    event.preventDefault();
+    if (event.dataTransfer === null) return;
+    console.log("dragging over");
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event: DragEvent, reactFlowWrapper: any) => {
+      event.preventDefault();
+      console.log("onDrop event", event);
+
+      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      if (event.dataTransfer === null) return;
+      const nodeType = event.dataTransfer.getData("nodeType");
+      const nodeData = JSON.parse(event.dataTransfer.getData("nodeData"));
+      const specialData = JSON.parse(event.dataTransfer.getData("specialData"));
+
+      if (typeof nodeType === "undefined" || !nodeType) {
+        return;
+      }
+      if (typeof nodeData === "undefined" || !nodeData) {
+        return;
+      }
+      if (typeof specialData === "undefined" || !specialData) {
+        return;
+      }
+   
+      if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
+
+      let position = reactFlowInstance.project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
+
+      addNode(nodeType, position, { ...nodeData, ...specialData });
+    },
+    [addNode]
+  );
 
   const readToml = async () => {
     try {
@@ -145,13 +221,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const writeToml = async (toml: string) => {
+  const writeToml = async (toml: string, explicit_flow_name?: string) => {
     if (!appDocuments || !flow_name) {
       throw new Error("appDocuments or flow_name is undefined");
     }
     console.log("writing toml in FlowProvider");
+    let name = explicit_flow_name ? explicit_flow_name : flow_name;
     return await writeTextFile(
-      appDocuments + "/flows/" + flow_name + "/flow.toml",
+      appDocuments + "/flows/" + name + "/flow.toml",
       toml
     );
   };
@@ -162,7 +239,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       let new_toml = await readToml();
       if (toml === new_toml) return; //don't update if the toml is the same
       if (!new_toml) {
-        console.log("new_toml is undefined in updateTomle");
+        console.log("new_toml is undefined in updateToml");
         setToml("");
         setNodes([]);
         setEdges([]);
@@ -172,8 +249,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         let parsedToml = parse(new_toml);
         console.log("parsedToml", parsedToml);
 
+        if (!parsedToml.nodes) {
+          console.log("no nodes in parsedToml");
+          parsedToml.nodes = [];
+        }
         setNodes(parsedToml.nodes as any);
+        if (!parsedToml.edges) {
+          console.log("no edges in parsedToml");
+          parsedToml.edges = [];
+        }
         setEdges(parsedToml.edges as any);
+        setFlowFrontmatter(parsedToml.flow);
       }
     } catch (error) {
       console.log("error loading toml in FlowProvider", error);
@@ -196,12 +282,56 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         let parsedToml = parse(new_toml);
         console.log("parsedToml", parsedToml);
 
+        //TODO: this should be a function since we do it here and in UpdateToml
+        if (!parsedToml.nodes) {
+          console.log("no nodes in parsedToml");
+          parsedToml.nodes = [];
+        }
+        setNodes(parsedToml.nodes as any);
+        if (!parsedToml.edges) {
+          console.log("no edges in parsedToml");
+          parsedToml.edges = [];
+        }
+
         setNodes(parsedToml.nodes as any);
         setEdges(parsedToml.edges as any);
+        //TODO: handle missing frontmatter
+        setFlowFrontmatter(parsedToml.flow);
         setInitialTomlLoaded(true);
       }
     } catch (error) {
       console.log("error loading toml in FlowProvider", error);
+    }
+  };
+
+  const updateFlowFrontmatter = async (flow_name: string, keysToUpdate: any) => {
+    try {
+
+      //if we are updating name we also need to update the folder name
+      if(keysToUpdate.name) {
+       await renameFlowFiles(flow_name, keysToUpdate.name);
+      }
+
+      let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
+
+      let newToml = stringify({
+        flow: flow_frontmatter,
+        nodes: nodes as any,
+        edges: edges as any,
+      });
+
+      //write to file
+      setToml(newToml);
+      setFlowFrontmatter(flow_frontmatter);
+      //TODO: code smell. we write to file and add the "explicity fileName" because we don't know how navigation will effect this
+      //since writeToml uses navigation state to manage teh file name to write too. 
+      await writeToml(newToml, keysToUpdate.name);
+
+   
+      //TODO: change file name if the kye is flow_name changes
+      // renameFlowFiles(keysToUpdate.flow_name, )
+    } catch (error) {
+      console.log("error updating flow frontmatter", error);
     }
   };
 
@@ -243,11 +373,16 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       value={{
         nodes,
         edges,
+        flowFrontmatter,
         onConnect,
         onNodesChange,
         onEdgesChange,
+        onDragOver,
+        onDrop,
         toml,
         addNode,
+        setReactFlowInstance,
+        updateFlowFrontmatter
       }}
     >
       {children}

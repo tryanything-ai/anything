@@ -17,19 +17,20 @@ import {
   copyFile,
   exists,
 } from "@tauri-apps/api/fs";
+import { v4 as uuidv4 } from "uuid";
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
-  renameFlow: (flowName: string, newFlowName: string) => void;
+  renameFlowFiles: (flowName: string, newFlowName: string) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
-  renameFlow: () => {},
+  renameFlowFiles: () => {},
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -58,10 +59,29 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  //BUG: there is a bug where when you add new flows the names colide because we write files as names.
+  //TODO: more sophisticated way of determining new flow name
   const createNewFlow = async () => {
     try {
-      let flowName = "Flow" + " " + flowPaths.length;
-      //TODO: use from template of basic flow
+      let flowName = "Flow" + " " + (flowPaths.length + 1);
+      console.log("new flow name", flowName);
+      let flowId = uuidv4();
+      // Basic TOML structure for the flow.toml file
+      const flowTomlContent = `
+    [flow]
+    name = "${flowName}"
+    id =  "${flowId}"
+    version = "0.0.1"
+    author = "Your Name <your.email@example.com>"
+    description = "Description of your flow"
+    `;
+
+      // Basic TOML structure for the settings.toml file (modify as needed)
+      const settingsTomlContent = `
+    [settings]
+    some_key = "some_value"
+    `;
+
       if (appDocuments !== undefined) {
         await createDir(appDocuments + "/flows/" + flowName, {
           recursive: true,
@@ -69,11 +89,11 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
 
         await writeTextFile(
           appDocuments + "/flows/" + flowName + "/flow.toml",
-          ""
+          flowTomlContent
         );
         await writeTextFile(
           appDocuments + "/flows/" + flowName + "/settings.toml",
-          ""
+          settingsTomlContent
         );
 
         // get local files for ui again
@@ -101,12 +121,12 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const allPathsExist = async (paths: string[]) => {
-    const results = await Promise.all(paths.map(path => exists(path)));
-    return results.every(result => result);
+    const results = await Promise.all(paths.map((path) => exists(path)));
+    return results.every((result) => result);
   };
 
-  const renameFlow = async (flowName: string, newFlowName: string) => {
-    console.log("renameFlow", flowName, newFlowName);
+  const renameFlowFiles = async (flowName: string, newFlowName: string) => {
+    console.log("renameFlowFiles", flowName, newFlowName);
     try {
       // if(true) throw Error("Not implemented yet");
       if (appDocuments === undefined) throw Error("AppDocuments Undefiend");
@@ -137,6 +157,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       await removeDir(appDocuments + "/flows/" + flowName, {
         recursive: true,
       });
+
+      //TODO: update file frontmatter
+
       await getLocalFiles();
     } catch (error) {
       console.error("Error renaming flow" + error);
@@ -149,7 +172,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     // Your watch function
     if (!loading) {
       let stopWatching = () => {};
-      console.log("Wathcing ", appDocuments, " for changes");
+      console.log("Watching ", appDocuments, " for changes");
       const watchThisFile = async () => {
         stopWatching = await watchImmediate(
           appDocuments,
@@ -184,7 +207,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         flowPaths,
         createNewFlow,
         deleteFlow,
-        renameFlow,
+        renameFlowFiles,
       }}
     >
       {children}
