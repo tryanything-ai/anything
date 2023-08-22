@@ -30,7 +30,7 @@ const DebugPanel = () => {
         <ul>
           {events.map((event) => {
             return (
-              <div className="card h-20 w-full text-md text-primary-content border p-4 my-2">
+              <div key={event.id} className="card h-20 w-full text-md text-primary-content border p-4 my-2">
                 {event.node_type}
               </div>
             );

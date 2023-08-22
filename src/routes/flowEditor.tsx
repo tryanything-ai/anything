@@ -1,5 +1,5 @@
-import { useMemo, useRef, useCallback, DragEvent, useEffect } from "react";
-import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
+import { useMemo, useRef, useState } from "react";
+import ReactFlow, { Background, BackgroundVariant, Controls, ReactFlowActions, ReactFlowInstance } from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
@@ -16,7 +16,6 @@ import CronNode from "../components/nodes/cronNode";
 import TerminalNode from "../components/nodes/terminalNode";
 import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
-import { q } from "@tauri-apps/api/path-c062430b";
 
 function Flows() {
   const {
@@ -27,6 +26,7 @@ function Flows() {
     onEdgesChange,
     onDragOver,
     onDrop,
+    setReactFlowInstance
   } = useFlowContext();
   const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
     useNavigationContext();
@@ -49,33 +49,17 @@ function Flows() {
     <div className="h-full w-full pb-5">
       <Header />
       <div className="flex flex-row h-full w-full">
-        <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
+        {/* <div className="flex flex-row h-full w-full" > */}
           <ReactFlow
+            ref={reactFlowWrapper}
             nodeTypes={nodeTypes}
             nodes={nodes} //new
             edges={edges} //new
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onDragOver={onDragOver}
-            onDrop={onDrop}
-            // onDragEnter={(e) => {
-            //   e.preventDefault();
-            //   // Handle the drop action
-            //   console.log("Drag Enter!");
-            // }}
-            // onDragLeave={(e) => {
-            //   e.preventDefault();
-            //   // Handle the drop action
-            //   console.log("Drag Leave!");
-            // }}
-            // onDragOver={(e) => {
-            //   e.preventDefault();
-            //   console.log("Drag over");
-            // }}
-            // onDrop={(e) => {
-            //   // Handle the drop action
-            //   console.log("Item dropped!");
-            // }}
+            onInit={setReactFlowInstance}
+            onDrop={(e) => onDrop(e, reactFlowWrapper)}
             onConnect={onConnect}
             fitView
           >
@@ -87,7 +71,7 @@ function Flows() {
               color="gray"
             />
           </ReactFlow>
-        </div>
+        {/* </div> */}
         {nodePanel ? (
           <div className="w-1/4">
             <NodePanel />
