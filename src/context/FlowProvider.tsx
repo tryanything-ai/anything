@@ -29,7 +29,6 @@ import { stringify, parse } from "iarna-toml-esm";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
 import { useLocalFileContext } from "./LocalFileProvider";
-import { keys } from "lodash";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -223,7 +222,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const writeToml = async (toml: string, explicit_flow_name?: string) => {
-    if (!appDocuments || !flow_name || !explicit_flow_name) {
+    if (!appDocuments || !flow_name) {
       throw new Error("appDocuments or flow_name is undefined");
     }
     console.log("writing toml in FlowProvider");
@@ -313,13 +312,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
        await renameFlowFiles(flow_name, keysToUpdate.name);
       }
 
+      let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
+
       let newToml = stringify({
-        flow: { ...flowFrontmatter, ...keysToUpdate },
+        flow: flow_frontmatter,
         nodes: nodes as any,
         edges: edges as any,
       });
 
+      //write to file
       setToml(newToml);
+      setFlowFrontmatter(flow_frontmatter);
       //TODO: code smell. we write to file and add the "explicity fileName" because we don't know how navigation will effect this
       //since writeToml uses navigation state to manage teh file name to write too. 
       await writeToml(newToml, keysToUpdate.name);

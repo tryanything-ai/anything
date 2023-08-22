@@ -38,6 +38,9 @@ export default function ManualNode({ data }: { data: any }) {
       created_at: new Date().toISOString(),
       data: { test: true },
     };
+    
+    console.log("Adding event", event); 
+
     addEvent(event);
 
     //TODO: real user feedback on loading state

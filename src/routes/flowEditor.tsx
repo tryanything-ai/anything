@@ -1,9 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import ReactFlow, {
-  Background,
-  BackgroundVariant,
-  Controls,
-} from "reactflow";
+import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
@@ -19,6 +15,7 @@ import TerminalNode from "../components/nodes/terminalNode";
 import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
 import "reactflow/dist/style.css";
+import { useParams } from "react-router-dom";
 
 function Flows() {
   const {
@@ -31,9 +28,11 @@ function Flows() {
     onDrop,
     setReactFlowInstance,
   } = useFlowContext();
+
   const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
     useNavigationContext();
-  const reactFlowWrapper = useRef(null);
+  const reactFlowWrapper = useRef(null); 
+  const { flow_name } = useParams(); 
 
   const nodeTypes = useMemo(
     () => ({
@@ -82,7 +81,8 @@ function Flows() {
         ) : null}
         {debugPanel ? (
           <div className="w-1/4">
-            <DebugPanel />
+            {/* If you don't provide this key the debug pannel doesnt rerender and flow_name is stale in useParams */}
+            <DebugPanel key={flow_name} />
           </div>
         ) : null}
         {settingsPanel ? (
@@ -92,7 +92,7 @@ function Flows() {
         ) : null}
         {tomlPanel ? (
           <div className="w-1/2">
-            <TomlPanel />
+            <TomlPanel  />
           </div>
         ) : null}
       </div>
