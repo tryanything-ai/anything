@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
+import { useMemo, useRef, useState } from "react";
+import ReactFlow, { Background, BackgroundVariant, Controls, ReactFlowActions, ReactFlowInstance } from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
@@ -18,14 +18,19 @@ import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
 
 function Flows() {
-  const { nodes, edges, onConnect, onNodesChange, onEdgesChange } =
-    useFlowContext();
   const {
-    nodePanel,
-    debugPanel, 
-    tomlPanel,
-    settingsPanel,
-  } = useNavigationContext();
+    nodes,
+    edges,
+    onConnect,
+    onNodesChange,
+    onEdgesChange,
+    onDragOver,
+    onDrop,
+    setReactFlowInstance
+  } = useFlowContext();
+  const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
+    useNavigationContext();
+  const reactFlowWrapper = useRef(null);
 
   const nodeTypes = useMemo(
     () => ({
@@ -44,23 +49,29 @@ function Flows() {
     <div className="h-full w-full pb-5">
       <Header />
       <div className="flex flex-row h-full w-full">
-        <ReactFlow
-          nodeTypes={nodeTypes}
-          nodes={nodes} //new
-          edges={edges} //new
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          fitView
-        >
-          <Controls style={{ background: "darkgray" }} />
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={30}
-            size={1}
-            color="gray"
-          />
-        </ReactFlow>
+        {/* <div className="flex flex-row h-full w-full" > */}
+          <ReactFlow
+            ref={reactFlowWrapper}
+            nodeTypes={nodeTypes}
+            nodes={nodes} //new
+            edges={edges} //new
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onDragOver={onDragOver}
+            onInit={setReactFlowInstance}
+            onDrop={(e) => onDrop(e, reactFlowWrapper)}
+            onConnect={onConnect}
+            fitView
+          >
+            <Controls style={{ background: "darkgray" }} />
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={30}
+              size={1}
+              color="gray"
+            />
+          </ReactFlow>
+        {/* </div> */}
         {nodePanel ? (
           <div className="w-1/4">
             <NodePanel />
