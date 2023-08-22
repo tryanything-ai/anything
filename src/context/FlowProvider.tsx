@@ -28,6 +28,8 @@ import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { stringify, parse } from "iarna-toml-esm";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
+import { useLocalFileContext } from "./LocalFileProvider";
+import { keys } from "lodash";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -66,6 +68,7 @@ interface FlowContextInterface {
   onDrop: (event: any, reactFlowWrapper: any) => void;
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
+  updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -78,14 +81,16 @@ export const FlowContext = createContext<FlowContextInterface>({
   onDragOver: () => {},
   onDrop: () => {},
   toml: "",
-  addNode: (type: string, specialData?: any) => {},
-  setReactFlowInstance: () => {},
+  addNode: () => {},
+  setReactFlowInstance: () => { },
+  updateFlowFrontmatter: () => { },
 });
 
 export const useFlowContext = () => useContext(FlowContext);
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments } = useTauriContext();
+  const { renameFlowFiles } = useLocalFileContext();
   const { flow_name } = useParams();
   const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -116,6 +121,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return [...nodes, newNode];
     });
   };
+
   //TODO: some sort of bug when we have no nodes but we don't remove all edges
   const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
     console.log("onNodesChange nodeChanges", nodeChanges);
@@ -180,9 +186,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       const nodeData = JSON.parse(event.dataTransfer.getData("nodeData"));
       const specialData = JSON.parse(event.dataTransfer.getData("specialData"));
 
-      // console.log("data from drop event", JSON.stringify(data, null, 3));
-      // console.log("reactFlowBounds", reactFlowBounds);
-      // check if the dropped element is valid
       if (typeof nodeType === "undefined" || !nodeType) {
         return;
       }
@@ -219,13 +222,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const writeToml = async (toml: string) => {
-    if (!appDocuments || !flow_name) {
+  const writeToml = async (toml: string, explicit_flow_name?: string) => {
+    if (!appDocuments || !flow_name || !explicit_flow_name) {
       throw new Error("appDocuments or flow_name is undefined");
     }
     console.log("writing toml in FlowProvider");
+    let name = explicit_flow_name ? explicit_flow_name : flow_name;
     return await writeTextFile(
-      appDocuments + "/flows/" + flow_name + "/flow.toml",
+      appDocuments + "/flows/" + name + "/flow.toml",
       toml
     );
   };
@@ -301,6 +305,33 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateFlowFrontmatter = async (flow_name: string, keysToUpdate: any) => {
+    try {
+
+      //if we are updating name we also need to update the folder name
+      if(keysToUpdate.name) {
+       await renameFlowFiles(flow_name, keysToUpdate.name);
+      }
+
+      let newToml = stringify({
+        flow: { ...flowFrontmatter, ...keysToUpdate },
+        nodes: nodes as any,
+        edges: edges as any,
+      });
+
+      setToml(newToml);
+      //TODO: code smell. we write to file and add the "explicity fileName" because we don't know how navigation will effect this
+      //since writeToml uses navigation state to manage teh file name to write too. 
+      await writeToml(newToml, keysToUpdate.name);
+
+   
+      //TODO: change file name if the kye is flow_name changes
+      // renameFlowFiles(keysToUpdate.flow_name, )
+    } catch (error) {
+      console.log("error updating flow frontmatter", error);
+    }
+  };
+
   //Load TOML into State the first time
   useEffect(() => {
     if (flow_name && !initalTomlLoaded && appDocuments && !loadingToml) {
@@ -348,6 +379,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         toml,
         addNode,
         setReactFlowInstance,
+        updateFlowFrontmatter
       }}
     >
       {children}

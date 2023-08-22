@@ -1,5 +1,9 @@
 import { useMemo, useRef, useState } from "react";
-import ReactFlow, { Background, BackgroundVariant, Controls, ReactFlowActions, ReactFlowInstance } from "reactflow";
+import ReactFlow, {
+  Background,
+  BackgroundVariant,
+  Controls,
+} from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
@@ -10,12 +14,11 @@ import VectorNode from "../components/nodes/vectorNode";
 import PythonNode from "../components/nodes/pythonNode";
 import JavascriptNode from "../components/nodes/javascriptNode";
 import SettingsPanel from "../components/settingsPanel";
-
-import "reactflow/dist/style.css";
 import CronNode from "../components/nodes/cronNode";
 import TerminalNode from "../components/nodes/terminalNode";
 import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
+import "reactflow/dist/style.css";
 
 function Flows() {
   const {
@@ -26,7 +29,7 @@ function Flows() {
     onEdgesChange,
     onDragOver,
     onDrop,
-    setReactFlowInstance
+    setReactFlowInstance,
   } = useFlowContext();
   const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
     useNavigationContext();
@@ -49,9 +52,9 @@ function Flows() {
     <div className="h-full w-full pb-5">
       <Header />
       <div className="flex flex-row h-full w-full">
-        {/* <div className="flex flex-row h-full w-full" > */}
+        <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
           <ReactFlow
-            ref={reactFlowWrapper}
+            // ref={reactFlowWrapper}
             nodeTypes={nodeTypes}
             nodes={nodes} //new
             edges={edges} //new
@@ -71,7 +74,7 @@ function Flows() {
               color="gray"
             />
           </ReactFlow>
-        {/* </div> */}
+        </div>
         {nodePanel ? (
           <div className="w-1/4">
             <NodePanel />

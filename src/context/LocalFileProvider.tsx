@@ -23,14 +23,14 @@ interface LocalFileContextInterface {
   flowPaths: FileEntry[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
-  renameFlow: (flowName: string, newFlowName: string) => void;
+  renameFlowFiles: (flowName: string, newFlowName: string) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
-  renameFlow: () => {},
+  renameFlowFiles: () => {},
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -125,8 +125,8 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     return results.every((result) => result);
   };
 
-  const renameFlow = async (flowName: string, newFlowName: string) => {
-    console.log("renameFlow", flowName, newFlowName);
+  const renameFlowFiles = async (flowName: string, newFlowName: string) => {
+    console.log("renameFlowFiles", flowName, newFlowName);
     try {
       // if(true) throw Error("Not implemented yet");
       if (appDocuments === undefined) throw Error("AppDocuments Undefiend");
@@ -157,6 +157,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       await removeDir(appDocuments + "/flows/" + flowName, {
         recursive: true,
       });
+
+      //TODO: update file frontmatter
+
       await getLocalFiles();
     } catch (error) {
       console.error("Error renaming flow" + error);
@@ -204,7 +207,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         flowPaths,
         createNewFlow,
         deleteFlow,
-        renameFlow,
+        renameFlowFiles,
       }}
     >
       {children}
