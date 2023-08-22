@@ -1,35 +1,31 @@
 import { useEffect, useState } from "react";
-import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useParams } from "react-router-dom";
 import TerminalNode from "./nodes/terminalNode";
 import ModelNode from "./nodes/modelNode";
+import CronNode from "./nodes/cronNode";
+import JavascriptNode from "./nodes/javascriptNode";
+import ManualNode from "./nodes/manualNode";
+
+export type NodeData = {
+  worker_type: string;
+};
 
 export type Node = {
   nodeType: string;
   image_src?: string;
   title?: string;
   alt: string;
+  nodeData: NodeData;
   specialData?: any;
 };
 
 export const default_nodes: Node[] = [
-  {
-    nodeType: "default",
-    title: "Default Node",
-    alt: "Default Node",
-  },
-  {
-    nodeType: "javascriptNode",
-    image_src: "/js-logo.svg",
-    alt: "JS Logo",
-  },
-  {
-    nodeType: 'cronNode', 
-    title: 'Cron Node',
-    alt: 'Cron Node'
-  }, TerminalNode.Node, 
+  JavascriptNode.Node,
+  CronNode.Node,
+  TerminalNode.Node,
   ModelNode.Node,
+  ManualNode.Node,
 ];
 
 const NodePanel = () => {
@@ -49,6 +45,7 @@ const NodePanel = () => {
           nodeType: "flow",
           title: path.name ? path.name : "",
           alt: path.name ? path.name : "",
+          nodeData: { worker_type: "flow" },
         });
       }
     });
@@ -59,35 +56,54 @@ const NodePanel = () => {
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
       <h1 className="text-2xl font-bold">Nodes</h1>
-
       {nodes.map((node) => (
         <NodeButton
+          key={node.nodeType}
           nodeType={node.nodeType}
           image_src={node.image_src}
           title={node.title}
           alt={node.alt}
+          nodeData={node.nodeData}
           specialData={node.specialData}
         />
       ))}
       <h1 className="text-2xl font-bold mt-2">Flows</h1>
       {flows.map((node) => (
         <NodeButton
+          key={node.nodeType + node.title}
           nodeType={node.nodeType}
           title={node.title}
           image_src={node.image_src}
           alt={node.alt}
+          nodeData={node.nodeData}
         />
       ))}
     </div>
   );
 };
 
-const NodeButton = ({ nodeType, image_src, title, alt, specialData }: Node) => {
-  const { addNode } = useFlowContext();
+const NodeButton = ({
+  nodeType,
+  image_src,
+  title,
+  alt,
+  specialData,
+  nodeData,
+}: Node) => {
+
+  const onDragStart = (event: any) => {
+    console.log("drag started", nodeType);
+    event.dataTransfer.setData("nodeType", nodeType);
+    event.dataTransfer.setData("nodeData", JSON.stringify(nodeData));
+    event.dataTransfer.setData("specialData", JSON.stringify(specialData));
+    event.dataTransfer.effectAllowed = "move";
+  };
+
   return (
-    <button
-      onClick={() => addNode(nodeType, specialData)}
-      className="btn btn-neutral mt-2 pb-2 max-w-md"
+    <div
+      className="btn btn-neutral mt-2 pb-2 max-w-md cursor-grab"
+      onDragStart={(event) => onDragStart(event)}
+      draggable
     >
       {image_src ? (
         <img
@@ -98,7 +114,7 @@ const NodeButton = ({ nodeType, image_src, title, alt, specialData }: Node) => {
       ) : (
         <h1 className="text-lg truncate overflow-ellipsis">{title}</h1>
       )}
-    </button>
+    </div>
   );
 };
 

@@ -10,7 +10,8 @@ type Inputs = {
 
 const FlowSettingsPanel = () => {
   const [loading, setLoading] = useState(false);
-  const { deleteFlow, renameFlow } = useLocalFileContext();
+  const { deleteFlow } = useLocalFileContext();
+  const { updateFlowFrontmatter } = useFlowContext(); 
   const { flow_name } = useParams();
   const navigate = useNavigate();
   const {
@@ -31,7 +32,7 @@ const FlowSettingsPanel = () => {
     try {
       setLoading(true);
       if (flow_name && data.flow_name != flow_name) {
-        await renameFlow(flow_name, data.flow_name);
+        await updateFlowFrontmatter(flow_name, { name: data.flow_name }); 
         navigate(`/flows/${data.flow_name}`);
       }
     } catch (error) {
