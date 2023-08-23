@@ -3,20 +3,20 @@ import ReactFlow, { Handle, Position } from "reactflow";
 import { Node } from "../nodePanel";
 
 let node: Node = {
-  nodeType: "terminalNode",
-  title: "Terminal Node",
-  alt: "Terminal Node",
+  nodeType: "openAiNode",
+  title: "OpenAI Node",
+  alt: "OpenAI Node",
   nodeData: {
-    worker_type: "terminal", 
+    worker_type: "rest",
   },
   specialData: {
     command: "",
   },
 };
 
-TerminalNode.Node = node;
+OpenAiNode.Node = node;
 
-export default function TerminalNode({ data }: { data: any }) {
+export default function OpenAiNode({ data }: { data: any }) {
   return (
     <div
       className={
@@ -25,7 +25,7 @@ export default function TerminalNode({ data }: { data: any }) {
       }
     >
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-left text-xl">CLI Command</div>
+      <div className="text-left text-xl">OpenAI Node</div>
       <div className="text-left text-md underline  truncate overflow-ellipsis">
         {data.command}
       </div>
