@@ -9,8 +9,9 @@ use tauri::api::path::document_dir;
 use std::io::{Result, Error as IOError, ErrorKind};
 use uuid::Uuid;
 
+
 extern crate chrono;
-use chrono::{Utc, DateTime};
+use chrono::Utc; 
 
 #[derive(Clone, serde::Serialize)]
  struct Payload {
@@ -40,7 +41,8 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
         Ok(items) => {
             if let Some(item) = items.get(0) {
                 if let Some(event_id) = item.get("event_id") {
-                    
+                     sql_event_id = event_id.as_str().unwrap();
+                     
                     //TODO: let frontend know wtf is going on
                       // emit the `event-name` event to all webview windows on the frontend
                     //     app.emit_all("current_task", 
@@ -48,27 +50,45 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
                     //     .unwrap();
                    
                     if let Some(worker_type) = item.get("worker_type") {
-                        sql_event_id = event_id.as_str().unwrap();
-
-                        if worker_type != "start" {
-                            println!("Worker type is not Start. Doing Work."); 
-                            //TODO: if node type is "START" create the other events
-                            mark_as_done(app, sql_event_id.to_string()).await;
-                            println!("event_id: {} marked as COMPLETE", event_id);
-                        } else {
-                            println!("Worker type is START. Determining what to build"); 
-                            if let Some(flow_name_value) = item.get("flow_name") {
-                                if let Some(flow_name_str) = flow_name_value.as_str() {
-                                    // Assuming create_events_from_graph expects a &str
-                                    create_events_from_graph(app,flow_name_str).await;
-                                    //Mark the "start" event as done. 
-                                    mark_as_done(app, sql_event_id.to_string()).await;                         
-                                    println!("event_id: {} marked a START event COMPLETE", event_id);
-                                } else {
-                                    // Handle the case where the flow_name is not a string.
+                        
+                            if let Some(worker_type_str) = worker_type.as_str() {
+                                // Now worker_type_str is a &str
+                                match execute_worker_task(app, worker_type_str, item, sql_event_id).await {
+                                    Ok(_) => {
+                                        mark_as_done(app, sql_event_id.to_string()).await;
+                                        println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
+                                    },
+                                    Err(err) => {
+                                        println!("Failed to execute worker task: {}", err);
+                                    }
                                 }
+                            } else {
+                                // Handle the case where worker_type is not a string
+                                println!("Worker type is not a string")
                             }
-                        }
+                        // }
+                      
+
+
+                        // if worker_type != "start" {
+                        //     println!("Worker type is not Start. Doing Work."); 
+                        //     //TODO: if node type is "START" create the other events
+                        //     mark_as_done(app, sql_event_id.to_string()).await;
+                        //     println!("event_id: {} marked as COMPLETE", event_id);
+                        // } else {
+                        //     println!("Worker type is START. Determining what to build"); 
+                        //     if let Some(flow_name_value) = item.get("flow_name") {
+                        //         if let Some(flow_name_str) = flow_name_value.as_str() {
+                        //             // Assuming create_events_from_graph expects a &str
+                        //             create_events_from_graph(app,flow_name_str).await;
+                        //             //Mark the "start" event as done. 
+                        //             mark_as_done(app, sql_event_id.to_string()).await;                         
+                        //             println!("event_id: {} marked a START event COMPLETE", event_id);
+                        //         } else {
+                        //             // Handle the case where the flow_name is not a string.
+                        //         }
+                        //     }
+                        // }
                         
                     } else {
                         println!("event_name not found in the item.");
@@ -141,7 +161,7 @@ async fn create_event<R: tauri::Runtime>(
         JsonValue::String(flow_id.to_string()),              // flow_id
         JsonValue::String(flow_name.to_string()),            // flow_name
         JsonValue::String(flow_version.to_string()),         // flow_version
-        JsonValue::String("dev".to_string()),              // stage
+        JsonValue::String("dev".to_string()),                // stage
         JsonValue::String(worker_type.to_string()),          // worker_type
         JsonValue::String("PENDING".to_string()),            // event_status
         JsonValue::String("PENDING".to_string()),            // session_status
@@ -283,9 +303,37 @@ fn read_from_documents(flow_name: &str) -> Result<String> {
     fs::read_to_string(path)
 }
 
+//gets marked as done after it leaves here. Kinda a bad pattern i think
+async fn execute_worker_task<R: Runtime>(app: &AppHandle<R>, worker_type: &str, event_data: &HashMap<String, JsonValue>, event_id: &str) -> std::result::Result<(), String> {
+    match worker_type {
+        "start" => {
+            // Do something for "start"
+            // You can read the "flow_name" or other values from `event_data`
+            if let Some(flow_name_value) = event_data.get("flow_name") {
+                if let Some(flow_name_str) = flow_name_value.as_str() {
+                    create_events_from_graph(app, flow_name_str).await;
+                } else {
+                    return Err("flow_name is not a string".to_string());
+                }
+            }
+        },
+        "rest" => {
+            // Do something for "some_other_type"
+            println!("Found a REST worker type");
+            println!("{:?}", event_data); 
+            // mark_as_done(app, event_id.to_string()).await;
+            // println!("event_id: {} marked as COMPLETE", event_id);
+        },
+        // add other worker types here
+        _ => {
+            //FIXME: actually fail on unknown worker type
+            println!("Worker type is not Start. Doing Work."); 
+            //     //TODO: if node type is "START" create the other events
+                // mark_as_done(app, event_id.to_string()).await;
+                // println!("event_id: {} marked as COMPLETE", event_id);
+            // return Err(format!("Unknown worker_type: {}", worker_type));
+        }
+    }
 
-// Thoughts on events based architefture
-//https://discord.com/channels/616186924390023171/731495028677148753/1133165388981620837
-
-// Inspiration 
-// https://tokio.rs/tokio/tutorial/shared-state
+    Ok(())
+}

@@ -18,6 +18,7 @@ import "reactflow/dist/style.css";
 import { useParams } from "react-router-dom";
 import SendChatNode from "../components/nodes/sendChatNode";
 import ReceiveChatNode from "../components/nodes/receiveChatNode";
+import OpenAiNode from "../components/nodes/openAiNode";
 
 function Flows() {
   const {
@@ -47,6 +48,7 @@ function Flows() {
       manualNode: ManualNode,
       sendChatNode: SendChatNode,
       receiveChatNode: ReceiveChatNode,
+      openAiNode: OpenAiNode,
     }),
     []
   );

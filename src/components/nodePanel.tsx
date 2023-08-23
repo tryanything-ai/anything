@@ -8,6 +8,7 @@ import JavascriptNode from "./nodes/javascriptNode";
 import ManualNode from "./nodes/manualNode";
 import ReceiveChatNode from "./nodes/receiveChatNode";
 import SendChatNode from "./nodes/sendChatNode";
+import OpenAiNode from "./nodes/openAiNode";
 
 export type NodeData = {
   worker_type: string;
@@ -30,6 +31,7 @@ export const default_nodes: Node[] = [
   CronNode.Node,
   TerminalNode.Node,
   ManualNode.Node,
+  OpenAiNode.Node,
 ];
 
 const NodePanel = () => {
