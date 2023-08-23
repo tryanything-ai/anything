@@ -5,7 +5,6 @@ import { useSqlContext } from "../context/SqlProvider";
 export default function Tables() {
   const { getTableData } = useSqlContext();
   const [data, setData] = useState<any[]>([]);
-
   const { table } = useParams();
 
   const hydrate = async () => {
