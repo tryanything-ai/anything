@@ -8,18 +8,15 @@
     feature(cublas)
 )]
 
-use tauri::{
-    // plugin::{Builder, TauriPlugin},
-    // Runtime, 
-    Window,
-  };
+use tauri::Window; 
 
 extern crate llm;
 use crate::ManagerState;
 
 use llm::{InferenceResponse, LoadProgress};
 
-pub mod config; 
+use crate::config;  
+
 pub mod prompt;
 pub mod models; 
 pub mod events;
