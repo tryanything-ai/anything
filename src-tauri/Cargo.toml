@@ -38,8 +38,8 @@ futures-util = "0.3.28"
 rand = "0.8"
 uuid = "1.4.1"
 chrono = "0.4.26"
-# taplo = "0.12.1"
-llm = { git = "https://github.com/clarkmcc/llm", branch = "upgrade-tokenizers-crate", features = ["metal"] } #remove this when llm is published
+
+llm = { git = "https://github.com/rustformers/llm" , branch = "main", features= ["metal"] } #remove this when llm is published
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]
 # llm = { git = "https://github.com/rustformers/llm", branch = "main", features= ["metal"] }

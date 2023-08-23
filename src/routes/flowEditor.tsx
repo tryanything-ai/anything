@@ -53,7 +53,6 @@ function Flows() {
       <div className="flex flex-row h-full w-full">
         <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
           <ReactFlow
-            // ref={reactFlowWrapper}
             nodeTypes={nodeTypes}
             nodes={nodes} //new
             edges={edges} //new
