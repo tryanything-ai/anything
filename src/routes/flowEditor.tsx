@@ -16,6 +16,8 @@ import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
 import "reactflow/dist/style.css";
 import { useParams } from "react-router-dom";
+import SendChatNode from "../components/nodes/sendChatNode";
+import ReceiveChatNode from "../components/nodes/receiveChatNode";
 
 function Flows() {
   const {
@@ -43,6 +45,8 @@ function Flows() {
       terminalNode: TerminalNode,
       modelNode: ModelNode,
       manualNode: ManualNode,
+      sendChatNode: SendChatNode,
+      receiveChatNode: ReceiveChatNode,
     }),
     []
   );
@@ -53,7 +57,6 @@ function Flows() {
       <div className="flex flex-row h-full w-full">
         <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
           <ReactFlow
-            // ref={reactFlowWrapper}
             nodeTypes={nodeTypes}
             nodes={nodes} //new
             edges={edges} //new

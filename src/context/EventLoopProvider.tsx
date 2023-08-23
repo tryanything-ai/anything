@@ -6,33 +6,31 @@ import React, {
   ReactNode,
 } from "react";
 
-// import React, { createContext, useContext, useEffect } from 'react';
-import { emit, listen, UnlistenFn } from '@tauri-apps/api/event';
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 
+type EventCallback = (payload: any) => void;
 
 interface EventLoopContextInterface {
-  // listenToEvent: (eventName: string, callback: (payload: any) => void) => void;
-  currentTask: any | null;
+  subscribeToEvent: (eventName: string, callback: EventCallback) => void;
 }
 
-// TODO: This should be in Rust i beleive but I don't have time for that right now
 export const EventLoopContext = createContext<EventLoopContextInterface>({
-  // listenToEvent: () => {},
-  currentTask: null,
+  subscribeToEvent: () => {},
 });
 
 export const useEventLoopContext = () => useContext(EventLoopContext);
 
 export const EventLoopProvider = ({ children }: { children: ReactNode }) => {
-  const [currentTask, setCurrentTask] = useState<any | null>(null);
-  
   const listeners: UnlistenFn[] = [];
 
-  const listenToEvent = () => {
-    const unlistenPromise = listen('current_task', (event: any) => {
-      console.log("EventLoopProvider: current_task event received"); 
-      console.log(event.payload);
-      setCurrentTask(event.payload);
+  const subscribeToEvent = (event_name: string, callBack: EventCallback) => {
+    const unlistenPromise = listen(event_name, (event: any) => {
+      // console.log("EventLoopProvider: current_task event received");
+      console.log(
+        "Listened to event for " + event_name + " -> " + event.payload
+      );
+      // setCurrentTask(event.payload);
+      callBack(event.payload);
     });
 
     // Resolve the promise and push the unlisten function to the listeners array
@@ -42,8 +40,6 @@ export const EventLoopProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    listenToEvent();
-
     // Clean up listeners when component unmounts
     return () => {
       listeners.forEach((unlisten) => unlisten());
@@ -51,7 +47,7 @@ export const EventLoopProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <EventLoopContext.Provider value={{currentTask  }}>
+    <EventLoopContext.Provider value={{ subscribeToEvent }}>
       {children}
     </EventLoopContext.Provider>
   );

@@ -86,6 +86,9 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
+//FIXME: we need to switch over to flow_id now that it exists because name changes kill
+//when we have an even in the sqlite stack that is not done yet when names change. 
+//TODO: also just handle that Error Gracefully when it does happen because it is possible
 async fn fetch_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
 ) -> std::result::Result<Vec<HashMap<String, JsonValue>>, Error> {
@@ -96,7 +99,7 @@ async fn fetch_event<R: tauri::Runtime>(
     let query = "SELECT * FROM events WHERE event_status = $1 ORDER BY created_at ASC LIMIT 1".to_string(); 
     let values = vec![JsonValue::String("PENDING".to_string())];
     
-    println!("Fetched Event"); 
+    println!("Fetching Next Event"); 
     // Call the select function with the fetched dbInstances state
     select(db_instances, db, query, values).await
 }
