@@ -1,28 +1,19 @@
 use crate::local_models::config::get_models_dir;
+use crate::local_models::prompt::Template;
 use anyhow::Result;
+use futures_util::StreamExt;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::fs; 
-use std::fs::create_dir_all;
-use std::path::PathBuf;
 use std::cmp::min;
-// use std::io::Write;
-// use std::io::Write;
-use llm::Model;
-
-use futures_util::StreamExt;
-// use lazy_static::lazy_static;
-// use serde::{Deserialize, Serialize};
-// use std::cmp::min;
-// use std::convert::Infallible;
-// use std::fs;
-// use std::fs::create_dir_all;
+use std::convert::Infallible;
+use std::fs;
+use std::fs::create_dir_all;
 use std::io::Write;
-// use std::path::PathBuf;
-// use tracing::info;
+use std::path::PathBuf;
+use tracing::info;
 
 lazy_static! {
-    pub static ref AVAILABLE_MODELS: Vec<MyModel> =
+    pub static ref AVAILABLE_MODELS: Vec<Model> =
         serde_json::from_str(include_str!("./data/models.json")).unwrap();
     pub static ref AVAILABLE_ARCHITECTURES: Vec<Architecture> = vec![
         Architecture {
@@ -40,16 +31,16 @@ lazy_static! {
             id: "gpt-j".to_string(),
             inner: llm::ModelArchitecture::GptJ,
         },
-        // Architecture { //TODO: something is unhappy here
-        //     name: "GPT-NeoX".to_string(),
-        //     id: "gpt-neo-x".to_string(),
-        //     inner: llm::ModelArchitecture::GptNeoX,
-        // },
-        // Architecture {
-        //     name: "MPT".to_string(),
-        //     id: "mpt".to_string(),
-        //     inner: llm::ModelArchitecture::Mpt,
-        // },
+        Architecture {
+            name: "GPT-NeoX".to_string(),
+            id: "gpt-neo-x".to_string(),
+            inner: llm::ModelArchitecture::GptNeoX,
+        },
+        Architecture {
+            name: "MPT".to_string(),
+            id: "mpt".to_string(),
+            inner: llm::ModelArchitecture::Mpt,
+        },
         Architecture {
             name: "BLOOM".to_string(),
             id: "bloom".to_string(),
@@ -58,7 +49,11 @@ lazy_static! {
     ];
 }
 
-pub async fn get_available_models() -> Result<Vec<MyModel>> {
+/// Returns a list of all .bin files available in the models directory
+/// (with associated metadata if we have them in our models.json file)
+/// and if the model is a model that we don't know about, then we return
+/// it first.
+pub async fn get_available_models() -> Result<Vec<Model>> {
     let dir = get_models_dir()?;
     let mut known_models = AVAILABLE_MODELS.clone();
     let mut models = fs::read_dir(dir)?
@@ -68,7 +63,7 @@ pub async fn get_available_models() -> Result<Vec<MyModel>> {
                     if filename.ends_with(".bin")
                         && !known_models.iter().any(|m| m.filename.as_str() == filename)
                     {
-                        return Some(MyModel {
+                        return Some(Model {
                             name: filename.to_string(),
                             filename: filename.to_string(),
                             custom: true,
@@ -85,25 +80,9 @@ pub async fn get_available_models() -> Result<Vec<MyModel>> {
     Ok(models)
 }
 
-pub async fn get_local_model<F>(filename: &str, progress: F) -> Result<PathBuf>
-where
-    F: Fn(u64, u64, f32),
-{
-    let models_dir = get_models_dir()?;
-    if !models_dir.join(filename).exists() {
-        let model = AVAILABLE_MODELS
-            .iter()
-            .find(|m| m.filename == filename)
-            .ok_or(anyhow::anyhow!("Model not found"))?;
-        download_file(&model.url, &models_dir, &model.filename, progress).await?;
-        // info!(filename = model.filename, "finished downloading model");
-    }
-    Ok(models_dir.join(filename))
-}
-
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct MyModel {
+pub struct Model {
     name: String,
     url: String,
     #[serde(default)]
@@ -134,15 +113,42 @@ pub enum Quantization {
     Bit2,
 }
 
-// #[derive(Serialize, Clone)] didnt work cause modelArchitecture does not implement seriealize
 #[derive(Serialize, Clone)]
 pub struct Architecture {
     name: String,
     pub id: String,
-    #[serde(skip_serializing)] ///carl added cause LLM does not implement serialize and made everything angry
     pub inner: llm::ModelArchitecture,
 }
 
+pub struct ModelManager {
+    pub model: Box<dyn llm::Model>,
+    pub session: llm::InferenceSession,
+    pub template: Template,
+}
+
+impl ModelManager {
+    pub fn infer<F>(&mut self, prompt: &str, callback: F) -> Result<llm::InferenceStats, String>
+    where
+        F: FnMut(llm::InferenceResponse) -> Result<llm::InferenceFeedback, Infallible>,
+    {
+        self.session
+            .infer(
+                self.model.as_ref(),
+                &mut rand::thread_rng(),
+                &llm::InferenceRequest {
+                    prompt: self.template.process(prompt).as_str().into(),
+                    parameters: &llm::InferenceParameters::default(),
+                    play_back_previous_tokens: false,
+                    maximum_token_count: None,
+                },
+                &mut Default::default(),
+                callback,
+            )
+            .map_err(|e| format!("Error inferring: {}", e))
+    }
+}
+
+#[tracing::instrument(skip(progress))]
 async fn download_file<F>(
     url: &str,
     destination: &PathBuf,
@@ -155,7 +161,7 @@ where
     create_dir_all(destination)?;
     let destination = destination.join(filename);
     let destination = destination.to_str().unwrap();
-    println!("downloading model to {}", destination);
+    info!("downloading model to {}", destination);
     let response = reqwest::get(url).await?;
     let total_size = response.content_length().unwrap_or(0);
     let mut stream = response.bytes_stream();
@@ -174,59 +180,39 @@ where
     Ok(PathBuf::from(destination))
 }
 
-
-pub async fn run_model(prompt: String) {
-
-    let models_dir = get_models_dir().expect("didnt find models dir"); 
-    let path = models_dir.join("llama-2-7b-chat.ggmlv3.q2_K.bin");
-    println!("models dir: {:?}", models_dir);
-    println!("path: {:?}", path);
-    let llama: llm::models::Llama = llm::load::<llm::models::Llama>(
-        &path,
-        llm::ModelParameters::Default::default(),
-        llm::load_progress_callback_stdout,
-        |_progress| {
-            // let message = format!(
-            //     "Downloading model ({} / {})",
-            //     ByteSize(downloaded),
-            //     ByteSize(total)
-            // );
-            // println!("{}", progress::bar(progress, 50))
-            // Event::ModelLoading { message, progress }.send(&window);
-        }
-        
-    )
-    .unwrap_or_else(|err| panic!("Failed to load model: {}", err));
-
-    println!("Model loaded successfully");
-
-// use the model to generate text from a prompt
-let mut session = llama.start_session(Default::default());
-let res = session.infer::<std::convert::Infallible>(
-    // model to use for text generation
-    &llama,
-    // randomness provider
-    &mut rand::thread_rng(),
-    // the prompt to use for text generation, as well as other
-    // inference parameters
-    &llm::InferenceRequest {
-        prompt: &prompt,
-        ..Default::default()
-    },
-    // llm::OutputRequest
-    &mut Default::default(),
-    // output callback
-    |t| {
-        print!("{t}");
-        std::io::stdout().flush().unwrap();
-
-        Ok(())
+#[tracing::instrument(skip(progress))]
+pub async fn get_local_model<F>(filename: &str, progress: F) -> Result<PathBuf>
+where
+    F: Fn(u64, u64, f32),
+{
+    let models_dir = get_models_dir()?;
+    if !models_dir.join(filename).exists() {
+        let model = AVAILABLE_MODELS
+            .iter()
+            .find(|m| m.filename == filename)
+            .ok_or(anyhow::anyhow!("Model not found"))?;
+        download_file(&model.url, &models_dir, &model.filename, progress).await?;
+        info!(filename = model.filename, "finished downloading model");
     }
-);
-
-match res {
-    Ok(result) => println!("\n\nInference stats:\n{result}"),
-    Err(err) => println!("\n{err}"),
+    Ok(models_dir.join(filename))
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::local_models::models::AVAILABLE_MODELS;
+
+    #[test]
+    fn test_model_existence() {
+        for model in AVAILABLE_MODELS.iter() {
+            println!("Testing {} ({})", model.name, model.url);
+            let response = reqwest::blocking::get(&model.url).expect("Failed to get model");
+            assert!(
+                response.status().is_success(),
+                "Failed to get {} ({}): {}",
+                model.name,
+                model.url,
+                response.status().as_str()
+            );
+        }
+    }
 }

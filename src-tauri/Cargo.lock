@@ -1384,7 +1384,7 @@ dependencies = [
 [[package]]
 name = "ggml"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "ggml-sys",
  "memmap2",
@@ -1394,7 +1394,7 @@ dependencies = [
 [[package]]
 name = "ggml-sys"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "cc",
 ]
@@ -2137,7 +2137,7 @@ checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 [[package]]
 name = "llm"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "llm-base",
  "llm-bloom",
@@ -2153,7 +2153,7 @@ dependencies = [
 [[package]]
 name = "llm-base"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "bytemuck",
  "ggml",
@@ -2173,7 +2173,7 @@ dependencies = [
 [[package]]
 name = "llm-bloom"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "llm-base",
 ]
@@ -2181,7 +2181,7 @@ dependencies = [
 [[package]]
 name = "llm-gpt2"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "bytemuck",
  "llm-base",
@@ -2190,7 +2190,7 @@ dependencies = [
 [[package]]
 name = "llm-gptj"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "llm-base",
 ]
@@ -2198,7 +2198,7 @@ dependencies = [
 [[package]]
 name = "llm-gptneox"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "llm-base",
 ]
@@ -2206,7 +2206,7 @@ dependencies = [
 [[package]]
 name = "llm-llama"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "llm-base",
  "tracing",
@@ -2215,7 +2215,7 @@ dependencies = [
 [[package]]
 name = "llm-mpt"
 version = "0.2.0-dev"
-source = "git+https://github.com/clarkmcc/llm?branch=upgrade-tokenizers-crate#e982ff87a3f43e6675fc703e6d0f4aa0260fd00b"
+source = "git+https://github.com/rustformers/llm?branch=main#2f6ffd4435799ceaa1d1bcb5a8790e5b3e0c5663"
 dependencies = [
  "llm-base",
 ]
