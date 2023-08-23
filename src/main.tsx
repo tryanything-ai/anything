@@ -20,6 +20,7 @@ import "./styles.css";
 import { EventLoopProvider } from "./context/EventLoopProvider";
 import { ModelProvider } from "./context/ModelsProvider";
 import Chats from "./routes/chats";
+import ChatInterface from "./routes/chatInterface";
 
 const router = createBrowserRouter([
   {
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: "/chats",
         element: <Chats/>
+      },
+      {
+        path: "/chats/:flow_id",
+        element: <ChatInterface />
       },
       {
         path: "/tables",
