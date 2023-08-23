@@ -7,6 +7,7 @@ import {
   VscDebug,
   VscHubot,
   VscCircuitBoard,
+  VscComment,
 } from "react-icons/vsc";
 import clsx from "clsx";
 
@@ -31,6 +32,13 @@ export default function Layout() {
           <VscRepoForked
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname.includes("/flows"),
+            })}
+          />
+        </Link>
+        <Link className={linkClass} to="/chats">
+          <VscComment
+            className={clsx(defaultClass, {
+              [selectedClass]: location.pathname.includes("/chats"),
             })}
           />
         </Link>

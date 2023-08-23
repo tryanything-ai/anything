@@ -19,6 +19,7 @@ import { NavigationProvider } from "./context/NavigationProvider";
 import "./styles.css";
 import { EventLoopProvider } from "./context/EventLoopProvider";
 import { ModelProvider } from "./context/ModelsProvider";
+import Chats from "./routes/chats";
 
 const router = createBrowserRouter([
   {
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
       {
         path: "flows/:flow_name",
         element: <FlowEditor />,
+      },
+      {
+        path: "/chats",
+        element: <Chats/>
       },
       {
         path: "/tables",
