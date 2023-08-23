@@ -9,8 +9,9 @@
 )]
 
 use tauri::{
-    plugin::{Builder, TauriPlugin},
-    Runtime, Window,
+    // plugin::{Builder, TauriPlugin},
+    // Runtime, 
+    Window,
   };
 
 extern crate llm;
@@ -24,8 +25,6 @@ pub mod models;
 pub mod events;
 pub mod cancellation;
 use cancellation::Canceller;
-
-use std::io::Write; 
 
 use events::Event; 
 use prompt::Template; 
@@ -49,6 +48,13 @@ pub fn get_architectures() -> Vec<Architecture> {
 #[tauri::command]
 pub async fn get_models() -> Result<Vec<Model>, String> {
     models::get_available_models()
+        .await
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub async fn get_downloaded_models() -> Result<Vec<Model>, String> {
+    models::get_downloaded_models()
         .await
         .map_err(|err| err.to_string())
 }
@@ -253,7 +259,7 @@ pub async fn prompt(
     })
 }
 
-// #[tauri::command]
+// #[tauri::command]d
 // async fn call_model(
 //     window: Window,
 //     prompt: Template,
@@ -408,7 +414,8 @@ pub async fn download_model(
 //       .build()
 // }
 
-fn print_token(t: String) {
-    print!("{t}");
-    std::io::stdout().flush().unwrap();
-}
+
+// fn print_token(t: String) {
+//     print!("{t}");
+//     std::io::stdout().flush().unwrap();
+// }
