@@ -4,8 +4,10 @@
 mod sql;
 mod events;
 mod local_models;
+mod config;
+mod file_manager; 
 
-use local_models::config::get_logs_dir; 
+use config::get_logs_dir; 
 use local_models::models::ModelManager;
 use local_models::cancellation::Canceller;
 
@@ -39,7 +41,17 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
         .plugin(Builder::default().build())
-        .invoke_handler(tauri::generate_handler![local_models::get_architectures, local_models::get_models, local_models::get_prompt_templates, local_models::download_model, local_models::start, local_models::prompt, local_models::get_downloaded_models])
+        .invoke_handler(
+            tauri::generate_handler![
+                local_models::get_architectures,
+                local_models::get_models,
+                local_models::get_prompt_templates,
+                local_models::download_model,
+                local_models::start,
+                local_models::prompt,
+                local_models::get_downloaded_models,
+                file_manager::get_chat_flows, 
+                ])
         // .plugin(local_models::init())
         .setup(|app| {
 
