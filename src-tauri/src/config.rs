@@ -10,6 +10,13 @@ pub fn get_app_dir() -> Result<PathBuf> {
         .join("Anything"))
 }
 
+pub fn get_flows_dir() -> Result<PathBuf> {
+    let dir = get_app_dir()?.join("flows");
+    println!("flows dir: {:?}", dir);
+    create_dir_all(&dir)?;
+    Ok(dir)
+}
+
 pub fn get_models_dir() -> Result<PathBuf> {
     let dir = get_app_dir()?.join("models");
     println!("models dir: {:?}", dir);

@@ -27,6 +27,7 @@ type Model = {
 
 interface ModelContextInterface {
   models: Model[];
+  downloadedModels: Model[];
   architectures: any[];
   modelPromptTemplates: ModelPromptTemplate[];
   downloadModel: (fileName: string) => Promise<any>;
@@ -35,6 +36,7 @@ interface ModelContextInterface {
 
 export const ModelContext = createContext<ModelContextInterface>({
   models: [],
+  downloadedModels: [],
   architectures: [],
   modelPromptTemplates: [],
   downloadModel: async (fileName: string) => { },
@@ -45,6 +47,7 @@ export const useModelContext = () => useContext(ModelContext);
 
 export const ModelProvider = ({ children }: { children: ReactNode }) => {
   const [models, setModels] = useState<Model[]>([]);
+  const [downloadedModels, setDownloadedModels] = useState<Model[]>([]);
   const [modelPromptTemplates, setModelPromptTemplates] = useState<
     ModelPromptTemplate[]
   >([]);
@@ -66,25 +69,31 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
-    invoke("plugin:local_models|get_prompt_templates").then((result) => {
+    invoke("get_prompt_templates").then((result) => {
       console.log("Prompt Templates from plugin" + JSON.stringify(result));
       setModelPromptTemplates(result as ModelPromptTemplate[]);
     });
 
-    invoke("plugin:local_models|get_architectures").then((result) => {
+    invoke("get_architectures").then((result) => {
       console.log("Architectures from plugin" + JSON.stringify(result));
       setArchitectures(result as any[]);
     });
 
-    invoke("plugin:local_models|get_models").then((result) => {
+    invoke("get_models").then((result) => {
       console.log("Models from plugin" + JSON.stringify(result));
       setModels(result as Model[]);
     });
+
+    invoke("get_downloaded_models").then((result) => {
+      console.log("Downloaded Models from plugin" + JSON.stringify(result));
+      setDownloadedModels(result as Model[]);
+    });
+
   }, []);
 
   return (
     <ModelContext.Provider
-      value={{ models, modelPromptTemplates, architectures, downloadModel, callModel }}
+      value={{ models, downloadedModels, modelPromptTemplates, architectures, downloadModel, callModel }}
     >
       {children}
     </ModelContext.Provider>

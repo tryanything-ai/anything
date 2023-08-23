@@ -1,6 +1,6 @@
 use serde::Serialize;
 use tauri::Window;
-// use tracing::error;
+use tracing::error;
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "untagged")]
@@ -19,11 +19,11 @@ impl Event {
 
     pub fn send(&self, window: &Window) {
         if let Err(error) = window.emit(self.name(), self) {
-            // error!(
-            //     error = error.to_string(),
-            //     event = format!("{:?}", self),
-            //     "sending event"
-            // );
+            error!(
+                error = error.to_string(),
+                event = format!("{:?}", self),
+                "sending event"
+            );
         }
     }
 }
