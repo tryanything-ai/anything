@@ -80,6 +80,29 @@ pub async fn get_available_models() -> Result<Vec<Model>> {
     Ok(models)
 }
 
+pub async fn get_downloaded_models() -> Result<Vec<Model>> {
+    let dir = get_models_dir()?;
+    let models = fs::read_dir(dir)?
+        .filter_map(|file| {
+            if let Ok(file) = file {
+                if let Some(filename) = file.file_name().to_str() {
+                    if filename.ends_with(".bin") {
+                        return Some(Model {
+                            name: filename.to_string(),
+                            filename: filename.to_string(),
+                            custom: true,
+                            ..Default::default()
+                        });
+                    }
+                }
+            }
+            None
+        })
+        .collect::<Vec<_>>();
+    Ok(models)
+}
+
+
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Model {
