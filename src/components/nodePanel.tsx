@@ -6,6 +6,8 @@ import ModelNode from "./nodes/modelNode";
 import CronNode from "./nodes/cronNode";
 import JavascriptNode from "./nodes/javascriptNode";
 import ManualNode from "./nodes/manualNode";
+import ReceiveChatNode from "./nodes/receiveChatNode";
+import SendChatNode from "./nodes/sendChatNode";
 
 export type NodeData = {
   worker_type: string;
@@ -21,10 +23,12 @@ export type Node = {
 };
 
 export const default_nodes: Node[] = [
+  ReceiveChatNode.Node,
+  SendChatNode.Node,
+  ModelNode.Node,
   JavascriptNode.Node,
   CronNode.Node,
   TerminalNode.Node,
-  ModelNode.Node,
   ManualNode.Node,
 ];
 
@@ -90,7 +94,6 @@ const NodeButton = ({
   specialData,
   nodeData,
 }: Node) => {
-
   const onDragStart = (event: any) => {
     console.log("drag started", nodeType);
     event.dataTransfer.setData("nodeType", nodeType);
