@@ -14,7 +14,7 @@ type ModelPromptTemplate = {
   template: string;
 };
 
-type Model = {
+export type Model = {
   recommended: boolean;
   name: string;
   description: string;
