@@ -8,22 +8,22 @@
     feature(cublas)
 )]
 
-use tauri::Window; 
+use tauri::Window;
 
 extern crate llm;
 use crate::ManagerState;
 
 use llm::{InferenceResponse, LoadProgress};
 
-use crate::config;  
+use crate::config;
 
 pub mod prompt;
-pub mod models; 
-pub mod events;
+pub mod models;
 pub mod cancellation;
 use cancellation::Canceller;
 
-use events::Event; 
+use crate::notifications::Event; 
+
 use prompt::Template; 
 use models::{get_local_model, Architecture, Model, ModelManager};
 use bytesize::ByteSize;
@@ -56,6 +56,7 @@ pub async fn get_downloaded_models() -> Result<Vec<Model>, String> {
         .map_err(|err| err.to_string())
 }
 
+//TODO: abstract this tauri command into code that can be called from rust event processing system
 
 #[tauri::command]
 pub async fn start(
