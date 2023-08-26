@@ -29,6 +29,7 @@ import { stringify, parse } from "iarna-toml-esm";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
 import { useLocalFileContext } from "./LocalFileProvider";
+import { useEventLoopContext } from "./EventLoopProvider";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -70,6 +71,8 @@ interface FlowContextInterface {
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
 }
 
+//BUG: sometimes whole toml gets deleted if we wiggle too many things. race condition?
+//BUG: sometimes edges aren't deleted when we delete a node that is connected.
 export const FlowContext = createContext<FlowContextInterface>({
   nodes: [],
   edges: [],
@@ -90,6 +93,7 @@ export const useFlowContext = () => useContext(FlowContext);
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments } = useTauriContext();
   const { renameFlowFiles } = useLocalFileContext();
+  const { subscribeToEvent } = useEventLoopContext(); 
   const { flow_name } = useParams();
   const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -334,6 +338,18 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       console.log("error updating flow frontmatter", error);
     }
   };
+
+ 
+  //listen to event to show processing state in nodes
+  useEffect(() => {
+    subscribeToEvent("event_processing", (event: any) => {
+      console.log("received event about processing");
+      console.log(event);
+      // setLoading(true);
+      // setProgress(event.progress);
+      // setMessage(event.message);
+    });
+  }, []);
 
   //Load TOML into State the first time
   useEffect(() => {
