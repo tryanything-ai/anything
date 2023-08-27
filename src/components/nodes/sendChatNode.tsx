@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
-import ReactFlow, { Handle, Position } from "reactflow";
+import ReactFlow, { Handle, Position, NodeProps } from "reactflow";
 import { Node } from "../nodePanel";
+import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "sendChatNode",
@@ -16,20 +17,19 @@ let node: Node = {
 
 SendChatNode.Node = node;
 
-export default function SendChatNode({ data }: { data: any }) {
+type NodeData = {
+  value: number;
+};
+
+export default function SendChatNode({ id }: NodeProps<NodeData>) {
   return (
-    <div
-      className={
-        "bg-primary w-40 h-20 p-4 border rounded-md text-primary-content flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
+   <BaseNode id={id} flow_id="flow_id">
       <Handle type="target" position={Position.Top} id="a" />
       <div className="text-left text-xl">Send Chat</div>
       {/* <div className="text-left text-md underline  truncate overflow-ellipsis">
         {data.command}
       </div> */}
       <Handle type="source" position={Position.Bottom} id="b" />
-    </div>
+    </BaseNode>
   );
 }

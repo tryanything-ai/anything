@@ -42,7 +42,7 @@ function Flows() {
       vectorNode: VectorNode,
       pythonNode: PythonNode,
       javascriptNode: JavascriptNode,
-      cronNode: CronNode,
+        cronNode: CronNode,
       terminalNode: TerminalNode,
       modelNode: ModelNode,
       manualNode: ManualNode,
@@ -54,7 +54,7 @@ function Flows() {
   );
 
   return (
-    <div className="h-full w-full pb-5">
+    <div className="h-full w-full pb-5 overscroll-none">
       <Header />
       <div className="flex flex-row h-full w-full">
         <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
@@ -77,6 +77,7 @@ function Flows() {
               size={1}
               color="gray"
             />
+            
           </ReactFlow>
         </div>
         {nodePanel ? (

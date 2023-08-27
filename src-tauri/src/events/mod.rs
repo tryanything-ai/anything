@@ -281,19 +281,21 @@ fn read_from_documents(flow_name: &str) -> Result<String> {
 //gets marked as done after it leaves here. Kinda a bad pattern i think
 async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>, event_id: &str) -> std::result::Result<(), String> {
 
-    //get values for eventProcessing Message
-    let node_id = event_data.get("node_id").unwrap().to_string(); 
-    let flow_id = event_data.get("flow_id").unwrap().to_string(); 
-    let event_id = event_data.get("event_id").unwrap().to_string(); 
+    // Get values for eventProcessing Message
+    // Use `.as_str().unwrap()` to extract the string value from the JsonValue
+    let node_id = event_data.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
+    let flow_id = event_data.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
+    let event_id = event_data.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
+
 
     //write message 
     let message = format!("Executing Worker Task: {} for node_id: {} and flow_id: {} and event_id: {}", worker_type, node_id, flow_id, event_id);
 
     Event::EventProcessing { 
         message,
-        event_id,
-        node_id, 
-        flow_id, 
+        event_id: event_id.to_string(),
+        node_id: node_id.to_string(), 
+        flow_id: flow_id.to_string(), 
          }.send(&app.get_window("main").unwrap()); 
    
     match worker_type {

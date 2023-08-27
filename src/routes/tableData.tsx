@@ -37,13 +37,17 @@ export default function Tables() {
         <table className="table table-xs">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Event ID</th>
               <th>Created At</th>
+              <th>Node Id</th>
+              <th>Node Type</th>
               <th>Flow ID</th>
               <th>Flow Name</th>
               <th>Flow Version</th>
+              <th>Worker Type</th>
               <th>Stage</th>
               <th>Event Status</th>
+              <th>Session Status</th>
               <th>Data</th>
             </tr>
           </thead>
@@ -53,11 +57,15 @@ export default function Tables() {
                 <tr>
                   <th>{event.event_id}</th>
                   <th>{event.created_at}</th>
+                  <th>{event.node_id}</th>
+                  <th>{event.node_type}</th>
                   <th>{event.flow_id}</th>
                   <th>{event.flow_name}</th>
                   <th>{event.flow_version}</th>
+                  <th>{event.worker_type}</th>
                   <th>{event.stage}</th>
                   <th>{event.event_status}</th>
+                  <th>{event.session_status}</th>
                   <th>{JSON.stringify(event.data)}</th>
                 </tr>
               );
