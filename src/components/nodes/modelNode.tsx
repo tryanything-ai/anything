@@ -28,10 +28,6 @@ type NodeData = {
 export default function ModelNode({ id }: NodeProps<NodeData>) {
   const { callModel } = useModelContext();
 
-  // const onChange = useCallback((evt: any) => {
-  //   console.log(evt.target.value);
-  // }, []);
-
   return (
     <BaseNode id={id} flow_id="flow_id">
       <Handle type="target" position={Position.Top} id="a" />

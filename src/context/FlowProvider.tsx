@@ -56,10 +56,18 @@ function findNextNodeId(nodes: any): string {
   return nextId;
 }
 
+type FlowFrontMatter = {
+  name: string;
+  id: string;
+  version: string;
+  author: string;
+  description: string;
+};
+
 interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
-  flowFrontmatter: any;
+  flowFrontmatter: FlowFrontMatter | undefined;
   currentProcessingStatus: ProcessingStatus | undefined;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
@@ -77,16 +85,15 @@ interface FlowContextInterface {
 export const FlowContext = createContext<FlowContextInterface>({
   nodes: [],
   edges: [],
-  flowFrontmatter: {},
-  currentProcessingStatus: undefined, 
+  flowFrontmatter: undefined,
+  currentProcessingStatus: undefined,
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
   onDragOver: () => {},
   onDrop: () => {},
   toml: "",
-  addNode: () => { },
-  
+  addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
 });
@@ -109,9 +116,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [flowFrontmatter, setFlowFrontmatter] = useState<any>({});
+  const [flowFrontmatter, setFlowFrontmatter] = useState<FlowFrontMatter | undefined>();
   const [toml, setToml] = useState<string>("");
-  const [currentProcessingStatus, setCurrentProcessingStatus] = useState<ProcessingStatus | undefined>();
+  const [currentProcessingStatus, setCurrentProcessingStatus] = useState<
+    ProcessingStatus | undefined
+  >();
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
 
@@ -142,7 +151,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setNodes((nodes) => {
       let new_nodes = applyNodeChanges(nodeChanges, nodes);
       let new_toml = stringify({
-        flow: flowFrontmatter,
+        flow: flowFrontmatter as FlowFrontMatter,
         nodes: new_nodes as any,
         edges: edges as any,
       });
@@ -156,7 +165,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setEdges((edges) => {
       let new_edges = applyEdgeChanges(edgeChanges, edges);
       let new_toml = stringify({
-        flow: flowFrontmatter,
+        flow: flowFrontmatter as FlowFrontMatter,
         nodes: nodes as any,
         edges: new_edges as any,
       });
@@ -173,7 +182,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     setEdges((edges) => {
       let new_edges = addEdge(params, edges);
       let new_toml = stringify({
-        flow: flowFrontmatter,
+        flow: flowFrontmatter as FlowFrontMatter,
         nodes: nodes as any,
         edges: new_edges as any,
       });
@@ -274,7 +283,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
           parsedToml.edges = [];
         }
         setEdges(parsedToml.edges as any);
-        setFlowFrontmatter(parsedToml.flow);
+        setFlowFrontmatter(parsedToml.flow as FlowFrontMatter);
       }
     } catch (error) {
       console.log("error loading toml in FlowProvider", error);
@@ -311,7 +320,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         setNodes(parsedToml.nodes as any);
         setEdges(parsedToml.edges as any);
         //TODO: handle missing frontmatter
-        setFlowFrontmatter(parsedToml.flow);
+        setFlowFrontmatter(parsedToml.flow as FlowFrontMatter);
         setInitialTomlLoaded(true);
       }
     } catch (error) {
