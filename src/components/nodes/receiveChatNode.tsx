@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
-import ReactFlow, { Handle, Position } from "reactflow";
+import { Handle, Position, NodeProps } from "reactflow";
 import { Node } from "../nodePanel";
+import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "receiveChatNode",
@@ -16,13 +16,13 @@ let node: Node = {
 
 ReceiveChatNode.Node = node;
 
-export default function ReceiveChatNode({ data }: { data: any }) {
+type NodeData = {
+  value: number;
+};
+
+export default function ReceiveChatNode({ id }: NodeProps<NodeData>) {
   return (
-    <div
-      className={
-        "bg-secondary w-40 h-20 p-4 border rounded-md text-primary-content flex flex-col justify-center align-middle" +
-        data.classNames
-      }
+    <BaseNode id={id} flow_id="flow_id"
     >
       <Handle type="target" position={Position.Top} id="a" />
       <div className="text-left text-xl">Receive Chat</div>
@@ -30,6 +30,6 @@ export default function ReceiveChatNode({ data }: { data: any }) {
         {data.command}
       </div> */}
       <Handle type="source" position={Position.Bottom} id="b" />
-    </div>
+    </BaseNode>
   );
 }

@@ -1,22 +1,32 @@
-import React, { useCallback } from "react";
-import ReactFlow, { Handle, Position } from "reactflow";
+import { Handle, Position, NodeProps } from "reactflow";
+import { Node } from "../nodePanel";
+import BaseNode from "./baseNode";
 
-export default function VectorNode({ data }: { data: any }) {
-  const onChange = useCallback((evt: any) => {
-    console.log(evt.target.value);
-  }, []);
+let node: Node = {
+  nodeType: "vectorNode",
+  title: "Vector Node",
+  alt: "Vector Node",
+  nodeData: {
+    worker_type: "vector",
+  },
+  specialData: {
+    db: "",
+  },
+};
 
+VectorNode.Node = node;
+
+type NodeData = {
+  value: number;
+};
+
+export default function VectorNode({ id, data }: NodeProps<NodeData>) {
   return (
-    <div
-      className={
-        "bg-primary-200 w-64 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
+    <BaseNode id={id} flow_id="flow_id">
       <Handle type="target" position={Position.Top} id="a" />
       <div className="text-center text-xl">{data.value}</div>
       <Handle type="target" position={Position.Right} id="b" />
       <Handle type="source" position={Position.Bottom} id="c" />
-    </div>
+    </BaseNode>
   );
 }

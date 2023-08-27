@@ -60,6 +60,7 @@ interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
   flowFrontmatter: any;
+  currentProcessingStatus: ProcessingStatus | undefined;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -77,23 +78,32 @@ export const FlowContext = createContext<FlowContextInterface>({
   nodes: [],
   edges: [],
   flowFrontmatter: {},
+  currentProcessingStatus: undefined, 
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
   onDragOver: () => {},
   onDrop: () => {},
   toml: "",
-  addNode: () => {},
-  setReactFlowInstance: () => { },
-  updateFlowFrontmatter: () => { },
+  addNode: () => { },
+  
+  setReactFlowInstance: () => {},
+  updateFlowFrontmatter: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
 
+type ProcessingStatus = {
+  message: String;
+  event_id: String;
+  node_id: String;
+  flow_id: String;
+};
+
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments } = useTauriContext();
   const { renameFlowFiles } = useLocalFileContext();
-  const { subscribeToEvent } = useEventLoopContext(); 
+  const { subscribeToEvent } = useEventLoopContext();
   const { flow_name } = useParams();
   const [initalTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -101,6 +111,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [flowFrontmatter, setFlowFrontmatter] = useState<any>({});
   const [toml, setToml] = useState<string>("");
+  const [currentProcessingStatus, setCurrentProcessingStatus] = useState<ProcessingStatus | undefined>();
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
 
@@ -153,8 +164,8 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       return new_edges;
     });
   };
-  //TODO: need to protect against "undefined" as a state we sync anywhere.
 
+  //TODO: need to protect against "undefined" as a state we sync anywhere.
   //When a node is connected to an edge etc
   const onConnect: OnConnect = (params: any) => {
     console.log("onConnect params", params);
@@ -198,7 +209,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       if (typeof specialData === "undefined" || !specialData) {
         return;
       }
-   
+
       if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
 
       let position = reactFlowInstance.project({
@@ -308,12 +319,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateFlowFrontmatter = async (flow_name: string, keysToUpdate: any) => {
+  const updateFlowFrontmatter = async (
+    flow_name: string,
+    keysToUpdate: any
+  ) => {
     try {
-
       //if we are updating name we also need to update the folder name
-      if(keysToUpdate.name) {
-       await renameFlowFiles(flow_name, keysToUpdate.name);
+      if (keysToUpdate.name) {
+        await renameFlowFiles(flow_name, keysToUpdate.name);
       }
 
       let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
@@ -328,10 +341,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       setToml(newToml);
       setFlowFrontmatter(flow_frontmatter);
       //TODO: code smell. we write to file and add the "explicity fileName" because we don't know how navigation will effect this
-      //since writeToml uses navigation state to manage teh file name to write too. 
+      //since writeToml uses navigation state to manage teh file name to write too.
       await writeToml(newToml, keysToUpdate.name);
 
-   
       //TODO: change file name if the kye is flow_name changes
       // renameFlowFiles(keysToUpdate.flow_name, )
     } catch (error) {
@@ -339,15 +351,12 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
- 
   //listen to event to show processing state in nodes
   useEffect(() => {
     subscribeToEvent("event_processing", (event: any) => {
       console.log("received event about processing");
       console.log(event);
-      // setLoading(true);
-      // setProgress(event.progress);
-      // setMessage(event.message);
+      setCurrentProcessingStatus(event);
     });
   }, []);
 
@@ -390,6 +399,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         nodes,
         edges,
         flowFrontmatter,
+        currentProcessingStatus,
         onConnect,
         onNodesChange,
         onEdgesChange,
@@ -398,7 +408,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         toml,
         addNode,
         setReactFlowInstance,
-        updateFlowFrontmatter
+        updateFlowFrontmatter,
       }}
     >
       {children}
