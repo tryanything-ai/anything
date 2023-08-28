@@ -26,21 +26,27 @@ const DebugPanel = () => {
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
       {events.length > 0 ? (
-        <ul>
-          {events.map((event) => {
-            return (
-              <div key={event.event_id} className="card h-20 w-full text-md text-primary-content border p-4 my-2">
-                {event.node_type}
-              </div>
-            );
-          })}
-        </ul>
+        <>
+          <div className="text-2xl font-bold">Processing Tasks</div>
+          <ul>
+            {events.map((event) => {
+              return (
+                <div
+                  key={event.event_id}
+                  className="card h-20 w-full text-md text-primary-content border p-4 my-2"
+                >
+                  {event.node_type}
+                </div>
+              );
+            })}
+          </ul>
+        </>
       ) : (
         <div className="flex-1 text-center">
           <div>
-            <h1 className="text-2xl">No Events</h1>
+            <h1 className="text-2xl font-bold">No Tasks</h1>
             <p className="text-sm p-2">
-              Events will appear here when you run your flow
+              Tasks will appear here when your flow runs
             </p>
           </div>
         </div>
