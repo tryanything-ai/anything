@@ -65,6 +65,13 @@ async fn process(app: &AppHandle) {
                         println!("event_name not found in the item.");
                     }
             } else {
+                Event::EventProcessing { 
+                    message: "No items to process".to_string(), 
+                    event_id: "".to_string(),
+                    node_id: "".to_string(),
+                    flow_id: "".to_string(),
+                    session_id: "".to_string(),
+                     }.send(&app.get_window("main").unwrap()); 
                 println!("No items in the response.");
             }
         }
