@@ -37,7 +37,7 @@ pnpm start
 - All flows are just files
 - Inspired by NextJS routing a flow just lives at ~/Documents/Flows/{Flow Name} in your computer
 
-[Go to an example flow definition](https://github.com/tryanything-ai/anything.git/tree/main/docs/examples)
+[Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/docs/examples)
 
 
 ### 🤖 Roadmap
