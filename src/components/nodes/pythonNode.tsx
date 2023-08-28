@@ -7,10 +7,10 @@ let node: Node = {
   title: "Python Node",
   alt: "Python Node",
   nodeData: {
-    worker_type: "rest",
+    worker_type: "python",
   },
   specialData: {
-    url: "",
+    code: "",
   },
 };
 

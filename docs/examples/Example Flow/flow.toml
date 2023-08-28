@@ -1,0 +1,191 @@
+[flow]
+name = "Example Flow"
+id = "7b7ffb36-133c-437e-953e-01d6071de796"
+version = "0.0.1"
+author = "Your Name <your.email@example.com>"
+description = "Description of your flow"
+
+[[nodes]]
+id = "1"
+type = "manualNode"
+width = 240
+height = 80
+
+  [nodes.position]
+  x = 159
+  y = 116
+
+  [nodes.data]
+  label = "Node 1"
+  worker_type = "start"
+
+[[nodes]]
+id = "2"
+type = "cronNode"
+width = 240
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 538.1851316751951
+  y = 115.77480964103808
+
+  [nodes.data]
+  label = "Node 2"
+  worker_type = "start"
+  pattern = ""
+
+  [nodes.positionAbsolute]
+  x = 538.1851316751951
+  y = 115.77480964103808
+
+[[nodes]]
+id = "3"
+type = "pythonNode"
+width = 240
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 505.84299642904125
+  y = 751.45482959893
+
+  [nodes.data]
+  label = "Node 3"
+  worker_type = "python"
+  code = ""
+
+  [nodes.positionAbsolute]
+  x = 505.84299642904125
+  y = 751.45482959893
+
+[[nodes]]
+id = "4"
+type = "vectorNode"
+width = 240
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 335.2753038771208
+  y = 371.97874428581287
+
+  [nodes.data]
+  label = "Node 4"
+  worker_type = "vector"
+  db = ""
+  params = [ ]
+
+  [nodes.positionAbsolute]
+  x = 335.2753038771208
+  y = 371.97874428581287
+
+[[nodes]]
+id = "5"
+type = "modelNode"
+width = 240
+height = 80
+selected = true
+dragging = false
+
+  [nodes.position]
+  x = 334.9839825990332
+  y = 534.6928607385315
+
+  [nodes.data]
+  label = "Node 5"
+  worker_type = "local_model"
+  filename = ""
+  prompt = ""
+  variables = [ ]
+
+  [nodes.positionAbsolute]
+  x = 334.9839825990332
+  y = 534.6928607385315
+
+[[nodes]]
+id = "6"
+type = "sendChatNode"
+width = 240
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 160.5899097266509
+  y = 750.785909166661
+
+  [nodes.data]
+  label = "Node 6"
+  worker_type = "app_chat"
+  message = ""
+
+  [nodes.positionAbsolute]
+  x = 160.5899097266509
+  y = 750.785909166661
+
+[[nodes]]
+id = "7"
+type = "terminalNode"
+width = 240
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 506.0165154832414
+  y = 940.1767944688787
+
+  [nodes.data]
+  label = "Node 7"
+  worker_type = "terminal"
+  command = ""
+
+  [nodes.positionAbsolute]
+  x = 506.0165154832414
+  y = 940.1767944688787
+
+[[edges]]
+source = "1"
+sourceHandle = "a"
+target = "4"
+targetHandle = "a"
+id = "reactflow__edge-1a-4a"
+
+[[edges]]
+source = "2"
+sourceHandle = "a"
+target = "4"
+targetHandle = "a"
+id = "reactflow__edge-2a-4a"
+
+[[edges]]
+source = "4"
+sourceHandle = "c"
+target = "5"
+targetHandle = "a"
+id = "reactflow__edge-4c-5a"
+
+[[edges]]
+source = "5"
+sourceHandle = "c"
+target = "6"
+targetHandle = "a"
+id = "reactflow__edge-5c-6a"
+
+[[edges]]
+source = "5"
+sourceHandle = "c"
+target = "3"
+targetHandle = "a"
+id = "reactflow__edge-5c-3a"
+
+[[edges]]
+source = "3"
+sourceHandle = "b"
+target = "7"
+targetHandle = "a"
+id = "reactflow__edge-3b-7a"
