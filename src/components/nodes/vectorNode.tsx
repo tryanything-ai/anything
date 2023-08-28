@@ -11,6 +11,7 @@ let node: Node = {
   },
   specialData: {
     db: "",
+    params: [],
   },
 };
 

@@ -33,6 +33,13 @@ pnpm i
 pnpm start 
 ```
 
+### Flows are defined as TOML Files
+- All flows are just files
+- Inspired by NextJS routing a flow just lives at ~/Documents/Flows/{Flow Name} in your computer
+
+[Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/docs/examples)
+
+
 ### 🤖 Roadmap
 - [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
 - [x] Embeded Sqlite DB
