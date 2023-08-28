@@ -10,7 +10,7 @@ let node: Node = {
     worker_type: "app_chat", 
   },
   specialData: {
-    command: "",
+    message: "",
   },
 };
 
