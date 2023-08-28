@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-import { Handle, Position, NodeProps } from "reactflow";
-import { Node } from "../nodePanel";
+import { useState } from "react";
+import { Handle, Position} from "reactflow";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { VscPlayCircle } from "react-icons/vsc";
 import clsx from "clsx";
-import { useFlowContext } from "../../context/FlowProvider";
 import BaseNode from "./baseNode";
 
 let node: Node = {
@@ -20,11 +19,7 @@ let node: Node = {
 
 ManualNode.Node = node;
 
-type NodeData = {
-  value: number;
-};
-
-export default function ManualNode({ id }: NodeProps<NodeData>) {
+export default function ManualNode({ id, data }: AnythingNodeProps) {
   const { addEvent } = useSqlContext();
   const { flow_name } = useParams();
   const [loading, setLoading] = useState(false);
@@ -57,7 +52,7 @@ export default function ManualNode({ id }: NodeProps<NodeData>) {
   };
 
   return (
-    <BaseNode id={id} flow_id="flow_id">
+    <BaseNode id={id} data={data}>
       <div className="flex flex-row items-center">
         <div className="h-full w-16">
           <button
@@ -67,7 +62,7 @@ export default function ManualNode({ id }: NodeProps<NodeData>) {
             <VscPlayCircle className=" h-12 w-12" />
           </button>
         </div>
-        <div className="text-left text-lg">Manual Trigger</div>
+        <div className="text-lg">Manual Trigger</div>
       </div>
       <Handle
         type="source"

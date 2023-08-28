@@ -1,6 +1,6 @@
-import { Handle, Position, NodeProps } from "reactflow";
-import { Node } from "../nodePanel";
+import { Handle, Position } from "reactflow";
 import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "receiveChatNode",
@@ -16,19 +16,11 @@ let node: Node = {
 
 ReceiveChatNode.Node = node;
 
-type NodeData = {
-  value: number;
-};
-
-export default function ReceiveChatNode({ id }: NodeProps<NodeData>) {
+export default function ReceiveChatNode({ id, data }: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id="flow_id"
-    >
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-left text-xl">Receive Chat</div>
-      {/* <div className="text-left text-md underline  truncate overflow-ellipsis">
-        {data.command}
-      </div> */}
+      <div className="">Receive Chat</div>
       <Handle type="source" position={Position.Bottom} id="b" />
     </BaseNode>
   );

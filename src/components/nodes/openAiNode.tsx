@@ -1,6 +1,6 @@
-import { Handle, Position, NodeProps } from "reactflow";
-import { Node } from "../nodePanel";
+import { Handle, Position } from "reactflow";
 import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "openAiNode",
@@ -16,15 +16,11 @@ let node: Node = {
 
 OpenAiNode.Node = node;
 
-type NodeData = {
-  value: number;
-};
-
-export default function OpenAiNode({ id }: NodeProps<NodeData>) {
+export default function OpenAiNode({ id, data }: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id="flow_id">
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-left text-xl">Open AI Node</div>
+      <div className="text-xl">Open AI Node</div>
       <Handle type="source" position={Position.Bottom} id="b" />
     </BaseNode>
   );

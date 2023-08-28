@@ -1,7 +1,6 @@
-import { Handle, Position, NodeProps } from "reactflow";
-
-import { Node } from "../nodePanel";
+import { Handle, Position } from "reactflow";
 import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "pythonNode",
@@ -22,9 +21,9 @@ type NodeData = {
 };
 
 //Node that acts as the beginning of a flow or one of many beginnings of a flow
-export default function PythonNode({ id }: NodeProps<NodeData>) {
+export default function PythonNode({ id, data}: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id="flow_id">
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
       <img
         src={"/python-logo.svg"}

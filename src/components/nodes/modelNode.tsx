@@ -1,16 +1,13 @@
-import React, { useCallback } from "react";
-import { Handle, Position, NodeProps } from "reactflow";
-
-import { Node } from "../nodePanel";
-import { useModelContext } from "../../context/ModelsProvider";
+import { Handle, Position} from "reactflow";
 import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "modelNode",
   title: "Model Node",
   alt: "Model Node",
   nodeData: {
-    worker_type: "local_model", 
+    worker_type: "local_model",
   },
   specialData: {
     filename: "",
@@ -21,26 +18,11 @@ let node: Node = {
 
 ModelNode.Node = node;
 
-type NodeData = {
-  value: number;
-};
-
-export default function ModelNode({ id }: NodeProps<NodeData>) {
-  const { callModel } = useModelContext();
-
+export default function ModelNode({ id, data }: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id="flow_id">
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-center text-xl">Local Model</div>
-      {/* <button
-        className="btn btn-secondary"
-        onClick={() =>
-          callModel("Tell me to have a wonderful day in a random language! ( then describe in english )")
-        }
-      >
-        Call
-      </button> */}
-      <Handle type="target" position={Position.Right} id="b" />
+      <div className="">Local Model</div>
       <Handle type="source" position={Position.Bottom} id="c" />
     </BaseNode>
   );

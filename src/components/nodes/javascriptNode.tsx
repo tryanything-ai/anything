@@ -1,24 +1,9 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  ReactNode,
-} from "react";
-import ReactFlow, {
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
+import {
   Handle,
-  Position,
-  BackgroundVariant,
-  Controls,
-  NodeProps
+  Position
 } from "reactflow";
-import { Node } from "../nodePanel";
-
+import { AnythingNodeProps, Node} from "../../utils/nodeUtils";
+import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "javascriptNode",
@@ -34,20 +19,11 @@ let node: Node = {
   },
 };
 
-type NodeData = {
-  value: number;
-};
-
 JavascriptNode.Node = node;
 //Node that acts as the beginning of a flow or one of many beginnings of a flow
-export default function JavascriptNode({ data }: any){
+export default function JavascriptNode({id,  data }: AnythingNodeProps){
   return (
-    <div
-      className={
-        "bg-primary w-40 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
+    <BaseNode id={id} data={data}>
       <Handle
         type="target"
         position={Position.Top}
@@ -72,7 +48,7 @@ export default function JavascriptNode({ data }: any){
           console.log("onConnect params in JavscriptNode", params);
         }}
       />
-    </div>
+   </BaseNode>
   );
 };
 

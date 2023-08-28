@@ -1,14 +1,13 @@
-import React, { useCallback } from "react";
-import { Handle, Position, NodeProps } from "reactflow";
-import { Node } from "../nodePanel";
+import { Handle, Position } from "reactflow";
 import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "terminalNode",
   title: "Terminal Node",
   alt: "Terminal Node",
   nodeData: {
-    worker_type: "terminal", 
+    worker_type: "terminal",
   },
   specialData: {
     command: "",
@@ -17,16 +16,12 @@ let node: Node = {
 
 TerminalNode.Node = node;
 
-type NodeData = {
-  command: string;
-};
-
-export default function TerminalNode({ id, data }: NodeProps<NodeData>) {
+export default function TerminalNode({ id, data }: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id={"flow_id"}>
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-left text-xl">CLI Command</div>
-      <div className="text-left text-md underline  truncate overflow-ellipsis">
+      <div className="">CLI Command</div>
+      <div className="text-md underline  truncate overflow-ellipsis">
         {data.command}
       </div>
       <Handle type="source" position={Position.Bottom} id="b" />
