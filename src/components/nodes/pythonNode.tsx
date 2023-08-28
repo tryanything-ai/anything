@@ -1,31 +1,29 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  ReactNode,
-} from "react";
-import ReactFlow, {
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Handle,
-  Position,
-  BackgroundVariant,
-  Controls,
-} from "reactflow";
+import { Handle, Position } from "reactflow";
+import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
+
+let node: Node = {
+  nodeType: "pythonNode",
+  title: "Python Node",
+  alt: "Python Node",
+  nodeData: {
+    worker_type: "rest",
+  },
+  specialData: {
+    url: "",
+  },
+};
+
+PythonNode.Node = node;
+
+type NodeData = {
+  value: number;
+};
 
 //Node that acts as the beginning of a flow or one of many beginnings of a flow
-const PythonNode = ({ data }: any) => {
+export default function PythonNode({ id, data}: AnythingNodeProps) {
   return (
-    <div
-      className={
-        "bg-primary w-42 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
       <img
         src={"/python-logo.svg"}
@@ -33,8 +31,6 @@ const PythonNode = ({ data }: any) => {
         className="max-w-full max-h-full mt-2 ml-4"
       />
       <Handle type="source" position={Position.Bottom} id="b" />
-    </div>
+    </BaseNode>
   );
-};
-
-export default PythonNode;
+}

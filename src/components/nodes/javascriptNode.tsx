@@ -1,31 +1,29 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  ReactNode,
-} from "react";
-import ReactFlow, {
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
+import {
   Handle,
-  Position,
-  BackgroundVariant,
-  Controls,
+  Position
 } from "reactflow";
+import { AnythingNodeProps, Node} from "../../utils/nodeUtils";
+import BaseNode from "./baseNode";
 
+let node: Node = {
+  nodeType: "javascriptNode",
+  title: "JS Node",
+  image_src: "/js-logo.svg",
+  alt: "JS Logo",
+  nodeData: {
+    worker_type: "javascript", 
+  },
+  specialData: {
+    code: "",
+    start: false,
+  },
+};
+
+JavascriptNode.Node = node;
 //Node that acts as the beginning of a flow or one of many beginnings of a flow
-const JavascriptNode = ({ data }: any) => {
+export default function JavascriptNode({id,  data }: AnythingNodeProps){
   return (
-    <div
-      className={
-        "bg-primary w-40 h-12 border rounded-md text-white flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
+    <BaseNode id={id} data={data}>
       <Handle
         type="target"
         position={Position.Top}
@@ -50,8 +48,7 @@ const JavascriptNode = ({ data }: any) => {
           console.log("onConnect params in JavscriptNode", params);
         }}
       />
-    </div>
+   </BaseNode>
   );
 };
 
-export default JavascriptNode;

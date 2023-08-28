@@ -1,33 +1,50 @@
 import React, {
   createContext,
-  useState,
   useEffect,
   useContext,
   ReactNode,
 } from "react";
 
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
+
+type EventCallback = (payload: any) => void;
+
 interface EventLoopContextInterface {
-  theme: string;
-  setTheme: (theme: string) => void;
+  subscribeToEvent: (eventName: string, callback: EventCallback) => void;
 }
-// TODO: This should be in Rust i beleive but I don't have time for that right now
+
 export const EventLoopContext = createContext<EventLoopContextInterface>({
-  theme: localStorage.getItem("theme") || "dark",
-  setTheme: () => {},
+  subscribeToEvent: () => {},
 });
 
 export const useEventLoopContext = () => useContext(EventLoopContext);
 
 export const EventLoopProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+  const listeners: UnlistenFn[] = [];
+
+  const subscribeToEvent = (event_name: string, callBack: EventCallback) => {
+    const unlistenPromise = listen(event_name, (event: any) => {
+      console.log(
+        "Listened to event for " + event_name + " -> " + event.payload
+      );
+      callBack(event.payload);
+    });
+
+    // Resolve the promise and push the unlisten function to the listeners array
+    unlistenPromise.then((unlisten) => {
+      listeners.push(unlisten);
+    });
+  };
 
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    // Clean up listeners when component unmounts
+    return () => {
+      listeners.forEach((unlisten) => unlisten());
+    };
+  }, []);
 
   return (
-    <EventLoopContext.Provider value={{ theme, setTheme }}>
+    <EventLoopContext.Provider value={{ subscribeToEvent }}>
       {children}
     </EventLoopContext.Provider>
   );

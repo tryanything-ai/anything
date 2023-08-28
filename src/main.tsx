@@ -3,19 +3,26 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./layout";
 import ErrorPage from "./error-page";
+// Routes
 import Home from "./routes/home";
 import Settings from "./routes/settings";
 import Tables from "./routes/tables";
 import FlowEditor from "./routes/flowEditor";
 import TableData from "./routes/tableData";
 import Flows from "./routes/flows";
+import Models from "./routes/models";
+import Vectors from "./routes/vectors";
+import Chats from "./routes/chats";
+import ChatInterface from "./routes/chatInterface";
+// Contexts
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
 import { NavigationProvider } from "./context/NavigationProvider";
-import "./styles.css";
 import { EventLoopProvider } from "./context/EventLoopProvider";
+import { ModelProvider } from "./context/ModelsProvider";
+import "./styles.css";
 
 const router = createBrowserRouter([
   {
@@ -32,8 +39,24 @@ const router = createBrowserRouter([
         element: <Flows />,
       },
       {
+        path: "/models",
+        element: <Models />,
+      },
+      {
+        path: "/vectors",
+        element: <Vectors />,
+      },
+      {
         path: "flows/:flow_name",
         element: <FlowEditor />,
+      },
+      {
+        path: "/chats",
+        element: <Chats/>
+      },
+      {
+        path: "/chats/:flow_id",
+        element: <ChatInterface />
       },
       {
         path: "/tables",
@@ -55,15 +78,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
       <LocalFileProvider>
-        <SqlProvider>
-          <EventLoopProvider>
-            <SettingsProvider>
-              <NavigationProvider>
-                <RouterProvider router={router} />
-              </NavigationProvider>
-            </SettingsProvider>
-          </EventLoopProvider>
-        </SqlProvider>
+        <ModelProvider>
+          <SqlProvider>
+            <EventLoopProvider>
+              <SettingsProvider>
+                <NavigationProvider>
+                  <RouterProvider router={router} />
+                </NavigationProvider>
+              </SettingsProvider>
+            </EventLoopProvider>
+          </SqlProvider>
+        </ModelProvider>
       </LocalFileProvider>
     </TauriProvider>
   </React.StrictMode>
