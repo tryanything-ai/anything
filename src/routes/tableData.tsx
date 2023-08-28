@@ -11,7 +11,6 @@ export default function Tables() {
     try {
       if (!table) return;
       const data = await getTableData(table);
-      console.log("data in tableData", data);
       setData(data);
     } catch (error) {
       console.log("error", error);

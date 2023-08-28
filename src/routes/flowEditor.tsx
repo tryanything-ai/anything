@@ -34,15 +34,15 @@ function Flows() {
 
   const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
     useNavigationContext();
-  const reactFlowWrapper = useRef(null); 
-  const { flow_name } = useParams(); 
+  const reactFlowWrapper = useRef(null);
+  const { flow_name } = useParams();
 
   const nodeTypes = useMemo(
     () => ({
       vectorNode: VectorNode,
       pythonNode: PythonNode,
       javascriptNode: JavascriptNode,
-        cronNode: CronNode,
+      cronNode: CronNode,
       terminalNode: TerminalNode,
       modelNode: ModelNode,
       manualNode: ManualNode,
@@ -77,7 +77,6 @@ function Flows() {
               size={1}
               color="gray"
             />
-            
           </ReactFlow>
         </div>
         {nodePanel ? (
@@ -98,7 +97,7 @@ function Flows() {
         ) : null}
         {tomlPanel ? (
           <div className="w-1/2">
-            <TomlPanel  />
+            <TomlPanel />
           </div>
         ) : null}
       </div>
