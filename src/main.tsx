@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./layout";
 import ErrorPage from "./error-page";
+// Routes
 import Home from "./routes/home";
 import Settings from "./routes/settings";
 import Tables from "./routes/tables";
@@ -11,16 +12,17 @@ import TableData from "./routes/tableData";
 import Flows from "./routes/flows";
 import Models from "./routes/models";
 import Vectors from "./routes/vectors";
+import Chats from "./routes/chats";
+import ChatInterface from "./routes/chatInterface";
+// Contexts
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
 import { NavigationProvider } from "./context/NavigationProvider";
-import "./styles.css";
 import { EventLoopProvider } from "./context/EventLoopProvider";
 import { ModelProvider } from "./context/ModelsProvider";
-import Chats from "./routes/chats";
-import ChatInterface from "./routes/chatInterface";
+import "./styles.css";
 
 const router = createBrowserRouter([
   {

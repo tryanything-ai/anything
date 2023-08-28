@@ -18,6 +18,7 @@ export const SettingsContext = createContext<SettingsContextInterface>({
 
 export const useSettingsContext = () => useContext(SettingsContext);
 
+//TODO: its an antipattern to use local storage here. It should also be in Toml Somewhere
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
 
