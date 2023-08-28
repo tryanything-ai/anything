@@ -9,9 +9,9 @@ import ManualNode from "./nodes/manualNode";
 import ReceiveChatNode from "./nodes/receiveChatNode";
 import SendChatNode from "./nodes/sendChatNode";
 import OpenAiNode from "./nodes/openAiNode";
-import { Node } from "../utils/nodeUtils"; 
 import PythonNode from "./nodes/pythonNode";
 import VectorNode from "./nodes/vectorNode";
+import { Node } from "../utils/nodeUtils"; 
 
 export const default_nodes: Node[] = [
   ReceiveChatNode.Node,
@@ -55,7 +55,7 @@ const NodePanel = () => {
     <div className="flex flex-col h-full p-4 border-l border-gray-500">
       <h1 className="text-2xl font-bold">Nodes</h1>
       {nodes.map((node) => (
-        <NodeButton
+        <NodeDnD
           key={node.nodeType}
           nodeType={node.nodeType}
           image_src={node.image_src}
@@ -67,7 +67,7 @@ const NodePanel = () => {
       ))}
       <h1 className="text-2xl font-bold mt-2">Flows</h1>
       {flows.map((node) => (
-        <NodeButton
+        <NodeDnD
           key={node.nodeType + node.title}
           nodeType={node.nodeType}
           title={node.title}
@@ -80,7 +80,7 @@ const NodePanel = () => {
   );
 };
 
-const NodeButton = ({
+const NodeDnD = ({
   nodeType,
   image_src,
   title,

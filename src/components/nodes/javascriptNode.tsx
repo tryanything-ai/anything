@@ -15,7 +15,6 @@ let node: Node = {
   },
   specialData: {
     code: "",
-    start: false,
   },
 };
 
