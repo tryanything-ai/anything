@@ -48,7 +48,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         // filter out .DS_Store files
         entries = entries.filter((entry) => !entry.path.endsWith(".DS_Store"));
 
-        console.log("entries", entries);
+        // console.log("entries", entries);
         //TODO: check for properly formed file structure
         setFlowPaths(entries);
       } else {
