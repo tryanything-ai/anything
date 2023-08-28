@@ -100,6 +100,14 @@ type ProcessingStatus = {
   event_id: String;
   node_id: String;
   flow_id: String;
+  session_id: String;
+};
+
+type SessionComplete = {
+  event_id: String;
+  node_id: String;
+  flow_id: String;
+  session_id: String;
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
@@ -117,6 +125,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [toml, setToml] = useState<string>("");
   const [currentProcessingStatus, setCurrentProcessingStatus] = useState<
     ProcessingStatus | undefined
+  >();
+  const [sessionComplete, setSessionComplete] = useState<
+    SessionComplete | undefined
   >();
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
@@ -337,6 +348,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     subscribeToEvent("event_processing", (event: any) => {
       setCurrentProcessingStatus(event);
+    });
+    subscribeToEvent("session_complete", (event: any) => {
+      setSessionComplete(event);
     });
   }, []);
 
