@@ -20,8 +20,7 @@ export default function VectorNode({ id, data }: AnythingNodeProps) {
   return (
     <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="">{data.value}</div>
-      <Handle type="target" position={Position.Right} id="b" />
+      <div className="">Vector Node</div>
       <Handle type="source" position={Position.Bottom} id="c" />
     </BaseNode>
   );

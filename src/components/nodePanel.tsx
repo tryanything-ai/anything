@@ -10,12 +10,16 @@ import ReceiveChatNode from "./nodes/receiveChatNode";
 import SendChatNode from "./nodes/sendChatNode";
 import OpenAiNode from "./nodes/openAiNode";
 import { Node } from "../utils/nodeUtils"; 
+import PythonNode from "./nodes/pythonNode";
+import VectorNode from "./nodes/vectorNode";
 
 export const default_nodes: Node[] = [
   ReceiveChatNode.Node,
+  VectorNode.Node,
   SendChatNode.Node,
   ModelNode.Node,
   JavascriptNode.Node,
+  PythonNode.Node,
   CronNode.Node,
   TerminalNode.Node,
   ManualNode.Node,
