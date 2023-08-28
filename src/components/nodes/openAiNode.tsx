@@ -3,25 +3,25 @@ import BaseNode from "./baseNode";
 import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
-  nodeType: "vectorNode",
-  title: "Vector Node",
-  alt: "Vector Node",
+  nodeType: "openAiNode",
+  title: "OpenAI Node",
+  alt: "OpenAI Node",
   nodeData: {
-    worker_type: "vector",
+    worker_type: "rest",
   },
   specialData: {
-    db: "",
+    url: "",
   },
 };
 
-VectorNode.Node = node;
+OpenAiNode.Node = node;
 
-export default function VectorNode({ id, data }: AnythingNodeProps) {
+export default function OpenAiNode({ id, data }: AnythingNodeProps) {
   return (
     <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="">Vector Node</div>
-      <Handle type="source" position={Position.Bottom} id="c" />
+      <div className="text-xl">Open AI Node</div>
+      <Handle type="source" position={Position.Bottom} id="b" />
     </BaseNode>
   );
 }

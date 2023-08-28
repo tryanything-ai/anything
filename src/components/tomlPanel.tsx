@@ -3,7 +3,7 @@ import { useFlowContext } from "../context/FlowProvider";
 import Editor from "@monaco-editor/react";
 import { writeTextFile } from "@tauri-apps/api/fs";
 import { useTauriContext } from "../context/TauriProvider";
-import { stringify, parse } from "iarna-toml-esm";
+import { parse } from "iarna-toml-esm";
 
 const TomlPanel = () => {
   const { toml } = useFlowContext();

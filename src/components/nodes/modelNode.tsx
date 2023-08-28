@@ -1,26 +1,28 @@
-import { Handle, Position } from "reactflow";
+import { Handle, Position} from "reactflow";
 import BaseNode from "./baseNode";
 import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
-  nodeType: "vectorNode",
-  title: "Vector Node",
-  alt: "Vector Node",
+  nodeType: "modelNode",
+  title: "Model Node",
+  alt: "Model Node",
   nodeData: {
-    worker_type: "vector",
+    worker_type: "local_model",
   },
   specialData: {
-    db: "",
+    filename: "",
+    prompt: "",
+    variables: [],
   },
 };
 
-VectorNode.Node = node;
+ModelNode.Node = node;
 
-export default function VectorNode({ id, data }: AnythingNodeProps) {
+export default function ModelNode({ id, data }: AnythingNodeProps) {
   return (
     <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="">Vector Node</div>
+      <div className="">Local Model</div>
       <Handle type="source" position={Position.Bottom} id="c" />
     </BaseNode>
   );

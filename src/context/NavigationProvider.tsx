@@ -1,12 +1,14 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import { createContext, useState, useContext, ReactNode } from "react";
 
 interface NavigationContextInterface {
   nodePanel: boolean;
   setNodePanel: (option: boolean) => void;
   tomlPanel: boolean;
   setTomlPanel: (option: boolean) => void;
-  chatPanel: boolean;
-  setChatPanel: (option: boolean) => void;
+  debugPanel: boolean;
+  setDebugPanel: (option: boolean) => void;
+  settingsPanel: boolean;
+  setSettingsPanel: (option: boolean) => void;
 }
 
 export const NavigationContext = createContext<NavigationContextInterface>({
@@ -14,8 +16,10 @@ export const NavigationContext = createContext<NavigationContextInterface>({
   setNodePanel: () => {},
   tomlPanel: true,
   setTomlPanel: () => {},
-  chatPanel: true,
-  setChatPanel: () => {},
+  debugPanel: true,
+  setDebugPanel: () => {},
+  settingsPanel: true,
+  setSettingsPanel: () => {},
 });
 
 export const useNavigationContext = () => useContext(NavigationContext);
@@ -24,7 +28,8 @@ export const useNavigationContext = () => useContext(NavigationContext);
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {
   const [nodePanel, setNodePanel] = useState<boolean>(false);
   const [tomlPanel, setTomlPanel] = useState<boolean>(false);
-  const [chatPanel, setChatPanel] = useState<boolean>(false);
+  const [debugPanel, setDebugPanel] = useState<boolean>(false);
+  const [settingsPanel, setSettingsPanel] = useState<boolean>(false);
 
   return (
     <NavigationContext.Provider
@@ -33,8 +38,10 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
         setNodePanel,
         tomlPanel,
         setTomlPanel,
-        chatPanel,
-        setChatPanel,
+        debugPanel,
+        setDebugPanel, 
+        settingsPanel,
+        setSettingsPanel,
       }}
     >
       {children}

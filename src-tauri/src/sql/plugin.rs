@@ -151,7 +151,6 @@ async fn load<R: Runtime>(
     #[allow(unused_variables)] app: AppHandle<R>,
     db_instances: State<'_, DbInstances>,
     migrations: State<'_, Migrations>,
-    // db: String,
 ) -> Result<String> {
     println!("Loading db"); 
     let db = DB_STRING.to_string();
@@ -276,7 +275,7 @@ impl Builder {
             .insert(db_url.to_string(), MigrationList(migrations));
         self
     }
-
+    
     pub fn build<R: Runtime>(mut self) -> TauriPlugin<R, Option<PluginConfig>> {
         PluginBuilder::new("sqlite")
             .invoke_handler(tauri::generate_handler![load, execute, select, close])
