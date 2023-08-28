@@ -11,7 +11,7 @@ type Inputs = {
 const FlowSettingsPanel = () => {
   const [loading, setLoading] = useState(false);
   const { deleteFlow } = useLocalFileContext();
-  const { updateFlowFrontmatter } = useFlowContext(); 
+  const { updateFlowFrontmatter } = useFlowContext();
   const { flow_name } = useParams();
   const navigate = useNavigate();
   const {
@@ -22,17 +22,17 @@ const FlowSettingsPanel = () => {
   } = useForm<Inputs>();
 
   const _deleteFlow = async () => {
-      if (flow_name) {
-        await deleteFlow(flow_name);
-        navigate("/");
-      }
+    if (flow_name) {
+      await deleteFlow(flow_name);
+      navigate("/");
     }
-  
+  };
+
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
       if (flow_name && data.flow_name != flow_name) {
-        await updateFlowFrontmatter(flow_name, { name: data.flow_name }); 
+        await updateFlowFrontmatter(flow_name, { name: data.flow_name });
         navigate(`/flows/${data.flow_name}`);
       }
     } catch (error) {
@@ -43,7 +43,6 @@ const FlowSettingsPanel = () => {
     }
   };
 
-  // console.log(watch("example")); // watch input value
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500 gap-5">
       <h1 className="text-2xl font-bold">Flow Settings</h1>
@@ -65,10 +64,7 @@ const FlowSettingsPanel = () => {
         {errors.flow_name && <span>This field is required</span>}
         <input type="submit" className="btn btn-primary" />
       </form>
-      <button
-        className="btn btn-error mt-4"
-        onClick={_deleteFlow}
-      >
+      <button className="btn btn-error mt-4" onClick={_deleteFlow}>
         Delete Flow
       </button>
     </div>

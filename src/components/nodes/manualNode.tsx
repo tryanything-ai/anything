@@ -56,7 +56,6 @@ export default function ManualNode({ id }: NodeProps<NodeData>) {
     }, 1000);
   };
 
-
   return (
     <BaseNode id={id} flow_id="flow_id">
       <div className="flex flex-row items-center">
