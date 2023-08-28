@@ -1,12 +1,5 @@
 use serde::Serialize;
-use tauri::{AppHandle, Window, Runtime, Manager};
-// use tauri::{
-//     Window,
-//     command,
-//     plugin::{Builder as PluginBuilder, TauriPlugin},
-//     api::path::document_dir,
-//     AppHandle, Manager, RunEvent, Runtime, State,
-// };
+use tauri::Window;
 use tracing::error;
 
 #[derive(Serialize, Debug)]
@@ -14,7 +7,8 @@ use tracing::error;
 pub enum Event {
     ModelLoading { message: String, progress: f32 },
     PromptResponse { message: String },
-    EventProcessing { message: String, event_id: String, node_id: String, flow_id: String },
+    EventProcessing { message: String, event_id: String, node_id: String, flow_id: String, session_id: String },
+    SessionComplete {  event_id: String, node_id: String, flow_id: String, session_id: String }
 }
 
 impl Event {
@@ -23,6 +17,7 @@ impl Event {
             Event::ModelLoading { .. } => "model_loading",
             Event::PromptResponse { .. } => "prompt_response",
             Event::EventProcessing { .. } => "event_processing",
+            Event::SessionComplete { .. } => "session_complete"
         }
     }
 
