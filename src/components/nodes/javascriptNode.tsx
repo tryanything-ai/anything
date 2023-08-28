@@ -15,6 +15,7 @@ import ReactFlow, {
   Position,
   BackgroundVariant,
   Controls,
+  NodeProps
 } from "reactflow";
 import { Node } from "../nodePanel";
 
@@ -31,6 +32,10 @@ let node: Node = {
     code: "",
     start: false,
   },
+};
+
+type NodeData = {
+  value: number;
 };
 
 JavascriptNode.Node = node;

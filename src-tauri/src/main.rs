@@ -3,15 +3,17 @@
 
 mod sql;
 mod events;
+mod notifications;
 mod local_models;
 mod config;
-mod file_manager; 
+mod file_manager;
 
-use config::get_logs_dir; 
+use config::get_logs_dir;
 use local_models::models::ModelManager;
 use local_models::cancellation::Canceller;
+use tauri::Manager; 
 
-use sql::plugin::Builder; 
+use sql::plugin::Builder;
 use std::fs; 
 use events::scheduler; 
 
@@ -56,6 +58,7 @@ fn main() {
         .setup(|app| {
 
             let app_handle = app.handle();
+            // let window = app_handle.get_window("main").unwrap();
               // Spawn a new asynchronous task for scheduler
               tauri::async_runtime::spawn(async move {
                 scheduler(&app_handle).await;
