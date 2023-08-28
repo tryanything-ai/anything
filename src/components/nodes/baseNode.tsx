@@ -17,7 +17,11 @@ export default function BaseNode({
     //FIXME: manage flow_name by ID globally here we need it to only show activity if the activity is from the right flow
     console.log("now: Processing set to true in node", currentProcessingStatus);
     console.log("now: Data id", id);
-    if (currentProcessingStatus && currentProcessingStatus?.node_id === id && currentProcessingStatus?.flow_id === flowFrontmatter?.id) {
+    if (
+      currentProcessingStatus &&
+      currentProcessingStatus?.node_id === id &&
+      currentProcessingStatus?.flow_id === flowFrontmatter?.id
+    ) {
       setProcessing(true);
     } else {
       setProcessing(false);

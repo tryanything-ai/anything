@@ -11,7 +11,6 @@ const DebugPanel = () => {
     try {
       if (!flow_name) return;
       const data = await getFlowEvents(flow_name);
-      console.log("data in debug Panel", data);
       setEvents(data);
     } catch (error) {
       console.log("error", error);
@@ -20,7 +19,7 @@ const DebugPanel = () => {
 
   useEffect(() => {
     hydrate();
-    const intervalId = setInterval(hydrate, 1000);
+    const intervalId = setInterval(hydrate, 500);
     return () => clearInterval(intervalId);
   }, []);
 

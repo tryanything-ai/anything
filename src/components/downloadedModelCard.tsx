@@ -30,8 +30,6 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
 
   useEffect(() => {
     subscribeToEvent("model_loading", (event: any) => {
-      console.log("model_download_progress event received");
-      console.log(event);
       setLoading(true);
       setProgress(event.progress);
       setMessage(event.message);
