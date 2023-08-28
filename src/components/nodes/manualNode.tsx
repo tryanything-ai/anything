@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Handle, Position } from "reactflow";
+import { useEffect, useState } from "react";
+import { Handle, Position, NodeProps } from "reactflow";
 import { Node } from "../nodePanel";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { VscPlayCircle } from "react-icons/vsc";
 import clsx from "clsx";
+import { useFlowContext } from "../../context/FlowProvider";
+import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "manualNode",
@@ -18,7 +20,11 @@ let node: Node = {
 
 ManualNode.Node = node;
 
-export default function ManualNode({ data }: { data: any }) {
+type NodeData = {
+  value: number;
+};
+
+export default function ManualNode({ id }: NodeProps<NodeData>) {
   const { addEvent } = useSqlContext();
   const { flow_name } = useParams();
   const [loading, setLoading] = useState(false);
@@ -26,10 +32,10 @@ export default function ManualNode({ data }: { data: any }) {
     if (flow_name === undefined) return;
     setLoading(true);
     let event: EventInput = {
-      flow_id: flow_name, //flow_id
+      flow_id: flow_name, //TODO: proliferate flow_id vs name
       flow_name: flow_name,
       flow_version: "0.0.1",
-      node_id: "node_id",
+      node_id: id,
       node_type: "manualNode", //node type, lets the machine know it should boostrap the
       stage: "dev",
       worker_type: "start",
@@ -38,8 +44,8 @@ export default function ManualNode({ data }: { data: any }) {
       created_at: new Date().toISOString(),
       data: { test: true },
     };
-    
-    console.log("Adding event", event); 
+
+    console.log("Adding event", event);
 
     addEvent(event);
 
@@ -50,13 +56,9 @@ export default function ManualNode({ data }: { data: any }) {
     }, 1000);
   };
 
+
   return (
-    <div
-      className={
-        "bg-secondary w-60 h-20 p-4 border rounded-md text-primary-content flex flex-col justify-center align-middle" +
-        data.classNames
-      }
-    >
+    <BaseNode id={id} flow_id="flow_id">
       <div className="flex flex-row items-center">
         <div className="h-full w-16">
           <button
@@ -68,13 +70,12 @@ export default function ManualNode({ data }: { data: any }) {
         </div>
         <div className="text-left text-lg">Manual Trigger</div>
       </div>
-
       <Handle
         type="source"
         position={Position.Bottom}
         id="a"
         isConnectableEnd={false}
       />
-    </div>
+    </BaseNode>
   );
 }

@@ -1,6 +1,6 @@
 use tokio::time::{sleep, Duration};
 use tauri::{
-    AppHandle, Runtime, Manager
+    AppHandle, Manager
 };
 use std::{collections::{HashMap, VecDeque}, fs};
 use crate::sql::plugin::{select, DbInstances, DB_STRING, execute, Error};
@@ -9,6 +9,7 @@ use tauri::api::path::document_dir;
 use std::io::{Result, Error as IOError, ErrorKind};
 use uuid::Uuid;
 
+use crate::notifications::Event; 
 
 extern crate chrono;
 use chrono::Utc; 
@@ -19,9 +20,11 @@ use chrono::Utc;
   name: String
 }
 
-pub async fn scheduler<R: Runtime>(app: &AppHandle<R>){
+pub async fn scheduler(app: &AppHandle){
     loop {
         let app_handle = app.clone(); 
+       let win =  app_handle.get_window("main").unwrap();
+        let window = app.get_window("main").unwrap();
 
         tokio::spawn(async move {
             process(&app_handle).await;
@@ -31,7 +34,8 @@ pub async fn scheduler<R: Runtime>(app: &AppHandle<R>){
     }
 }
 
-async fn process<R: Runtime>(app: &AppHandle<R>) {
+//TODO: write a function to safely extract JSON from Event. This code makes me ill. Do nesting somwhere else
+async fn process(app: &AppHandle) {
 
     let res = fetch_event(app).await; 
     
@@ -42,12 +46,6 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
             if let Some(item) = items.get(0) {
                 if let Some(event_id) = item.get("event_id") {
                      sql_event_id = event_id.as_str().unwrap();
-                     
-                    //TODO: let frontend know wtf is going on
-                      // emit the `event-name` event to all webview windows on the frontend
-                    //     app.emit_all("current_task", 
-                    //     Payload { name: flow_name.to_string(),  message: "Tauri is awesome! it automated my work!".into() })
-                    //     .unwrap();
                    
                     if let Some(worker_type) = item.get("worker_type") {
                         
@@ -65,31 +63,7 @@ async fn process<R: Runtime>(app: &AppHandle<R>) {
                             } else {
                                 // Handle the case where worker_type is not a string
                                 println!("Worker type is not a string")
-                            }
-                        // }
-                      
-
-
-                        // if worker_type != "start" {
-                        //     println!("Worker type is not Start. Doing Work."); 
-                        //     //TODO: if node type is "START" create the other events
-                        //     mark_as_done(app, sql_event_id.to_string()).await;
-                        //     println!("event_id: {} marked as COMPLETE", event_id);
-                        // } else {
-                        //     println!("Worker type is START. Determining what to build"); 
-                        //     if let Some(flow_name_value) = item.get("flow_name") {
-                        //         if let Some(flow_name_str) = flow_name_value.as_str() {
-                        //             // Assuming create_events_from_graph expects a &str
-                        //             create_events_from_graph(app,flow_name_str).await;
-                        //             //Mark the "start" event as done. 
-                        //             mark_as_done(app, sql_event_id.to_string()).await;                         
-                        //             println!("event_id: {} marked a START event COMPLETE", event_id);
-                        //         } else {
-                        //             // Handle the case where the flow_name is not a string.
-                        //         }
-                        //     }
-                        // }
-                        
+                            }                        
                     } else {
                         println!("event_name not found in the item.");
                     }
@@ -177,6 +151,7 @@ async fn create_event<R: tauri::Runtime>(
         },
     }
 }
+
 
 async fn mark_as_done<R: tauri::Runtime>(
     app: &AppHandle<R>,
@@ -304,7 +279,25 @@ fn read_from_documents(flow_name: &str) -> Result<String> {
 }
 
 //gets marked as done after it leaves here. Kinda a bad pattern i think
-async fn execute_worker_task<R: Runtime>(app: &AppHandle<R>, worker_type: &str, event_data: &HashMap<String, JsonValue>, event_id: &str) -> std::result::Result<(), String> {
+async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>, event_id: &str) -> std::result::Result<(), String> {
+
+    // Get values for eventProcessing Message
+    // Use `.as_str().unwrap()` to extract the string value from the JsonValue
+    let node_id = event_data.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
+    let flow_id = event_data.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
+    let event_id = event_data.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
+
+
+    //write message 
+    let message = format!("Executing Worker Task: {} for node_id: {} and flow_id: {} and event_id: {}", worker_type, node_id, flow_id, event_id);
+
+    Event::EventProcessing { 
+        message,
+        event_id: event_id.to_string(),
+        node_id: node_id.to_string(), 
+        flow_id: flow_id.to_string(), 
+         }.send(&app.get_window("main").unwrap()); 
+   
     match worker_type {
         "start" => {
             // Do something for "start"
