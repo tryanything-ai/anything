@@ -37,6 +37,7 @@ export default function Tables() {
           <thead>
             <tr>
               <th>Event ID</th>
+              <th>Session ID</th>
               <th>Created At</th>
               <th>Node Id</th>
               <th>Node Type</th>
@@ -55,6 +56,7 @@ export default function Tables() {
               return (
                 <tr>
                   <th>{event.event_id}</th>
+                  <th>{event.session_id}</th>
                   <th>{event.created_at}</th>
                   <th>{event.node_id}</th>
                   <th>{event.node_type}</th>

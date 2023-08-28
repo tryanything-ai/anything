@@ -23,9 +23,7 @@ use chrono::Utc;
 pub async fn scheduler(app: &AppHandle){
     loop {
         let app_handle = app.clone(); 
-       let win =  app_handle.get_window("main").unwrap();
-        let window = app.get_window("main").unwrap();
-
+  
         tokio::spawn(async move {
             process(&app_handle).await;
         });
@@ -34,42 +32,38 @@ pub async fn scheduler(app: &AppHandle){
     }
 }
 
-//TODO: write a function to safely extract JSON from Event. This code makes me ill. Do nesting somwhere else
+//TODO: write it bettter. This nesting makes me ill
 async fn process(app: &AppHandle) {
 
     let res = fetch_event(app).await; 
-    
-    let sql_event_id: &str;
 
     match res {
         Ok(items) => {
-            if let Some(item) = items.get(0) {
-                if let Some(event_id) = item.get("event_id") {
-                     sql_event_id = event_id.as_str().unwrap();
-                   
+            if let Some(item) = items.get(0) { 
                     if let Some(worker_type) = item.get("worker_type") {
-                        
                             if let Some(worker_type_str) = worker_type.as_str() {
-                                // Now worker_type_str is a &str
-                                match execute_worker_task(app, worker_type_str, item, sql_event_id).await {
-                                    Ok(_) => {
-                                        mark_as_done(app, sql_event_id.to_string()).await;
-                                        println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
-                                    },
-                                    Err(err) => {
-                                        println!("Failed to execute worker task: {}", err);
+                                    match execute_worker_task(app, worker_type_str, item).await {
+                                        Ok(_) => {
+                                             // Get values for eventProcessing Message
+                                            let node_id = item.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
+                                            let flow_id = item.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
+                                            let event_id = item.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
+                                            let session_id = item.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
+
+                                            mark_as_done(app, event_id.to_string(), node_id.to_string(), flow_id.to_string(), session_id.to_string()).await;
+                                            println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
+                                            println!("Session ID: {} Evaluated", session_id) 
+                                        },
+                                        Err(err) => {
+                                            println!("Failed to execute worker task: {}", err);
+                                        }
                                     }
-                                }
                             } else {
-                                // Handle the case where worker_type is not a string
-                                println!("Worker type is not a string")
+                            println!("Worker type is not a string")
                             }                        
                     } else {
                         println!("event_name not found in the item.");
                     }
-                } else { 
-                    println!("event_id not found in the item.");
-                }
             } else {
                 println!("No items in the response.");
             }
@@ -102,6 +96,7 @@ async fn create_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
     node: &JsonValue,
     flow_info: &JsonValue,
+    session_id: &str,
 ) -> std::result::Result<(), Error> {
     let db_instances = app.state::<DbInstances>(); 
 
@@ -129,7 +124,7 @@ async fn create_event<R: tauri::Runtime>(
 
     let values = vec![
         JsonValue::String(Uuid::new_v4().to_string()),       // event_id
-        JsonValue::String(Uuid::new_v4().to_string()),       // session_id
+        JsonValue::String(session_id.to_string()),           // session_id
         JsonValue::String(node_id.to_string()),              // node_id
         JsonValue::String(node_type.to_string()),            // node_type
         JsonValue::String(flow_id.to_string()),              // flow_id
@@ -153,30 +148,77 @@ async fn create_event<R: tauri::Runtime>(
 }
 
 
-async fn mark_as_done<R: tauri::Runtime>(
-    app: &AppHandle<R>,
+async fn mark_as_done(
+    app: &AppHandle,
     event_id: String,
+    node_id: String,
+    flow_id: String,
+    session_id: String, 
 ) {
     let db_instances = app.state::<DbInstances>(); 
 
     let db = DB_STRING.to_string();
-    let query = "UPDATE events
+    let update_event_query = "UPDATE events
     SET event_status = 'COMPLETE'
     WHERE event_id = $1".to_string(); 
-    let values = vec![JsonValue::String(event_id)];
+    let values = vec![JsonValue::String(event_id.clone())];
 
-    match execute(db_instances, db, query, values).await {
-        Ok((affected_rows, last_insert_id)) => {
-            println!("Affected rows: {}", affected_rows);
-            println!("Last insert ID: {}", last_insert_id);
-        }
-        Err(e) => {
-            println!("Error executing the query: {:?}", e);
-        }
+    
+    if let Err(e) = execute(db_instances.clone(), db.clone(), update_event_query, values).await {
+        println!("Error executing the query to set Event to COMPLETE: {:?}", e);
+        return;
     }
+
+     // Check if all events with the same session_id are 'COMPLETE'
+     let check_events_query = "
+     SELECT COUNT(*)
+     FROM events
+     WHERE session_id = $1 AND event_status != 'COMPLETE'".to_string();
+     let values = vec![JsonValue::String(session_id.clone())];
+
+     let response = select(db_instances.clone(), db.clone(), check_events_query, values).await; 
+
+     if let Ok(rows) = response {
+        if let Some(first_row) = rows.first() {
+            println!("first_row: {:?}", first_row);
+            if let Some(&ref number) = first_row.get("COUNT(*)") {
+                // Now `number` contains the number you are looking for
+                println!("The count of session events left is: {:?}", number);
+
+                    println!("count in mark_as_done: {}", number);
+                    if number == 0 {
+                        println!("Setting all session events as complete"); 
+                        // If all events are 'COMPLETE', update Session_status to 'COMPLETE'
+                        let update_session_query = "
+                        UPDATE events
+                        SET session_status = 'COMPLETE'
+                        WHERE session_id = $1".to_string();
+                        let values = vec![JsonValue::String(session_id.clone())];
+
+                        if let Err(e) = execute(db_instances.clone(), db.clone(), update_session_query, values).await {
+                            println!("Error executing the query: {:?}", e);
+                        }
+                        Event::SessionComplete { 
+                            event_id: event_id.to_string(),
+                            node_id: node_id.to_string(),
+                            flow_id: flow_id.to_string(),
+                            session_id: session_id.clone().to_string(),
+                        }.send(&app.get_window("main").unwrap());
+                    }
+            } else {
+                println!("The key 'COUNT(*)' was not found in the row");
+            }
+        } else {
+            println!("No rows returned");
+        }
+    } else {
+        println!("An error occurred");
+    }
+    
+  
 }
 
-async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_name: &str){
+async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_name: &str, session_id: &str){
 
      let toml_document = read_from_documents(file_name).unwrap(); 
 
@@ -197,7 +239,7 @@ async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_na
         println!("{}", work); 
    
         if let Some(flow) = flow_json_data.get("flow") {
-       let _res =  create_event(app, work, flow).await;
+       let _res =  create_event(app, work, flow, session_id).await;
        println!("ID: {} is created as the next item in the work order", work.get("id").unwrap());
        //TODO: give the user the update?
         } else {
@@ -279,14 +321,13 @@ fn read_from_documents(flow_name: &str) -> Result<String> {
 }
 
 //gets marked as done after it leaves here. Kinda a bad pattern i think
-async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>, event_id: &str) -> std::result::Result<(), String> {
+async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>) -> std::result::Result<(), String> {
 
     // Get values for eventProcessing Message
-    // Use `.as_str().unwrap()` to extract the string value from the JsonValue
     let node_id = event_data.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
     let flow_id = event_data.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
     let event_id = event_data.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
-
+    let session_id = event_data.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
 
     //write message 
     let message = format!("Executing Worker Task: {} for node_id: {} and flow_id: {} and event_id: {}", worker_type, node_id, flow_id, event_id);
@@ -294,17 +335,16 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
     Event::EventProcessing { 
         message,
         event_id: event_id.to_string(),
-        node_id: node_id.to_string(), 
-        flow_id: flow_id.to_string(), 
+        node_id: node_id.to_string(),
+        flow_id: flow_id.to_string(),
+        session_id: session_id.to_string()
          }.send(&app.get_window("main").unwrap()); 
    
     match worker_type {
         "start" => {
-            // Do something for "start"
-            // You can read the "flow_name" or other values from `event_data`
             if let Some(flow_name_value) = event_data.get("flow_name") {
                 if let Some(flow_name_str) = flow_name_value.as_str() {
-                    create_events_from_graph(app, flow_name_str).await;
+                    create_events_from_graph(app, flow_name_str, session_id).await;
                 } else {
                     return Err("flow_name is not a string".to_string());
                 }
@@ -314,17 +354,11 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             // Do something for "some_other_type"
             println!("Found a REST worker type");
             println!("{:?}", event_data); 
-            // mark_as_done(app, event_id.to_string()).await;
-            // println!("event_id: {} marked as COMPLETE", event_id);
         },
-        // add other worker types here
+        //TODO: add other worker types here
         _ => {
             //FIXME: actually fail on unknown worker type
             println!("Worker type is not Start. Doing Work."); 
-            //     //TODO: if node type is "START" create the other events
-                // mark_as_done(app, event_id.to_string()).await;
-                // println!("event_id: {} marked as COMPLETE", event_id);
-            // return Err(format!("Unknown worker_type: {}", worker_type));
         }
     }
 
