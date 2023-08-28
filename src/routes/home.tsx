@@ -49,7 +49,7 @@ export default function Home() {
           <button
             className="btn btn-primary m-1 ml-4"
             onClick={() => {
-              // createNewFlow();
+              // createNewVector();
             }}
           >
             New Vector
@@ -65,7 +65,7 @@ export default function Home() {
           <button
             className="btn btn-primary m-1 ml-4"
             onClick={() => {
-              // createNewFlow();
+              // createNewTable();
             }}
           >
             New Table

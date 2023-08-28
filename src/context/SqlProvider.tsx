@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useState,
   useEffect,
@@ -104,7 +104,6 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     const tableData = await db.select(`SELECT * FROM ${tableName}`);
     console.log("tableData in db", tableData);
     return tableData;
-    // return [];
   };
 
   const getFlowEvents = async (flowName: string) => {

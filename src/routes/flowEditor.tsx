@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
@@ -14,11 +14,11 @@ import CronNode from "../components/nodes/cronNode";
 import TerminalNode from "../components/nodes/terminalNode";
 import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
-import "reactflow/dist/style.css";
 import { useParams } from "react-router-dom";
 import SendChatNode from "../components/nodes/sendChatNode";
 import ReceiveChatNode from "../components/nodes/receiveChatNode";
 import OpenAiNode from "../components/nodes/openAiNode";
+import "reactflow/dist/style.css";
 
 function Flows() {
   const {

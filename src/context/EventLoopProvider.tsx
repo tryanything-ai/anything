@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useState,
   useEffect,
   useContext,
   ReactNode,
@@ -25,11 +24,9 @@ export const EventLoopProvider = ({ children }: { children: ReactNode }) => {
 
   const subscribeToEvent = (event_name: string, callBack: EventCallback) => {
     const unlistenPromise = listen(event_name, (event: any) => {
-      // console.log("EventLoopProvider: current_task event received");
       console.log(
         "Listened to event for " + event_name + " -> " + event.payload
       );
-      // setCurrentTask(event.payload);
       callBack(event.payload);
     });
 
