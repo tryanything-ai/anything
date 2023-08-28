@@ -84,7 +84,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   currentProcessingStatus: undefined,
   onNodesChange: () => {},
   onEdgesChange: () => {},
-  onConnect: () => {},
+  onConnect: () => {},          
   onDragOver: () => {},
   onDrop: () => {},
   toml: "",

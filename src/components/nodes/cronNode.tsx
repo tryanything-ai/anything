@@ -1,6 +1,5 @@
-import React, { useCallback } from "react";
-import ReactFlow, { Handle, Position, NodeProps } from "reactflow";
-import { Node } from "../nodePanel";
+import { Handle, Position } from "reactflow";
+import { AnythingNodeProps, Node } from '../../utils/nodeUtils';
 import BaseNode from "./baseNode";
 
 let node: Node = {
@@ -17,19 +16,11 @@ let node: Node = {
 
 CronNode.Node = node;
 
-type NodeData = {
-  value: number;
-};
-
-export default function CronNode({ id }: NodeProps<NodeData>) {
-  // const onChange = useCallback((evt: any) => {
-  //   console.log(evt.target.value);
-  // }, []);
-
+export default function CronNode({ id, data }: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id="flow_id">
-      <div className="text-left text-xl">Cron</div>
-      <div className="text-left text-md underline">Every 5 Minutes</div>
+    <BaseNode id={id} data={data}>
+      <div className="">Cron</div>
+      <div className="text-md underline">Every 5 Minutes</div>
       <Handle
         type="source"
         position={Position.Bottom}

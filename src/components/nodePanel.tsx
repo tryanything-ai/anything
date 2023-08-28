@@ -9,19 +9,7 @@ import ManualNode from "./nodes/manualNode";
 import ReceiveChatNode from "./nodes/receiveChatNode";
 import SendChatNode from "./nodes/sendChatNode";
 import OpenAiNode from "./nodes/openAiNode";
-
-export type NodeData = {
-  worker_type: string;
-};
-
-export type Node = {
-  nodeType: string;
-  image_src?: string;
-  title?: string;
-  alt: string;
-  nodeData: NodeData;
-  specialData?: any;
-};
+import { Node } from "../utils/nodeUtils"; 
 
 export const default_nodes: Node[] = [
   ReceiveChatNode.Node,

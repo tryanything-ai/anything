@@ -1,6 +1,6 @@
-import { Handle, Position, NodeProps } from "reactflow";
-import { Node } from "../nodePanel";
+import { Handle, Position } from "reactflow";
 import BaseNode from "./baseNode";
+import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "vectorNode",
@@ -16,15 +16,11 @@ let node: Node = {
 
 VectorNode.Node = node;
 
-type NodeData = {
-  value: number;
-};
-
-export default function VectorNode({ id, data }: NodeProps<NodeData>) {
+export default function VectorNode({ id, data }: AnythingNodeProps) {
   return (
-    <BaseNode id={id} flow_id="flow_id">
+    <BaseNode id={id} data={data}>
       <Handle type="target" position={Position.Top} id="a" />
-      <div className="text-center text-xl">{data.value}</div>
+      <div className="">{data.value}</div>
       <Handle type="target" position={Position.Right} id="b" />
       <Handle type="source" position={Position.Bottom} id="c" />
     </BaseNode>
