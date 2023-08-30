@@ -2,7 +2,7 @@
 
 ✨ The next-generation local automation tool: Think Zapier, but on your Mac, supercharged with AI!
 
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/dev/docs/anyhting_aug_10.gif)
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_aug_10.gif)
 
 
 ### 🌟 Welcome to Anything - the future of local automation! 
@@ -25,6 +25,10 @@ If you've been seeking a tool that blends the simplicity of Zapier, the flexibil
 ### 🤝 Contribute
 
 We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build. 
+
+But first. 
+
+Check out our [contributors guide](https://github.com/tryanything-ai/anything/tree/main/.github/CONTRIBUTING.md).
 
 ### 🔧 Setting Up
 ```bash
