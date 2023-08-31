@@ -362,6 +362,9 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             println!("Found a REST worker type");
             println!("{:?}", event_data); 
         },
+        "terminal" => {
+
+        }, 
         //TODO: add other worker types here
         _ => {
             //FIXME: actually fail on unknown worker type
