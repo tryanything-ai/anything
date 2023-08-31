@@ -9,9 +9,9 @@ import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "manualNode",
-  title: "Manual Node",
-  alt: "Manual Node",
   nodeData: {
+    title: "Manual Node",
+    alt: "Manual Node",
     worker_type: "start",
   },
   specialData: {},

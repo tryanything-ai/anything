@@ -4,9 +4,10 @@ import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "receiveChatNode",
-  title: "Receive Chat Node",
-  alt: "Receive Chat Node",
+  
   nodeData: {
+    title: "Receive Chat Node",
+  alt: "Receive Chat Node",
     worker_type: "start",
   },
   specialData: {

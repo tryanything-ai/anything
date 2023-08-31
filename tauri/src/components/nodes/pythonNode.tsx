@@ -4,9 +4,9 @@ import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "pythonNode",
-  title: "Python Node",
-  alt: "Python Node",
   nodeData: {
+    title: "Python Node",
+    alt: "Python Node",
     worker_type: "python",
   },
   specialData: {

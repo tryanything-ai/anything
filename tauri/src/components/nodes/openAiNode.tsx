@@ -4,9 +4,9 @@ import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "openAiNode",
-  title: "OpenAI Node",
-  alt: "OpenAI Node",
   nodeData: {
+    title: "OpenAI Node",
+  alt: "OpenAI Node",
     worker_type: "rest",
   },
   specialData: {

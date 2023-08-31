@@ -4,9 +4,10 @@ import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "terminalNode",
-  title: "Terminal Node",
-  alt: "Terminal Node",
+  
   nodeData: {
+    title: "Terminal Node",
+     alt: "Terminal Node",
     worker_type: "terminal",
   },
   specialData: {
