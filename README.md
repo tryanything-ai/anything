@@ -33,6 +33,7 @@ Check out our [contributors guide](https://github.com/tryanything-ai/anything/tr
 ### 🔧 Setting Up
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
+cd tauri
 pnpm i
 pnpm start 
 ```
