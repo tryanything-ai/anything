@@ -4,9 +4,9 @@ import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
   nodeType: "sendChatNode",
-  title: "Send Chat Node",
-  alt: "Send Chat Node",
   nodeData: {
+    title: "Send Chat Node",
+    alt: "Send Chat Node",
     worker_type: "app_chat", 
   },
   specialData: {

@@ -7,10 +7,10 @@ import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "javascriptNode",
-  title: "JS Node",
+  nodeData: {
+    title: "JS Node",
   image_src: "/js-logo.svg",
   alt: "JS Logo",
-  nodeData: {
     worker_type: "javascript", 
   },
   specialData: {

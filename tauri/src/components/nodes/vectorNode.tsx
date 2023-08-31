@@ -3,10 +3,10 @@ import BaseNode from "./baseNode";
 import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 
 let node: Node = {
-  nodeType: "vectorNode",
-  title: "Vector Node",
-  alt: "Vector Node",
+  nodeType: "vectorNode", 
   nodeData: {
+    title: "Vector Node",
+    alt: "Vector Node",
     worker_type: "vector",
   },
   specialData: {

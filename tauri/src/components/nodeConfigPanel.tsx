@@ -3,18 +3,22 @@ import { useSqlContext } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { useNavigationContext } from "../context/NavigationProvider";
 import { VscClose } from "react-icons/vsc";
+import { useLocalFileContext } from "../context/LocalFileProvider";
 
 const NodeConfigPanel = () => {
   const { getFlowEvents } = useSqlContext();
   const { nodeId, setNodeConfigPanel } = useNavigationContext();
+  const { readNodeConfig, writeNodeConfig } = useLocalFileContext(); 
+
   const { flow_name } = useParams();
-  const [events, setEvents] = useState<any[]>([]);
+  const [data, setData] = useState<any>({});
 
   const hydrate = async () => {
     try {
       if (!flow_name) return;
-      const data = await getFlowEvents(flow_name);
-      setEvents(data);
+      if(!nodeId) return;
+      const data = await readNodeConfig(nodeId, flow_name);
+      setData(data);
     } catch (error) {
       console.log("error", error);
     }
@@ -34,7 +38,7 @@ const NodeConfigPanel = () => {
       >
         <VscClose className="h-6 w-6" />
       </button>
-      {nodeId}
+      {JSON.stringify(data) }
     </div>
   );
 };

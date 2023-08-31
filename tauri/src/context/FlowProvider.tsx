@@ -75,6 +75,7 @@ interface FlowContextInterface {
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
+
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -90,7 +91,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   toml: "",
   addNode: () => {},
   setReactFlowInstance: () => {},
-  updateFlowFrontmatter: () => {},
+  updateFlowFrontmatter: () => { }
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -223,6 +224,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       console.log("error updating flow frontmatter", error);
     }
   };
+     
 
   const writeToml = async (toml: string, explicit_flow_name?: string) => {
     if (!appDocuments || !flow_name) {

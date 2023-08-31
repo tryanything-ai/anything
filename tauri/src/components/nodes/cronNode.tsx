@@ -4,9 +4,9 @@ import BaseNode from "./baseNode";
 
 let node: Node = {
   nodeType: "cronNode",
-  title: "Cron Node",
-  alt: "Cron Node",
   nodeData: {
+    title: "Cron Node",
+     alt: "Cron Node",
     worker_type: "start",
   },
   specialData: {
