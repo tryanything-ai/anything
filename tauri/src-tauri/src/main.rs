@@ -10,8 +10,7 @@ mod file_manager;
 
 use config::get_logs_dir;
 use local_models::models::ModelManager;
-use local_models::cancellation::Canceller;
-use tauri::Manager; 
+use local_models::cancellation::Canceller; 
 
 use sql::plugin::Builder;
 use std::fs; 
