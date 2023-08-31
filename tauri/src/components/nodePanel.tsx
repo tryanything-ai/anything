@@ -11,7 +11,7 @@ import SendChatNode from "./nodes/sendChatNode";
 import OpenAiNode from "./nodes/openAiNode";
 import PythonNode from "./nodes/pythonNode";
 import VectorNode from "./nodes/vectorNode";
-import { Node } from "../utils/nodeUtils"; 
+import { Node } from "../utils/nodeUtils";
 
 export const default_nodes: Node[] = [
   ReceiveChatNode.Node,
@@ -52,7 +52,7 @@ const NodePanel = () => {
   }, [flowPaths]);
 
   return (
-    <div className="flex flex-col h-full p-4 border-l border-gray-500">
+    <div className="flex flex-col h-full p-4 border-l border-gray-500 overflow-y-auto">
       <h1 className="text-2xl font-bold">Nodes</h1>
       {nodes.map((node) => (
         <NodeDnD

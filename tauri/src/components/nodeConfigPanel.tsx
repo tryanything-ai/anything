@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useSqlContext } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { useNavigationContext } from "../context/NavigationProvider";
-import { VscClose } from 'react-icons/vsc'; 
+import { VscClose } from "react-icons/vsc";
 
 const NodeConfigPanel = () => {
   const { getFlowEvents } = useSqlContext();
-  const { nodeId, setNodeConfigPanel} = useNavigationContext(); 
+  const { nodeId, setNodeConfigPanel } = useNavigationContext();
   const { flow_name } = useParams();
   const [events, setEvents] = useState<any[]>([]);
 
@@ -27,9 +27,12 @@ const NodeConfigPanel = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-full p-4 border-l border-gray-500">
-      <button className="btn btn-primary" onClick={() => setNodeConfigPanel(false, "")}>
-        <VscClose />
+    <div className="flex flex-col h-full border-l border-gray-500">
+      <button
+        className="m-1 btn btn-ghost btn-square btn-xs w-6 h-6 absolute right-0"
+        onClick={() => setNodeConfigPanel(false, "")}
+      >
+        <VscClose className="h-6 w-6" />
       </button>
       {nodeId}
     </div>
