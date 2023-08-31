@@ -19,6 +19,7 @@ import SendChatNode from "../components/nodes/sendChatNode";
 import ReceiveChatNode from "../components/nodes/receiveChatNode";
 import OpenAiNode from "../components/nodes/openAiNode";
 import "reactflow/dist/style.css";
+import NodeConfigPanel from "../components/nodeConfigPanel";
 
 function Flows() {
   const {
@@ -32,7 +33,7 @@ function Flows() {
     setReactFlowInstance,
   } = useFlowContext();
 
-  const { nodePanel, debugPanel, tomlPanel, settingsPanel } =
+  const { nodePanel, debugPanel, tomlPanel, settingsPanel, nodeConfigPanel } =
     useNavigationContext();
   const reactFlowWrapper = useRef(null);
   const { flow_name } = useParams();
@@ -98,6 +99,11 @@ function Flows() {
         {tomlPanel ? (
           <div className="w-1/2">
             <TomlPanel />
+          </div>
+        ) : null}
+        {nodeConfigPanel ? (
+          <div className="w-1/2">
+            <NodeConfigPanel />{" "}
           </div>
         ) : null}
       </div>
