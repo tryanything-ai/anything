@@ -6,20 +6,13 @@ import TomlPanel from "../components/tomlPanel";
 import DebugPanel from "../components/debugPanel";
 import { useNavigationContext } from "../context/NavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
-import VectorNode from "../components/nodes/vectorNode";
-import PythonNode from "../components/nodes/pythonNode";
-import JavascriptNode from "../components/nodes/javascriptNode";
 import SettingsPanel from "../components/settingsPanel";
-import CronNode from "../components/nodes/cronNode";
-import TerminalNode from "../components/nodes/terminalNode";
-import ModelNode from "../components/nodes/modelNode";
 import ManualNode from "../components/nodes/manualNode";
 import { useParams } from "react-router-dom";
-import SendChatNode from "../components/nodes/sendChatNode";
-import ReceiveChatNode from "../components/nodes/receiveChatNode";
-import OpenAiNode from "../components/nodes/openAiNode";
-import "reactflow/dist/style.css";
+
 import NodeConfigPanel from "../components/nodeConfigPanel";
+import SuperNode from "../components/nodes/superNode";
+import "reactflow/dist/style.css";
 
 function Flows() {
   const {
@@ -40,16 +33,8 @@ function Flows() {
 
   const nodeTypes = useMemo(
     () => ({
-      vectorNode: VectorNode,
-      pythonNode: PythonNode,
-      javascriptNode: JavascriptNode,
-      cronNode: CronNode,
-      terminalNode: TerminalNode,
-      modelNode: ModelNode,
       manualNode: ManualNode,
-      sendChatNode: SendChatNode,
-      receiveChatNode: ReceiveChatNode,
-      openAiNode: OpenAiNode,
+      superNode: SuperNode
     }),
     []
   );
@@ -61,8 +46,8 @@ function Flows() {
         <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
           <ReactFlow
             nodeTypes={nodeTypes}
-            nodes={nodes} //new
-            edges={edges} //new
+            nodes={nodes} 
+            edges={edges} 
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onDragOver={onDragOver}
