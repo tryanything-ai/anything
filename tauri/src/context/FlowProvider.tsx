@@ -75,7 +75,6 @@ interface FlowContextInterface {
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
-
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -85,13 +84,13 @@ export const FlowContext = createContext<FlowContextInterface>({
   currentProcessingStatus: undefined,
   onNodesChange: () => {},
   onEdgesChange: () => {},
-  onConnect: () => {},          
+  onConnect: () => {},
   onDragOver: () => {},
   onDrop: () => {},
   toml: "",
   addNode: () => {},
   setReactFlowInstance: () => {},
-  updateFlowFrontmatter: () => { }
+  updateFlowFrontmatter: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -183,16 +182,32 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       if (event.dataTransfer === null) return;
       const nodeType = event.dataTransfer.getData("nodeType");
-      const nodeData = JSON.parse(event.dataTransfer.getData("nodeData"));
-      const specialData = JSON.parse(event.dataTransfer.getData("specialData"));
+      const nodeProcessData = JSON.parse(
+        event.dataTransfer.getData("nodeProcessData")
+      );
+      const nodeConfigurationData = JSON.parse(
+        event.dataTransfer.getData("nodeConfigurationData")
+      );
+      const nodePresentationData = JSON.parse(
+        event.dataTransfer.getData("nodePresentationData")
+      );
 
       if (typeof nodeType === "undefined" || !nodeType) {
         return;
       }
-      if (typeof nodeData === "undefined" || !nodeData) {
+      if (typeof nodeProcessData === "undefined" || !nodeProcessData) {
         return;
       }
-      if (typeof specialData === "undefined" || !specialData) {
+      if (
+        typeof nodeConfigurationData === "undefined" ||
+        !nodeConfigurationData
+      ) {
+        return;
+      }
+      if (
+        typeof nodePresentationData === "undefined" ||
+        !nodePresentationData
+      ) {
         return;
       }
 
@@ -203,7 +218,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      addNode(nodeType, position, { ...nodeData, ...specialData });
+      addNode(nodeType, position, {
+        ...nodeProcessData,
+        ...nodeConfigurationData,
+        ...nodePresentationData,
+      });
     },
     [addNode]
   );
@@ -224,7 +243,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       console.log("error updating flow frontmatter", error);
     }
   };
-     
 
   const writeToml = async (toml: string, explicit_flow_name?: string) => {
     if (!appDocuments || !flow_name) {

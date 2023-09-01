@@ -4,6 +4,7 @@ import { NodeData } from "../../utils/nodeUtils";
 import { VscEllipsis, VscClose } from "react-icons/vsc";
 import clsx from "clsx";
 import { useNavigationContext } from "../../context/NavigationProvider";
+import { HandleProps, Handle } from "reactflow";
 
 export default function BaseNode({
   children,
@@ -21,8 +22,8 @@ export default function BaseNode({
 
   useEffect(() => {
     //FIXME: manage flow_name by ID globally here we need it to only show activity if the activity is from the right flow
-    console.log("now: Processing set to true in node", currentProcessingStatus);
-    console.log("now: Data id", id);
+    // console.log("now: Processing set to true in node", currentProcessingStatus);
+    // console.log("now: Data id", id);
     if (
       currentProcessingStatus &&
       currentProcessingStatus?.node_id === id &&
@@ -43,6 +44,17 @@ export default function BaseNode({
         }
       )}
     >
+      {data.handles.map((handle: HandleProps) => {
+        return (
+          <Handle
+            key={handle.id}
+            type={handle.type}
+            position={handle.position}
+            id={handle.id}
+          />
+        );
+      })}
+
       {processing ? (
         <div className=" bg-white rounded-full w-10 h-10 absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 flex items-center justify-center p-0.5 overflow-hidden shadow z-10">
           <span className="loading loading-spinner text-accent"></span>

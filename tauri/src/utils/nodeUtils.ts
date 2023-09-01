@@ -1,18 +1,23 @@
-import { NodeProps } from "reactflow";
+import { ReactNode } from "react";
+import { HandleProps, NodeProps } from "reactflow";
 
-type NodeProcessData = {
+//Things configured mandatory by node author
+export type NodeProcessData = {
     worker_type: string;
 };
 
-type NodePresentationData = {
+//Things that deal with UI that we don't want in version control
+export type NodePresentationData = {
     image_src?: string;
     title?: string;
     alt: string;
     description?: string;
+    handles: HandleProps[];
+    component?: ReactNode; 
 }
 
 //ARGS TO BE PASSED TO THE NODE Processor but edited by user
-type NodeConfigurationData = {
+export type NodeConfigurationData = {
     [key: string]: any; 
 }
   
