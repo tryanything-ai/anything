@@ -35,7 +35,7 @@ const DebugPanel = () => {
                   key={event.event_id}
                   className="card h-20 w-full text-md text-primary-content border p-4 my-2"
                 >
-                  {event.node_type}
+                  {event.worker_type}
                 </div>
               );
             })}

@@ -9,6 +9,9 @@ interface NavigationContextInterface {
   setDebugPanel: (option: boolean) => void;
   settingsPanel: boolean;
   setSettingsPanel: (option: boolean) => void;
+  nodeConfigPanel: boolean;
+  setNodeConfigPanel: (option: boolean, node_id: string) => void;
+  nodeId: string;
 }
 
 export const NavigationContext = createContext<NavigationContextInterface>({
@@ -19,7 +22,10 @@ export const NavigationContext = createContext<NavigationContextInterface>({
   debugPanel: true,
   setDebugPanel: () => {},
   settingsPanel: true,
-  setSettingsPanel: () => {},
+  setSettingsPanel: () => { },
+  nodeConfigPanel: true,
+  setNodeConfigPanel: () => { },
+  nodeId: "",
 });
 
 export const useNavigationContext = () => useContext(NavigationContext);
@@ -30,6 +36,13 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
   const [tomlPanel, setTomlPanel] = useState<boolean>(false);
   const [debugPanel, setDebugPanel] = useState<boolean>(false);
   const [settingsPanel, setSettingsPanel] = useState<boolean>(false);
+  const [nodeConfigPanel, setNodeConfigPanel] = useState<boolean>(false);
+  const [nodeId, setNodeId] = useState<string>("");
+
+  const _setNodeConfigPanel = (option: boolean, node_id: string) => {
+    setNodeConfigPanel(option);
+    setNodeId(node_id);
+  }
 
   return (
     <NavigationContext.Provider
@@ -42,6 +55,9 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
         setDebugPanel, 
         settingsPanel,
         setSettingsPanel,
+        nodeConfigPanel,
+        setNodeConfigPanel: _setNodeConfigPanel,
+        nodeId,
       }}
     >
       {children}

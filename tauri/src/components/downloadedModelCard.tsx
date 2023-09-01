@@ -29,11 +29,15 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
   const { subscribeToEvent } = useEventLoopContext();
 
   useEffect(() => {
-    subscribeToEvent("model_loading", (event: any) => {
+   let unlisten =  subscribeToEvent("model_loading", (event: any) => {
       setLoading(true);
       setProgress(event.progress);
       setMessage(event.message);
     });
+
+    return () => {
+      unlisten.then((unlisten) => unlisten()); 
+    }
   }, []);
 
   return (

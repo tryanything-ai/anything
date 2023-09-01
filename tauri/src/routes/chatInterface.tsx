@@ -25,7 +25,7 @@ const ChatInterface = () => {
       ...messages,
       { message: message, from: "User" },
     ]);
-    subscribeToEvent("prompt_response", (event) => {
+    let unlisten = subscribeToEvent("prompt_response", (event) => {
       // if (event.payload?.message?.length > 0) onToken(event.payload.message);
       console.log("prompt_response event received");
       console.debug(event);
