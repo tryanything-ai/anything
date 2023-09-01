@@ -366,12 +366,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   //Watch event processing for fun ui updates
   useEffect(() => {
-    subscribeToEvent("event_processing", (event: any) => {
+    let unlisten = subscribeToEvent("event_processing", (event: any) => {
       setCurrentProcessingStatus(event);
     });
-    subscribeToEvent("session_complete", (event: any) => {
+    let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
     });
+
+    return () => {
+      unlisten.then((unlisten) => unlisten());
+      unlisten2.then((unlisten) => unlisten());
+    }
   }, []);
 
   return (

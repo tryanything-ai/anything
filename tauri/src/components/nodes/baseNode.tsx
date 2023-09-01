@@ -21,9 +21,6 @@ export default function BaseNode({
     useNavigationContext();
 
   useEffect(() => {
-    //FIXME: manage flow_name by ID globally here we need it to only show activity if the activity is from the right flow
-    // console.log("now: Processing set to true in node", currentProcessingStatus);
-    // console.log("now: Data id", id);
     if (
       currentProcessingStatus &&
       currentProcessingStatus?.node_id === id &&
@@ -54,7 +51,6 @@ export default function BaseNode({
           />
         );
       })}
-
       {processing ? (
         <div className=" bg-white rounded-full w-10 h-10 absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 flex items-center justify-center p-0.5 overflow-hidden shadow z-10">
           <span className="loading loading-spinner text-accent"></span>
