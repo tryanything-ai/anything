@@ -16,21 +16,27 @@ import {
   removeDir,
   copyFile,
   exists,
+  readTextFile
 } from "@tauri-apps/api/fs";
 import { v4 as uuidv4 } from "uuid";
+import { stringify, parse } from "iarna-toml-esm";
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
   renameFlowFiles: (flowName: string, newFlowName: string) => void;
+  readNodeConfig: (nodeId: string, flow_name: string) => void;
+  writeNodeConfig: (nodeId: string, flowName: string, data: any ) => void;
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
   flowPaths: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
-  renameFlowFiles: () => {},
+  renameFlowFiles: () => { },
+  readNodeConfig: () => { },
+  writeNodeConfig: () => { },
 });
 
 export const useLocalFileContext = () => useContext(LocalFileContext);
@@ -125,6 +131,71 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     return results.every((result) => result);
   };
 
+  const readToml = async (flow_name: string) => {
+    try {
+      if (!appDocuments || !flow_name) {
+        throw new Error("appDocuments or flow_name is undefined");
+      }
+      console.log("reading toml in FlowProvider");
+      return await readTextFile(
+        appDocuments + "/flows/" + flow_name + "/flow.toml"
+      );
+    } catch (error) {
+      console.log("error reading toml in FlowProvider", error);
+    }
+  };
+
+  const readNodeConfig = async (nodeId: string, flowName: string) => {
+    try {
+      if (!appDocuments || !flowName) {
+        throw new Error("appDocuments or flowName is undefined");
+      }
+      console.log("reading node config in FlowProvider");
+      let new_toml = await readToml(flowName);
+      if (!new_toml) throw new Error("new_toml is undefined");
+      let parsedToml = parse(new_toml);
+      if (!parsedToml.nodes) throw new Error("parsedToml.nodes is undefined"); 
+     
+      if (!parsedToml.nodes) {
+        parsedToml.nodes = [];
+      }
+      let nodes = parsedToml.nodes as any;
+      if (nodes.length === 0) throw new Error("nodes is empty"); 
+      let node = nodes.find((node: any) => node.id === nodeId);
+      if (!node) throw new Error("node is undefined");
+      return node; 
+    } catch (error) {
+      console.log("error reading node config in FlowProvider", error);
+    }
+  };
+
+  const writeNodeConfig = async (nodeId: string, flowName: string, data: any) => {
+    try {
+      if (!appDocuments || !flowName) {
+        throw new Error("appDocuments or flowName is undefined");
+      }
+      console.log("writing node config in FlowProvider");
+      let new_toml = await readToml(flowName);
+
+      if (!new_toml) throw new Error("new_toml is undefined");
+      let parsedToml = parse(new_toml);
+      if (!parsedToml.nodes) throw new Error("parsedToml.nodes is undefined");
+      let nodes = parsedToml.nodes as any;
+      if (nodes.length === 0) throw new Error("nodes is empty");
+      let node = nodes.find((node: any) => node.id === nodeId);
+      if (!node) throw new Error("node is undefined");
+      node.data = data; 
+      let newToml = stringify(parsedToml);
+      await writeTextFile(
+        appDocuments + "/flows/" + flowName + "/flow.toml",
+        newToml
+      );
+    } catch (error) {
+      console.log("error writing node config in FlowProvider", error);
+    }
+  };
+
+
   const renameFlowFiles = async (flowName: string, newFlowName: string) => {
     console.log("renameFlowFiles", flowName, newFlowName);
     try {
@@ -208,6 +279,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         createNewFlow,
         deleteFlow,
         renameFlowFiles,
+        readNodeConfig,
+
+        writeNodeConfig,
       }}
     >
       {children}
