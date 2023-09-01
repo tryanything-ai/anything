@@ -28,7 +28,7 @@ pub fn get_chat_flows() -> Result<Vec<FlowInfo>, String> {
 
             let toml_content = fs::read_to_string(&toml_file_path).map_err(|e| e.to_string())?;
             let parsed_toml: JsonValue = toml::from_str(&toml_content).map_err(|e| e.to_string())?;
-            
+            //BUG: broken when we changed how we generate Nodes
             if let Some(nodes) = parsed_toml.get("nodes") {
                 for node in nodes.as_array().unwrap() {
                     if let Some(node_type) = node.get("type") {
