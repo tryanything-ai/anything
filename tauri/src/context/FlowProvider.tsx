@@ -84,7 +84,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   currentProcessingStatus: undefined,
   onNodesChange: () => {},
   onEdgesChange: () => {},
-  onConnect: () => {},          
+  onConnect: () => {},
   onDragOver: () => {},
   onDrop: () => {},
   toml: "",
@@ -182,16 +182,32 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       if (event.dataTransfer === null) return;
       const nodeType = event.dataTransfer.getData("nodeType");
-      const nodeData = JSON.parse(event.dataTransfer.getData("nodeData"));
-      const specialData = JSON.parse(event.dataTransfer.getData("specialData"));
+      const nodeProcessData = JSON.parse(
+        event.dataTransfer.getData("nodeProcessData")
+      );
+      const nodeConfigurationData = JSON.parse(
+        event.dataTransfer.getData("nodeConfigurationData")
+      );
+      const nodePresentationData = JSON.parse(
+        event.dataTransfer.getData("nodePresentationData")
+      );
 
       if (typeof nodeType === "undefined" || !nodeType) {
         return;
       }
-      if (typeof nodeData === "undefined" || !nodeData) {
+      if (typeof nodeProcessData === "undefined" || !nodeProcessData) {
         return;
       }
-      if (typeof specialData === "undefined" || !specialData) {
+      if (
+        typeof nodeConfigurationData === "undefined" ||
+        !nodeConfigurationData
+      ) {
+        return;
+      }
+      if (
+        typeof nodePresentationData === "undefined" ||
+        !nodePresentationData
+      ) {
         return;
       }
 
@@ -202,7 +218,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      addNode(nodeType, position, { ...nodeData, ...specialData });
+      addNode(nodeType, position, {
+        ...nodeProcessData,
+        ...nodeConfigurationData,
+        ...nodePresentationData,
+      });
     },
     [addNode]
   );
@@ -346,12 +366,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   //Watch event processing for fun ui updates
   useEffect(() => {
-    subscribeToEvent("event_processing", (event: any) => {
+    let unlisten = subscribeToEvent("event_processing", (event: any) => {
       setCurrentProcessingStatus(event);
     });
-    subscribeToEvent("session_complete", (event: any) => {
+    let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
     });
+
+    return () => {
+      unlisten.then((unlisten) => unlisten());
+      unlisten2.then((unlisten) => unlisten());
+    }
   }, []);
 
   return (

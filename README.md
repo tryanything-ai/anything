@@ -20,7 +20,12 @@ If you've been seeking a tool that blends the simplicity of Zapier, the flexibil
 
 - React: For our intuitive and seamless UI.
 - Rust: Ensuring robust and lightning-fast operations.
-- Tauri: Local apps that aren't a whole chrome browser. 
+- Tauri: Local apps that aren't a whole chrome browser.
+
+### Where we're going
+
+![Agent Library](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/agent_library.png)
+
 
 ### 🤝 Contribute
 
@@ -33,6 +38,7 @@ Check out our [contributors guide](https://github.com/tryanything-ai/anything/tr
 ### 🔧 Setting Up
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
+cd tauri
 pnpm i
 pnpm start 
 ```

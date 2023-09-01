@@ -1,33 +1,38 @@
 import { useState } from "react";
-import { Handle, Position} from "reactflow";
 import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { VscPlayCircle } from "react-icons/vsc";
 import clsx from "clsx";
 import BaseNode from "./baseNode";
+import { useFlowContext } from "../../context/FlowProvider";
 
 let node: Node = {
   nodeType: "manualNode",
-  title: "Manual Node",
-  alt: "Manual Node",
-  nodeData: {
+  nodeConfigurationData: {},
+  nodePresentationData: {
+    title: "Manual Node",
+    alt: "Manual Node",
+    handles: [],
+  },
+  nodeProcessData: {
     worker_type: "start",
   },
-  specialData: {},
 };
 
 ManualNode.Node = node;
 
 export default function ManualNode({ id, data }: AnythingNodeProps) {
   const { addEvent } = useSqlContext();
+  const { flowFrontmatter } = useFlowContext(); 
   const { flow_name } = useParams();
   const [loading, setLoading] = useState(false);
   const createEvent = async () => {
     if (flow_name === undefined) return;
+    if (flowFrontmatter === undefined) return;
     setLoading(true);
     let event: EventInput = {
-      flow_id: flow_name, //TODO: proliferate flow_id vs name
+      flow_id: flowFrontmatter.id,
       flow_name: flow_name,
       flow_version: "0.0.1",
       node_id: id,
@@ -64,12 +69,6 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
         </div>
         <div className="text-lg">Manual Trigger</div>
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="a"
-        isConnectableEnd={false}
-      />
     </BaseNode>
   );
 }
