@@ -42,7 +42,7 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
       event_status: "PENDING", //EVENT STATUS
       session_status: "PENDING", //SESSION STATUS
       created_at: new Date().toISOString(),
-      data: { test: true },
+      data: "",
     };
 
     console.log("Adding event", event);

@@ -280,7 +280,6 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         deleteFlow,
         renameFlowFiles,
         readNodeConfig,
-
         writeNodeConfig,
       }}
     >

@@ -35,7 +35,7 @@ pub async fn scheduler(app: &AppHandle){
 //TODO: write it bettter. This nesting makes me ill
 async fn process(app: &AppHandle) {
 
-    let res = fetch_event(app).await; 
+    let res = fetch_event(app).await;
 
     match res {
         Ok(items) => {
@@ -103,6 +103,7 @@ async fn create_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
     node: &JsonValue,
     flow_info: &JsonValue,
+    flow_json_data: &JsonValue,
     session_id: &str,
 ) -> std::result::Result<(), Error> {
     let db_instances = app.state::<DbInstances>(); 
@@ -123,6 +124,9 @@ async fn create_event<R: tauri::Runtime>(
     let flow_name = flow_info.get("name").and_then(|v| v.as_str()).unwrap_or_default();
     let flow_version = flow_info.get("version").and_then(|v| v.as_str()).unwrap_or_default();
     // ... (Add other data extraction as needed) ...
+
+    // Get Data from Node from TOML file
+
 
     let query = "
         INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data) 
@@ -246,7 +250,7 @@ async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_na
         println!("{}", work); 
    
         if let Some(flow) = flow_json_data.get("flow") {
-       let _res =  create_event(app, work, flow, session_id).await;
+       let _res =  create_event(app, work, flow, &flow_json_data, session_id).await;
        println!("ID: {} is created as the next item in the work order", work.get("id").unwrap());
        //TODO: give the user the update?
         } else {
@@ -359,6 +363,9 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
         },
         "rest" => {
             // Do something for "some_other_type"
+            // call_api().await;
+            //TODO: Need to determine JIT values from TOML or from Response in SQL Event System. 
+            //Merge these?
             println!("Found a REST worker type");
             println!("{:?}", event_data); 
         },

@@ -124,12 +124,14 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
       node_type TEXT,
       flow_id TEXT,
       flow_name TEXT,
-      flow_version TEXT,  
+      flow_version TEXT,
       worker_type TEXT,
       stage TEXT,
       event_status TEXT,
       session_status TEXT,
       created_at DATETIME,
+      result TEXT, 
+      context TEXT,
       data TEXT
       )`);
     } catch (error) {

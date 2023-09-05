@@ -47,6 +47,8 @@ export default function Tables() {
               <th>Worker Type</th>
               <th>Stage</th>
               <th>Event Status</th>
+              <th>Event Result</th>
+              <th>Event Context</th>
               <th>Session Status</th>
               <th>Data</th>
             </tr>
@@ -67,6 +69,8 @@ export default function Tables() {
                   <th>{event.stage}</th>
                   <th>{event.event_status}</th>
                   <th>{event.session_status}</th>
+                  <th>{JSON.stringify(event.context)}</th>
+                  <th>{JSON.stringify(event.result)}</th>
                   <th>{JSON.stringify(event.data)}</th>
                 </tr>
               );

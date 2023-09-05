@@ -92,11 +92,30 @@ export const NODES: Node[] = [
     nodeType: "openAiNode",
     nodeConfigurationData: {
       url: "",
-      params: [],
+      method: "", 
+      headers: "", 
+      body: "",
     },
     nodePresentationData: {
       title: "OpenAI Node",
       alt: "OpenAI Node",
+      handles: BaseHandles,
+    },
+    nodeProcessData: {
+      worker_type: "rest",
+    },
+  },
+  {
+    nodeType: "restNode",
+    nodeConfigurationData: {
+      url: "",
+      method: "", 
+      headers: "", 
+      body: "",
+    },
+    nodePresentationData: {
+      title: "Rest API Node",
+      alt: "Rest API Node",
       handles: BaseHandles,
     },
     nodeProcessData: {

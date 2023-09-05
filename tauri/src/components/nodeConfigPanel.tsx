@@ -42,11 +42,16 @@ const NodeConfigPanel = () => {
   } = useForm();
 
   const onSubmit = (data: any) => {
+    if (!flow_name) return;
+    if (!nodeId) return;
+    console.log("Hit Node Config Submit");
     console.log(data);
+
+    writeNodeConfig(nodeId, flow_name, data);
   };
 
   return (
-    <div className="flex flex-col h-full border-l border-gray-500">
+    <div className="flex flex-col h-full border-l border-gray-500 overflow-y-auto">
       <button
         className="m-1 btn btn-ghost btn-square btn-xs w-6 h-6 absolute right-0"
         onClick={() => setNodeConfigPanel(false, "")}
@@ -67,11 +72,14 @@ const NodeConfigPanel = () => {
                 <div className="mb-1">{key}:</div>
                 <input
                   type="text"
-                  placeholder="Type here"
                   className="input input-bordered input-md w-full"
-                  defaultValue={flow_name}
-                  {...register(key, { required: true })}
+                  // value={value}
+                  defaultValue={value}
+                  {...register(key)}
                 />
+                {errors[key] && (
+                  <span>{JSON.stringify(errors[key]?.message)}</span>
+                )}
               </div>
             );
           } else if (typeof value === "boolean") {
@@ -93,7 +101,7 @@ const NodeConfigPanel = () => {
                   </label>
                 )}
               />
-          )
+            );
           }
           // Extend this to handle other types as needed
         })}

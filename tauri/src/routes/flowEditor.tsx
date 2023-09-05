@@ -26,15 +26,21 @@ function Flows() {
     setReactFlowInstance,
   } = useFlowContext();
 
-  const { nodePanel, debugPanel, tomlPanel, settingsPanel, nodeConfigPanel } =
-    useNavigationContext();
+  const {
+    nodePanel,
+    debugPanel,
+    tomlPanel,
+    settingsPanel,
+    nodeConfigPanel,
+    nodeId,
+  } = useNavigationContext();
   const reactFlowWrapper = useRef(null);
   const { flow_name } = useParams();
 
   const nodeTypes = useMemo(
     () => ({
       manualNode: ManualNode,
-      superNode: SuperNode
+      superNode: SuperNode,
     }),
     []
   );
@@ -46,8 +52,8 @@ function Flows() {
         <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
           <ReactFlow
             nodeTypes={nodeTypes}
-            nodes={nodes} 
-            edges={edges} 
+            nodes={nodes}
+            edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onDragOver={onDragOver}
@@ -88,7 +94,7 @@ function Flows() {
         ) : null}
         {nodeConfigPanel ? (
           <div className="w-1/2">
-            <NodeConfigPanel />{" "}
+            <NodeConfigPanel key={nodeId} />
           </div>
         ) : null}
       </div>
