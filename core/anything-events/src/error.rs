@@ -29,6 +29,9 @@ pub enum DeviceError {
 
     #[error("already subscribing on this socket")]
     AlreadySubscribingError,
+
+    #[error("not subscribed or published")]
+    DeviceNotAvailableError,
 }
 
 impl From<TmqError> for DeviceError {
