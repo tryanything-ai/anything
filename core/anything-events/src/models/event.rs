@@ -110,19 +110,6 @@ impl Event {
         };
         self
     }
-
-    // pub async fn append_to_stream(
-    //     pool: &AnyPool,
-    //     request: Request<AppendToStreamRequest>,
-    // ) -> DBResult<AppendToStreamResponse> {
-    //     let request = request.get_ref();
-
-    //     let log = sqlx::query("INSERT INTO events").fetch_one(pool).await?;
-    //     let response = AppendToStreamResponse {
-    //         response: "ok".to_string(),
-    //     };
-    //     Ok(response)
-    // }
 }
 
 #[cfg(test)]
