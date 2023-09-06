@@ -33,9 +33,11 @@ async-trait = "0.1.73"
 sqlx = { version = "0.7", default-features = false, features = [
     "runtime-tokio",
     "macros",
-    "postgres",
     "uuid",
+    "sqlite",
     "any",
+    "json",
+    "chrono",
 ] }
 tonic = "0.10.0"
 prost = "0.12.0"
@@ -43,6 +45,7 @@ chrono = { version = "0.4.29", features = ["serde"] }
 tokio-stream = { version = "0.1.14", features = ["net"] }
 lazy_static = "1.4.0"
 regex = "1.9.5"
+futures = "0.3.28"
 
 [dev-dependencies]
 parking_lot = "0.12.1"
