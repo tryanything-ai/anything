@@ -99,11 +99,29 @@ async fn fetch_event<R: tauri::Runtime>(
     select(db_instances, db, query, values).await
 }
 
+fn find_node_data_by_id(json_data: &JsonValue, node_id: &str) -> Option<JsonValue> {
+    println!("Find Node Data By ID"); 
+    println!("node_id: {}", node_id);
+    println!("json_data: {}", json_data);
+    if let Some(nodes) = json_data.get("nodes") {
+        for node in nodes.as_array().unwrap() {
+            if node.get("id").unwrap().as_str().unwrap() == node_id {
+                println!("We found a node we want"); 
+                if let Some(data) = node.get("data") {
+                    println!("Data we want: {:?}", data);
+                    return Some(data.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
 async fn create_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
     node: &JsonValue,
     flow_info: &JsonValue,
-    flow_json_data: &JsonValue,
+    flow_json_data: &JsonValue,  
     session_id: &str,
 ) -> std::result::Result<(), Error> {
     let db_instances = app.state::<DbInstances>(); 
@@ -126,11 +144,13 @@ async fn create_event<R: tauri::Runtime>(
     // ... (Add other data extraction as needed) ...
 
     // Get Data from Node from TOML file
+    let node_data = find_node_data_by_id(flow_json_data, node_id).unwrap_or_default();
 
+    println!("node data from find node data by id: {}", node_data);
 
     let query = "
-        INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data, context) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     ";
 
     let values = vec![
@@ -146,7 +166,8 @@ async fn create_event<R: tauri::Runtime>(
         JsonValue::String("PENDING".to_string()),            // event_status
         JsonValue::String("PENDING".to_string()),            // session_status
         JsonValue::String(Utc::now().to_rfc3339()),          // created_at
-        JsonValue::String(data.to_string()),                 // data
+        JsonValue::String(data.to_string()),                 // context
+        JsonValue::String(node_data.to_string())             // data
     ];
 
     match execute(db_instances, db, query.to_string(), values).await {
