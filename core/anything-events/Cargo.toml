@@ -11,7 +11,6 @@ path = "./bin/main.rs"
 
 [dependencies]
 crossbeam = "0.8.2"
-lockfree = "0.5.1"
 log = "0.4.20"
 protobuf = "3.2.0"
 serde = { version = "1.0.188", features = ["derive"] }
@@ -21,6 +20,9 @@ tokio = "1.32.0"
 tracing = "0.1.37"
 uuid = { version = "1.4.1", features = ["v4"] }
 zmq = "0.10.0"
+node_derive = { path = "node_derive" }
+async-trait = "0.1.73"
+tmq = "0.4.0"
 
 [dev-dependencies]
 parking_lot = "0.12.1"
