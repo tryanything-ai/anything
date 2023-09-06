@@ -6,11 +6,11 @@ use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 use tonic::{Request, Response, Status, Streaming};
 
 use crate::{
-    event::event::Event,
     pb::{
         event_action_server::EventAction, AppendToStreamRequest, AppendToStreamResponse,
         ReadStreamRequest, ReadStreamResponse,
     },
+    Event,
 };
 
 pub struct EventService {

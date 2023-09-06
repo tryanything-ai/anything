@@ -97,11 +97,32 @@ mod tests {
             .with_tags(vec!["bob".to_string()]);
 
         let res = store.save(fake_event).await;
-        println!("res: {:?}", res);
         assert!(res.is_ok());
 
         let cols = select_all_events(&pool_clone).await?;
+        assert_eq!(cols.len(), 1);
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn it_can_read_all_events() -> AnythingResult<()> {
+        let pool = get_pool().await?;
+        let pool_clone = pool.clone();
+
+        let store = SqliteStoreAdapter::new(pool);
+        let _res = store.init().await?;
+
+        let fake_event = Event::new(
+            "wee".to_string(),
+            serde_json::json!(HashMap::from([("name".to_string(), "Ari".to_string())])),
+            vec![],
+        );
+        let fake_event = fake_event
+            .with_metadata(HashMap::from([("time".to_string(), "now".to_string())]))
+            .with_tags(vec!["bob".to_string()]);
+
+        insert_new_event(&pool_clone, fake_event.clone()).await?;
         Ok(())
     }
 }
@@ -122,12 +143,21 @@ pub async fn select_all_events(pool: &SqlitePool) -> AnythingResult<Vec<Event>> 
     .fetch_all(pool)
     .await?;
 
-    // let events = res.into_iter().collect::<Vec<Event>>();
-    println!("res: {:#?}", res);
-
     Ok(res)
 }
 
-pub async fn insert_new_event(pool: SqlitePool, query: &str) -> AnythingResult<()> {
+pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> AnythingResult<()> {
+    let res = sqlx::query(
+        r#"INSERT INTO events (event_name, payload, metadata, tags) VALUES (?, ?, ?, ?)"#,
+    )
+    .bind(event.event_name)
+    .bind(event.payload)
+    .bind(event.metadata)
+    .bind(event.tags)
+    .execute(pool)
+    .await?;
+
+    println!("res: {:?}", res);
+
     Ok(())
 }
