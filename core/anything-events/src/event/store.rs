@@ -16,7 +16,8 @@ pub type FetchResult = AnythingResult<Vec<JsonValue>>;
 pub trait StoreAdapter {
     async fn init(&self) -> SaveResult;
     async fn save(&self, event: Event) -> SaveResult;
-    async fn read(&self, since: Option<DateTime<Utc>>) -> FetchResult;
+    async fn all(&self) -> AnythingResult<Vec<Event>>;
+    async fn get(&self, id: i64) -> AnythingResult<Event>;
 }
 
 #[derive(Debug)]

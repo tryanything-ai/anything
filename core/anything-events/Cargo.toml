@@ -46,9 +46,11 @@ tokio-stream = { version = "0.1.14", features = ["net"] }
 lazy_static = "1.4.0"
 regex = "1.9.5"
 futures = "0.3.28"
+fake = { version = "2.8", features = ["serde_json", "derive", "chrono"] }
 
 [dev-dependencies]
 parking_lot = "0.12.1"
+fake = { version = "2.8", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = { version = "0.10" }
