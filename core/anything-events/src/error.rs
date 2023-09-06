@@ -15,8 +15,8 @@ pub enum AnythingError {
 
 #[derive(Error, Debug)]
 pub enum DeviceError {
-    #[error("socket error: {0}")]
-    SocketError(TmqError),
+    #[error(transparent)]
+    SocketError(#[from] zmq::Error),
 
     #[error("unable to publish")]
     UnableToPublishError,
@@ -34,8 +34,8 @@ pub enum DeviceError {
     DeviceNotAvailableError,
 }
 
-impl From<TmqError> for DeviceError {
-    fn from(value: TmqError) -> Self {
-        DeviceError::SocketError(value)
-    }
-}
+// impl From<TmqError> for DeviceError {
+//     fn from(value: TmqError) -> Self {
+//         DeviceError::SocketError(value)
+//     }
+// }
