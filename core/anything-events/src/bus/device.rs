@@ -4,7 +4,6 @@ use crate::{
     error::{AnythingError, DeviceError},
     types::AnythingResult,
 };
-use std::{marker::PhantomData, ops::Deref};
 
 pub struct Device {
     pub context: Context,

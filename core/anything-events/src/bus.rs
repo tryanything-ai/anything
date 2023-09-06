@@ -1,6 +1,10 @@
 use std::{borrow::BorrowMut, collections::HashMap, sync::Mutex};
 
-use crate::{types::AnythingResult, Observable};
+use crate::{
+    error::{AnythingError, DeviceError},
+    types::AnythingResult,
+    Observable,
+};
 
 use self::device::Device;
 
@@ -8,6 +12,7 @@ mod device;
 
 pub struct EventBus<'a, T> {
     pub devices: HashMap<&'a str, Mutex<Box<Device>>>,
+    // pub devices: HashMap<&'a str, Box<Device>>,
     pub observables: HashMap<String, Observable<'a, T>>,
 }
 
@@ -16,6 +21,24 @@ impl<'a, T> EventBus<'a, T> {
         Self {
             devices: HashMap::default(),
             observables: HashMap::default(),
+        }
+    }
+
+    pub fn get_device(&self, addr: &'a str) -> AnythingResult<&Device> {
+        match &self.devices.get(addr) {
+            Some(v) => match v.lock() {
+                Err(_e) => {
+                    return Err(AnythingError::DeviceError(
+                        DeviceError::DeviceNotAvailableError,
+                    ))
+                }
+                Ok(device) => Ok(device.as_ref()),
+            },
+            None => {
+                return Err(AnythingError::DeviceError(
+                    DeviceError::DeviceNotAvailableError,
+                ))
+            }
         }
     }
 
@@ -43,7 +66,14 @@ impl<'a, T> EventBus<'a, T> {
     {
         match self.devices.get(addr) {
             Some(v) => {
-                func(v.lock().borrow_mut().as_mut().unwrap())?;
+                match v.lock().borrow_mut() {
+                    Err(_e) => {
+                        return Err(AnythingError::DeviceError(
+                            DeviceError::DeviceNotAvailableError,
+                        ))
+                    }
+                    Ok(device) => func(device.as_mut())?,
+                };
                 Ok(())
             }
             None => {
