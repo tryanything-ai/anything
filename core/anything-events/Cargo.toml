@@ -9,6 +9,10 @@ edition = "2021"
 name = "aevents"
 path = "./bin/main.rs"
 
+[features]
+default = []
+sqlite = ["sqlx/sqlite"]
+
 [dependencies]
 crossbeam = "0.8.2"
 log = "0.4.20"
@@ -16,13 +20,32 @@ protobuf = "3.2.0"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
 thiserror = "1.0.47"
-tokio = { version = "1.32.0", features = ["net", "macros", "rt-multi-thread"] }
+tokio = { version = "1.32.0", features = [
+    "net",
+    "macros",
+    "rt-multi-thread",
+    "rt",
+] }
 tracing = "0.1.37"
-uuid = { version = "1.4.1", features = ["v4"] }
-zmq = "0.10.0"
+uuid = { version = "1.4.1", features = ["v4", "serde"] }
 node_derive = { path = "node_derive" }
 async-trait = "0.1.73"
-tmq = "0.4.0"
+sqlx = { version = "0.7", default-features = false, features = [
+    "runtime-tokio",
+    "macros",
+    "postgres",
+    "uuid",
+    "any",
+] }
+tonic = "0.10.0"
+prost = "0.12.0"
+chrono = { version = "0.4.29", features = ["serde"] }
+tokio-stream = { version = "0.1.14", features = ["net"] }
+lazy_static = "1.4.0"
+regex = "1.9.5"
 
 [dev-dependencies]
 parking_lot = "0.12.1"
+
+[build-dependencies]
+tonic-build = { version = "0.10" }

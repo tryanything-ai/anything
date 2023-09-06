@@ -2,11 +2,22 @@ pub mod event;
 
 pub mod types;
 
-pub mod bus;
 pub mod error;
+pub(crate) mod utils;
+pub(crate) mod validation;
+
+mod pb {
+    tonic::include_proto!("event");
+}
+
+pub mod handler;
 
 mod observable;
 
-pub use bus::EventBus;
+#[cfg(test)]
+pub(crate) mod internal;
+
 pub use observable::delegate::{Delegate, Response, Subscription};
 pub use observable::Observable;
+
+pub use event::event::*;
