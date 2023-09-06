@@ -36,7 +36,7 @@ impl EventAction for EventService {
     ) -> ServiceResponse<AppendToStreamResponse> {
         let req = req.into_inner();
 
-        let mut events: Vec<Event<JsonValue>> = vec![];
+        let mut events: Vec<Event> = vec![];
         let stream_name = req.stream_name;
         for event in req.events {
             let id = event.id;
@@ -45,8 +45,8 @@ impl EventAction for EventService {
 
             let mut new_event = Event::new(stream_name.clone(), payload, tags);
             if let Some(id) = id {
-                if let Ok(u64_id) = id.parse::<u64>() {
-                    new_event = new_event.with_id(u64_id);
+                if let Ok(i64_id) = id.parse::<i64>() {
+                    new_event = new_event.with_id(i64_id);
                 }
             }
             events.push(new_event.with_name(stream_name.clone()));

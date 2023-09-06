@@ -1,31 +1,22 @@
-use chrono::{DateTime, Utc};
-use sqlx::Database;
-
-use crate::event::store::store_query::StoreQuery;
 use crate::types::AnythingResult;
+use crate::Event;
+use chrono::{DateTime, Utc};
+use serde_json::Value as JsonValue;
 
 pub mod ident;
+#[cfg(feature = "sqlite")]
 pub mod sqlite;
+
 pub mod store_query;
-pub mod stream_query;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum SaveStatus {
-    Ok,
-    Duplicate,
-}
-
-pub type SaveResult = AnythingResult<SaveStatus>;
+pub type SaveResult = AnythingResult<bool>;
+pub type FetchResult = AnythingResult<Vec<JsonValue>>;
 
 #[async_trait::async_trait]
 pub trait StoreAdapter {
-    async fn init<'a>(&'a self) -> AnythingResult<SaveStatus>;
-    async fn save<'a, E: Send + Sync>(&'a self, event: &'a E) -> AnythingResult<SaveStatus>;
-    async fn read<'a, D: Database + Send + Sync, E: Send + Sync + Clone>(
-        &'a self,
-        query: &'a StoreQuery<'a, D, E>,
-        since: Option<DateTime<Utc>>,
-    ) -> AnythingResult<Vec<E>>;
+    async fn init(&self) -> SaveResult;
+    async fn save(&self, event: Event) -> SaveResult;
+    async fn read(&self, since: Option<DateTime<Utc>>) -> FetchResult;
 }
 
 #[derive(Debug)]

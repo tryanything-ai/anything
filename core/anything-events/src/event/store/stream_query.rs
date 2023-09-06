@@ -1,6 +1,8 @@
+use std::fmt::Display;
 use std::marker::PhantomData;
 use std::str;
 
+use serde_json::Value as JsonValue;
 use sqlx::{database::HasArguments, encode::IsNull, Type};
 use sqlx::{Decode, Encode};
 
@@ -52,6 +54,7 @@ pub trait FilterEvaluator {
     fn eval(&mut self, filter: &StreamFilter) -> Self::Result;
 }
 
+#[derive(Debug, Clone, sqlx::Decode)]
 pub struct Text(String);
 
 impl Text {
@@ -60,7 +63,12 @@ impl Text {
     }
 }
 
-// std::string::String` to implement `Into<stream_query::Text>
+impl Display for Text {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl Into<Text> for String {
     fn into(self) -> Text {
         Text(self)
@@ -89,17 +97,42 @@ impl From<&u64> for Text {
     }
 }
 
+impl From<JsonValue> for Text {
+    fn from(value: JsonValue) -> Self {
+        Self(value.to_string())
+    }
+}
+
 #[cfg(feature = "sqlite")]
 impl<'q> sqlx::Encode<'q, sqlx::Sqlite> for Text {
     fn encode_by_ref(
         &self,
         args: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
     ) -> sqlx::encode::IsNull {
-        // args.push(sqlx::sqlite::SqliteArgumentValue::Text(self.0));
-        // args.push(self.0);
+        args.push(sqlx::sqlite::SqliteArgumentValue::Text(
+            std::borrow::Cow::from(self.0.clone()),
+        ));
         sqlx::encode::IsNull::No
     }
 }
+
+// Encode<'args, DB> + Send + Type<DB>
+#[cfg(feature = "sqlite")]
+impl<'q> sqlx::Type<sqlx::Sqlite> for Text {
+    fn type_info() -> <sqlx::Sqlite as sqlx::Database>::TypeInfo {
+        <String as sqlx::Type<sqlx::Sqlite>>::type_info()
+    }
+    fn compatible(ty: &<sqlx::Sqlite as sqlx::Database>::TypeInfo) -> bool {
+        use sqlx::TypeInfo;
+
+        match ty.name() {
+            "String" => true,
+            _ => <String as sqlx::Type<sqlx::Sqlite>>::compatible(ty),
+        }
+    }
+}
+
+// stream_query::Text: Encode<'_, D>`
 
 // impl<'q> Encode<'q, sqlx::Sqlite> for Text {
 //     fn encode_by_ref(&self, args: &mut Vec<sqlx::sqlite::SqliteArgumentValue<'q>>) -> IsNull {
