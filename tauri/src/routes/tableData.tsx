@@ -32,13 +32,13 @@ export default function Tables() {
         <div className="text-5xl text-white m-5">table/{table}</div>
         <button onClick={hydrate}>Refresh</button>
       </div>
-      <div className="overflow-y-auto max-h-[600px]">
+      <div className="overflow-y-auto overflow-x-auto">
         <table className="table table-xs">
           <thead>
             <tr>
               <th>Event ID</th>
               <th>Session ID</th>
-              <th>Created At</th>
+              {/* <th>Created At</th> */}
               <th>Node Id</th>
               <th>Node Type</th>
               <th>Flow ID</th>
@@ -47,9 +47,9 @@ export default function Tables() {
               <th>Worker Type</th>
               <th>Stage</th>
               <th>Event Status</th>
-              <th>Event Result</th>
-              <th>Event Context</th>
               <th>Session Status</th>
+              <th>Event Context</th>
+              <th>Event Result</th>
               <th>Data</th>
             </tr>
           </thead>
@@ -59,7 +59,7 @@ export default function Tables() {
                 <tr>
                   <th>{event.event_id}</th>
                   <th>{event.session_id}</th>
-                  <th>{event.created_at}</th>
+                  {/* <th>{event.created_at}</th> */}
                   <th>{event.node_id}</th>
                   <th>{event.node_type}</th>
                   <th>{event.flow_id}</th>

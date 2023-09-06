@@ -106,7 +106,7 @@ const NodeConfigPanel = () => {
           // Extend this to handle other types as needed
         })}
         <button className="mt-2 btn btn-primary" type="submit">
-          Submit
+          Save
         </button>
       </form>
     </div>

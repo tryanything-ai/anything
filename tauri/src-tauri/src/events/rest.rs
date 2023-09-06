@@ -1,4 +1,4 @@
-use reqwest::{Error, Method, HeaderMap, header::HeaderName};
+use reqwest::{Error, Method, header::HeaderMap, header::HeaderName};
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -15,7 +15,7 @@ pub async fn call_api(api_request: ApiRequest) -> Result<String, Error> {
     let client = reqwest::Client::new();
     
     // Parse HTTP method
-    let method = Method::from_str(&api_request.method).expect("Invalid HTTP method");
+    let method = Method::from_bytes(api_request.method.as_bytes()).expect("Invalid HTTP method");
 
     // Build request
     let mut request_builder = client.request(method, &api_request.url);
@@ -42,9 +42,11 @@ pub async fn call_api(api_request: ApiRequest) -> Result<String, Error> {
 
     if response.status().is_success() {
         let text = response.text().await?;
+        println!("res from rest call processor: {:?}", text);
         Ok(text)
     } else {
-        Err(reqwest::Error::from(response.status()))
+        //TODO: this is probabaly bad error handling
+        Err(response.error_for_status().unwrap_err())
     }
 }
 

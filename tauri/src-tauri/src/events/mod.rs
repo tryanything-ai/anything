@@ -11,6 +11,9 @@ use uuid::Uuid;
 
 use crate::notifications::Event; 
 
+pub mod rest; 
+use rest::{ApiRequest, call_api}; 
+
 extern crate chrono;
 use chrono::Utc; 
 
@@ -49,6 +52,7 @@ async fn process(app: &AppHandle) {
                                             let flow_id = item.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let event_id = item.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let session_id = item.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
+                                            //TODO: save result in sql
 
                                             mark_as_done(app, event_id.to_string(), node_id.to_string(), flow_id.to_string(), session_id.to_string()).await;
                                             println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
@@ -121,7 +125,7 @@ async fn create_event<R: tauri::Runtime>(
     app: &AppHandle<R>,
     node: &JsonValue,
     flow_info: &JsonValue,
-    flow_json_data: &JsonValue,  
+    flow_json_data: &JsonValue,
     session_id: &str,
 ) -> std::result::Result<(), Error> {
     let db_instances = app.state::<DbInstances>(); 
@@ -178,7 +182,6 @@ async fn create_event<R: tauri::Runtime>(
         },
     }
 }
-
 
 async fn mark_as_done(
     app: &AppHandle,
@@ -383,12 +386,36 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             }
         },
         "rest" => {
-            // Do something for "some_other_type"
-            // call_api().await;
-            //TODO: Need to determine JIT values from TOML or from Response in SQL Event System. 
-            //Merge these?
+        
+            let context_str = event_data["context"].as_str().unwrap_or("");
+            let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
+            
+            let method = context_json["method"].as_str().unwrap_or_default().to_string();
+            let url = context_json["url"].as_str().unwrap_or_default().to_string();
+            let headers_str = context_json["headers"].as_str().unwrap_or_default();
+            
+            let mut headers_map: Option<HashMap<String, String>> = None;
+            if !headers_str.is_empty() {
+                headers_map = Some(serde_json::from_str(headers_str).unwrap_or_default());
+            }
+            
+            let body = context_json["body"].as_str().map(|s| s.to_string());
+        
+            let api_request = ApiRequest {
+                method,
+                url,
+                headers: headers_map,
+                body,
+            };
             println!("Found a REST worker type");
             println!("{:?}", event_data); 
+
+        //TODO: these all need to return JSON so we can store it in the event when we mark as done
+         call_api(api_request).await.map_err(|e| e.to_string())?;
+
+    
+  
+        
         },
         "terminal" => {
 
