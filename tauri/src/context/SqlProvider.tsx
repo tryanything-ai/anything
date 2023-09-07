@@ -67,7 +67,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
   const addEvent = async (event: EventInput) => {
     try {
       await db.execute(
-        "INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage,worker_type, event_status, session_status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+        "INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
         [
           uuidv4(),
           uuidv4(),
@@ -130,8 +130,8 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
       event_status TEXT,
       session_status TEXT,
       created_at DATETIME,
-      result TEXT, 
-      context TEXT,
+      event_result TEXT,
+      event_context TEXT,
       data TEXT
       )`);
     } catch (error) {

@@ -46,14 +46,14 @@ async fn process(app: &AppHandle) {
                     if let Some(worker_type) = item.get("worker_type") {
                             if let Some(worker_type_str) = worker_type.as_str() {
                                     match execute_worker_task(app, worker_type_str, item).await {
-                                        Ok(_) => {
+                                        Ok(result_json) => {
                                              // Get values for eventProcessing Message
                                             let node_id = item.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let flow_id = item.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let event_id = item.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let session_id = item.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
                                             //TODO: save result in sql
-
+                                            // save_result(app, event_id.to_string(), result_json).await;
                                             mark_as_done(app, event_id.to_string(), node_id.to_string(), flow_id.to_string(), session_id.to_string()).await;
                                             println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
                                             println!("Session ID: {} Evaluated", session_id) 
@@ -153,7 +153,7 @@ async fn create_event<R: tauri::Runtime>(
     println!("node data from find node data by id: {}", node_data);
 
     let query = "
-        INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data, context) 
+        INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data, event_context) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     ";
 
@@ -195,7 +195,7 @@ async fn mark_as_done(
     let db = DB_STRING.to_string();
     let update_event_query = "UPDATE events
     SET event_status = 'COMPLETE'
-    WHERE event_id = $1".to_string(); 
+    WHERE event_id = $1".to_string();
     let values = vec![JsonValue::String(event_id.clone())];
 
     
@@ -249,8 +249,27 @@ async fn mark_as_done(
     } else {
         println!("An error occurred");
     }
-    
+        
   
+}
+
+async fn save_result(
+    app: &AppHandle,
+    event_id: String,
+    result: String,
+) {
+    let db_instances = app.state::<DbInstances>(); 
+
+    let db = DB_STRING.to_string();
+    let update_event_query = "UPDATE events
+    SET event_result = $1
+    WHERE event_id = $2".to_string();
+    let values = vec![JsonValue::String(result.clone()), JsonValue::String(event_id.clone())];
+
+    if let Err(e) = execute(db_instances.clone(), db.clone(), update_event_query, values).await {
+        println!("Error executing the query to set Event result to processor result: {:?}", e);
+        return;
+    }
 }
 
 async fn create_events_from_graph<R: tauri::Runtime>(app: &AppHandle<R>, file_name: &str, session_id: &str){
@@ -356,7 +375,7 @@ fn read_from_documents(flow_name: &str) -> Result<String> {
 }
 
 //gets marked as done after it leaves here. Kinda a bad pattern i think
-async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>) -> std::result::Result<(), String> {
+async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>) -> std::result::Result<JsonValue, String> {
 
     // Get values for eventProcessing Message
     let node_id = event_data.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
@@ -380,14 +399,16 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             if let Some(flow_name_value) = event_data.get("flow_name") {
                 if let Some(flow_name_str) = flow_name_value.as_str() {
                     create_events_from_graph(app, flow_name_str, session_id).await;
+                    Ok(serde_json::json!({"status": "events created"}))
                 } else {
-                    return Err("flow_name is not a string".to_string());
+                    Err("flow_name is not a string".to_string())
                 }
+            } else {
+                Err("flow_name is missing".to_string())
             }
         },
         "rest" => {
-        
-            let context_str = event_data["context"].as_str().unwrap_or("");
+            let context_str = event_data["event_context"].as_str().unwrap_or("");
             let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
             
             let method = context_json["method"].as_str().unwrap_or_default().to_string();
@@ -411,21 +432,20 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             println!("{:?}", event_data); 
 
         //TODO: these all need to return JSON so we can store it in the event when we mark as done
-         call_api(api_request).await.map_err(|e| e.to_string())?;
-
-    
-  
-        
+        //  call_api(api_request).await.map_err(|e| e.to_string())?;
+           return match call_api(api_request).await {
+                Ok(result) => Ok(serde_json::json!({"status": "success", "result": result})),
+                Err(e) => Err(e.to_string())
+            }
         },
         "terminal" => {
-
-        }, 
-        //TODO: add other worker types here
+            // Implement logic for "terminal" worker type
+           return Ok(serde_json::json!({"status": "terminal worker not implemented"}))
+        },
         _ => {
-            //FIXME: actually fail on unknown worker type
-            println!("Worker type is not Start. Doing Work."); 
+           return Err(format!("Unknown worker type: {}", worker_type))
         }
     }
 
-    Ok(())
+    // Ok(())
 }

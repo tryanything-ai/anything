@@ -48,6 +48,7 @@ const NodeConfigPanel = () => {
     console.log(data);
 
     writeNodeConfig(nodeId, flow_name, data);
+    setNodeConfigPanel(false, "")
   };
 
   return (
