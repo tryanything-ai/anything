@@ -7,9 +7,10 @@ use crate::sql::plugin::{select, DbInstances, DB_STRING, execute, Error};
 use serde_json::Value as JsonValue;
 use tauri::api::path::document_dir;
 use std::io::{Result, Error as IOError, ErrorKind};
-use uuid::Uuid;
+use uuid::{Uuid, timestamp::context};
 
 use crate::notifications::Event; 
+use std::process::Command;
 
 pub mod rest; 
 use rest::{ApiRequest, call_api}; 
@@ -53,7 +54,7 @@ async fn process(app: &AppHandle) {
                                             let event_id = item.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let session_id = item.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
                                             //TODO: save result in sql
-                                            // save_result(app, event_id.to_string(), result_json).await;
+                                            save_result(app, event_id.to_string(), result_json.to_string()).await;
                                             mark_as_done(app, event_id.to_string(), node_id.to_string(), flow_id.to_string(), session_id.to_string()).await;
                                             println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
                                             println!("Session ID: {} Evaluated", session_id) 
@@ -354,6 +355,29 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
     work_list
 }
 
+
+fn run_terminal_command(cmd: &str) -> std::result::Result<String, std::io::Error> {
+    // let output = Command::new(cmd)
+    //     .args(args)
+    //     .output()?;
+    println!("Running command: {}", cmd);
+    // let output = Command::new(cmd)
+    //     .output()?;
+
+   let output = Command::new("sh")
+    .arg("-c")
+    .arg(cmd)
+    .output()?; 
+
+    
+    if output.status.success() {
+        let s = String::from_utf8_lossy(&output.stdout);
+        Ok(s.to_string())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "Command failed"))
+    }
+}
+
 fn read_from_documents(flow_name: &str) -> Result<String> {
     // Get the user's Documents directory
     let mut path = document_dir()
@@ -440,7 +464,30 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
         },
         "terminal" => {
             // Implement logic for "terminal" worker type
-           return Ok(serde_json::json!({"status": "terminal worker not implemented"}))
+            let context_str = event_data["event_context"].as_str().unwrap_or("");
+            let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
+            
+            let command = context_json["command"].as_str().unwrap_or_default().to_string();
+            // let args = context_json["args"].as_str().unwrap_or_default().to_string();
+            // let command = "echo"; // Replace with your actual command
+            // let args = vec!["Hello, world!"]; // Replace with your actual arguments
+            // Try to get the 'args' from the JSON data, and convert them to a Vec<&str>
+            // if let Some(JsonValue::Array(args)) = event_data.get("args") {
+            //     let string_args: Vec<&str> = args.iter()
+            //         .filter_map(|val| val.as_str())
+            //         .collect();
+
+                match run_terminal_command(&command) {
+                    Ok(result) => {
+                        return Ok(serde_json::json!({"status": "success", "result": result}))
+                    },
+                    Err(e) => {
+                        return Err(format!("Terminal command failed: {}", e))
+                    } 
+                }
+            // } else {
+            //     return Err("Arguments not found or not an array".to_string());
+            // }
         },
         _ => {
            return Err(format!("Unknown worker type: {}", worker_type))
@@ -449,3 +496,4 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
 
     // Ok(())
 }
+
