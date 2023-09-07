@@ -7,7 +7,7 @@ use crate::sql::plugin::{select, DbInstances, DB_STRING, execute, Error};
 use serde_json::Value as JsonValue;
 use tauri::api::path::document_dir;
 use std::io::{Result, Error as IOError, ErrorKind};
-use uuid::{Uuid, timestamp::context};
+use uuid::Uuid;
 
 use crate::notifications::Event; 
 use std::process::Command;
@@ -32,7 +32,7 @@ pub async fn scheduler(app: &AppHandle){
             process(&app_handle).await;
         });
 
-       sleep(Duration::from_secs(2)).await; 
+       sleep(Duration::from_secs(4)).await; 
     }
 }
 
@@ -357,12 +357,8 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
 
 
 fn run_terminal_command(cmd: &str) -> std::result::Result<String, std::io::Error> {
-    // let output = Command::new(cmd)
-    //     .args(args)
-    //     .output()?;
-    println!("Running command: {}", cmd);
-    // let output = Command::new(cmd)
-    //     .output()?;
+ 
+    println!("Running command #FIND: {}", cmd);
 
    let output = Command::new("sh")
     .arg("-c")
@@ -450,34 +446,23 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                 method,
                 url,
                 headers: headers_map,
-                body,
+                body,   
             };
             println!("Found a REST worker type");
             println!("{:?}", event_data); 
 
-        //TODO: these all need to return JSON so we can store it in the event when we mark as done
-        //  call_api(api_request).await.map_err(|e| e.to_string())?;
            return match call_api(api_request).await {
                 Ok(result) => Ok(serde_json::json!({"status": "success", "result": result})),
                 Err(e) => Err(e.to_string())
             }
         },
         "terminal" => {
-            // Implement logic for "terminal" worker type
             let context_str = event_data["event_context"].as_str().unwrap_or("");
             let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
             
             let command = context_json["command"].as_str().unwrap_or_default().to_string();
-            // let args = context_json["args"].as_str().unwrap_or_default().to_string();
-            // let command = "echo"; // Replace with your actual command
-            // let args = vec!["Hello, world!"]; // Replace with your actual arguments
-            // Try to get the 'args' from the JSON data, and convert them to a Vec<&str>
-            // if let Some(JsonValue::Array(args)) = event_data.get("args") {
-            //     let string_args: Vec<&str> = args.iter()
-            //         .filter_map(|val| val.as_str())
-            //         .collect();
-
-                match run_terminal_command(&command) {
+            //FIXME: seems to be a range of bugs introduced via differe "" vs '' vs curly '' from toml to event system translation
+              match run_terminal_command(&command) {
                     Ok(result) => {
                         return Ok(serde_json::json!({"status": "success", "result": result}))
                     },
@@ -485,15 +470,11 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                         return Err(format!("Terminal command failed: {}", e))
                     } 
                 }
-            // } else {
-            //     return Err("Arguments not found or not an array".to_string());
-            // }
         },
         _ => {
            return Err(format!("Unknown worker type: {}", worker_type))
         }
     }
 
-    // Ok(())
 }
 
