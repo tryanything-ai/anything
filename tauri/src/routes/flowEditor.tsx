@@ -24,6 +24,7 @@ function Flows() {
     onDragOver,
     onDrop,
     setReactFlowInstance,
+    currentProcessingStatus
   } = useFlowContext();
 
   const {
@@ -80,6 +81,7 @@ function Flows() {
           <div className="w-1/4">
             {/* If you don't provide this key the debug pannel doesnt rerender and flow_name is stale in useParams */}
             <DebugPanel key={flow_name} />
+              {/* // key={`${flow_name}/${currentProcessingStatus?.event_id}`} /> */}
           </div>
         ) : null}
         {settingsPanel ? (
