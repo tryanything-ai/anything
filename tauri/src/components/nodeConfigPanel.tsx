@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSqlContext } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { useNavigationContext } from "../context/NavigationProvider";
 import { VscClose } from "react-icons/vsc";
