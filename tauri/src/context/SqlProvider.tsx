@@ -30,7 +30,7 @@ interface SqlContextInterface {
   tables: any[];
   addEvent: (event: EventInput) => void;
   getTableData: (tableName: string) => any;
-  getFlowEvents: (flowName: string) => any;
+  getFlowEvents: (flowName: string, session_id: string) => any;
 }
 
 export const SqlContext = createContext<SqlContextInterface>({
@@ -106,10 +106,10 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     return tableData;
   };
 
-  const getFlowEvents = async (flowName: string) => {
+  const getFlowEvents = async (flowName: string, session_id: string) => {
     const flowEvents = await db.select(
-      `SELECT * FROM events WHERE flow_name = $1 AND event_status = 'PENDING'`,
-      [flowName]
+      `SELECT * FROM events WHERE flow_name = $1 AND session_id = $2;`,
+      [flowName, session_id]
     );
     console.log("flowEvents in db", flowEvents);
     return flowEvents;

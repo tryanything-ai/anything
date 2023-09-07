@@ -427,18 +427,18 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                 Err("flow_name is missing".to_string())
             }
         },
-        "rest" => {
+        "rest" => { 
             let context_str = event_data["event_context"].as_str().unwrap_or("");
             let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
             
             let method = context_json["method"].as_str().unwrap_or_default().to_string();
             let url = context_json["url"].as_str().unwrap_or_default().to_string();
-            let headers_str = context_json["headers"].as_str().unwrap_or_default();
-            
-            let mut headers_map: Option<HashMap<String, String>> = None;
-            if !headers_str.is_empty() {
-                headers_map = Some(serde_json::from_str(headers_str).unwrap_or_default());
-            }
+            let headers_str = context_json["headers"].as_str().unwrap_or("");
+
+            let headers_map =  match serde_json::from_str::<HashMap<String, String>>(headers_str) {
+                Ok(headers_map) => Some(headers_map),
+                Err(_) => None,
+            };
             
             let body = context_json["body"].as_str().map(|s| s.to_string());
         
@@ -448,6 +448,9 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                 headers: headers_map,
                 body,   
             };
+
+            println!("api_request: {:?}", api_request); 
+
             println!("Found a REST worker type");
             println!("{:?}", event_data); 
 

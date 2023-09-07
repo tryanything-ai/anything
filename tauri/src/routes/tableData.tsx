@@ -104,7 +104,7 @@ export const eventColumnDefs = [
   columnHelper.accessor((event: Event) => event.data, {
     id: "data",
     cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Data</span>,
+    header: () => <span>Data</span>,  
   }),
 ];
 

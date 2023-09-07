@@ -96,18 +96,18 @@ export const FlowContext = createContext<FlowContextInterface>({
 export const useFlowContext = () => useContext(FlowContext);
 
 type ProcessingStatus = {
-  message: String;
-  event_id: String;
-  node_id: String;
-  flow_id: String;
-  session_id: String;
+  message: string;
+  event_id: string;
+  node_id: string;
+  flow_id: string;
+  session_id: string;
 };
 
 type SessionComplete = {
-  event_id: String;
-  node_id: String;
-  flow_id: String;
-  session_id: String;
+  event_id: string;
+  node_id: string;
+  flow_id: string;
+  session_id: string;
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
@@ -367,6 +367,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //Watch event processing for fun ui updates
   useEffect(() => {
     let unlisten = subscribeToEvent("event_processing", (event: any) => {
+      console.log("setCurrentProcessingStatus", event);
       setCurrentProcessingStatus(event);
     });
     let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
