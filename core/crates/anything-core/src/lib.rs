@@ -5,3 +5,5 @@ pub mod error;
 pub mod macros;
 pub mod tracing;
 pub mod utils;
+
+pub use config::AnythingConfig;

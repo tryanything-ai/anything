@@ -1,8 +1,14 @@
-use anyhow::{Context, Result};
+use anyhow::Context;
+use once_cell::sync::Lazy;
 use serde::{de, Deserialize, Deserializer};
 use std::{fmt::Formatter, path::PathBuf};
 struct DurationError(humantime::DurationError);
-use config::{builder::DefaultState, ConfigBuilder, Environment, File};
+use config::{builder::DefaultState, ConfigBuilder, Environment, File, FileFormat};
+
+use crate::error::AnythingResult;
+
+pub static CONFIG: Lazy<AnythingConfig> =
+    Lazy::new(|| AnythingConfig::new().expect("Unable to get config"));
 
 impl de::Expected for DurationError {
     fn fmt(&self, formatter: &mut Formatter) -> std::fmt::Result {
@@ -24,6 +30,11 @@ pub struct TracingConfig {
     pub service_name: Option<String>,
     /// The endpoint of the otel collector
     pub otel_endpoint: Option<String>,
+
+    #[serde(deserialize_with = "serde_human_time")]
+    pub log_retention: u64,
+
+    pub json_log: Option<bool>,
 }
 
 /// Server configuration
@@ -47,29 +58,44 @@ pub struct DatabaseConfig {
 
 /// Root configuration
 #[derive(Debug, Deserialize, Clone)]
-pub struct Config {
+pub struct AnythingConfig {
     /// RUN_MODE refers to the stage we're running in
     pub run_mode: String,
     pub root_dir: PathBuf,
-    pub json_log: bool,
-    pub log: String,
+    pub log: Option<String>,
     // pub task_engine: TaskEngine,
-    #[serde(deserialize_with = "serde_human_time")]
-    pub log_retention: u64,
-
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub tracing: TracingConfig,
 }
 
-impl Default for Config {
+impl AnythingConfig {
+    pub fn new() -> AnythingResult<Self> {
+        load(None)
+    }
+
+    pub fn is_dev(&self) -> bool {
+        self.run_mode == "development"
+    }
+
+    pub fn database_path(&self) -> PathBuf {
+        let mut path = self.root_dir.clone();
+
+        path.push("database");
+        path.push(&self.database.uri);
+
+        path
+    }
+}
+
+impl Default for AnythingConfig {
     fn default() -> Self {
         Self {
             run_mode: "development".to_string(),
             root_dir: PathBuf::from("./.eventurous"),
-            json_log: false,
-            log: "info".to_string(),
-            log_retention: 86400,
+
+            log: Some("info".to_string()),
+
             server: ServerConfig {
                 host: None,
                 port: 8080,
@@ -81,6 +107,8 @@ impl Default for Config {
             tracing: TracingConfig {
                 service_name: Some("eventurous".to_string()),
                 otel_endpoint: Some("http://otel-collector:4317".to_string()),
+                log_retention: 86400,
+                json_log: Some(false),
             },
         }
     }
@@ -95,6 +123,11 @@ pub fn loader(file: Option<&PathBuf>) -> ConfigBuilder<DefaultState> {
     // ));
     let run_mode = std::env::var("RUN_MODE").unwrap_or_else(|_| "development".to_string());
 
+    builder = builder.add_source(File::from_str(
+        include_str!("./default_config.toml"),
+        FileFormat::Toml,
+    ));
+
     builder = builder.add_source(File::with_name(&format!("config/{}", run_mode)).required(false));
 
     if let Some(file) = file {
@@ -103,15 +136,14 @@ pub fn loader(file: Option<&PathBuf>) -> ConfigBuilder<DefaultState> {
     }
 
     builder.add_source(
-        Environment::with_prefix("EVENTUROUS")
+        Environment::with_prefix("ANYTHING")
             .list_separator(",")
-            .try_parsing(true)
-            .with_list_parse_key("cluster_seed_nodes"),
+            .try_parsing(true),
     )
 }
 
 /// Load the configuration for the entire application
-pub fn load(file: Option<&PathBuf>) -> Result<Config> {
+pub fn load(file: Option<&PathBuf>) -> AnythingResult<AnythingConfig> {
     let config = loader(file)
         .build()?
         .try_deserialize()

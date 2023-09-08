@@ -11,9 +11,9 @@ use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{fmt, prelude::*};
 
-use crate::config::Config;
+use crate::config::AnythingConfig;
 
-pub fn setup_tracing<S>(subscriber: S, config: &Config)
+pub fn setup_tracing<S>(subscriber: S, config: &AnythingConfig)
 where
     S: Subscriber + for<'a> LookupSpan<'a> + Send + Sync,
 {
