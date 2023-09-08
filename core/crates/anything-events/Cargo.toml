@@ -6,6 +6,10 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
+[[bin]]
+name = "events"
+path = "bin/main.rs"
+
 [features]
 default = ["sqlite"]
 sqlite = ["sqlx/sqlite"]
@@ -20,8 +24,8 @@ tokio = { workspace = true, features = ["full", "rt-multi-thread"] }
 zmq = "0.10.0"
 
 # Tracing
-tracing = "0.1.35"
-# tracing-log = "0.1.3"
+tracing = { workspace = true }
+# tracing-log = { workspace = true }
 tracing-subscriber = { workspace = true }
 # tracing-appender = "0.2.2"
 # tracing-opentelemetry = "0.21.0"
@@ -35,7 +39,7 @@ config = { workspace = true }
 
 once_cell = { workspace = true }
 clap = { version = "4.4.2", features = ["derive"] }
-# dotenv = { workspace = true }
+dotenv = { workspace = true }
 git-version = { workspace = true }
 thiserror = { workspace = true }
 anymap = { workspace = true }

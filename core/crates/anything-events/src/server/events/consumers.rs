@@ -6,12 +6,13 @@ use crate::{messages::EventNotification, server::server::Server};
 
 pub async fn process_consumers(server: Arc<Server>) -> anyhow::Result<()> {
     let (backend_tx, mut backend_rx) = mpsc::channel::<EventNotification>(32);
-    let consumer_events_tx = server
-        .comm_channels
-        .lock()
-        .unwrap()
-        .consumer_events_tx
-        .clone();
+    // let consumer_events_tx = server
+    //     .comm_channels
+    //     .lock()
+    //     .unwrap()
+    //     .consumer_events_tx
+    //     .clone();
+    let consumer_events_tx = server.post_office.post_mail::<EventNotification>().await?;
 
     let context = zmq::Context::new();
     let responder = context.socket(zmq::REP).unwrap();
