@@ -1,0 +1,11 @@
+root_dir = "/tmp/eventurous"
+log = "warn,eventurous=info"
+json_log = false
+log_retention = "4h"
+
+[database]
+uri = "sqlite"
+
+[server]
+host = ":8080"
+port = 5556
