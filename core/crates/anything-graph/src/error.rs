@@ -27,8 +27,8 @@ pub enum AppError {
     #[error("Flow error: {0}")]
     FlowError(String),
 
-    #[error("Flow step error: {0}")]
-    FlowStepError(String),
+    #[error("Flow node error: {0}")]
+    FlowNodeError(String),
 
     #[error("Step action run error: {0}")]
     ActionError(ActionError),

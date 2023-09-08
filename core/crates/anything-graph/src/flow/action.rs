@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use super::node::{Node, StepList, StepState};
+use super::node::{Node, NodeList, NodeState};
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Builder)]
 #[builder(setter(into, strip_option), default)]
@@ -12,14 +12,14 @@ pub struct Action {
     pub display_name: String,
     pub action_type: ActionType,
     // pub input: Vec<String>,
-    // state: StepState,
+    // state: NodeState,
     run_result: Option<ActionResult>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ActionResult {
     pub duration: Duration,
-    pub step_execution_error: Option<String>,
+    pub node_execution_error: Option<String>,
     pub stdout: Option<String>,
     pub stderr: Option<String>,
     pub return_code: i32,
@@ -62,10 +62,10 @@ impl FlowTransition {
 pub type FlowSnapshot = Vec<Node>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct StepTransition {
-    pub step_name: String,
-    pub from_state: StepState,
-    pub to_state: StepState,
+pub struct NodeTransition {
+    pub node_name: String,
+    pub from_state: NodeState,
+    pub to_state: NodeState,
 }
 
 /// State of execution for Flow transitions
@@ -80,7 +80,7 @@ pub enum ExecutionState {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Transition {
     Flow(FlowTransition),
-    Step(StepTransition),
+    Node(NodeTransition),
 }
 
 #[derive(Debug, Clone)]
@@ -104,27 +104,27 @@ impl ExecutionUpdate {
     }
 }
 
-pub fn get_step_snapshot(step_list: &StepList) -> FlowSnapshot {
-    step_list
-        .steps
+pub fn get_node_snapshot(node_list: &NodeList) -> FlowSnapshot {
+    node_list
+        .nodes
         .iter()
-        .flat_map(|step_group| step_group.iter().map(|step| step.clone()))
+        .flat_map(|node_group| node_group.iter().map(|node| node.clone()))
         .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{flow::node::StepList, test_helpers::test_helpers::*};
+    use crate::{flow::node::NodeList, test_helpers::test_helpers::*};
 
     #[test]
-    fn test_get_step_snapshot_from_list() {
+    fn test_get_node_snapshot_from_list() {
         let sg1 = (0..3)
             .into_iter()
-            .map(|s| make_node(&format!("step{}", s), &vec![]))
+            .map(|s| make_node(&format!("node{}", s), &vec![]))
             .collect();
-        let sl = StepList::new_with_list(sg1).ok();
+        let sl = NodeList::new_with_list(sg1).ok();
         assert!(sl.is_some());
         let sl = sl.unwrap();
-        assert_eq!(sl.steps.len(), 1);
+        assert_eq!(sl.nodes.len(), 1);
     }
 }

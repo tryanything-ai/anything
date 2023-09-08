@@ -6,15 +6,15 @@ use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
 
 use super::{action::Action, common::PackageData, trigger::Trigger};
-pub type StepGroup = Vec<Node>;
+pub type NodeGroup = Vec<Node>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct Node {
     pub name: String,
     pub trigger: Option<Trigger>,
-    pub state: StepState,
-    pub step_action: Action,
+    pub state: NodeState,
+    pub node_action: Action,
     pub depends_on: Vec<String>,
     pub run_started: Option<DateTime<Utc>>,
     pub input: indexmap::IndexMap<String, String>,
@@ -33,8 +33,8 @@ impl Default for Node {
             name: String::default(),
             package_data: PackageData::default(),
             trigger: None,
-            state: StepState::default(),
-            step_action: Action::default(),
+            state: NodeState::default(),
+            node_action: Action::default(),
             depends_on: Vec::default(),
             run_started: None,
             input: indexmap::IndexMap::new(),
@@ -43,16 +43,16 @@ impl Default for Node {
 }
 
 // #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
-// pub struct StepInput(pub Vec)
+// pub struct NodeInput(pub Vec)
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
-pub struct StepOutput {
+pub struct NodeOutput {
     pub name: String,
     pub value: String,
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-pub enum StepState {
+pub enum NodeState {
     Pending,
     Running,
     Success,
@@ -61,51 +61,51 @@ pub enum StepState {
     Skipped(String),
 }
 
-impl Default for StepState {
+impl Default for NodeState {
     fn default() -> Self {
         Self::Pending
     }
 }
 
-pub enum StepType {
-    Shell(ShellStep),
+pub enum NodeType {
+    Shell(ShellNode),
     Missing,
 }
 
 // TODO:
-pub struct ShellStep {}
+pub struct ShellNode {}
 
 #[derive(Clone, Debug)]
-pub struct StepList {
-    pub steps: Vec<StepGroup>,
+pub struct NodeList {
+    pub nodes: Vec<NodeGroup>,
     edges: HashMap<String, Vec<String>>,
 }
 
-/// StepList is the group of steps that exist
+/// NodeList is the group of nodes that exist
 /// on the same level. It's a helpful class to
-/// group a list of same-level steps
-impl StepList {
+/// group a list of same-level nodes
+impl NodeList {
     pub fn new() -> Self {
         Self {
-            steps: vec![],
+            nodes: vec![],
             edges: HashMap::new(),
         }
     }
 
-    pub fn new_with_list(steps: StepGroup) -> AppResult<Self> {
+    pub fn new_with_list(nodes: NodeGroup) -> AppResult<Self> {
         let mut new_list = Self::new();
-        match new_list.add_list(steps) {
+        match new_list.add_list(nodes) {
             Ok(()) => Ok(new_list),
             Err(e) => Err(e),
         }
     }
 
-    pub fn add_list(&mut self, steps: StepGroup) -> AppResult<()> {
-        let new_edges: Vec<&str> = steps.iter().map(|t| t.name.as_ref()).collect();
+    pub fn add_list(&mut self, nodes: NodeGroup) -> AppResult<()> {
+        let new_edges: Vec<&str> = nodes.iter().map(|t| t.name.as_ref()).collect();
         for edge in new_edges {
             if self.edges.contains_key(edge) {
                 return Err(AppError::FlowError(format!(
-                    "Step '{}' is already added",
+                    "Node '{}' is already added",
                     edge
                 )));
             } else {
@@ -113,12 +113,12 @@ impl StepList {
             }
         }
 
-        self.steps.push(steps);
+        self.nodes.push(nodes);
         Ok(())
     }
 
     pub fn set_child(&mut self, parent: &str, child: &str) -> AppResult<()> {
-        if self.get_step_by_name(&child).is_some() {
+        if self.get_node_by_name(&child).is_some() {
             if let Some(children) = self.edges.get_mut(parent) {
                 children.push(child.to_string());
                 Ok(())
@@ -136,33 +136,33 @@ impl StepList {
         }
     }
 
-    pub fn is_step_name_parent(&mut self, name: &str) -> bool {
-        self.get_step_by_name(name).is_some()
+    pub fn is_node_name_parent(&mut self, name: &str) -> bool {
+        self.get_node_by_name(name).is_some()
     }
 
-    pub fn get_step_by_name(&mut self, name: &str) -> Option<&mut Node> {
-        for step_group in self.steps.iter_mut() {
-            for step in step_group.iter_mut() {
-                if step.name == name {
-                    return Some(step);
+    pub fn get_node_by_name(&mut self, name: &str) -> Option<&mut Node> {
+        for node_group in self.nodes.iter_mut() {
+            for node in node_group.iter_mut() {
+                if node.name == name {
+                    return Some(node);
                 }
             }
         }
         None
     }
 
-    pub fn get_descendants(&self, step_name: &str) -> Vec<String> {
-        let mut descendants = self.get_descendants_recusively(step_name);
+    pub fn get_descendants(&self, node_name: &str) -> Vec<String> {
+        let mut descendants = self.get_descendants_recusively(node_name);
         descendants.sort();
         descendants.dedup();
         descendants
     }
 
-    fn get_descendants_recusively(&self, step_name: &str) -> Vec<String> {
+    fn get_descendants_recusively(&self, node_name: &str) -> Vec<String> {
         let default = &vec![];
         let deps: Vec<String> = self
             .edges
-            .get(step_name)
+            .get(node_name)
             .unwrap_or(default)
             .iter()
             .map(|x| x.clone())
@@ -187,116 +187,116 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_create_step_default() {
+    fn test_create_node_default() {
         let _ = Node::new();
     }
 
     #[test]
-    fn test_can_create_a_step_list() {
-        let step1 = make_node("step1", &vec![]);
-        let step2 = make_node("step2", &vec![]);
-        let step3 = make_node("step3", &vec![]);
-        let step4 = make_node("step4", &vec![]);
+    fn test_can_create_a_node_list() {
+        let node1 = make_node("node1", &vec![]);
+        let node2 = make_node("node2", &vec![]);
+        let node3 = make_node("node3", &vec![]);
+        let node4 = make_node("node4", &vec![]);
 
-        let mut step_list = StepList::new();
+        let mut node_list = NodeList::new();
 
-        step_list.add_list(vec![step1, step2]).ok().unwrap();
-        step_list.add_list(vec![step3, step4]).ok().unwrap();
+        node_list.add_list(vec![node1, node2]).ok().unwrap();
+        node_list.add_list(vec![node3, node4]).ok().unwrap();
 
-        assert!(step_list.get_step_by_name("step1").is_some());
-        assert!(step_list.get_step_by_name("step2").is_some());
-        assert!(step_list.get_step_by_name("step3").is_some());
-        assert!(step_list.get_step_by_name("step4").is_some());
+        assert!(node_list.get_node_by_name("node1").is_some());
+        assert!(node_list.get_node_by_name("node2").is_some());
+        assert!(node_list.get_node_by_name("node3").is_some());
+        assert!(node_list.get_node_by_name("node4").is_some());
     }
 
     #[test]
-    fn test_returns_none_if_step_does_not_exist() {
-        let step1 = make_node("step1", &vec![]);
-        let step2 = make_node("step2", &vec![]);
+    fn test_returns_none_if_node_does_not_exist() {
+        let node1 = make_node("node1", &vec![]);
+        let node2 = make_node("node2", &vec![]);
 
-        let mut step_list = StepList::new();
-        step_list.add_list(vec![step1, step2]).ok().unwrap();
+        let mut node_list = NodeList::new();
+        node_list.add_list(vec![node1, node2]).ok().unwrap();
 
-        assert!(step_list.get_step_by_name("step5").is_none());
+        assert!(node_list.get_node_by_name("node5").is_none());
     }
 
     #[test]
     fn test_set_child_without_a_parent_err() {
-        let step1 = make_node("step1", &vec![]);
-        let step2 = make_node("step2", &vec![]);
+        let node1 = make_node("node1", &vec![]);
+        let node2 = make_node("node2", &vec![]);
 
-        let mut step_list = StepList::new_with_list(vec![step1, step2]).unwrap();
-        let r = step_list.set_child("parent", "step1");
+        let mut node_list = NodeList::new_with_list(vec![node1, node2]).unwrap();
+        let r = node_list.set_child("parent", "node1");
         assert!(r.is_err());
     }
 
     #[test]
     fn test_set_child_without_child_err() {
-        let step1 = make_node("step1", &vec![]);
-        let step2 = make_node("step2", &vec![]);
+        let node1 = make_node("node1", &vec![]);
+        let node2 = make_node("node2", &vec![]);
 
-        let mut step_list = StepList::new_with_list(vec![step1, step2]).unwrap();
-        let r = step_list.set_child("parent", "step2");
+        let mut node_list = NodeList::new_with_list(vec![node1, node2]).unwrap();
+        let r = node_list.set_child("parent", "node2");
         assert!(r.is_err());
     }
 
     #[test]
     fn test_set_valid_child() {
-        let step1 = make_node("step1", &vec![]);
-        let step2 = make_node("step2", &vec![]);
+        let node1 = make_node("node1", &vec![]);
+        let node2 = make_node("node2", &vec![]);
 
-        let mut step_list = StepList::new_with_list(vec![step1, step2]).unwrap();
-        let r = step_list.set_child("step1", "step2");
+        let mut node_list = NodeList::new_with_list(vec![node1, node2]).unwrap();
+        let r = node_list.set_child("node1", "node2");
         assert!(r.is_ok());
         assert!(r.ok().is_some());
     }
 
     #[test]
-    fn get_child_steps() {
-        let mut step_list = StepList::new();
-        let step1 = make_node("step1", &vec![]);
-        let step2 = make_node("step2", &vec![]);
-        let step3 = make_node("step3", &vec![]);
-        let step4 = make_node("step4", &vec![]);
+    fn get_child_nodes() {
+        let mut node_list = NodeList::new();
+        let node1 = make_node("node1", &vec![]);
+        let node2 = make_node("node2", &vec![]);
+        let node3 = make_node("node3", &vec![]);
+        let node4 = make_node("node4", &vec![]);
 
-        let step_group = vec![step1, step2, step3, step4];
-        step_list.add_list(step_group).ok();
-        step_list.set_child("step1", "step2").ok();
-        step_list.set_child("step2", "step3").ok();
-        step_list.set_child("step3", "step4").ok();
+        let node_group = vec![node1, node2, node3, node4];
+        node_list.add_list(node_group).ok();
+        node_list.set_child("node1", "node2").ok();
+        node_list.set_child("node2", "node3").ok();
+        node_list.set_child("node3", "node4").ok();
 
         assert_eq!(
-            vec!["step2", "step3", "step4"],
-            step_list.get_descendants("step1")
+            vec!["node2", "node3", "node4"],
+            node_list.get_descendants("node1")
         );
-        assert_eq!(vec!["step3", "step4"], step_list.get_descendants("step2"));
-        assert_eq!(Vec::<String>::new(), step_list.get_descendants("step4"));
-        assert_eq!(Vec::<String>::new(), step_list.get_descendants(""));
+        assert_eq!(vec!["node3", "node4"], node_list.get_descendants("node2"));
+        assert_eq!(Vec::<String>::new(), node_list.get_descendants("node4"));
+        assert_eq!(Vec::<String>::new(), node_list.get_descendants(""));
     }
 
     #[test]
     fn get_children_without_duplicates() {
-        let mut step_list = StepList::new();
-        let step1 = make_node("parent", &vec![]);
-        let step2 = make_node("child", &vec![]);
-        let step3 = make_node("grandchild", &vec![]);
-        let step4 = make_node("grandchild2", &vec![]);
+        let mut node_list = NodeList::new();
+        let node1 = make_node("parent", &vec![]);
+        let node2 = make_node("child", &vec![]);
+        let node3 = make_node("grandchild", &vec![]);
+        let node4 = make_node("grandchild2", &vec![]);
 
-        let step_group = vec![step1, step2, step3, step4];
-        step_list.add_list(step_group).ok();
-        step_list.set_child("parent", "child").ok();
-        step_list.set_child("child", "grandchild").ok();
-        step_list.set_child("child", "grandchild2").ok();
-        step_list.set_child("parent", "grandchild2").ok();
+        let node_group = vec![node1, node2, node3, node4];
+        node_list.add_list(node_group).ok();
+        node_list.set_child("parent", "child").ok();
+        node_list.set_child("child", "grandchild").ok();
+        node_list.set_child("child", "grandchild2").ok();
+        node_list.set_child("parent", "grandchild2").ok();
 
         assert_eq!(
             vec!["grandchild", "grandchild2"],
-            step_list.get_descendants("child")
+            node_list.get_descendants("child")
         );
         assert_eq!(
             vec!["child", "grandchild", "grandchild2"],
-            step_list.get_descendants("parent")
+            node_list.get_descendants("parent")
         );
-        assert_eq!(Vec::<String>::new(), step_list.get_descendants(""));
+        assert_eq!(Vec::<String>::new(), node_list.get_descendants(""));
     }
 }

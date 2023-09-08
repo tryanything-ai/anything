@@ -26,7 +26,7 @@ pub mod test_helpers {
             .name(name.to_string())
             .depends_on(dependencies)
             .build()
-            .expect("unable to create step :/")
+            .expect("unable to create node :/")
     }
 
     pub fn make_action(name: &str, action_type: ActionType) -> Action {
@@ -41,8 +41,8 @@ pub mod test_helpers {
         actual
             .iter()
             .into_iter()
-            .map(|steps| {
-                steps
+            .map(|nodes| {
+                nodes
                     .into_iter()
                     .map(|s| s.name.as_str())
                     .collect::<Vec<&'a str>>()
@@ -52,9 +52,9 @@ pub mod test_helpers {
 
     /// Flow Helpers
     /// Helpers
-    /// Make a simple 2-step sequence action flow
-    pub fn make_two_step_sequence_flow() -> (Flow, Vec<Node>) {
-        let mut steps = Vec::new();
+    /// Make a simple 2-node sequence action flow
+    pub fn make_two_node_sequence_flow() -> (Flow, Vec<Node>) {
+        let mut nodes = Vec::new();
 
         let mut flow = Flow::new();
         let action = make_action(
@@ -65,11 +65,11 @@ pub mod test_helpers {
                 args: Vec::default(),
             }),
         );
-        let mut step = make_node("get_weather_step", &vec![]);
-        step.step_action = action;
-        add_step_obj(&mut flow, &step).ok();
+        let mut node = make_node("get_weather_node", &vec![]);
+        node.node_action = action;
+        add_node_obj(&mut flow, &node).ok();
 
-        steps.push(step);
+        nodes.push(node);
 
         let action = make_action(
             "print_forecast",
@@ -80,21 +80,21 @@ pub mod test_helpers {
             }),
         );
 
-        let mut step = make_node("print_forecast", &vec!["get_weather_step"]);
-        step.step_action = action;
-        add_step_obj(&mut flow, &step).ok();
-        steps.push(step);
+        let mut node = make_node("print_forecast", &vec!["get_weather_node"]);
+        node.node_action = action;
+        add_node_obj(&mut flow, &node).ok();
+        nodes.push(node);
 
-        (flow, steps)
+        (flow, nodes)
     }
 
-    pub fn add_step_obj(flow: &mut Flow, step: &Node) -> AppResult<bool> {
-        let depends_on = step
+    pub fn add_node_obj(flow: &mut Flow, node: &Node) -> AppResult<bool> {
+        let depends_on = node
             .depends_on
             .iter()
             .map(AsRef::as_ref)
             .collect::<Vec<&str>>();
 
-        flow.add_step(&step.name, &step.step_action, &depends_on)
+        flow.add_node(&node.name, &node.node_action, &depends_on)
     }
 }
