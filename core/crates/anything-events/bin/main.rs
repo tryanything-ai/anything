@@ -4,7 +4,7 @@ use anyhow::Result;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    eventurous::cli::start().await?;
+    anything_events::cli::start().await?;
 
     Ok(())
 }

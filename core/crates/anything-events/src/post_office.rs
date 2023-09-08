@@ -1,3 +1,4 @@
+#![allow(unused)]
 use anyhow::Result;
 use crossbeam::channel::*;
 use tokio::sync::Mutex;
