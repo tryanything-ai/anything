@@ -46,6 +46,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    use anything_core::config::DatabaseConfig;
     use std::env::{self};
     use temp_dir::TempDir;
 
@@ -106,8 +107,11 @@ mod tests {
         env::set_var("RUN_MODE", "test");
         let mut config = AnythingConfig::new().unwrap();
         let tmp_dir = TempDir::new().unwrap().path().to_path_buf();
-        config.root_dir = Some(tmp_dir.into());
-        config.db = None;
+        config.root_dir = tmp_dir.into();
+        config.database = DatabaseConfig {
+            uri: "sqlite://:memory:".to_string(),
+            max_connections: None,
+        };
         config
     }
 }

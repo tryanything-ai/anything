@@ -2,8 +2,8 @@ use std::{fs, sync::Arc};
 use tracing::error;
 
 use anything_core::{
-    config::AnythingConfig,
     error::{AnythingError, AnythingResult, DatabaseError},
+    AnythingConfig,
 };
 use sqlx::{any::AnyPoolOptions, AnyPool};
 
