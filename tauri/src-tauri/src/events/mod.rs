@@ -406,13 +406,15 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
     //write message 
     let message = format!("Executing Worker Task: {} for node_id: {} and flow_id: {} and event_id: {}", worker_type, node_id, flow_id, event_id);
 
-    Event::EventProcessing { 
+    Event::EventProcessing {    
         message,
         event_id: event_id.to_string(),
         node_id: node_id.to_string(),
         flow_id: flow_id.to_string(),
         session_id: session_id.to_string()
          }.send(&app.get_window("main").unwrap()); 
+
+    //TODO: prepare context for worker type
    
     match worker_type {
         "start" => {
@@ -455,8 +457,8 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             println!("{:?}", event_data); 
 
            return match call_api(api_request).await {
-                Ok(result) => Ok(serde_json::json!({"status": "success", "result": result})),
-                Err(e) => Err(e.to_string())
+                Ok(result) => Ok(serde_json::json!(result)),
+                Err(e) => Err(e.to_string()) 
             }
         },
         "terminal" => {
@@ -467,7 +469,7 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             //FIXME: seems to be a range of bugs introduced via differe "" vs '' vs curly '' from toml to event system translation
               match run_terminal_command(&command) {
                     Ok(result) => {
-                        return Ok(serde_json::json!({"status": "success", "result": result}))
+                        return Ok(serde_json::json!(result))
                     },
                     Err(e) => {
                         return Err(format!("Terminal command failed: {}", e))

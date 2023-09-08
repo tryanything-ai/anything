@@ -40,6 +40,7 @@ uuid = "1.4.1"
 chrono = "0.4.26"
 
 llm = { git = "https://github.com/rustformers/llm" , branch = "main", features= ["metal"] } #remove this when llm is published
+handlebars = "4.4.0"
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]
 # llm = { git = "https://github.com/rustformers/llm", branch = "main", features= ["metal"] }
