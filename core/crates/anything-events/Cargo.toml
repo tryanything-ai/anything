@@ -1,0 +1,63 @@
+[package]
+name = "anything-events"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["sqlite"]
+sqlite = ["sqlx/sqlite"]
+postgres = ["sqlx/postgres"]
+
+[dependencies]
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
+tokio = { version = "1.20.0", features = ["full", "rt-multi-thread"] }
+zmq = "0.10.0"
+flexi_logger = { version = "0.26", features = ["trc"] }
+
+# Tracing
+tracing = "0.1.35"
+tracing-log = "0.1.3"
+tracing-subscriber = { version = "0.3.14", features = ["env-filter", "json"] }
+tracing-appender = "0.2.2"
+tracing-opentelemetry = "0.21.0"
+opentelemetry = { version = "0.20.0", features = ["rt-tokio"] }
+opentelemetry-http = "0.9.0"
+opentelemetry-otlp = "0.13.0"
+opentelemetry-semantic-conventions = "0.12.0"
+
+anyhow = "1.0.75"
+colored = "2.0.4"
+chrono = { version = "0.4.29", features = ["serde"] }
+humantime = "2.1.0"
+config = { version = "0.13", default-features = false, features = [
+    "json",
+    "toml",
+    "yaml",
+] }
+postage = "0.5.0"
+once_cell = "1.18.0"
+clap = { version = "4.4.2", features = ["derive"] }
+dotenv = "0.15.0"
+git-version = "0.3.5"
+thiserror = "1.0.48"
+anymap = "1.0.0-beta.2"
+sqlx = { version = "0.7.1", features = [
+    "sqlite",
+    "runtime-tokio",
+    "chrono",
+    "uuid",
+    "any",
+    "macros",
+] }
+async-trait = "0.1.73"
+uuid = { version = "1.4.1", features = ["v4", "serde"] }
+axum = { version = "0.6", features = ["json", "tokio"] }
+crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }
+
+
+[dev-dependencies]
+fake = { version = "2.8", features = ["derive"] }
