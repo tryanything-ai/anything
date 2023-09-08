@@ -1,0 +1,6 @@
+[data]
+name = "create a gif"
+topics = ["watch/directory"]
+
+[[data.steps]]
+name = ""
