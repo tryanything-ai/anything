@@ -1,7 +1,3 @@
-use errors::EventurousError;
-
-pub type EvtResult<T> = std::result::Result<T, EventurousError>;
-
 pub(crate) mod bootstrap;
 pub mod cli;
 pub mod config;
@@ -21,3 +17,5 @@ pub mod messages;
 pub(crate) mod internal;
 
 pub(crate) mod constants;
+
+pub use models::*;

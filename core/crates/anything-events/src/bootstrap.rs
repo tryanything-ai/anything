@@ -1,10 +1,9 @@
 use std::fs;
 
+use anything_core::{error::AnythingResult, tracing::setup_tracing, AnythingConfig};
 use tracing::info;
 
-use crate::{config::Config, utils::tracing::setup_tracing, EvtResult};
-
-pub async fn bootstrap(config: &Config) -> EvtResult<()> {
+pub async fn bootstrap(config: &AnythingConfig) -> AnythingResult<()> {
     info!("Bootstrapping Eventurous");
     // Bootstrap database directory
     let root_dir = config.root_dir.clone();
@@ -15,7 +14,7 @@ pub async fn bootstrap(config: &Config) -> EvtResult<()> {
         fs::create_dir_all(db_dir).unwrap();
     }
 
-    setup_tracing(tracing_subscriber::registry(), "events-service");
+    setup_tracing(tracing_subscriber::registry(), config);
 
     Ok(())
 }

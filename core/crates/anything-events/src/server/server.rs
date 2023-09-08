@@ -5,13 +5,13 @@ use crossbeam::channel::{Receiver, Sender};
 
 use sqlx::types::Uuid;
 
+use crate::errors::EventsResult;
 use crate::{
     context::Context,
     executor::spawn_or_crash,
     messages::EventNotification,
     post_office::PostOffice,
     server::{api, heartbeat},
-    EvtResult,
 };
 
 use super::events::{consumers, controller, incoming};
@@ -57,7 +57,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub async fn new(context: Context) -> EvtResult<Arc<Self>> {
+    pub async fn new(context: Context) -> EventsResult<Arc<Self>> {
         let comm_channels = Mutex::new(CommChannels::default());
 
         let server = Self {
@@ -73,7 +73,7 @@ impl Server {
         Ok(Arc::new(server))
     }
 
-    pub async fn run_server(self: Arc<Self>) -> EvtResult<()> {
+    pub async fn run_server(self: Arc<Self>) -> EventsResult<()> {
         spawn_or_crash("heartbeat", self.clone(), heartbeat::heartbeat);
         spawn_or_crash(
             "incoming_events",

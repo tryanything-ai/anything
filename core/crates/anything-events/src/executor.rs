@@ -8,10 +8,10 @@ use std::{
 use tokio::runtime::{Builder, Runtime};
 use tracing::error;
 
-use crate::EvtResult;
+use crate::errors::EventsResult;
 
 #[allow(unused)]
-pub fn build_runtime() -> EvtResult<Arc<Runtime>> {
+pub fn build_runtime() -> EventsResult<Arc<Runtime>> {
     let raw_runtime = Builder::new_multi_thread()
         .thread_name_fn(|| {
             static ATOMIC_ID: AtomicUsize = AtomicUsize::new(0);

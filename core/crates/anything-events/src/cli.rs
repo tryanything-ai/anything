@@ -1,8 +1,14 @@
 use std::path::PathBuf;
 
+use anything_core::error::AnythingResult;
 use clap::{Parser, Subcommand};
 
-use crate::{bootstrap, context::Context, server::server::Server, EvtResult};
+use crate::{
+    bootstrap,
+    context::Context,
+    errors::{EventsError, EventsResult},
+    server::server::Server,
+};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -23,11 +29,12 @@ pub enum Commands {
     },
 }
 
-pub async fn start() -> EvtResult<()> {
+pub async fn start() -> EventsResult<()> {
     let cli = Cli::parse();
 
     let config_path = cli.config_path;
-    let mut config = crate::config::load(config_path.as_ref())?;
+    // let mut config = crate::config::load(config_path.as_ref())?;
+    let mut config = anything_core::config::load(config_path.as_ref())?;
 
     // logging::setup(&config)?;
     bootstrap::bootstrap(&config).await?;

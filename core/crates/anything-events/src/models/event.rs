@@ -28,7 +28,7 @@ impl Event {
     /// # Example
     ///
     /// ```rust
-    /// use eventurous::Event;
+    /// use anything_events::Event;
     /// use std::collections::HashMap;
     ///
     /// let mut evt = Event::new(
@@ -57,7 +57,7 @@ impl Event {
     /// # Example
     ///
     /// ```rust
-    /// use eventurous::Event;
+    /// use anything_events::Event;
     /// use std::collections::HashMap;
     ///
     /// let mut evt = Event::new(

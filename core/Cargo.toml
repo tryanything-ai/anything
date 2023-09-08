@@ -13,9 +13,11 @@ path = "bin/main.rs"
 members = ["crates/*"]
 resolver = "2"
 
-[dependencies]
 [workspace.dependencies]
 anything-core = { path = "./crates/anything-core", version = "*" }
+dotenv = "0.15.0"
+
+git-version = "0.3.5"
 
 dirs = { version = "5.0.1" }
 tempfile = { version = "3" }
@@ -55,3 +57,20 @@ opentelemetry-semantic-conventions = "0.12"
 tracing-tree = "0.2.2"
 
 uuid = { version = "1.4.1", features = ["v4"], default-features = false }
+
+sqlx = { workspace = true, features = [
+    "sqlite",
+    "runtime-tokio",
+    "chrono",
+    "uuid",
+    "any",
+    "macros",
+    "postgres",
+] }
+
+anymap = "1.0.0-beta.2"
+config = { version = "0.13", default-features = false, features = [
+    "json",
+    "toml",
+    "yaml",
+] }
