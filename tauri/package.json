@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.5.1",
-    "@tauri-apps/api": "^1.4.0",
-    "tauri-plugin-fs-watch-api": "github:tauri-apps/tauri-plugin-fs-watch#v1",
+    "@tanstack/react-table": "^8.9.7",
+    "@tauri-apps/api": "1.4.0",
     "autoprefixer": "^10.4.14",
     "clsx": "^1.2.1",
     "iarna-toml-esm": "^3.0.5",
@@ -28,11 +28,12 @@
     "reactflow": "^11.7.4",
     "sort-by": "^1.2.0",
     "tailwindcss": "^3.3.2",
+    "tauri-plugin-fs-watch-api": "github:tauri-apps/tauri-plugin-fs-watch#v1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.9",
-    "@tauri-apps/cli": "^1.4.0",
+    "@tauri-apps/cli": "1.4.0",
     "@types/node": "^18.7.10",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
