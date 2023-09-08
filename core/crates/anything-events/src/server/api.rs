@@ -3,7 +3,7 @@ use axum::{
     Router,
 };
 
-use crate::{context::Context, EvtResult};
+use crate::{context::Context, errors::EventsResult};
 
 mod heartbeat;
 
@@ -16,7 +16,7 @@ async fn healthcheck() -> &'static str {
     "OK"
 }
 
-pub async fn make_app(context: Context) -> EvtResult<Router> {
+pub async fn make_app(context: Context) -> EventsResult<Router> {
     let state = AppState {
         context: context.clone(),
     };
@@ -30,7 +30,7 @@ pub async fn make_app(context: Context) -> EvtResult<Router> {
     Ok(app)
 }
 
-pub async fn serve(context: Context) -> EvtResult<()> {
+pub async fn serve(context: Context) -> EventsResult<()> {
     let app = make_app(context).await?;
 
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())

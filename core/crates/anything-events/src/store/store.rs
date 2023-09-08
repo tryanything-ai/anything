@@ -2,15 +2,17 @@
 use std::fmt::Debug;
 use std::fmt::Formatter;
 
+use anything_core::error::AnythingResult;
+use anything_core::AnythingConfig;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
     Pool, Sqlite,
 };
 
+use crate::errors::EventsResult;
 use crate::{
     config::{Config, DatabaseConfig},
     models::Event,
-    EvtResult,
 };
 
 use super::sqlite::SqliteStoreAdapter;
@@ -22,10 +24,10 @@ pub enum StoreAdapterType {
 
 #[async_trait::async_trait]
 pub trait StoreAdapter {
-    async fn init(&self, database_config: &Config) -> EvtResult<bool>;
-    async fn save(&self, event: Event) -> EvtResult<bool>;
-    async fn all(&self) -> EvtResult<Vec<Event>>;
-    async fn get(&self, id: i64) -> EvtResult<Event>;
+    async fn init(&self, database_config: &AnythingConfig) -> EventsResult<bool>;
+    async fn save(&self, event: Event) -> EventsResult<bool>;
+    async fn all(&self) -> EventsResult<Vec<Event>>;
+    async fn get(&self, id: i64) -> EventsResult<Event>;
 
     fn pool(&self) -> &Pool<Sqlite>;
 }
@@ -33,11 +35,11 @@ pub trait StoreAdapter {
 pub struct Store {
     // Get the ANY out of here
     pub store: Box<dyn StoreAdapter + Sync + Send>,
-    config: Config,
+    config: AnythingConfig,
 }
 
 impl Store {
-    pub async fn from_config(config: &Config) -> EvtResult<Self> {
+    pub async fn from_config(config: &AnythingConfig) -> EventsResult<Self> {
         let store = match determine_store_backend(config.database.uri.clone()) {
             StoreAdapterType::SQLITE => instantiate_sqlite_store(config),
         }
@@ -54,7 +56,7 @@ impl Store {
         self.store.pool()
     }
 
-    pub async fn init(&self) -> EvtResult<()> {
+    pub async fn init(&self) -> EventsResult<()> {
         self.store.init(&self.config).await.unwrap();
         Ok(())
     }
@@ -63,7 +65,7 @@ impl Store {
         let pool = SqliteStoreAdapter::default().await;
         Self {
             store: Box::new(pool),
-            config: Config::default(),
+            config: AnythingConfig::default(),
         }
     }
 }
@@ -84,8 +86,8 @@ fn determine_store_backend(database_uri: String) -> StoreAdapterType {
 }
 
 async fn instantiate_sqlite_store(
-    config: &Config,
-) -> EvtResult<Box<dyn StoreAdapter + Sync + Send>> {
+    config: &AnythingConfig,
+) -> EventsResult<Box<dyn StoreAdapter + Sync + Send>> {
     // For sqlite databases, we use the root directory
     let root_dir = config.root_dir.clone();
     let root_dir = config.root_dir.clone();

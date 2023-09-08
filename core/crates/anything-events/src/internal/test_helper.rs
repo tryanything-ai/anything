@@ -1,17 +1,18 @@
-use crate::{config::Config, store::store::Store};
+use crate::{errors::EventsResult, store::store::Store};
+use anything_core::AnythingConfig;
 use fake::Fake;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, SqlitePool};
 use std::collections::HashMap;
 
-use crate::{models::Event, EvtResult};
+use crate::models::Event;
 
-pub fn get_test_config() -> Config {
-    let mut config = Config::default();
+pub fn get_test_config() -> AnythingConfig {
+    let mut config = AnythingConfig::default();
     config.database.uri = "sqlite::memory:".to_string();
     config
 }
 
-pub async fn get_pool() -> EvtResult<Pool<sqlx::Sqlite>> {
+pub async fn get_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
     let pool = SqlitePoolOptions::new()
         .max_connections(1)
         .connect("sqlite::memory:")
@@ -20,14 +21,14 @@ pub async fn get_pool() -> EvtResult<Pool<sqlx::Sqlite>> {
     Ok(pool)
 }
 
-pub async fn get_sqlite_store_adapter() -> EvtResult<Store> {
+pub async fn get_sqlite_store_adapter() -> EventsResult<Store> {
     // let store = SqliteStoreAdapter::new(pool);
     let store = Store::from_config(&get_test_config()).await?;
     store.init().await?;
     Ok(store)
 }
 
-pub async fn select_all_events(pool: &SqlitePool) -> EvtResult<Vec<Event>> {
+pub async fn select_all_events(pool: &SqlitePool) -> EventsResult<Vec<Event>> {
     let res = sqlx::query_as::<_, Event>(
         r#"SELECT id, event_name, payload, metadata, tags, timestamp FROM events"#,
     )
@@ -37,7 +38,7 @@ pub async fn select_all_events(pool: &SqlitePool) -> EvtResult<Vec<Event>> {
     Ok(res)
 }
 
-pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EvtResult<i64> {
+pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EventsResult<i64> {
     let res = sqlx::query(
         r#"INSERT INTO events (event_name, payload, metadata, tags) VALUES (?, ?, ?, ?)"#,
     )
@@ -51,14 +52,14 @@ pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EvtResult<i64>
     Ok(res.last_insert_rowid())
 }
 
-pub async fn insert_n_dummy_data(pool: &SqlitePool, count: i8) -> EvtResult<()> {
+pub async fn insert_n_dummy_data(pool: &SqlitePool, count: i8) -> EventsResult<()> {
     for _i in 0..count {
         insert_dummy_data(pool).await?;
     }
     Ok(())
 }
 
-pub async fn insert_dummy_data(pool: &SqlitePool) -> EvtResult<()> {
+pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<()> {
     let payload = generate_dummy_hashmap();
     let metadata = generate_dummy_hashmap();
     let tags = fake::faker::lorem::en::Words(3..5).fake();

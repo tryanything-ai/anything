@@ -1,7 +1,8 @@
+use anything_core::config::AnythingConfig;
 use async_trait::async_trait;
 use sqlx::{Pool, Sqlite, SqlitePool};
 
-use crate::{config::Config, models::Event, EvtResult};
+use crate::{errors::EventsResult, models::Event};
 
 use super::store::StoreAdapter;
 
@@ -23,7 +24,7 @@ impl SqliteStoreAdapter {
 
 #[async_trait]
 impl StoreAdapter for SqliteStoreAdapter {
-    async fn init<'a>(&'a self, _config: &Config) -> EvtResult<bool> {
+    async fn init<'a>(&'a self, _config: &AnythingConfig) -> EventsResult<bool> {
         sqlx::query(include_str!("../../sql/schema.sql"))
             .execute(&self.pool)
             .await?;
@@ -31,7 +32,7 @@ impl StoreAdapter for SqliteStoreAdapter {
         Ok(true)
     }
 
-    async fn save(&self, event: Event) -> EvtResult<bool> {
+    async fn save(&self, event: Event) -> EventsResult<bool> {
         let _evt = sqlx::query(
             r#"
             INSERT INTO events (event_name,payload,metadata,tags) VALUES (?,?,?,?)
@@ -46,7 +47,7 @@ impl StoreAdapter for SqliteStoreAdapter {
 
         Ok(true)
     }
-    async fn all(&self) -> EvtResult<Vec<Event>> {
+    async fn all(&self) -> EventsResult<Vec<Event>> {
         let res = sqlx::query_as::<_, Event>(
             r#"SELECT id, event_name, payload, metadata, tags, timestamp FROM events"#,
         )
@@ -55,7 +56,7 @@ impl StoreAdapter for SqliteStoreAdapter {
         Ok(res)
     }
 
-    async fn get(&self, id: i64) -> EvtResult<Event> {
+    async fn get(&self, id: i64) -> EventsResult<Event> {
         let res = sqlx::query_as::<_, Event>(
             r#"SELECT id, event_name, payload, metadata, tags, timestamp FROM events WHERE id = $1"#,
         )
@@ -126,7 +127,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_can_read_all_events() -> EvtResult<()> {
+    async fn it_can_read_all_events() -> EventsResult<()> {
         let pool = get_pool().await?;
         let pool_clone = pool.clone();
 
@@ -143,7 +144,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_can_read_a_single_event() -> EvtResult<()> {
+    async fn it_can_read_a_single_event() -> EventsResult<()> {
         let pool = get_pool().await?;
         let pool_clone = pool.clone();
 

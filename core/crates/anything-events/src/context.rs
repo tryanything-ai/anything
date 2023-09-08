@@ -1,15 +1,17 @@
 use std::sync::Arc;
 
-use crate::{config::Config, store::store::Store, EvtResult};
+use anything_core::AnythingConfig;
+
+use crate::{errors::EventsResult, store::store::Store};
 
 #[derive(Clone, Debug)]
 pub struct Context {
-    pub config: Config,
+    pub config: AnythingConfig,
     pub store: Arc<Box<Store>>,
 }
 
 impl Context {
-    pub async fn new(config: Config) -> EvtResult<Self> {
+    pub async fn new(config: AnythingConfig) -> EventsResult<Self> {
         let store = Store::from_config(&config).await?;
 
         Ok(Self {
@@ -18,7 +20,7 @@ impl Context {
         })
     }
 
-    pub fn config(&self) -> &Config {
+    pub fn config(&self) -> &AnythingConfig {
         &self.config
     }
 
