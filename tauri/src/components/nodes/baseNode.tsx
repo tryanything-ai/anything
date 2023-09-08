@@ -35,7 +35,7 @@ export default function BaseNode({
   return (
     <div
       className={clsx(
-        "bg-primary w-60 h-20 rounded-md text-primary-content flex flex-row justify-center align-middle text-center text-xl",
+        "bg-primary w-60 h-20 rounded-md flex flex-row justify-center align-middle text-center text-xl",
         {
           "bg-secondary": data.worker_type === "start",
         }

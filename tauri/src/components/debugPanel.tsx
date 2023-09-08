@@ -38,19 +38,6 @@ const DebugPanel = () => {
         <>
           <div className="text-2xl font-bold">Processing Tasks</div>
           <ul>
-            {/* {events.map((event) => {
-              let context = JSON.parse(event?.event_context); 
-              let result = JSON.parse(event?.event_result);
-              return (
-                <div
-                  key={event.event_id}
-                  className="card h-20 w-full text-md text-primary-content border p-4 my-2"
-                >
-                  {context?.title}
-                  {JSON.stringify(result, null, 2)}
-                </div>
-              );
-            })} */}
             {events.map((event) => (
               <DebugCard event={event} />
             ))}
@@ -78,12 +65,10 @@ const DebugCard = ({ event }: { event: any }) => {
   return (
     <div
       key={event.event_id}
-      className={clsx(
-        "card h-20 w-full text-md text-primary-content border p-4 my-2",
-        {
-          "h-auto": isExpanded,
-        }
-      )} >
+      className={clsx("card h-20 w-full text-md border p-4 my-2", {
+        "h-auto": isExpanded,
+      })}
+    >
       <div onClick={() => setIsExpanded(!isExpanded)}>
         <span>{context?.title}</span>
         <span> {isExpanded ? "▲" : "▼"}</span>
