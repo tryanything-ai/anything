@@ -23,8 +23,11 @@ pub async fn process_consumers(server: Arc<Server>) -> anyhow::Result<()> {
         let msg = responder.recv_msg(0);
         match msg {
             Ok(msg) => {
-                println!("Frontend received a message. Sending it to the manager");
-                consumer_events_tx.send(msg.into()).unwrap()
+                println!(
+                    "Frontend received a message. Sending it to the manager: {:?}",
+                    msg
+                );
+                // consumer_events_tx.send(msg.into()).unwrap()
             }
             Err(_) => break,
         }
