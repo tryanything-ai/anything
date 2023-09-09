@@ -12,6 +12,7 @@ interface NavigationContextInterface {
   nodeConfigPanel: boolean;
   setNodeConfigPanel: (option: boolean, node_id: string) => void;
   nodeId: string;
+  closeAllPanelsOpenOne: (panelName: string, arg: any) => void;
 }
 
 export const NavigationContext = createContext<NavigationContextInterface>({
@@ -26,15 +27,16 @@ export const NavigationContext = createContext<NavigationContextInterface>({
   nodeConfigPanel: true,
   setNodeConfigPanel: () => { },
   nodeId: "",
+  closeAllPanelsOpenOne: () => {},
 });
 
 export const useNavigationContext = () => useContext(NavigationContext);
 
 //TODO: keyboard shortcuts
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {
-  const [nodePanel, setNodePanel] = useState<boolean>(false);
+  const [nodePanel, setNodePanel] = useState<boolean>(true);
   const [tomlPanel, setTomlPanel] = useState<boolean>(false);
-  const [debugPanel, setDebugPanel] = useState<boolean>(false);
+  const [debugPanel, setDebugPanel] = useState<boolean>(true);
   const [settingsPanel, setSettingsPanel] = useState<boolean>(false);
   const [nodeConfigPanel, setNodeConfigPanel] = useState<boolean>(false);
   const [nodeId, setNodeId] = useState<string>("");
@@ -43,6 +45,35 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
     setNodeConfigPanel(option);
     setNodeId(node_id);
   }
+
+  const closeAllPanelsOpenOne = (panelName: string, arg?: any) => {
+
+    setNodePanel(false);
+    setTomlPanel(false);
+    setDebugPanel(false);
+    setSettingsPanel(false);
+    setNodeConfigPanel(false);
+
+    switch (panelName) {
+      case "node":
+        setNodePanel(true);
+        break;
+      case "toml":
+        setTomlPanel(true);
+        break;
+      case "nodeConfig":
+        _setNodeConfigPanel(true, arg);
+        break;
+      case "debug":
+        setDebugPanel(true);
+        break;
+      case "settings":
+        setSettingsPanel(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <NavigationContext.Provider
@@ -58,6 +89,7 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
         nodeConfigPanel,
         setNodeConfigPanel: _setNodeConfigPanel,
         nodeId,
+        closeAllPanelsOpenOne,
       }}
     >
       {children}
