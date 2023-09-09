@@ -39,6 +39,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "Cron Node",
       alt: "Cron Node",
+      icon: "VscWatch",
       handles: StartHandles,
     },
     nodeProcessData: {
@@ -52,7 +53,7 @@ export const NODES: Node[] = [
     },
     nodePresentationData: {
       title: "JS Node",
-      image_src: "/js-logo.svg",
+      icon: "/js-logo.svg",
       alt: "JS Logo",
       handles: BaseHandles,
     },
@@ -66,6 +67,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "Manual Node",
       alt: "Manual Node",
+      icon: "VscPerson",
       handles: StartHandles,
     },
     nodeProcessData: {
@@ -82,6 +84,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "Model Node",
       alt: "Model Node",
+      icon: "VscWand",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -92,13 +95,14 @@ export const NODES: Node[] = [
     nodeType: "openAiNode",
     nodeConfigurationData: {
       url: "",
-      method: "", 
-      headers: "", 
+      method: "",
+      headers: "",
       body: "",
     },
     nodePresentationData: {
       title: "OpenAI Node",
       alt: "OpenAI Node",
+      icon: "VscRadioTower",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -109,13 +113,14 @@ export const NODES: Node[] = [
     nodeType: "restNode",
     nodeConfigurationData: {
       url: "",
-      method: "", 
-      headers: "", 
+      method: "",
+      headers: "",
       body: "",
     },
     nodePresentationData: {
       title: "Rest API Node",
       alt: "Rest API Node",
+      icon: "VscRadioTower",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -130,6 +135,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "Python Node",
       alt: "Python Node",
+      icon: "VscCode",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -143,6 +149,7 @@ export const NODES: Node[] = [
     },
     nodePresentationData: {
       title: "Receive Chat Node",
+      icon: "VscMail",
       alt: "Receive Chat Node",
       handles: StartHandles,
     },
@@ -157,6 +164,7 @@ export const NODES: Node[] = [
     },
     nodePresentationData: {
       title: "Send Chat Node",
+      icon: "VscSend",
       alt: "Send Chat Node",
       handles: BaseHandles,
     },
@@ -172,6 +180,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "Terminal Node",
       alt: "Terminal Node",
+      icon: "VscTerminal",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -187,6 +196,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "Vector Node",
       alt: "Vector Node",
+      icon: "VscReferences",
       handles: BaseHandles,
     },
     nodeProcessData: {
