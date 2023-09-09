@@ -4,7 +4,10 @@ import Header from "../components/header";
 import NodePanel from "../components/nodePanel";
 import TomlPanel from "../components/tomlPanel";
 import DebugPanel from "../components/debugPanel";
-import { useNavigationContext } from "../context/NavigationProvider";
+import {
+  FlowNavigationProvider,
+  useFlowNavigationContext,
+} from "../context/FlowNavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 import SettingsPanel from "../components/settingsPanel";
 import ManualNode from "../components/nodes/manualNode";
@@ -38,7 +41,7 @@ function Flows() {
     settingsPanel,
     nodeConfigPanel,
     nodeId,
-  } = useNavigationContext();
+  } = useFlowNavigationContext();
   const reactFlowWrapper = useRef(null);
   const { flow_name } = useParams();
 
@@ -54,7 +57,7 @@ function Flows() {
     <div className="h-full w-full pb-5 overscroll-none">
       <Header />
       <div className="flex flex-row h-full w-full">
-        <Allotment proportionalLayout={false}>
+        <Allotment defaultSizes={[100, 500, 100]}>
           {/* Left Side */}
           {nodePanel ? (
             <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
@@ -62,7 +65,7 @@ function Flows() {
             </Allotment.Pane>
           ) : null}
           {/* Editor */}
-          <Allotment.Pane priority={LayoutPriority.High}>
+          <Allotment.Pane preferredSize={800}>
             <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
               <ReactFlow
                 nodeTypes={nodeTypes}
@@ -103,7 +106,7 @@ function Flows() {
             </Allotment.Pane>
           ) : null}
           {nodeConfigPanel ? (
-            <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+            <Allotment.Pane preferredSize={700} minSize={200}>
               <NodeConfigPanel key={nodeId} />
             </Allotment.Pane>
           ) : null}
@@ -116,7 +119,9 @@ function Flows() {
 export default function FlowEditor() {
   return (
     <FlowProvider>
-      <Flows />
+      <FlowNavigationProvider>
+        <Flows />
+      </FlowNavigationProvider>
     </FlowProvider>
   );
 }
