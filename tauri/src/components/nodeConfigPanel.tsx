@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useNavigationContext } from "../context/NavigationProvider";
+import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { VscClose } from "react-icons/vsc";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useForm, Controller } from "react-hook-form";
 
 const NodeConfigPanel = () => {
-  const { nodeId, setNodeConfigPanel } = useNavigationContext();
+  const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();
   const { readNodeConfig, writeNodeConfig } = useLocalFileContext();
 
   const { flow_name } = useParams();
@@ -47,7 +47,7 @@ const NodeConfigPanel = () => {
     console.log(data);
 
     writeNodeConfig(nodeId, flow_name, data);
-    setNodeConfigPanel(false, "")
+    setNodeConfigPanel(false, "");
   };
 
   return (

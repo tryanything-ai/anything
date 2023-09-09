@@ -3,7 +3,7 @@ import { useFlowContext } from "../../context/FlowProvider";
 import { NodeData } from "../../utils/nodeUtils";
 import { VscEllipsis, VscClose } from "react-icons/vsc";
 import clsx from "clsx";
-import { useNavigationContext } from "../../context/NavigationProvider";
+import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { HandleProps, Handle } from "reactflow";
 
 export default function BaseNode({
@@ -18,7 +18,7 @@ export default function BaseNode({
   const { currentProcessingStatus, flowFrontmatter } = useFlowContext();
   const [processing, setProcessing] = useState(false);
   const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
-    useNavigationContext();
+    useFlowNavigationContext();
 
   useEffect(() => {
     if (
@@ -68,7 +68,7 @@ export default function BaseNode({
       ) : (
         <button
           className="m-1 absolute top-0 right-0"
-            onClick={() => closeAllPanelsOpenOne('nodeConfig', nodeId)}
+          onClick={() => closeAllPanelsOpenOne("nodeConfig", id)}
         >
           <VscEllipsis />
         </button>

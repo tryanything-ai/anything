@@ -75,6 +75,7 @@ interface FlowContextInterface {
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
+  setFlowCenter: () => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -91,6 +92,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
+  setFlowCenter: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -227,6 +229,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     [addNode]
   );
 
+  //TODO: get working someday
+  const setFlowCenter = () => {
+    console.log("setting flow center  center");
+    if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
+    reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
+    // reactFlowInstance.fitView();
+  };
+
   const updateFlowFrontmatter = async (
     flow_name: string,
     keysToUpdate: any
@@ -328,7 +338,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         edges: edges as any,
       });
       console.log("writing to toml");
-      console.log(newToml);
+      // console.log(newToml);
       //don't write if nothing has changed in react state
       if (newToml === toml) return;
       setToml(newToml);
@@ -377,7 +387,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       unlisten.then((unlisten) => unlisten());
       unlisten2.then((unlisten) => unlisten());
-    }
+    };
   }, []);
 
   return (
@@ -396,6 +406,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         addNode,
         setReactFlowInstance,
         updateFlowFrontmatter,
+        setFlowCenter,
       }}
     >
       {children}
