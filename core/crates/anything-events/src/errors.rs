@@ -16,4 +16,10 @@ pub enum EventsError {
 
     #[error("configuration error")]
     ConfigurationError(#[from] AnythingError),
+
+    #[error(transparent)]
+    DecodingError(#[from] serde_json::Error),
+
+    #[error("encoding error")]
+    EncodingError,
 }

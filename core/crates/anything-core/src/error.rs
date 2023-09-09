@@ -12,6 +12,9 @@ pub enum AnythingError {
 
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
+
+    #[error("message decoding error")]
+    MessageDecodingError,
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
