@@ -11,10 +11,12 @@ export default function BaseNode({
   children,
   id,
   data,
+  hideIcon,
 }: {
   children: ReactNode;
   id: string;
   data: NodeData;
+  hideIcon?: boolean;
 }) {
   const { currentProcessingStatus, flowFrontmatter } = useFlowContext();
   const [processing, setProcessing] = useState(false);
@@ -59,12 +61,8 @@ export default function BaseNode({
       ) : null}
       {/* Container */}
       <div className="p-3 flex flex-row h-full w-full items-center">
-        {/* <div className="bg-black"> */}
-        <BaseNodeIcon icon={data.icon} />
-        {/* </div> */}
-
+        {hideIcon ? null : <BaseNodeIcon icon={data.icon} />}
         <div className="flex flex-col p-4">{children}</div>
-
         {nodeConfigPanel && nodeId === id ? (
           <button
             className="m-1 absolute top-0 right-0"

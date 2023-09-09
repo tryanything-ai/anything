@@ -13,6 +13,7 @@ let node: Node = {
   nodePresentationData: {
     title: "Manual Node",
     alt: "Manual Node",
+    icon: "",
     handles: [],
   },
   nodeProcessData: {
@@ -57,7 +58,7 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
   };
 
   return (
-    <BaseNode id={id} data={data}>
+    <BaseNode id={id} data={data} hideIcon>
       <div className="flex flex-row items-center">
         <div className="h-full w-16">
           <button
