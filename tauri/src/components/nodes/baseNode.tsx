@@ -5,6 +5,7 @@ import { VscEllipsis, VscClose } from "react-icons/vsc";
 import clsx from "clsx";
 import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { HandleProps, Handle } from "reactflow";
+import BaseNodeIcon from "../baseNodeIcon";
 
 export default function BaseNode({
   children,
@@ -35,7 +36,7 @@ export default function BaseNode({
   return (
     <div
       className={clsx(
-        "bg-primary text-primary-content w-60 h-20 rounded-md flex flex-row justify-center align-middle text-center text-xl",
+        "bg-primary text-primary-content w-80 h-20 rounded-md flex flex-row text-xl",
         {
           "bg-secondary text-secondayr-content": data.worker_type === "start",
         }
@@ -56,23 +57,30 @@ export default function BaseNode({
           <span className="loading loading-spinner text-accent"></span>
         </div>
       ) : null}
-      <div className="flex flex-col p-4">{children}</div>
+      {/* Container */}
+      <div className="p-3 flex flex-row h-full w-full items-center">
+        {/* <div className="bg-black"> */}
+        <BaseNodeIcon icon={data.icon} />
+        {/* </div> */}
 
-      {nodeConfigPanel && nodeId === id ? (
-        <button
-          className="m-1 absolute top-0 right-0"
-          onClick={() => setNodeConfigPanel(false, "")}
-        >
-          <VscClose />
-        </button>
-      ) : (
-        <button
-          className="m-1 absolute top-0 right-0"
-          onClick={() => closeAllPanelsOpenOne("nodeConfig", id)}
-        >
-          <VscEllipsis />
-        </button>
-      )}
+        <div className="flex flex-col p-4">{children}</div>
+
+        {nodeConfigPanel && nodeId === id ? (
+          <button
+            className="m-1 absolute top-0 right-0"
+            onClick={() => setNodeConfigPanel(false, "")}
+          >
+            <VscClose />
+          </button>
+        ) : (
+          <button
+            className="m-1 absolute top-0 right-0"
+            onClick={() => closeAllPanelsOpenOne("nodeConfig", id)}
+          >
+            <VscEllipsis />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

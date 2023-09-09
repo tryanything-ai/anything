@@ -8,7 +8,7 @@ export type NodeProcessData = {
 
 //Things that deal with UI that we don't want in version control
 export type NodePresentationData = {
-    image_src?: string;
+    icon: string; //VSCode icon or url to image
     title?: string;
     alt: string;
     description?: string;
