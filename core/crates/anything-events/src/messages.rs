@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anything_core::error::AnythingResult;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -17,6 +19,8 @@ pub struct EventNotification {
     pub uuid: Uuid,
     pub name: String,
     pub tags: Vec<String>,
+    pub payload: HashMap<String, String>,
+    pub metadata: HashMap<String, String>,
 }
 
 impl EventNotification {
