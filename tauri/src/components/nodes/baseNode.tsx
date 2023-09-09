@@ -17,7 +17,7 @@ export default function BaseNode({
 }) {
   const { currentProcessingStatus, flowFrontmatter } = useFlowContext();
   const [processing, setProcessing] = useState(false);
-  const { setNodeConfigPanel, nodeConfigPanel, nodeId } =
+  const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
     useNavigationContext();
 
   useEffect(() => {
@@ -35,9 +35,9 @@ export default function BaseNode({
   return (
     <div
       className={clsx(
-        "bg-primary w-60 h-20 rounded-md flex flex-row justify-center align-middle text-center text-xl",
+        "bg-primary text-primary-content w-60 h-20 rounded-md flex flex-row justify-center align-middle text-center text-xl",
         {
-          "bg-secondary": data.worker_type === "start",
+          "bg-secondary text-secondayr-content": data.worker_type === "start",
         }
       )}
     >
@@ -68,7 +68,7 @@ export default function BaseNode({
       ) : (
         <button
           className="m-1 absolute top-0 right-0"
-          onClick={() => setNodeConfigPanel(true, id)}
+            onClick={() => closeAllPanelsOpenOne('nodeConfig', nodeId)}
         >
           <VscEllipsis />
         </button>

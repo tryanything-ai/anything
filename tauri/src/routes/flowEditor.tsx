@@ -12,6 +12,10 @@ import { useParams } from "react-router-dom";
 
 import NodeConfigPanel from "../components/nodeConfigPanel";
 import SuperNode from "../components/nodes/superNode";
+
+import { Allotment, LayoutPriority } from "allotment";
+import "allotment/dist/style.css";
+
 import "reactflow/dist/style.css";
 
 function Flows() {
@@ -24,7 +28,7 @@ function Flows() {
     onDragOver,
     onDrop,
     setReactFlowInstance,
-    currentProcessingStatus
+    currentProcessingStatus,
   } = useFlowContext();
 
   const {
@@ -50,55 +54,60 @@ function Flows() {
     <div className="h-full w-full pb-5 overscroll-none">
       <Header />
       <div className="flex flex-row h-full w-full">
-        <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodeTypes={nodeTypes}
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onDragOver={onDragOver}
-            onInit={setReactFlowInstance}
-            onDrop={(e) => onDrop(e, reactFlowWrapper)}
-            onConnect={onConnect}
-            fitView
-          >
-            <Controls style={{ background: "darkgray" }} />
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={30}
-              size={1}
-              color="gray"
-            />
-          </ReactFlow>
-        </div>
-        {nodePanel ? (
-          <div className="w-1/4">
-            <NodePanel />
-          </div>
-        ) : null}
-        {debugPanel ? (
-          <div className="w-1/4">
-            {/* If you don't provide this key the debug pannel doesnt rerender and flow_name is stale in useParams */}
-            <DebugPanel key={flow_name} />
-              {/* // key={`${flow_name}/${currentProcessingStatus?.event_id}`} /> */}
-          </div>
-        ) : null}
-        {settingsPanel ? (
-          <div className="w-1/4">
-            <SettingsPanel />
-          </div>
-        ) : null}
-        {tomlPanel ? (
-          <div className="w-1/2">
-            <TomlPanel />
-          </div>
-        ) : null}
-        {nodeConfigPanel ? (
-          <div className="w-1/2">
-            <NodeConfigPanel key={nodeId} />
-          </div>
-        ) : null}
+        <Allotment proportionalLayout={false}>
+          {/* Left Side */}
+          {nodePanel ? (
+            <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+              <NodePanel />
+            </Allotment.Pane>
+          ) : null}
+          {/* Editor */}
+          <Allotment.Pane priority={LayoutPriority.High}>
+            <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
+              <ReactFlow
+                nodeTypes={nodeTypes}
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onDragOver={onDragOver}
+                onInit={setReactFlowInstance}
+                onDrop={(e) => onDrop(e, reactFlowWrapper)}
+                onConnect={onConnect}
+                fitView
+              >
+                <Controls style={{ background: "darkgray" }} />
+                <Background
+                  variant={BackgroundVariant.Dots}
+                  gap={30}
+                  size={1}
+                  color="gray"
+                />
+              </ReactFlow>
+            </div>
+          </Allotment.Pane>
+          {/* Right Side */}
+          {debugPanel ? (
+            <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+              <DebugPanel key={flow_name} />
+            </Allotment.Pane>
+          ) : null}
+          {settingsPanel ? (
+            <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+              <SettingsPanel />
+            </Allotment.Pane>
+          ) : null}
+          {tomlPanel ? (
+            <Allotment.Pane preferredSize={300} minSize={200}>
+              <TomlPanel />
+            </Allotment.Pane>
+          ) : null}
+          {nodeConfigPanel ? (
+            <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+              <NodeConfigPanel key={nodeId} />
+            </Allotment.Pane>
+          ) : null}
+        </Allotment>
       </div>
     </div>
   );
