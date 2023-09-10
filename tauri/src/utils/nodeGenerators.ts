@@ -37,8 +37,8 @@ export const NODES: Node[] = [
       pattern: "",
     },
     nodePresentationData: {
-      title: "Cron Node",
-      alt: "Cron Node",
+      title: "Cron Trigger",
+      alt: "Cron Trigger",
       icon: "VscWatch",
       handles: StartHandles,
     },
@@ -53,8 +53,8 @@ export const NODES: Node[] = [
       code: "",
     },
     nodePresentationData: {
-      title: "JS Node",
-      icon: "/js-logo.svg",
+      title: "JS Action",
+      icon: "VscCode",
       alt: "JS Logo",
       handles: BaseHandles,
     },
@@ -67,8 +67,8 @@ export const NODES: Node[] = [
     nodeType: "manualNode",
     nodeConfigurationData: {},
     nodePresentationData: {
-      title: "Manual Node",
-      alt: "Manual Node",
+      title: "Manual Trigger",
+      alt: "Manual Trigger",
       icon: "VscPerson",
       handles: StartHandles,
     },
@@ -85,8 +85,8 @@ export const NODES: Node[] = [
       variables: [],
     },
     nodePresentationData: {
-      title: "Model Node",
-      alt: "Model Node",
+      title: "Model Action",
+      alt: "Model Action",
       icon: "VscWand",
       handles: BaseHandles,
     },
@@ -104,8 +104,8 @@ export const NODES: Node[] = [
       body: "",
     },
     nodePresentationData: {
-      title: "OpenAI Node",
-      alt: "OpenAI Node",
+      title: "OpenAI Action",
+      alt: "OpenAI Action",
       icon: "VscRadioTower",
       handles: BaseHandles,
     },
@@ -123,8 +123,8 @@ export const NODES: Node[] = [
       body: "",
     },
     nodePresentationData: {
-      title: "Rest API Node",
-      alt: "Rest API Node",
+      title: "Rest API Action",
+      alt: "Rest API Action",
       icon: "VscRadioTower",
       handles: BaseHandles,
     },
@@ -139,8 +139,8 @@ export const NODES: Node[] = [
       code: "",
     },
     nodePresentationData: {
-      title: "Python Node",
-      alt: "Python Node",
+      title: "Python Action",
+      alt: "Python Action",
       icon: "VscCode",
       handles: BaseHandles,
     },
@@ -155,9 +155,9 @@ export const NODES: Node[] = [
       message: "",
     },
     nodePresentationData: {
-      title: "Receive Chat Node",
+      title: "App Chat Trigger",
+      alt: "App Chat Trigger",
       icon: "VscMail",
-      alt: "Receive Chat Node",
       handles: StartHandles,
     },
     nodeProcessData: {
@@ -171,9 +171,9 @@ export const NODES: Node[] = [
       pattern: "",
     },
     nodePresentationData: {
-      title: "Send Chat Node",
+      title: "Send Chat Action",
       icon: "VscSend",
-      alt: "Send Chat Node",
+      alt: "Send Chat Action",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -187,8 +187,8 @@ export const NODES: Node[] = [
       command: "",
     },
     nodePresentationData: {
-      title: "Terminal Node",
-      alt: "Terminal Node",
+      title: "Terminal Action",
+      alt: "Terminal Action",
       icon: "VscTerminal",
       handles: BaseHandles,
     },
@@ -204,8 +204,8 @@ export const NODES: Node[] = [
       params: [],
     },
     nodePresentationData: {
-      title: "Vector Node",
-      alt: "Vector Node",
+      title: "Vector Action",
+      alt: "Vector Action",
       icon: "VscReferences",
       handles: BaseHandles,
     },
@@ -217,7 +217,7 @@ export const NODES: Node[] = [
 ];
 
 export const getTriggerNodes = (): Node[] => {
-  return NODES.filter(node => node.nodeProcessData.trigger === true);
+  return NODES.filter((node) => node.nodeProcessData.trigger === true);
 };
 
 /**
@@ -225,5 +225,5 @@ export const getTriggerNodes = (): Node[] => {
  * @returns {Node[]} Array of nodes where trigger is false
  */
 export const getActionNodes = (): Node[] => {
-  return NODES.filter(node => node.nodeProcessData.trigger === false);
+  return NODES.filter((node) => node.nodeProcessData.trigger === false);
 };

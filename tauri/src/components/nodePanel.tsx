@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Node } from "../utils/nodeUtils";
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
+import BaseNodeIcon from "./baseNodeIcon";
 
 const NodePanel = () => {
   const [triggerNodes, setTriggerNodes] = useState<Node[]>([]);
@@ -47,11 +48,20 @@ const NodeDnD = ({ node }: { node: Node }) => {
 
   return (
     <div
-      className="btn btn-neutral mt-2 pb-2 max-w-md cursor-grab"
+      className="flex flex-row mt-2 pb-2 max-w-md cursor-grab bg-white bg-opacity-5 rounded-md p-2 items-center"
       onDragStart={(event) => onDragStart(event)}
       draggable
     >
-      {node.nodePresentationData.image_src ? (
+      <BaseNodeIcon
+        icon={node.nodePresentationData.icon}
+        className={`h-9 w-9 bg-opacity-80 ${
+          node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
+        }`}
+      />
+      <h1 className="text-lg truncate overflow-ellipsis pl-2">
+        {node.nodePresentationData.title}
+      </h1>
+      {/* {node.nodePresentationData.image_src ? (
         <img
           src={node.nodePresentationData.image_src}
           alt={node.nodePresentationData.alt}
@@ -61,7 +71,7 @@ const NodeDnD = ({ node }: { node: Node }) => {
         <h1 className="text-lg truncate overflow-ellipsis">
           {node.nodePresentationData.title}
         </h1>
-      )}
+      )} */}
     </div>
   );
 };
