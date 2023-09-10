@@ -106,7 +106,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       title: "OpenAI Action",
       alt: "OpenAI Action",
-      icon: "VscRadioTower",
+      icon: "https://qcuguzlfpjtyiloqtysz.supabase.co/storage/v1/object/public/random/openai-logomark.svg",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -211,6 +211,101 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "vector",
+      trigger: false,
+    },
+  },
+  {
+    nodeType: "superNode",
+    nodeConfigurationData: {
+      url: "https://api.salesforce.com/",
+      method: "",
+      headers: "",
+      body: "",
+    },
+    nodePresentationData: {
+      title: "Salesforce Action",
+      alt: "Salesforce Action",
+      icon: "https://www.vectorlogo.zone/logos/salesforce/salesforce-icon.svg",
+      handles: BaseHandles,
+    },
+    nodeProcessData: {
+      worker_type: "rest",
+      trigger: false,
+    },
+  },
+  {
+    nodeType: "superNode",
+    nodeConfigurationData: {
+      url: "https://api.gmail.com/",
+      method: "",
+      headers: "",
+      body: "",
+    },
+    nodePresentationData: {
+      title: "Gmail Action",
+      alt: "Gmail Action",
+      icon: "https://www.vectorlogo.zone/logos/google_gmail/google_gmail-icon.svg",
+      handles: BaseHandles,
+    },
+    nodeProcessData: {
+      worker_type: "rest",
+      trigger: false,
+    },
+  },
+  {
+    nodeType: "superNode",
+    nodeConfigurationData: {
+      url: "https://api.slack.com/",
+      method: "",
+      headers: "",
+      body: "",
+    },
+    nodePresentationData: {
+      title: "Slack Action",
+      alt: "Slack Action",
+      icon: "https://www.vectorlogo.zone/logos/slack/slack-icon.svg",
+      handles: BaseHandles,
+    },
+    nodeProcessData: {
+      worker_type: "rest",
+      trigger: false,
+    },
+  },
+  {
+    nodeType: "superNode",
+    nodeConfigurationData: {
+      url: "https://api.twitter.com/",
+      method: "",
+      headers: "",
+      body: "",
+    },
+    nodePresentationData: {
+      title: "Twitter Action",
+      alt: "Twitter Action",
+      icon: "https://www.vectorlogo.zone/logos/twitter/twitter-icon.svg",
+      handles: BaseHandles,
+    },
+    nodeProcessData: {
+      worker_type: "rest",
+      trigger: false,
+    },
+  },
+  {
+    nodeType: "superNode",
+    nodeConfigurationData: {
+      url: "https://api.github.com/",
+      method: "",
+      headers: "",
+      body: "",
+    },  
+    nodePresentationData: {
+      title: "GitHub Action",
+      alt: "GitHub Action",
+      icon: "https://www.vectorlogo.zone/logos/github/github-icon.svg",
+      handles: BaseHandles,
+    },
+    nodeProcessData: {
+      worker_type: "rest",
       trigger: false,
     },
   },

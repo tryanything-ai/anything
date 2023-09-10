@@ -3,6 +3,8 @@ import { useSqlContext } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import { useFlowContext } from "../context/FlowProvider";
 import clsx from "clsx";
+import ReactJson from "react-json-view";
+import { formatDistanceToNow } from "date-fns";
 
 const DebugPanel = () => {
   const { getFlowEvents } = useSqlContext();
@@ -36,13 +38,13 @@ const DebugPanel = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-full p-4 border-l border-gray-500">
+    <div className="flex flex-col h-full p-4 ">
       {events.length > 0 ? (
         <>
           <div className="text-2xl font-bold">Processing Tasks</div>
           <ul>
             {events.map((event) => (
-              <DebugCard key={event.id} event={event} />
+              <DebugCard key={event.event_id} event={event} />
             ))}
           </ul>
         </>
@@ -68,21 +70,33 @@ const DebugCard = ({ event }: { event: any }) => {
   return (
     <div
       key={event.event_id}
-      className={clsx("card h-20 w-full text-md border p-4 my-2", {
-        "h-auto": isExpanded,
-      })}
-    >
-      <div onClick={() => setIsExpanded(!isExpanded)}>
-        <span>{context?.title}</span>
-        <span> {isExpanded ? "▲" : "▼"}</span>
-      </div>
-
-      {isExpanded && (
-        <div>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
-        </div>
+      className={clsx(
+        "h-20 w-full my-2 flex flex-col bg-white bg-opacity-5 rounded-md p-2",
+        {
+          "h-auto": isExpanded,
+        }
       )}
+    >
+      {/* <div onClick={() => setIsExpanded(!isExpanded)}> */}
+      <div className="text-2xl">{context?.title}</div>
+      {event && event.created_at ? (
+        <div className="text-sm">
+          {formatDistanceToNow(new Date(event?.created_at), {
+            includeSeconds: true,
+          })}{" "}
+          ago
+        </div>
+      ) : null}
+
+      {/* <span> {isExpanded ? "▲" : "▼"}</span> */}
     </div>
+
+    // {isExpanded && result && (
+    //   <div>
+    //     <ReactJson src={result} />
+    //   </div>
+    // )}
+    // </div>
   );
 };
 
