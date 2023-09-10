@@ -46,7 +46,7 @@ const BaseNodeOrIcon: React.FC<Props> = ({ icon }) => {
 
 const BaseNodeIcon: React.FC<Props> = ({ icon }) => {
   return (
-    <div className="flex justify-center items-center h-14 w-14 p-2 rounded-md bg-secondary text-secondary-content">
+    <div className="flex justify-center items-center h-14 w-14 p-2 rounded-md bg-white bg-opacity-30">
       <BaseNodeOrIcon icon={icon} />
     </div>
   );

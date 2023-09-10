@@ -40,7 +40,7 @@ export default function BaseNode({
       className={clsx(
         "bg-primary text-primary-content w-80 h-20 rounded-md flex flex-row text-xl",
         {
-          "bg-secondary text-secondayr-content": data.worker_type === "start",
+          "bg-secondary text-secondary-content": data.worker_type === "start",
         }
       )}
     >
@@ -62,7 +62,7 @@ export default function BaseNode({
       {/* Container */}
       <div className="p-3 flex flex-row h-full w-full items-center">
         {hideIcon ? null : <BaseNodeIcon icon={data.icon} />}
-        <div className="flex flex-col p-4">{children}</div>
+        <div className="flex flex-col">{children}</div>
         {nodeConfigPanel && nodeId === id ? (
           <button
             className="m-1 absolute top-0 right-0"
