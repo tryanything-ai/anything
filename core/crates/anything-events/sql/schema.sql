@@ -1,18 +1,27 @@
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_id SERIAL,
     event_name TEXT NOT NULL,
     payload json NOT NULL,
     metadata json NOT NULL,
-    tags json NOT NULL,
     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
 );
-CREATE TABLE IF NOT EXISTS scheduler (
-    id UUID PRIMARY KEY,
-    last_seen_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
-    queued_triggers INT,
-    -- waiting_for_trigger_id UUID REFERENCES trigger(id),
-    version VARCHAR
-);
+-- CREATE TABLE IF NOT EXISTS event_tags (
+--     event_id INTEGER NOT NULL,
+--     tag_id INTEGER NOT NULL
+-- );
+-- CREATE TABLE IF NOT EXISTS tags (
+--     id INTEGER PRIMARY KEY AUTOINCREMENT,
+--     name TEXT NOT NULL
+-- );
+-- CREATE TABLE IF NOT EXISTS 
+-- CREATE TABLE IF NOT EXISTS scheduler (
+--     id UUID PRIMARY KEY,
+--     last_seen_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+--     queued_triggers INT,
+--     -- waiting_for_trigger_id UUID REFERENCES trigger(id),
+--     version VARCHAR
+-- );
 -- CREATE TABLE IF NOT EXISTS trigger (
 --     id UUID PRIMARY KEY,
 --     name VARCHAR NOT NULL,

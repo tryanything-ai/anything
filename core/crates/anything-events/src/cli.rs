@@ -1,34 +1,27 @@
 use std::path::PathBuf;
 
-use anything_core::error::AnythingResult;
 use clap::{Parser, Subcommand};
-use tracing::{debug, info};
+use tracing::debug;
 
-use crate::{
-    config::AnythingEventsConfig,
-    context::Context,
-    errors::{EventsError, EventsResult},
-    server::server::Server,
-    utils::bootstrap,
-};
+use crate::{errors::EventsResult, server::server::Server, utils::bootstrap};
 
-#[derive(Parser)]
+#[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     /// Provide a specific config path
     #[arg(short, long, value_name = "FILE")]
     pub config_path: Option<PathBuf>,
 
+    #[arg(short, long)]
+    pub database_uri: Option<String>,
+
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
-    Server {
-        #[arg(short, long)]
-        database_uri: Option<String>,
-    },
+    Server {},
 }
 
 pub async fn start() -> EventsResult<()> {
@@ -37,21 +30,15 @@ pub async fn start() -> EventsResult<()> {
     let config_path = cli.config_path;
     // let mut config = crate::config::load(config_path.as_ref())?;
     // let mut config = anything_core::config::load(config_path.as_ref())?;
-    let mut config = crate::config::load(config_path.as_ref())?;
+    let config = crate::config::load(config_path.as_ref())?;
 
     // logging::setup(&config)?;
-    bootstrap::bootstrap(&config).await?;
+    let context = bootstrap::bootstrap(&config).await?;
 
     match cli.command {
-        Some(Commands::Server { database_uri }) => {
-            // TODO: add a sexier way to handle this configuration
-            if let Some(database_uri) = database_uri {
-                config.database.uri = database_uri;
-            }
-            let ctx = Context::new(config).await?;
-            debug!("Context: {:?}", ctx);
+        Some(Commands::Server {}) => {
             debug!("Building server...");
-            let server = Server::new(ctx).await?;
+            let server = Server::new(context).await?;
             server.run_server().await?;
         }
         None => {
