@@ -1,13 +1,12 @@
-use crate::{errors::EventsResult, store::store::Store};
-use anything_core::AnythingConfig;
+use crate::{config::AnythingEventsConfig, errors::EventsResult, store::store::Store};
 use fake::Fake;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, SqlitePool};
 use std::collections::HashMap;
 
 use crate::models::Event;
 
-pub fn get_test_config() -> AnythingConfig {
-    let mut config = AnythingConfig::default();
+pub fn get_test_config() -> AnythingEventsConfig {
+    let mut config = AnythingEventsConfig::default();
     config.database.uri = "sqlite::memory:".to_string();
     config
 }

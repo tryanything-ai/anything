@@ -4,11 +4,12 @@ use crossbeam::channel::unbounded;
 use crossbeam::channel::{Receiver, Sender};
 
 use sqlx::types::Uuid;
+use tracing::debug;
 
 use crate::errors::EventsResult;
+use crate::utils::executor::spawn_or_crash;
 use crate::{
     context::Context,
-    executor::spawn_or_crash,
     messages::EventNotification,
     post_office::PostOffice,
     server::{api, heartbeat},
@@ -61,6 +62,7 @@ impl Server {
         //     controller::handle_controller_plane,
         // );
 
+        debug!("Starting server...");
         api::serve(self.context.clone()).await?;
 
         Ok(())

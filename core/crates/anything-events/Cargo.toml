@@ -24,12 +24,13 @@ tokio = { workspace = true, features = ["full", "rt-multi-thread"] }
 zmq = "0.10.0"
 
 # Tracing
-tracing = { workspace = true }
-# tracing-log = { workspace = true }
-tracing-subscriber = { workspace = true }
-# tracing-appender = "0.2.2"
-# tracing-opentelemetry = "0.21.0"
-# opentelemetry = { version = "0.20.0", features = ["rt-tokio"] }
+tracing-appender = "0.2.2"
+tracing-opentelemetry = "0.21.0"
+opentelemetry = { version = "0.20.0", features = ["rt-tokio"] }
+tracing = "0.1.37"
+tracing-log = "0.1.3"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+opentelemetry-otlp = "0.13.0"
 
 anyhow = { workspace = true }
 colored = "2.0.4"
@@ -52,3 +53,6 @@ crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }
 
 [dev-dependencies]
 fake = { version = "2.8", features = ["derive"] }
+
+[build-dependencies]
+tonic-build = "0.10.0"

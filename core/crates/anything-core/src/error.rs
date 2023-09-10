@@ -15,6 +15,9 @@ pub enum AnythingError {
 
     #[error("message decoding error")]
     MessageDecodingError,
+
+    #[error("invalid server config")]
+    InvalidServerConfigError,
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]

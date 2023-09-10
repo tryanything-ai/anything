@@ -11,7 +11,7 @@ use sqlx::{
 
 use crate::errors::EventsResult;
 use crate::{
-    config::{Config, DatabaseConfig},
+    config::{AnythingEventsConfig, DatabaseConfig},
     models::Event,
 };
 
@@ -24,7 +24,7 @@ pub enum StoreAdapterType {
 
 #[async_trait::async_trait]
 pub trait StoreAdapter {
-    async fn init(&self, database_config: &AnythingConfig) -> EventsResult<bool>;
+    async fn init(&self, database_config: &AnythingEventsConfig) -> EventsResult<bool>;
     async fn save(&self, event: Event) -> EventsResult<bool>;
     async fn all(&self) -> EventsResult<Vec<Event>>;
     async fn get(&self, id: i64) -> EventsResult<Event>;
@@ -35,11 +35,11 @@ pub trait StoreAdapter {
 pub struct Store {
     // Get the ANY out of here
     pub store: Box<dyn StoreAdapter + Sync + Send>,
-    config: AnythingConfig,
+    config: AnythingEventsConfig,
 }
 
 impl Store {
-    pub async fn from_config(config: &AnythingConfig) -> EventsResult<Self> {
+    pub async fn from_config(config: &AnythingEventsConfig) -> EventsResult<Self> {
         let store = match determine_store_backend(config.database.uri.clone()) {
             StoreAdapterType::SQLITE => instantiate_sqlite_store(config),
         }
@@ -65,7 +65,7 @@ impl Store {
         let pool = SqliteStoreAdapter::default().await;
         Self {
             store: Box::new(pool),
-            config: AnythingConfig::default(),
+            config: AnythingEventsConfig::default(),
         }
     }
 }
@@ -86,7 +86,7 @@ fn determine_store_backend(database_uri: String) -> StoreAdapterType {
 }
 
 async fn instantiate_sqlite_store(
-    config: &AnythingConfig,
+    config: &AnythingEventsConfig,
 ) -> EventsResult<Box<dyn StoreAdapter + Sync + Send>> {
     // For sqlite databases, we use the root directory
     let root_dir = config.root_dir.clone();

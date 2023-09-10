@@ -16,10 +16,10 @@ pub struct WorkerHeartbeat {
 // TODO: define a message for events here
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EventNotification {
-    pub uuid: Uuid,
+    pub source_id: Uuid,
     pub name: String,
     pub tags: Vec<String>,
-    pub payload: HashMap<String, String>,
+    pub payload: Box<u8>,
     pub metadata: HashMap<String, String>,
 }
 
