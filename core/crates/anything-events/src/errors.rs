@@ -1,4 +1,3 @@
-use anyhow::Error;
 use anything_core::error::AnythingError;
 use thiserror::Error;
 
@@ -18,6 +17,9 @@ pub enum EventsError {
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
 
+    #[error("server error")]
+    EventServerError(#[from] tonic::transport::Error),
+
     #[error("configuration error")]
     ConfigurationError(#[from] AnythingError),
 
@@ -26,4 +28,7 @@ pub enum EventsError {
 
     #[error("encoding error")]
     EncodingError,
+
+    #[error("not found: {0}")]
+    NotFoundError(String),
 }

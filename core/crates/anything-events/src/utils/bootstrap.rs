@@ -12,12 +12,11 @@ use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{fmt, prelude::*};
 
-use anything_core::error::AnythingResult;
 use tracing::info;
 
-use crate::config::AnythingEventsConfig;
+use crate::{config::AnythingEventsConfig, context::Context, errors::EventsResult};
 
-pub async fn bootstrap(config: &AnythingEventsConfig) -> AnythingResult<()> {
+pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
     info!("Bootstrapping Eventurous");
     // Bootstrap database directory
     let root_dir = config.root_dir.clone();
@@ -28,10 +27,17 @@ pub async fn bootstrap(config: &AnythingEventsConfig) -> AnythingResult<()> {
         fs::create_dir_all(db_dir).unwrap();
     }
 
-    setup_tracing(tracing_subscriber::registry(), config);
+    setup_tracing(tracing_subscriber::registry(), &config);
 
-    Ok(())
+    // Create context
+    let context = Context::new(config.clone()).await?;
+
+    Ok(context)
 }
+
+// -----------------------------------------------------------------
+// Tracing
+// --
 
 pub fn setup_tracing<S>(subscriber: S, config: &AnythingEventsConfig)
 where

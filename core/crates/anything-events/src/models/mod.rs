@@ -1,5 +1,2 @@
-mod event;
-mod tags;
-
-pub use event::*;
-pub use tags::*;
+pub(crate) mod event;
+pub(crate) mod tag;
