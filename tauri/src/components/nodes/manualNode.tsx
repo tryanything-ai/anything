@@ -2,30 +2,14 @@ import { useState } from "react";
 import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
-import { VscPlayCircle } from "react-icons/vsc";
 import clsx from "clsx";
 import BaseNode from "./baseNode";
 import { useFlowContext } from "../../context/FlowProvider";
-
-let node: Node = {
-  nodeType: "manualNode",
-  nodeConfigurationData: {},
-  nodePresentationData: {
-    title: "Manual Node",
-    alt: "Manual Node",
-    icon: "",
-    handles: [],
-  },
-  nodeProcessData: {
-    worker_type: "start",
-  },
-};
-
-ManualNode.Node = node;
+import BaseNodeIcon from "../baseNodeIcon";
 
 export default function ManualNode({ id, data }: AnythingNodeProps) {
   const { addEvent } = useSqlContext();
-  const { flowFrontmatter } = useFlowContext(); 
+  const { flowFrontmatter } = useFlowContext();
   const { flow_name } = useParams();
   const [loading, setLoading] = useState(false);
   const createEvent = async () => {
@@ -50,8 +34,6 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
 
     addEvent(event);
 
-    //TODO: real user feedback on loading state
-    //set loading for 1 second for fun
     setTimeout(() => {
       setLoading(false);
     }, 1000);
@@ -59,16 +41,14 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
 
   return (
     <BaseNode id={id} data={data} hideIcon>
-      <div className="flex flex-row items-center">
-        <div className="h-full w-16">
-          <button
-            className={clsx(loading && "bg-green-500 rounded-full")}
-            onClick={() => createEvent()}
-          >
-            <VscPlayCircle className=" h-12 w-12" />
-          </button>
-        </div>
-        <div className="text-lg">Manual Trigger</div>
+      <div className="flex flex-row">
+        <button
+          className={clsx(loading && "bg-green-500 rounded-md h-14 w-14")}
+          onClick={() => createEvent()}
+        >
+          <BaseNodeIcon icon="VscPlayCircle" />
+        </button>
+        <div className="flex flex-col justify-center p-4">{data.title}</div>
       </div>
     </BaseNode>
   );
