@@ -1,19 +1,25 @@
 import { useEffect, useState } from "react";
 import { Node } from "../utils/nodeUtils";
-import { NODES, getNodesForNodePanel } from "../utils/nodeGenerators";
+import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
 
 const NodePanel = () => {
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [triggerNodes, setTriggerNodes] = useState<Node[]>([]);
+  const [actionNodes, setActionNodes] = useState<Node[]>([]);
 
   useEffect(() => {
-    setNodes(getNodesForNodePanel());
+    setTriggerNodes(getTriggerNodes());
+    setActionNodes(getActionNodes());
   }, []);
 
   //TODO: add flows in some future where we can facilitate
   return (
     <div className="flex flex-col h-full p-4 border-l border-gray-500 overflow-y-auto">
-      <h1 className="text-2xl font-bold">Nodes</h1>
-      {nodes.map((node: Node) => (
+      <h1 className="text-2xl font-bold pb-2">Triggers</h1>
+      {triggerNodes.map((node: Node) => (
+        <NodeDnD node={node} key={node.nodePresentationData.title} />
+      ))}
+      <h1 className="text-2xl font-bold py-2">Actions</h1>
+      {actionNodes.map((node: Node) => (
         <NodeDnD node={node} key={node.nodePresentationData.title} />
       ))}
     </div>
