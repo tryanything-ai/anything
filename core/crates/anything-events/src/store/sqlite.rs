@@ -1,4 +1,4 @@
-use anything_core::config::AnythingConfig;
+use crate::config::AnythingEventsConfig;
 use async_trait::async_trait;
 use sqlx::{Pool, Sqlite, SqlitePool};
 
@@ -24,7 +24,7 @@ impl SqliteStoreAdapter {
 
 #[async_trait]
 impl StoreAdapter for SqliteStoreAdapter {
-    async fn init<'a>(&'a self, _config: &AnythingConfig) -> EventsResult<bool> {
+    async fn init<'a>(&'a self, _config: &AnythingEventsConfig) -> EventsResult<bool> {
         sqlx::query(include_str!("../../sql/schema.sql"))
             .execute(&self.pool)
             .await?;

@@ -4,8 +4,9 @@ json_log = false
 log_retention = "4h"
 
 [database]
-uri = "sqlite"
+uri = "sqlite:///tmp/anything/anything.db"
 
 [server]
-host = ":8080"
 port = 5556
+
+[tracing]

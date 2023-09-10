@@ -1,3 +1,4 @@
+use anyhow::Error;
 use anything_core::error::AnythingError;
 use thiserror::Error;
 
@@ -6,7 +7,10 @@ pub type EventsResult<T> = Result<T, EventsError>;
 #[derive(Error, Debug)]
 pub enum EventsError {
     #[error("config error: {0}")]
-    ConfigError(#[from] config::ConfigError),
+    ConfigLibraryError(#[from] config::ConfigError),
+
+    #[error("configuration error: {0}")]
+    ConfigError(String),
 
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),

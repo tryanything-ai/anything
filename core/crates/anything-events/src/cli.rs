@@ -2,12 +2,14 @@ use std::path::PathBuf;
 
 use anything_core::error::AnythingResult;
 use clap::{Parser, Subcommand};
+use tracing::{debug, info};
 
 use crate::{
-    bootstrap,
+    config::AnythingEventsConfig,
     context::Context,
     errors::{EventsError, EventsResult},
     server::server::Server,
+    utils::bootstrap,
 };
 
 #[derive(Parser)]
@@ -34,7 +36,8 @@ pub async fn start() -> EventsResult<()> {
 
     let config_path = cli.config_path;
     // let mut config = crate::config::load(config_path.as_ref())?;
-    let mut config = anything_core::config::load(config_path.as_ref())?;
+    // let mut config = anything_core::config::load(config_path.as_ref())?;
+    let mut config = crate::config::load(config_path.as_ref())?;
 
     // logging::setup(&config)?;
     bootstrap::bootstrap(&config).await?;
@@ -46,6 +49,8 @@ pub async fn start() -> EventsResult<()> {
                 config.database.uri = database_uri;
             }
             let ctx = Context::new(config).await?;
+            debug!("Context: {:?}", ctx);
+            debug!("Building server...");
             let server = Server::new(ctx).await?;
             server.run_server().await?;
         }

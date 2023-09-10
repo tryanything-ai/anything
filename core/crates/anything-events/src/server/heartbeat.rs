@@ -3,7 +3,7 @@ use sqlx::{Pool, Sqlite};
 use std::sync::{atomic::Ordering, Arc};
 use tracing::trace;
 
-use crate::constants::GIT_VERSION;
+use crate::config::GIT_VERSION;
 
 use super::server::Server;
 

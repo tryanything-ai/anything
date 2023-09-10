@@ -4,6 +4,8 @@ use std::{fmt::Formatter, path::PathBuf};
 struct DurationError(humantime::DurationError);
 use config::{builder::DefaultState, ConfigBuilder, Environment, File, FileFormat};
 
+pub const GIT_VERSION: &str = git_version::git_version!();
+
 impl de::Expected for DurationError {
     fn fmt(&self, formatter: &mut Formatter) -> std::fmt::Result {
         write!(formatter, "a human duration string ({})", self.0)
@@ -33,7 +35,17 @@ pub struct DatabaseConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct Config {
+pub struct TracingConfig {
+    /// The service name given for the tracing
+    pub service_name: Option<String>,
+    /// The endpoint of the otel collector
+    pub otel_endpoint: Option<String>,
+
+    pub json_log: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct AnythingEventsConfig {
     pub root_dir: PathBuf,
     pub json_log: bool,
     pub log: String,
@@ -43,9 +55,10 @@ pub struct Config {
 
     pub server: ServerConfig,
     pub database: DatabaseConfig,
+    pub tracing: TracingConfig,
 }
 
-impl Default for Config {
+impl Default for AnythingEventsConfig {
     fn default() -> Self {
         Self {
             root_dir: PathBuf::from("./.eventurous"),
@@ -59,6 +72,11 @@ impl Default for Config {
             database: DatabaseConfig {
                 uri: "sqlite://:memory:".to_string(),
                 max_connections: None,
+            },
+            tracing: TracingConfig {
+                service_name: None,
+                otel_endpoint: None,
+                json_log: None,
             },
         }
     }
@@ -85,7 +103,7 @@ pub fn loader(file: Option<&PathBuf>) -> ConfigBuilder<DefaultState> {
     )
 }
 
-pub fn load(file: Option<&PathBuf>) -> Result<Config> {
+pub fn load(file: Option<&PathBuf>) -> Result<AnythingEventsConfig> {
     let config = loader(file)
         .build()?
         .try_deserialize()
