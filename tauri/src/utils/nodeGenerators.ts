@@ -32,7 +32,7 @@ const EndHandles: HandleProps[] = [
 
 export const NODES: Node[] = [
   {
-    nodeType: "cronNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       pattern: "",
     },
@@ -44,10 +44,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "start",
+      trigger: true,
     },
   },
   {
-    nodeType: "javascriptNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       code: "",
     },
@@ -59,6 +60,7 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "javascript",
+      trigger: false,
     },
   },
   {
@@ -72,10 +74,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "start",
+      trigger: true,
     },
   },
   {
-    nodeType: "modelNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       filename: "",
       prompt: "",
@@ -89,10 +92,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "local_model",
+      trigger: false,
     },
   },
   {
-    nodeType: "openAiNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       url: "",
       method: "",
@@ -107,10 +111,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "rest",
+      trigger: false,
     },
   },
   {
-    nodeType: "restNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       url: "",
       method: "",
@@ -125,10 +130,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "rest",
+      trigger: false,
     },
   },
   {
-    nodeType: "pythonNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       code: "",
     },
@@ -140,10 +146,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "python",
+      trigger: false,
     },
   },
   {
-    nodeType: "receiveChatNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       message: "",
     },
@@ -155,10 +162,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "start",
+      trigger: true,
     },
   },
   {
-    nodeType: "sendChatNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       pattern: "",
     },
@@ -170,10 +178,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "app_chat",
+      trigger: false,
     },
   },
   {
-    nodeType: "terminalNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       command: "",
     },
@@ -185,10 +194,11 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "terminal",
+      trigger: false,
     },
   },
   {
-    nodeType: "vectorNode",
+    nodeType: "superNode",
     nodeConfigurationData: {
       db: "",
       params: [],
@@ -201,19 +211,19 @@ export const NODES: Node[] = [
     },
     nodeProcessData: {
       worker_type: "vector",
+      trigger: false,
     },
   },
 ];
 
-export const getNodesForNodePanel = () => {
-  //make them all "nodeType === "superNode"
-  let nodes = NODES.map((node) => {
-    //if its Manual Node Don't
-    if (node.nodeType === "manualNode") {
-      return node;
-    }
-    node.nodeType = "superNode";
-    return node;
-  });
-  return nodes;
+export const getTriggerNodes = (): Node[] => {
+  return NODES.filter(node => node.nodeProcessData.trigger === true);
+};
+
+/**
+ * Function to get nodes where trigger is false
+ * @returns {Node[]} Array of nodes where trigger is false
+ */
+export const getActionNodes = (): Node[] => {
+  return NODES.filter(node => node.nodeProcessData.trigger === false);
 };

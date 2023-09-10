@@ -4,6 +4,7 @@ import { HandleProps, NodeProps } from "reactflow";
 //Things configured mandatory by node author
 export type NodeProcessData = {
     worker_type: string;
+    trigger: boolean;
 };
 
 //Things that deal with UI that we don't want in version control
