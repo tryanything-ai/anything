@@ -47,7 +47,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
 
   const db = {
     execute: async (query: string, values?: any[]) => {
-      console.log("Executing Sql on JS side", query, values);
+      // console.log("Executing Sql on JS side", query, values);
       return await invoke("plugin:sqlite|execute", {
         db: DB_STRING,
         query,
@@ -55,7 +55,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
       });
     },
     select: async (query: string, values?: any[]) => {
-      console.log("Selecting Sql on JS side", query, values);
+      // console.log("Selecting Sql on JS side", query, values);
       return await invoke("plugin:sqlite|select", {
         db: DB_STRING,
         query,

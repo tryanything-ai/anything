@@ -13,7 +13,10 @@ const DebugPanel = () => {
   const hydrate = async () => {
     try {
       if (!flow_name) return;
-      if (!currentProcessingStatus?.session_id) return;
+      if (!currentProcessingStatus?.session_id) {
+        console.log("no session id in debug panel");
+        return;
+      }
 
       const data = await getFlowEvents(
         flow_name,
@@ -39,7 +42,7 @@ const DebugPanel = () => {
           <div className="text-2xl font-bold">Processing Tasks</div>
           <ul>
             {events.map((event) => (
-              <DebugCard event={event} />
+              <DebugCard key={event.id} event={event} />
             ))}
           </ul>
         </>

@@ -20,12 +20,12 @@ export const EventLoopProvider = ({ children }: { children: ReactNode }) => {
   //TODO: this pattern is kinda not great. maybe not even helpful. maybe remove context completely.
   const subscribeToEvent = (event_name: string, callBack: EventCallback) => {
     const unlistenPromise = listen(event_name, (event: any) => {
-      console.log(
-        "Listened to event for " +
-          event_name +
-          " -> " +
-          JSON.stringify(event.payload)
-      );
+      // console.log(
+      //   "Listened to event for " +
+      //     event_name +
+      //     " -> " +
+      //     JSON.stringify(event.payload)
+      // );
       callBack(event.payload);
     });
 
