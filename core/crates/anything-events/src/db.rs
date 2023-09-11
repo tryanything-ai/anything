@@ -1,12 +1,9 @@
-use once_cell::sync::OnceCell;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
 
 use crate::{config::AnythingEventsConfig, errors::EventsResult};
-
-static DB: OnceCell<sqlx::sqlite::SqlitePool> = OnceCell::new();
 
 pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<SqlitePool> {
     let root_dir = config.root_dir.clone();
@@ -36,10 +33,4 @@ pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<S
 
     // DB.set(pool).expect("unable to set pool");
     Ok(pool)
-}
-
-#[inline]
-pub fn get_pool() -> &'static SqlitePool {
-    // For convenience
-    unsafe { DB.get_unchecked() }
 }
