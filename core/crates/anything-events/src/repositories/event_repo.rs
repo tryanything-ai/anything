@@ -1,8 +1,7 @@
-use sqlx::{Row, SqlitePool};
+use sqlx::SqlitePool;
 
 use crate::{
     errors::EventsResult,
-    events::Event as ProtoEvent,
     models::event::{CreateEvent, Event, EventId},
 };
 
@@ -59,6 +58,8 @@ impl EventRepo for EventRepoImpl {
 
 #[cfg(test)]
 mod tests {
+    use sqlx::Row;
+
     use crate::internal::test_helper::TestEventRepo;
 
     use super::*;
@@ -79,7 +80,7 @@ mod tests {
         assert_eq!(res.len(), 1);
         let row = res.first();
         assert!(row.is_some());
-        let row = row.unwrap();
+        let row = row.unwrap().clone();
         let name: String = row.get("event_name");
         assert_eq!(&cloned_fake_event.event_name, &name);
 
