@@ -21,7 +21,10 @@ pub struct Cli {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
+    /// Run the server
     Server {},
+    /// Post a new event to a running server
+    PostEvent {},
 }
 
 pub async fn start() -> EventsResult<()> {
@@ -40,6 +43,9 @@ pub async fn start() -> EventsResult<()> {
             debug!("Building server...");
             let server = Server::new(context).await?;
             server.run_server().await?;
+        }
+        Some(Commands::PostEvent {}) => {
+            println!("post an event");
         }
         None => {
             println!("No command specified");

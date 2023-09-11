@@ -182,8 +182,6 @@ mod tests {
 
         let event_manager = EventManager::new(&context, test.with_sender().await);
         let event = test.dummy_create_event();
-
-        // let fake_event
         let create_event_request = TriggerEventRequest {
             event: Some(event.clone().into()),
         };
@@ -203,6 +201,30 @@ mod tests {
         assert!(found.is_ok());
         let found = found.unwrap();
         assert_eq!(found.event_name, event.event_name);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_event_sends_update() -> anyhow::Result<()> {
+        let context = get_test_context().await;
+        let test = TestEventRepo::new().await;
+        let test_tx = test.with_sender().await;
+        let test_rx = test.with_receiver().await;
+        let event_manager = EventManager::new(&context, test_tx);
+
+        let event = test.dummy_create_event();
+        let create_event_request = TriggerEventRequest {
+            event: Some(event.clone().into()),
+        };
+
+        let request = Request::new(create_event_request);
+        let _response = event_manager.trigger_event(request).await;
+
+        let msg = test_rx.recv();
+        assert!(msg.is_ok());
+        let msg = msg.unwrap();
+        assert_eq!(msg.event_name, event.event_name);
 
         Ok(())
     }

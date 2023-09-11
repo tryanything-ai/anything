@@ -3,9 +3,11 @@ use std::sync::Arc;
 
 use tracing::debug;
 
+use crate::callbacks;
 use crate::errors::{EventsError, EventsResult};
 use crate::events::events_server::EventsServer;
 use crate::server::events_server::EventManager;
+use crate::utils::executor::spawn_or_crash;
 // use crate::utils::executor::spawn_or_crash;
 use crate::{context::Context, post_office::PostOffice};
 
@@ -31,24 +33,11 @@ impl Server {
     }
 
     pub async fn run_server(self: Arc<Self>) -> EventsResult<()> {
-        // spawn_or_crash(
-        //     "incoming_events",
-        //     self.clone(),
-        //     incoming::process_incoming_event_updates,
-        // );
-
-        // spawn_or_crash(
-        //     "event_consumers",
-        //     self.clone(),
-        //     consumers::process_consumers,
-        // );
-
-        // spawn_or_crash(
-        //     "control_plane",
-        //     self.clone(),
-        //     controller::handle_controller_plane,
-        // );
-        // let events =
+        spawn_or_crash(
+            "on_event",
+            self.clone(),
+            callbacks::on_event::process_on_events,
+        );
 
         let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
