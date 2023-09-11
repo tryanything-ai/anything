@@ -49,16 +49,3 @@ pub async fn call_api(api_request: ApiRequest) -> Result<String, Error> {
         Err(response.error_for_status().unwrap_err())
     }
 }
-
-
-// Example FE Call
-// const apiRequest = {
-//     url: 'https://jsonplaceholder.typicode.com/todos',
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify({ title: 'foo', body: 'bar', userId: 1 }),
-//   };
-//   const apiResult = await window.__TAURI__.invoke('call_api', apiRequest);
-//   console.log(apiResult);

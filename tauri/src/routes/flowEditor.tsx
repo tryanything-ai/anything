@@ -92,7 +92,7 @@ function Flows() {
           {/* Right Side */}
           {debugPanel ? (
             <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
-              <DebugPanel key={currentProcessingStatus?.event_id} />
+              <DebugPanel />
             </Allotment.Pane>
           ) : null}
           {settingsPanel ? (

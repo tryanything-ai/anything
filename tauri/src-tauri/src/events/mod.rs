@@ -47,14 +47,14 @@ async fn process(app: &AppHandle) {
                     if let Some(worker_type) = item.get("worker_type") {
                             if let Some(worker_type_str) = worker_type.as_str() {
                                     match execute_worker_task(app, worker_type_str, item).await {
-                                        Ok(result_json) => {
+                                        Ok(result_string) => {
                                              // Get values for eventProcessing Message
                                             let node_id = item.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let flow_id = item.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let event_id = item.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
                                             let session_id = item.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
                                             //TODO: save result in sql
-                                            save_result(app, event_id.to_string(), result_json.to_string()).await;
+                                            save_result(app, event_id.to_string(), result_string).await;
                                             mark_as_done(app, event_id.to_string(), node_id.to_string(), flow_id.to_string(), session_id.to_string()).await;
                                             println!("event_id: {} marked as COMPLETE after passing through execute_worker_task", event_id);
                                             println!("Session ID: {} Evaluated", session_id) 
@@ -395,7 +395,7 @@ fn read_from_documents(flow_name: &str) -> Result<String> {
 }
 
 //gets marked as done after it leaves here. Kinda a bad pattern i think
-async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>) -> std::result::Result<JsonValue, String> {
+async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>) -> std::result::Result<String, String> {
 
     // Get values for eventProcessing Message
     let node_id = event_data.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
@@ -421,7 +421,7 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             if let Some(flow_name_value) = event_data.get("flow_name") {
                 if let Some(flow_name_str) = flow_name_value.as_str() {
                     create_events_from_graph(app, flow_name_str, session_id).await;
-                    Ok(serde_json::json!({"status": "events created"}))
+                    Ok("{\"status\": \"events created\"}".to_string())
                 } else {
                     Err("flow_name is not a string".to_string())
                 }
@@ -437,7 +437,7 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             let url = context_json["url"].as_str().unwrap_or_default().to_string();
             let headers_str = context_json["headers"].as_str().unwrap_or("");
 
-            let headers_map =  match serde_json::from_str::<HashMap<String, String>>(headers_str) {
+            let headers_map = match serde_json::from_str::<HashMap<String, String>>(headers_str) {
                 Ok(headers_map) => Some(headers_map),
                 Err(_) => None,
             };
@@ -451,13 +451,8 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                 body,   
             };
 
-            println!("api_request: {:?}", api_request); 
-
-            println!("Found a REST worker type");
-            println!("{:?}", event_data); 
-
-           return match call_api(api_request).await {
-                Ok(result) => Ok(serde_json::json!(result)),
+            return match call_api(api_request).await {
+                Ok(result) => Ok(result),
                 Err(e) => Err(e.to_string()) 
             }
         },
@@ -466,20 +461,105 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
             let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
             
             let command = context_json["command"].as_str().unwrap_or_default().to_string();
-            //FIXME: seems to be a range of bugs introduced via differe "" vs '' vs curly '' from toml to event system translation
-              match run_terminal_command(&command) {
-                    Ok(result) => {
-                        return Ok(serde_json::json!(result))
-                    },
-                    Err(e) => {
-                        return Err(format!("Terminal command failed: {}", e))
-                    } 
-                }
+              
+            match run_terminal_command(&command) {
+                Ok(result) => Ok(result),
+                Err(e) => Err(format!("Terminal command failed: {}", e))
+            }
         },
-        _ => {
-           return Err(format!("Unknown worker type: {}", worker_type))
-        }
+        _ => Err(format!("Unknown worker type: {}", worker_type))
     }
-
 }
+
+
+// //gets marked as done after it leaves here. Kinda a bad pattern i think
+// async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &HashMap<String, JsonValue>) -> std::result::Result<JsonValue, String> {
+
+//     // Get values for eventProcessing Message
+//     let node_id = event_data.get("node_id").and_then(JsonValue::as_str).unwrap_or("");
+//     let flow_id = event_data.get("flow_id").and_then(JsonValue::as_str).unwrap_or("");
+//     let event_id = event_data.get("event_id").and_then(JsonValue::as_str).unwrap_or("");
+//     let session_id = event_data.get("session_id").and_then(JsonValue::as_str).unwrap_or("");
+
+//     //write message 
+//     let message = format!("Executing Worker Task: {} for node_id: {} and flow_id: {} and event_id: {}", worker_type, node_id, flow_id, event_id);
+
+//     Event::EventProcessing {    
+//         message,
+//         event_id: event_id.to_string(),
+//         node_id: node_id.to_string(),
+//         flow_id: flow_id.to_string(),
+//         session_id: session_id.to_string()
+//          }.send(&app.get_window("main").unwrap()); 
+
+//     //TODO: prepare context for worker type
+   
+//     match worker_type {
+//         "start" => {
+//             if let Some(flow_name_value) = event_data.get("flow_name") {
+//                 if let Some(flow_name_str) = flow_name_value.as_str() {
+//                     create_events_from_graph(app, flow_name_str, session_id).await;
+//                     Ok(serde_json::json!({"status": "events created"}))
+//                 } else {
+//                     Err("flow_name is not a string".to_string())
+//                 }
+//             } else {
+//                 Err("flow_name is missing".to_string())
+//             }
+//         },
+//         "rest" => { 
+//             let context_str = event_data["event_context"].as_str().unwrap_or("");
+//             let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
+            
+//             let method = context_json["method"].as_str().unwrap_or_default().to_string();
+//             let url = context_json["url"].as_str().unwrap_or_default().to_string();
+//             let headers_str = context_json["headers"].as_str().unwrap_or("");
+
+//             let headers_map =  match serde_json::from_str::<HashMap<String, String>>(headers_str) {
+//                 Ok(headers_map) => Some(headers_map),
+//                 Err(_) => None,
+//             };
+            
+//             let body = context_json["body"].as_str().map(|s| s.to_string());
+        
+//             let api_request = ApiRequest {
+//                 method,
+//                 url,
+//                 headers: headers_map,
+//                 body,   
+//             };
+
+//             println!("api_request: {:?}", api_request); 
+
+//             println!("Found a REST worker type");
+//             println!("{:?}", event_data); 
+
+//            return match call_api(api_request).await {
+//                 Ok(result) => { 
+//                     println!("api call result in match: {}", result); 
+//                     Ok(serde_json::json!(result))},
+//                 Err(e) => Err(e.to_string()) 
+//             }
+//         },
+//         "terminal" => {
+//             let context_str = event_data["event_context"].as_str().unwrap_or("");
+//             let context_json: JsonValue = serde_json::from_str(context_str).unwrap_or_default();
+            
+//             let command = context_json["command"].as_str().unwrap_or_default().to_string();
+//             //FIXME: seems to be a range of bugs introduced via differe "" vs '' vs curly '' from toml to event system translation
+//               match run_terminal_command(&command) {
+//                     Ok(result) => {
+//                         return Ok(serde_json::json!(result))
+//                     },
+//                     Err(e) => {
+//                         return Err(format!("Terminal command failed: {}", e))
+//                     } 
+//                 }
+//         },
+//         _ => {
+//            return Err(format!("Unknown worker type: {}", worker_type))
+//         }
+//     }
+
+// }
 
