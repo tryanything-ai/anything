@@ -9,12 +9,8 @@ use crate::server::events_server::EventManager;
 // use crate::utils::executor::spawn_or_crash;
 use crate::{context::Context, post_office::PostOffice};
 
-mod pb {
-    tonic::include_proto!("events");
-
-    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
-        tonic::include_file_descriptor_set!("events_descriptor");
-}
+pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
+    tonic::include_file_descriptor_set!("events_descriptor");
 
 pub struct Server {
     pub port: u16,
@@ -57,11 +53,11 @@ impl Server {
         let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
         let reflection_service = tonic_reflection::server::Builder::configure()
-            .register_encoded_file_descriptor_set(pb::FILE_DESCRIPTOR_SET)
+            .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
             .build()
             .unwrap();
 
-        let event_manager = EventManager::new(self.context.clone());
+        let event_manager = EventManager::new(&self.context);
         let event_server = EventsServer::new(event_manager);
 
         tonic::transport::Server::builder()
@@ -69,7 +65,6 @@ impl Server {
             .add_service(reflection_service)
             .serve(addr)
             .await?;
-        // api::serve(self.context.clone()).await?;
 
         Ok(())
     }

@@ -1,13 +1,16 @@
-use chrono::Utc;
 use sqlx::{Row, SqlitePool};
 
 use crate::{
     errors::EventsResult,
+    events::Event as ProtoEvent,
     models::event::{CreateEvent, Event, EventId},
 };
 
 #[derive(Debug, Clone)]
 pub struct EventRepoImpl {
+    #[cfg(debug_assertions)]
+    pub pool: SqlitePool,
+    #[cfg(not(debug_assertions))]
     pool: SqlitePool,
 }
 
@@ -86,7 +89,8 @@ mod tests {
     #[tokio::test]
     async fn test_get_event_by_id() -> anyhow::Result<()> {
         let test_repo = TestEventRepo::new().await;
-        let fake_event = test_repo.insert_dummy_data().await?;
+        let _r = test_repo.insert_dummy_event().await;
+        let fake_event = test_repo.insert_dummy_event().await?;
 
         let found = test_repo.event_repo.find_by_id(fake_event.id).await;
         assert!(found.is_ok());
