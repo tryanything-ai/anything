@@ -11,7 +11,7 @@ use crate::{
     repositories::{self, event_repo::EventRepoImpl, Repositories},
 };
 use chrono::Utc;
-use crossbeam::channel::Sender;
+use crossbeam::channel::{Receiver, Sender};
 use fake::Fake;
 use serde_json::Value;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, SqlitePool};
@@ -164,6 +164,10 @@ impl TestEventRepo {
 
     pub async fn with_sender(&self) -> Sender<Event> {
         self.post_office.post_mail().await.unwrap()
+    }
+
+    pub async fn with_receiver(&self) -> Receiver<Event> {
+        self.post_office.receive_mail().await.unwrap()
     }
 
     // pub async fn new_from_context(context: Context) -> Self {
