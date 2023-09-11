@@ -17,6 +17,7 @@ impl<T: Clone> Mailbox<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct PostOffice(Mutex<AnySendMap>);
 
 impl PostOffice {

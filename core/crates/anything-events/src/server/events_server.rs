@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use chrono::Utc;
+use crossbeam::channel::Sender;
 use serde_json::json;
 use sqlx::{Pool, Row, SqlitePool};
 use tonic::{Request, Response, Status};
@@ -38,12 +39,14 @@ const EVENT_NOT_FOUND: &str = "Event not found";
 #[derive(Debug)]
 pub struct EventManager {
     context: Arc<Context>,
+    update_tx: Sender<Event>,
 }
 
 impl EventManager {
-    pub fn new(context: &Context) -> Self {
+    pub fn new(context: &Context, update_tx: Sender<Event>) -> Self {
         Self {
             context: Arc::new(context.clone()),
+            update_tx,
         }
     }
 }
@@ -93,6 +96,22 @@ impl Events for EventManager {
         {
             Ok(v) => v,
             Err(_e) => return Err(Status::internal(UNABLE_TO_SAVE_EVENT)),
+        };
+
+        let event = match self
+            .context
+            .repositories
+            .event_repo
+            .find_by_id(event_id)
+            .await
+        {
+            Ok(r) => {
+                self.update_tx.send(r);
+            }
+            Err(_) => {
+                // Something should be done here... maybe?
+                return Err(Status::internal("unable to save event"));
+            }
         };
 
         Ok(Response::new(TriggerEventResponse {
@@ -161,7 +180,7 @@ mod tests {
         let context = get_test_context_from_pool(&pool).await;
         let test = TestEventRepo::new_with_pool(&context.pool);
 
-        let event_manager = EventManager::new(&context);
+        let event_manager = EventManager::new(&context, test.with_sender().await);
         let event = test.dummy_create_event();
 
         // let fake_event
@@ -192,10 +211,8 @@ mod tests {
     async fn event_get() -> anyhow::Result<()> {
         let context = get_test_context().await;
         let test = TestEventRepo::new().await;
-        // let pool = get_test_pool().await.unwrap();
-        // let mut context = get_test_context_from_pool(&pool).await;
 
-        let event_manager = EventManager::new(&context);
+        let event_manager = EventManager::new(&context, test.with_sender().await);
         let p = &event_manager.context.repositories.event_repo.pool;
         let r = insert_dummy_data(&p).await.unwrap();
         test.insert_dummy_event().await;
