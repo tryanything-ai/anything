@@ -76,8 +76,6 @@ const DebugPanel = () => {
 };
 
 const DebugCard = React.memo(({ event_id }: { event_id: string }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  // const [event, setEvent] = useState<any>(null);
   const [label, setLabel] = useState<string>("");
   const [result, setResult] = useState<any>(null);
   const [createdAt, setCreatedAt] = useState<any>(null);
@@ -92,7 +90,7 @@ const DebugCard = React.memo(({ event_id }: { event_id: string }) => {
 
       if (data) {
         // if (data?.event_context) {
-          setLabel(data?.node_label);
+        setLabel(data?.node_label);
         // }
 
         if (data?.event_result) {
@@ -119,31 +117,25 @@ const DebugCard = React.memo(({ event_id }: { event_id: string }) => {
     <div
       key={event_id}
       className={clsx(
-        "h-20 w-full my-2 flex flex-col bg-white bg-opacity-5 rounded-md p-2 ",
-        {
-          "h-auto": isExpanded,
-        }
+        "h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 rounded-md p-3 text-primary-content"
       )}
     >
-      <div className="text-2xl">{label}</div>
-      {createdAt ? (
-        <div className="text-xsm">
-          {formatDistanceToNow(new Date(createdAt), {
-            includeSeconds: true,
-          })}
-          ago
-        </div>
-      ) : null}
-      {result ? (
-        <div onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? "Hide Results" : "View Results"}
-        </div>
-      ) : null}
-      {isExpanded && result && (
-        <>
+      <div className="pb-4">
+        <div className="text-xl">{label}</div>
+        {createdAt ? (
+          <div className="text-xs text-base-content">
+            {formatDistanceToNow(new Date(createdAt), {
+              includeSeconds: true,
+            })}{" "}
+            ago
+          </div>
+        ) : null}
+      </div>
+      {result && (
+        <div className="">
+          <div className="text-md">Results: </div>
           <ResultComponent result={result} />
-          {/* {JSON.stringify(result, null, 2)} */}
-        </>
+        </div>
       )}
     </div>
   );
@@ -157,7 +149,14 @@ const ResultComponent = ({ result }: any) => {
       try {
         const parsedJson = JSON.parse(result);
         console.log("parsedJson", parsedJson);
-        content = <ReactJson theme={"monokai"} src={parsedJson} />;
+        content = (
+          <ReactJson
+            style={{ borderRadius: "5px", padding: "5px" }}
+            enableClipboard={false}
+            theme={"tube"}
+            src={parsedJson}
+          />
+        );
       } catch (e) {
         content = result;
       }
@@ -168,7 +167,9 @@ const ResultComponent = ({ result }: any) => {
     case "object":
       if (result !== null) {
         console.log("result in object switch", result);
-        content = <ReactJson theme={"monokai"} src={result} />;
+        content = (
+          <ReactJson enableClipboard={false} theme={"tube"} src={result} />
+        );
       } else {
         content = "null";
       }
