@@ -66,6 +66,7 @@ interface FlowContextInterface {
   edges: Edge[];
   flowFrontmatter: FlowFrontMatter | undefined;
   currentProcessingStatus: ProcessingStatus | undefined;
+  currentProcessingSessionId: string | undefined;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -83,6 +84,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   edges: [],
   flowFrontmatter: undefined,
   currentProcessingStatus: undefined,
+  currentProcessingSessionId: undefined,
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
@@ -127,6 +129,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [toml, setToml] = useState<string>("");
   const [currentProcessingStatus, setCurrentProcessingStatus] = useState<
     ProcessingStatus | undefined
+  >();
+  const [currentProcessingSessionId, setCurrentProcessingSessionId] = useState<
+    string | undefined
   >();
   const [sessionComplete, setSessionComplete] = useState<
     SessionComplete | undefined
@@ -377,8 +382,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //Watch event processing for fun ui updates
   useEffect(() => {
     let unlisten = subscribeToEvent("event_processing", (event: any) => {
-      console.log("setCurrentProcessingStatus", event);
+      // console.log("setCurrentProcessingStatus", event);
       setCurrentProcessingStatus(event);
+    //   console.log(`event.session_id is: "${event.session_id}" and its type is ${typeof event.session_id}`);
+    // console.log(`currentProcessingSessionId is: "${currentProcessingSessionId}" and its type is ${typeof currentProcessingSessionId}`);
+
+      // if (event.session_id != currentProcessingSessionId) {
+      //   console.log("setCurrentProcessingSessionId", event.session_id);
+        // setCurrentProcessingSessionId(event.session_id);
+      // } else {
+      //   console.log("session_id is the same, not updating in context");
+      // }
     });
     let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
@@ -388,7 +402,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       unlisten.then((unlisten) => unlisten());
       unlisten2.then((unlisten) => unlisten());
     };
-  }, []);
+  }, [currentProcessingSessionId]);
 
   return (
     <FlowContext.Provider
@@ -397,6 +411,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         edges,
         flowFrontmatter,
         currentProcessingStatus,
+        currentProcessingSessionId,
         onConnect,
         onNodesChange,
         onEdgesChange,

@@ -30,14 +30,16 @@ interface SqlContextInterface {
   tables: any[];
   addEvent: (event: EventInput) => void;
   getTableData: (tableName: string) => any;
-  getFlowEvents: (flowName: string, session_id: string) => any;
+  getSessionEvents: (flowName: string, session_id: string) => any;
+  getEvent: (event_id: string) => any;
 }
 
 export const SqlContext = createContext<SqlContextInterface>({
   tables: [],
   addEvent: () => {},
   getTableData: () => {},
-  getFlowEvents: () => {},
+  getSessionEvents: () => {},
+  getEvent: () => {},
 });
 
 export const useSqlContext = () => useContext(SqlContext);
@@ -54,7 +56,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
         values: values ?? [],
       });
     },
-    select: async (query: string, values?: any[]) => {
+    select: async (query: string, values?: any[]): Promise<any> => {
       // console.log("Selecting Sql on JS side", query, values);
       return await invoke("plugin:sqlite|select", {
         db: DB_STRING,
@@ -106,13 +108,19 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     return tableData;
   };
 
-  const getFlowEvents = async (flowName: string, session_id: string) => {
+  const getSessionEvents = async (flowName: string, session_id: string) => {
     const flowEvents = await db.select(
-      `SELECT * FROM events WHERE flow_name = $1 AND session_id = $2;`,
+      `SELECT * FROM events WHERE flow_name = $1 AND session_id = $2 ORDER BY created_at ASC;`,
       [flowName, session_id]
     );
-    console.log("flowEvents in db", flowEvents);
     return flowEvents;
+  };
+
+  const getEvent = async (event_id: string) => {
+    const event = await db.select(`SELECT * FROM events WHERE event_id = $1;`, [
+      event_id,
+    ]);
+    return event[0];
   };
 
   const initDb = async () => {
@@ -149,7 +157,13 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <SqlContext.Provider
-      value={{ addEvent, tables, getTableData, getFlowEvents }}
+      value={{
+        addEvent,
+        tables,
+        getTableData,
+        getSessionEvents,
+        getEvent,
+      }}
     >
       {children}
     </SqlContext.Provider>
