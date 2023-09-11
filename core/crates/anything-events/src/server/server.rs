@@ -6,6 +6,7 @@ use tracing::debug;
 use crate::callbacks;
 use crate::errors::{EventsError, EventsResult};
 use crate::events::events_server::EventsServer;
+use crate::models::event::Event;
 use crate::server::events_server::EventManager;
 use crate::utils::executor::spawn_or_crash;
 // use crate::utils::executor::spawn_or_crash;
@@ -46,7 +47,7 @@ impl Server {
             .build()
             .unwrap();
 
-        let sender = self.post_office.post_mail().await?;
+        let sender = self.post_office.post_mail::<Event>().await?;
 
         let event_manager = EventManager::new(&self.context, sender);
         let event_server = EventsServer::new(event_manager);
