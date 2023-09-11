@@ -228,6 +228,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "anything-queue"
+version = "0.1.0"
+
+[[package]]
 name = "async-stream"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
