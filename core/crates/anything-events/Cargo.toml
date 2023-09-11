@@ -36,7 +36,6 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 opentelemetry-otlp = { workspace = true }
 
 anyhow = { workspace = true }
-# colored = "2.0.4"
 chrono = { workspace = true }
 humantime = { workspace = true }
 config = { workspace = true }
