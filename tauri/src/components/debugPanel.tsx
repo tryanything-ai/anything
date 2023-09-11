@@ -53,7 +53,7 @@ const DebugPanel = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-full p-4 overflow-y-auto">
+    <div className="flex flex-col h-full p-4 overflow-y-auto hide-scrollbar">
       {eventIds.length > 0 ? (
         <div className="text-2xl font-bold">Processing Tasks</div>
       ) : (
