@@ -78,7 +78,7 @@ const DebugPanel = () => {
 const DebugCard = React.memo(({ event_id }: { event_id: string }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   // const [event, setEvent] = useState<any>(null);
-  const [title, setTitle] = useState<string>("");
+  const [label, setLabel] = useState<string>("");
   const [result, setResult] = useState<any>(null);
   const [createdAt, setCreatedAt] = useState<any>(null);
 
@@ -88,12 +88,12 @@ const DebugCard = React.memo(({ event_id }: { event_id: string }) => {
     try {
       // console.log("event_id", event_id);
       const data = await getEvent(event_id);
-      // console.log("data in DebugCard direct query", data);
+      console.log("data in DebugCard direct query", data);
 
       if (data) {
-        if (data?.event_context) {
-          setTitle(data?.event_context?.title);
-        }
+        // if (data?.event_context) {
+          setLabel(data?.node_label);
+        // }
 
         if (data?.event_result) {
           setResult(data?.event_result);
@@ -125,7 +125,7 @@ const DebugCard = React.memo(({ event_id }: { event_id: string }) => {
         }
       )}
     >
-      <div className="text-2xl">{title}</div>
+      <div className="text-2xl">{label}</div>
       {createdAt ? (
         <div className="text-xsm">
           {formatDistanceToNow(new Date(createdAt), {

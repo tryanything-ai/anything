@@ -17,11 +17,11 @@ const NodePanel = () => {
     <div className="flex flex-col h-full p-4 border-l border-gray-500 overflow-y-auto">
       <h1 className="text-2xl font-bold pb-2">Triggers</h1>
       {triggerNodes.map((node: Node) => (
-        <NodeDnD node={node} key={node.nodePresentationData.title} />
+        <NodeDnD node={node} key={node.nodePresentationData.node_label} />
       ))}
       <h1 className="text-2xl font-bold py-2">Actions</h1>
       {actionNodes.map((node: Node) => (
-        <NodeDnD node={node} key={node.nodePresentationData.title} />
+        <NodeDnD node={node} key={node.nodePresentationData.node_label} />
       ))}
     </div>
   );
@@ -59,7 +59,7 @@ const NodeDnD = ({ node }: { node: Node }) => {
         }`}
       />
       <h1 className="text-lg truncate overflow-ellipsis pl-2">
-        {node.nodePresentationData.title}
+        {node.nodePresentationData.node_label}
       </h1>
       {/* {node.nodePresentationData.image_src ? (
         <img

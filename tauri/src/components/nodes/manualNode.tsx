@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AnythingNodeProps, Node } from "../../utils/nodeUtils";
+import { AnythingNodeProps } from "../../utils/nodeUtils";
 import { useSqlContext, EventInput } from "../../context/SqlProvider";
 import { useParams } from "react-router-dom";
 import clsx from "clsx";
@@ -21,9 +21,11 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
       flow_name: flow_name,
       flow_version: "0.0.1",
       node_id: id,
-      node_type: "manualNode", //node type, lets the machine know it should boostrap the
+      node_type: "manualNode", //node type for reactFlow
+      node_label: "Manual Trigger", //For display in UI
+      worker_name: "manual_trigger", //for accessing node results by name in props
       stage: "dev",
-      worker_type: "start",
+      worker_type: "start", //for backend processing
       event_status: "PENDING", //EVENT STATUS
       session_status: "PENDING", //SESSION STATUS
       created_at: new Date().toISOString(),
@@ -48,7 +50,9 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
         >
           <BaseNodeIcon icon="VscPlayCircle" />
         </button>
-        <div className="flex flex-col justify-center p-4">{data.title}</div>
+        <div className="flex flex-col justify-center p-4">
+          {data.node_label}
+        </div>
       </div>
     </BaseNode>
   );

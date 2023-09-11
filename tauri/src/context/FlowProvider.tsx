@@ -150,7 +150,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       id: nextId,
       type,
       position,
-      data: { label: `Node ${nextId}`, ...specialData },
+      data: { ...specialData },
     };
 
     setNodes((nodes) => {
