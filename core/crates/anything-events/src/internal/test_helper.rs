@@ -1,23 +1,52 @@
 #![allow(unused)]
 use crate::{
     config::AnythingEventsConfig,
+    context::Context,
     errors::EventsResult,
     models::{
         event::{CreateEvent, Event, EventId},
         tag::Tag,
     },
-    repositories::event_repo::EventRepoImpl,
+    repositories::{self, event_repo::EventRepoImpl, Repositories},
 };
 use chrono::Utc;
 use fake::Fake;
 use serde_json::Value;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, SqlitePool};
-use std::collections::HashMap;
+use std::{borrow::BorrowMut, collections::HashMap, sync::Arc};
 
 pub fn get_test_config() -> AnythingEventsConfig {
     let mut config = AnythingEventsConfig::default();
     config.database.uri = "sqlite::memory:".to_string();
     config
+}
+
+pub async fn get_test_context() -> Context {
+    let config = get_test_config();
+    let pool = get_test_pool().await.unwrap();
+    let event_repo = TestEventRepo::new_with_pool(&pool);
+    let repositories = Arc::new(Repositories {
+        event_repo: event_repo.event_repo,
+    });
+    Context {
+        pool: Arc::new(pool.clone()),
+        config,
+        repositories,
+    }
+}
+
+pub async fn get_test_context_from_pool(pool: &SqlitePool) -> Context {
+    let config = get_test_config();
+    // let pool = Arc::new(get_test_pool().await.unwrap());
+    let event_repo = TestEventRepo::new_with_pool(pool);
+    let repositories = Arc::new(Repositories {
+        event_repo: event_repo.event_repo,
+    });
+    Context {
+        pool: Arc::new(pool.clone()),
+        config,
+        repositories,
+    }
 }
 
 pub async fn get_test_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
@@ -43,8 +72,9 @@ pub async fn select_all_events(pool: &SqlitePool) -> EventsResult<Vec<Event>> {
 
 pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EventsResult<i64> {
     let res = sqlx::query(
-        r#"INSERT INTO events (event_name, payload, metadata, tags) VALUES (?, ?, ?, ?)"#,
+        r#"INSERT INTO events (source_id, event_name, payload, metadata) VALUES (?, ?, ?, ?)"#,
     )
+    .bind(event.source_id)
     .bind(event.event_name)
     .bind(event.payload)
     .bind(event.metadata)
@@ -73,14 +103,14 @@ pub async fn insert_n_dummy_data(pool: &SqlitePool, count: i8) -> EventsResult<(
     Ok(())
 }
 
-pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<()> {
+pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<EventId> {
     let payload = generate_dummy_hashmap();
     let metadata = generate_dummy_hashmap();
-    let tag_words: Vec<String> = fake::faker::lorem::en::Words(3..5).fake();
-    let tags = tag_words
-        .into_iter()
-        .map(|f| f.into())
-        .collect::<Vec<Tag>>();
+    // let tag_words: Vec<String> = fake::faker::lorem::en::Words(3..5).fake();
+    // let tags = tag_words
+    //     .into_iter()
+    //     .map(|f| f.into())
+    //     .collect::<Vec<Tag>>();
 
     let fake_event = Event {
         id: i64::default(),
@@ -92,9 +122,9 @@ pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<()> {
         timestamp: Utc::now(),
     };
 
-    let _res = insert_new_event(pool, fake_event).await?;
+    let _res = insert_new_event(pool, fake_event.clone()).await?;
 
-    Ok(())
+    Ok(fake_event.id)
 }
 
 fn generate_dummy_hashmap() -> HashMap<String, String> {
@@ -117,9 +147,27 @@ pub struct TestEventRepo {
 impl TestEventRepo {
     pub async fn new() -> Self {
         let pool = get_test_pool().await.expect("unable to get test pool");
-        let event_repo = EventRepoImpl::new(&pool);
-        Self { pool, event_repo }
+        Self::new_with_pool(&pool)
     }
+
+    pub fn new_with_pool(pool: &SqlitePool) -> Self {
+        let event_repo = EventRepoImpl::new(&pool);
+        Self {
+            pool: pool.clone(),
+            event_repo,
+        }
+    }
+
+    // pub async fn new_from_context(context: Context) -> Self {
+    //     let pool = (&*context.pool).clone();
+    //     let event_repo = EventRepoImpl::new(&pool);
+    //     let context = get_test_context().await;
+    //     Self {
+    //         pool,
+    //         event_repo,
+    //         context,
+    //     }
+    // }
 
     pub fn dummy_create_event(&self) -> CreateEvent {
         CreateEvent {
@@ -130,7 +178,7 @@ impl TestEventRepo {
         }
     }
 
-    pub async fn insert_dummy_data(&self) -> EventsResult<Event> {
+    pub async fn insert_dummy_event(&self) -> EventsResult<Event> {
         let mut event = Event {
             id: i64::default(),
             event_name: fake::faker::name::en::Name().fake(),
