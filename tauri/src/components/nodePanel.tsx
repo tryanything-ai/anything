@@ -61,17 +61,6 @@ const NodeDnD = ({ node }: { node: Node }) => {
       <h1 className="text-lg truncate overflow-ellipsis pl-2">
         {node.nodePresentationData.node_label}
       </h1>
-      {/* {node.nodePresentationData.image_src ? (
-        <img
-          src={node.nodePresentationData.image_src}
-          alt={node.nodePresentationData.alt}
-          className="max-w-full max-h-full mt-2 ml-4"
-        />
-      ) : (
-        <h1 className="text-lg truncate overflow-ellipsis">
-          {node.nodePresentationData.title}
-        </h1>
-      )} */}
     </div>
   );
 };
