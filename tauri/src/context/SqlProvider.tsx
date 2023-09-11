@@ -16,7 +16,9 @@ export type EventInput = {
   flow_version: string; //flows will have versions so you can have confidence messing arround in future
   node_id: string; //represents exact_id inside a flow
   node_type: string; //represents front_end representation of node
+  node_label: string; //what the user will see in the flow
   worker_type: string; //worker type === "start" or "javascript interpreter" or "rest" etc
+  worker_name: string; //what the user will use to reference the node in props for args. needs to be snake_case
   stage: string;
   event_status: string;
   session_status: string;
@@ -68,20 +70,24 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
 
   const addEvent = async (event: EventInput) => {
     try {
+      //TODO: implement in rust. this does not conform exactly to event_context and other things usually shaped in rust
       await db.execute(
-        "INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+        "INSERT INTO events (event_id, session_id, node_id, node_type, node_label, flow_id, flow_name, flow_version, stage, worker_type, worker_name, event_status, session_status, event_context, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
         [
           uuidv4(),
           uuidv4(),
           event.node_id,
           event.node_type,
+          event.node_label,
           event.flow_id,
           event.flow_name,
           event.flow_version,
           event.stage,
           event.worker_type,
+          event.worker_name,
           event.event_status,
           event.session_status,
+          event, //context
           event.created_at,
           event.data,
         ]
@@ -130,10 +136,12 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
       session_id TEXT,
       node_id TEXT,
       node_type TEXT,
+      node_label TEXT, 
       flow_id TEXT,
       flow_name TEXT,
       flow_version TEXT,
       worker_type TEXT,
+      worker_name TEXT,
       stage TEXT,
       event_status TEXT,
       session_status TEXT,

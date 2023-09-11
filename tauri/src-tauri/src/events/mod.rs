@@ -134,6 +134,7 @@ async fn create_event<R: tauri::Runtime>(
     let db = DB_STRING.to_string();
 
     // Extract node details and other required information
+    //hella ugly but it works. please clean
     let node_id = node.get("id").and_then(|v| v.as_str()).unwrap_or_default();
     let node_type = node.get("type").and_then(|v| v.as_str()).unwrap_or_default();
     let data = node.get("data").and_then(|v| v.as_str()).unwrap_or_default();
@@ -141,6 +142,15 @@ async fn create_event<R: tauri::Runtime>(
                           .and_then(|data| data.get("worker_type"))
                           .and_then(|wt| wt.as_str())
                           .unwrap_or_default();
+    let worker_name = node.get("data")
+                        .and_then(|data| data.get("worker_name"))
+                        .and_then(|wt| wt.as_str())
+                        .unwrap_or_default();
+    let node_label = node.get("data")
+                        .and_then(|data| data.get("node_label"))
+                        .and_then(|wt| wt.as_str())
+                        .unwrap_or_default();
+
 
     // Flow specific info (adjust as per your requirement)
     let flow_id = flow_info.get("id").and_then(|v| v.as_str()).unwrap_or_default();
@@ -154,8 +164,8 @@ async fn create_event<R: tauri::Runtime>(
     println!("node data from find node data by id: {}", node_data);
 
     let query = "
-        INSERT INTO events (event_id, session_id, node_id, node_type, flow_id, flow_name, flow_version, stage, worker_type, event_status, session_status, created_at, data, event_context) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        INSERT INTO events (event_id, session_id, node_id, node_type, node_label, flow_id, flow_name, flow_version, stage, worker_type, worker_name, event_status, session_status, created_at, data, event_context) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
     ";
 
     let values = vec![
@@ -163,11 +173,13 @@ async fn create_event<R: tauri::Runtime>(
         JsonValue::String(session_id.to_string()),           // session_id
         JsonValue::String(node_id.to_string()),              // node_id
         JsonValue::String(node_type.to_string()),            // node_type
+        JsonValue::String(node_label.to_string()),            // node_label
         JsonValue::String(flow_id.to_string()),              // flow_id
         JsonValue::String(flow_name.to_string()),            // flow_name
         JsonValue::String(flow_version.to_string()),         // flow_version
         JsonValue::String("dev".to_string()),                // stage
         JsonValue::String(worker_type.to_string()),          // worker_type
+        JsonValue::String(worker_name.to_string()),          // worker_name
         JsonValue::String("PENDING".to_string()),            // event_status
         JsonValue::String("PENDING".to_string()),            // session_status
         JsonValue::String(Utc::now().to_rfc3339()),          // created_at

@@ -15,10 +15,12 @@ interface Event {
   session_id: string;
   node_id: string;
   node_type: string;
+  node_label: string; 
   flow_id: string;
   flow_name: string;
   flow_version: string;
   worker_type: string;
+  worker_name: string;
   stage: string;
   event_status: string;
   session_status: string;
@@ -51,6 +53,11 @@ export const eventColumnDefs = [
     cell: (info) => <span>{info.getValue()}</span>,
     header: () => <span>Node Type</span>,
   }),
+  columnHelper.accessor((event: Event) => event.node_label, {
+    id: "node_label",
+    cell: (info) => <span>{info.getValue()}</span>,
+    header: () => <span>Node Label</span>,
+  }),
   columnHelper.accessor((event: Event) => event.flow_id, {
     id: "flow_id",
     cell: (info) => <span>{info.getValue()}</span>,
@@ -70,6 +77,11 @@ export const eventColumnDefs = [
     id: "worker_type",
     cell: (info) => <span>{info.getValue()}</span>,
     header: () => <span>Worker Type</span>,
+  }),
+  columnHelper.accessor((event: Event) => event.worker_name, {
+    id: "worker_name",
+    cell: (info) => <span>{info.getValue()}</span>,
+    header: () => <span>Worker Name</span>,
   }),
   columnHelper.accessor((event: Event) => event.stage, {
     id: "stage",
