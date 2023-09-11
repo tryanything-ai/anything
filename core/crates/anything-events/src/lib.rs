@@ -3,6 +3,7 @@ pub mod config;
 pub(crate) mod context;
 pub(crate) mod errors;
 // pub(crate) mod events;
+pub(crate) mod callbacks;
 pub(crate) mod db;
 pub(crate) mod events;
 pub(crate) mod models;
