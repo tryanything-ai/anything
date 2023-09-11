@@ -7,9 +7,11 @@ use crate::{
         event::{CreateEvent, Event, EventId},
         tag::Tag,
     },
+    post_office::PostOffice,
     repositories::{self, event_repo::EventRepoImpl, Repositories},
 };
 use chrono::Utc;
+use crossbeam::channel::Sender;
 use fake::Fake;
 use serde_json::Value;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, SqlitePool};
@@ -142,6 +144,7 @@ fn generate_dummy_hashmap() -> HashMap<String, String> {
 pub struct TestEventRepo {
     pub pool: SqlitePool,
     pub event_repo: EventRepoImpl,
+    pub post_office: PostOffice,
 }
 
 impl TestEventRepo {
@@ -155,7 +158,12 @@ impl TestEventRepo {
         Self {
             pool: pool.clone(),
             event_repo,
+            post_office: PostOffice::open(),
         }
+    }
+
+    pub async fn with_sender(&self) -> Sender<Event> {
+        self.post_office.post_mail().await.unwrap()
     }
 
     // pub async fn new_from_context(context: Context) -> Self {

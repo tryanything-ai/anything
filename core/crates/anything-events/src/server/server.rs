@@ -57,7 +57,9 @@ impl Server {
             .build()
             .unwrap();
 
-        let event_manager = EventManager::new(&self.context);
+        let sender = self.post_office.post_mail().await?;
+
+        let event_manager = EventManager::new(&self.context, sender);
         let event_server = EventsServer::new(event_manager);
 
         tonic::transport::Server::builder()
