@@ -31,7 +31,6 @@ pub mod test_helpers {
 
     pub fn make_action(name: &str, action_type: ActionType) -> Action {
         ActionBuilder::default()
-            .id(name)
             .action_type(action_type)
             .build()
             .expect("unable to create action")

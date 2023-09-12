@@ -9,7 +9,7 @@ edition = "2021"
 
 chrono = { workspace = true, features = ["serde"] }
 daggy = { version = "0.8.0", features = ["serde-1"] }
-serde = { workspace = true }
+serde = { workspace = true, features = [] }
 derive_builder = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
@@ -20,3 +20,4 @@ anything-core = { workspace = true }
 serde_json.workspace = true
 indexmap = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4", "serde"] }
+toml = "0.7.8"
