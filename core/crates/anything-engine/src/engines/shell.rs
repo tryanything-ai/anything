@@ -14,9 +14,13 @@ use fs_extra::{copy_items, dir};
 use miette::IntoDiagnostic;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{EngineError, EngineResult};
+use crate::{
+    context::ExecutionContext,
+    error::{EngineError, EngineResult},
+    types::{ExecEnv, Process, ProcessState},
+};
 
-use super::{Engine, ExecEnv, Process, ProcessState};
+use super::Engine;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ShellEngine {
@@ -34,6 +38,15 @@ impl ShellEngine {
 }
 
 impl ShellEngine {
+    pub fn validate(&self) -> EngineResult<bool> {
+        // Validate command is greater than ""
+        if self.config.command.is_empty() {
+            return Err(EngineError::ShellError("command is empty".to_string()));
+        }
+
+        Ok(true)
+    }
+
     pub fn clean(&self) -> EngineResult<()> {
         if self.process.is_none() {
             tracing::error!("Cannot clean a process that has not run");
@@ -98,8 +111,8 @@ impl ShellEngine {
 }
 
 impl Engine for ShellEngine {
-    // TODO: continue run?
-    fn run(&mut self) -> EngineResult<()> {
+    /// Run a shell engine command from a Node's `ShellAction` configuration
+    fn run(&mut self, context: &ExecutionContext) -> EngineResult<()> {
         self.validate()?;
 
         let uuid = uuid::Uuid::new_v4();
@@ -174,13 +187,11 @@ impl Engine for ShellEngine {
         Ok(())
     }
 
-    fn validate(&self) -> EngineResult<bool> {
-        // Validate command is greater than ""
-        if self.config.command.is_empty() {
-            return Err(EngineError::ShellError("command is empty".to_string()));
+    fn get_process(&self) -> EngineResult<Process> {
+        match self.process.clone() {
+            None => Err(EngineError::ShellProcessHasNotRunError),
+            Some(v) => Ok(v),
         }
-
-        Ok(true)
     }
 }
 
@@ -202,7 +213,9 @@ mod tests {
             process: None,
         };
 
-        action.run()?;
+        let context = ExecutionContext::default();
+
+        action.run(&context)?;
         assert!(action.process.is_some());
         let process = action.process.unwrap();
         assert!(process.state.stdout.is_some());
@@ -224,7 +237,8 @@ mod tests {
             process: None,
         };
 
-        let res = action.run();
+        let context = ExecutionContext::default();
+        let res = action.run(&context);
         assert!(res.is_err());
         Ok(())
     }

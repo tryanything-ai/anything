@@ -15,6 +15,15 @@ pub enum AppError {
     #[error("Panic: {0}")]
     Panic(String),
 
+    #[error("File not found: {0}")]
+    FileNotFound(String),
+
+    #[error(transparent)]
+    FileReadError(#[from] std::io::Error),
+
+    #[error("flow file parsing error")]
+    FlowFileParsingError(#[from] toml::de::Error),
+
     #[error("Config error: {0}")]
     ConfigError(ConfigError),
 

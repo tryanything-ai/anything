@@ -4,6 +4,7 @@ use serde_json::Value;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum Trigger {
     Empty(EmptyTrigger),
+    FileChange(FileChangeTrigger),
     Webhook(WebhookTrigger),
     Schedule(ScheduleTrigger),
     Manual(ManualTrigger),
@@ -30,10 +31,15 @@ pub struct WebhookTrigger {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ManualTrigger {
     pub name: String,
-    pub version: String,
+    pub settings: Value,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ScheduleTrigger {
+    pub settings: Value,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct FileChangeTrigger {
     pub settings: Value,
 }

@@ -1,23 +1,24 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{AppError, AppResult};
 
-use super::{action::Action, common::PackageData, trigger::Trigger};
+use super::{action::Action, common::PackageData};
 pub type NodeGroup = Vec<Node>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct Node {
+    pub id: String,
     pub name: String,
-    pub trigger: Option<Trigger>,
+    pub label: String,
+    // pub trigger: Option<Trigger>,
     pub state: NodeState,
     pub node_action: Action,
     pub depends_on: Vec<String>,
-    pub run_started: Option<DateTime<Utc>>,
-    pub input: indexmap::IndexMap<String, String>,
+    // pub input: indexmap::IndexMap<String, String>,
+    // pub output: indexmap::IndexMap<String, String>, // TODO: should we make this serializable instead of a simple string?
     pub package_data: PackageData,
 }
 
@@ -30,14 +31,15 @@ impl Node {
 impl Default for Node {
     fn default() -> Self {
         Self {
+            id: String::default(),
             name: String::default(),
+            label: String::default(),
             package_data: PackageData::default(),
-            trigger: None,
             state: NodeState::default(),
             node_action: Action::default(),
             depends_on: Vec::default(),
-            run_started: None,
-            input: indexmap::IndexMap::new(),
+            // input: indexmap::IndexMap::new(),
+            // output: indexmap::IndexMap::new(),
         }
     }
 }
@@ -58,7 +60,6 @@ pub enum NodeState {
     Success,
     SuccessNoop,
     Failed,
-    Skipped(String),
 }
 
 impl Default for NodeState {

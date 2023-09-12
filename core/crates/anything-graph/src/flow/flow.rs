@@ -12,10 +12,12 @@ use super::{
 };
 
 // TODO: add node transitions
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Builder)]
+#[builder(setter(into, strip_option), default)]
 pub struct Flow {
-    pub id: String,
     pub name: String,
+    pub version: Option<String>,
+    pub description: Option<String>,
     pub trigger: Trigger,
     dag: Dag<Node, ()>,
     root: NodeIndex,
@@ -29,8 +31,9 @@ impl Flow {
 
         let parent = new_dag.add_node(root_node);
         Self {
-            id: String::default(),
             name: String::default(),
+            version: None,
+            description: None,
             dag: new_dag,
             root: parent,
             trigger: Trigger::default(),
@@ -75,7 +78,6 @@ impl Flow {
         format!("{}\n{}{}{}", title, node_names, node_connections, "}")
     }
 
-    #[cfg(test)]
     pub fn add_node_obj(&mut self, node: &Node) -> AppResult<bool> {
         let depends_on = node
             .depends_on
@@ -180,14 +182,16 @@ impl Flow {
             let node_group = lvl
                 .iter()
                 .map(|node| Node {
+                    id: node.id.clone(),
                     name: node.name.clone(),
+                    label: node.label.clone(),
                     state: node.state.clone(),
                     package_data: node.package_data.clone(),
-                    trigger: node.trigger.clone(),
+                    // trigger: node.trigger.clone(),
                     node_action: node.node_action.clone(),
                     depends_on: node.depends_on.clone(),
-                    run_started: node.run_started.clone(),
-                    input: node.input.clone(),
+                    // input: node.input.clone(),
+                    // output: node.output.clone(),
                 })
                 .collect::<Vec<Node>>();
             match node_list.add_list(node_group) {
