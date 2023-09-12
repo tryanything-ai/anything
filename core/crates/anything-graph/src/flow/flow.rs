@@ -326,6 +326,7 @@ mod test {
                 command: "echo".to_string(),
                 executor: Some("sh -c".to_string()),
                 args: Vec::default(),
+                cwd: None,
             }),
         );
         let mut node = make_node("first_node", &vec![]);
@@ -380,6 +381,7 @@ mod test {
                 command: "echo".to_string(),
                 executor: Some("sh -c".to_string()),
                 args: Vec::default(),
+                cwd: None,
             }),
         );
         let mut node = make_node("output-forecast", &vec!["print_forecast"]);
