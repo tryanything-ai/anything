@@ -49,3 +49,5 @@ pub async fn call_api(api_request: ApiRequest) -> Result<String, Error> {
         Err(response.error_for_status().unwrap_err())
     }
 }
+
+

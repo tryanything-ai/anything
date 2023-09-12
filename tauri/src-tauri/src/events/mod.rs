@@ -454,7 +454,15 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                 Err(_) => None,
             };
             
-            let body = context_json["body"].as_str().map(|s| s.to_string());
+            // let body = context_json["body"].as_str().map(|s| s.to_string());
+
+            // Assuming body is a JSON object or string, convert to a serialized string
+            let body = match &context_json["body"] {
+                JsonValue::Object(obj) => Some(serde_json::to_string(obj).unwrap_or_default()),
+                JsonValue::Array(arr) => Some(serde_json::to_string(arr).unwrap_or_default()),
+                JsonValue::String(s) => Some(s.clone()),
+                _ => None,
+            };
         
             let api_request = ApiRequest {
                 method,
@@ -463,6 +471,7 @@ async fn execute_worker_task(app: &AppHandle, worker_type: &str, event_data: &Ha
                 body,   
             };
 
+            println!("api_request: {:?}", api_request);
             return match call_api(api_request).await {
                 Ok(result) => Ok(result),
                 Err(e) => Err(e.to_string()) 

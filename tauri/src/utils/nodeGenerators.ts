@@ -102,10 +102,10 @@ export const NODES: Node[] = [
   {
     nodeType: "superNode",
     nodeConfigurationData: {
-      url: "",
-      method: "",
-      headers: "",
-      body: "",
+      url: "https://api.openai.com/v1/chat/completions",
+      method: "POST",
+      headers: '{"Authorization":"Bearer OPEN_AI_API_KEY", "Content-Type":"application/json"}',
+      body: '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Act like Hermione Granger and be pithy. She just tried a spell and it mostly worked."}], "temperature": 0.7 }'
     },
     nodePresentationData: {
       node_label: "OpenAI Action",
