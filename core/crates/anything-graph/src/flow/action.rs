@@ -45,6 +45,7 @@ pub struct ShellAction {
     pub executor: Option<String>,
     pub command: String,
     pub args: Vec<String>,
+    pub cwd: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

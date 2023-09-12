@@ -57,7 +57,7 @@ pub enum NodeState {
     Running,
     Success,
     SuccessNoop,
-    Failed(String),
+    Failed,
     Skipped(String),
 }
 

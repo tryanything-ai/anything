@@ -63,6 +63,7 @@ pub mod test_helpers {
                 command: "curl".to_string(),
                 executor: Some("sh -c".to_string()),
                 args: Vec::default(),
+                cwd: None,
             }),
         );
         let mut node = make_node("get_weather_node", &vec![]);
@@ -77,6 +78,7 @@ pub mod test_helpers {
                 command: "echo".to_string(),
                 executor: Some("sh -c".to_string()),
                 args: Vec::default(),
+                cwd: None,
             }),
         );
 
