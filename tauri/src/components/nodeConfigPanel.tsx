@@ -68,7 +68,7 @@ const NodeConfigPanel = () => {
 
           if (typeof value === "string" || typeof value === "number") {
             return (
-              <div>
+              <div key={key}>
                 <div className="mb-1">{key}:</div>
                 <input
                   type="text"

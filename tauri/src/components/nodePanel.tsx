@@ -14,7 +14,7 @@ const NodePanel = () => {
 
   //TODO: add flows in some future where we can facilitate
   return (
-    <div className="flex flex-col h-full p-4 border-l border-gray-500 overflow-y-auto hide-scrollbar">
+    <div className="flex flex-col h-full p-4 overflow-y-auto hide-scrollbar">
       <h1 className="text-2xl font-bold pb-2">Triggers</h1>
       {triggerNodes.map((node: Node) => (
         <NodeDnD node={node} key={node.nodePresentationData.node_label} />
