@@ -2,7 +2,14 @@
 
 ✨ The next-generation local automation tool: Think Zapier, but on your Mac, supercharged with AI!
 
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_aug_10.gif)
+### Drag it and drop it
+
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_dnd_sept_11.gif)
+
+
+### Make Anything happen
+
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_sept_11.gif)
 
 
 ### 🌟 Welcome to Anything - the future of local automation! 
