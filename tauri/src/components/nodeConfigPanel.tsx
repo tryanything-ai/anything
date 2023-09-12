@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSqlContext } from "../context/SqlProvider";
 import { useParams } from "react-router-dom";
-import { useNavigationContext } from "../context/NavigationProvider";
+import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { VscClose } from "react-icons/vsc";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import { useForm, Controller } from "react-hook-form";
 
 const NodeConfigPanel = () => {
-  const { nodeId, setNodeConfigPanel } = useNavigationContext();
+  const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();
   const { readNodeConfig, writeNodeConfig } = useLocalFileContext();
 
   const { flow_name } = useParams();
@@ -42,11 +41,17 @@ const NodeConfigPanel = () => {
   } = useForm();
 
   const onSubmit = (data: any) => {
+    if (!flow_name) return;
+    if (!nodeId) return;
+    console.log("Hit Node Config Submit");
     console.log(data);
+
+    writeNodeConfig(nodeId, flow_name, data);
+    setNodeConfigPanel(false, "");
   };
 
   return (
-    <div className="flex flex-col h-full border-l border-gray-500">
+    <div className="flex flex-col h-full border-l border-gray-500 overflow-y-auto">
       <button
         className="m-1 btn btn-ghost btn-square btn-xs w-6 h-6 absolute right-0"
         onClick={() => setNodeConfigPanel(false, "")}
@@ -63,15 +68,18 @@ const NodeConfigPanel = () => {
 
           if (typeof value === "string" || typeof value === "number") {
             return (
-              <div>
+              <div key={key}>
                 <div className="mb-1">{key}:</div>
                 <input
                   type="text"
-                  placeholder="Type here"
                   className="input input-bordered input-md w-full"
-                  defaultValue={flow_name}
-                  {...register(key, { required: true })}
+                  // value={value}
+                  defaultValue={value}
+                  {...register(key)}
                 />
+                {errors[key] && (
+                  <span>{JSON.stringify(errors[key]?.message)}</span>
+                )}
               </div>
             );
           } else if (typeof value === "boolean") {
@@ -93,12 +101,12 @@ const NodeConfigPanel = () => {
                   </label>
                 )}
               />
-          )
+            );
           }
           // Extend this to handle other types as needed
         })}
         <button className="mt-2 btn btn-primary" type="submit">
-          Submit
+          Save
         </button>
       </form>
     </div>

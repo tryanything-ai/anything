@@ -19,7 +19,6 @@ import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
-import { NavigationProvider } from "./context/NavigationProvider";
 import { EventLoopProvider } from "./context/EventLoopProvider";
 import { ModelProvider } from "./context/ModelsProvider";
 import "./styles.css";
@@ -52,11 +51,11 @@ const router = createBrowserRouter([
       },
       {
         path: "/chats",
-        element: <Chats/>
+        element: <Chats />,
       },
       {
         path: "/chats/:flow_id",
-        element: <ChatInterface />
+        element: <ChatInterface />,
       },
       {
         path: "/tables",
@@ -82,9 +81,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <SqlProvider>
             <EventLoopProvider>
               <SettingsProvider>
-                <NavigationProvider>
-                  <RouterProvider router={router} />
-                </NavigationProvider>
+                <RouterProvider router={router} />
               </SettingsProvider>
             </EventLoopProvider>
           </SqlProvider>

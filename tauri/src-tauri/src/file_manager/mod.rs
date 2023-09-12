@@ -30,9 +30,14 @@ pub fn get_chat_flows() -> Result<Vec<FlowInfo>, String> {
             let parsed_toml: JsonValue = toml::from_str(&toml_content).map_err(|e| e.to_string())?;
             //BUG: broken when we changed how we generate Nodes
             if let Some(nodes) = parsed_toml.get("nodes") {
+                println!("nodes in chat finder {:?}", nodes);
                 for node in nodes.as_array().unwrap() {
-                    if let Some(node_type) = node.get("type") {
-                        if node_type.as_str().unwrap_or("") == "receiveChatNode" {
+                    if let Some(node_data) = node.get("data") {
+                        println!("node type {:?}", node_data.as_str());
+                        if let Some(node_label) = node_data.get("node_label") {
+                            println!("node type {:?}", node_label.as_str());
+                        //TODO: this is a bad hack. We need a better way to do this
+                        if node_label.as_str().unwrap_or("") == "App Chat Trigger" {
                             // flows_with_receive_chat_node.push(flow_name.to_string());
                             if let Some(flow_value) = parsed_toml.get("flow") {
                                 flows_with_receive_chat_node.push(FlowInfo {
@@ -46,6 +51,7 @@ pub fn get_chat_flows() -> Result<Vec<FlowInfo>, String> {
                             }
                             break;
                         }
+                    } 
                     }
                 }
             }
