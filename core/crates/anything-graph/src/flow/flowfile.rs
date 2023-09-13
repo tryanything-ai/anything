@@ -6,7 +6,7 @@ use serde_json::Value;
 use std::{collections::HashMap, path::PathBuf};
 
 use super::{
-    action::{Action, ActionBuilder, ActionType, EmptyAction, ShellAction},
+    action::{Action, ActionBuilder, ActionType, EmptyAction, RestAction, ShellAction},
     flow::Flow,
     node::Node,
     trigger::Trigger,
@@ -119,18 +119,28 @@ struct ParseAction {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-struct ParseConfig {
+struct ParseShellConfig {
     pub command: String,
     pub executor: Option<String>,
     pub args: Option<Vec<HashMap<String, String>>>,
     pub cwd: Option<String>,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+struct ParseRestConfig {
+    pub url: String,
+    pub method: Option<String>,
+    pub headers: Option<Vec<HashMap<String, String>>>,
+    pub body: Option<String>,
+    pub response_type: Option<String>,
+    pub query_params: Option<Vec<HashMap<String, String>>>,
+}
+
 impl Into<Action> for ParseAction {
     fn into(self) -> Action {
         let action_type = match self.action_type.to_lowercase().as_str() {
             "shell" => {
-                let config: ParseConfig =
+                let config: ParseShellConfig =
                     serde_json::from_str(self.config.to_string().as_str()).unwrap();
 
                 let args_map = optional_vec_map_into_hashmap(config.args);
@@ -140,6 +150,20 @@ impl Into<Action> for ParseAction {
                     executor: config.executor,
                     args: args_map,
                     cwd: config.cwd,
+                })
+            }
+            "rest" => {
+                let config: ParseRestConfig =
+                    serde_json::from_str(self.config.to_string().as_str()).unwrap();
+                let headers = optional_vec_map_into_hashmap(config.headers);
+                let query_params = optional_vec_map_into_hashmap(config.query_params);
+                ActionType::Rest(RestAction {
+                    url: config.url,
+                    method: config.method,
+                    headers: headers,
+                    body: config.body,
+                    response_type: config.response_type,
+                    query_params: query_params,
                 })
             }
             _ => ActionType::Empty(EmptyAction {}),

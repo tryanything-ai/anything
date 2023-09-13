@@ -78,14 +78,6 @@ impl Default for NodeState {
     }
 }
 
-pub enum NodeType {
-    Shell(ShellNode),
-    Missing,
-}
-
-// TODO:
-pub struct ShellNode {}
-
 #[derive(Clone, Debug)]
 pub struct NodeList {
     pub nodes: Vec<NodeGroup>,

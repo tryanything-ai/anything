@@ -33,7 +33,7 @@ impl Executor {
 
     // TODO: parallelize this by breaking each flow "level" and concurrently execute when possible
     // For now this is a simple linear execution
-    pub fn run(&mut self) -> EngineResult<()> {
+    pub async fn run(&mut self) -> EngineResult<()> {
         let execution_nodes = self
             .context
             .lock()
@@ -42,7 +42,7 @@ impl Executor {
             .get_node_execution_list(None)?;
 
         for node in execution_nodes.into_iter() {
-            let node_execution = self.run_node(node)?;
+            let node_execution = self.run_node(node).await?;
             self.context
                 .lock()
                 .unwrap()
@@ -55,19 +55,17 @@ impl Executor {
         Ok(())
     }
 
-    pub fn run_node(&mut self, node: Node) -> EngineResult<NodeExecutionContext> {
+    pub async fn run_node(&mut self, node: Node) -> EngineResult<NodeExecutionContext> {
         let mut engine = get_engine(node.clone());
         let mut node_execution_context =
             engine.render(&node, &self.context.lock().unwrap().clone())?;
 
         // Call the engine to run the node
-        match engine.run(&node_execution_context) {
+        match engine.run(&node_execution_context).await {
             Err(e) => return Err(e),
-            Ok(_executed) => {
-                if let Some(process) = engine.process() {
-                    node_execution_context.process = Some(process.clone());
-                    node_execution_context.status = process.state.status;
-                }
+            Ok(process) => {
+                node_execution_context.process = Some(process.clone());
+                node_execution_context.status = process.state.status;
             }
         }
         Ok(node_execution_context)
@@ -89,12 +87,34 @@ mod tests {
             .unwrap()
             .flow;
         let mut executor = Executor::new(&flow);
-        let run = executor.run();
+        let run = executor.run().await;
         assert!(run.is_ok());
         let context = executor.context.lock().unwrap(); // Get the final output
         assert_eq!(context.executed.len(), 2);
 
-        println!("context last output: {:?}", context.latest_output.stdout);
+        assert!(!context.latest_output.stdout.is_none());
+
+        let latest_output = context.latest_output.stdout.as_ref().unwrap().clone();
+        assert_eq!(latest_output, "Heres my cheers: Jingle Bells".to_string());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_run_with_rest_node() -> Result<()> {
+        let flow = Flowfile::from_file(PathBuf::from("tests/fixtures/with_rest.toml"))
+            .unwrap()
+            .flow;
+        let mut executor = Executor::new(&flow);
+        let run = executor.run().await;
+        assert!(run.is_ok());
+        let context = executor.context.lock().unwrap(); // Get the final output
+        assert_eq!(context.executed.len(), 2);
+
+        let latest_output = context.latest_output.stdout.as_ref().unwrap().clone();
+        tracing::debug!("latest_output: {}", latest_output);
+        assert!(latest_output.contains("latitude"));
+        assert!(latest_output.contains("timezone"));
+
         Ok(())
     }
 }

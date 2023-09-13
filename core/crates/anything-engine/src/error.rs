@@ -17,6 +17,9 @@ pub enum EngineError {
 
     #[error("error running flow")]
     FlowRunError(#[from] AppError),
+
+    #[error("error making request")]
+    RequestError(#[from] reqwest::Error),
 }
 
 impl From<ErrReport> for EngineError {

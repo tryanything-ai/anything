@@ -10,6 +10,7 @@ anything-graph = { path = "../anything-graph" }
 anything-core = { path = "../anything-core" }
 
 serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 
@@ -21,3 +22,7 @@ tracing = { workspace = true }
 fs_extra = "1.3.0"
 tera = "1.19.1"
 derive_builder = { workspace = true }
+reqwest = { version = "0.11.20", features = ["json"] }
+
+async-trait = { workspace = true }
+url = { version = "2.4.1", features = ["serde"] }

@@ -22,10 +22,11 @@ impl EmptyEngine {
     }
 }
 
+#[async_trait::async_trait]
 impl Engine for EmptyEngine {
-    fn run(&mut self, _context: &NodeExecutionContext) -> EngineResult<()> {
+    async fn run(&mut self, _context: &NodeExecutionContext) -> EngineResult<Process> {
         self.process = Some(Process::default());
-        Ok(())
+        Ok(self.process.clone().unwrap())
     }
     fn process(&self) -> Option<Process> {
         self.process.clone()
@@ -35,10 +36,12 @@ impl Engine for EmptyEngine {
         node: &Node,
         _global_context: &ExecutionContext,
     ) -> EngineResult<NodeExecutionContext> {
-        Ok(NodeExecutionContext {
+        let exec_context = NodeExecutionContext {
             node: node.clone(),
             status: None,
             process: None,
-        })
+        };
+
+        Ok(exec_context)
     }
 }
