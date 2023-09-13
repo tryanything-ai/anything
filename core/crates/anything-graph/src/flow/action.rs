@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +25,7 @@ pub struct ActionResult {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum ActionType {
-    Empty,
+    Empty(EmptyAction),
     Shell(ShellAction),
     // Request(RequestAction),
     // Native(NativeAction),
@@ -34,16 +34,20 @@ pub enum ActionType {
 
 impl Default for ActionType {
     fn default() -> Self {
-        Self::Empty
+        Self::Empty(EmptyAction {})
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, Builder)]
+#[builder(setter(into, strip_option), default)]
+pub struct EmptyAction {}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct ShellAction {
     pub executor: Option<String>,
     pub command: String,
-    pub args: Vec<String>,
+    pub args: Option<HashMap<String, String>>,
     pub cwd: Option<String>,
 }
 

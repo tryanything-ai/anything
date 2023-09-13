@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env::temp_dir,
     fs::{remove_file, File},
     io::BufReader,
@@ -112,7 +113,7 @@ impl ShellEngine {
 
 impl Engine for ShellEngine {
     /// Run a shell engine command from a Node's `ShellAction` configuration
-    fn run(&mut self, context: &ExecutionContext) -> EngineResult<()> {
+    fn run(&mut self, _context: &ExecutionContext) -> EngineResult<()> {
         self.validate()?;
 
         let uuid = uuid::Uuid::new_v4();
@@ -125,6 +126,7 @@ impl Engine for ShellEngine {
         }
         .clone();
 
+        // TODO: COW this, possibly
         let base_dir = temp_dir();
         let base_dir_str = base_dir.to_string_lossy();
         match config.cwd {
@@ -142,14 +144,17 @@ impl Engine for ShellEngine {
         let stdout = Stdio::from(File::create(&stdout_path).into_diagnostic()?);
         let stderr = Stdio::from(File::create(&stderr_path).into_diagnostic()?);
 
-        let args = config.args;
+        let args: HashMap<String, String> = match config.args {
+            None => HashMap::default(),
+            Some(v) => v,
+        };
 
         let mut child = Command::new(executor);
         let child = child.arg("-c");
         let mut child = child.arg(config.command);
 
-        for arg in args {
-            child = child.arg(arg);
+        for (key, val) in args {
+            child = child.arg(format!("{}={}", key, val));
         }
 
         let child = child
@@ -161,6 +166,7 @@ impl Engine for ShellEngine {
             .into_diagnostic()?;
 
         let child_pid = child.id();
+
         let output = child.wait_with_output().into_diagnostic()?;
         let status = ProcessState::from(&output).status;
 
@@ -186,12 +192,11 @@ impl Engine for ShellEngine {
 
         Ok(())
     }
-
-    fn get_process(&self) -> EngineResult<Process> {
-        match self.process.clone() {
-            None => Err(EngineError::ShellProcessHasNotRunError),
-            Some(v) => Ok(v),
-        }
+    fn config(&self) -> &dyn std::any::Any {
+        &self.config
+    }
+    fn process(&self) -> Option<Process> {
+        self.process.clone()
     }
 }
 
@@ -204,7 +209,7 @@ mod tests {
         let config = ShellAction {
             executor: None,
             command: "echo 'ducks'".to_string(),
-            args: vec![],
+            args: None,
             cwd: None,
         };
 
@@ -231,7 +236,7 @@ mod tests {
             config: ShellAction {
                 executor: None,
                 command: "".to_string(),
-                args: vec![],
+                args: None,
                 cwd: None,
             },
             process: None,

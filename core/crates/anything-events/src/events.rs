@@ -13,12 +13,12 @@ pub struct SourceIdentifier {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventDetails {
+    /// Event name, like file-watcher/changed
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
     /// Event payload
     #[prost(string, tag = "1")]
     pub payload: ::prost::alloc::string::String,
-    /// Event name, like files/changed
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
     #[prost(string, repeated, tag = "3")]
     pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "4")]

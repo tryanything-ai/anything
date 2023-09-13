@@ -5,6 +5,7 @@ mod tests {
     use anything_graph::flow::{
         action::{ActionBuilder, ActionType, ShellActionBuilder},
         flow,
+        node::Node,
     };
 
     #[tokio::test]
@@ -12,11 +13,11 @@ mod tests {
         let mut flow = flow::Flow::new();
         let action = ShellActionBuilder::default()
             .command("echo 'ducks'".to_string())
-            .args(vec![])
             .build()
             .expect("unable to build action");
 
         flow.add_node(
+            &Node::default(),
             "echo name",
             &ActionBuilder::default()
                 .action_type(ActionType::Shell(action))
@@ -27,6 +28,7 @@ mod tests {
         .expect("unable to add echo node");
 
         flow.add_node(
+            &Node::default(),
             "print name",
             &ActionBuilder::default()
                 .action_type(ActionType::Shell(
@@ -40,8 +42,6 @@ mod tests {
             &vec!["echo name"],
         )
         .expect("unable to add echo node");
-
-        println!("flow: {:#?}", flow);
 
         Ok(())
     }

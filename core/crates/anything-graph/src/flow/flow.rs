@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use daggy::*;
 use serde::{Deserialize, Serialize};
 use tracing::info;
@@ -19,6 +21,7 @@ pub struct Flow {
     pub version: Option<String>,
     pub description: Option<String>,
     pub trigger: Trigger,
+    pub variables: HashMap<String, String>,
     dag: Dag<Node, ()>,
     root: NodeIndex,
 }
@@ -37,6 +40,7 @@ impl Flow {
             dag: new_dag,
             root: parent,
             trigger: Trigger::default(),
+            variables: HashMap::new(),
             // active_version: FlowVersion::default(),
         }
     }
@@ -85,11 +89,12 @@ impl Flow {
             .map(AsRef::as_ref)
             .collect::<Vec<&str>>();
 
-        self.add_node(&node.name, &node.node_action, &depends_on)
+        self.add_node(&node, &node.name, &node.node_action, &depends_on)
     }
 
     pub fn add_node(
         &mut self,
+        node: &Node,
         name: &str,
         action: &Action,
         depends_on: &Vec<&str>,
@@ -125,6 +130,7 @@ impl Flow {
 
             let node = NodeBuilder::default()
                 .name(name.to_string())
+                .variables(node.variables.clone())
                 .node_action(action.clone())
                 .depends_on(
                     depends_on
@@ -182,7 +188,6 @@ impl Flow {
             let node_group = lvl
                 .iter()
                 .map(|node| Node {
-                    id: node.id.clone(),
                     name: node.name.clone(),
                     label: node.label.clone(),
                     state: node.state.clone(),
@@ -190,8 +195,7 @@ impl Flow {
                     // trigger: node.trigger.clone(),
                     node_action: node.node_action.clone(),
                     depends_on: node.depends_on.clone(),
-                    // input: node.input.clone(),
-                    // output: node.output.clone(),
+                    variables: node.variables.clone(),
                 })
                 .collect::<Vec<Node>>();
             match node_list.add_list(node_group) {
@@ -329,7 +333,7 @@ mod test {
             ActionType::Shell(ShellAction {
                 command: "echo".to_string(),
                 executor: Some("sh -c".to_string()),
-                args: Vec::default(),
+                args: None,
                 cwd: None,
             }),
         );
@@ -384,7 +388,7 @@ mod test {
             ActionType::Shell(ShellAction {
                 command: "echo".to_string(),
                 executor: Some("sh -c".to_string()),
-                args: Vec::default(),
+                args: None,
                 cwd: None,
             }),
         );

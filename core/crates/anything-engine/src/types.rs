@@ -4,6 +4,7 @@ use anything_graph::flow::{
     action::{Action, ActionResult},
     node::NodeState,
 };
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -13,14 +14,16 @@ pub struct ActionExecution {
     pub result: ActionResult,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, Default, Builder)]
+#[builder(setter(into, strip_option), default)]
 pub struct Process {
     pub uuid: Uuid,
     pub state: ProcessState,
     pub env: ExecEnv,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, Default, Builder)]
+#[builder(setter(into, strip_option), default)]
 pub struct ProcessState {
     pub status: Option<NodeState>,
     pub stdin: Option<String>,

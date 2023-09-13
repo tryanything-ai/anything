@@ -1,14 +1,12 @@
 //! A flowfile description build into a flow
 //!
 //!
-
 use serde::Deserialize;
 use serde_json::Value;
-use std::path::PathBuf;
-use toml::Table;
+use std::{collections::HashMap, path::PathBuf};
 
 use super::{
-    action::{Action, ActionBuilder, ActionType, ShellAction},
+    action::{Action, ActionBuilder, ActionType, EmptyAction, ShellAction},
     flow::Flow,
     node::Node,
     trigger::Trigger,
@@ -99,15 +97,17 @@ struct ParseNode {
     label: String,
     depends_on: Option<Vec<String>>,
     action: ParseAction,
+    variables: Option<Vec<HashMap<String, String>>>,
 }
 
 impl Into<Node> for ParseNode {
     fn into(self) -> Node {
-        let mut node = Node::new();
+        let mut node = Node::default();
         node.name = self.name;
-        node.label = self.label;
+        node.label = self.label.clone();
         node.depends_on = self.depends_on.unwrap_or_default();
         node.node_action = self.action.into();
+        node.variables = optional_vec_map_into_hashmap(self.variables).unwrap_or_default();
         node
     }
 }
@@ -118,20 +118,53 @@ struct ParseAction {
     config: Value,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+struct ParseConfig {
+    pub command: String,
+    pub executor: Option<String>,
+    pub args: Option<Vec<HashMap<String, String>>>,
+    pub cwd: Option<String>,
+}
+
 impl Into<Action> for ParseAction {
     fn into(self) -> Action {
-        let action_type = match self.action_type.as_str() {
+        let action_type = match self.action_type.to_lowercase().as_str() {
             "shell" => {
-                let config: ShellAction =
+                let config: ParseConfig =
                     serde_json::from_str(self.config.to_string().as_str()).unwrap();
-                ActionType::Shell(config)
+
+                let args_map = optional_vec_map_into_hashmap(config.args);
+
+                ActionType::Shell(ShellAction {
+                    command: config.command,
+                    executor: config.executor,
+                    args: args_map,
+                    cwd: config.cwd,
+                })
             }
-            _ => ActionType::Empty,
+            _ => ActionType::Empty(EmptyAction {}),
         };
         ActionBuilder::default()
             .action_type(action_type)
             .build()
             .unwrap()
+    }
+}
+
+fn optional_vec_map_into_hashmap(
+    arg: Option<Vec<HashMap<String, String>>>,
+) -> Option<HashMap<String, String>> {
+    match arg {
+        Some(args) => {
+            let mut args_map = HashMap::new();
+            for arg in args {
+                for (k, v) in arg {
+                    args_map.insert(k, v);
+                }
+            }
+            Some(args_map)
+        }
+        None => None,
     }
 }
 

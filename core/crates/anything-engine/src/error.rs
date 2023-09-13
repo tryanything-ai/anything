@@ -1,3 +1,4 @@
+use anything_graph::error::AppError;
 use miette::{Diagnostic, ErrReport};
 use thiserror::Error;
 
@@ -13,6 +14,9 @@ pub enum EngineError {
 
     #[error("copy files error")]
     CopyFilesError(#[from] fs_extra::error::Error),
+
+    #[error("error running flow")]
+    FlowRunError(#[from] AppError),
 }
 
 impl From<ErrReport> for EngineError {

@@ -170,9 +170,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "anything-graph",
+ "derive_builder",
  "fs_extra",
  "miette",
  "serde",
+ "tera",
  "thiserror",
  "tokio",
  "tracing",
