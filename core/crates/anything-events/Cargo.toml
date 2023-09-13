@@ -13,7 +13,6 @@ path = "bin/main.rs"
 [features]
 default = ["sqlite"]
 sqlite = ["sqlx/sqlite"]
-postgres = ["sqlx/postgres"]
 
 [dependencies]
 anything-core = { path = "../anything-core" }
@@ -23,7 +22,6 @@ derive_builder = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["full", "rt-multi-thread"] }
-zmq = "0.10.0"
 
 # Tracing
 tracing-appender = { workspace = true }
@@ -47,6 +45,7 @@ git-version = { workspace = true }
 thiserror = { workspace = true }
 anymap = { workspace = true }
 sqlx = { workspace = true }
+
 async-trait = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }

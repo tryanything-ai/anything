@@ -2,9 +2,9 @@
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
-    errors::EventsResult,
+    errors::{DatabaseError, EventsError, EventsResult},
     models::{
-        event::{CreateEvent, Event, EventId},
+        event::{CreateEvent, Event, EventId, SourceId},
         tag::Tag,
     },
     post_office::PostOffice,
@@ -14,7 +14,7 @@ use chrono::Utc;
 use crossbeam::channel::{Receiver, Sender};
 use fake::Fake;
 use serde_json::Value;
-use sqlx::{sqlite::SqlitePoolOptions, Pool, SqlitePool};
+use sqlx::{sqlite::SqlitePoolOptions, Pool, Row, SqlitePool};
 use std::{borrow::BorrowMut, collections::HashMap, sync::Arc};
 
 pub fn get_test_config() -> AnythingEventsConfig {
@@ -55,11 +55,15 @@ pub async fn get_test_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
     let pool = SqlitePoolOptions::new()
         .max_connections(1)
         .connect("sqlite::memory:")
-        .await?;
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
 
-    let res = sqlx::query(include_str!("../../sql/schema.sql"))
-        .execute(&pool)
-        .await?;
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(DatabaseError::DBError(Box::new(e))))?;
 
     Ok(pool)
 }
@@ -67,7 +71,9 @@ pub async fn get_test_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
 pub async fn select_all_events(pool: &SqlitePool) -> EventsResult<Vec<Event>> {
     let query = sqlx::query_as::<_, Event>(r#"SELECT * FROM events"#);
 
-    let result = query.fetch_all(pool).await?;
+    let result = query.fetch_all(pool).await.map_err(|e| {
+        EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+    })?;
 
     Ok(result)
 }
@@ -82,7 +88,8 @@ pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EventsResult<i
     .bind(event.metadata)
     // .bind(event.tags)
     .execute(pool)
-    .await?;
+    .await
+    .map_err(|e| EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e))))?;
 
     Ok(res.last_insert_rowid())
 }
@@ -116,7 +123,8 @@ pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<EventId> {
 
     let fake_event = Event {
         id: i64::default(),
-        source_id: i64::default(),
+        event_id: uuid::Uuid::new_v4().to_string(),
+        source_id: String::default(),
         event_name: fake::faker::name::en::Name().fake(),
         // tags: TagList::default(),
         payload: Value::default(),
@@ -126,7 +134,7 @@ pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<EventId> {
 
     let _res = insert_new_event(pool, fake_event.clone()).await?;
 
-    Ok(fake_event.id)
+    Ok(fake_event.event_id)
 }
 
 fn generate_dummy_hashmap() -> HashMap<String, String> {
@@ -183,7 +191,8 @@ impl TestEventRepo {
 
     pub fn dummy_create_event(&self) -> CreateEvent {
         CreateEvent {
-            source_id: i64::default(),
+            event_id: uuid::Uuid::new_v4().to_string(),
+            source_id: uuid::Uuid::new_v4().to_string(),
             event_name: fake::faker::name::en::Name().fake(),
             payload: Value::default(),
             metadata: Value::default(),
@@ -193,8 +202,9 @@ impl TestEventRepo {
     pub async fn insert_dummy_event(&self) -> EventsResult<Event> {
         let mut event = Event {
             id: i64::default(),
+            event_id: uuid::Uuid::new_v4().to_string(),
             event_name: fake::faker::name::en::Name().fake(),
-            source_id: i64::default(),
+            source_id: String::default(),
             payload: Value::default(),
             metadata: Value::default(),
             timestamp: Utc::now(),
@@ -202,19 +212,23 @@ impl TestEventRepo {
 
         let res = sqlx::query(
             r#"INSERT INTO events 
-            (source_id, event_name, payload, metadata)
-            VALUES (?1, ?2, ?3, ?4)"#,
+            (event_id, source_id, event_name, payload, metadata)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            RETURNING id"#,
         )
+        .bind(&event.event_id)
         .bind(&event.source_id)
         .bind(&event.event_name)
         .bind(&event.payload)
         .bind(&event.metadata)
         // .bind(event.tags)
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await
         .expect("unable to insert dummy data");
 
-        event.id = res.last_insert_rowid();
+        let id = res.get("id");
+        event.id = id;
+
         Ok(event)
     }
 }

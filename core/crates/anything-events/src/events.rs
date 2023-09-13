@@ -1,36 +1,20 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct EventIdentifier {
-    #[prost(int64, tag = "1")]
-    pub id: i64,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SourceIdentifier {
-    #[prost(int64, tag = "1")]
-    pub source_id: i64,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct EventDetails {
-    /// Event name, like file-watcher/changed
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    /// Event payload
-    #[prost(string, tag = "1")]
-    pub payload: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "3")]
-    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "4")]
-    pub metadata: ::core::option::Option<::prost::alloc::string::String>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Event {
-    #[prost(message, optional, tag = "1")]
-    pub identifier: ::core::option::Option<SourceIdentifier>,
-    #[prost(message, optional, tag = "2")]
-    pub details: ::core::option::Option<EventDetails>,
+    #[prost(string, tag = "1")]
+    pub event_id: ::prost::alloc::string::String,
+    /// Source of the event
+    #[prost(string, tag = "2")]
+    pub source_id: ::prost::alloc::string::String,
+    /// Event payload
+    #[prost(string, tag = "3")]
+    pub payload: ::prost::alloc::string::String,
+    /// Event name, like files/changed
+    #[prost(string, tag = "4")]
+    pub name: ::prost::alloc::string::String,
+    /// repeated string tags = 4;
+    #[prost(string, optional, tag = "5")]
+    pub metadata: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -43,14 +27,14 @@ pub struct TriggerEventRequest {
 pub struct TriggerEventResponse {
     #[prost(string, tag = "1")]
     pub status: ::prost::alloc::string::String,
-    #[prost(int64, tag = "2")]
-    pub event_id: i64,
+    #[prost(string, tag = "2")]
+    pub event_id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetEventRequest {
-    #[prost(message, optional, tag = "1")]
-    pub id: ::core::option::Option<EventIdentifier>,
+    #[prost(string, tag = "1")]
+    pub event_id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

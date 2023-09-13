@@ -15,6 +15,7 @@ resolver = "2"
 
 [workspace.dependencies]
 anything-core = { path = "./crates/anything-core", version = "*" }
+anything-engine = { path = "./crates/anything-engine", version = "*" }
 dotenv = "0.15.0"
 
 git-version = "0.3.5"
@@ -72,7 +73,6 @@ sqlx = { version = "0.7", features = [
     "uuid",
     "any",
     "macros",
-    "postgres",
 ] }
 
 anymap = "1.0.0-beta.2"

@@ -12,8 +12,8 @@ use crate::{
     context::Context,
     errors::EventsError,
     events::{
-        events_server::Events, EventIdentifier, GetEventRequest, GetEventResponse,
-        TriggerEventRequest, TriggerEventResponse,
+        events_server::Events, GetEventRequest, GetEventResponse, TriggerEventRequest,
+        TriggerEventResponse,
     },
     models::event::{CreateEvent, Event},
     repositories::event_repo::EventRepo,
@@ -65,52 +65,60 @@ impl Events for EventManager {
         };
 
         // Handle source
-        let source_id = match event.identifier.as_ref() {
-            Some(source) => source.source_id.to_owned(),
-            None => return Err(Status::invalid_argument(NO_SOURCE_IDENTIFIER)),
-        };
+        let source_id = event.source_id.clone();
+        // let source_id = match event.identifier.as_ref() {
+        //     Some(source) => source.source_id.to_owned(),
+        //     None => return Err(Status::invalid_argument(NO_SOURCE_IDENTIFIER)),
+        // };
+        let event_name = event.name.clone();
 
-        let event_details = match event.details.as_ref() {
-            None => return Err(Status::invalid_argument(NO_EVENT_DETAILS)),
-            Some(details) => details.to_owned(),
-        };
+        let payload = event.payload.clone();
+        let metadata = event.metadata.clone();
 
-        let event_name = event_details.name.to_owned();
-        let payload = event_details.payload.to_owned();
-        let metadata = match event_details.metadata {
-            None => String::default(),
-            Some(v) => v.to_owned(),
-        };
-        let event_tags = event_details.tags.to_owned();
+        if source_id.is_empty() {
+            return Err(Status::invalid_argument(NO_SOURCE_IDENTIFIER));
+        }
+        if payload.is_empty() {
+            return Err(Status::invalid_argument(NO_EVENT_DATA_PROVIDED));
+        }
+
+        let event_id = uuid::Uuid::new_v4().to_string();
 
         let event_repo = self.context.repositories.event_repo.clone();
 
         let event_id = match event_repo
             .save_event(CreateEvent {
                 event_name,
+                event_id,
                 source_id,
                 payload: json!(payload),
                 metadata: json!(metadata),
+                // tags,
             })
             .await
         {
             Ok(v) => v,
-            Err(_e) => return Err(Status::internal(UNABLE_TO_SAVE_EVENT)),
+            Err(e) => {
+                println!("ERROR => {:?}", e);
+                tracing::error!("Error saving a new event {:?}", e);
+                return Err(Status::internal(UNABLE_TO_SAVE_EVENT));
+            }
         };
 
         let event = match self
             .context
             .repositories
             .event_repo
-            .find_by_id(event_id)
+            .find_by_id(event_id.clone())
             .await
         {
             Ok(r) => {
                 self.update_tx.send(r);
             }
-            Err(_) => {
+            Err(err) => {
                 // Something should be done here... maybe?
-                return Err(Status::internal("unable to save event"));
+                println!("Unable to save event {:?}", err);
+                return Err(Status::internal("error saving event"));
             }
         };
 
@@ -126,17 +134,13 @@ impl Events for EventManager {
     ) -> Result<Response<GetEventResponse>, Status> {
         let req = request.into_inner();
 
-        let event_id = match req.id {
-            Some(e) => e.id,
-            None => return Err(Status::invalid_argument(NO_EVENT)),
-        };
+        let event_id = req.event_id;
 
         let event_repo = self.context.repositories.event_repo.clone();
 
         let found = match event_repo.find_by_id(event_id).await {
             Ok(v) => v,
             Err(e) => {
-                println!("ERROR => {:?}", e);
                 return Err(Status::not_found(EVENT_NOT_FOUND));
             }
         };
@@ -156,10 +160,10 @@ mod tests {
     use tonic::transport::{Channel, Uri};
     use tracing::{debug, info};
 
-    use crate::events::{Event as ProtoEvent, EventDetails, SourceIdentifier};
+    use crate::events::Event as ProtoEvent;
     use crate::internal::test_helper::{
         get_test_context, get_test_context_from_pool, get_test_pool, insert_dummy_data,
-        TestEventRepo,
+        select_all_events, TestEventRepo,
     };
     use crate::models::event::Event;
     use crate::{internal::test_helper::get_test_config, utils::bootstrap};
@@ -175,7 +179,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn event_save() -> anyhow::Result<()> {
+    async fn test_event_save() -> anyhow::Result<()> {
         let pool = get_test_pool().await.unwrap();
         let context = get_test_context_from_pool(&pool).await;
         let test = TestEventRepo::new_with_pool(&context.pool);
@@ -230,23 +234,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn event_get() -> anyhow::Result<()> {
-        let context = get_test_context().await;
-        let test = TestEventRepo::new().await;
+    async fn test_save_event_triggers_callback() -> anyhow::Result<()> {
+        let pool = get_test_pool().await.unwrap();
+        let context = get_test_context_from_pool(&pool).await;
+        let test = TestEventRepo::new_with_pool(&context.pool);
 
         let event_manager = EventManager::new(&context, test.with_sender().await);
-        let p = &event_manager.context.repositories.event_repo.pool;
-        let r = insert_dummy_data(&p).await.unwrap();
-        test.insert_dummy_event().await;
+        // let r = insert_dummy_data(&p).await.unwrap();
+        let r = test.insert_dummy_event().await.unwrap();
         test.insert_dummy_event().await.unwrap();
 
         let request = Request::new(GetEventRequest {
-            id: Some(EventIdentifier { id: 1 }),
+            event_id: r.event_id,
         });
         let response = event_manager.get_event(request).await;
         assert!(response.is_ok());
         let response = response.unwrap().into_inner();
-        // assert_eq!(response.event)
+        assert_eq!(response.event.unwrap().name, r.event_name);
 
         Ok(())
     }
