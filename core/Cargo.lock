@@ -169,6 +169,7 @@ name = "anything-engine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "anything-core",
  "anything-graph",
  "derive_builder",
  "fs_extra",

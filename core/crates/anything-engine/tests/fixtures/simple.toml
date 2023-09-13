@@ -13,7 +13,7 @@ name = "FileChange"
 file = "/Users/auser/Desktop/watch-directory"
 
 [[nodes]]
-name = "echo-cheer"
+name = "echocheer"
 label = "Holiday cheers"
 depends_on = []
 variables = [{ cheers = "Jingle Bells" }]
@@ -28,14 +28,14 @@ command = "echo 'Jingle Bells'"
 [[nodes]]
 name = "say-cheers"
 label = "say holiday cheer"
-depends_on = ["echo-cheer"]
-variables = [{ cheer = "{{echo-cheer.stdout}}" }]
+depends_on = ["echocheer"]
+variables = [{ cheer = "{{echocheer.stdout}}" }]
 
 [nodes.action]
 action_type = "Shell"
 
 [nodes.action.config]
-command = "echo"
+command = "echo 'STDOUT to {{cheer}}'"
 executor = "/bin/bash"
 args = []
 

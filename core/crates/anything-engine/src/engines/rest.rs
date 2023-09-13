@@ -1,7 +1,11 @@
-use crate::{context::ExecutionContext, error::EngineResult, types::Process};
+use crate::{
+    context::{ExecutionContext, NodeExecutionContext},
+    error::EngineResult,
+    types::Process,
+};
 
 use super::Engine;
-use anything_graph::flow::action::ShellAction;
+use anything_graph::flow::{action::ShellAction, node::Node};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
@@ -20,16 +24,22 @@ impl RestEngine {
 }
 
 impl Engine for RestEngine {
-    /// Execute this engine with the given execution context
-    fn run(&mut self, _context: &ExecutionContext) -> EngineResult<()> {
-        // REST Call goes here
+    fn run(&mut self, _context: &NodeExecutionContext) -> EngineResult<()> {
         self.process = Some(Process::default());
         Ok(())
     }
-    fn config(&self) -> &dyn std::any::Any {
-        &self.config
-    }
     fn process(&self) -> Option<Process> {
         self.process.clone()
+    }
+    fn render(
+        &mut self,
+        node: &Node,
+        _global_context: &ExecutionContext,
+    ) -> EngineResult<NodeExecutionContext> {
+        Ok(NodeExecutionContext {
+            node: node.clone(),
+            status: None,
+            process: None,
+        })
     }
 }
