@@ -10,16 +10,16 @@ pub type NodeGroup = Vec<Node>;
 #[derive(Clone, Debug, Deserialize, Serialize, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct Node {
-    pub id: String,
+    pub package_data: PackageData,
     pub name: String,
     pub label: String,
-    // pub trigger: Option<Trigger>,
     pub state: NodeState,
     pub node_action: Action,
     pub depends_on: Vec<String>,
     // pub input: indexmap::IndexMap<String, String>,
     // pub output: indexmap::IndexMap<String, String>, // TODO: should we make this serializable instead of a simple string?
-    pub package_data: PackageData,
+    pub variables: HashMap<String, String>,
+    // pub environment: HashMap<String, String>,
 }
 
 impl Node {
@@ -31,14 +31,14 @@ impl Node {
 impl Default for Node {
     fn default() -> Self {
         Self {
-            id: String::default(),
             name: String::default(),
             label: String::default(),
             package_data: PackageData::default(),
             state: NodeState::default(),
             node_action: Action::default(),
             depends_on: Vec::default(),
-            // input: indexmap::IndexMap::new(),
+            variables: HashMap::new(),
+            // environment: HashMap::new(),
             // output: indexmap::IndexMap::new(),
         }
     }
@@ -58,8 +58,18 @@ pub enum NodeState {
     Pending,
     Running,
     Success,
-    SuccessNoop,
     Failed,
+}
+
+impl Into<String> for NodeState {
+    fn into(self) -> String {
+        match self {
+            NodeState::Pending => "pending".to_string(),
+            NodeState::Running => "running".to_string(),
+            NodeState::Success => "success".to_string(),
+            NodeState::Failed => "failed".to_string(),
+        }
+    }
 }
 
 impl Default for NodeState {
@@ -177,6 +187,21 @@ impl NodeList {
         }
 
         seen
+    }
+}
+
+impl IntoIterator for NodeList {
+    type Item = Node;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut nodes = vec![];
+        for node_group in self.nodes {
+            for node in node_group {
+                nodes.push(node);
+            }
+        }
+        nodes.into_iter()
     }
 }
 

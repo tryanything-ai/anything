@@ -61,7 +61,7 @@ pub mod test_helpers {
             ActionType::Shell(ShellAction {
                 command: "curl".to_string(),
                 executor: Some("sh -c".to_string()),
-                args: Vec::default(),
+                args: None,
                 cwd: None,
             }),
         );
@@ -76,7 +76,7 @@ pub mod test_helpers {
             ActionType::Shell(ShellAction {
                 command: "echo".to_string(),
                 executor: Some("sh -c".to_string()),
-                args: Vec::default(),
+                args: None,
                 cwd: None,
             }),
         );
@@ -96,6 +96,6 @@ pub mod test_helpers {
             .map(AsRef::as_ref)
             .collect::<Vec<&str>>();
 
-        flow.add_node(&node.name, &node.node_action, &depends_on)
+        flow.add_node(&node, &node.name, &node.node_action, &depends_on)
     }
 }

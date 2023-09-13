@@ -7,6 +7,12 @@ service Events {
 
     // Get an event
     rpc GetEvent(GetEventRequest) returns (GetEventResponse);
+
+    // Post update
+    // rpc PostExecutionUpdate(PostExecutionUpdateRequest) returns (PostExecutionUpdateResponse);
+
+    // Register flow for execution
+    // rpc SubscribeFlow(SubscribeFlowRequest) returns (stream SubscribeFlowResponse);
 }
 
 message EventIdentifier {
@@ -18,10 +24,10 @@ message SourceIdentifier {
 }
 
 message EventDetails {
+    // Event name, like file-watcher/changed
+    string name = 2;
     // Event payload
     string payload = 1;
-    // Event name, like files/changed
-    string name = 2;
     repeated string tags = 3;
     optional string metadata = 4;
 }

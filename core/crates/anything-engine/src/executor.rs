@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use anything_graph::flow::{flow::Flow, node::Node};
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
@@ -10,9 +10,9 @@ use crate::{
     error::EngineResult,
 };
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Executor {
-    pub context: Arc<ExecutionContext>,
+    pub context: Arc<Mutex<ExecutionContext>>,
 }
 
 impl Executor {
@@ -22,11 +22,31 @@ impl Executor {
         let context = ExecutionContext {
             uuid,
             flow: flow.clone(),
-            executed,
+            executed: executed.clone(),
+            outputs: Vec::default(),
         };
         Self {
-            context: Arc::new(context),
+            context: Arc::new(Mutex::new(context)),
         }
+    }
+
+    pub fn run(&mut self) -> EngineResult<()> {
+        let execution_nodes = self
+            .context
+            .lock()
+            .unwrap()
+            .flow
+            .get_node_execution_list(None)?;
+        for node in execution_nodes.into_iter() {
+            let node_execution = self.run_node(node)?;
+            self.context
+                .lock()
+                .unwrap()
+                .executed
+                .push(node_execution.clone());
+        }
+
+        Ok(())
     }
 
     pub fn run_node(&mut self, node: Node) -> EngineResult<NodeExecutionContext> {
@@ -36,12 +56,13 @@ impl Executor {
             process: None,
         };
         let mut engine = get_engine(node);
-        match engine.run(&self.context) {
+        match engine.run(&self.context.lock().unwrap()) {
             Err(e) => return Err(e),
             Ok(_executed) => {
-                let process = engine.get_process()?;
-                node_execution.process = Some(process.clone());
-                node_execution.status = process.state.status;
+                if let Some(process) = engine.process() {
+                    node_execution.process = Some(process.clone());
+                    node_execution.status = process.state.status;
+                }
             }
         }
         Ok(node_execution)
@@ -53,11 +74,7 @@ mod tests {
     use std::path::PathBuf;
 
     use anyhow::Result;
-    use anything_graph::flow::{
-        action::{ActionBuilder, ActionType, ShellActionBuilder},
-        flowfile::Flowfile,
-        node::NodeBuilder,
-    };
+    use anything_graph::flow::flowfile::Flowfile;
 
     use super::*;
 
@@ -66,56 +83,61 @@ mod tests {
         let flow = Flowfile::from_file(PathBuf::from("tests/fixtures/simple.toml"))
             .unwrap()
             .flow;
-        let executor = Executor::new(&flow);
+        let mut executor = Executor::new(&flow);
+        let _run = executor.run();
+        // let context = executor.context.lock().unwrap();
+        // println!("context: {:?}", context);
         // TODO: finish along the executor chain
         Ok(())
     }
-
-    fn demo_flow() -> Flow {
-        let mut flow = Flow::new();
-
-        flow.add_node_obj(
-            &NodeBuilder::default()
-                .id("holiday-cheer")
-                .name("holiday cheer")
-                .node_action(
-                    ActionBuilder::default()
-                        .action_type(ActionType::Shell(
-                            ShellActionBuilder::default()
-                                .command("echo 'ducks")
-                                .build()
-                                .unwrap(),
-                        ))
-                        .display_name("holiday cheer")
-                        .build()
-                        .unwrap(),
-                )
-                .build()
-                .unwrap(),
-        )
-        .unwrap();
-
-        flow.add_node_obj(
-            &NodeBuilder::default()
-                .id("echo-cheer")
-                .name("echo holiday cheer")
-                .node_action(
-                    ActionBuilder::default()
-                        .action_type(ActionType::Shell(
-                            ShellActionBuilder::default()
-                                .command("echo '{{ cheer }}")
-                                .build()
-                                .unwrap(),
-                        ))
-                        .display_name("holiday cheer")
-                        .build()
-                        .unwrap(),
-                )
-                .build()
-                .unwrap(),
-        )
-        .unwrap();
-
-        flow
-    }
 }
+
+/*
+fn demo_flow() -> Flow {
+       let mut flow = Flow::new();
+
+       flow.add_node_obj(
+           &NodeBuilder::default()
+               .id("holiday-cheer")
+               .name("holiday cheer")
+               .node_action(
+                   ActionBuilder::default()
+                       .action_type(ActionType::Shell(
+                           ShellActionBuilder::default()
+                               .command("echo 'ducks")
+                               .build()
+                               .unwrap(),
+                       ))
+                       .display_name("holiday cheer")
+                       .build()
+                       .unwrap(),
+               )
+               .build()
+               .unwrap(),
+       )
+       .unwrap();
+
+       flow.add_node_obj(
+           &NodeBuilder::default()
+               .id("echo-cheer")
+               .name("echo holiday cheer")
+               .node_action(
+                   ActionBuilder::default()
+                       .action_type(ActionType::Shell(
+                           ShellActionBuilder::default()
+                               .command("echo '{{ cheer }}")
+                               .build()
+                               .unwrap(),
+                       ))
+                       .display_name("holiday cheer")
+                       .build()
+                       .unwrap(),
+               )
+               .build()
+               .unwrap(),
+       )
+       .unwrap();
+
+       flow
+   }
+*/
