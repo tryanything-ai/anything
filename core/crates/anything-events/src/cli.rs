@@ -25,6 +25,10 @@ pub enum Commands {
     Server {},
     /// Post a new event to a running server
     PostEvent {},
+    // Setup {
+    //     #[command(subcommand)]
+    //     command: Option<SetupCommands>,
+    // },
 }
 
 pub async fn start() -> EventsResult<()> {
@@ -44,6 +48,7 @@ pub async fn start() -> EventsResult<()> {
             let server = Server::new(context).await?;
             server.run_server().await?;
         }
+
         Some(Commands::PostEvent {}) => {
             println!("post an event");
         }

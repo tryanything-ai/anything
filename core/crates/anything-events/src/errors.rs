@@ -1,4 +1,5 @@
 use anything_core::error::AnythingError;
+use sqlx::error::BoxDynError;
 use thiserror::Error;
 
 pub type EventsResult<T> = Result<T, EventsError>;
@@ -14,8 +15,8 @@ pub enum EventsError {
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
 
-    #[error(transparent)]
-    DatabaseError(#[from] sqlx::Error),
+    #[error("database error {0}")]
+    DatabaseError(DatabaseError),
 
     #[error("server error")]
     EventServerError(#[from] tonic::transport::Error),
@@ -31,4 +32,13 @@ pub enum EventsError {
 
     #[error("not found: {0}")]
     NotFoundError(String),
+}
+
+#[derive(Error, Debug)]
+pub enum DatabaseError {
+    #[error("{0}")]
+    DBError(#[source] BoxDynError),
+
+    #[error(transparent)]
+    DatabaseError(#[from] sqlx::Error),
 }

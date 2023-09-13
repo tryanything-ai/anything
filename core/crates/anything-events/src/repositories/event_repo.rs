@@ -1,7 +1,8 @@
+use sqlx::Row;
 use sqlx::SqlitePool;
 
 use crate::{
-    errors::EventsResult,
+    errors::{EventsError, EventsResult},
     models::event::{CreateEvent, Event, EventId},
 };
 
@@ -9,8 +10,6 @@ use crate::{
 pub struct EventRepoImpl {
     #[cfg(debug_assertions)]
     pub pool: SqlitePool,
-    #[cfg(not(debug_assertions))]
-    pool: SqlitePool,
 }
 
 impl EventRepoImpl {
@@ -31,26 +30,36 @@ impl EventRepo for EventRepoImpl {
     async fn save_event(&self, event: CreateEvent) -> EventsResult<EventId> {
         let row = sqlx::query(
             r#"
-            INSERT INTO events (source_id, event_name, payload, metadata)
-            VALUES (?1, ?2, ?3, ?4)
+            INSERT INTO events (source_id, event_name, payload, metadata, event_id)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            RETURNING event_id
             "#,
         )
         .bind(event.source_id)
         .bind(event.event_name)
         .bind(event.payload)
         .bind(event.metadata)
+        .bind(event.event_id)
         // .bind(Utc::now())
-        .execute(&self.pool)
-        .await?;
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
 
-        Ok(row.last_insert_rowid())
+        let id = row.get("event_id");
+
+        Ok(id)
     }
 
     async fn find_by_id(&self, event_id: EventId) -> EventsResult<Event> {
-        let row = sqlx::query_as::<_, Event>("SELECT * from events WHERE id = ?1")
+        let row = sqlx::query_as::<_, Event>("SELECT * from events WHERE event_id = ?1")
             .bind(event_id)
             .fetch_one(&self.pool)
-            .await?;
+            .await
+            .map_err(|e| {
+                EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+            })?;
 
         Ok(row)
     }
@@ -93,7 +102,7 @@ mod tests {
         let _r = test_repo.insert_dummy_event().await;
         let fake_event = test_repo.insert_dummy_event().await?;
 
-        let found = test_repo.event_repo.find_by_id(fake_event.id).await;
+        let found = test_repo.event_repo.find_by_id(fake_event.event_id).await;
         assert!(found.is_ok());
         let found = found.unwrap();
         assert_eq!(found.event_name, fake_event.event_name);

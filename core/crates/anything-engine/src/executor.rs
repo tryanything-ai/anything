@@ -111,7 +111,6 @@ mod tests {
         assert_eq!(context.executed.len(), 2);
 
         let latest_output = context.latest_output.stdout.as_ref().unwrap().clone();
-        tracing::debug!("latest_output: {}", latest_output);
         assert!(latest_output.contains("latitude"));
         assert!(latest_output.contains("timezone"));
 

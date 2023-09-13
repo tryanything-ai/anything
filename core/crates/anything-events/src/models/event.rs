@@ -10,11 +10,9 @@ use sqlx::SqlitePool;
 
 use crate::errors::EventsResult;
 use crate::events::Event as ProtoEvent;
-use crate::events::EventDetails;
-use crate::events::EventIdentifier;
-use crate::events::SourceIdentifier;
 
-pub type EventId = i64;
+pub type EventId = String;
+pub type SourceId = String;
 /// Event object that is stored in the database
 ///
 /// # Keys
@@ -22,25 +20,25 @@ pub type EventId = i64;
 /// - `event_name` String
 #[derive(FromRow, Debug, Serialize, Deserialize, Clone, Builder)]
 pub struct Event {
-    pub id: EventId,
-    pub source_id: i64,
+    pub id: i64,
+    pub event_id: EventId,
+    pub source_id: SourceId,
     pub event_name: String,
-    // pub tags: TagList,
     pub payload: Value,
     pub metadata: Value,
     pub timestamp: DateTime<Utc>,
+    // pub tags: Vec<String>,
 }
 
 impl Into<ProtoEvent> for Event {
     fn into(self) -> ProtoEvent {
         ProtoEvent {
-            identifier: Some(SourceIdentifier { source_id: self.id }),
-            details: Some(EventDetails {
-                name: self.event_name,
-                tags: Vec::default(),
-                payload: self.payload.to_string(),
-                metadata: Some(self.metadata.to_string()),
-            }),
+            source_id: self.source_id,
+            event_id: self.event_id,
+            name: self.event_name,
+            payload: self.payload.to_string(),
+            metadata: Some(self.metadata.to_string()),
+            // tags: Vec::default(),
         }
     }
 }
@@ -49,25 +47,23 @@ pub type EventList = Vec<Event>;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateEvent {
+    pub event_id: String,
     pub source_id: EventId,
     pub event_name: String,
-    // pub tags: TagList,
     pub payload: Value,
     pub metadata: Value,
+    // pub tags: Vec<String>,
 }
 
 impl Into<ProtoEvent> for CreateEvent {
     fn into(self) -> ProtoEvent {
         ProtoEvent {
-            identifier: Some(SourceIdentifier {
-                source_id: self.source_id,
-            }),
-            details: Some(EventDetails {
-                name: self.event_name,
-                payload: self.payload.to_string(),
-                metadata: Some(self.metadata.to_string()),
-                tags: Vec::default(),
-            }),
+            event_id: uuid::Uuid::new_v4().to_string(),
+            source_id: self.source_id,
+            name: self.event_name,
+            payload: self.payload.to_string(),
+            metadata: Some(self.metadata.to_string()),
+            // tags: self.tags,
         }
     }
 }

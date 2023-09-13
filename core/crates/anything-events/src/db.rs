@@ -3,7 +3,10 @@ use sqlx::{
     SqlitePool,
 };
 
-use crate::{config::AnythingEventsConfig, errors::EventsResult};
+use crate::{
+    config::AnythingEventsConfig,
+    errors::{DatabaseError, EventsError, EventsResult},
+};
 
 pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<SqlitePool> {
     let root_dir = config.root_dir.clone();
@@ -26,10 +29,11 @@ pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<S
         .await
         .expect("failed to connect to sqlite db");
 
-    sqlx::query(include_str!("../sql/schema.sql"))
-        .execute(&pool)
+    // Migrate
+    sqlx::migrate!("./migrations")
+        .run(&pool)
         .await
-        .expect("unable to bootstrap sqlite database");
+        .map_err(|e| EventsError::DatabaseError(DatabaseError::DBError(Box::new(e))))?;
 
     // DB.set(pool).expect("unable to set pool");
     Ok(pool)

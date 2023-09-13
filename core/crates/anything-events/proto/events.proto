@@ -15,26 +15,16 @@ service Events {
     // rpc SubscribeFlow(SubscribeFlowRequest) returns (stream SubscribeFlowResponse);
 }
 
-message EventIdentifier {
-    int64 id = 1;
-}
-
-message SourceIdentifier {
-    int64 source_id = 1;
-}
-
-message EventDetails {
-    // Event name, like file-watcher/changed
-    string name = 2;
-    // Event payload
-    string payload = 1;
-    repeated string tags = 3;
-    optional string metadata = 4;
-}
-
 message Event {
-    SourceIdentifier identifier = 1;
-    EventDetails details = 2;
+    string event_id = 1;
+    // Source of the event
+    string source_id = 2;
+    // Event payload
+    string payload = 3;
+    // Event name, like files/changed
+    string name = 4;
+    // repeated string tags = 4;
+    optional string metadata = 5;
 }
 
 message TriggerEventRequest {
@@ -42,11 +32,11 @@ message TriggerEventRequest {
 }
 message TriggerEventResponse {
     string status = 1;
-    int64 event_id = 2;
+    string event_id = 2;
 }
 
 message GetEventRequest {
-    EventIdentifier id = 1;
+    string event_id = 1;
 }
 
 message GetEventResponse {
