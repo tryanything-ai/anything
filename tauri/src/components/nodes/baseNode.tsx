@@ -40,7 +40,7 @@ export default function BaseNode({
       className={clsx(
         "bg-primary text-primary-content w-80 h-20 rounded-md flex flex-row text-xl",
         {
-          "bg-secondary text-secondary-content": data.worker_type === "start",
+          "bg-secondary text-secondary-content": data.trigger === true,
         }
       )}
     >
