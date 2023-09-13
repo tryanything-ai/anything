@@ -115,6 +115,7 @@ impl ShellEngine {
     }
 }
 
+#[async_trait::async_trait]
 impl Engine for ShellEngine {
     /// Render a shell engine command from a Node's `ShellAction` configuration
     ///
@@ -153,7 +154,7 @@ impl Engine for ShellEngine {
         Ok(exec_context)
     }
     /// Run a shell engine command from a Node's `ShellAction` configuration
-    fn run(&mut self, _context: &NodeExecutionContext) -> EngineResult<()> {
+    async fn run(&mut self, _context: &NodeExecutionContext) -> EngineResult<Process> {
         self.validate()?;
 
         let uuid = uuid::Uuid::new_v4();
@@ -230,7 +231,7 @@ impl Engine for ShellEngine {
         let _ = self.read_status();
         let _ = self.clean();
 
-        Ok(())
+        Ok(self.process.clone().unwrap())
     }
 
     fn process(&self) -> Option<Process> {
@@ -258,12 +259,12 @@ mod tests {
 
         let node_context = NodeExecutionContext::default();
 
-        action.run(&node_context)?;
+        action.run(&node_context).await?;
         assert!(action.process.is_some());
         let process = action.process.unwrap();
         assert!(process.state.stdout.is_some());
         let stdout = process.state.stdout.unwrap();
-        assert_eq!(stdout, "ducks\n");
+        assert_eq!(stdout, "ducks");
 
         Ok(())
     }
@@ -281,7 +282,7 @@ mod tests {
         };
 
         let node_context = NodeExecutionContext::default();
-        let res = action.run(&node_context);
+        let res = action.run(&node_context).await;
         assert!(res.is_err());
         Ok(())
     }

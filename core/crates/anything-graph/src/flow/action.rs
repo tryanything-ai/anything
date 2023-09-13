@@ -27,6 +27,7 @@ pub struct ActionResult {
 pub enum ActionType {
     Empty(EmptyAction),
     Shell(ShellAction),
+    Rest(RestAction),
     // Request(RequestAction),
     // Native(NativeAction),
     // Wasm(WasmAction),
@@ -49,6 +50,17 @@ pub struct ShellAction {
     pub command: String,
     pub args: Option<HashMap<String, String>>,
     pub cwd: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, Builder)]
+#[builder(setter(into, strip_option), default)]
+pub struct RestAction {
+    pub url: String,
+    pub method: Option<String>,
+    pub headers: Option<HashMap<String, String>>,
+    pub body: Option<String>,
+    pub response_type: Option<String>,
+    pub query_params: Option<HashMap<String, String>>,
 }
 
 pub type FlowSnapshot = Vec<Node>;

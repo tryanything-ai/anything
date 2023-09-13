@@ -57,7 +57,6 @@ impl Flow {
         for node in nodes.iter() {
             for s in node.iter() {
                 for dep in s.iter() {
-                    println!("{} -> {}", dep.name, dep.name);
                     topological_sorted_nodes.push(dep);
                 }
             }
@@ -154,6 +153,7 @@ impl Flow {
             let node = NodeBuilder::default()
                 .name(name.to_string())
                 .node_action(action.clone())
+                .variables(node.variables.clone())
                 .build()?;
             self.dag.add_child(self.root, (), node);
         }
@@ -198,6 +198,7 @@ impl Flow {
                     variables: node.variables.clone(),
                 })
                 .collect::<Vec<Node>>();
+
             match node_list.add_list(node_group) {
                 Ok(_) => (),
                 Err(e) => return Err(e),
