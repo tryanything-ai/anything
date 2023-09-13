@@ -9,14 +9,17 @@ use serde::{Deserialize, Serialize};
 use tera::Tera;
 use uuid::Uuid;
 
-use crate::types::Process;
+use crate::{
+    engines::Engine,
+    types::{Process, ProcessState},
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct ExecutionContext {
     pub uuid: Uuid,
     pub flow: Flow,
     pub executed: Vec<NodeExecutionContext>,
-    pub outputs: Vec<String>,
+    pub latest_output: ProcessState,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, Builder)]
@@ -35,33 +38,45 @@ impl ExecutionContext {
             uuid,
             flow: flow.clone(),
             executed: executed.clone(),
-            outputs: Vec::default(),
+            latest_output: ProcessState::default(),
         };
         context
     }
 
-    // pub fn render_string_for_node(
-    //     &self,
-    //     node: NodeExecutionContext,
-    //     engine: Box<dyn Engine>,
-    // ) -> String {
-    //     let context = self.build_render_context(node.clone());
-    //     let mut tera = Tera::default();
-
-    //     // let command = node.node_action.command.as_str();
-
-    //     let mut output = String::new();
-    //     output
-    // }
+    pub fn render_string_for_node(
+        &mut self,
+        node: Node,
+        mut engine: Box<dyn Engine>,
+    ) -> NodeExecutionContext {
+        engine.render(&node, &self).expect("unable to render node")
+    }
 
     pub fn render_string(&self, node: &NodeExecutionContext, string: String) -> String {
+        let mut context = self.build_global_render_context();
+        let mut context = self.build_node_render_context(&mut context, &node);
+
+        self.render_with_tera(&mut context, string)
+    }
+
+    fn render_with_tera(&self, context: &mut tera::Context, string: String) -> String {
         let mut tera = Tera::default();
-        let context = self.build_render_context(node.clone());
         tera.add_raw_template("string", &string).unwrap();
         tera.render("string", &context).unwrap()
     }
 
-    fn build_render_context(&self, node: NodeExecutionContext) -> tera::Context {
+    fn build_node_render_context(
+        &self,
+        context: &mut tera::Context,
+        node: &NodeExecutionContext,
+    ) -> tera::Context {
+        for (key, value) in node.node.variables.iter() {
+            let rendered_val = self.render_with_tera(context, value.clone());
+            context.insert(key, &rendered_val);
+        }
+        context.clone()
+    }
+
+    fn build_global_render_context(&self) -> tera::Context {
         let mut context = tera::Context::new();
 
         // Process global variables and environment
@@ -90,11 +105,6 @@ impl ExecutionContext {
             }
         });
 
-        // Next handle the node specific variables
-        for (key, value) in node.node.variables.iter() {
-            context.insert(key, value);
-        }
-
         context
     }
 }
@@ -108,6 +118,20 @@ mod tests {
     use crate::types::{ProcessBuilder, ProcessStateBuilder};
 
     use super::*;
+
+    #[test]
+    fn test_rendering_node_command_string() {
+        let flow = FlowBuilder::default()
+            .variables(HashMap::from([("name".to_string(), "ducks".to_string())]))
+            .build()
+            .unwrap();
+
+        let exec_context = ExecutionContext::new(&flow);
+
+        let node_exec = NodeExecutionContext::default();
+        let result = exec_context.render_string(&node_exec, "Hello {{name}}".to_string());
+        assert_eq!(result, "Hello ducks");
+    }
 
     #[test]
     fn test_render_variables_are_available_from_global_flow_scope() {
@@ -143,6 +167,34 @@ mod tests {
             .unwrap();
         let result = execution_context.render_string(&node, "Hello {{name}}".to_string());
         assert_eq!(result, "Hello mantalope");
+    }
+
+    #[test]
+    fn test_render_variables_are_rendered_and_available() {
+        let flow = FlowBuilder::default()
+            .variables(HashMap::from([(
+                "boys".to_string(),
+                "will be boys".to_string(),
+            )]))
+            .build()
+            .unwrap();
+
+        let execution_context = ExecutionContext::new(&flow);
+
+        let node = NodeBuilder::default()
+            .variables(HashMap::from([(
+                "name".to_string(),
+                "{{ boys }}".to_string(),
+            )]))
+            .build()
+            .unwrap();
+
+        let node = NodeExecutionContextBuilder::default()
+            .node(node)
+            .build()
+            .unwrap();
+        let result = execution_context.render_string(&node, "Hello {{name}}".to_string());
+        assert_eq!(result, "Hello will be boys");
     }
 
     #[test]

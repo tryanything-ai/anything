@@ -10,13 +10,17 @@ extern crate fs_extra;
 
 use std::io::Read;
 
-use anything_graph::flow::action::ShellAction;
+use anything_core::utils::trim_newline;
+use anything_graph::flow::{
+    action::{ActionType, ShellAction},
+    node::Node,
+};
 use fs_extra::{copy_items, dir};
 use miette::IntoDiagnostic;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    context::ExecutionContext,
+    context::{ExecutionContext, NodeExecutionContext},
     error::{EngineError, EngineResult},
     types::{ExecEnv, Process, ProcessState},
 };
@@ -96,8 +100,8 @@ impl ShellEngine {
         let state = ProcessState {
             status: process.state.status.clone(),
             stdin: process.state.stdin.clone(),
-            stderr: Some(stderr),
-            stdout: Some(stdout),
+            stderr: Some(trim_newline(&stderr)),
+            stdout: Some(trim_newline(&stdout)),
         };
 
         // process.state = state;
@@ -112,8 +116,44 @@ impl ShellEngine {
 }
 
 impl Engine for ShellEngine {
+    /// Render a shell engine command from a Node's `ShellAction` configuration
+    ///
+    /// For now, this "render" function accepts a mutable reference to the engine, but
+    /// in future iterations, this will be immutable.
+    fn render(
+        &mut self,
+        node: &Node,
+        global_context: &ExecutionContext,
+    ) -> EngineResult<NodeExecutionContext> {
+        let mut exec_context = NodeExecutionContext {
+            node: node.clone(),
+            status: None,
+            process: None,
+        };
+
+        let command = self.config.command.clone();
+        let evaluated_command = global_context.render_string(&exec_context, command);
+
+        self.config.command = evaluated_command.clone();
+
+        let mut evaluated_args: HashMap<String, String> = HashMap::new();
+        if let Some(args) = &self.config.args {
+            for (key, val) in args.into_iter() {
+                let evaluated_val = global_context.render_string(&exec_context, val.clone());
+                evaluated_args.insert(key.clone(), evaluated_val);
+            }
+        }
+
+        exec_context.node.node_action.action_type = ActionType::Shell(ShellAction {
+            command: evaluated_command.clone(),
+            args: Some(evaluated_args.clone()),
+            ..self.config.clone()
+        });
+
+        Ok(exec_context)
+    }
     /// Run a shell engine command from a Node's `ShellAction` configuration
-    fn run(&mut self, _context: &ExecutionContext) -> EngineResult<()> {
+    fn run(&mut self, _context: &NodeExecutionContext) -> EngineResult<()> {
         self.validate()?;
 
         let uuid = uuid::Uuid::new_v4();
@@ -192,9 +232,7 @@ impl Engine for ShellEngine {
 
         Ok(())
     }
-    fn config(&self) -> &dyn std::any::Any {
-        &self.config
-    }
+
     fn process(&self) -> Option<Process> {
         self.process.clone()
     }
@@ -218,9 +256,9 @@ mod tests {
             process: None,
         };
 
-        let context = ExecutionContext::default();
+        let node_context = NodeExecutionContext::default();
 
-        action.run(&context)?;
+        action.run(&node_context)?;
         assert!(action.process.is_some());
         let process = action.process.unwrap();
         assert!(process.state.stdout.is_some());
@@ -242,8 +280,8 @@ mod tests {
             process: None,
         };
 
-        let context = ExecutionContext::default();
-        let res = action.run(&context);
+        let node_context = NodeExecutionContext::default();
+        let res = action.run(&node_context);
         assert!(res.is_err());
         Ok(())
     }

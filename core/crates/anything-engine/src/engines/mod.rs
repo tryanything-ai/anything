@@ -1,6 +1,10 @@
 use anything_graph::flow::{action::ActionType, node::Node};
 
-use crate::{context::ExecutionContext, error::EngineResult, types::Process};
+use crate::{
+    context::{ExecutionContext, NodeExecutionContext},
+    error::EngineResult,
+    types::Process,
+};
 
 use self::{empty::EmptyEngine, shell::ShellEngine};
 
@@ -16,7 +20,16 @@ pub fn get_engine(node: Node) -> Box<dyn Engine> {
 }
 
 pub trait Engine {
-    fn run(&mut self, context: &ExecutionContext) -> EngineResult<()>;
-    fn config(&self) -> &dyn std::any::Any;
+    /// Run command is called for when it's time to execute the action
+    fn run(&mut self, context: &NodeExecutionContext) -> EngineResult<()>;
+    /// Config retrieves the configuration for the action
+    // fn config(&self) -> &dyn std::any::Any;
+    /// Process retrieves the process for the action
     fn process(&self) -> Option<Process>;
+    /// Render renders the current execution context for this node
+    fn render(
+        &mut self,
+        node: &Node,
+        global_context: &ExecutionContext,
+    ) -> EngineResult<NodeExecutionContext>;
 }
