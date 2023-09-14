@@ -16,6 +16,8 @@ sqlite = ["sqlx/sqlite"]
 
 [dependencies]
 anything-core = { path = "../anything-core" }
+anything-engine = { path = "../anything-engine" }
+anything-graph = { path = "../anything-graph" }
 
 derive_builder = { workspace = true }
 

@@ -7,6 +7,6 @@ log_retention = "4h"
 uri = "sqlite:///tmp/anything/anything.db"
 
 [server]
-port = 5556
+port = 50234
 
 [tracing]
