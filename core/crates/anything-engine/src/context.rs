@@ -46,7 +46,7 @@ impl ExecutionContext {
     pub fn render_string_for_node(
         &mut self,
         node: Node,
-        mut engine: Box<dyn Engine>,
+        mut engine: Box<dyn Engine + Send>,
     ) -> NodeExecutionContext {
         engine.render(&node, &self).expect("unable to render node")
     }

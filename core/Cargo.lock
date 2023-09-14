@@ -193,6 +193,8 @@ dependencies = [
  "anyhow",
  "anymap",
  "anything-core",
+ "anything-engine",
+ "anything-graph",
  "async-trait",
  "chrono",
  "clap",

@@ -13,6 +13,7 @@ pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<S
     let db_dir = root_dir.join("database");
 
     let database_file = db_dir.join("eventurous.db");
+    tracing::debug!("Using database file: {:?}", database_file);
     // let database_uri = format!("sqlite://{}", database_file.to_str().unwrap());
 
     let options = SqliteConnectOptions::new()

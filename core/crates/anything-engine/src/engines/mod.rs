@@ -12,7 +12,7 @@ mod empty;
 mod rest;
 mod shell;
 
-pub fn get_engine(node: Node) -> Box<dyn Engine> {
+pub fn get_engine(node: Node) -> Box<dyn Engine + Send + Sync> {
     match node.node_action.action_type {
         ActionType::Shell(config) => Box::new(ShellEngine::new(config.clone())),
         ActionType::Rest(config) => Box::new(RestEngine::new(config.clone())),
