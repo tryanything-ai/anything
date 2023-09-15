@@ -1,5 +1,5 @@
 import { useModelContext } from "../context/ModelsProvider";
-import { invoke } from "@tauri-apps/api";
+import api from '../tauri_api/api'; 
 import { useEffect, useState } from "react";
 import { useEventLoopContext } from "../context/EventLoopProvider";
 
@@ -12,7 +12,7 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
 
   const start = () => {
     setLoading(true);
-    invoke("start", {
+    api.startModel({
       modelFilename: model.filename,
       architecture: architectures[0].id,
       tokenizer: "embedded",
@@ -20,7 +20,7 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
       useGpu: false,
       prompt: modelPromptTemplates[0],
       contextFiles: [],
-    });
+    }); 
   };
   const {
     architectures,

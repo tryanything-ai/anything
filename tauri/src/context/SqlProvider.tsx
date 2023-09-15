@@ -5,7 +5,8 @@ import {
   useContext,
   ReactNode,
 } from "react";
-import { invoke } from "@tauri-apps/api";
+
+import api from "../tauri_api/api";
 import { v4 as uuidv4 } from "uuid";
 
 const DB_STRING = "sqlite:test.db";
@@ -25,8 +26,9 @@ export type EventInput = {
   created_at: string;
   data: any;
 };
+
 //Load Database once
-invoke("plugin:sqlite|load");
+api.loadSqlLite();
 
 interface SqlContextInterface {
   tables: any[];
@@ -52,7 +54,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
   const db = {
     execute: async (query: string, values?: any[]) => {
       // console.log("Executing Sql on JS side", query, values);
-      return await invoke("plugin:sqlite|execute", {
+      return await await api.executeSqlLite({
         db: DB_STRING,
         query,
         values: values ?? [],
@@ -60,7 +62,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
     },
     select: async (query: string, values?: any[]): Promise<any> => {
       // console.log("Selecting Sql on JS side", query, values);
-      return await invoke("plugin:sqlite|select", {
+      return await api.selectSqlLite({
         db: DB_STRING,
         query,
         values: values ?? [],

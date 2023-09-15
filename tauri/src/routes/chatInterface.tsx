@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useParams } from "react-router-dom";
-import { invoke } from "@tauri-apps/api";
+import api from "../tauri_api/api";
 import { useEventLoopContext } from "../context/EventLoopProvider";
 
 type Inputs = {
@@ -37,7 +37,8 @@ const ChatInterface = () => {
       }
     });
     console.log("prompt sent: " + message);
-    invoke("prompt", { message });
+
+    api.sendPrompt({ message });
   };
 
   const {
