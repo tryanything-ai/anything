@@ -1,7 +1,6 @@
 import { useModelContext } from "../context/ModelsProvider";
-import api from '../tauri_api/api'; 
+import api from "../tauri_api/api";
 import { useEffect, useState } from "react";
-import { useEventLoopContext } from "../context/EventLoopProvider";
 
 import { Model } from "../context/ModelsProvider";
 
@@ -20,24 +19,21 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
       useGpu: false,
       prompt: modelPromptTemplates[0],
       contextFiles: [],
-    }); 
+    });
   };
-  const {
-    architectures,
-    modelPromptTemplates,
-  } = useModelContext();
-  const { subscribeToEvent } = useEventLoopContext();
+
+  const { architectures, modelPromptTemplates } = useModelContext();
 
   useEffect(() => {
-   let unlisten =  subscribeToEvent("model_loading", (event: any) => {
+    let unlisten = api.subscribeToEvent("model_loading", (event: any) => {
       setLoading(true);
       setProgress(event.progress);
       setMessage(event.message);
     });
 
     return () => {
-      unlisten.then((unlisten) => unlisten()); 
-    }
+      unlisten.then((unlisten) => unlisten());
+    };
   }, []);
 
   return (
