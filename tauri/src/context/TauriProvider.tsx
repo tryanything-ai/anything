@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, ReactNode } from "react";
 import * as tauriPath from "@tauri-apps/api/path";
-import * as fs from "@tauri-apps/api/fs";
+import api from '../tauri_api/api';
 import * as os from "@tauri-apps/api/os";
 import tauriConfJson from "../../src-tauri/tauri.conf.json";
 
@@ -47,6 +47,7 @@ export function TauriProvider({ children }: { children: ReactNode }) {
   const [currentVault, setCurrentVault] = useState<string>("");
 
   //TODO: fix why this is running twice on startup
+  //MIGRATE_TO_RUST
   useEffect(() => {
     if (RUNNING_IN_TAURI) {
       const callTauriAPIs = async () => {
@@ -59,28 +60,28 @@ export function TauriProvider({ children }: { children: ReactNode }) {
         const _fileSep = _osType === "Windows_NT" ? "\\" : "/";
         setFileSep(_fileSep);
         //Create App Folder
-        await fs.createDir(APP_NAME, {
-          dir: fs.BaseDirectory.Document,
+        await api.fs.createDir(APP_NAME, {
+          dir: api.fs.BaseDirectory.Document,
           recursive: true,
         });
         //Create Flows Folder
-        await fs.createDir(APP_NAME + "/flows", {
-          dir: fs.BaseDirectory.Document,
+        await api.fs.createDir(APP_NAME + "/flows", {
+          dir: api.fs.BaseDirectory.Document,
           recursive: true,
         });
         //Create Nodes Folder
-        await fs.createDir(APP_NAME + "/nodes", {
-          dir: fs.BaseDirectory.Document,
+        await api.fs.createDir(APP_NAME + "/nodes", {
+          dir: api.fs.BaseDirectory.Document,
           recursive: true,
         });
         //Create Settings Folder
-        await fs.createDir(APP_NAME + "/settings", {
-          dir: fs.BaseDirectory.Document,
+        await api.fs.createDir(APP_NAME + "/settings", {
+          dir: api.fs.BaseDirectory.Document,
           recursive: true,
         });
         //Create Assets Folder
-        await fs.createDir(APP_NAME + "/assets", {
-          dir: fs.BaseDirectory.Document,
+        await api.fs.createDir(APP_NAME + "/assets", {
+          dir: api.fs.BaseDirectory.Document,
           recursive: true,
         });
         setAppDocuments(`${_documents}${APP_NAME}`);

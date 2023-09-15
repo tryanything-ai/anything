@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useFlowContext } from "../context/FlowProvider";
 import Editor from "@monaco-editor/react";
-import { writeTextFile } from "@tauri-apps/api/fs";
+import api from '../tauri_api/api'; 
+
 import { useTauriContext } from "../context/TauriProvider";
 import { parse } from "iarna-toml-esm";
 
@@ -19,7 +20,7 @@ const TomlPanel = () => {
         //   "writing toml to",
         //   appDocuments + "/flows/" + flow_name + "/flow.toml"
         // );
-        await writeTextFile(
+        await api.fs.writeTextFile(
           appDocuments + "/flows/" + flow_name + "/flow.toml",
           value
         );

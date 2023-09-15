@@ -24,7 +24,6 @@ import {
 } from "reactflow";
 
 import { useTauriContext } from "./TauriProvider";
-import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { stringify, parse } from "iarna-toml-esm";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
@@ -265,7 +264,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
     console.log("writing toml in FlowProvider");
     let name = explicit_flow_name ? explicit_flow_name : flow_name;
-    return await writeTextFile(
+    return await api.fs.writeTextFile(
       appDocuments + "/flows/" + name + "/flow.toml",
       toml
     );
@@ -277,7 +276,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("appDocuments or flow_name is undefined");
       }
       console.log("reading toml in FlowProvider");
-      return await readTextFile(
+      return await api.fs.readTextFile(
         appDocuments + "/flows/" + flow_name + "/flow.toml"
       );
     } catch (error) {
