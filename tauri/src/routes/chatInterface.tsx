@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import api from "../tauri_api/api";
-import { useEventLoopContext } from "../context/EventLoopProvider";
 
 type Inputs = {
   message: string;
@@ -16,7 +15,6 @@ type Message = {
 const ChatInterface = () => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const { subscribeToEvent } = useEventLoopContext();
   const { flow_id } = useParams();
 
   //TODO: switch this over to event model not chatting directly
@@ -25,7 +23,7 @@ const ChatInterface = () => {
       ...messages,
       { message: message, from: "User" },
     ]);
-    let unlisten = subscribeToEvent("prompt_response", (event) => {
+    let unlisten = api.subscribeToEvent("prompt_response", (event) => {
       // if (event.payload?.message?.length > 0) onToken(event.payload.message);
       console.log("prompt_response event received");
       console.debug(event);

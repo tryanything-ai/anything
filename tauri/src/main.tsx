@@ -19,7 +19,6 @@ import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
-import { EventLoopProvider } from "./context/EventLoopProvider";
 import { ModelProvider } from "./context/ModelsProvider";
 import "./styles.css";
 
@@ -79,11 +78,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <LocalFileProvider>
         <ModelProvider>
           <SqlProvider>
-            <EventLoopProvider>
-              <SettingsProvider>
-                <RouterProvider router={router} />
-              </SettingsProvider>
-            </EventLoopProvider>
+            <SettingsProvider>
+              <RouterProvider router={router} />
+            </SettingsProvider>
           </SqlProvider>
         </ModelProvider>
       </LocalFileProvider>
