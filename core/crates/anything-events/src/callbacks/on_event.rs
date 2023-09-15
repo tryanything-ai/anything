@@ -13,6 +13,7 @@ pub async fn process_on_events(server: Arc<Server>) -> anyhow::Result<()> {
         // Iterate through "registered" flows that are "listening" for events
         // based upon the event `name` and `source`
         //
+        // let flows = get_flows_interested_in_event(evt)
         // Hardcoded for now
         let flow = Flowfile::from_file(PathBuf::from("examples/simple_flow.toml"))
             .unwrap()

@@ -22,7 +22,7 @@ variables = [{ cheers = "Jingle Bells" }]
 action_type = "Shell"
 
 [nodes.action.config]
-command = "echo 'Jingle Bells'"
+command = "echo '{{cheer}}'"
 
 
 [[nodes]]
@@ -35,7 +35,7 @@ variables = [{ cheer = "{{echo-cheer.output}}" }]
 action_type = "Shell"
 
 [nodes.action.config]
-command = "echo"
+command = "echo {{cheer}}"
 executor = "/bin/bash"
 args = []
 
