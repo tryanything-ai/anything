@@ -8,16 +8,9 @@ import {
 
 import { useTauriContext } from "./TauriProvider";
 import { watchImmediate } from "tauri-plugin-fs-watch-api";
-import {
-  readDir,
-  writeTextFile,
-  FileEntry,
-  createDir,
-  removeDir,
-  copyFile,
-  exists,
-  readTextFile,
-} from "@tauri-apps/api/fs";
+import { FileEntry } from "@tauri-apps/api/fs";
+import api from "../tauri_api/api";
+
 import { v4 as uuidv4 } from "uuid";
 import { stringify, parse } from "iarna-toml-esm";
 
@@ -45,14 +38,13 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments, loading } = useTauriContext();
   const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
 
-  const getRootFolder = () => { 
+  const getRootFolder = () => {
     try {
-
       if (appDocuments === undefined) {
         throw new Error("appDocuments is undefined");
       }
 
-      return appDocuments; 
+      return appDocuments;
     } catch (error) {
       console.error(error);
     }
@@ -119,11 +111,10 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-
   const getLocalFiles = async () => {
     try {
       if (appDocuments !== undefined) {
-        let entries = await readDir(appDocuments + "/flows", {
+        let entries = await api.fs.readDir(appDocuments + "/flows", {
           recursive: true,
         });
         // filter out .DS_Store files
@@ -164,15 +155,15 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     `;
 
       if (appDocuments !== undefined) {
-        await createDir(appDocuments + "/flows/" + flowName, {
+        await api.fs.createDir(appDocuments + "/flows/" + flowName, {
           recursive: true,
         });
 
-        await writeTextFile(
+        await api.fs.writeTextFile(
           appDocuments + "/flows/" + flowName + "/flow.toml",
           flowTomlContent
         );
-        await writeTextFile(
+        await api.fs.writeTextFile(
           appDocuments + "/flows/" + flowName + "/settings.toml",
           settingsTomlContent
         );
@@ -189,7 +180,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     //TODO: deal with situation where there are flow events in the db
     try {
       if (appDocuments !== undefined) {
-        await removeDir(appDocuments + "/flows/" + flowName, {
+        await api.fs.removeDir(appDocuments + "/flows/" + flowName, {
           recursive: true,
         });
 
@@ -202,7 +193,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const allPathsExist = async (paths: string[]) => {
-    const results = await Promise.all(paths.map((path) => exists(path)));
+    const results = await Promise.all(paths.map((path) => api.fs.exists(path)));
     return results.every((result) => result);
   };
 
@@ -212,7 +203,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("appDocuments or flow_name is undefined");
       }
       console.log("reading toml in FlowProvider");
-      return await readTextFile(
+      return await api.fs.readTextFile(
         appDocuments + "/flows/" + flow_name + "/flow.toml"
       );
     } catch (error) {
@@ -265,7 +256,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       if (!node) throw new Error("node is undefined");
       node.data = data;
       let newToml = stringify(parsedToml);
-      await writeTextFile(
+      await api.fs.writeTextFile(
         appDocuments + "/flows/" + flowName + "/flow.toml",
         newToml
       );
@@ -289,21 +280,21 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       if (!allExist) throw Error("Flow files do not all exist");
 
       //make new dir first
-      await createDir(appDocuments + "/flows/" + newFlowName, {
+      await api.fs.createDir(appDocuments + "/flows/" + newFlowName, {
         recursive: true,
       });
       //copy files over
-      await copyFile(
+      await api.fs.copyFile(
         appDocuments + "/flows/" + flowName + "/flow.toml",
         appDocuments + "/flows/" + newFlowName + "/flow.toml"
       );
-      await copyFile(
+      await api.fs.copyFile(
         appDocuments + "/flows/" + flowName + "/settings.toml",
         appDocuments + "/flows/" + newFlowName + "/settings.toml"
       );
 
       //delete old dir
-      await removeDir(appDocuments + "/flows/" + flowName, {
+      await api.fs.removeDir(appDocuments + "/flows/" + flowName, {
         recursive: true,
       });
 
