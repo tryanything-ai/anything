@@ -25,7 +25,6 @@ import {
 
 import { useTauriContext } from "./TauriProvider";
 import { stringify, parse } from "iarna-toml-esm";
-import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
 import { useLocalFileContext } from "./LocalFileProvider";
 import api from "../tauri_api/api";
@@ -365,7 +364,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     console.log(`Watching ${path} for changes`);
 
     const watchThisFile = async () => {
-      stopWatching = await watchImmediate(path, (event) => {
+      stopWatching = await api.watch.watchImmediate(path, (event) => {
         console.log("TOML file changed");
         updateStateFromToml();
       });

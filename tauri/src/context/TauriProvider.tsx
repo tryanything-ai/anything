@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useContext, ReactNode } from "react";
-import * as tauriPath from "@tauri-apps/api/path";
 import api from '../tauri_api/api';
-import * as os from "@tauri-apps/api/os";
 import tauriConfJson from "../../src-tauri/tauri.conf.json";
 
 declare global {
@@ -51,11 +49,11 @@ export function TauriProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (RUNNING_IN_TAURI) {
       const callTauriAPIs = async () => {
-        setDownloadDir(await tauriPath.downloadDir());
-        const _documents = await tauriPath.documentDir();
+        setDownloadDir(await api.path.downloadDir());
+        const _documents = await api.path.documentDir();
         console.log("documents", _documents);
         setDocumentDir(_documents);
-        const _osType = await os.type();
+        const _osType = await api.os.type(); 
         setOsType(_osType);
         const _fileSep = _osType === "Windows_NT" ? "\\" : "/";
         setFileSep(_fileSep);
