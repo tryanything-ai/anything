@@ -15,10 +15,10 @@ const TomlPanel = () => {
       //TODO: manage coding errors differently. Can't add random stuff right now
       let parseable = parse(value);
       if (parseable) {
-        console.log(
-          "writing toml to",
-          appDocuments + "/flows/" + flow_name + "/flow.toml"
-        );
+        // console.log(
+        //   "writing toml to",
+        //   appDocuments + "/flows/" + flow_name + "/flow.toml"
+        // );
         await writeTextFile(
           appDocuments + "/flows/" + flow_name + "/flow.toml",
           value

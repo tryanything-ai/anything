@@ -21,6 +21,7 @@ interface TauriContextInterface {
   appDocuments: string;
   osType: string;
   fileSep: string;
+  currentVault: string,
 }
 
 const TauriContext = React.createContext<TauriContextInterface>({
@@ -30,6 +31,7 @@ const TauriContext = React.createContext<TauriContextInterface>({
   appDocuments: "",
   osType: "",
   fileSep: "/",
+  currentVault: "",
 });
 
 export const useTauriContext = () => useContext(TauriContext);
@@ -41,6 +43,8 @@ export function TauriProvider({ children }: { children: ReactNode }) {
   const [osType, setOsType] = useState<string>("");
   const [fileSep, setFileSep] = useState<string>("/");
   const [appDocuments, setAppDocuments] = useState<string>("");
+  //TODO: implement Vualts ( but after backend is done in ) 
+  const [currentVault, setCurrentVault] = useState<string>("");
 
   //TODO: fix why this is running twice on startup
   useEffect(() => {
@@ -89,7 +93,7 @@ export function TauriProvider({ children }: { children: ReactNode }) {
 
   return (
     <TauriContext.Provider
-      value={{ loading, fileSep, downloads, documents, osType, appDocuments }}
+      value={{ loading, fileSep, downloads, documents, osType, appDocuments, currentVault }}
     >
       {children}
     </TauriContext.Provider>
