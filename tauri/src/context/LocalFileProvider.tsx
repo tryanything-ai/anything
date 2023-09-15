@@ -7,10 +7,9 @@ import {
 } from "react";
 
 import { useTauriContext } from "./TauriProvider";
-import { watchImmediate } from "tauri-plugin-fs-watch-api";
-import { FileEntry } from "@tauri-apps/api/fs";
-import api from "../tauri_api/api";
 
+import { FileEntry } from "../tauri_api/fs"; 
+import api from "../tauri_api/api";
 import { v4 as uuidv4 } from "uuid";
 import { stringify, parse } from "iarna-toml-esm";
 
@@ -314,7 +313,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       let stopWatching = () => {};
       console.log("Watching ", appDocuments, " for changes");
       const watchThisFile = async () => {
-        stopWatching = await watchImmediate(
+        stopWatching = await api.watch.watchImmediate(
           appDocuments,
           (event) => {
             console.log("File changed: ", JSON.stringify(event, null, 3));

@@ -1,1 +1,1 @@
-//TODO: stub for listening for file changes vs using fs-watch api
+export { watchImmediate } from "tauri-plugin-fs-watch-api";
