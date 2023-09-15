@@ -142,6 +142,7 @@ dependencies = [
  "opentelemetry-semantic-conventions",
  "serde",
  "thiserror",
+ "tokio",
  "tracing",
  "tracing-appender",
  "tracing-opentelemetry",
