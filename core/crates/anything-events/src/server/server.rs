@@ -36,7 +36,7 @@ impl Server {
 
     pub async fn add_callback(mut self: Arc<Self>, callback: Box<dyn Fn() -> ()>) {
         let callback = Box::new(callback);
-        self.callbacks.push(callback);
+        // self.callbacks.push(callback);
     }
 
     pub async fn run_server(self: Arc<Self>) -> EventsResult<()> {
