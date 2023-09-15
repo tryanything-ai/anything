@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use anything_core::spawning::spawn_or_crash;
 use tracing::debug;
 
 use crate::callbacks;
@@ -8,7 +9,6 @@ use crate::errors::{EventsError, EventsResult};
 use crate::events::events_server::EventsServer;
 use crate::models::event::Event;
 use crate::server::events_server::EventManager;
-use crate::utils::executor::spawn_or_crash;
 // use crate::utils::executor::spawn_or_crash;
 use crate::{context::Context, post_office::PostOffice};
 
@@ -20,6 +20,7 @@ pub struct Server {
     pub post_office: PostOffice,
     // pub store: Box<dyn StoreAdapter + Send + Sync>,
     pub context: Context,
+    // pub callbacks: Vec<
 }
 
 impl Server {
@@ -33,13 +34,12 @@ impl Server {
         Ok(Arc::new(server))
     }
 
-    pub async fn run_server(self: Arc<Self>) -> EventsResult<()> {
-        spawn_or_crash(
-            "on_event",
-            self.clone(),
-            callbacks::on_event::process_on_events,
-        );
+    pub async fn add_callback(mut self: Arc<Self>, callback: Box<dyn Fn() -> ()>) {
+        let callback = Box::new(callback);
+        self.callbacks.push(callback);
+    }
 
+    pub async fn run_server(self: Arc<Self>) -> EventsResult<()> {
         let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
         let reflection_service = tonic_reflection::server::Builder::configure()

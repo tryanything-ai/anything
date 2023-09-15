@@ -1,6 +1,6 @@
 pub mod cli;
 pub mod config;
-pub(crate) mod context;
+pub mod context;
 pub(crate) mod errors;
 // pub(crate) mod events;
 pub(crate) mod callbacks;
@@ -17,3 +17,7 @@ pub(crate) mod utils;
 
 #[cfg(test)]
 pub(crate) mod internal;
+
+pub use context::Context;
+pub use server::server::Server;
+pub use utils::bootstrap;
