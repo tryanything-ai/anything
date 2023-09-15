@@ -1,7 +1,6 @@
 import { useModelContext } from "../context/ModelsProvider";
-import { invoke } from "@tauri-apps/api";
+import api from "../tauri_api/api";
 import { useEffect, useState } from "react";
-import { useEventLoopContext } from "../context/EventLoopProvider";
 
 import { Model } from "../context/ModelsProvider";
 
@@ -12,7 +11,7 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
 
   const start = () => {
     setLoading(true);
-    invoke("start", {
+    api.startModel({
       modelFilename: model.filename,
       architecture: architectures[0].id,
       tokenizer: "embedded",
@@ -22,22 +21,19 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
       contextFiles: [],
     });
   };
-  const {
-    architectures,
-    modelPromptTemplates,
-  } = useModelContext();
-  const { subscribeToEvent } = useEventLoopContext();
+
+  const { architectures, modelPromptTemplates } = useModelContext();
 
   useEffect(() => {
-   let unlisten =  subscribeToEvent("model_loading", (event: any) => {
+    let unlisten = api.subscribeToEvent("model_loading", (event: any) => {
       setLoading(true);
       setProgress(event.progress);
       setMessage(event.message);
     });
 
     return () => {
-      unlisten.then((unlisten) => unlisten()); 
-    }
+      unlisten.then((unlisten) => unlisten());
+    };
   }, []);
 
   return (
