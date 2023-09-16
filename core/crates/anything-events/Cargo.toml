@@ -20,6 +20,8 @@ anything-engine = { path = "../anything-engine" }
 anything-graph = { path = "../anything-graph" }
 
 derive_builder = { workspace = true }
+notify = { workspace = true }
+postage = { workspace = true }
 
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -50,7 +52,7 @@ sqlx = { workspace = true }
 
 async-trait = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
-crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }
+# crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }
 
 tonic = { workspace = true }
 tonic-reflection = { workspace = true }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Builder)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct PackageData {
     pub id: Uuid,

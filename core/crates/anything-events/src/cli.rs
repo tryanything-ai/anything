@@ -1,9 +1,13 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use clap::{Parser, Subcommand};
 use tracing::debug;
 
-use crate::{errors::EventsResult, server::server::Server, utils::bootstrap};
+use crate::{
+    errors::EventsResult,
+    server::server::Server,
+    utils::{bootstrap, loader::load_flows},
+};
 
 #[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]

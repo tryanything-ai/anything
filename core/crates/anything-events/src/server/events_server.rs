@@ -3,7 +3,8 @@
 use std::sync::Arc;
 
 use chrono::Utc;
-use crossbeam::channel::Sender;
+use postage::dispatch::Sender;
+use postage::prelude::*;
 use serde_json::json;
 use sqlx::{Pool, Row, SqlitePool};
 use tonic::{Request, Response, Status};
@@ -104,6 +105,7 @@ impl Events for EventManager {
                 return Err(Status::internal(UNABLE_TO_SAVE_EVENT));
             }
         };
+        let mut update_tx = self.update_tx.clone();
 
         let event = match self
             .context
@@ -113,7 +115,7 @@ impl Events for EventManager {
             .await
         {
             Ok(r) => {
-                self.update_tx.send(r);
+                update_tx.send(r);
             }
             Err(err) => {
                 // Something should be done here... maybe?
@@ -214,7 +216,7 @@ mod tests {
         let context = get_test_context().await;
         let test = TestEventRepo::new().await;
         let test_tx = test.with_sender().await;
-        let test_rx = test.with_receiver().await;
+        let mut test_rx = test.with_receiver().await;
         let event_manager = EventManager::new(&context, test_tx);
 
         let event = test.dummy_create_event();
@@ -225,8 +227,8 @@ mod tests {
         let request = Request::new(create_event_request);
         let _response = event_manager.trigger_event(request).await;
 
-        let msg = test_rx.recv();
-        assert!(msg.is_ok());
+        let msg = test_rx.recv().await;
+        assert!(msg.is_some());
         let msg = msg.unwrap();
         assert_eq!(msg.event_name, event.event_name);
 
