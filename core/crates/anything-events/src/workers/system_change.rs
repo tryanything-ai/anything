@@ -8,6 +8,8 @@ use std::sync::Arc;
 use tracing::info;
 
 use crate::{
+    callbacks::FlowRunner,
+    models::flow_handler::{FlowHandler, FLOW_HANDLER},
     trigger_change::{ChangeMessage, SystemChangeType},
     Server,
 };
@@ -47,6 +49,8 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
             SystemChangeType::Flows => {
                 info!("Flows change ({:?}) at {:?}", msg.kind, msg.path);
                 // TODO: Reload the flows
+                let mut fh = FlowHandler::global().lock().await;
+                fh.reload_flows().await?;
             }
             _ => {}
         }

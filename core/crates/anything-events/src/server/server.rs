@@ -30,7 +30,8 @@ pub struct Server {
 
 impl Server {
     pub async fn new(context: Context) -> EventsResult<Arc<Self>> {
-        let (tx, _rx) = tokio::sync::watch::channel(FlowHandler::new());
+        let context_clone = context.clone();
+        let (tx, _rx) = tokio::sync::watch::channel(FlowHandler::new(context_clone.config.clone()));
         let server = Self {
             port: context.config().server.port,
             post_office: PostOffice::open(),

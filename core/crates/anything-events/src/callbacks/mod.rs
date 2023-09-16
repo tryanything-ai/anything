@@ -9,13 +9,13 @@ use crate::{errors::EventsResult, post_office::PostOffice};
 pub(crate) mod on_event;
 
 #[derive(Debug)]
-pub struct FlowHandler {
+pub struct FlowRunner {
     pub flow: Flow,
     pub flow_file: PathBuf,
     pub post_office: PostOffice,
 }
 
-impl FlowHandler {
+impl FlowRunner {
     pub fn new(flow_file: PathBuf) -> Self {
         let flow = Flowfile::from_file(flow_file.clone()).unwrap().flow;
         Self {

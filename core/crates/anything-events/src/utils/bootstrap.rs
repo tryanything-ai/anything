@@ -1,3 +1,5 @@
+use anything_graph::flow;
+use futures::lock::Mutex;
 use opentelemetry::{
     global,
     runtime::Tokio,
@@ -14,17 +16,34 @@ use tracing_subscriber::{fmt, prelude::*};
 
 use tracing::info;
 
-use crate::{config::AnythingEventsConfig, context::Context, errors::EventsResult};
+use crate::{
+    config::AnythingEventsConfig,
+    context::Context,
+    errors::EventsResult,
+    models::flow_handler::{FlowHandler, FLOW_HANDLER},
+};
 
 pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
     info!("Bootstrapping Eventurous");
     bootstrap_directory(config)?;
     setup_tracing(tracing_subscriber::registry(), &config);
+    setup_system(config)?;
 
     // Create context
     let context = Context::new(config.clone()).await?;
 
     Ok(context)
+}
+
+// -----------------------------------------------------------------
+// Bootstrap systems
+// -----------------------------------------------------------------
+fn setup_system<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()> {
+    let flow_handler = Mutex::new(FlowHandler::new(config.clone()));
+    FLOW_HANDLER
+        .set(flow_handler)
+        .expect("unable to set global flow handler");
+    Ok(())
 }
 
 // -----------------------------------------------------------------
