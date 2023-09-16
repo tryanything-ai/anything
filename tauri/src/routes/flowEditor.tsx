@@ -12,11 +12,11 @@ import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 import SettingsPanel from "../components/settingsPanel";
 import ManualNode from "../components/nodes/manualNode";
 import { useParams } from "react-router-dom";
-
+import  StartButton from "../components/startButton";
 import NodeConfigPanel from "../components/nodeConfigPanel";
 import SuperNode from "../components/nodes/superNode";
 
-import { Allotment, LayoutPriority } from "allotment";
+import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 
 import "reactflow/dist/style.css";
@@ -79,6 +79,7 @@ function Flows() {
                 onConnect={onConnect}
                 fitView
               >
+                <StartButton />
                 <Controls style={{ background: "darkgray" }} />
                 <Background
                   variant={BackgroundVariant.Dots}
