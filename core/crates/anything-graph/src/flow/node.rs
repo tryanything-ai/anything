@@ -7,7 +7,7 @@ use crate::error::{AppError, AppResult};
 use super::{action::Action, common::PackageData};
 pub type NodeGroup = Vec<Node>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Builder)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct Node {
     pub package_data: PackageData,

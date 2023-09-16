@@ -11,8 +11,11 @@ use crate::{
     repositories::{self, event_repo::EventRepoImpl, Repositories},
 };
 use chrono::Utc;
-use crossbeam::channel::{Receiver, Sender};
 use fake::Fake;
+use postage::{
+    dispatch::{Receiver, Sender},
+    prelude::*,
+};
 use serde_json::Value;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Row, SqlitePool};
 use std::{borrow::BorrowMut, collections::HashMap, sync::Arc};

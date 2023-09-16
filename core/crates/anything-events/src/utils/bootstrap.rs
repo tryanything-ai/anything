@@ -18,15 +18,7 @@ use crate::{config::AnythingEventsConfig, context::Context, errors::EventsResult
 
 pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
     info!("Bootstrapping Eventurous");
-    // Bootstrap database directory
-    let root_dir = config.root_dir.clone();
-    let db_dir = root_dir.join("database");
-
-    // If the parent directory does not exist, create it.
-    if !db_dir.exists() {
-        fs::create_dir_all(db_dir).unwrap();
-    }
-
+    bootstrap_directory(config)?;
     setup_tracing(tracing_subscriber::registry(), &config);
 
     // Create context
@@ -36,8 +28,33 @@ pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Con
 }
 
 // -----------------------------------------------------------------
+// Bootstrap directory
+// -----------------------------------------------------------------
+fn bootstrap_directory<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()> {
+    // Bootstrap database directory
+    let root_dir = config.root_dir.clone();
+
+    let directories = vec![
+        "database", "logs", "config", "nodes", "settings", "assets", "flows",
+    ];
+
+    directories.into_iter().for_each(|dir| {
+        let dir = root_dir.join(dir);
+        if !dir.exists() {
+            fs::create_dir_all(dir).unwrap();
+        }
+    });
+
+    // // If the parent directory does not exist, create it.
+    // if !db_dir.exists() {
+    //     fs::create_dir_all(db_dir).unwrap();
+    // }
+    Ok(())
+}
+
+// -----------------------------------------------------------------
 // Tracing
-// --
+// -----------------------------------------------------------------
 
 pub fn setup_tracing<S>(subscriber: S, config: &AnythingEventsConfig)
 where

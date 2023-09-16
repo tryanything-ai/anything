@@ -12,6 +12,9 @@ pub enum EventsError {
     #[error("configuration error: {0}")]
     ConfigError(String),
 
+    #[error("io error: {0}")]
+    IOError(#[from] std::io::Error),
+
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
 

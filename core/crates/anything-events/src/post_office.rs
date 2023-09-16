@@ -1,6 +1,5 @@
-#![allow(unused)]
 use anyhow::Result;
-use crossbeam::channel::*;
+use postage::dispatch::{Receiver, Sender};
 use tokio::sync::Mutex;
 
 type AnySendMap = anymap::Map<dyn std::any::Any + Send>;
@@ -12,7 +11,7 @@ struct Mailbox<T> {
 
 impl<T: Clone> Mailbox<T> {
     fn new() -> Mailbox<T> {
-        let (tx, rx) = crossbeam::channel::unbounded();
+        let (tx, rx) = postage::dispatch::channel(256);
         Mailbox { tx, rx }
     }
 }

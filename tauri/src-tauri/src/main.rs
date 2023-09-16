@@ -8,9 +8,7 @@ mod local_models;
 mod notifications;
 mod sql;
 
-use anything_core::build_runtime;
-use anything_core::spawn_or_crash;
-use anything_events::Context;
+use anything_core::{build_runtime, spawn_or_crash};
 // use anything_core::spawn_or_crash;
 use config::get_logs_dir;
 use local_models::cancellation::Canceller;
@@ -19,10 +17,9 @@ use local_models::models::ModelManager;
 use events::scheduler;
 use sql::plugin::Builder;
 use std::fs;
-use tauri::App;
-use tauri::AppHandle;
 
 use std::fs::create_dir_all;
+use std::path::PathBuf;
 use tracing::info;
 
 use std::sync::Mutex;
@@ -34,24 +31,30 @@ use tracing_subscriber::EnvFilter;
 pub struct ManagerState(Mutex<Option<ModelManager>>);
 
 // Run core server
-async fn setup_anything_server(_app: AppHandle) -> anyhow::Result<()> {
-    let config = anything_events_config::load(None)?;
+async fn setup_anything_server(_nothing: ()) -> anyhow::Result<()> {
+    println!("Setting up anything core");
+    let config_file = &PathBuf::from("../config/events.toml");
+    println!("Loading config from {:?}", config_file.exists());
+    let config = anything_events_config::load(Some(config_file)).expect("error loading config");
+    println!("Loaded config");
+    let context = anything_events::bootstrap::bootstrap(&config).await?;
 
-    let context = Context::new(config.clone()).await?;
+    // let context = Context::new(config.clone()).await?;
     let server = anything_events::Server::new(context).await?;
-    info!("Setting up anything server");
+    println!("Setting up anything server");
     // let rt = build_runtime()?;
     // rt.spawn(async move {
     // });
-    tokio::spawn(async move {
-        info!("Spawning server");
-        server.run_server().await
-    });
+    // tokio::spawn(async move {
+    let _ = server.run_server().await;
+    // });
+    // tokio::spawn(async move { server.run_server() });
 
     info!("started server");
 
     Ok(())
 }
+
 fn main() {
     let log_file_path = get_logs_dir().expect("getting log directory");
     create_dir_all(&log_file_path).expect("creating log directory");
@@ -64,6 +67,12 @@ fn main() {
         .init();
 
     info!("starting...");
+
+    let rt = build_runtime().expect("building runtime");
+    rt.spawn(async move {
+        println!("Spawning anything-server");
+        spawn_or_crash("anything-server", (), setup_anything_server);
+    });
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
@@ -84,8 +93,6 @@ fn main() {
             // let window = app_handle.get_window("main").unwrap();
             // Spawn a new asynchronous task for scheduler
             tauri::async_runtime::spawn(async move {
-                // spawn_or_crash("anything-server", app_handle.clone(), setup_anything_server);
-                setup_anything_server(app_handle.clone()).await.unwrap();
                 scheduler(&app_handle).await;
             });
 
