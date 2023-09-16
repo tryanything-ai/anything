@@ -22,6 +22,8 @@ anything-graph = { path = "../anything-graph" }
 derive_builder = { workspace = true }
 notify = { workspace = true }
 postage = { workspace = true }
+futures = { workspace = true }
+
 
 serde = { workspace = true }
 serde_json = { workspace = true }
