@@ -52,11 +52,11 @@ impl Server {
             self.clone(),
             workers::system_change::file_watcher,
         );
-        // spawn_or_crash(
-        //     "handle_system_change",
-        //     self.clone(),
-        //     workers::system_change::handle_system_change,
-        // );
+        spawn_or_crash(
+            "handle_system_change",
+            self.clone(),
+            workers::system_change::handle_system_change,
+        );
 
         let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
