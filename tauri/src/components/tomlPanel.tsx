@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useFlowContext } from "../context/FlowProvider";
 import Editor from "@monaco-editor/react";
-import api from '../tauri_api/api'; 
+import api from "../tauri_api/api";
 
 import { useTauriContext } from "../context/TauriProvider";
 import { parse } from "iarna-toml-esm";
@@ -31,7 +31,7 @@ const TomlPanel = () => {
   };
 
   return (
-    <div className="flex flex-col h-full pt-2 border-l border-gray-500">
+    <div className="flex flex-col h-full">
       <Editor
         language="toml"
         height="100vh"
