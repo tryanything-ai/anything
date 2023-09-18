@@ -57,12 +57,10 @@ const DebugPanel = () => {
       {eventIds.length > 0 ? (
         <div className="text-2xl font-bold">Processing Tasks</div>
       ) : (
-        <div className="flex-1 text-center">
+        <div className="flex-1">
           <div>
             <h1 className="text-2xl font-bold">No Tasks</h1>
-            <p className="text-sm p-2">
-              Tasks will appear here when your flow runs
-            </p>
+            <p className="">Tasks will appear here when your flow runs</p>
           </div>
         </div>
       )}

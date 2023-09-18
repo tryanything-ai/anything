@@ -12,7 +12,7 @@ interface FLowNavigationContextInterface {
   nodeConfigPanel: boolean;
   setNodeConfigPanel: (option: boolean, node_id: string) => void;
   nodeId: string;
-  closeAllPanelsOpenOne: (panelName: string, arg: any) => void;
+  closeAllPanelsOpenOne: (panelName: string, arg?: any) => void;
 }
 
 export const FlowNavigationContext =

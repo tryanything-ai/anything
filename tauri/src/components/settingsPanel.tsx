@@ -44,7 +44,7 @@ const FlowSettingsPanel = () => {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 border-l border-gray-500 gap-5">
+    <div className="flex flex-col h-full gap-5 p-4">
       <h1 className="text-2xl font-bold">Flow Settings</h1>
 
       <form
