@@ -2,13 +2,13 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TriggerChange {
     AddFlow,
     RemoveFlow,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DirectoryChangeKind {
     Any,
     Access,
@@ -30,7 +30,7 @@ impl From<notify::EventKind> for DirectoryChangeKind {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum SystemChangeType {
     Database,
     Logs,

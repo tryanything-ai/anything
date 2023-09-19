@@ -81,7 +81,7 @@ impl SystemHandler {
 
 #[cfg(test)]
 mod tests {
-    use crate::internal::test_helper::{get_fixtures_dir, setup_temp_dir};
+    use crate::internal::test_helper::setup_test_directory;
 
     use super::*;
 
@@ -115,13 +115,5 @@ mod tests {
         assert_eq!(flows_triggers.len(), 1);
         // assert_eq!(flow_names, vec!["SimpleFlow"]);
         Ok(())
-    }
-
-    fn setup_test_directory() -> EventsResult<AnythingEventsConfig> {
-        let simple_fixture_dir = get_fixtures_dir().join("simple");
-        let temp_dir = setup_temp_dir(simple_fixture_dir)?;
-        let mut config = AnythingEventsConfig::default();
-        config.root_dir = temp_dir.clone();
-        Ok(config)
     }
 }
