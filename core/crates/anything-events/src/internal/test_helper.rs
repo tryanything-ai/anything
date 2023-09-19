@@ -1,10 +1,13 @@
 #![allow(unused)]
 
 use anything_core::posix::copy_recursively;
+use anything_engine::context;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 
+use crate::models::system_handler;
+use crate::Server;
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
@@ -39,10 +42,28 @@ pub async fn get_test_context() -> Context {
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
     });
+    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
+        system_handler,
+    }
+}
+
+pub async fn get_test_context_with_config(config: AnythingEventsConfig) -> Context {
+    // let config = get_test_config();
+    let pool = get_test_pool().await.unwrap();
+    let event_repo = TestEventRepo::new_with_pool(&pool);
+    let repositories = Arc::new(Repositories {
+        event_repo: event_repo.event_repo,
+    });
+    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
+    Context {
+        pool: Arc::new(pool.clone()),
+        config,
+        repositories,
+        system_handler,
     }
 }
 
@@ -53,10 +74,12 @@ pub async fn get_test_context_from_pool(pool: &SqlitePool) -> Context {
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
     });
+    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
+        system_handler,
     }
 }
 
@@ -75,6 +98,12 @@ pub async fn get_test_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
         .map_err(|e| EventsError::DatabaseError(DatabaseError::DBError(Box::new(e))))?;
 
     Ok(pool)
+}
+
+pub async fn get_test_server() -> EventsResult<Arc<Server>> {
+    let context = get_test_context().await;
+    let server = Server::new(context).await?;
+    Ok(server)
 }
 
 pub async fn select_all_events(pool: &SqlitePool) -> EventsResult<Vec<Event>> {
@@ -261,4 +290,12 @@ pub fn get_fixtures_dir() -> PathBuf {
     d.push("tests");
     d.push("fixtures");
     d
+}
+
+pub fn setup_test_directory() -> EventsResult<AnythingEventsConfig> {
+    let simple_fixture_dir = get_fixtures_dir().join("simple");
+    let temp_dir = setup_temp_dir(simple_fixture_dir)?;
+    let mut config = AnythingEventsConfig::default();
+    config.root_dir = temp_dir.clone();
+    Ok(config)
 }
