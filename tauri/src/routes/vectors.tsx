@@ -5,7 +5,7 @@ export default function Vectors() {
   //   const { flowPaths, createNewFlow } = useLocalFileContext();
   return (
     <div className="flex h-full w-full p-10">
-      <div className="flex flex-col text-5xl text-primary-content m-5 w-full">
+      <div className="flex flex-col text-5xl m-5 w-full">
         <div className="flex flex-row justify-between">
           <div>Vectors</div>
           <button

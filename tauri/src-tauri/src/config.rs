@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
-use tauri::api::path::document_dir; 
+use tauri::api::path::document_dir;
 
 //TODO: harmonize for one type of error handling. using anyhow
 pub fn get_app_dir() -> Result<PathBuf> {

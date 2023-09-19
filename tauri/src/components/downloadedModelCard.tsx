@@ -43,7 +43,7 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
   return (
     <div
       key={model.filename}
-      className="card w-full bg-base-300 shadow-xl my-2 text-5xl text-primary-content"
+      className="card w-full bg-base-300 shadow-xl my-2 text-5xl"
     >
       <div className="card-body flex-row justify-between">
         <div className="w-1/4">

@@ -3,22 +3,25 @@ import { useFlowContext } from "../../context/FlowProvider";
 import { NodeData } from "../../utils/nodeUtils";
 import { VscEllipsis, VscClose } from "react-icons/vsc";
 import clsx from "clsx";
-import { useNavigationContext } from "../../context/NavigationProvider";
+import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { HandleProps, Handle } from "reactflow";
+import BaseNodeIcon from "../baseNodeIcon";
 
 export default function BaseNode({
   children,
   id,
   data,
+  hideIcon,
 }: {
   children: ReactNode;
   id: string;
   data: NodeData;
+  hideIcon?: boolean;
 }) {
   const { currentProcessingStatus, flowFrontmatter } = useFlowContext();
   const [processing, setProcessing] = useState(false);
-  const { setNodeConfigPanel, nodeConfigPanel, nodeId } =
-    useNavigationContext();
+  const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
+    useFlowNavigationContext();
 
   useEffect(() => {
     if (
@@ -35,9 +38,9 @@ export default function BaseNode({
   return (
     <div
       className={clsx(
-        "bg-primary w-60 h-20 rounded-md text-primary-content flex flex-row justify-center align-middle text-center text-xl",
+        "bg-primary text-primary-content w-80 h-20 rounded-md flex flex-row text-xl",
         {
-          "bg-secondary": data.worker_type === "start",
+          "bg-secondary text-secondary-content": data.worker_type === "start",
         }
       )}
     >
@@ -56,23 +59,26 @@ export default function BaseNode({
           <span className="loading loading-spinner text-accent"></span>
         </div>
       ) : null}
-      <div className="flex flex-col p-4">{children}</div>
-
-      {nodeConfigPanel && nodeId === id ? (
-        <button
-          className="m-1 absolute top-0 right-0"
-          onClick={() => setNodeConfigPanel(false, "")}
-        >
-          <VscClose />
-        </button>
-      ) : (
-        <button
-          className="m-1 absolute top-0 right-0"
-          onClick={() => setNodeConfigPanel(true, id)}
-        >
-          <VscEllipsis />
-        </button>
-      )}
+      {/* Container */}
+      <div className="p-3 flex flex-row h-full w-full items-center">
+        {hideIcon ? null : <BaseNodeIcon icon={data.icon} />}
+        <div className="flex flex-col">{children}</div>
+        {nodeConfigPanel && nodeId === id ? (
+          <button
+            className="m-1 absolute top-0 right-0"
+            onClick={() => setNodeConfigPanel(false, "")}
+          >
+            <VscClose />
+          </button>
+        ) : (
+          <button
+            className="m-1 absolute top-0 right-0"
+            onClick={() => closeAllPanelsOpenOne("nodeConfig", id)}
+          >
+            <VscEllipsis />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

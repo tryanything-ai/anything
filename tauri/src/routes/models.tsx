@@ -12,7 +12,7 @@ export default function Models() {
   return (
     <div className="flex flex-col w-full p-10 h-screen overflow-y-auto">
       {/* Downloaded Models */}
-      <div className="flex flex-col text-5xl text-primary-content w-full">
+      <div className="flex flex-col text-5xl w-full">
         <div className="flex flex-col">
           <div className="pl-4">Downloaded Models</div>
         </div>
@@ -23,7 +23,7 @@ export default function Models() {
         </ul>
       </div>
       {/* All Models */}
-      <div className="flex flex-col text-5xl text-primary-content w-full mt-4">
+      <div className="flex flex-col text-5xl w-full mt-4">
         <div className="flex flex-col justify-between">
           <div className="pl-4">All Models</div>
         </div>

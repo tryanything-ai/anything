@@ -66,6 +66,7 @@ interface FlowContextInterface {
   edges: Edge[];
   flowFrontmatter: FlowFrontMatter | undefined;
   currentProcessingStatus: ProcessingStatus | undefined;
+  currentProcessingSessionId: string | undefined;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -75,6 +76,7 @@ interface FlowContextInterface {
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
+  setFlowCenter: () => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -82,6 +84,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   edges: [],
   flowFrontmatter: undefined,
   currentProcessingStatus: undefined,
+  currentProcessingSessionId: undefined,
   onNodesChange: () => {},
   onEdgesChange: () => {},
   onConnect: () => {},
@@ -91,23 +94,24 @@ export const FlowContext = createContext<FlowContextInterface>({
   addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
+  setFlowCenter: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
 
 type ProcessingStatus = {
-  message: String;
-  event_id: String;
-  node_id: String;
-  flow_id: String;
-  session_id: String;
+  message: string;
+  event_id: string;
+  node_id: string;
+  flow_id: string;
+  session_id: string;
 };
 
 type SessionComplete = {
-  event_id: String;
-  node_id: String;
-  flow_id: String;
-  session_id: String;
+  event_id: string;
+  node_id: string;
+  flow_id: string;
+  session_id: string;
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
@@ -126,6 +130,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [currentProcessingStatus, setCurrentProcessingStatus] = useState<
     ProcessingStatus | undefined
   >();
+  const [currentProcessingSessionId, setCurrentProcessingSessionId] = useState<
+    string | undefined
+  >();
   const [sessionComplete, setSessionComplete] = useState<
     SessionComplete | undefined
   >();
@@ -143,7 +150,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       id: nextId,
       type,
       position,
-      data: { label: `Node ${nextId}`, ...specialData },
+      data: { ...specialData },
     };
 
     setNodes((nodes) => {
@@ -226,6 +233,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     },
     [addNode]
   );
+
+  //TODO: get working someday
+  const setFlowCenter = () => {
+    console.log("setting flow center  center");
+    if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
+    reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
+    // reactFlowInstance.fitView();
+  };
 
   const updateFlowFrontmatter = async (
     flow_name: string,
@@ -328,7 +343,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         edges: edges as any,
       });
       console.log("writing to toml");
-      console.log(newToml);
+      // console.log(newToml);
       //don't write if nothing has changed in react state
       if (newToml === toml) return;
       setToml(newToml);
@@ -367,7 +382,17 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //Watch event processing for fun ui updates
   useEffect(() => {
     let unlisten = subscribeToEvent("event_processing", (event: any) => {
+      // console.log("setCurrentProcessingStatus", event);
       setCurrentProcessingStatus(event);
+    //   console.log(`event.session_id is: "${event.session_id}" and its type is ${typeof event.session_id}`);
+    // console.log(`currentProcessingSessionId is: "${currentProcessingSessionId}" and its type is ${typeof currentProcessingSessionId}`);
+
+      // if (event.session_id != currentProcessingSessionId) {
+      //   console.log("setCurrentProcessingSessionId", event.session_id);
+        // setCurrentProcessingSessionId(event.session_id);
+      // } else {
+      //   console.log("session_id is the same, not updating in context");
+      // }
     });
     let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
@@ -376,8 +401,8 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       unlisten.then((unlisten) => unlisten());
       unlisten2.then((unlisten) => unlisten());
-    }
-  }, []);
+    };
+  }, [currentProcessingSessionId]);
 
   return (
     <FlowContext.Provider
@@ -386,6 +411,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         edges,
         flowFrontmatter,
         currentProcessingStatus,
+        currentProcessingSessionId,
         onConnect,
         onNodesChange,
         onEdgesChange,
@@ -395,6 +421,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         addNode,
         setReactFlowInstance,
         updateFlowFrontmatter,
+        setFlowCenter,
       }}
     >
       {children}
