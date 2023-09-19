@@ -16,6 +16,7 @@ pub struct FlowRunner {
 }
 
 impl FlowRunner {
+    #[allow(unused)]
     pub fn new(flow_file: PathBuf) -> Self {
         let flow = Flowfile::from_file(flow_file.clone()).unwrap().flow;
         Self {
@@ -24,7 +25,7 @@ impl FlowRunner {
             post_office: PostOffice::open(),
         }
     }
-
+    #[allow(unused)]
     pub async fn run(&self) -> EventsResult<()> {
         let mut executor = Executor::new(&self.flow);
         let _run = executor.run().await;

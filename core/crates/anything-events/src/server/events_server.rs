@@ -115,7 +115,7 @@ impl Events for EventManager {
             .await
         {
             Ok(r) => {
-                update_tx.send(r);
+                update_tx.send(r).await;
             }
             Err(err) => {
                 // Something should be done here... maybe?
@@ -215,9 +215,9 @@ mod tests {
     async fn test_event_sends_update() -> anyhow::Result<()> {
         let context = get_test_context().await;
         let test = TestEventRepo::new().await;
-        let test_tx = test.with_sender().await;
+        let mut test_tx = test.with_sender().await;
         let mut test_rx = test.with_receiver().await;
-        let event_manager = EventManager::new(&context, test_tx);
+        let event_manager = EventManager::new(&context, test_tx.clone());
 
         let event = test.dummy_create_event();
         let create_event_request = TriggerEventRequest {
@@ -257,21 +257,3 @@ mod tests {
         Ok(())
     }
 }
-
-/*
-let name = "test-event".to_string();
-        let payload = serde_json::json!(TestPayload {
-            file: "/tmp/hello".to_string(),
-        })
-        .to_string();
-
-        let event = Event {
-            identifier: Some(SourceIdentifier { source_id: 1 }),
-            details: Some(EventDetails {
-                payload,
-                name: name.clone(),
-                tags: Vec::default(),
-                metadata: None,
-            }),
-        };
-         */
