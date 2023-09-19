@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::{config::AnythingEventsConfig, errors::EventsResult};
 
+#[allow(unused)]
 pub fn load_flows(config: &AnythingEventsConfig) -> EventsResult<Vec<PathBuf>> {
     let root_dir = config.root_dir.clone();
     let flows_dir = root_dir.join("flows");

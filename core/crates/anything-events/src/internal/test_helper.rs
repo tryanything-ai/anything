@@ -1,4 +1,10 @@
 #![allow(unused)]
+
+use anything_core::posix::copy_recursively;
+use std::fs;
+use std::path::{Path, PathBuf};
+use tempfile::tempdir;
+
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
@@ -18,7 +24,7 @@ use postage::{
 };
 use serde_json::Value;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Row, SqlitePool};
-use std::{borrow::BorrowMut, collections::HashMap, sync::Arc};
+use std::{borrow::BorrowMut, collections::HashMap, panic, sync::Arc};
 
 pub fn get_test_config() -> AnythingEventsConfig {
     let mut config = AnythingEventsConfig::default();
@@ -234,4 +240,25 @@ impl TestEventRepo {
 
         Ok(event)
     }
+}
+
+pub fn setup_temp_dir(fixture_dir_path: PathBuf) -> EventsResult<PathBuf> {
+    // Create a temporary directory
+    let temp_dir = tempdir().expect("Failed to create temporary directory");
+
+    // Ensure the fixture directory exists
+    assert!(fixture_dir_path.exists(), "Fixture directory not found");
+
+    // Copy the contents of the fixture directory to the temporary directory
+    copy_recursively(fixture_dir_path, temp_dir.path()).expect("Failed to copy directory");
+
+    // Return the temporary directory path
+    Ok(temp_dir.into_path())
+}
+
+pub fn get_fixtures_dir() -> PathBuf {
+    let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("tests");
+    d.push("fixtures");
+    d
 }

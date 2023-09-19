@@ -1,11 +1,9 @@
 use postage::prelude::Stream;
 use std::sync::Arc;
 
-use postage::prelude::*;
+// use postage::prelude::*;
 
-use crate::{
-    flow_notification::FlowFileNotification, models::event::Event, server::server::Server,
-};
+use crate::{models::event::Event, server::server::Server};
 
 pub async fn process_on_events(server: Arc<Server>) -> anyhow::Result<()> {
     let mut events_rx = server.post_office.receive_mail::<Event>().await?;

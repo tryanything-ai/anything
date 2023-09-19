@@ -59,6 +59,8 @@ uuid = { workspace = true, features = ["v4", "serde"] }
 tonic = { workspace = true }
 tonic-reflection = { workspace = true }
 prost = { workspace = true }
+tempfile.workspace = true
+lazy_static = { workspace = true }
 
 [dev-dependencies]
 fake = { version = "2.8", features = ["derive"] }

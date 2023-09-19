@@ -1,8 +1,10 @@
+#[macro_use]
+extern crate lazy_static;
+
 pub mod cli;
 pub mod config;
 pub mod context;
 pub(crate) mod errors;
-use postage::prelude::Stream;
 
 // pub(crate) mod events;
 pub(crate) mod callbacks;

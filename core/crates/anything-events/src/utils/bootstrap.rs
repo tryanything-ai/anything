@@ -1,4 +1,3 @@
-use anything_graph::flow;
 use futures::lock::Mutex;
 use opentelemetry::{
     global,
@@ -20,7 +19,7 @@ use crate::{
     config::AnythingEventsConfig,
     context::Context,
     errors::EventsResult,
-    models::flow_handler::{FlowHandler, FLOW_HANDLER},
+    models::system_handler::{SystemHandler, SYSTEM_HANDLER},
 };
 
 pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
@@ -39,8 +38,8 @@ pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Con
 // Bootstrap systems
 // -----------------------------------------------------------------
 fn setup_system<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()> {
-    let flow_handler = Mutex::new(FlowHandler::new(config.clone()));
-    FLOW_HANDLER
+    let flow_handler = Mutex::new(SystemHandler::new(config.clone()));
+    SYSTEM_HANDLER
         .set(flow_handler)
         .expect("unable to set global flow handler");
     Ok(())
