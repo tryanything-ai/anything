@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { VscRepoForked, VscCode, VscDebug, VscGear } from "react-icons/vsc";
-import { useNavigationContext } from "../context/NavigationProvider";
+import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 
 export default function Header() {
   const {
@@ -8,11 +8,11 @@ export default function Header() {
     setNodePanel,
     tomlPanel,
     setTomlPanel,
-    debugPanel, 
+    debugPanel,
     setDebugPanel,
     setSettingsPanel,
     settingsPanel,
-  } = useNavigationContext();
+  } = useFlowNavigationContext();
 
   const { flow_name } = useParams();
 

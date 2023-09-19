@@ -22,6 +22,7 @@ tauri = { version = "1.4", features = [
     "path-all",
     "shell-open",
 ] }
+
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
@@ -57,6 +58,7 @@ chrono = "0.4.26"
 llm = { git = "https://github.com/rustformers/llm", branch = "main", features = [
     "metal",
 ] } #remove this when llm is published
+
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]
 # llm = { git = "https://github.com/rustformers/llm", branch = "main", features= ["metal"] }

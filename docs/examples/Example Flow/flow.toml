@@ -1,191 +1,255 @@
 [flow]
-name = "Example Flow"
-id = "7b7ffb36-133c-437e-953e-01d6071de796"
+name = "Anything Example"
+id = "055fcddb-5ff7-4177-8c5a-527f6e07e160"
 version = "0.0.1"
 author = "Your Name <your.email@example.com>"
 description = "Description of your flow"
 
 [[nodes]]
-id = "1"
-type = "manualNode"
-width = 240
-height = 80
-
-  [nodes.position]
-  x = 159
-  y = 116
-
-  [nodes.data]
-  label = "Node 1"
-  worker_type = "start"
-
-[[nodes]]
-id = "2"
-type = "cronNode"
-width = 240
-height = 80
-selected = false
-dragging = false
-
-  [nodes.position]
-  x = 538.1851316751951
-  y = 115.77480964103808
-
-  [nodes.data]
-  label = "Node 2"
-  worker_type = "start"
-  pattern = ""
-
-  [nodes.positionAbsolute]
-  x = 538.1851316751951
-  y = 115.77480964103808
-
-[[nodes]]
 id = "3"
-type = "pythonNode"
-width = 240
+type = "manualNode"
+width = 320
 height = 80
 selected = false
 dragging = false
 
   [nodes.position]
-  x = 505.84299642904125
-  y = 751.45482959893
+  x = 212.24306492851156
+  y = 144.79041503820665
 
   [nodes.data]
-  label = "Node 3"
-  worker_type = "python"
-  code = ""
+  worker_type = "start"
+  worker_name = "manual_trigger"
+  trigger = true
+  node_label = "Manual Trigger"
+  alt = "Manual Trigger"
+  icon = "VscPerson"
+
+    [[nodes.data.handles]]
+    id = "a"
+    position = "bottom"
+    type = "source"
 
   [nodes.positionAbsolute]
-  x = 505.84299642904125
-  y = 751.45482959893
+  x = 212.24306492851156
+  y = 144.79041503820665
 
 [[nodes]]
-id = "4"
-type = "vectorNode"
-width = 240
+id = "6"
+type = "superNode"
+width = 320
 height = 80
 selected = false
 dragging = false
 
   [nodes.position]
-  x = 335.2753038771208
-  y = 371.97874428581287
+  x = 376.06614170140597
+  y = 528.1863418735636
 
   [nodes.data]
-  label = "Node 4"
-  worker_type = "vector"
-  db = ""
-  params = [ ]
+  worker_type = "rest"
+  worker_name = "rest_action"
+  trigger = false
+  url = "https://hp-api.onrender.com/api/character/9e3f7ce4-b9a7-4244-b709-dae5c1f1d4a8"
+  method = "GET"
+  headers = ""
+  body = ""
+  node_label = "Get Harry Potter"
+  alt = "Rest API Action"
+  icon = "VscRadioTower"
+
+    [[nodes.data.handles]]
+    id = "a"
+    position = "top"
+    type = "target"
+
+    [[nodes.data.handles]]
+    id = "b"
+    position = "bottom"
+    type = "source"
 
   [nodes.positionAbsolute]
-  x = 335.2753038771208
-  y = 371.97874428581287
+  x = 376.06614170140597
+  y = 528.1863418735636
 
 [[nodes]]
-id = "5"
-type = "modelNode"
-width = 240
+id = "7"
+type = "superNode"
+width = 320
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 375.08429237916096
+  y = 678.3920746174688
+
+  [nodes.data]
+  worker_type = "rest"
+  worker_name = "openai_action"
+  trigger = false
+  url = "https://api.openai.com/v1/chat/completions"
+  method = "POST"
+  headers = '{"Authorization":"Bearer OPEN_AI_API_KEY", "Content-Type":"application/json”}'
+  body = '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": “In three sentences as hermione granger tell us why automation with Anything is the best."}], "temperature": 0.7 }'
+  node_label = "OpenAI Action"
+  alt = "OpenAI Action"
+  icon = "https://qcuguzlfpjtyiloqtysz.supabase.co/storage/v1/object/public/random/openai-logomark.svg"
+
+    [[nodes.data.handles]]
+    id = "a"
+    position = "top"
+    type = "target"
+
+    [[nodes.data.handles]]
+    id = "b"
+    position = "bottom"
+    type = "source"
+
+  [nodes.positionAbsolute]
+  x = 375.08429237916096
+  y = 678.3920746174688
+
+[[nodes]]
+id = "8"
+type = "superNode"
+width = 320
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 8.578180126188727
+  y = 527.5377595740093
+
+  [nodes.data]
+  worker_type = "rest"
+  worker_name = "rest_action"
+  trigger = false
+  url = "https://hp-api.onrender.com/api/character/4c7e6819-a91a-45b2-a454-f931e4a7cce3"
+  method = "GET"
+  headers = ""
+  body = ""
+  node_label = "Get Hermione Granger"
+  alt = "Rest API Action"
+  icon = "VscRadioTower"
+
+    [[nodes.data.handles]]
+    id = "a"
+    position = "top"
+    type = "target"
+
+    [[nodes.data.handles]]
+    id = "b"
+    position = "bottom"
+    type = "source"
+
+  [nodes.positionAbsolute]
+  x = 8.578180126188727
+  y = 527.5377595740093
+
+[[nodes]]
+id = "9"
+type = "superNode"
+width = 320
+height = 80
+selected = false
+dragging = false
+
+  [nodes.position]
+  x = 211.00717267991456
+  y = 323.8349594452834
+
+  [nodes.data]
+  worker_type = "terminal"
+  worker_name = "terminal_action"
+  trigger = false
+  command = "echo 'Hello World'"
+  node_label = "Terminal Action"
+  alt = "Terminal Action"
+  icon = "VscTerminal"
+
+    [[nodes.data.handles]]
+    id = "a"
+    position = "top"
+    type = "target"
+
+    [[nodes.data.handles]]
+    id = "b"
+    position = "bottom"
+    type = "source"
+
+  [nodes.positionAbsolute]
+  x = 211.00717267991456
+  y = 323.8349594452834
+
+[[nodes]]
+id = "10"
+type = "superNode"
+width = 320
 height = 80
 selected = true
 dragging = false
 
   [nodes.position]
-  x = 334.9839825990332
-  y = 534.6928607385315
+  x = 7.248159692786544
+  y = 683.1713198993666
 
   [nodes.data]
-  label = "Node 5"
-  worker_type = "local_model"
-  filename = ""
-  prompt = ""
-  variables = [ ]
-
-  [nodes.positionAbsolute]
-  x = 334.9839825990332
-  y = 534.6928607385315
-
-[[nodes]]
-id = "6"
-type = "sendChatNode"
-width = 240
-height = 80
-selected = false
-dragging = false
-
-  [nodes.position]
-  x = 160.5899097266509
-  y = 750.785909166661
-
-  [nodes.data]
-  label = "Node 6"
   worker_type = "app_chat"
-  message = ""
+  worker_name = "send_chat_action"
+  trigger = false
+  pattern = ""
+  node_label = "Send Chat Action"
+  icon = "VscSend"
+  alt = "Send Chat Action"
+
+    [[nodes.data.handles]]
+    id = "a"
+    position = "top"
+    type = "target"
+
+    [[nodes.data.handles]]
+    id = "b"
+    position = "bottom"
+    type = "source"
 
   [nodes.positionAbsolute]
-  x = 160.5899097266509
-  y = 750.785909166661
-
-[[nodes]]
-id = "7"
-type = "terminalNode"
-width = 240
-height = 80
-selected = false
-dragging = false
-
-  [nodes.position]
-  x = 506.0165154832414
-  y = 940.1767944688787
-
-  [nodes.data]
-  label = "Node 7"
-  worker_type = "terminal"
-  command = ""
-
-  [nodes.positionAbsolute]
-  x = 506.0165154832414
-  y = 940.1767944688787
+  x = 7.248159692786544
+  y = 683.1713198993666
 
 [[edges]]
-source = "1"
-sourceHandle = "a"
-target = "4"
-targetHandle = "a"
-id = "reactflow__edge-1a-4a"
-
-[[edges]]
-source = "2"
-sourceHandle = "a"
-target = "4"
-targetHandle = "a"
-id = "reactflow__edge-2a-4a"
-
-[[edges]]
-source = "4"
-sourceHandle = "c"
-target = "5"
-targetHandle = "a"
-id = "reactflow__edge-4c-5a"
-
-[[edges]]
-source = "5"
-sourceHandle = "c"
-target = "6"
-targetHandle = "a"
-id = "reactflow__edge-5c-6a"
-
-[[edges]]
-source = "5"
-sourceHandle = "c"
-target = "3"
-targetHandle = "a"
-id = "reactflow__edge-5c-3a"
-
-[[edges]]
-source = "3"
+source = "6"
 sourceHandle = "b"
 target = "7"
 targetHandle = "a"
-id = "reactflow__edge-3b-7a"
+id = "reactflow__edge-6b-7a"
+selected = false
+
+[[edges]]
+source = "3"
+sourceHandle = "a"
+target = "9"
+targetHandle = "a"
+id = "reactflow__edge-3a-9a"
+
+[[edges]]
+source = "9"
+sourceHandle = "b"
+target = "8"
+targetHandle = "a"
+id = "reactflow__edge-9b-8a"
+
+[[edges]]
+source = "9"
+sourceHandle = "b"
+target = "6"
+targetHandle = "a"
+id = "reactflow__edge-9b-6a"
+
+[[edges]]
+source = "8"
+sourceHandle = "b"
+target = "10"
+targetHandle = "a"
+id = "reactflow__edge-8b-10a"

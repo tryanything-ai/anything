@@ -4,10 +4,9 @@ import {
   VscRepoForked,
   VscSettingsGear,
   VscTable,
-  VscDebug,
   VscHubot,
-  VscCircuitBoard,
   VscComment,
+  VscReferences,
 } from "react-icons/vsc";
 import clsx from "clsx";
 
@@ -50,7 +49,7 @@ export default function Layout() {
           />
         </Link>
         <Link className={linkClass} to="/vectors">
-          <VscCircuitBoard
+          <VscReferences
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname.includes("/vector"),
             })}
