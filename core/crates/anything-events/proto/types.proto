@@ -1,0 +1,10 @@
+syntax = "proto3";
+package types;
+
+service Types {
+    rpc GetTypes(GetTypesRequest) returns (GetTypesResponse) {}
+}
+
+message GetTypesRequest {}
+message GetTypesResponse {}
+
