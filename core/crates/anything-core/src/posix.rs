@@ -1,4 +1,7 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 pub fn copy_recursively(
     source: impl AsRef<Path>,
@@ -15,4 +18,15 @@ pub fn copy_recursively(
         }
     }
     Ok(())
+}
+
+pub fn path_contains_directory(path: &PathBuf, directory: &str) -> bool {
+    for component in path.components() {
+        if let Some(name) = component.as_os_str().to_str() {
+            if name == directory {
+                return true;
+            }
+        }
+    }
+    false
 }
