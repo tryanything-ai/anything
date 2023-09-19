@@ -1,0 +1,44 @@
+syntax = "proto3";
+package events;
+
+service Events {
+    // Send an event
+    rpc TriggerEvent(TriggerEventRequest) returns (TriggerEventResponse);
+
+    // Get an event
+    rpc GetEvent(GetEventRequest) returns (GetEventResponse);
+
+    // Post update
+    // rpc PostExecutionUpdate(PostExecutionUpdateRequest) returns (PostExecutionUpdateResponse);
+
+    // Register flow for execution
+    // rpc SubscribeFlow(SubscribeFlowRequest) returns (stream SubscribeFlowResponse);
+}
+
+message Event {
+    string event_id = 1;
+    // Source of the event
+    string source_id = 2;
+    // Event payload
+    string payload = 3;
+    // Event name, like files/changed
+    string name = 4;
+    // repeated string tags = 4;
+    optional string metadata = 5;
+}
+
+message TriggerEventRequest {
+    Event event = 1;
+}
+message TriggerEventResponse {
+    string status = 1;
+    string event_id = 2;
+}
+
+message GetEventRequest {
+    string event_id = 1;
+}
+
+message GetEventResponse {
+    Event event = 1;
+}

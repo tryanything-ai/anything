@@ -1,0 +1,14 @@
+run_mode = "development"
+root_dir = "/tmp/anything"
+log = "warn,eventurous=info"
+
+[database]
+uri = "sqlite"
+
+[server]
+host = ":8080"
+port = 5556
+
+[tracing]
+json_log = false
+log_retention = "4h"

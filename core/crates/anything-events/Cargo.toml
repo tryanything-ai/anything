@@ -1,0 +1,69 @@
+[package]
+name = "anything-events"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "events"
+path = "bin/main.rs"
+
+[features]
+default = ["sqlite"]
+sqlite = ["sqlx/sqlite"]
+
+[dependencies]
+anything-core = { path = "../anything-core" }
+anything-engine = { path = "../anything-engine" }
+anything-graph = { path = "../anything-graph" }
+
+derive_builder = { workspace = true }
+notify = { workspace = true }
+postage = { workspace = true }
+futures = { workspace = true }
+
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["full", "rt-multi-thread"] }
+
+# Tracing
+tracing-appender = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+opentelemetry = { workspace = true, features = ["rt-tokio"] }
+tracing = { workspace = true }
+tracing-log = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+# opentelemetry-otlp = "0.13.0"
+opentelemetry-otlp = { workspace = true }
+
+anyhow = { workspace = true }
+chrono = { workspace = true }
+humantime = { workspace = true }
+config = { workspace = true }
+
+once_cell = { workspace = true }
+clap = { version = "4.4.2", features = ["derive"] }
+dotenv = { workspace = true }
+git-version = { workspace = true }
+thiserror = { workspace = true }
+anymap = { workspace = true }
+sqlx = { workspace = true }
+
+async-trait = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+# crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }
+
+tonic = { workspace = true }
+tonic-reflection = { workspace = true }
+prost = { workspace = true }
+tempfile.workspace = true
+lazy_static = { workspace = true }
+
+[dev-dependencies]
+fake = { version = "2.8", features = ["derive"] }
+
+[build-dependencies]
+tonic-build = "0.10.0"
