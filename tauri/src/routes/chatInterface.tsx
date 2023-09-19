@@ -36,7 +36,7 @@ const ChatInterface = () => {
     });
     console.log("prompt sent: " + message);
 
-    api.sendPrompt({ message });
+    // api.sendPrompt({ message });
   };
 
   const {

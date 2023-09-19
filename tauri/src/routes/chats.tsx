@@ -4,18 +4,18 @@ import {
 } from "react";
 
 import { Link } from "react-router-dom";
-import api from "../tauri_api/api";
+// import api from "../tauri_api/api";
 
 export default function Chats() {
   const [chats, setChats] = useState<any[]>([]);
 
-  const fetchData = async () => {
-    let res = await api.getFlowsWitChats();
-    console.log("Chats from rust" + JSON.stringify(res));
-    setChats(res as any[]);
-  };
+  // const fetchData = async () => {
+  //   let res = await api.getFlowsWitChats();
+  //   console.log("Chats from rust" + JSON.stringify(res));
+  //   setChats(res as any[]);
+  // };
   useEffect(() => {
-    fetchData();
+    // fetchData();
   }, []);
 
   return (
