@@ -27,7 +27,7 @@ export type EventInput = {
 
 //MIGRATE_TO_RUST
 //Load Database once
-api.loadSqlLite();
+// api.loadSqlLite();
 
 interface SqlContextInterface {
   tables: any[];
