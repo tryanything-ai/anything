@@ -1,17 +1,14 @@
-use std::future::Future;
 use std::net::SocketAddr;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use anything_core::spawning::spawn_or_crash;
-use anything_graph::flow::flow::Flow;
 use tracing::debug;
 
 use crate::callbacks::{self};
 use crate::errors::{EventsError, EventsResult};
 use crate::events::events_server::EventsServer;
 use crate::models::event::Event;
-use crate::models::flow_handler::FlowHandler;
+use crate::models::system_handler::SystemHandler;
 use crate::server::events_server::EventManager;
 use crate::workers;
 // use crate::utils::executor::spawn_or_crash;
@@ -25,13 +22,14 @@ pub struct Server {
     pub post_office: PostOffice,
     // pub store: Box<dyn StoreAdapter + Send + Sync>,
     pub context: Context,
-    pub on_flow_handler_change: tokio::sync::watch::Sender<FlowHandler>,
+    pub on_flow_handler_change: tokio::sync::watch::Sender<SystemHandler>,
 }
 
 impl Server {
     pub async fn new(context: Context) -> EventsResult<Arc<Self>> {
         let context_clone = context.clone();
-        let (tx, _rx) = tokio::sync::watch::channel(FlowHandler::new(context_clone.config.clone()));
+        let (tx, _rx) =
+            tokio::sync::watch::channel(SystemHandler::new(context_clone.config.clone()));
         let server = Self {
             port: context.config().server.port,
             post_office: PostOffice::open(),
