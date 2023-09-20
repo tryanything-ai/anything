@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use crate::errors::EventsResult;
+use crate::{errors::EventsResult, models::flow::Flow};
 
 #[derive(Debug, Clone)]
 pub struct FlowRepoImpl {
@@ -16,9 +16,13 @@ impl FlowRepoImpl {
 
 #[async_trait::async_trait]
 pub trait FlowRepo {
-    // async fn get_flows(&self) -> EventsResult<Flow>;
+    async fn get_flows(&self) -> EventsResult<Flow>;
     // async fn get_flow_by_id(&self, event_id: EventId) -> EventsResult<Event>;
 }
 
 #[async_trait::async_trait]
-impl FlowRepo for FlowRepoImpl {}
+impl FlowRepo for FlowRepoImpl {
+    async fn get_flows(&self) -> EventsResult<Flow> {
+        todo!()
+    }
+}
