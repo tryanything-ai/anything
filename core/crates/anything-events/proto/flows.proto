@@ -31,8 +31,8 @@ message Flow {
     string flow_name = 3;
     // oneof description { string present = 4; };
     bool active = 4;
+    repeated FlowVersion flow_versions = 5;
     // repeated Node nodes = 6;
-    // repeated FlowVersion versions = 7;
 }
 
 message FlowVersion {

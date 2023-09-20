@@ -15,18 +15,18 @@ service Events {
     // rpc SubscribeFlow(SubscribeFlowRequest) returns (stream SubscribeFlowResponse);
 }
 
+
 message Event {
-    string event_id = 1;
+    string id = 1;
     // Source of the event
-    string source_id = 2;
-    // Event payload
-    string payload = 3;
-    // Event name, like files/changed
-    string name = 4;
-    // Type of event
-    string event_type = 5;
-    // repeated string tags = 4;
-    optional string metadata = 6;
+    oneof source {
+        string flow_id = 2;
+        string trigger_id = 3;
+    };
+    string context = 4;
+    string name = 5;
+    optional int64 started_at = 6;
+    optional int64 ended_at = 7;
 }
 
 // trigger_id TEXT NOT NULL PRIMARY KEY,

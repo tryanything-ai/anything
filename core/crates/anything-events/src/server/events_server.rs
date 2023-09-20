@@ -249,13 +249,11 @@ mod tests {
         let r = test.insert_dummy_event().await.unwrap();
         test.insert_dummy_event().await.unwrap();
 
-        let request = Request::new(GetEventRequest {
-            event_id: r.event_id,
-        });
+        let request = Request::new(GetEventRequest { event_id: r.id });
         let response = event_manager.get_event(request).await;
         assert!(response.is_ok());
         let response = response.unwrap().into_inner();
-        assert_eq!(response.event.unwrap().name, r.event_name);
+        assert_eq!(response.event.unwrap().name, r.name);
 
         Ok(())
     }
