@@ -7,7 +7,6 @@ use sqlx::{Row, SqlitePool};
 
 use crate::{
     errors::{EventsError, EventsResult},
-    generated::create_flow,
     models::flow::{CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId},
 };
 
