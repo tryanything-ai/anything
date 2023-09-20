@@ -2,8 +2,9 @@
 
 use crate::{
     generated::{
-        flows_server::Flows, GetFlowRequest, GetFlowResponse, GetFlowsResponse, PublishFlowRequest,
-        PublishFlowResponse, UpdateFlowRequest, UpdateFlowResponse,
+        flows_server::Flows, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
+        GetFlowResponse, GetFlowsResponse, PublishFlowRequest, PublishFlowResponse,
+        UpdateFlowRequest, UpdateFlowResponse,
     },
     generated::{Flow, GetFlowsRequest},
     Context,
@@ -29,6 +30,12 @@ impl FlowManager {
 
 #[tonic::async_trait]
 impl Flows for FlowManager {
+    async fn create_flow(
+        &self,
+        _request: Request<CreateFlowRequest>,
+    ) -> Result<Response<CreateFlowResponse>, Status> {
+        Err(Status::unimplemented("Not implemented"))
+    }
     async fn get_flows(
         &self,
         _request: Request<GetFlowsRequest>,

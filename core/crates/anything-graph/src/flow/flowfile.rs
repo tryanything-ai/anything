@@ -28,6 +28,10 @@ impl Flowfile {
             return Err(AppError::FileNotFound(file.to_string_lossy().to_string()));
         }
         let toml_contents = std::fs::read_to_string(file)?;
+        Self::from_string(toml_contents)
+    }
+
+    pub fn from_string(toml_contents: String) -> AppResult<Self> {
         let parsed_flow = toml::from_str::<ParseFlowfile>(&toml_contents)?;
         let flow: Flow = parsed_flow.into();
         let flowfile = Flowfile { flow };
@@ -42,6 +46,7 @@ impl Flowfile {
 
 #[derive(Deserialize, Debug, Clone)]
 struct ParseFlowfile {
+    id: Option<String>,
     name: String,
     version: Option<String>,
     trigger: ParseTrigger,
@@ -52,6 +57,7 @@ impl Into<Flow> for ParseFlowfile {
     fn into(self) -> Flow {
         let mut flow = Flow::new();
         flow.name = self.name;
+        flow.id = self.id.unwrap_or(uuid::Uuid::new_v4().to_string());
         flow.version = self.version;
         flow.trigger = self.trigger.into();
         for node in self.nodes {

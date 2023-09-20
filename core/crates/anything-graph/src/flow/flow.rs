@@ -281,6 +281,13 @@ impl Flow {
     }
 }
 
+impl Into<String> for Flow {
+    fn into(self) -> String {
+        let flow = toml::to_string(&self).unwrap();
+        flow
+    }
+}
+
 impl Default for Flow {
     fn default() -> Self {
         Self::new()

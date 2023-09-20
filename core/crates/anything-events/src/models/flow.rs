@@ -3,10 +3,11 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
+use sqlx::{Decode, Encode};
 
 use crate::generated::flows::{
-    Flow as ProtoFlow, FlowVersion as ProtoFlowVersion, Node as ProtoNode,
-    Variable as ProtoVariable,
+    CreateFlow as ProtoCreateFlow, Flow as ProtoFlow, FlowVersion as ProtoFlowVersion,
+    Node as ProtoNode, Variable as ProtoVariable,
 };
 
 pub type FlowId = String;
@@ -57,26 +58,25 @@ impl Into<ProtoNode> for Node {
 pub struct Flow {
     pub flow_id: FlowId,
     pub flow_name: String,
-    pub latest_active_version: FlowVersionId,
-    pub published: bool,
+    pub latest_version_id: FlowVersionId,
+    pub active: bool,
     pub updated_at: DateTime<Utc>,
-    pub description: Option<String>,
-    pub versions: Vec<FlowVersion>,
-    pub nodes: Vec<Node>,
+    // pub description: Option<String>,
+    // pub versions: Vec<FlowVersion>,
+    // pub nodes: Vec<Node>,
 }
 
 impl Into<ProtoFlow> for Flow {
     // use crate::generated::
     fn into(self) -> ProtoFlow {
-        use crate::generated::flows::flow::Description;
         ProtoFlow {
             flow_id: self.flow_id,
             flow_name: self.flow_name,
-            version: self.latest_active_version,
-            published: self.published,
-            nodes: self.nodes.into_iter().map(|n| n.into()).collect(),
-            description: self.description.map(Description::Present),
-            versions: self.versions.into_iter().map(|v| v.into()).collect(),
+            version: self.latest_version_id,
+            active: self.active,
+            // description: self.description.map(Description::Present),
+            // nodes: self.nodes.into_iter().map(|n| n.into()).collect(),
+            // versions: self.versions.into_iter().map(|v| v.into()).collect(),
         }
     }
 }
@@ -88,7 +88,7 @@ pub struct FlowVersion {
     pub description: Option<String>,
     pub flow_definition: Value,
     pub checksum: String,
-    pub latest_active_version: String,
+    pub version_id: String,
     pub published: bool,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -101,12 +101,45 @@ impl Into<ProtoFlowVersion> for FlowVersion {
             Some(t) => t.timestamp(),
         };
         ProtoFlowVersion {
+            version_id: self.version_id,
             flow_id: self.flow_id,
             version: self.flow_version,
             description: self.description.map(Description::Present),
             flow_definition: self.flow_definition.to_string(),
             published: self.published,
             updated_at,
+        }
+    }
+}
+
+/*
+       flow_id TEXT PRIMARY KEY NOT NULL,
+    flow_version TEXT NOT NULL,
+    description TEXT NOT NULL,
+    checksum TEXT NOT NULL,
+    updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
+    published BOOLEAN NOT NULL DEFAULT FALSE,
+    flow_definition json NOT NULL,
+*/
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CreateFlow {
+    pub flow_name: String,
+    pub active: bool,
+    pub version: Option<String>,
+    pub description: Option<String>,
+}
+
+impl Into<ProtoCreateFlow> for CreateFlow {
+    fn into(self) -> ProtoCreateFlow {
+        use crate::generated::flows::create_flow::{Description, Version};
+        ProtoCreateFlow {
+            flow_id: uuid::Uuid::new_v4().to_string(),
+            flow_name: self.flow_name,
+            version: Some(self.version.map_or_else(
+                || Version::VersionString("0.0.1".to_string()),
+                Version::VersionString,
+            )),
+            description: self.description.map(Description::Present),
         }
     }
 }
