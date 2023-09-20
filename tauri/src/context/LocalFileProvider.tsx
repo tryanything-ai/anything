@@ -8,10 +8,11 @@ import {
 
 import { useTauriContext } from "./TauriProvider";
 
-import { FileEntry } from "../tauri_api/fs"; 
+import { FileEntry } from "../tauri_api/fs";
 import api from "../tauri_api/api";
 import { v4 as uuidv4 } from "uuid";
 import { stringify, parse } from "iarna-toml-esm";
+import { getFlows } from "../tauri_api/invoke";
 
 interface LocalFileContextInterface {
   flowPaths: FileEntry[];
@@ -333,6 +334,16 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       };
     }
   }, [loading]);
+
+  //RUST_MIGRATION
+  const get = async () => {
+    let res = await getFlows();
+    console.log("res from new rust stub", res);
+  };
+
+  useEffect(() => {
+    get();
+  }, []);
 
   useEffect(() => {
     if (!loading) {
