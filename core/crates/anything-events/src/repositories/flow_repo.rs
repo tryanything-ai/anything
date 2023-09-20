@@ -6,9 +6,11 @@ use sqlx::{Row, SqlitePool};
 
 use crate::{
     errors::{EventsError, EventsResult},
+    generated::create_flow_version,
     models::flow::{
         CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId, UpdateFlow, UpdateFlowVersion,
     },
+    CreateFlowVersion,
 };
 
 const GET_FLOW_SQL: &str = r#"
@@ -27,16 +29,22 @@ INNER JOIN flow_versions fv ON fv.flow_id = f.flow_id
 
 #[async_trait::async_trait]
 pub trait FlowRepo {
-    async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId>;
+    async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<Flow>;
     async fn get_flows(&self) -> EventsResult<Vec<Flow>>;
     async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<Flow>;
-    async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId>;
+    async fn get_flow_versions(&self, flow_id: FlowId) -> EventsResult<Vec<FlowVersion>>;
+    async fn get_flow_version_by_id(
+        &self,
+        flow_id: FlowId,
+        version_id: FlowVersionId,
+    ) -> EventsResult<FlowVersion>;
+    async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<Flow>;
     async fn update_flow_version(
         &self,
         flow_id: FlowId,
         version_id: FlowVersionId,
         update_flow_version: UpdateFlowVersion,
-    ) -> EventsResult<FlowVersionId>;
+    ) -> EventsResult<FlowVersion>;
 }
 
 #[derive(Debug, Clone)]
@@ -81,20 +89,13 @@ impl FlowRepoImpl {
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
         version_id: String,
-        create_flow: CreateFlow,
+        create_flow: CreateFlowVersion,
     ) -> EventsResult<FlowVersionId> {
         let create_flow_clone = create_flow.clone();
         // TODO: decide if this is how we want to handle the input or not
         let input = format!(
-            r#"
-            id = "{}"
-            name = "{}"
-            version = "{}"
-            description = "{}"
-            
-        "#,
+            r#"{{"id": "{}", "version": "{}", "description": "{}"}}"#,
             flow_id.clone(),
-            create_flow.flow_name.clone(),
             create_flow.version.unwrap_or("0.0.1".to_string()),
             create_flow.description.unwrap_or_default()
         );
@@ -137,7 +138,7 @@ impl FlowRepoImpl {
 #[async_trait::async_trait]
 impl FlowRepo for FlowRepoImpl {
     /// Create a new flow
-    async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId> {
+    async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<Flow> {
         // Create a new flow
         let mut tx = self
             .pool
@@ -145,11 +146,9 @@ impl FlowRepo for FlowRepoImpl {
             .await
             .map_err(|e| EventsError::DatabaseError(e))?;
         let cloned_create_flow = create_flow.clone();
+        let create_flow_version = CreateFlowVersion::default();
         // TODO: decide if w're keeping flow or just creating it to ensure it can be created
-        let flow = match create_flow.description {
-            None => Flowfile::default(),
-            Some(d) => Flowfile::from_string(d).unwrap(),
-        };
+        let flow = Flowfile::default();
         let flow_id = flow.flow.id.clone();
         let version_id = uuid::Uuid::new_v4().to_string();
         // Create a new flow
@@ -161,13 +160,18 @@ impl FlowRepo for FlowRepoImpl {
                 cloned_create_flow.clone(),
             )
             .await?;
-        self.save_flow_version(&mut tx, flow_id, version_id, cloned_create_flow)
+        self.save_flow_version(&mut tx, flow_id, version_id, create_flow_version)
             .await?;
         tx.commit()
             .await
             .map_err(|e| EventsError::DatabaseError(e))?;
 
-        Ok(saved_flow_id)
+        let saved_flow = match self.get_flow_by_id(saved_flow_id.clone()).await {
+            Ok(f) => f,
+            Err(e) => return Err(e),
+        };
+
+        Ok(saved_flow)
     }
 
     async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<Flow> {
@@ -177,36 +181,54 @@ impl FlowRepo for FlowRepoImpl {
             .await
             .map_err(|e| EventsError::DatabaseError(e))?;
 
-        // let version = self
-        //     .get_latest_version_for(row.flow_id.clone())
-        //     .await
-        //     .map_err(|e| {
-        //         EventsError::DatabaseError(e)
-        //     })?;
-
         Ok(flow)
     }
 
     async fn get_flows(&self) -> EventsResult<Vec<Flow>> {
-        let flows = sqlx::query_as::<_, Flow>(GET_FLOW_SQL)
+        let flows = sqlx::query_as::<_, Flow>("SELECT * from flows")
             .fetch_all(&self.pool)
             .await
             .map_err(|e| EventsError::DatabaseError(e))?;
 
-        // let mut flows_and_versions: Vec<(Flow, FlowVersion)> = vec![];
-
-        // for flow in flows.into_iter() {
-        //     let version = self
-        //         .get_latest_version_for(flow.flow_id.clone())
-        //         .await
-        //         .map_err(|e| EventsError::DatabaseError(e))?;
-        //     flows_and_versions.push((flow, version));
-        // }
-
         Ok(flows)
     }
 
-    async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId> {
+    // TODO: write tests for this badboy
+    async fn get_flow_versions(&self, flow_id: FlowId) -> EventsResult<Vec<FlowVersion>> {
+        let flow_versions = sqlx::query_as::<_, FlowVersion>(
+            r#"
+        SELECT * FROM flow_versions WHERE flow_id = ?1
+        "#,
+        )
+        .bind(flow_id.clone())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(flow_versions)
+    }
+
+    // TODO: write tests
+    async fn get_flow_version_by_id(
+        &self,
+        flow_id: FlowId,
+        version_id: FlowVersionId,
+    ) -> EventsResult<FlowVersion> {
+        let flow_version = sqlx::query_as::<_, FlowVersion>(
+            r#"
+        SELECT * FROM flow_versions WHERE flow_id = ?1 AND version_id = ?2
+        "#,
+        )
+        .bind(flow_id.clone())
+        .bind(version_id.clone())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(flow_version)
+    }
+
+    async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<Flow> {
         let flow = sqlx::query_as::<_, Flow>(
             r#"
             UPDATE flows SET flow_name = ?1, active = ?2, updated_at = ?3 WHERE flow_id = ?4
@@ -221,7 +243,9 @@ impl FlowRepo for FlowRepoImpl {
         .await
         .map_err(|e| EventsError::DatabaseError(e))?;
 
-        Ok(flow.flow_id)
+        let flow_id = flow.flow_id;
+
+        self.get_flow_by_id(flow_id).await
     }
 
     async fn update_flow_version(
@@ -229,7 +253,7 @@ impl FlowRepo for FlowRepoImpl {
         flow_id: FlowId,
         version_id: FlowVersionId,
         update_flow_version: UpdateFlowVersion,
-    ) -> EventsResult<FlowVersionId> {
+    ) -> EventsResult<FlowVersion> {
         let current_flow_version = sqlx::query_as::<_, FlowVersion>(
             r#"
             SELECT * FROM flow_versions WHERE flow_id = ?1 AND version_id = ?2
@@ -266,8 +290,8 @@ impl FlowRepo for FlowRepoImpl {
         let row = sqlx::query(
             r#"
             UPDATE flow_versions SET 
-                flow_version = ?1, description = ?2, updated_at = ?3, published = ?4, checksum = ?5
-            WHERE version_id = ?6 AND flow_id = ?7
+                flow_version = ?1, description = ?2, updated_at = ?3, published = ?4, checksum = ?5, flow_definition = ?6
+            WHERE version_id = ?7 AND flow_id = ?8
             RETURNING version_id
             "#,
         )
@@ -276,13 +300,15 @@ impl FlowRepo for FlowRepoImpl {
         .bind(Utc::now().timestamp())
         .bind(published)
         .bind(checksum)
+        .bind(definition)
         .bind(version_id.clone())
         .bind(flow_id.clone())
         .fetch_one(&self.pool)
         .await
         .map_err(|e| EventsError::DatabaseError(e))?;
 
-        Ok(row.get("version_id"))
+        let version_id = row.get("version_id");
+        self.get_flow_version_by_id(flow_id, version_id).await
     }
 }
 
@@ -302,11 +328,11 @@ mod tests {
         let res = test.flow_repo.create_flow(dummy_create.clone()).await;
         assert!(res.is_ok());
 
-        let flow_id = res.unwrap();
+        let flow = res.unwrap();
 
         // Get the flow from the database
         let row = sqlx::query("SELECT * FROM flows WHERE flow_id = ?1")
-            .bind(flow_id.clone())
+            .bind(flow.flow_id.clone())
             .fetch_one(&test.pool)
             .await?;
 
@@ -319,15 +345,15 @@ mod tests {
             .fetch_one(&test.pool)
             .await?;
 
-        assert_eq!(row.get::<String, _>("flow_id"), flow_id);
+        assert_eq!(row.get::<String, _>("flow_id"), flow.flow_id.clone());
 
         let row = sqlx::query(
             r#"
             SELECT * FROM flow_versions WHERE version_id IN (SELECT latest_version_id FROM flows WHERE flow_id = ?1)
             "#,
-        ).bind(flow_id.clone()).fetch_one(&test.pool).await?;
+        ).bind(flow.flow_id.clone().clone()).fetch_one(&test.pool).await?;
 
-        assert_eq!(row.get::<String, _>("flow_id"), flow_id);
+        assert_eq!(row.get::<String, _>("flow_id"), flow.flow_id.clone());
         assert_eq!(row.get::<String, _>("flow_version"), "0.0.1".to_string());
 
         Ok(())
@@ -340,13 +366,19 @@ mod tests {
         let dummy_create2 = test.dummy_create_flow();
 
         let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
-        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
-            .await?;
+
+        let dummy_create_flow = test.dummy_create_flow_version(flow_id.clone());
+        test.insert_create_flow_version(
+            flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow.clone(),
+        )
+        .await?;
         let (flow_id2, version_id2) = test.insert_create_flow(dummy_create2.clone()).await?;
         test.insert_create_flow_version(
             flow_id2.clone(),
             version_id2.clone(),
-            dummy_create2.clone(),
+            dummy_create_flow.clone(),
         )
         .await?;
 
@@ -373,8 +405,13 @@ mod tests {
         let dummy_create = test.dummy_create_flow();
 
         let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
-        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
-            .await?;
+        let dummy_create_flow = test.dummy_create_flow_version(flow_id.clone());
+        test.insert_create_flow_version(
+            flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow.clone(),
+        )
+        .await?;
 
         let res = test.flow_repo.get_flow_by_id(flow_id.clone()).await;
         assert!(res.is_ok());
@@ -392,8 +429,13 @@ mod tests {
         let dummy_create = test.dummy_create_flow();
 
         let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
-        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
-            .await?;
+        let dummy_create_flow = test.dummy_create_flow_version(flow_id.clone());
+        test.insert_create_flow_version(
+            flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow.clone(),
+        )
+        .await?;
 
         let update_flow = UpdateFlow {
             flow_name: "new name".to_string(),
@@ -418,11 +460,11 @@ mod tests {
             .update_flow(flow_id.clone(), update_flow.clone())
             .await;
         assert!(res.is_ok());
-        let flow_id = res.unwrap();
+        let flow = res.unwrap();
 
         // AFTER UPDATE
         let row = sqlx::query("SELECT * FROM flows WHERE flow_id = ?1")
-            .bind(flow_id.clone())
+            .bind(flow.flow_id.clone())
             .fetch_one(&test.pool)
             .await?;
 
@@ -440,8 +482,13 @@ mod tests {
         let dummy_create = test.dummy_create_flow();
 
         let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
-        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
-            .await?;
+        let dummy_create_flow = test.dummy_create_flow_version(flow_id.clone());
+        test.insert_create_flow_version(
+            flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow.clone(),
+        )
+        .await?;
 
         let update_flow_version = UpdateFlowVersion {
             version: None,
@@ -472,7 +519,8 @@ mod tests {
             )
             .await;
         assert!(res.is_ok());
-        let version_id = res.unwrap();
+        let flow_version = res.unwrap();
+        let version_id = flow_version.version_id.clone();
 
         // AFTER UPDATE
         let flow_version = sqlx::query_as::<_, FlowVersion>(

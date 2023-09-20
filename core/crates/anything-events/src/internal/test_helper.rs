@@ -11,7 +11,6 @@ use crate::models::system_handler;
 use crate::models::trigger::CreateTrigger;
 use crate::repositories::flow_repo::{self, FlowRepoImpl};
 use crate::repositories::trigger_repo::TriggerRepoImpl;
-use crate::Server;
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
@@ -23,6 +22,7 @@ use crate::{
     post_office::PostOffice,
     repositories::{self, event_repo::EventRepoImpl, Repositories},
 };
+use crate::{CreateFlowVersion, Flow, FlowVersion, Server};
 use chrono::Utc;
 use fake::Fake;
 use postage::{
@@ -230,12 +230,29 @@ impl TestFlowRepo {
         }
     }
 
+    pub async fn with_sender(&self) -> Sender<Flow> {
+        self.post_office.post_mail().await.unwrap()
+    }
+
+    pub async fn with_receiver(&self) -> Receiver<Flow> {
+        self.post_office.receive_mail().await.unwrap()
+    }
+
     pub fn dummy_create_flow(&self) -> CreateFlow {
         CreateFlow {
             flow_name: fake::faker::name::en::Name().fake(),
             version: Some("0.0.1".to_string()),
-            active: bool::default(),
-            description: None,
+            active: Some(false),
+        }
+    }
+
+    pub fn dummy_create_flow_version(&self, flow_id: String) -> CreateFlowVersion {
+        CreateFlowVersion {
+            flow_id,
+            flow_definition: "{}".to_string(),
+            published: Some(false),
+            version: Some("0.0.1".to_string()),
+            description: Some("test".to_string()),
         }
     }
 
@@ -261,6 +278,8 @@ impl TestFlowRepo {
         .await
         .map_err(|e| EventsError::DatabaseError(e))?;
 
+        let flow_id = row.get(0);
+
         Ok((flow_id, version_id))
     }
 
@@ -268,7 +287,7 @@ impl TestFlowRepo {
         &self,
         flow_id: String,
         version_id: String,
-        create_flow: CreateFlow,
+        create_flow: CreateFlowVersion,
     ) -> EventsResult<FlowVersionId> {
         // Create flow version
         let row = sqlx::query(
@@ -291,6 +310,30 @@ impl TestFlowRepo {
         })?;
 
         Ok(row.get("version_id"))
+    }
+
+    pub async fn find_flow_by_id(&self, flow_id: String) -> EventsResult<Flow> {
+        let flow = sqlx::query_as::<_, Flow>(r#"SELECT * FROM flows WHERE flow_id = ?1"#)
+            .bind(flow_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| EventsError::DatabaseError(e));
+
+        flow
+    }
+
+    pub async fn get_flow_versions(&self, flow_id: String) -> EventsResult<Vec<FlowVersion>> {
+        let flow_versions = sqlx::query_as::<_, FlowVersion>(
+            r#"
+        SELECT * FROM flow_versions WHERE flow_id = ?1
+        "#,
+        )
+        .bind(flow_id.clone())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(flow_versions)
     }
 }
 
