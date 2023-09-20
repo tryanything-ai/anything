@@ -1,9 +1,4 @@
-import { useLocalFileContext } from "../context/LocalFileProvider";
-import { Link } from "react-router-dom";
 import { useModelContext } from "../context/ModelsProvider";
-import { invoke } from "@tauri-apps/api";
-import { useEffect } from "react";
-import { useEventLoopContext } from "../context/EventLoopProvider";
 import ModelCard from "../components/downloadedModelCard";
 
 export default function Models() {

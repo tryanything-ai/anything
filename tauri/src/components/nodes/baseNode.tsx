@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useFlowContext } from "../../context/FlowProvider";
 import { NodeData } from "../../utils/nodeUtils";
-import { VscEllipsis, VscClose } from "react-icons/vsc";
+import { VscEllipsis, VscClose, VscGear } from "react-icons/vsc";
 import clsx from "clsx";
 import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { HandleProps, Handle } from "reactflow";
@@ -40,7 +40,7 @@ export default function BaseNode({
       className={clsx(
         "bg-primary text-primary-content w-80 h-20 rounded-md flex flex-row text-xl",
         {
-          "bg-secondary text-secondary-content": data.worker_type === "start",
+          "bg-secondary text-secondary-content": data.trigger === true,
         }
       )}
     >
@@ -75,7 +75,7 @@ export default function BaseNode({
             className="m-1 absolute top-0 right-0"
             onClick={() => closeAllPanelsOpenOne("nodeConfig", id)}
           >
-            <VscEllipsis />
+            <VscGear />
           </button>
         )}
       </div>
