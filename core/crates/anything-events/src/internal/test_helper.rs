@@ -316,6 +316,14 @@ impl TestTriggerRepo {
         }
     }
 
+    pub async fn with_sender(&self) -> Sender<Event> {
+        self.post_office.post_mail().await.unwrap()
+    }
+
+    pub async fn with_receiver(&self) -> Receiver<Event> {
+        self.post_office.receive_mail().await.unwrap()
+    }
+
     pub fn dummy_create_trigger(&self) -> CreateTrigger {
         CreateTrigger {
             event_name: fake::faker::name::en::Name().fake(),

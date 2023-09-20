@@ -15,6 +15,8 @@ resolver = "2"
 
 [workspace.dependencies]
 anything-core = { path = "./crates/anything-core", version = "*" }
+anything-events = { path = "./crates/anything-events", version = "*" }
+
 dotenv = "0.15.0"
 
 git-version = "0.3.5"

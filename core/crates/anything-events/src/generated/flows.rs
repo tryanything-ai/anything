@@ -31,10 +31,8 @@ pub struct Flow {
     pub version: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub flow_name: ::prost::alloc::string::String,
-    /// oneof description { string present = 4; };
     #[prost(bool, tag = "4")]
     pub active: bool,
-    /// repeated Node nodes = 6;
     #[prost(message, repeated, tag = "5")]
     pub flow_versions: ::prost::alloc::vec::Vec<FlowVersion>,
 }
