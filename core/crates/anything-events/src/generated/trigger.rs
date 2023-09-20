@@ -15,15 +15,15 @@ pub struct CreateTriggerResponse {
     pub trigger_id: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
-pub mod trigger_client {
+pub mod triggers_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct TriggerClient<T> {
+    pub struct TriggersClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl TriggerClient<tonic::transport::Channel> {
+    impl TriggersClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -34,7 +34,7 @@ pub mod trigger_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> TriggerClient<T>
+    impl<T> TriggersClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -52,7 +52,7 @@ pub mod trigger_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> TriggerClient<InterceptedService<T, F>>
+        ) -> TriggersClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -66,7 +66,7 @@ pub mod trigger_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            TriggerClient::new(InterceptedService::new(inner, interceptor))
+            TriggersClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -117,22 +117,22 @@ pub mod trigger_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/trigger.Trigger/CreateTrigger",
+                "/trigger.Triggers/CreateTrigger",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("trigger.Trigger", "CreateTrigger"));
+                .insert(GrpcMethod::new("trigger.Triggers", "CreateTrigger"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod trigger_server {
+pub mod triggers_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with TriggerServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with TriggersServer.
     #[async_trait]
-    pub trait Trigger: Send + Sync + 'static {
+    pub trait Triggers: Send + Sync + 'static {
         async fn create_trigger(
             &self,
             request: tonic::Request<super::CreateTriggerRequest>,
@@ -142,7 +142,7 @@ pub mod trigger_server {
         >;
     }
     #[derive(Debug)]
-    pub struct TriggerServer<T: Trigger> {
+    pub struct TriggersServer<T: Triggers> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -150,7 +150,7 @@ pub mod trigger_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Trigger> TriggerServer<T> {
+    impl<T: Triggers> TriggersServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -202,9 +202,9 @@ pub mod trigger_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for TriggerServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for TriggersServer<T>
     where
-        T: Trigger,
+        T: Triggers,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -220,11 +220,11 @@ pub mod trigger_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/trigger.Trigger/CreateTrigger" => {
+                "/trigger.Triggers/CreateTrigger" => {
                     #[allow(non_camel_case_types)]
-                    struct CreateTriggerSvc<T: Trigger>(pub Arc<T>);
+                    struct CreateTriggerSvc<T: Triggers>(pub Arc<T>);
                     impl<
-                        T: Trigger,
+                        T: Triggers,
                     > tonic::server::UnaryService<super::CreateTriggerRequest>
                     for CreateTriggerSvc<T> {
                         type Response = super::CreateTriggerResponse;
@@ -238,7 +238,7 @@ pub mod trigger_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Trigger>::create_trigger(&inner, request).await
+                                <T as Triggers>::create_trigger(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -281,7 +281,7 @@ pub mod trigger_server {
             }
         }
     }
-    impl<T: Trigger> Clone for TriggerServer<T> {
+    impl<T: Triggers> Clone for TriggersServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -293,7 +293,7 @@ pub mod trigger_server {
             }
         }
     }
-    impl<T: Trigger> Clone for _Inner<T> {
+    impl<T: Triggers> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -303,7 +303,7 @@ pub mod trigger_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Trigger> tonic::server::NamedService for TriggerServer<T> {
-        const NAME: &'static str = "trigger.Trigger";
+    impl<T: Triggers> tonic::server::NamedService for TriggersServer<T> {
+        const NAME: &'static str = "trigger.Triggers";
     }
 }

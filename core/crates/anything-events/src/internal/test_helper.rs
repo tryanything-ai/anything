@@ -375,15 +375,15 @@ impl TestEventRepo {
         }
     }
 
-    pub async fn insert_dummy_event(&self) -> EventsResult<Event> {
+    pub async fn insert_dummy_event(&self, event: CreateEvent) -> EventsResult<Event> {
         let event = Event {
             id: uuid::Uuid::new_v4().to_string(),
-            name: fake::faker::name::en::Name().fake(),
-            flow_id: Some(uuid::Uuid::new_v4().to_string()),
-            trigger_id: Some(uuid::Uuid::new_v4().to_string()),
-            context: Value::default(),
-            started_at: Some(Utc::now()),
-            ended_at: Some(Utc::now()),
+            name: event.name.clone(),
+            flow_id: event.flow_id.clone(),
+            trigger_id: event.trigger_id.clone(),
+            context: event.context.clone(),
+            started_at: event.started_at.clone(),
+            ended_at: event.ended_at.clone(),
         };
 
         let mut cloned_event = event.clone();

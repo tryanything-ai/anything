@@ -122,7 +122,7 @@ impl Events for EventManager {
 
         Ok(Response::new(TriggerEventResponse {
             status: "success".into(),
-            trigger_id,
+            trigger_id: event_id,
         }))
     }
 
@@ -180,12 +180,13 @@ mod tests {
     async fn test_event_save() -> anyhow::Result<()> {
         let pool = get_test_pool().await.unwrap();
         let context = get_test_context_from_pool(&pool).await;
-        let test = TestTriggerRepo::new_with_pool(&context.pool);
+        let test = TestEventRepo::new_with_pool(&context.pool);
 
         let event_manager = EventManager::new(&context, test.with_sender().await);
-        let event = test.dummy_create_trigger();
+        let dummy_event = test.dummy_create_event();
+        let event = test.insert_dummy_event(dummy_event.clone()).await.unwrap();
         let create_event_request = TriggerEventRequest {
-            event: Some(event.clone().into()),
+            event: Some(dummy_event.clone().into()),
         };
 
         let request = Request::new(create_event_request);
@@ -202,7 +203,7 @@ mod tests {
             .await;
         assert!(found.is_ok());
         let found = found.unwrap();
-        assert_eq!(found.name, event.event_name);
+        assert_eq!(found.name, event.name);
 
         Ok(())
     }
@@ -238,9 +239,13 @@ mod tests {
         let test = TestEventRepo::new_with_pool(&context.pool);
 
         let event_manager = EventManager::new(&context, test.with_sender().await);
-        // let r = insert_dummy_data(&p).await.unwrap();
-        let r = test.insert_dummy_event().await.unwrap();
-        test.insert_dummy_event().await.unwrap();
+
+        let dummy_event = test.dummy_create_event();
+        let r = test
+            .insert_dummy_event(test.dummy_create_event())
+            .await
+            .unwrap();
+        test.insert_dummy_event(dummy_event).await.unwrap();
 
         let request = Request::new(GetEventRequest { event_id: r.id });
         let response = event_manager.get_event(request).await;

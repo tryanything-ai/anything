@@ -10,7 +10,7 @@ use sqlx::FromRow;
 use sqlx::SqlitePool;
 
 use crate::errors::EventsResult;
-use crate::generated::events::Event as ProtoEvent;
+use crate::generated::events::{CreateEvent as ProtoCreateEvent, Event as ProtoEvent};
 
 use super::flow::FlowId;
 
@@ -80,8 +80,8 @@ pub struct CreateEvent {
     pub ended_at: Option<DateTime<Utc>>,
 }
 
-impl Into<ProtoEvent> for CreateEvent {
-    fn into(self) -> ProtoEvent {
+impl Into<ProtoCreateEvent> for CreateEvent {
+    fn into(self) -> ProtoCreateEvent {
         use crate::generated::events::event::Source::{FlowId, TriggerId};
 
         let started_at = Some(match self.started_at {
@@ -92,16 +92,11 @@ impl Into<ProtoEvent> for CreateEvent {
             Some(t) => t.timestamp(),
             None => Utc::now().timestamp(),
         });
-        ProtoEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            context: self.context.to_string(),
-            name: self.name,
-            source: Some(match self.flow_id {
-                Some(flow_id) => FlowId(flow_id),
-                None => TriggerId(self.trigger_id.unwrap()),
-            }),
-            started_at,
-            ended_at,
+        ProtoCreateEvent {
+            event_name: self.name,
+            payload: self.context.to_string(),
+            metadata: None,
+            trigger_id: self.trigger_id.unwrap(),
         }
     }
 }

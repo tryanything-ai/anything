@@ -9,8 +9,6 @@ use serde_json::Value;
 use sqlx::FromRow;
 use sqlx::SqlitePool;
 
-use crate::generated::Trigger as ProtoTrigger;
-
 pub type TriggerId = String;
 
 #[derive(FromRow, Debug, Serialize, Deserialize, Clone, Builder)]
@@ -25,19 +23,19 @@ pub struct Trigger {
     // pub tags: Vec<String>,
 }
 
-impl Into<ProtoTrigger> for Trigger {
-    fn into(self) -> ProtoTrigger {
-        ProtoTrigger {
-            event_name: self.event_name,
-            payload: self.payload.to_string(),
-            trigger_id: self.trigger_id,
-            metadata: match self.metadata {
-                Some(m) => m.to_string(),
-                None => "".to_string(),
-            },
-        }
-    }
-}
+// impl Into<ProtoTrigger> for Trigger {
+//     fn into(self) -> ProtoTrigger {
+//         ProtoTrigger {
+//             event_name: self.event_name,
+//             payload: self.payload.to_string(),
+//             trigger_id: self.trigger_id,
+//             metadata: match self.metadata {
+//                 Some(m) => m.to_string(),
+//                 None => "".to_string(),
+//             },
+//         }
+//     }
+// }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateTrigger {
@@ -47,18 +45,18 @@ pub struct CreateTrigger {
     pub metadata: Option<Value>,
 }
 
-impl Into<ProtoTrigger> for CreateTrigger {
-    fn into(self) -> ProtoTrigger {
-        let metadata = match self.metadata {
-            Some(m) => m,
-            None => Value::Null,
-        }
-        .to_string();
-        ProtoTrigger {
-            event_name: self.event_name,
-            payload: self.payload.to_string(),
-            metadata,
-            trigger_id: self.trigger_id,
-        }
-    }
-}
+// impl Into<ProtoTrigger> for CreateTrigger {
+//     fn into(self) -> ProtoTrigger {
+//         let metadata = match self.metadata {
+//             Some(m) => m,
+//             None => Value::Null,
+//         }
+//         .to_string();
+//         ProtoTrigger {
+//             event_name: self.event_name,
+//             payload: self.payload.to_string(),
+//             metadata,
+//             trigger_id: self.trigger_id,
+//         }
+//     }
+// }

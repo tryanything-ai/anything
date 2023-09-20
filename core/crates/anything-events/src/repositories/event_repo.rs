@@ -97,8 +97,11 @@ mod tests {
     #[tokio::test]
     async fn test_get_event_by_id() -> anyhow::Result<()> {
         let test_repo = TestEventRepo::new().await;
-        let _r = test_repo.insert_dummy_event().await;
-        let fake_event = test_repo.insert_dummy_event().await?;
+        let dummy_event = test_repo.dummy_create_event();
+        let _r = test_repo
+            .insert_dummy_event(test_repo.dummy_create_event())
+            .await;
+        let fake_event = test_repo.insert_dummy_event(dummy_event).await?;
 
         let found = test_repo.event_repo.find_by_id(fake_event.id).await;
         assert!(found.is_ok());
