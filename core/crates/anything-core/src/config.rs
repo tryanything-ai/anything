@@ -92,7 +92,7 @@ impl Default for AnythingConfig {
     fn default() -> Self {
         Self {
             run_mode: "development".to_string(),
-            root_dir: PathBuf::from("./.eventurous"),
+            root_dir: PathBuf::from("./.anything"),
 
             log: Some("info".to_string()),
 
@@ -105,7 +105,7 @@ impl Default for AnythingConfig {
                 max_connections: None,
             },
             tracing: TracingConfig {
-                service_name: Some("eventurous".to_string()),
+                service_name: Some("anything".to_string()),
                 otel_endpoint: Some("http://otel-collector:4317".to_string()),
                 log_retention: 86400,
                 json_log: Some(false),

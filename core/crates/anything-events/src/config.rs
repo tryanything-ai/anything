@@ -61,7 +61,7 @@ pub struct AnythingEventsConfig {
 impl Default for AnythingEventsConfig {
     fn default() -> Self {
         Self {
-            root_dir: PathBuf::from("./.eventurous"),
+            root_dir: PathBuf::from("./.anything"),
             json_log: false,
             log: "info".to_string(),
             log_retention: 86400,
@@ -96,7 +96,7 @@ pub fn loader(file: Option<&PathBuf>) -> ConfigBuilder<DefaultState> {
     }
 
     builder.add_source(
-        Environment::with_prefix("EVENTUROUS")
+        Environment::with_prefix("ANYTHING")
             .list_separator(",")
             .try_parsing(true)
             .with_list_parse_key("cluster_seed_nodes"),

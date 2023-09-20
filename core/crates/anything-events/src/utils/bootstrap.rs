@@ -23,7 +23,7 @@ use crate::{
 };
 
 pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
-    info!("Bootstrapping Eventurous");
+    info!("Bootstrapping Anything");
     bootstrap_directory(config)?;
     setup_tracing(tracing_subscriber::registry(), &config);
     setup_system(config)?;
