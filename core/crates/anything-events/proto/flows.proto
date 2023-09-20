@@ -8,6 +8,7 @@ service Flows {
     rpc GetFlows (GetFlowsRequest) returns (GetFlowsResponse) {}
     rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}
     rpc UpdateFlow (UpdateFlowRequest) returns (UpdateFlowResponse) {}
+    rpc UpdateFlowVersion (UpdateFlowVersionRequest) returns (UpdateFlowVersionResponse) {}
     rpc PublishFlow (PublishFlowRequest) returns (PublishFlowResponse) {}
 }
 
@@ -59,6 +60,13 @@ message UpdateFlow {
     bool active = 4;
 }
 
+message UpdateFlowVersion {
+    oneof version { string version_string = 1;};
+    oneof flow_definition {string flow_definition_string = 2; };
+    oneof published { bool published_bool = 3;};
+    oneof description { string present = 4; };
+}
+
 // Create a flow
 message CreateFlowRequest {
     Flow flow = 1;
@@ -88,6 +96,16 @@ message UpdateFlowRequest {
     UpdateFlow update_flow = 2;
 }
 message UpdateFlowResponse {
+    Flow flow = 1;
+}
+
+message UpdateFlowVersionRequest {
+    string flow_id = 1;
+    string version_id = 2;
+    UpdateFlowVersion update_flow_version = 3;
+}
+
+message UpdateFlowVersionResponse {
     Flow flow = 1;
 }
 

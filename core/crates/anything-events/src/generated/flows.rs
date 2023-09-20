@@ -119,6 +119,45 @@ pub mod update_flow {
         Present(::prost::alloc::string::String),
     }
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlowVersion {
+    #[prost(oneof = "update_flow_version::Version", tags = "1")]
+    pub version: ::core::option::Option<update_flow_version::Version>,
+    #[prost(oneof = "update_flow_version::FlowDefinition", tags = "2")]
+    pub flow_definition: ::core::option::Option<update_flow_version::FlowDefinition>,
+    #[prost(oneof = "update_flow_version::Published", tags = "3")]
+    pub published: ::core::option::Option<update_flow_version::Published>,
+    #[prost(oneof = "update_flow_version::Description", tags = "4")]
+    pub description: ::core::option::Option<update_flow_version::Description>,
+}
+/// Nested message and enum types in `UpdateFlowVersion`.
+pub mod update_flow_version {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Version {
+        #[prost(string, tag = "1")]
+        VersionString(::prost::alloc::string::String),
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum FlowDefinition {
+        #[prost(string, tag = "2")]
+        FlowDefinitionString(::prost::alloc::string::String),
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Published {
+        #[prost(bool, tag = "3")]
+        PublishedBool(bool),
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Description {
+        #[prost(string, tag = "4")]
+        Present(::prost::alloc::string::String),
+    }
+}
 /// Create a flow
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -166,6 +205,22 @@ pub struct UpdateFlowRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateFlowResponse {
+    #[prost(message, optional, tag = "1")]
+    pub flow: ::core::option::Option<Flow>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlowVersionRequest {
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub version_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "3")]
+    pub update_flow_version: ::core::option::Option<UpdateFlowVersion>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlowVersionResponse {
     #[prost(message, optional, tag = "1")]
     pub flow: ::core::option::Option<Flow>,
 }
@@ -354,6 +409,31 @@ pub mod flows_client {
             req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "UpdateFlow"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn update_flow_version(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateFlowVersionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::UpdateFlowVersionResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.Flows/UpdateFlowVersion",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.Flows", "UpdateFlowVersion"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn publish_flow(
             &mut self,
             request: impl tonic::IntoRequest<super::PublishFlowRequest>,
@@ -408,6 +488,13 @@ pub mod flows_server {
             request: tonic::Request<super::UpdateFlowRequest>,
         ) -> std::result::Result<
             tonic::Response<super::UpdateFlowResponse>,
+            tonic::Status,
+        >;
+        async fn update_flow_version(
+            &self,
+            request: tonic::Request<super::UpdateFlowVersionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::UpdateFlowVersionResponse>,
             tonic::Status,
         >;
         async fn publish_flow(
@@ -658,6 +745,52 @@ pub mod flows_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = UpdateFlowSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/flows.Flows/UpdateFlowVersion" => {
+                    #[allow(non_camel_case_types)]
+                    struct UpdateFlowVersionSvc<T: Flows>(pub Arc<T>);
+                    impl<
+                        T: Flows,
+                    > tonic::server::UnaryService<super::UpdateFlowVersionRequest>
+                    for UpdateFlowVersionSvc<T> {
+                        type Response = super::UpdateFlowVersionResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UpdateFlowVersionRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Flows>::update_flow_version(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = UpdateFlowVersionSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

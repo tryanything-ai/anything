@@ -4,7 +4,7 @@ use crate::{
     generated::{
         flows_server::Flows, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
         GetFlowResponse, GetFlowsResponse, PublishFlowRequest, PublishFlowResponse,
-        UpdateFlowRequest, UpdateFlowResponse,
+        UpdateFlowRequest, UpdateFlowResponse, UpdateFlowVersionRequest, UpdateFlowVersionResponse,
     },
     generated::{Flow, GetFlowsRequest},
     Context,
@@ -54,6 +54,13 @@ impl Flows for FlowManager {
         &self,
         _request: Request<UpdateFlowRequest>,
     ) -> Result<Response<UpdateFlowResponse>, Status> {
+        Err(Status::unimplemented("Not implemented"))
+    }
+
+    async fn update_flow_version(
+        &self,
+        _request: Request<UpdateFlowVersionRequest>,
+    ) -> Result<Response<UpdateFlowVersionResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
 
