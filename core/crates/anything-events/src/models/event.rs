@@ -1,6 +1,7 @@
 #![allow(unused)]
 use std::collections::{HashMap, HashSet};
 
+use anything_graph::flow::node::NodeState;
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,7 @@ use sqlx::FromRow;
 use sqlx::SqlitePool;
 
 use crate::errors::EventsResult;
-use crate::events::Event as ProtoEvent;
+use crate::generated::events::Event as ProtoEvent;
 
 pub type EventId = String;
 pub type SourceId = String;
@@ -27,6 +28,7 @@ pub struct Event {
     pub payload: Value,
     pub metadata: Value,
     pub timestamp: DateTime<Utc>,
+    pub event_type: String,
     // pub tags: Vec<String>,
 }
 
@@ -38,6 +40,7 @@ impl Into<ProtoEvent> for Event {
             name: self.event_name,
             payload: self.payload.to_string(),
             metadata: Some(self.metadata.to_string()),
+            event_type: self.event_type,
             // tags: Vec::default(),
         }
     }
@@ -52,6 +55,7 @@ pub struct CreateEvent {
     pub event_name: String,
     pub payload: Value,
     pub metadata: Value,
+    pub event_type: String,
     // pub tags: Vec<String>,
 }
 
@@ -63,9 +67,16 @@ impl Into<ProtoEvent> for CreateEvent {
             name: self.event_name,
             payload: self.payload.to_string(),
             metadata: Some(self.metadata.to_string()),
+            event_type: self.event_type,
             // tags: self.tags,
         }
     }
 }
 
 impl Event {}
+
+// #[derive(Debug, Clone, Serialize, Deserialize)]
+// pub struct NodeExecutionUpdate {
+//     pub status: NodeState,
+//     pub flow_uuid: String,
+// }

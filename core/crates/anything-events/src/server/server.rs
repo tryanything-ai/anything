@@ -6,7 +6,7 @@ use tracing::debug;
 
 use crate::callbacks::{self};
 use crate::errors::{EventsError, EventsResult};
-use crate::events::events_server::EventsServer;
+use crate::generated::events_server::EventsServer;
 use crate::models::event::Event;
 use crate::models::system_handler::SystemHandler;
 use crate::server::events_server::EventManager;
@@ -14,8 +14,11 @@ use crate::workers;
 // use crate::utils::executor::spawn_or_crash;
 use crate::{context::Context, post_office::PostOffice};
 
-pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
+pub(crate) const EVENTS_FILE_DESCRIPTOR_SET: &[u8] =
     tonic::include_file_descriptor_set!("events_descriptor");
+
+pub(crate) const FLOWS_FILE_DESCRIPTOR_SET: &[u8] =
+    tonic::include_file_descriptor_set!("flows_descriptor");
 
 pub struct Server {
     pub port: u16,
@@ -30,8 +33,18 @@ impl Server {
         let context_clone = context.clone();
         let (tx, _rx) =
             tokio::sync::watch::channel(SystemHandler::new(context_clone.config.clone()));
+
+        let port = match context.config().server.port {
+            0 => {
+                let socket = get_configured_api_socket(&context)?;
+                let listener = std::net::TcpListener::bind(socket)?;
+                listener.local_addr().unwrap().port()
+            }
+            p => p,
+        };
+
         let server = Self {
-            port: context.config().server.port,
+            port,
             post_office: PostOffice::open(),
             context,
             on_flow_handler_change: tx,
@@ -44,7 +57,7 @@ impl Server {
         spawn_or_crash(
             "on_event",
             self.clone(),
-            callbacks::on_event::process_on_events,
+            callbacks::on_trigger::process_triggers,
         );
         spawn_or_crash(
             "system_watcher",
@@ -60,7 +73,8 @@ impl Server {
         let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
         let reflection_service = tonic_reflection::server::Builder::configure()
-            .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
+            .register_encoded_file_descriptor_set(EVENTS_FILE_DESCRIPTOR_SET)
+            .register_encoded_file_descriptor_set(FLOWS_FILE_DESCRIPTOR_SET)
             .build()
             .unwrap();
 
@@ -103,30 +117,54 @@ fn get_configured_api_socket(context: &Context) -> EventsResult<SocketAddr> {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Ok;
 
-    use crate::internal::test_helper::get_test_context;
+    #![allow(unused)]
+    use tokio::sync::OnceCell;
+    use tonic::transport::Channel;
+
+    use crate::{
+        generated::events::events_client::EventsClient, internal::test_helper::get_test_context,
+    };
+    static SERVER: OnceCell<Arc<Server>> = OnceCell::const_new();
+    static CLIENT: OnceCell<EventsClient<Channel>> = OnceCell::const_new();
+
+    async fn get_client() -> EventsClient<Channel> {
+        SERVER
+            .get_or_init(|| async {
+                let mut context = get_test_context().await;
+                context.config.server.port = 10001;
+                let server = Server::new(context).await.unwrap();
+                let cloned_server = server.clone();
+                tokio::spawn(async move {
+                    println!("Starting server...");
+                    cloned_server.run_server().await.unwrap();
+                })
+                .await
+                .unwrap();
+                server
+            })
+            .await;
+
+        let server = SERVER.get().unwrap();
+        CLIENT
+            .get_or_init(|| async {
+                let addr_string = format!("http://[::1]:{}", server.port);
+                println!("Connecting to {}", addr_string);
+                let client = EventsClient::connect(addr_string).await.unwrap();
+                client
+            })
+            .await
+            .to_owned()
+    }
 
     use super::*;
 
-    async fn start_server() -> anyhow::Result<Arc<Server>> {
-        // let config = get_test_config();
-        // let context = Context::new(config).await.unwrap();
-        let mut context = get_test_context().await;
-        context.config.server.port = 0;
-
-        let server = Server::new(context).await.unwrap();
-        let cloned_server = server.clone();
-        tokio::spawn(async move {
-            println!("Starting server...");
-            cloned_server.run_server().await.unwrap();
-        });
-        Ok(server)
-    }
-
     #[tokio::test]
     async fn test_starts_up() -> anyhow::Result<()> {
-        // let server = start_server().await?;
-        Ok(())
+        todo!("Finish test");
+        // let _client = get_client().await;
+
+        // let client = EventManager::models::event::{CreateEvent, Event},
+        // Ok(())
     }
 }

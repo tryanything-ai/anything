@@ -1,3 +1,4 @@
+// use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use sqlx::SqlitePool;
@@ -7,9 +8,10 @@ use crate::{
     db::create_sqlite_pool,
     errors::EventsResult,
     models::system_handler::SystemHandler,
-    repositories::{event_repo::EventRepoImpl, Repositories},
+    repositories::{event_repo::EventRepoImpl, flow_repo::FlowRepoImpl, Repositories},
 };
 
+// TODO: make #[derive(Clone, Debug, Serialize, Deserialize)]
 #[derive(Clone, Debug)]
 pub struct Context {
     pub pool: Arc<SqlitePool>,
@@ -24,6 +26,7 @@ impl Context {
         let pool = create_sqlite_pool(&config).await?;
         let repositories = Repositories {
             event_repo: EventRepoImpl::new(&pool),
+            flow_repo: FlowRepoImpl::new(&pool),
         };
         let system_handler = Arc::new(SystemHandler::new(config.clone()));
         Ok(Self {

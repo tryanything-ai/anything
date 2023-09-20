@@ -33,6 +33,14 @@ impl SystemHandler {
         }
     }
 
+    // pub fn get_config(&self) -> AnythingEventsConfig {
+    //     self.config.clone()
+    // }
+
+    // pub fn get_flow_path(&self) -> PathBuf {
+    //     self.config.root_dir.join(std::path::Path::new("flows"))
+    // }
+
     pub fn clear(&mut self) {
         self.flows.clear();
     }
@@ -77,6 +85,11 @@ impl SystemHandler {
         }
         flows
     }
+
+    // pub fn get_flow_nodes(&self, flow_name: String) -> Vec<Node> {
+    // let flow = self.flows.get(&flow_name).expect("unable to find flow");
+    // flow.nodes.clone()
+    // }
 }
 
 #[cfg(test)]

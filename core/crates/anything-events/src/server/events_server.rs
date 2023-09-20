@@ -12,7 +12,7 @@ use tonic::{Request, Response, Status};
 use crate::{
     context::Context,
     errors::EventsError,
-    events::{
+    generated::events::{
         events_server::Events, GetEventRequest, GetEventResponse, TriggerEventRequest,
         TriggerEventResponse,
     },
@@ -20,7 +20,7 @@ use crate::{
     repositories::event_repo::EventRepo,
 };
 
-use crate::events::Event as ProtoEvent;
+use crate::generated::events::Event as ProtoEvent;
 
 // --------------------------------------------------
 // Errors
@@ -82,6 +82,7 @@ impl Events for EventManager {
         if payload.is_empty() {
             return Err(Status::invalid_argument(NO_EVENT_DATA_PROVIDED));
         }
+        let event_type = event.event_type.clone();
 
         let event_id = uuid::Uuid::new_v4().to_string();
 
@@ -94,6 +95,7 @@ impl Events for EventManager {
                 source_id,
                 payload: json!(payload),
                 metadata: json!(metadata),
+                event_type,
                 // tags,
             })
             .await
@@ -162,7 +164,7 @@ mod tests {
     use tonic::transport::{Channel, Uri};
     use tracing::{debug, info};
 
-    use crate::events::Event as ProtoEvent;
+    use crate::generated::events::Event as ProtoEvent;
     use crate::internal::test_helper::{
         get_test_context, get_test_context_from_pool, get_test_pool, insert_dummy_data,
         select_all_events, TestEventRepo,
@@ -170,7 +172,7 @@ mod tests {
     use crate::models::event::Event;
     use crate::{internal::test_helper::get_test_config, utils::bootstrap};
 
-    use crate::events::{events_client::EventsClient, events_server::EventsServer};
+    use crate::generated::events::{events_client::EventsClient, events_server::EventsServer};
     use serde::{Deserialize, Serialize};
 
     use super::*;
