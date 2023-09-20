@@ -31,28 +31,28 @@ impl FlowManager {
 impl Flows for FlowManager {
     async fn get_flows(
         &self,
-        request: Request<GetFlowsRequest>,
+        _request: Request<GetFlowsRequest>,
     ) -> Result<Response<GetFlowsResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
 
     async fn get_flow(
         &self,
-        request: Request<GetFlowRequest>,
+        _request: Request<GetFlowRequest>,
     ) -> Result<Response<GetFlowResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
 
     async fn update_flow(
         &self,
-        request: Request<UpdateFlowRequest>,
+        _request: Request<UpdateFlowRequest>,
     ) -> Result<Response<UpdateFlowResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
 
     async fn publish_flow(
         &self,
-        request: Request<PublishFlowRequest>,
+        _request: Request<PublishFlowRequest>,
     ) -> Result<Response<PublishFlowResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
