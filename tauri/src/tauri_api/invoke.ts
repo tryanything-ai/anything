@@ -1,5 +1,25 @@
 import { invoke } from "@tauri-apps/api/tauri";
 
+export const getFlows = async () => {
+  return await invoke("get_flows");
+};
+
+export const getChatFlows = async () => {
+  return await invoke("get_chat_flows");
+};
+
+export const getFlow = async (flow_id: string) => {
+  return await invoke("get_flow", {flow_id});
+};
+
+export const getNodes = async () => {
+  return await invoke("get_nodes");
+};
+
+export const getFlowNode = async (flow_id: string, node_id: string) => {
+  return await invoke("get_flow_node", { flow_id, node_id });
+};
+
 //Models
 // export const startModel = async (args: any) => {
 //   return await invoke("start", args);
