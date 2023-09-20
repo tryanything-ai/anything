@@ -52,6 +52,13 @@ message CreateFlow {
     oneof description { string present = 5; };
 }
 
+message UpdateFlow {
+    oneof version { string version_string = 1;};
+    string flow_name = 2;
+    oneof description { string present = 3; };
+    bool active = 4;
+}
+
 // Create a flow
 message CreateFlowRequest {
     Flow flow = 1;
@@ -78,6 +85,7 @@ message GetFlowResponse {
 
 message UpdateFlowRequest {
     Flow flow = 1;
+    UpdateFlow update_flow = 2;
 }
 message UpdateFlowResponse {
     Flow flow = 1;
