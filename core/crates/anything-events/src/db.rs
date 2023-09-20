@@ -5,7 +5,7 @@ use sqlx::{
 
 use crate::{
     config::AnythingEventsConfig,
-    errors::{DatabaseError, EventsError, EventsResult},
+    errors::{EventsError, EventsResult},
 };
 
 pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<SqlitePool> {
@@ -34,7 +34,7 @@ pub async fn create_sqlite_pool(config: &AnythingEventsConfig) -> EventsResult<S
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await
-        .map_err(|e| EventsError::DatabaseError(DatabaseError::DBError(Box::new(e))))?;
+        .map_err(|e| EventsError::MigrationError(e))?;
 
     // DB.set(pool).expect("unable to set pool");
     Ok(pool)

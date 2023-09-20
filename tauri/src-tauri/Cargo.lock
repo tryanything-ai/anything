@@ -182,6 +182,7 @@ dependencies = [
  "time 0.3.23",
  "tokio",
  "toml 0.5.11",
+ "tonic 0.10.0",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",

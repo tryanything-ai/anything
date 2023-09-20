@@ -11,7 +11,6 @@ use crate::models::event::Event;
 use crate::models::system_handler::SystemHandler;
 use crate::server::events_server::EventManager;
 use crate::workers;
-// use crate::utils::executor::spawn_or_crash;
 use crate::{context::Context, post_office::PostOffice};
 
 pub(crate) const EVENTS_FILE_DESCRIPTOR_SET: &[u8] =
@@ -119,52 +118,30 @@ fn get_configured_api_socket(context: &Context) -> EventsResult<SocketAddr> {
 mod tests {
 
     #![allow(unused)]
-    use tokio::sync::OnceCell;
-    use tonic::transport::Channel;
+    use std::{any::Any, future, sync::Once};
+
+    use anything_core::tracing::setup_tracing;
+    use futures::Future;
+    use postage::{
+        mpsc::{self, Sender},
+        sink::Sink,
+        stream::Stream,
+    };
+
+    use tonic::{transport::Channel, Request};
 
     use crate::{
         generated::events::events_client::EventsClient, internal::test_helper::get_test_context,
+        server::server_test_helpers::get_client,
     };
-    static SERVER: OnceCell<Arc<Server>> = OnceCell::const_new();
-    static CLIENT: OnceCell<EventsClient<Channel>> = OnceCell::const_new();
-
-    async fn get_client() -> EventsClient<Channel> {
-        SERVER
-            .get_or_init(|| async {
-                let mut context = get_test_context().await;
-                context.config.server.port = 10001;
-                let server = Server::new(context).await.unwrap();
-                let cloned_server = server.clone();
-                tokio::spawn(async move {
-                    println!("Starting server...");
-                    cloned_server.run_server().await.unwrap();
-                })
-                .await
-                .unwrap();
-                server
-            })
-            .await;
-
-        let server = SERVER.get().unwrap();
-        CLIENT
-            .get_or_init(|| async {
-                let addr_string = format!("http://[::1]:{}", server.port);
-                println!("Connecting to {}", addr_string);
-                let client = EventsClient::connect(addr_string).await.unwrap();
-                client
-            })
-            .await
-            .to_owned()
-    }
 
     use super::*;
 
     #[tokio::test]
     async fn test_starts_up() -> anyhow::Result<()> {
-        todo!("Finish test");
-        // let _client = get_client().await;
-
-        // let client = EventManager::models::event::{CreateEvent, Event},
-        // Ok(())
+        // TODO: do this in a better way
+        let client = get_client().await;
+        assert!(true); // The server started up!
+        Ok(())
     }
 }

@@ -10,7 +10,7 @@ pub(crate) mod callbacks;
 pub(crate) mod cmd;
 pub(crate) mod db;
 pub(crate) mod generated;
-pub(crate) mod models;
+pub mod models;
 pub(crate) mod notifications;
 pub(crate) mod post_office;
 pub(crate) mod repositories;
@@ -27,3 +27,9 @@ pub use context::Context;
 pub use notifications::*;
 pub use server::server::Server;
 pub use utils::bootstrap;
+
+pub mod clients {
+    pub use crate::generated::flows::*;
+}
+
+pub use crate::models::*;

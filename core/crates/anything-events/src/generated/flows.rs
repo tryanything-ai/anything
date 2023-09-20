@@ -31,12 +31,10 @@ pub struct Flow {
     pub version: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub flow_name: ::prost::alloc::string::String,
-    /// oneof description { string present = 4; };
-    ///
-    /// repeated Node nodes = 6;
-    /// repeated FlowVersion versions = 7;
     #[prost(bool, tag = "4")]
     pub active: bool,
+    #[prost(message, repeated, tag = "5")]
+    pub flow_versions: ::prost::alloc::vec::Vec<FlowVersion>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
