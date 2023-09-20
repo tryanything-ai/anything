@@ -41,9 +41,7 @@ impl FlowRepo for TriggerRepoImpl {
         .bind(Utc::now())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         let id = row.get("trigger_id");
         Ok(id)

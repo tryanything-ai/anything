@@ -15,7 +15,7 @@ use crate::Server;
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
-    errors::{DatabaseError, EventsError, EventsResult},
+    errors::{EventsError, EventsResult},
     models::{
         event::{CreateEvent, Event, EventId, SourceId},
         tag::Tag,
@@ -105,14 +105,12 @@ pub async fn get_test_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
         .max_connections(1)
         .connect("sqlite::memory:")
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await
-        .map_err(|e| EventsError::DatabaseError(DatabaseError::DBError(Box::new(e))))?;
+        .map_err(|e| EventsError::MigrationError(e))?;
 
     Ok(pool)
 }
@@ -126,25 +124,32 @@ pub async fn get_test_server() -> EventsResult<Arc<Server>> {
 pub async fn select_all_events(pool: &SqlitePool) -> EventsResult<Vec<Event>> {
     let query = sqlx::query_as::<_, Event>(r#"SELECT * FROM events"#);
 
-    let result = query.fetch_all(pool).await.map_err(|e| {
-        EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-    })?;
+    let result = query
+        .fetch_all(pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
     Ok(result)
 }
 
 pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EventsResult<i64> {
     let res = sqlx::query(
-        r#"INSERT INTO events (source_id, event_name, payload, metadata) VALUES (?, ?, ?, ?)"#,
+        r#"
+        INSERT INTO events (flow_id, trigger_id, name, context, started_at, ended_at)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            RETURNING id
+        "#,
     )
-    .bind(event.source_id)
-    .bind(event.event_name)
-    .bind(event.payload)
-    .bind(event.metadata)
+    .bind(event.flow_id)
+    .bind(event.trigger_id)
+    .bind(event.name)
+    .bind(event.context)
+    .bind(event.started_at)
+    .bind(event.ended_at)
     // .bind(event.tags)
     .execute(pool)
     .await
-    .map_err(|e| EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e))))?;
+    .map_err(|e| EventsError::DatabaseError(e))?;
 
     Ok(res.last_insert_rowid())
 }
@@ -177,20 +182,19 @@ pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<EventId> {
     //     .collect::<Vec<Tag>>();
 
     let fake_event = Event {
-        id: i64::default(),
-        event_id: uuid::Uuid::new_v4().to_string(),
-        source_id: String::default(),
-        event_name: fake::faker::name::en::Name().fake(),
-        event_type: String::default(),
+        id: uuid::Uuid::new_v4().to_string(),
+        flow_id: Some(uuid::Uuid::new_v4().to_string()),
+        trigger_id: Some(String::default()),
+        name: fake::faker::name::en::Name().fake(),
         // tags: TagList::default(),
-        payload: Value::default(),
-        metadata: Value::default(),
-        timestamp: Utc::now(),
+        context: Value::default(),
+        started_at: Some(Utc::now()),
+        ended_at: Some(Utc::now()),
     };
 
     let _res = insert_new_event(pool, fake_event.clone()).await?;
 
-    Ok(fake_event.event_id)
+    Ok(fake_event.id)
 }
 
 fn generate_dummy_hashmap() -> HashMap<String, String> {
@@ -255,9 +259,7 @@ impl TestFlowRepo {
         .bind(Utc::now().timestamp())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         Ok((flow_id, version_id))
     }
@@ -285,7 +287,7 @@ impl TestFlowRepo {
         .fetch_one(&self.pool)
         .await
         .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+            EventsError::DatabaseError(e)
         })?;
 
         Ok(row.get("version_id"))
@@ -314,11 +316,20 @@ impl TestTriggerRepo {
         }
     }
 
+    pub async fn with_sender(&self) -> Sender<Event> {
+        self.post_office.post_mail().await.unwrap()
+    }
+
+    pub async fn with_receiver(&self) -> Receiver<Event> {
+        self.post_office.receive_mail().await.unwrap()
+    }
+
     pub fn dummy_create_trigger(&self) -> CreateTrigger {
         CreateTrigger {
             event_name: fake::faker::name::en::Name().fake(),
             payload: Value::default(),
             metadata: None,
+            trigger_id: uuid::Uuid::new_v4().to_string(),
         }
     }
 }
@@ -355,47 +366,51 @@ impl TestEventRepo {
 
     pub fn dummy_create_event(&self) -> CreateEvent {
         CreateEvent {
-            event_id: uuid::Uuid::new_v4().to_string(),
-            source_id: uuid::Uuid::new_v4().to_string(),
-            event_name: fake::faker::name::en::Name().fake(),
-            event_type: String::default(),
-            payload: Value::default(),
-            metadata: Value::default(),
+            name: fake::faker::name::en::Name().fake(),
+            flow_id: Some(uuid::Uuid::new_v4().to_string()),
+            trigger_id: Some(uuid::Uuid::new_v4().to_string()),
+            context: Value::default(),
+            started_at: Some(Utc::now()),
+            ended_at: Some(Utc::now()),
         }
     }
 
-    pub async fn insert_dummy_event(&self) -> EventsResult<Event> {
-        let mut event = Event {
-            id: i64::default(),
-            event_id: uuid::Uuid::new_v4().to_string(),
-            event_name: fake::faker::name::en::Name().fake(),
-            event_type: String::default(),
-            source_id: String::default(),
-            payload: Value::default(),
-            metadata: Value::default(),
-            timestamp: Utc::now(),
+    pub async fn insert_dummy_event(&self, event: CreateEvent) -> EventsResult<Event> {
+        let event = Event {
+            id: uuid::Uuid::new_v4().to_string(),
+            name: event.name.clone(),
+            flow_id: event.flow_id.clone(),
+            trigger_id: event.trigger_id.clone(),
+            context: event.context.clone(),
+            started_at: event.started_at.clone(),
+            ended_at: event.ended_at.clone(),
         };
 
-        let res = sqlx::query(
-            r#"INSERT INTO events 
-            (event_id, source_id, event_name, payload, metadata)
-            VALUES (?1, ?2, ?3, ?4, ?5)
-            RETURNING id"#,
+        let mut cloned_event = event.clone();
+
+        let row = sqlx::query(
+            r#"
+            INSERT INTO events (id, flow_id, trigger_id, name, context, started_at, ended_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            RETURNING id
+            "#,
         )
-        .bind(&event.event_id)
-        .bind(&event.source_id)
-        .bind(&event.event_name)
-        .bind(&event.payload)
-        .bind(&event.metadata)
+        .bind(event.id)
+        .bind(event.flow_id)
+        .bind(event.trigger_id)
+        .bind(event.name)
+        .bind(event.context)
+        .bind(event.started_at)
+        .bind(event.ended_at)
         // .bind(event.tags)
         .fetch_one(&self.pool)
         .await
         .expect("unable to insert dummy data");
 
-        let id = res.get("id");
-        event.id = id;
+        let id = row.get("id");
+        cloned_event.id = id;
 
-        Ok(event)
+        Ok(cloned_event)
     }
 }
 

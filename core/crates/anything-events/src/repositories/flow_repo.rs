@@ -1,8 +1,7 @@
-use std::io::BufReader;
-
 use anything_core::hashing::hash_string_sha256;
 use anything_graph::flow::flowfile::Flowfile;
 use chrono::Utc;
+
 use sqlx::{Row, SqlitePool};
 
 use crate::{
@@ -12,11 +11,25 @@ use crate::{
     },
 };
 
+const GET_FLOW_SQL: &str = r#"
+SELECT f.flow_id, f.flow_name, f.latest_version_id,
+        f.active, f.updated_at,
+        fv.version_id AS fv_id,
+        fv.description AS fv_description,
+        fv.flow_version AS fv_version,
+        fv.checksum AS fv_checksum,
+        fv.updated_at AS fv_updated_at,
+        fv.published AS fv_published,
+        fv.flow_definition AS fv_flow_definition
+FROM flows f
+INNER JOIN flow_versions fv ON fv.flow_id = f.flow_id
+"#;
+
 #[async_trait::async_trait]
 pub trait FlowRepo {
     async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId>;
-    async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>>;
-    async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<(Flow, FlowVersion)>;
+    async fn get_flows(&self) -> EventsResult<Vec<Flow>>;
+    async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<Flow>;
     async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId>;
     async fn update_flow_version(
         &self,
@@ -58,9 +71,7 @@ impl FlowRepoImpl {
         .bind(Utc::now().timestamp())
         .fetch_one(&mut **tx)
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         Ok(row.get("flow_id"))
     }
@@ -103,9 +114,8 @@ impl FlowRepoImpl {
         .bind(checksum)
         .bind(input)
         .bind(Utc::now().timestamp())
-        .fetch_one(&mut **tx).await.map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .fetch_one(&mut **tx).await
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         Ok(row.get("version_id"))
     }
@@ -115,8 +125,9 @@ impl FlowRepoImpl {
             r#"
                 SELECT * FROM flow_versions WHERE version_id IN (SELECT latest_version_id FROM flows WHERE flow_id = ?1)
             "#,
-        ).bind(flow_id.clone()).fetch_one(&self.pool).await.map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        ).bind(flow_id.clone()).fetch_one(&self.pool).await
+        .map_err(|e| {
+            EventsError::DatabaseError(e)
         })?;
 
         Ok(row)
@@ -128,9 +139,11 @@ impl FlowRepo for FlowRepoImpl {
     /// Create a new flow
     async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId> {
         // Create a new flow
-        let mut tx = self.pool.begin().await.map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| EventsError::DatabaseError(e))?;
         let cloned_create_flow = create_flow.clone();
         // TODO: decide if w're keeping flow or just creating it to ensure it can be created
         let flow = match create_flow.description {
@@ -150,53 +163,47 @@ impl FlowRepo for FlowRepoImpl {
             .await?;
         self.save_flow_version(&mut tx, flow_id, version_id, cloned_create_flow)
             .await?;
-        tx.commit().await.map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        tx.commit()
+            .await
+            .map_err(|e| EventsError::DatabaseError(e))?;
 
         Ok(saved_flow_id)
     }
 
-    async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<(Flow, FlowVersion)> {
-        let row = sqlx::query_as::<_, Flow>("SELECT * from flows WHERE flow_id = ?1")
+    async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<Flow> {
+        let flow = sqlx::query_as::<_, Flow>(&format!("{} WHERE f.flow_id = ?1", GET_FLOW_SQL))
             .bind(flow_id)
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| {
-                EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-            })?;
+            .map_err(|e| EventsError::DatabaseError(e))?;
 
-        let version = self
-            .get_latest_version_for(row.flow_id.clone())
-            .await
-            .map_err(|e| {
-                EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-            })?;
+        // let version = self
+        //     .get_latest_version_for(row.flow_id.clone())
+        //     .await
+        //     .map_err(|e| {
+        //         EventsError::DatabaseError(e)
+        //     })?;
 
-        Ok((row, version))
+        Ok(flow)
     }
 
-    async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>> {
-        let flows = sqlx::query_as::<_, Flow>("SELECT * from flows")
+    async fn get_flows(&self) -> EventsResult<Vec<Flow>> {
+        let flows = sqlx::query_as::<_, Flow>(GET_FLOW_SQL)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| {
-                EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-            })?;
+            .map_err(|e| EventsError::DatabaseError(e))?;
 
-        let mut flows_and_versions: Vec<(Flow, FlowVersion)> = vec![];
+        // let mut flows_and_versions: Vec<(Flow, FlowVersion)> = vec![];
 
-        for flow in flows.into_iter() {
-            let version = self
-                .get_latest_version_for(flow.flow_id.clone())
-                .await
-                .map_err(|e| {
-                    EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-                })?;
-            flows_and_versions.push((flow, version));
-        }
+        // for flow in flows.into_iter() {
+        //     let version = self
+        //         .get_latest_version_for(flow.flow_id.clone())
+        //         .await
+        //         .map_err(|e| EventsError::DatabaseError(e))?;
+        //     flows_and_versions.push((flow, version));
+        // }
 
-        Ok(flows_and_versions)
+        Ok(flows)
     }
 
     async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId> {
@@ -212,9 +219,7 @@ impl FlowRepo for FlowRepoImpl {
         .bind(flow_id.clone())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         Ok(flow.flow_id)
     }
@@ -234,9 +239,7 @@ impl FlowRepo for FlowRepoImpl {
         .bind(version_id.clone())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         let definition = match update_flow_version.flow_definition {
             Some(d) => d,
@@ -277,9 +280,7 @@ impl FlowRepo for FlowRepoImpl {
         .bind(flow_id.clone())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
         Ok(row.get("version_id"))
     }
@@ -356,9 +357,12 @@ mod tests {
         assert_eq!(flows.len(), 2);
         let first = flows.first();
         assert_eq!(first.is_some(), true);
-        let (first_flow, flow_version) = first.unwrap();
-        assert_eq!(first_flow.flow_name, dummy_create.flow_name);
-        assert_eq!(flow_version.flow_version, dummy_create.version.unwrap());
+        let first = first.unwrap();
+        assert_eq!(first.flow_name, dummy_create.flow_name);
+        assert_eq!(
+            first.versions[0].flow_version,
+            dummy_create.version.unwrap()
+        );
 
         Ok(())
     }
@@ -374,10 +378,10 @@ mod tests {
 
         let res = test.flow_repo.get_flow_by_id(flow_id.clone()).await;
         assert!(res.is_ok());
-        let (flow, flow_version) = res.unwrap();
+        let flow = res.unwrap();
 
         assert_eq!(flow.flow_name, dummy_create.flow_name);
-        assert_eq!(flow_version.flow_version, dummy_create.version.unwrap());
+        assert_eq!(flow.versions[0].flow_version, dummy_create.version.unwrap());
 
         Ok(())
     }
@@ -487,7 +491,6 @@ mod tests {
         assert_eq!(flow_version.published, true);
         assert_ne!(flow_version.checksum, original_checksum);
 
-        // assert_eq!(flow_name, "new name".to_string());
         // assert_eq!(row.get::<bool, _>("active"), true);
 
         Ok(())

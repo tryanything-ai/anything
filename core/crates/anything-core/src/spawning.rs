@@ -28,7 +28,7 @@ pub fn build_runtime() -> AnythingResult<Arc<Runtime>> {
     Ok(arc_runtime)
 }
 
-/// execute a future and if it returns (Ok or Err) then crash
+#[cfg(not(debug_assertions))]
 pub fn spawn_or_crash<F, C, Fut>(name: impl Into<String>, ctx: C, func: F)
 where
     F: Fn(C) -> Fut + Send + Sync + 'static,
@@ -44,5 +44,23 @@ where
         }
         error!("task {} failed, aborting!", name);
         std::process::exit(1);
+    });
+}
+
+#[cfg(debug_assertions)]
+pub fn spawn_or_crash<F, C, Fut>(name: impl Into<String>, ctx: C, func: F)
+where
+    F: Fn(C) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+    C: Send + Sync + 'static,
+{
+    let name = name.into();
+
+    let _ = tokio::spawn(async move {
+        match func(ctx).await {
+            Ok(_) => unreachable!("func never returns"),
+            Err(err) => error!("task {} failed: {:?}", name, err),
+        }
+        error!("task {} failed, aborting!", name);
     });
 }

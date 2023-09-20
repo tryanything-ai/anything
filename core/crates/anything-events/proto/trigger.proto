@@ -1,7 +1,7 @@
 syntax = "proto3";
 package trigger;
 
-service Trigger {
+service Triggers {
     rpc CreateTrigger (CreateTriggerRequest) returns (CreateTriggerResponse) {}
 }
 

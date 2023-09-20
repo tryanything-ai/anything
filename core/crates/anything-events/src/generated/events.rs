@@ -2,44 +2,48 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Event {
     #[prost(string, tag = "1")]
-    pub event_id: ::prost::alloc::string::String,
-    /// Source of the event
-    #[prost(string, tag = "2")]
-    pub source_id: ::prost::alloc::string::String,
-    /// Event payload
-    #[prost(string, tag = "3")]
-    pub payload: ::prost::alloc::string::String,
-    /// Event name, like files/changed
+    pub id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
-    pub name: ::prost::alloc::string::String,
-    /// Type of event
+    pub context: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]
-    pub event_type: ::prost::alloc::string::String,
-    /// repeated string tags = 4;
-    #[prost(string, optional, tag = "6")]
-    pub metadata: ::core::option::Option<::prost::alloc::string::String>,
+    pub name: ::prost::alloc::string::String,
+    #[prost(int64, optional, tag = "6")]
+    pub started_at: ::core::option::Option<i64>,
+    #[prost(int64, optional, tag = "7")]
+    pub ended_at: ::core::option::Option<i64>,
+    /// Source of the event
+    #[prost(oneof = "event::Source", tags = "2, 3")]
+    pub source: ::core::option::Option<event::Source>,
 }
-/// trigger_id TEXT NOT NULL PRIMARY KEY,
-///      -- /file/created/<file-path> or /whatsapp/message/<message-id>
-///      event_name TEXT NOT NULL,
-///      payload json NOT NULL,
-///      metadata json,
-///      timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
+/// Nested message and enum types in `Event`.
+pub mod event {
+    /// Source of the event
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        #[prost(string, tag = "2")]
+        FlowId(::prost::alloc::string::String),
+        #[prost(string, tag = "3")]
+        TriggerId(::prost::alloc::string::String),
+    }
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Trigger {
+pub struct CreateEvent {
     #[prost(string, tag = "1")]
     pub event_name: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub payload: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub metadata: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "3")]
+    pub metadata: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "4")]
+    pub trigger_id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TriggerEventRequest {
     #[prost(message, optional, tag = "1")]
-    pub event: ::core::option::Option<Trigger>,
+    pub event: ::core::option::Option<CreateEvent>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

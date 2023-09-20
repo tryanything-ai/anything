@@ -15,34 +15,29 @@ service Events {
     // rpc SubscribeFlow(SubscribeFlowRequest) returns (stream SubscribeFlowResponse);
 }
 
+
 message Event {
-    string event_id = 1;
+    string id = 1;
     // Source of the event
-    string source_id = 2;
-    // Event payload
-    string payload = 3;
-    // Event name, like files/changed
-    string name = 4;
-    // Type of event
-    string event_type = 5;
-    // repeated string tags = 4;
-    optional string metadata = 6;
+    oneof source {
+        string flow_id = 2;
+        string trigger_id = 3;
+    };
+    string context = 4;
+    string name = 5;
+    optional int64 started_at = 6;
+    optional int64 ended_at = 7;
 }
 
-// trigger_id TEXT NOT NULL PRIMARY KEY,
-//     -- /file/created/<file-path> or /whatsapp/message/<message-id>
-//     event_name TEXT NOT NULL,
-//     payload json NOT NULL,
-//     metadata json,
-//     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
-message Trigger {
+message CreateEvent {
     string event_name = 1;
     string payload = 2;
-    string metadata = 3;
+    optional string metadata = 3;
+    string trigger_id = 4;
 }
 
 message TriggerEventRequest {
-    Trigger event = 1;
+    CreateEvent event = 1;
 }
 message TriggerEventResponse {
     string status = 1;
