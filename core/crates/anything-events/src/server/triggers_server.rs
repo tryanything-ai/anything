@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::sync::Arc;
 
 use postage::dispatch::Sender;
