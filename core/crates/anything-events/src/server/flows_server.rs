@@ -239,7 +239,6 @@ mod tests {
     use crate::{
         generated::{GetFlowsRequest, UpdateFlow},
         internal::test_helper::{get_test_context_from_pool, get_test_pool, TestFlowRepo},
-        UpdateFlowVersion,
     };
 
     #[tokio::test]

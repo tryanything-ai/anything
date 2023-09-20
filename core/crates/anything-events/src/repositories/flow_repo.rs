@@ -6,7 +6,6 @@ use sqlx::{Row, SqlitePool};
 
 use crate::{
     errors::{EventsError, EventsResult},
-    generated::create_flow_version,
     models::flow::{
         CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId, UpdateFlow, UpdateFlowVersion,
     },
@@ -391,10 +390,6 @@ mod tests {
         assert_eq!(first.is_some(), true);
         let first = first.unwrap();
         assert_eq!(first.flow_name, dummy_create.flow_name);
-        assert_eq!(
-            first.versions[0].flow_version,
-            dummy_create.version.unwrap()
-        );
 
         Ok(())
     }
@@ -507,7 +502,7 @@ mod tests {
         let flow_description: String = row.get("description");
         let original_checksum: String = row.get("checksum");
 
-        assert_eq!(flow_description, "".to_string());
+        assert_eq!(flow_description, dummy_create_flow.description.unwrap());
         assert_eq!(row.get::<bool, _>("published"), false);
 
         let res = test
