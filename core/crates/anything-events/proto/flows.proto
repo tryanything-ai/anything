@@ -1,0 +1,73 @@
+syntax = "proto3";
+package flows;
+
+// import "types.proto";
+
+service Flows {
+    rpc GetFlows (GetFlowsRequest) returns (GetFlowsResponse) {}
+    rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}
+    rpc UpdateFlow (UpdateFlowRequest) returns (UpdateFlowResponse) {}
+    rpc PublishFlow (PublishFlowRequest) returns (PublishFlowResponse) {}
+}
+
+message Variable {
+    string key = 1;
+    string value = 2;
+}
+
+message Node {
+    string id = 1;
+    string name = 2;
+    string label = 3;
+    string action = 4;
+    repeated Node dependencies = 5;
+    repeated Variable variables = 6;
+}
+
+message Flow {
+    string flow_id = 1;
+    string version = 2;
+    string flow_name = 3;
+    repeated Node nodes = 4;
+    oneof description { string present = 5; };
+    bool published = 6;
+    repeated FlowVersion versions = 7;
+}
+
+message FlowVersion {
+    string flow_id = 1;
+    string version = 2;
+    string flow_definition = 4;
+    bool published = 5;
+    oneof description { string present = 6; };
+    int64 updated_at = 7;
+}
+
+// Get all flows
+// maybe add filtering, pagination
+message GetFlowsRequest {}
+message GetFlowsResponse {
+    repeated Flow flows = 1;
+}
+
+message GetFlowRequest {
+    string flow_id = 1;
+}
+
+message GetFlowResponse {
+    Flow flow = 1;
+}
+
+message UpdateFlowRequest {
+    Flow flow = 1;
+}
+message UpdateFlowResponse {
+    Flow flow = 1;
+}
+
+message PublishFlowRequest {
+    string flowId = 1;
+}
+message PublishFlowResponse {
+    Flow flow = 1;
+}
