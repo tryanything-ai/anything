@@ -6,7 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 
-import { invoke } from "@tauri-apps/api";
+// import api from "../tauri_api/api";
 
 type ModelPromptTemplate = {
   name: string;
@@ -54,41 +54,36 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
 
   const [architectures, setArchitectures] = useState<any[]>([]);
 
-  const downloadModel = async (filename: string) => {
-    const result = await invoke("plugin:local_models|download_model", {
-      filename,
-    });
-    return result;
-  };
+  const downloadModel = async (filename: string) => {};
+  // const downloadModel = async (filename: string) => {
+  //   const result = await api.downloadModel({
+  //     filename,
+  //   });
+  //   return result;
+  // };
+  const callModel = async (prompt: string) => {}; 
+  // const callModel = async (prompt: string) => {
+  //   const result = await api.callModel({prompt});
+  //   return result;
+  // };  
 
-  const callModel = async (prompt: string) => {
-    const result = await invoke("plugin:local_models|call_model", {
-      prompt,
-    });
-    return result;
-  };
+  // const getModelData = async () => {
+  //   const promptTemplates = await api.getPromptTemplates();
+  //   setModelPromptTemplates(promptTemplates as ModelPromptTemplate[]);
 
-  useEffect(() => {
-    invoke("get_prompt_templates").then((result) => {
-      // console.log("Prompt Templates from plugin" + JSON.stringify(result));
-      setModelPromptTemplates(result as ModelPromptTemplate[]);
-    });
+  //   const architectures = await api.getArchitectures();
+  //   setArchitectures(architectures as any[]);
 
-    invoke("get_architectures").then((result) => {
-      // console.log("Architectures from plugin" + JSON.stringify(result));
-      setArchitectures(result as any[]);
-    });
+  //   const models = await api.getModels();
+  //   setModels(models as Model[]);
 
-    invoke("get_models").then((result) => {
-      // console.log("Models from plugin" + JSON.stringify(result));
-      setModels(result as Model[]);
-    });
+  //   const downloadedModels = await api.getDownloadedModels();
+  //   setDownloadedModels(downloadedModels as Model[]);
+  // }
 
-    invoke("get_downloaded_models").then((result) => {
-      // console.log("Downloaded Models from plugin" + JSON.stringify(result));
-      setDownloadedModels(result as Model[]);
-    });
-  }, []);
+  // useEffect(() => {
+  //   getModelData(); 
+  // }, []);
 
   return (
     <ModelContext.Provider
@@ -98,7 +93,7 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
         modelPromptTemplates,
         architectures,
         downloadModel,
-        callModel,
+        callModel
       }}
     >
       {children}

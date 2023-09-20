@@ -24,12 +24,10 @@ import {
 } from "reactflow";
 
 import { useTauriContext } from "./TauriProvider";
-import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { stringify, parse } from "iarna-toml-esm";
-import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
 import { useLocalFileContext } from "./LocalFileProvider";
-import { useEventLoopContext } from "./EventLoopProvider";
+import api from "../tauri_api/api";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -117,7 +115,6 @@ type SessionComplete = {
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { appDocuments } = useTauriContext();
   const { renameFlowFiles } = useLocalFileContext();
-  const { subscribeToEvent } = useEventLoopContext();
   const { flow_name } = useParams();
   const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -266,7 +263,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
     console.log("writing toml in FlowProvider");
     let name = explicit_flow_name ? explicit_flow_name : flow_name;
-    return await writeTextFile(
+    return await api.fs.writeTextFile(
       appDocuments + "/flows/" + name + "/flow.toml",
       toml
     );
@@ -278,7 +275,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("appDocuments or flow_name is undefined");
       }
       console.log("reading toml in FlowProvider");
-      return await readTextFile(
+      return await api.fs.readTextFile(
         appDocuments + "/flows/" + flow_name + "/flow.toml"
       );
     } catch (error) {
@@ -367,7 +364,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     console.log(`Watching ${path} for changes`);
 
     const watchThisFile = async () => {
-      stopWatching = await watchImmediate(path, (event) => {
+      stopWatching = await api.watch.watchImmediate(path, (event) => {
         console.log("TOML file changed");
         updateStateFromToml();
       });
@@ -381,7 +378,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   //Watch event processing for fun ui updates
   useEffect(() => {
-    let unlisten = subscribeToEvent("event_processing", (event: any) => {
+    let unlisten = api.subscribeToEvent("event_processing", (event: any) => {
       // console.log("setCurrentProcessingStatus", event);
       setCurrentProcessingStatus(event);
     //   console.log(`event.session_id is: "${event.session_id}" and its type is ${typeof event.session_id}`);
@@ -394,7 +391,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       //   console.log("session_id is the same, not updating in context");
       // }
     });
-    let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
+    let unlisten2 = api.subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
     });
 
