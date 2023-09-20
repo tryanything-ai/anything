@@ -34,20 +34,20 @@ export default function Layout() {
             })}
           />
         </Link>
-        <Link className={linkClass} to="/chats">
+        {/* <Link className={linkClass} to="/chats">
           <VscComment
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname.includes("/chats"),
             })}
           />
-        </Link>
-        <Link className={linkClass} to="/models">
+        </Link> */}
+        {/* <Link className={linkClass} to="/models">
           <VscHubot
             className={clsx(defaultClass, {
               [selectedClass]: location.pathname.includes("/model"),
             })}
           />
-        </Link>
+        </Link> */}
         <Link className={linkClass} to="/vectors">
           <VscReferences
             className={clsx(defaultClass, {

@@ -49,7 +49,7 @@ impl ExecutionContext {
         mut engine: Box<dyn Engine + Send>,
     ) -> NodeExecutionContext {
         engine.render(&node, &self).expect("unable to render node")
-    }
+    }  
 
     pub fn render_string(&self, node: &NodeExecutionContext, string: String) -> String {
         let mut context = self.build_global_render_context();
