@@ -7,6 +7,6 @@ pub mod spawning;
 pub mod tracing;
 pub mod utils;
 
-pub use config::AnythingConfig;
+pub use crate::config::AnythingConfig;
 pub use spawning::{build_runtime, spawn_or_crash};
 pub mod posix;

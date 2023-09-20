@@ -63,7 +63,7 @@ pnpm start
 
 - [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
 - [x] Embeded Sqlite DB
-- [ ] Event System ( 90$ WIP )
+- [ ] Event System ( 90% WIP )
 - [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
 - [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models
 - [ ] WASM Nodes or

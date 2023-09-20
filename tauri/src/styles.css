@@ -10,3 +10,21 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.start-button {
+  width: 3rem; /* Adjust as needed */
+  transition: width 0.3s ease;
+}
+
+.start-button:hover {
+  width: 7rem; /* or any desired width */
+}
+
+.start-text {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.start-button:hover .start-text {
+  opacity: 1;
+}
