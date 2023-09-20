@@ -84,6 +84,19 @@ impl Into<ProtoFlow> for Flow {
     }
 }
 
+impl From<ProtoFlow> for Flow {
+    fn from(value: ProtoFlow) -> Self {
+        Self {
+            flow_id: value.flow_id,
+            flow_name: value.flow_name,
+            latest_version_id: value.version,
+            active: value.active,
+            updated_at: Utc::now(),
+            versions: Vec::default(),
+        }
+    }
+}
+
 impl FromRow<'_, SqliteRow> for Flow {
     fn from_row(row: &'_ SqliteRow) -> Result<Self, Error> {
         let flow_id = row.get::<'_, String, &str>("flow_id");

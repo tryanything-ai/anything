@@ -161,7 +161,7 @@ mod tests {
     use crate::generated::events::Event as ProtoEvent;
     use crate::internal::test_helper::{
         get_test_context, get_test_context_from_pool, get_test_pool, insert_dummy_data,
-        select_all_events, TestEventRepo,
+        select_all_events, TestEventRepo, TestTriggerRepo,
     };
     use crate::models::event::Event;
     use crate::{internal::test_helper::get_test_config, utils::bootstrap};
@@ -178,31 +178,31 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_save() -> anyhow::Result<()> {
-        // let pool = get_test_pool().await.unwrap();
-        // let context = get_test_context_from_pool(&pool).await;
-        // let test = TestEventRepo::new_with_pool(&context.pool);
+        let pool = get_test_pool().await.unwrap();
+        let context = get_test_context_from_pool(&pool).await;
+        let test = TestTriggerRepo::new_with_pool(&context.pool);
 
-        // let event_manager = EventManager::new(&context, test.with_sender().await);
-        // let event = test.dummy_create_event();
-        // let create_event_request = TriggerEventRequest {
-        //     event: Some(event.clone().into()),
-        // };
+        let event_manager = EventManager::new(&context, test.with_sender().await);
+        let event = test.dummy_create_trigger();
+        let create_event_request = TriggerEventRequest {
+            event: Some(event.clone().into()),
+        };
 
-        // let request = Request::new(create_event_request);
-        // let response = event_manager.trigger_event(request).await;
+        let request = Request::new(create_event_request);
+        let response = event_manager.trigger_event(request).await;
 
-        // assert!(response.is_ok());
-        // let response = response.unwrap().into_inner();
-        // assert_eq!(response.status, "success".to_string());
+        assert!(response.is_ok());
+        let response = response.unwrap().into_inner();
+        assert_eq!(response.status, "success".to_string());
 
-        // let found = context
-        //     .repositories
-        //     .event_repo
-        //     .find_by_id(response.event_id.clone())
-        //     .await;
-        // assert!(found.is_ok());
-        // let found = found.unwrap();
-        // assert_eq!(found.event_name, event.event_name);
+        let found = context
+            .repositories
+            .event_repo
+            .find_by_id(response.trigger_id.clone())
+            .await;
+        assert!(found.is_ok());
+        let found = found.unwrap();
+        assert_eq!(found.name, event.event_name);
 
         Ok(())
     }
