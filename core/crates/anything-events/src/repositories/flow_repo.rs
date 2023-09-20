@@ -10,6 +10,13 @@ use crate::{
     models::flow::{CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId},
 };
 
+#[async_trait::async_trait]
+pub trait FlowRepo {
+    async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId>;
+    async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>>;
+    async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<(Flow, FlowVersion)>;
+}
+
 #[derive(Debug, Clone)]
 pub struct FlowRepoImpl {
     #[cfg(debug_assertions)]
@@ -109,13 +116,6 @@ impl FlowRepoImpl {
 }
 
 #[async_trait::async_trait]
-pub trait FlowRepo {
-    async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId>;
-    async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>>;
-    // async fn get_flow_by_id(&self, event_id: EventId) -> EventsResult<Event>;
-}
-
-#[async_trait::async_trait]
 impl FlowRepo for FlowRepoImpl {
     /// Create a new flow
     async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId> {
@@ -147,6 +147,25 @@ impl FlowRepo for FlowRepoImpl {
         })?;
 
         Ok(saved_flow_id)
+    }
+
+    async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<(Flow, FlowVersion)> {
+        let row = sqlx::query_as::<_, Flow>("SELECT * from flows WHERE flow_id = ?1")
+            .bind(flow_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| {
+                EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+            })?;
+
+        let version = self
+            .get_latest_version_for(row.flow_id.clone())
+            .await
+            .map_err(|e| {
+                EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+            })?;
+
+        Ok((row, version))
     }
 
     async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>> {
@@ -246,6 +265,25 @@ mod tests {
         assert_eq!(first.is_some(), true);
         let (first_flow, flow_version) = first.unwrap();
         assert_eq!(first_flow.flow_name, dummy_create.flow_name);
+        assert_eq!(flow_version.flow_version, dummy_create.version.unwrap());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_flow_by_id() -> Result<()> {
+        let test = TestFlowRepo::new().await;
+        let dummy_create = test.dummy_create_flow();
+
+        let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
+        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
+            .await?;
+
+        let res = test.flow_repo.get_flow_by_id(flow_id.clone()).await;
+        assert!(res.is_ok());
+        let (flow, flow_version) = res.unwrap();
+
+        assert_eq!(flow.flow_name, dummy_create.flow_name);
         assert_eq!(flow_version.flow_version, dummy_create.version.unwrap());
 
         Ok(())

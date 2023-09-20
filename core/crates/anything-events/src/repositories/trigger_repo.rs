@@ -22,8 +22,6 @@ impl TriggerRepoImpl {
 #[async_trait::async_trait]
 pub trait FlowRepo {
     async fn create_trigger(&self, create_trigger: CreateTrigger) -> EventsResult<TriggerId>;
-    // async fn get_flows(&self) -> EventsResult<Flow>;
-    // async fn get_flow_by_id(&self, event_id: EventId) -> EventsResult<Event>;
 }
 
 #[async_trait::async_trait]
