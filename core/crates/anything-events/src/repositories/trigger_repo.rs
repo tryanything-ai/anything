@@ -1,4 +1,5 @@
 use chrono::Utc;
+use sqlx::Row;
 use sqlx::SqlitePool;
 
 use crate::{
@@ -48,5 +49,36 @@ impl FlowRepo for TriggerRepoImpl {
 
         let id = row.get("trigger_id");
         Ok(id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::internal::test_helper::TestTriggerRepo;
+    use sqlx::Row;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_create_a_trigger_stores() -> anyhow::Result<()> {
+        let test_repo = TestTriggerRepo::new().await;
+        let dummy_create = test_repo.dummy_create_trigger();
+
+        let res = test_repo
+            .trigger_repo
+            .create_trigger(dummy_create.clone())
+            .await;
+        assert!(res.is_ok());
+
+        let res = sqlx::query("SELECT * FROM triggers where trigger_id = ?1")
+            .bind(res.unwrap())
+            .fetch_one(&test_repo.pool)
+            .await;
+
+        assert!(res.is_ok());
+        let row = res.unwrap();
+        assert_eq!(row.get::<String, _>("event_name"), dummy_create.event_name);
+
+        Ok(())
     }
 }

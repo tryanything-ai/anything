@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS trigger (
+CREATE TABLE IF NOT EXISTS triggers (
     trigger_id TEXT NOT NULL PRIMARY KEY,
     -- /file/created/<file-path> or /whatsapp/message/<message-id>
     event_name TEXT NOT NULL,

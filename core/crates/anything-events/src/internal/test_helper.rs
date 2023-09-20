@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 
 use crate::models::system_handler;
+use crate::models::trigger::CreateTrigger;
 use crate::repositories::flow_repo::{self, FlowRepoImpl};
 use crate::repositories::trigger_repo::TriggerRepoImpl;
 use crate::Server;
@@ -244,6 +245,14 @@ impl TestTriggerRepo {
             pool: pool.clone(),
             trigger_repo,
             post_office: PostOffice::open(),
+        }
+    }
+
+    pub fn dummy_create_trigger(&self) -> CreateTrigger {
+        CreateTrigger {
+            event_name: fake::faker::name::en::Name().fake(),
+            payload: Value::default(),
+            metadata: None,
         }
     }
 }
