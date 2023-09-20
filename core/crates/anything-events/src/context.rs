@@ -8,7 +8,10 @@ use crate::{
     db::create_sqlite_pool,
     errors::EventsResult,
     models::system_handler::SystemHandler,
-    repositories::{event_repo::EventRepoImpl, flow_repo::FlowRepoImpl, Repositories},
+    repositories::{
+        event_repo::EventRepoImpl, flow_repo::FlowRepoImpl, trigger_repo::TriggerRepoImpl,
+        Repositories,
+    },
 };
 
 // TODO: make #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -27,6 +30,7 @@ impl Context {
         let repositories = Repositories {
             event_repo: EventRepoImpl::new(&pool),
             flow_repo: FlowRepoImpl::new(&pool),
+            trigger_repo: TriggerRepoImpl::new(&pool),
         };
         let system_handler = Arc::new(SystemHandler::new(config.clone()));
         Ok(Self {

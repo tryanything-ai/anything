@@ -19,11 +19,27 @@ pub struct Event {
     #[prost(string, optional, tag = "6")]
     pub metadata: ::core::option::Option<::prost::alloc::string::String>,
 }
+/// trigger_id TEXT NOT NULL PRIMARY KEY,
+///      -- /file/created/<file-path> or /whatsapp/message/<message-id>
+///      event_name TEXT NOT NULL,
+///      payload json NOT NULL,
+///      metadata json,
+///      timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Trigger {
+    #[prost(string, tag = "1")]
+    pub event_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub payload: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub metadata: ::prost::alloc::string::String,
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TriggerEventRequest {
     #[prost(message, optional, tag = "1")]
-    pub event: ::core::option::Option<Event>,
+    pub event: ::core::option::Option<Trigger>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -31,7 +47,7 @@ pub struct TriggerEventResponse {
     #[prost(string, tag = "1")]
     pub status: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub event_id: ::prost::alloc::string::String,
+    pub trigger_id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

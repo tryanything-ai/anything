@@ -8,6 +8,7 @@ use tempfile::tempdir;
 
 use crate::models::system_handler;
 use crate::repositories::flow_repo::{self, FlowRepoImpl};
+use crate::repositories::trigger_repo::TriggerRepoImpl;
 use crate::Server;
 use crate::{
     config::AnythingEventsConfig,
@@ -42,9 +43,11 @@ pub async fn get_test_context() -> Context {
     let pool = get_test_pool().await.expect("unable to get test pool");
     let event_repo = TestEventRepo::new_with_pool(&pool);
     let flow_repo = TestFlowRepo::new_with_pool(&pool);
+    let trigger_repo = TestTriggerRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
         flow_repo: flow_repo.flow_repo,
+        trigger_repo: trigger_repo.trigger_repo,
     });
     let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
@@ -60,9 +63,11 @@ pub async fn get_test_context_with_config(config: AnythingEventsConfig) -> Conte
     let pool = get_test_pool().await.unwrap();
     let event_repo = TestEventRepo::new_with_pool(&pool);
     let flow_repo = TestFlowRepo::new_with_pool(&pool);
+    let trigger_repo = TestTriggerRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
         flow_repo: flow_repo.flow_repo,
+        trigger_repo: trigger_repo.trigger_repo,
     });
     let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
@@ -78,9 +83,11 @@ pub async fn get_test_context_from_pool(pool: &SqlitePool) -> Context {
     // let pool = Arc::new(get_test_pool().await.unwrap());
     let event_repo = TestEventRepo::new_with_pool(pool);
     let flow_repo = TestFlowRepo::new_with_pool(&pool);
+    let trigger_repo = TestTriggerRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
         flow_repo: flow_repo.flow_repo,
+        trigger_repo: trigger_repo.trigger_repo,
     });
     let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
@@ -213,6 +220,29 @@ impl TestFlowRepo {
         Self {
             pool: pool.clone(),
             flow_repo,
+            post_office: PostOffice::open(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct TestTriggerRepo {
+    pub pool: SqlitePool,
+    pub trigger_repo: TriggerRepoImpl,
+    pub post_office: PostOffice,
+}
+
+impl TestTriggerRepo {
+    pub async fn new() -> Self {
+        let pool = get_test_pool().await.expect("unable to get test pool");
+        Self::new_with_pool(&pool)
+    }
+
+    pub fn new_with_pool(pool: &SqlitePool) -> Self {
+        let trigger_repo = TriggerRepoImpl::new(&pool);
+        Self {
+            pool: pool.clone(),
+            trigger_repo,
             post_office: PostOffice::open(),
         }
     }
