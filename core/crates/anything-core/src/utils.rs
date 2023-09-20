@@ -1,7 +1,5 @@
-use data_encoding::HEXUPPER;
 use ring::digest::{Context, Digest, SHA256};
-use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::Read;
 
 pub fn trim_newline(s: &String) -> String {
     let mut s = s.clone();

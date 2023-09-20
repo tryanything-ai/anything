@@ -4,7 +4,7 @@ use sqlx::SqlitePool;
 
 use crate::{
     errors::{EventsError, EventsResult},
-    models::trigger::{CreateTrigger, Trigger, TriggerId},
+    models::trigger::{CreateTrigger, TriggerId},
 };
 
 #[derive(Debug, Clone)]
