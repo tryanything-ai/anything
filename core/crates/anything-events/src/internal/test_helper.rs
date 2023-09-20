@@ -6,6 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 
+use crate::models::flow::{CreateFlow, FlowId, FlowVersionId};
 use crate::models::system_handler;
 use crate::models::trigger::CreateTrigger;
 use crate::repositories::flow_repo::{self, FlowRepoImpl};
@@ -223,6 +224,71 @@ impl TestFlowRepo {
             flow_repo,
             post_office: PostOffice::open(),
         }
+    }
+
+    pub fn dummy_create_flow(&self) -> CreateFlow {
+        CreateFlow {
+            flow_name: fake::faker::name::en::Name().fake(),
+            version: Some("0.0.1".to_string()),
+            active: bool::default(),
+            description: None,
+        }
+    }
+
+    pub async fn insert_create_flow(
+        &self,
+        create_flow: CreateFlow,
+    ) -> EventsResult<(FlowId, FlowVersionId)> {
+        let flow_id = uuid::Uuid::new_v4().to_string();
+        let version_id = uuid::Uuid::new_v4().to_string();
+        let row = sqlx::query(
+            r#"
+        INSERT INTO flows (flow_id, flow_name, active, latest_version_id, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+        RETURNING flow_id
+        "#,
+        )
+        .bind(flow_id.clone())
+        .bind(create_flow.flow_name)
+        .bind(create_flow.active)
+        .bind(version_id.clone())
+        .bind(Utc::now().timestamp())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
+
+        Ok((flow_id, version_id))
+    }
+
+    pub async fn insert_create_flow_version(
+        &self,
+        flow_id: String,
+        version_id: String,
+        create_flow: CreateFlow,
+    ) -> EventsResult<FlowVersionId> {
+        // Create flow version
+        let row = sqlx::query(
+            r#"
+        INSERT INTO flow_versions (version_id, flow_id, flow_version, description, flow_definition, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        RETURNING version_id
+            "#,
+        )
+        .bind(version_id.clone())
+        .bind(flow_id.clone())
+        .bind(create_flow.version)
+        .bind(create_flow.description)
+        .bind("{}")
+        .bind(Utc::now().timestamp())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
+
+        Ok(row.get("version_id"))
     }
 }
 

@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS flows (
     UNIQUE (flow_name)
 );
 CREATE TABLE IF NOT EXISTS flow_versions (
-    flow_id TEXT PRIMARY KEY NOT NULL,
+    version_id TEXT PRIMARY KEY NOT NULL,
+    flow_id TEXT NOT NULL,
     flow_version TEXT NOT NULL,
-    description TEXT NOT NULL,
-    checksum TEXT NOT NULL,
+    description TEXT,
+    checksum TEXT,
     updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
     published BOOLEAN NOT NULL DEFAULT FALSE,
     flow_definition json NOT NULL,

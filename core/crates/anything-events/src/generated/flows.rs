@@ -31,30 +31,21 @@ pub struct Flow {
     pub version: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub flow_name: ::prost::alloc::string::String,
-    #[prost(message, repeated, tag = "4")]
-    pub nodes: ::prost::alloc::vec::Vec<Node>,
-    #[prost(bool, tag = "6")]
-    pub published: bool,
-    #[prost(message, repeated, tag = "7")]
-    pub versions: ::prost::alloc::vec::Vec<FlowVersion>,
-    #[prost(oneof = "flow::Description", tags = "5")]
-    pub description: ::core::option::Option<flow::Description>,
-}
-/// Nested message and enum types in `Flow`.
-pub mod flow {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Description {
-        #[prost(string, tag = "5")]
-        Present(::prost::alloc::string::String),
-    }
+    /// oneof description { string present = 4; };
+    ///
+    /// repeated Node nodes = 6;
+    /// repeated FlowVersion versions = 7;
+    #[prost(bool, tag = "4")]
+    pub active: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowVersion {
     #[prost(string, tag = "1")]
-    pub flow_id: ::prost::alloc::string::String,
+    pub version_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
+    pub flow_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
     pub version: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub flow_definition: ::prost::alloc::string::String,
@@ -73,6 +64,46 @@ pub mod flow_version {
         #[prost(string, tag = "6")]
         Present(::prost::alloc::string::String),
     }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateFlow {
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub flow_name: ::prost::alloc::string::String,
+    #[prost(oneof = "create_flow::Version", tags = "2")]
+    pub version: ::core::option::Option<create_flow::Version>,
+    #[prost(oneof = "create_flow::Description", tags = "5")]
+    pub description: ::core::option::Option<create_flow::Description>,
+}
+/// Nested message and enum types in `CreateFlow`.
+pub mod create_flow {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Version {
+        #[prost(string, tag = "2")]
+        VersionString(::prost::alloc::string::String),
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Description {
+        #[prost(string, tag = "5")]
+        Present(::prost::alloc::string::String),
+    }
+}
+/// Create a flow
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateFlowRequest {
+    #[prost(message, optional, tag = "1")]
+    pub flow: ::core::option::Option<Flow>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateFlowResponse {
+    #[prost(message, optional, tag = "1")]
+    pub flow: ::core::option::Option<Flow>,
 }
 /// Get all flows
 /// maybe add filtering, pagination
@@ -206,6 +237,28 @@ pub mod flows_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
+        pub async fn create_flow(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateFlowRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CreateFlowResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/flows.Flows/CreateFlow");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "CreateFlow"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn get_flows(
             &mut self,
             request: impl tonic::IntoRequest<super::GetFlowsRequest>,
@@ -303,6 +356,13 @@ pub mod flows_server {
     /// Generated trait containing gRPC methods that should be implemented for use with FlowsServer.
     #[async_trait]
     pub trait Flows: Send + Sync + 'static {
+        async fn create_flow(
+            &self,
+            request: tonic::Request<super::CreateFlowRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CreateFlowResponse>,
+            tonic::Status,
+        >;
         async fn get_flows(
             &self,
             request: tonic::Request<super::GetFlowsRequest>,
@@ -408,6 +468,50 @@ pub mod flows_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
+                "/flows.Flows/CreateFlow" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreateFlowSvc<T: Flows>(pub Arc<T>);
+                    impl<T: Flows> tonic::server::UnaryService<super::CreateFlowRequest>
+                    for CreateFlowSvc<T> {
+                        type Response = super::CreateFlowResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateFlowRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Flows>::create_flow(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = CreateFlowSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/flows.Flows/GetFlows" => {
                     #[allow(non_camel_case_types)]
                     struct GetFlowsSvc<T: Flows>(pub Arc<T>);

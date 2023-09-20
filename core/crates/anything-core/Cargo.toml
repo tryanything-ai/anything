@@ -16,6 +16,10 @@ config = { version = "0.13", default-features = false, features = [
     "yaml",
 ] }
 
+digest = { workspace = true }
+ring = { workspace = true }
+data-encoding = { workspace = true }
+
 chrono = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 anyhow = { workspace = true }
