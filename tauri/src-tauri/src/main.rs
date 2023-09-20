@@ -53,28 +53,4 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-        
-        // .invoke_handler(tauri::generate_handler![
-        //     local_models::get_architectures,
-        //     local_models::get_models,
-        //     local_models::get_prompt_templates,
-        //     local_models::download_model,
-        //     local_models::start,
-        //     local_models::prompt,
-        //     local_models::get_downloaded_models,
-        //     file_manager::get_chat_flows,
-        // ])
-        // .plugin(local_models::init())
-        // .setup(|app| {
-        //     let app_handle = app.handle();
-        //     // let window = app_handle.get_window("main").unwrap();
-        //     // Spawn a new asynchronous task for scheduler
-        //     tauri::async_runtime::spawn(async move {
-        //         scheduler(&app_handle).await;
-        //     });
-
-        //     Ok(())
-        // })
-        // .manage(ManagerState(Mutex::new(None)))
-        // .manage(Canceller::default())
 }
