@@ -262,6 +262,7 @@ dependencies = [
  "opentelemetry-otlp",
  "postage",
  "prost 0.12.1",
+ "prost-types",
  "serde",
  "serde_json",
  "sqlx",
