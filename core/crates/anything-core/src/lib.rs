@@ -9,4 +9,5 @@ pub mod utils;
 
 pub use crate::config::AnythingConfig;
 pub use spawning::{build_runtime, spawn_or_crash};
+pub mod hashing;
 pub mod posix;

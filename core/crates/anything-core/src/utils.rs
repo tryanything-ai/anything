@@ -1,6 +1,3 @@
-use ring::digest::{Context, Digest, SHA256};
-use std::io::Read;
-
 pub fn trim_newline(s: &String) -> String {
     let mut s = s.clone();
     if s.ends_with('\n') {
@@ -10,21 +7,6 @@ pub fn trim_newline(s: &String) -> String {
         }
     }
     s
-}
-
-pub fn sha256_digest<R: Read>(mut reader: R) -> anyhow::Result<Digest> {
-    let mut context = Context::new(&SHA256);
-    let mut buffer = [0; 1024];
-
-    loop {
-        let count = reader.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        context.update(&buffer[..count]);
-    }
-
-    Ok(context.finish())
 }
 
 #[cfg(test)]

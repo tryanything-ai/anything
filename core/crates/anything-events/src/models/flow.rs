@@ -6,7 +6,8 @@ use sqlx::FromRow;
 
 use crate::generated::flows::{
     CreateFlow as ProtoCreateFlow, Flow as ProtoFlow, FlowVersion as ProtoFlowVersion,
-    Node as ProtoNode, UpdateFlow as ProtoUpdateFlow, Variable as ProtoVariable,
+    Node as ProtoNode, UpdateFlow as ProtoUpdateFlow, UpdateFlowVersion as ProtoUpdateFlowVersion,
+    Variable as ProtoVariable,
 };
 
 pub type FlowId = String;
@@ -162,6 +163,33 @@ impl Into<ProtoUpdateFlow> for UpdateFlow {
             )),
             description: self.description.map(Description::Present),
             active: self.active,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct UpdateFlowVersion {
+    pub version: Option<String>,
+    pub flow_definition: Option<String>,
+    pub published: Option<bool>,
+    pub description: Option<String>,
+}
+
+impl Into<ProtoUpdateFlowVersion> for UpdateFlowVersion {
+    fn into(self) -> ProtoUpdateFlowVersion {
+        use crate::generated::flows::update_flow_version::{
+            Description, FlowDefinition, Published, Version,
+        };
+        ProtoUpdateFlowVersion {
+            version: Some(self.version.map_or_else(
+                || Version::VersionString("0.0.1".to_string()),
+                Version::VersionString,
+            )),
+            flow_definition: self
+                .flow_definition
+                .map(FlowDefinition::FlowDefinitionString),
+            published: self.published.map(Published::PublishedBool),
+            description: self.description.map(Description::Present),
         }
     }
 }

@@ -1,13 +1,15 @@
 use std::io::BufReader;
 
-use anything_core::utils::sha256_digest;
+use anything_core::hashing::hash_string_sha256;
 use anything_graph::flow::flowfile::Flowfile;
 use chrono::Utc;
 use sqlx::{Row, SqlitePool};
 
 use crate::{
     errors::{EventsError, EventsResult},
-    models::flow::{CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId, UpdateFlow},
+    models::flow::{
+        CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId, UpdateFlow, UpdateFlowVersion,
+    },
 };
 
 #[async_trait::async_trait]
@@ -16,6 +18,12 @@ pub trait FlowRepo {
     async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>>;
     async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<(Flow, FlowVersion)>;
     async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId>;
+    async fn update_flow_version(
+        &self,
+        flow_id: FlowId,
+        version_id: FlowVersionId,
+        update_flow_version: UpdateFlowVersion,
+    ) -> EventsResult<FlowVersionId>;
 }
 
 #[derive(Debug, Clone)]
@@ -79,8 +87,7 @@ impl FlowRepoImpl {
             create_flow.version.unwrap_or("0.0.1".to_string()),
             create_flow.description.unwrap_or_default()
         );
-        let reader = BufReader::new(input.as_bytes());
-        let checksum = sha256_digest(reader)?;
+        let checksum = hash_string_sha256(input.as_str())?;
         // Create flow version
         let row = sqlx::query(
             r#"
@@ -93,7 +100,7 @@ impl FlowRepoImpl {
         .bind(flow_id.clone())
         .bind(create_flow_clone.version)
         .bind(create_flow_clone.description)
-        .bind(checksum.as_ref())
+        .bind(checksum)
         .bind(input)
         .bind(Utc::now().timestamp())
         .fetch_one(&mut **tx).await.map_err(|e| {
@@ -210,6 +217,71 @@ impl FlowRepo for FlowRepoImpl {
         })?;
 
         Ok(flow.flow_id)
+    }
+
+    async fn update_flow_version(
+        &self,
+        flow_id: FlowId,
+        version_id: FlowVersionId,
+        update_flow_version: UpdateFlowVersion,
+    ) -> EventsResult<FlowVersionId> {
+        let current_flow_version = sqlx::query_as::<_, FlowVersion>(
+            r#"
+            SELECT * FROM flow_versions WHERE flow_id = ?1 AND version_id = ?2
+            "#,
+        )
+        .bind(flow_id.clone())
+        .bind(version_id.clone())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
+
+        let definition = match update_flow_version.flow_definition {
+            Some(d) => d,
+            None => current_flow_version.description.clone().unwrap_or_default(),
+        };
+
+        let version = match update_flow_version.version {
+            Some(v) => v,
+            None => current_flow_version.flow_version.clone(),
+        };
+
+        let description = match update_flow_version.description {
+            Some(d) => d,
+            None => current_flow_version.description.clone().unwrap_or_default(),
+        };
+
+        let published = match update_flow_version.published {
+            Some(p) => p,
+            None => current_flow_version.published,
+        };
+
+        let checksum = hash_string_sha256(definition.as_str())?;
+
+        let row = sqlx::query(
+            r#"
+            UPDATE flow_versions SET 
+                flow_version = ?1, description = ?2, updated_at = ?3, published = ?4, checksum = ?5
+            WHERE version_id = ?6 AND flow_id = ?7
+            RETURNING version_id
+            "#,
+        )
+        .bind(version)
+        .bind(description)
+        .bind(Utc::now().timestamp())
+        .bind(published)
+        .bind(checksum)
+        .bind(version_id.clone())
+        .bind(flow_id.clone())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
+
+        Ok(row.get("version_id"))
     }
 }
 
@@ -354,6 +426,69 @@ mod tests {
 
         assert_eq!(flow_name, "new name".to_string());
         assert_eq!(row.get::<bool, _>("active"), true);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_update_flow_version() -> Result<()> {
+        let test = TestFlowRepo::new().await;
+        let dummy_create = test.dummy_create_flow();
+
+        let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
+        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
+            .await?;
+
+        let update_flow_version = UpdateFlowVersion {
+            version: None,
+            description: Some("new description".to_string()),
+            flow_definition: Some("{}".to_string()),
+            published: Some(true),
+        };
+
+        // BEFORE UPDATE
+        let row = sqlx::query("SELECT * FROM flow_versions WHERE flow_id = ?1 AND version_id = ?2")
+            .bind(flow_id.clone())
+            .bind(version_id.clone())
+            .fetch_one(&test.pool)
+            .await?;
+
+        let flow_description: String = row.get("description");
+        let original_checksum: String = row.get("checksum");
+
+        assert_eq!(flow_description, "".to_string());
+        assert_eq!(row.get::<bool, _>("published"), false);
+
+        let res = test
+            .flow_repo
+            .update_flow_version(
+                flow_id.clone(),
+                version_id.clone(),
+                update_flow_version.clone(),
+            )
+            .await;
+        assert!(res.is_ok());
+        let version_id = res.unwrap();
+
+        // AFTER UPDATE
+        let flow_version = sqlx::query_as::<_, FlowVersion>(
+            "SELECT * FROM flow_versions WHERE flow_id = ?1 AND version_id = ?2",
+        )
+        .bind(flow_id.clone())
+        .bind(version_id.clone())
+        .fetch_one(&test.pool)
+        .await?;
+
+        assert_eq!(flow_version.flow_id, flow_id);
+        assert_eq!(
+            flow_version.description,
+            Some("new description".to_string())
+        );
+        assert_eq!(flow_version.published, true);
+        assert_ne!(flow_version.checksum, original_checksum);
+
+        // assert_eq!(flow_name, "new name".to_string());
+        // assert_eq!(row.get::<bool, _>("active"), true);
 
         Ok(())
     }
