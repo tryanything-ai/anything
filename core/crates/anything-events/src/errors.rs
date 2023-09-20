@@ -19,7 +19,10 @@ pub enum EventsError {
     AnyhowError(#[from] anyhow::Error),
 
     #[error("database error {0}")]
-    DatabaseError(DatabaseError),
+    DatabaseError(#[from] sqlx::Error),
+
+    #[error("migration error {0}")]
+    MigrationError(#[from] sqlx::migrate::MigrateError),
 
     #[error("server error")]
     EventServerError(#[from] tonic::transport::Error),

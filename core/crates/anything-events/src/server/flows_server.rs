@@ -1,16 +1,18 @@
 // use crate::flows
 
 use crate::{
+    generated::GetFlowsRequest,
     generated::{
         flows_server::Flows, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
-        GetFlowResponse, GetFlowsResponse, PublishFlowRequest, PublishFlowResponse,
-        UpdateFlowRequest, UpdateFlowResponse, UpdateFlowVersionRequest, UpdateFlowVersionResponse,
+        GetFlowResponse, GetFlowsResponse, UpdateFlowRequest, UpdateFlowResponse,
+        UpdateFlowVersionRequest, UpdateFlowVersionResponse,
     },
-    generated::{Flow, GetFlowsRequest},
+    models::flow::{Flow, FlowVersion},
+    repositories::flow_repo::FlowRepo,
     Context,
 };
 use postage::dispatch::Sender;
-use std::sync::Arc;
+use std::{sync::Arc, vec};
 use tonic::{Request, Response, Status};
 
 #[derive(Debug)]
@@ -30,16 +32,38 @@ impl FlowManager {
 
 #[tonic::async_trait]
 impl Flows for FlowManager {
+    async fn get_flows(
+        &self,
+        request: Request<GetFlowsRequest>,
+    ) -> Result<Response<GetFlowsResponse>, Status> {
+        let req = request.into_inner();
+        // let flows = self.context.repositories.flow_repo.
+        let flows = match self.context.repositories.flow_repo.get_flows().await {
+            Ok(flows) => flows,
+            Err(e) => {
+                return Err(Status::internal(format!(
+                    "Unable to get flows: {}",
+                    e.to_string()
+                )))
+            }
+        };
+
+        // let flow: Vec<crate::generated::flows::Flow> = flows
+        //     .into_iter()
+        //     .map(|(flow, flow_version)| {
+        //         let mut flow = flow.clone();
+        //         flow.flow_version = flow_version;
+        //         flow
+        //     })
+        //     .collect();
+
+        let response = GetFlowsResponse { flows: vec![] };
+        Ok(Response::new(response))
+    }
     async fn create_flow(
         &self,
         _request: Request<CreateFlowRequest>,
     ) -> Result<Response<CreateFlowResponse>, Status> {
-        Err(Status::unimplemented("Not implemented"))
-    }
-    async fn get_flows(
-        &self,
-        _request: Request<GetFlowsRequest>,
-    ) -> Result<Response<GetFlowsResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
 

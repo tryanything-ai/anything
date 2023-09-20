@@ -120,19 +120,17 @@ mod tests {
 
     #![allow(unused)]
     use tokio::sync::OnceCell;
-    use tonic::transport::Channel;
+    use tonic::{transport::Channel, Request};
 
     use crate::{
         generated::events::events_client::EventsClient, internal::test_helper::get_test_context,
     };
     static SERVER: OnceCell<Arc<Server>> = OnceCell::const_new();
-    static CLIENT: OnceCell<EventsClient<Channel>> = OnceCell::const_new();
 
     async fn get_client() -> EventsClient<Channel> {
         SERVER
             .get_or_init(|| async {
                 let mut context = get_test_context().await;
-                context.config.server.port = 10001;
                 let server = Server::new(context).await.unwrap();
                 let cloned_server = server.clone();
                 tokio::spawn(async move {
@@ -146,25 +144,29 @@ mod tests {
             .await;
 
         let server = SERVER.get().unwrap();
-        CLIENT
-            .get_or_init(|| async {
-                let addr_string = format!("http://[::1]:{}", server.port);
-                println!("Connecting to {}", addr_string);
-                let client = EventsClient::connect(addr_string).await.unwrap();
-                client
-            })
-            .await
-            .to_owned()
+
+        loop {
+            match EventsClient::connect(format!("http://localhost:{}", server.port)).await {
+                Ok(client) => return client,
+                Err(_) => {
+                    println!("Waiting for server to start...");
+                    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                }
+            }
+        }
     }
 
     use super::*;
 
     #[tokio::test]
     async fn test_starts_up() -> anyhow::Result<()> {
-        todo!("Finish test");
-        // let _client = get_client().await;
+        // todo!("Finish test");
+        let client = get_client().await;
+        // let request = Request::new(GetFlowsRequest {
+        //     ..Default::default()
+        // });
 
         // let client = EventManager::models::event::{CreateEvent, Event},
-        // Ok(())
+        Ok(())
     }
 }
