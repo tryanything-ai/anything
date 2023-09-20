@@ -38,6 +38,25 @@ pub struct Flow {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateFlow {
+    #[prost(string, tag = "2")]
+    pub flow_name: ::prost::alloc::string::String,
+    #[prost(bool, optional, tag = "3")]
+    pub active: ::core::option::Option<bool>,
+    #[prost(oneof = "create_flow::Version", tags = "1")]
+    pub version: ::core::option::Option<create_flow::Version>,
+}
+/// Nested message and enum types in `CreateFlow`.
+pub mod create_flow {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Version {
+        #[prost(string, tag = "1")]
+        VersionString(::prost::alloc::string::String),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowVersion {
     #[prost(string, tag = "1")]
     pub version_id: ::prost::alloc::string::String,
@@ -65,89 +84,25 @@ pub mod flow_version {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateFlow {
+pub struct CreateFlowVersion {
     #[prost(string, tag = "1")]
     pub flow_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub flow_name: ::prost::alloc::string::String,
-    #[prost(oneof = "create_flow::Version", tags = "2")]
-    pub version: ::core::option::Option<create_flow::Version>,
-    #[prost(oneof = "create_flow::Description", tags = "5")]
-    pub description: ::core::option::Option<create_flow::Description>,
+    pub flow_definition: ::prost::alloc::string::String,
+    #[prost(bool, optional, tag = "5")]
+    pub published: ::core::option::Option<bool>,
+    #[prost(oneof = "create_flow_version::Version", tags = "2")]
+    pub version: ::core::option::Option<create_flow_version::Version>,
+    #[prost(oneof = "create_flow_version::Description", tags = "4")]
+    pub description: ::core::option::Option<create_flow_version::Description>,
 }
-/// Nested message and enum types in `CreateFlow`.
-pub mod create_flow {
+/// Nested message and enum types in `CreateFlowVersion`.
+pub mod create_flow_version {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Version {
         #[prost(string, tag = "2")]
         VersionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Description {
-        #[prost(string, tag = "5")]
-        Present(::prost::alloc::string::String),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateFlow {
-    #[prost(string, tag = "2")]
-    pub flow_name: ::prost::alloc::string::String,
-    #[prost(bool, tag = "4")]
-    pub active: bool,
-    #[prost(oneof = "update_flow::Version", tags = "1")]
-    pub version: ::core::option::Option<update_flow::Version>,
-    #[prost(oneof = "update_flow::Description", tags = "3")]
-    pub description: ::core::option::Option<update_flow::Description>,
-}
-/// Nested message and enum types in `UpdateFlow`.
-pub mod update_flow {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Version {
-        #[prost(string, tag = "1")]
-        VersionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Description {
-        #[prost(string, tag = "3")]
-        Present(::prost::alloc::string::String),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateFlowVersion {
-    #[prost(oneof = "update_flow_version::Version", tags = "1")]
-    pub version: ::core::option::Option<update_flow_version::Version>,
-    #[prost(oneof = "update_flow_version::FlowDefinition", tags = "2")]
-    pub flow_definition: ::core::option::Option<update_flow_version::FlowDefinition>,
-    #[prost(oneof = "update_flow_version::Published", tags = "3")]
-    pub published: ::core::option::Option<update_flow_version::Published>,
-    #[prost(oneof = "update_flow_version::Description", tags = "4")]
-    pub description: ::core::option::Option<update_flow_version::Description>,
-}
-/// Nested message and enum types in `UpdateFlowVersion`.
-pub mod update_flow_version {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Version {
-        #[prost(string, tag = "1")]
-        VersionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum FlowDefinition {
-        #[prost(string, tag = "2")]
-        FlowDefinitionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Published {
-        #[prost(bool, tag = "3")]
-        PublishedBool(bool),
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -156,12 +111,36 @@ pub mod update_flow_version {
         Present(::prost::alloc::string::String),
     }
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlow {
+    #[prost(string, optional, tag = "1")]
+    pub version: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "2")]
+    pub flow_name: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "3")]
+    pub description: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, tag = "4")]
+    pub active: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlowVersion {
+    #[prost(string, optional, tag = "1")]
+    pub version: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "2")]
+    pub flow_definition: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, optional, tag = "3")]
+    pub published: ::core::option::Option<bool>,
+    #[prost(string, optional, tag = "4")]
+    pub description: ::core::option::Option<::prost::alloc::string::String>,
+}
 /// Create a flow
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateFlowRequest {
     #[prost(message, optional, tag = "1")]
-    pub flow: ::core::option::Option<Flow>,
+    pub flow: ::core::option::Option<CreateFlow>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -195,8 +174,8 @@ pub struct GetFlowResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateFlowRequest {
-    #[prost(message, optional, tag = "1")]
-    pub flow: ::core::option::Option<Flow>,
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
     pub update_flow: ::core::option::Option<UpdateFlow>,
 }
@@ -220,7 +199,7 @@ pub struct UpdateFlowVersionRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateFlowVersionResponse {
     #[prost(message, optional, tag = "1")]
-    pub flow: ::core::option::Option<Flow>,
+    pub flow_version: ::core::option::Option<FlowVersion>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

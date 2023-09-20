@@ -210,24 +210,24 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_sends_update() -> anyhow::Result<()> {
-        // let context = get_test_context().await;
-        // let test = TestEventRepo::new().await;
-        // let mut test_tx = test.with_sender().await;
-        // let mut test_rx = test.with_receiver().await;
-        // let event_manager = EventManager::new(&context, test_tx.clone());
+        let context = get_test_context().await;
+        let test = TestEventRepo::new().await;
+        let mut test_tx = test.with_sender().await;
+        let mut test_rx = test.with_receiver().await;
+        let event_manager = EventManager::new(&context, test_tx.clone());
 
-        // let event = test.dummy_create_event();
-        // let create_event_request = TriggerEventRequest {
-        //     event: Some(event.clone().into()),
-        // };
+        let event = test.dummy_create_event();
+        let create_event_request = TriggerEventRequest {
+            event: Some(event.clone().into()),
+        };
 
-        // let request = Request::new(create_event_request);
-        // let _response = event_manager.trigger_event(request).await;
+        let request = Request::new(create_event_request);
+        let _response = event_manager.trigger_event(request).await;
 
-        // let msg = test_rx.recv().await;
-        // assert!(msg.is_some());
-        // let msg = msg.unwrap();
-        // assert_eq!(msg.event_name, event.event_name);
+        let msg = test_rx.recv().await;
+        assert!(msg.is_some());
+        let msg = msg.unwrap();
+        assert_eq!(msg.name, event.name);
 
         Ok(())
     }
