@@ -63,11 +63,4 @@ impl Flows for FlowManager {
     ) -> Result<Response<UpdateFlowVersionResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
-
-    async fn publish_flow(
-        &self,
-        _request: Request<PublishFlowRequest>,
-    ) -> Result<Response<PublishFlowResponse>, Status> {
-        Err(Status::unimplemented("Not implemented"))
-    }
 }

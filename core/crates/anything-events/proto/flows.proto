@@ -9,7 +9,6 @@ service Flows {
     rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}
     rpc UpdateFlow (UpdateFlowRequest) returns (UpdateFlowResponse) {}
     rpc UpdateFlowVersion (UpdateFlowVersionRequest) returns (UpdateFlowVersionResponse) {}
-    rpc PublishFlow (PublishFlowRequest) returns (PublishFlowResponse) {}
 }
 
 message Variable {

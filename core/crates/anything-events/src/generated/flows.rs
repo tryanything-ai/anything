@@ -434,28 +434,6 @@ pub mod flows_client {
                 .insert(GrpcMethod::new("flows.Flows", "UpdateFlowVersion"));
             self.inner.unary(req, path, codec).await
         }
-        pub async fn publish_flow(
-            &mut self,
-            request: impl tonic::IntoRequest<super::PublishFlowRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::PublishFlowResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/flows.Flows/PublishFlow");
-            let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "PublishFlow"));
-            self.inner.unary(req, path, codec).await
-        }
     }
 }
 /// Generated server implementations.
@@ -495,13 +473,6 @@ pub mod flows_server {
             request: tonic::Request<super::UpdateFlowVersionRequest>,
         ) -> std::result::Result<
             tonic::Response<super::UpdateFlowVersionResponse>,
-            tonic::Status,
-        >;
-        async fn publish_flow(
-            &self,
-            request: tonic::Request<super::PublishFlowRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::PublishFlowResponse>,
             tonic::Status,
         >;
     }
@@ -791,50 +762,6 @@ pub mod flows_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = UpdateFlowVersionSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                "/flows.Flows/PublishFlow" => {
-                    #[allow(non_camel_case_types)]
-                    struct PublishFlowSvc<T: Flows>(pub Arc<T>);
-                    impl<T: Flows> tonic::server::UnaryService<super::PublishFlowRequest>
-                    for PublishFlowSvc<T> {
-                        type Response = super::PublishFlowResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::PublishFlowRequest>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Flows>::publish_flow(&inner, request).await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let inner = inner.0;
-                        let method = PublishFlowSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
