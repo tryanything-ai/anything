@@ -56,7 +56,6 @@ pub struct CreateEvent {
     pub payload: Value,
     pub metadata: Value,
     pub event_type: String,
-    // pub tags: Vec<String>,
 }
 
 impl Into<ProtoEvent> for CreateEvent {

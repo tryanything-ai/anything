@@ -13,6 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     protos.add_file("types");
     protos.add_file("events");
     protos.add_file("flows");
+    protos.add_file("trigger");
 
     protos.emit_build();
     protos.emit_rerun();
