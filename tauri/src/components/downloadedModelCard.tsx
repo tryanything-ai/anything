@@ -11,15 +11,15 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
 
   const start = () => {
     setLoading(true);
-    api.startModel({
-      modelFilename: model.filename,
-      architecture: architectures[0].id,
-      tokenizer: "embedded",
-      contextSize: 1048,
-      useGpu: false,
-      prompt: modelPromptTemplates[0],
-      contextFiles: [],
-    });
+    // api.startModel({
+    //   modelFilename: model.filename,
+    //   architecture: architectures[0].id,
+    //   tokenizer: "embedded",
+    //   contextSize: 1048,
+    //   useGpu: false,
+    //   prompt: modelPromptTemplates[0],
+    //   contextFiles: [],
+    // });
   };
 
   const { architectures, modelPromptTemplates } = useModelContext();
