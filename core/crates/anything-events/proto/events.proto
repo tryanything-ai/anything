@@ -39,6 +39,7 @@ message Trigger {
     string event_name = 1;
     string payload = 2;
     string metadata = 3;
+    string trigger_id = 4;
 }
 
 message TriggerEventRequest {

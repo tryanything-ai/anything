@@ -15,7 +15,7 @@ use crate::Server;
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
-    errors::{DatabaseError, EventsError, EventsResult},
+    errors::{EventsError, EventsResult},
     models::{
         event::{CreateEvent, Event, EventId, SourceId},
         tag::Tag,
@@ -321,6 +321,7 @@ impl TestTriggerRepo {
             event_name: fake::faker::name::en::Name().fake(),
             payload: Value::default(),
             metadata: None,
+            trigger_id: uuid::Uuid::new_v4().to_string(),
         }
     }
 }
