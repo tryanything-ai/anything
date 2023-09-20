@@ -48,31 +48,49 @@ impl Flows for FlowManager {
             }
         };
 
-        // let flow: Vec<crate::generated::flows::Flow> = flows
-        //     .into_iter()
-        //     .map(|(flow, flow_version)| {
-        //         let mut flow = flow.clone();
-        //         flow.flow_version = flow_version;
-        //         flow
-        //     })
-        //     .collect();
-
         let response = GetFlowsResponse {
             flows: flows.into_iter().map(|f| f.into()).collect(),
         };
         Ok(Response::new(response))
     }
+
+    async fn get_flow(
+        &self,
+        request: Request<GetFlowRequest>,
+    ) -> Result<Response<GetFlowResponse>, Status> {
+        let req = request.into_inner();
+
+        let flow_id = req.flow_id;
+
+        if flow_id.is_empty() {
+            return Err(Status::invalid_argument("No flow id provided"));
+        }
+
+        let flow = match self
+            .context
+            .repositories
+            .flow_repo
+            .get_flow_by_id(flow_id)
+            .await
+        {
+            Ok(flow) => flow,
+            Err(e) => {
+                return Err(Status::internal(format!(
+                    "Unable to get flow: {}",
+                    e.to_string()
+                )))
+            }
+        };
+
+        Ok(Response::new(GetFlowResponse {
+            flow: Some(flow.into()),
+        }))
+    }
+
     async fn create_flow(
         &self,
         _request: Request<CreateFlowRequest>,
     ) -> Result<Response<CreateFlowResponse>, Status> {
-        Err(Status::unimplemented("Not implemented"))
-    }
-
-    async fn get_flow(
-        &self,
-        _request: Request<GetFlowRequest>,
-    ) -> Result<Response<GetFlowResponse>, Status> {
         Err(Status::unimplemented("Not implemented"))
     }
 
