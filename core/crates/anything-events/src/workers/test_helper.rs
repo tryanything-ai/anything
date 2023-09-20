@@ -1,5 +1,4 @@
 #![cfg(not(target_os = "windows"))]
-use std::fs::remove_file;
 use std::io::Write;
 use std::{
     fs::{self, OpenOptions},

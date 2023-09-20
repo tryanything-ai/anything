@@ -15,7 +15,6 @@ resolver = "2"
 
 [workspace.dependencies]
 anything-core = { path = "./crates/anything-core", version = "*" }
-anything-engine = { path = "./crates/anything-engine", version = "*" }
 dotenv = "0.15.0"
 
 git-version = "0.3.5"
@@ -60,6 +59,7 @@ tracing-log = "0.1.3"
 
 # Tonic
 prost = "0.12.0"
+prost-types = "0.12.1"
 tonic = "0.10.0"
 tonic-reflection = "0.10.0"
 humantime = "2.1.0"

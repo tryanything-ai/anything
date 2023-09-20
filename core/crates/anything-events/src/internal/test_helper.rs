@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 
 use crate::models::system_handler;
+use crate::repositories::flow_repo::{self, FlowRepoImpl};
 use crate::Server;
 use crate::{
     config::AnythingEventsConfig,
@@ -32,15 +33,18 @@ use std::{borrow::BorrowMut, collections::HashMap, panic, sync::Arc};
 pub fn get_test_config() -> AnythingEventsConfig {
     let mut config = AnythingEventsConfig::default();
     config.database.uri = "sqlite::memory:".to_string();
+    config.server.port = 0;
     config
 }
 
 pub async fn get_test_context() -> Context {
     let config = get_test_config();
-    let pool = get_test_pool().await.unwrap();
+    let pool = get_test_pool().await.expect("unable to get test pool");
     let event_repo = TestEventRepo::new_with_pool(&pool);
+    let flow_repo = TestFlowRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
+        flow_repo: flow_repo.flow_repo,
     });
     let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
@@ -55,8 +59,10 @@ pub async fn get_test_context_with_config(config: AnythingEventsConfig) -> Conte
     // let config = get_test_config();
     let pool = get_test_pool().await.unwrap();
     let event_repo = TestEventRepo::new_with_pool(&pool);
+    let flow_repo = TestFlowRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
+        flow_repo: flow_repo.flow_repo,
     });
     let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
@@ -71,8 +77,10 @@ pub async fn get_test_context_from_pool(pool: &SqlitePool) -> Context {
     let config = get_test_config();
     // let pool = Arc::new(get_test_pool().await.unwrap());
     let event_repo = TestEventRepo::new_with_pool(pool);
+    let flow_repo = TestFlowRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
+        flow_repo: flow_repo.flow_repo,
     });
     let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
@@ -164,6 +172,7 @@ pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<EventId> {
         event_id: uuid::Uuid::new_v4().to_string(),
         source_id: String::default(),
         event_name: fake::faker::name::en::Name().fake(),
+        event_type: String::default(),
         // tags: TagList::default(),
         payload: Value::default(),
         metadata: Value::default(),
@@ -184,6 +193,29 @@ fn generate_dummy_hashmap() -> HashMap<String, String> {
         payload.insert(key, value);
     }
     payload
+}
+
+#[derive(Debug)]
+pub struct TestFlowRepo {
+    pub pool: SqlitePool,
+    pub flow_repo: FlowRepoImpl,
+    pub post_office: PostOffice,
+}
+
+impl TestFlowRepo {
+    pub async fn new() -> Self {
+        let pool = get_test_pool().await.expect("unable to get test pool");
+        Self::new_with_pool(&pool)
+    }
+
+    pub fn new_with_pool(pool: &SqlitePool) -> Self {
+        let flow_repo = FlowRepoImpl::new(&pool);
+        Self {
+            pool: pool.clone(),
+            flow_repo,
+            post_office: PostOffice::open(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -216,22 +248,12 @@ impl TestEventRepo {
         self.post_office.receive_mail().await.unwrap()
     }
 
-    // pub async fn new_from_context(context: Context) -> Self {
-    //     let pool = (&*context.pool).clone();
-    //     let event_repo = EventRepoImpl::new(&pool);
-    //     let context = get_test_context().await;
-    //     Self {
-    //         pool,
-    //         event_repo,
-    //         context,
-    //     }
-    // }
-
     pub fn dummy_create_event(&self) -> CreateEvent {
         CreateEvent {
             event_id: uuid::Uuid::new_v4().to_string(),
             source_id: uuid::Uuid::new_v4().to_string(),
             event_name: fake::faker::name::en::Name().fake(),
+            event_type: String::default(),
             payload: Value::default(),
             metadata: Value::default(),
         }
@@ -242,6 +264,7 @@ impl TestEventRepo {
             id: i64::default(),
             event_id: uuid::Uuid::new_v4().to_string(),
             event_name: fake::faker::name::en::Name().fake(),
+            event_type: String::default(),
             source_id: String::default(),
             payload: Value::default(),
             metadata: Value::default(),

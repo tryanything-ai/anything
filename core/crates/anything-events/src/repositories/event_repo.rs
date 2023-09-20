@@ -89,7 +89,7 @@ mod tests {
         assert_eq!(res.len(), 1);
         let row = res.first();
         assert!(row.is_some());
-        let row = row.unwrap().clone();
+        let row = row.unwrap();
         let name: String = row.get("event_name");
         assert_eq!(&cloned_fake_event.event_name, &name);
 

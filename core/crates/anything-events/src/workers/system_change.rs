@@ -5,7 +5,7 @@ use futures::{
 };
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use postage::prelude::*;
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 use tracing::info;
 
 use crate::{
@@ -79,6 +79,10 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
                 // TODO: Reload the flows
                 let mut fh = SystemHandler::global().lock().await;
                 fh.reload_flows().await?;
+                // Check for checksum changes and insert new flows or update them
+                // SELECT * from flow_versions where flow_id = flow_version_id AND checksum != "new_checksum";
+                // UPDATE flow_versions SET definition = fh
+                // flows.store();
             }
             _ => {}
         }
@@ -87,8 +91,8 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn async_watcher(
-) -> notify::Result<(RecommendedWatcher, Receiver<notify::Result<notify::Event>>)> {
+fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Result<notify::Event>>)>
+{
     let (mut tx, rx) = channel(128);
 
     let watcher = RecommendedWatcher::new(

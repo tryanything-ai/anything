@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate lazy_static;
 
 pub mod cli;
@@ -10,7 +9,7 @@ pub(crate) mod errors;
 pub(crate) mod callbacks;
 pub(crate) mod cmd;
 pub(crate) mod db;
-pub(crate) mod events;
+pub(crate) mod generated;
 pub(crate) mod models;
 pub(crate) mod notifications;
 pub(crate) mod post_office;

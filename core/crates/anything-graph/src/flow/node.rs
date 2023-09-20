@@ -16,8 +16,6 @@ pub struct Node {
     pub state: NodeState,
     pub node_action: Action,
     pub depends_on: Vec<String>,
-    // pub input: indexmap::IndexMap<String, String>,
-    // pub output: indexmap::IndexMap<String, String>, // TODO: should we make this serializable instead of a simple string?
     pub variables: HashMap<String, String>,
     // pub environment: HashMap<String, String>,
 }

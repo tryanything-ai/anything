@@ -17,6 +17,7 @@ use super::{
 #[derive(Clone, Debug, Deserialize, Serialize, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct Flow {
+    pub id: String,
     pub name: String,
     pub version: Option<String>,
     pub description: Option<String>,
@@ -34,6 +35,7 @@ impl Flow {
 
         let parent = new_dag.add_node(root_node);
         Self {
+            id: uuid::Uuid::new_v4().to_string(),
             name: String::default(),
             version: None,
             description: None,

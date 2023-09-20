@@ -7,7 +7,6 @@
     all(not(test), any(target_os = "windows", target_os = "linux")),
     feature(cublas)
 )]
-
 use tauri::Window;
 
 extern crate llm;
@@ -17,20 +16,18 @@ use llm::{InferenceResponse, LoadProgress};
 
 use crate::config;
 
-pub mod prompt;
-pub mod models;
 pub mod cancellation;
+pub mod models;
+pub mod prompt;
 use cancellation::Canceller;
 
-use crate::notifications::Event; 
+use crate::notifications::Event;
 
-use prompt::Template; 
-use models::{get_local_model, Architecture, Model, ModelManager};
 use bytesize::ByteSize;
+use models::{get_local_model, Architecture, Model, ModelManager};
+use prompt::Template;
 use serde::Serialize;
 use tracing::info;
-
-
 
 #[tauri::command]
 pub fn get_prompt_templates() -> Vec<Template> {
@@ -85,7 +82,7 @@ pub async fn start(
     //     prompt.warmup.clone()
     // };
 
-    //Not using context this way. 
+    //Not using context this way.
 
     let warmup_prompt = prompt.warmup.clone();
 
@@ -274,7 +271,7 @@ pub async fn prompt(
 //             ByteSize(downloaded),
 //             ByteSize(total)
 //         );
-//         println!("{}", message); 
+//         println!("{}", message);
 //         Event::ModelLoading { message, progress }.send(&window);
 //     })
 //     .await
@@ -389,16 +386,14 @@ pub async fn prompt(
 // }
 
 #[tauri::command]
-pub async fn download_model(  
-    filename: &str
-) -> Result<(), String> { 
+pub async fn download_model(filename: &str) -> Result<(), String> {
     let _path = models::get_local_model(filename, |downloaded, total, _progress| {
         let message = format!(
             "Downloading model ({} / {})",
             ByteSize(downloaded),
             ByteSize(total)
         );
-        println!("{}", message); 
+        println!("{}", message);
         // Event::ModelLoading { message, progress }.send(&window);
     })
     .await
@@ -411,7 +406,6 @@ pub async fn download_model(
 //       .invoke_handler(tauri::generate_handler![get_architectures, get_models, get_prompt_templates, download_model, start, prompt])
 //       .build()
 // }
-
 
 // fn print_token(t: String) {
 //     print!("{t}");

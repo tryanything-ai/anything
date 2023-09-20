@@ -23,8 +23,10 @@ message Event {
     string payload = 3;
     // Event name, like files/changed
     string name = 4;
+    // Type of event
+    string event_type = 5;
     // repeated string tags = 4;
-    optional string metadata = 5;
+    optional string metadata = 6;
 }
 
 message TriggerEventRequest {

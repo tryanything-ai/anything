@@ -1,3 +1,4 @@
+id = "simpleflow"
 name = "SimpleFlow"
 version = "0.1"
 description = "A simple flow that echos holiday cheer"
@@ -9,7 +10,7 @@ variables = []
 name = "FileChange"
 
 [trigger.settings]
-file = "/Users/auser/Desktop/watch-directory"
+file = "/Users/auser/Desktop/pictures"
 
 [[nodes]]
 name = "echocheer"
