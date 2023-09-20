@@ -1,4 +1,4 @@
-// use crate::flows
+#![allow(dead_code)]
 
 use crate::{
     generated::GetFlowsRequest,
@@ -7,12 +7,12 @@ use crate::{
         GetFlowResponse, GetFlowsResponse, UpdateFlowRequest, UpdateFlowResponse,
         UpdateFlowVersionRequest, UpdateFlowVersionResponse,
     },
-    models::flow::{Flow, FlowVersion},
+    models::flow::Flow,
     repositories::flow_repo::FlowRepo,
     Context,
 };
 use postage::dispatch::Sender;
-use std::{sync::Arc, vec};
+use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
 #[derive(Debug)]
@@ -36,7 +36,7 @@ impl Flows for FlowManager {
         &self,
         request: Request<GetFlowsRequest>,
     ) -> Result<Response<GetFlowsResponse>, Status> {
-        let req = request.into_inner();
+        let _req = request.into_inner();
         // let flows = self.context.repositories.flow_repo.
         let flows = match self.context.repositories.flow_repo.get_flows().await {
             Ok(flows) => flows,
@@ -57,7 +57,9 @@ impl Flows for FlowManager {
         //     })
         //     .collect();
 
-        let response = GetFlowsResponse { flows: vec![] };
+        let response = GetFlowsResponse {
+            flows: flows.into_iter().map(|f| f.into()).collect(),
+        };
         Ok(Response::new(response))
     }
     async fn create_flow(

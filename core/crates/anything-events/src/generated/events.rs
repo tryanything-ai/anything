@@ -42,6 +42,8 @@ pub struct Trigger {
     pub payload: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub metadata: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub trigger_id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
