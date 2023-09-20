@@ -6,7 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 
-import api from "../tauri_api/api";
+// import api from "../tauri_api/api";
 
 type ModelPromptTemplate = {
   name: string;
@@ -54,35 +54,36 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
 
   const [architectures, setArchitectures] = useState<any[]>([]);
 
-  const downloadModel = async (filename: string) => {
-    const result = await api.downloadModel({
-      filename,
-    });
-    return result;
-  };
+  const downloadModel = async (filename: string) => {};
+  // const downloadModel = async (filename: string) => {
+  //   const result = await api.downloadModel({
+  //     filename,
+  //   });
+  //   return result;
+  // };
+  const callModel = async (prompt: string) => {}; 
+  // const callModel = async (prompt: string) => {
+  //   const result = await api.callModel({prompt});
+  //   return result;
+  // };  
 
-  const callModel = async (prompt: string) => {
-    const result = await api.callModel({prompt});
-    return result;
-  };  
+  // const getModelData = async () => {
+  //   const promptTemplates = await api.getPromptTemplates();
+  //   setModelPromptTemplates(promptTemplates as ModelPromptTemplate[]);
 
-  const getModelData = async () => {
-    const promptTemplates = await api.getPromptTemplates();
-    setModelPromptTemplates(promptTemplates as ModelPromptTemplate[]);
+  //   const architectures = await api.getArchitectures();
+  //   setArchitectures(architectures as any[]);
 
-    const architectures = await api.getArchitectures();
-    setArchitectures(architectures as any[]);
+  //   const models = await api.getModels();
+  //   setModels(models as Model[]);
 
-    const models = await api.getModels();
-    setModels(models as Model[]);
+  //   const downloadedModels = await api.getDownloadedModels();
+  //   setDownloadedModels(downloadedModels as Model[]);
+  // }
 
-    const downloadedModels = await api.getDownloadedModels();
-    setDownloadedModels(downloadedModels as Model[]);
-  }
-
-  useEffect(() => {
-    getModelData(); 
-  }, []);
+  // useEffect(() => {
+  //   getModelData(); 
+  // }, []);
 
   return (
     <ModelContext.Provider
@@ -92,7 +93,7 @@ export const ModelProvider = ({ children }: { children: ReactNode }) => {
         modelPromptTemplates,
         architectures,
         downloadModel,
-        callModel,
+        callModel
       }}
     >
       {children}
