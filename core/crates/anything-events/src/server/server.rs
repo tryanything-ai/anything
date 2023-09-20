@@ -7,11 +7,15 @@ use tracing::debug;
 use crate::callbacks::{self};
 use crate::errors::{EventsError, EventsResult};
 use crate::generated::events_server::EventsServer;
+use crate::generated::flows_server::FlowsServer;
+use crate::generated::triggers_server::TriggersServer;
 use crate::models::event::Event;
 use crate::models::system_handler::SystemHandler;
 use crate::server::events_server::EventManager;
-use crate::workers;
+use crate::server::flows_server::FlowManager;
+use crate::server::triggers_server::TriggersManager;
 use crate::{context::Context, post_office::PostOffice};
+use crate::{workers, Flow, Trigger};
 
 pub(crate) const EVENTS_FILE_DESCRIPTOR_SET: &[u8] =
     tonic::include_file_descriptor_set!("events_descriptor");
@@ -81,13 +85,27 @@ impl Server {
         let sender = self.post_office.post_mail::<Event>().await.unwrap();
 
         debug!("Building event manager");
-        let event_manager = EventManager::new(&self.context, sender);
+        let event_manager = EventManager::new(&self.context, sender.clone());
         debug!("Building event server");
         let event_server = EventsServer::new(event_manager);
+
+        debug!("Loading Flow post mailbox");
+        let sender = self.post_office.post_mail::<Flow>().await.unwrap();
+        debug!("Building flows server");
+        let flow_manager = FlowManager::new(&self.context, sender.clone());
+        let flow_server = FlowsServer::new(flow_manager);
+
+        debug!("Loading Trigger post mailbox");
+        let sender = self.post_office.post_mail::<Trigger>().await.unwrap();
+        debug!("Building trigger server");
+        let triggers_manager = TriggersManager::new(&self.context, sender.clone());
+        let triggers_server = TriggersServer::new(triggers_manager);
 
         debug!("Starting");
         tonic::transport::Server::builder()
             .add_service(event_server)
+            .add_service(flow_server)
+            .add_service(triggers_server)
             .add_service(reflection_service)
             .serve(addr)
             .await?;
