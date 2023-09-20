@@ -7,7 +7,7 @@ use sqlx::{Row, SqlitePool};
 
 use crate::{
     errors::{EventsError, EventsResult},
-    models::flow::{CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId},
+    models::flow::{CreateFlow, Flow, FlowId, FlowVersion, FlowVersionId, UpdateFlow},
 };
 
 #[async_trait::async_trait]
@@ -15,6 +15,7 @@ pub trait FlowRepo {
     async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<FlowId>;
     async fn get_flows(&self) -> EventsResult<Vec<(Flow, FlowVersion)>>;
     async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<(Flow, FlowVersion)>;
+    async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId>;
 }
 
 #[derive(Debug, Clone)]
@@ -190,6 +191,26 @@ impl FlowRepo for FlowRepoImpl {
 
         Ok(flows_and_versions)
     }
+
+    async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<FlowId> {
+        let flow = sqlx::query_as::<_, Flow>(
+            r#"
+            UPDATE flows SET flow_name = ?1, active = ?2, updated_at = ?3 WHERE flow_id = ?4
+            RETURNING *
+            "#,
+        )
+        .bind(update_flow.flow_name)
+        .bind(update_flow.active)
+        .bind(Utc::now().timestamp())
+        .bind(flow_id.clone())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
+        })?;
+
+        Ok(flow.flow_id)
+    }
 }
 
 #[cfg(test)]
@@ -285,6 +306,54 @@ mod tests {
 
         assert_eq!(flow.flow_name, dummy_create.flow_name);
         assert_eq!(flow_version.flow_version, dummy_create.version.unwrap());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_update_flow() -> Result<()> {
+        let test = TestFlowRepo::new().await;
+        let dummy_create = test.dummy_create_flow();
+
+        let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
+        test.insert_create_flow_version(flow_id.clone(), version_id.clone(), dummy_create.clone())
+            .await?;
+
+        let update_flow = UpdateFlow {
+            flow_name: "new name".to_string(),
+            active: true,
+            version: Some("0.0.2".to_string()),
+            description: Some("new description".to_string()),
+        };
+
+        // BEFORE UPDATE
+        let row = sqlx::query("SELECT * FROM flows WHERE flow_id = ?1")
+            .bind(flow_id.clone())
+            .fetch_one(&test.pool)
+            .await?;
+
+        let flow_name: String = row.get("flow_name");
+
+        assert_eq!(flow_name, dummy_create.flow_name);
+        assert_eq!(row.get::<bool, _>("active"), false);
+
+        let res = test
+            .flow_repo
+            .update_flow(flow_id.clone(), update_flow.clone())
+            .await;
+        assert!(res.is_ok());
+        let flow_id = res.unwrap();
+
+        // AFTER UPDATE
+        let row = sqlx::query("SELECT * FROM flows WHERE flow_id = ?1")
+            .bind(flow_id.clone())
+            .fetch_one(&test.pool)
+            .await?;
+
+        let flow_name: String = row.get("flow_name");
+
+        assert_eq!(flow_name, "new name".to_string());
+        assert_eq!(row.get::<bool, _>("active"), true);
 
         Ok(())
     }
