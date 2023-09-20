@@ -29,21 +29,15 @@ message Event {
     optional int64 ended_at = 7;
 }
 
-// trigger_id TEXT NOT NULL PRIMARY KEY,
-//     -- /file/created/<file-path> or /whatsapp/message/<message-id>
-//     event_name TEXT NOT NULL,
-//     payload json NOT NULL,
-//     metadata json,
-//     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
-message Trigger {
+message CreateEvent {
     string event_name = 1;
     string payload = 2;
-    string metadata = 3;
+    optional string metadata = 3;
     string trigger_id = 4;
 }
 
 message TriggerEventRequest {
-    Trigger event = 1;
+    CreateEvent event = 1;
 }
 message TriggerEventResponse {
     string status = 1;
