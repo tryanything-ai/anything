@@ -16,17 +16,15 @@ use tracing_subscriber::{fmt, prelude::*};
 use tracing::info;
 
 use crate::{
-    config::AnythingEventsConfig,
-    context::Context,
-    errors::EventsResult,
-    models::system_handler::{SystemHandler, SYSTEM_HANDLER},
+    config::AnythingEventsConfig, context::Context, errors::EventsResult,
+    models::system_handler::SystemHandler,
 };
 
 pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
     info!("Bootstrapping Eventurous");
     bootstrap_directory(config)?;
     setup_tracing(tracing_subscriber::registry(), &config);
-    setup_system(config)?;
+    setup_system(config).await?;
 
     // Create context
     let context = Context::new(config.clone()).await?;
@@ -37,11 +35,8 @@ pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Con
 // -----------------------------------------------------------------
 // Bootstrap systems
 // -----------------------------------------------------------------
-fn setup_system<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()> {
-    let flow_handler = Mutex::new(SystemHandler::new(config.clone()));
-    SYSTEM_HANDLER
-        .set(flow_handler)
-        .expect("unable to set global flow handler");
+async fn setup_system<'a>(_config: &'a AnythingEventsConfig) -> EventsResult<()> {
+    SystemHandler::setup(_config).await?;
     Ok(())
 }
 

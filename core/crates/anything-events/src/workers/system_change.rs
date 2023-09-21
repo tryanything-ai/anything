@@ -98,7 +98,12 @@ fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Resul
     let watcher = RecommendedWatcher::new(
         move |res| {
             futures::executor::block_on(async {
-                tx.send(res).await.unwrap();
+                match tx.send(res).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("watch error: {:?}", e);
+                    }
+                }
             })
         },
         Config::default(),

@@ -23,6 +23,9 @@ pub(crate) const EVENTS_FILE_DESCRIPTOR_SET: &[u8] =
 pub(crate) const FLOWS_FILE_DESCRIPTOR_SET: &[u8] =
     tonic::include_file_descriptor_set!("flows_descriptor");
 
+pub(crate) const TRIGGER_FILE_DESCRIPTOR_SET: &[u8] =
+    tonic::include_file_descriptor_set!("triggers_descriptor");
+
 pub struct Server {
     pub port: u16,
     pub post_office: PostOffice,
@@ -73,11 +76,12 @@ impl Server {
             workers::system_change::handle_system_change,
         );
 
-        let addr = get_configured_api_socket(&self.context)?;
+        // let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
         let reflection_service = tonic_reflection::server::Builder::configure()
             .register_encoded_file_descriptor_set(EVENTS_FILE_DESCRIPTOR_SET)
             .register_encoded_file_descriptor_set(FLOWS_FILE_DESCRIPTOR_SET)
+            .register_encoded_file_descriptor_set(TRIGGER_FILE_DESCRIPTOR_SET)
             .build()
             .unwrap();
 
@@ -101,23 +105,59 @@ impl Server {
         let triggers_manager = TriggersManager::new(&self.context, sender.clone());
         let triggers_server = TriggersServer::new(triggers_manager);
 
-        debug!("Starting");
+        debug!("Getting listener");
+        let (stream, local_addr) = self.get_configured_listening_stream().await?;
+
+        debug!("Starting on local addr: {}", local_addr);
         tonic::transport::Server::builder()
             .add_service(event_server)
             .add_service(flow_server)
             .add_service(triggers_server)
             .add_service(reflection_service)
-            .serve(addr)
+            .serve_with_incoming(stream)
             .await?;
 
         Ok(())
+    }
+
+    async fn get_configured_listening_stream(
+        &self,
+    ) -> EventsResult<(tokio_stream::wrappers::TcpListenerStream, SocketAddr)> {
+        let server_config = self.context.config.server.clone();
+
+        let host = &server_config.host.unwrap_or("0.0.0.0".to_string());
+        let port = &server_config.port;
+        let url_str = &format!("{}:{}", host, port);
+
+        debug!("Trying to parse {url_str}");
+        let addr: SocketAddr = match url_str.parse() {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("Parsing address error: {:?}", e);
+                return Err(EventsError::ConfigError(e.to_string()));
+            }
+        };
+
+        match tokio::net::TcpListener::bind(addr).await {
+            Ok(listener) => {
+                let local_addr = listener.local_addr().unwrap();
+                Ok((
+                    tokio_stream::wrappers::TcpListenerStream::new(listener),
+                    local_addr,
+                ))
+            }
+            Err(e) => {
+                tracing::error!("Failed to bind to address: {:?}", e);
+                return Err(EventsError::ConfigError(e.to_string()));
+            }
+        }
     }
 }
 
 fn get_configured_api_socket(context: &Context) -> EventsResult<SocketAddr> {
     let server_config = context.config.server.clone();
 
-    let host = &server_config.host.unwrap_or("0.0.0.0".to_string());
+    let host = &server_config.host.unwrap_or("[::]".to_string());
     let port = &server_config.port;
     let url_str = &format!("{}:{}", host, port);
 
@@ -158,8 +198,21 @@ mod tests {
     #[tokio::test]
     async fn test_starts_up() -> anyhow::Result<()> {
         // TODO: do this in a better way
-        let client = get_client().await;
+        let (_client, _server) = get_client().await?;
         assert!(true); // The server started up!
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_server_sends_trigger_update() -> anyhow::Result<()> {
+        // TODO: do this in a better way
+        let (client, server) = get_client().await?;
+
+        let mut trigger_tx = server.post_office.receive_mail::<Trigger>().await?;
+
+        let trigger = trigger_tx.recv().await;
+        assert!(trigger.is_some());
+
         Ok(())
     }
 }
