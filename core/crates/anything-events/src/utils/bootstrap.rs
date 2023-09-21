@@ -1,4 +1,3 @@
-use futures::lock::Mutex;
 use opentelemetry::{
     global,
     runtime::Tokio,
