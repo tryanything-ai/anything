@@ -3,7 +3,7 @@ package flows;
 
 // import "types.proto";
 
-service Flows {
+service FlowsService {
     rpc CreateFlow (CreateFlowRequest) returns (CreateFlowResponse) {}
     rpc GetFlows (GetFlowsRequest) returns (GetFlowsResponse) {}
     rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}

@@ -2,13 +2,15 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use anything_core::spawning::spawn_or_crash;
+use postage::sink::Sink;
 use tracing::debug;
 
 use crate::callbacks::{self};
 use crate::errors::{EventsError, EventsResult};
-use crate::generated::events_server::EventsServer;
-use crate::generated::flows_server::FlowsServer;
-use crate::generated::triggers_server::TriggersServer;
+use crate::generated::events_service_server::EventsServiceServer;
+use crate::generated::flows_service_server::FlowsServiceServer;
+use crate::generated::triggers_service_server::TriggersServiceServer;
+use crate::internal_notification::ShutdownNotification;
 use crate::models::event::Event;
 use crate::models::system_handler::SystemHandler;
 use crate::server::events_server::EventManager;
@@ -53,6 +55,13 @@ impl Server {
         Ok(Arc::new(server))
     }
 
+    pub async fn shutdown(&self) -> EventsResult<()> {
+        let mut shutdown = self.post_office.post_mail::<ShutdownNotification>().await?;
+        shutdown.send(ShutdownNotification {}).await?;
+
+        Ok(())
+    }
+
     pub async fn run_server(self: Arc<Self>) -> EventsResult<()> {
         spawn_or_crash(
             "on_event",
@@ -84,29 +93,26 @@ impl Server {
 
         debug!("Building event manager");
         let event_manager = EventManager::new(&self.context, sender.clone());
-        debug!("Building event server");
-        let event_server = EventsServer::new(event_manager);
+        let event_server = EventsServiceServer::new(event_manager);
 
         debug!("Loading Flow post mailbox");
         let sender = self.post_office.post_mail::<Flow>().await.unwrap();
-        debug!("Building flows server");
         let flow_manager = FlowManager::new(&self.context, sender.clone());
-        let flow_server = FlowsServer::new(flow_manager);
+        let flow_server = FlowsServiceServer::new(flow_manager);
 
         debug!("Loading Trigger post mailbox");
         let sender = self.post_office.post_mail::<Trigger>().await.unwrap();
-        debug!("Building trigger server");
         let triggers_manager = TriggersManager::new(&self.context, sender.clone());
-        let triggers_server = TriggersServer::new(triggers_manager);
+        let triggers_server = TriggersServiceServer::new(triggers_manager);
 
         debug!("Getting listener");
         let (stream, local_addr) = self.get_configured_listening_stream().await?;
 
         debug!("Starting on local addr: {}", local_addr);
         tonic::transport::Server::builder()
+            .add_service(triggers_server)
             .add_service(event_server)
             .add_service(flow_server)
-            .add_service(triggers_server)
             .add_service(reflection_service)
             .serve_with_incoming(stream)
             .await?;
@@ -132,12 +138,6 @@ impl Server {
                 return Err(EventsError::ConfigError(e.to_string()));
             }
         }
-    }
-}
-
-impl Drop for Server {
-    fn drop(&mut self) {
-        debug!("Dropping server");
     }
 }
 
@@ -175,31 +175,24 @@ mod tests {
 
     use tonic::{transport::Channel, Request};
 
-    use crate::{
-        generated::events::events_client::EventsClient, internal::test_helper::get_test_context,
-        server::server_test_helpers::get_client,
-    };
+    use crate::{internal::test_helper::get_test_context, server::server_test_helpers::get_client};
 
     use super::*;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_starts_up() -> anyhow::Result<()> {
         // TODO: do this in a better way
-        let (_client, _server) = get_client().await?;
+        let (_client, server) = get_client().await?;
         assert!(true); // The server started up!
+
+        // Test a trigger update is sent when trigger is received
+        // let mut trigger_tx = server.post_office.receive_mail::<Trigger>().await?;
+
+        // let trigger = trigger_tx.recv().await;
+        // assert!(trigger.is_some());
+
+        server.shutdown().await?;
+        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
         Ok(())
     }
-
-    // #[tokio::test]
-    // async fn test_server_sends_trigger_update() -> anyhow::Result<()> {
-    //     // TODO: do this in a better way
-    //     let (client, server) = get_client().await?;
-
-    //     let mut trigger_tx = server.post_office.receive_mail::<Trigger>().await?;
-
-    //     let trigger = trigger_tx.recv().await;
-    //     assert!(trigger.is_some());
-
-    //     Ok(())
-    // }
 }
