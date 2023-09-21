@@ -11,6 +11,9 @@ pub enum EventsError {
     #[error("configuration error: {0}")]
     ConfigError(String),
 
+    #[error("tcp address parse error: {0}")]
+    TcpListeningError(#[from] std::net::AddrParseError),
+
     #[error("io error: {0}")]
     IOError(#[from] std::io::Error),
 

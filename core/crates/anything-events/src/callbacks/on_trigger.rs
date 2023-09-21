@@ -3,17 +3,17 @@ use std::sync::Arc;
 
 // use postage::prelude::*;
 
-use crate::{models::event::Event, server::server::Server};
+use crate::{server::server::Server, Trigger};
 
 pub async fn process_triggers(server: Arc<Server>) -> anyhow::Result<()> {
-    let mut events_rx = server.post_office.receive_mail::<Event>().await?;
+    let mut trigger_rx = server.post_office.receive_mail::<Trigger>().await?;
     // let mut system_handler = server.system_handler.clone();
     // let handler_rx = server
     //     .post_office
     //     .receive_mail::<FlowFileNotification>()
     //     .await?;
 
-    while let Some(evt) = events_rx.recv().await {
+    while let Some(evt) = trigger_rx.recv().await {
         // Do something with this new event
         // Iterate through "registered" flows that are "listening" for events
         // based upon the event `name` and `source`

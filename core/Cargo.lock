@@ -225,6 +225,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tokio",
+ "tokio-stream",
  "tonic 0.10.0",
  "tonic-build",
  "tonic-reflection",

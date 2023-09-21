@@ -16,6 +16,14 @@ pub struct SystemHandler {
 }
 
 impl SystemHandler {
+    pub async fn setup<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()> {
+        let instance = SystemHandler::new(config.clone());
+        SYSTEM_HANDLER
+            .set(Mutex::new(instance.clone()))
+            .expect("unable to set global flow handler");
+        Ok(())
+    }
+
     pub fn global() -> &'static Mutex<SystemHandler> {
         if SYSTEM_HANDLER.get().is_none() {
             let instance = SystemHandler::new(AnythingEventsConfig::default());
