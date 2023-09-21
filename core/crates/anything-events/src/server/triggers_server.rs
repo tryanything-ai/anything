@@ -5,7 +5,9 @@ use postage::{dispatch::Sender, sink::Sink};
 use tonic::{Request, Response, Status};
 
 use crate::{
-    generated::{triggers_server::Triggers, CreateTriggerRequest, CreateTriggerResponse},
+    generated::{
+        triggers_service_server::TriggersService, CreateTriggerRequest, CreateTriggerResponse,
+    },
     repositories::trigger_repo::TriggerRepo,
     Context, CreateTrigger, Trigger,
 };
@@ -26,11 +28,12 @@ impl TriggersManager {
 }
 
 #[tonic::async_trait]
-impl Triggers for TriggersManager {
+impl TriggersService for TriggersManager {
     async fn create_trigger(
         &self,
         request: Request<CreateTriggerRequest>,
     ) -> Result<Response<CreateTriggerResponse>, Status> {
+        tracing::info!("Got into create_trigger");
         let resp = request.into_inner();
 
         let event_name = resp.event_name;

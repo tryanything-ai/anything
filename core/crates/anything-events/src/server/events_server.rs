@@ -12,9 +12,9 @@ use tonic::{metadata, Request, Response, Status};
 use crate::{
     context::Context,
     errors::EventsError,
-    generated::events::{
-        events_server::Events, GetEventRequest, GetEventResponse, TriggerEventRequest,
-        TriggerEventResponse,
+    generated::{
+        events::{GetEventRequest, GetEventResponse, TriggerEventRequest, TriggerEventResponse},
+        events_service_server::EventsService,
     },
     models::event::{CreateEvent, Event},
     repositories::event_repo::EventRepo,
@@ -53,7 +53,7 @@ impl EventManager {
 }
 
 #[tonic::async_trait]
-impl Events for EventManager {
+impl EventsService for EventManager {
     async fn trigger_event(
         &self,
         request: Request<TriggerEventRequest>,
@@ -166,7 +166,6 @@ mod tests {
     use crate::models::event::Event;
     use crate::{internal::test_helper::get_test_config, utils::bootstrap};
 
-    use crate::generated::events::{events_client::EventsClient, events_server::EventsServer};
     use serde::{Deserialize, Serialize};
 
     use super::*;

@@ -3,7 +3,7 @@
 use crate::{
     generated::GetFlowsRequest,
     generated::{
-        flows_server::Flows, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
+        flows_service_server::FlowsService, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
         GetFlowResponse, GetFlowsResponse, UpdateFlowRequest, UpdateFlowResponse,
         UpdateFlowVersionRequest, UpdateFlowVersionResponse,
     },
@@ -31,7 +31,7 @@ impl FlowManager {
 }
 
 #[tonic::async_trait]
-impl Flows for FlowManager {
+impl FlowsService for FlowManager {
     async fn get_flows(
         &self,
         request: Request<GetFlowsRequest>,

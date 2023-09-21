@@ -1,5 +1,8 @@
 use anything_core::error::AnythingError;
+use color_eyre::eyre::Result;
 use thiserror::Error;
+
+use crate::internal_notification::ShutdownNotification;
 
 pub type EventsResult<T> = Result<T, EventsError>;
 
@@ -13,6 +16,9 @@ pub enum EventsError {
 
     #[error("tcp address parse error: {0}")]
     TcpListeningError(#[from] std::net::AddrParseError),
+
+    #[error("postoffice send error: {0}")]
+    PostOfficeSendError(#[from] postage::sink::SendError<ShutdownNotification>),
 
     #[error("io error: {0}")]
     IOError(#[from] std::io::Error),
@@ -29,6 +35,9 @@ pub enum EventsError {
     #[error("server error")]
     EventServerError(#[from] tonic::transport::Error),
 
+    #[error("trigger error: {0}")]
+    TriggerError(String),
+
     #[error("configuration error")]
     ConfigurationError(#[from] AnythingError),
 
@@ -40,4 +49,7 @@ pub enum EventsError {
 
     #[error("not found: {0}")]
     NotFoundError(String),
+
+    #[error(transparent)]
+    ErrReport(#[from] color_eyre::eyre::ErrReport),
 }

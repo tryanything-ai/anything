@@ -1,7 +1,7 @@
 syntax = "proto3";
 package events;
 
-service Events {
+service EventsService {
     // Send an event
     rpc TriggerEvent(TriggerEventRequest) returns (TriggerEventResponse);
 
