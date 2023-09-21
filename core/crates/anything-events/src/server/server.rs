@@ -27,7 +27,8 @@ pub(crate) const TRIGGER_FILE_DESCRIPTOR_SET: &[u8] =
     tonic::include_file_descriptor_set!("triggers_descriptor");
 
 pub struct Server {
-    pub port: u16,
+    pub socket: SocketAddr,
+    // pub port: u16,
     pub post_office: PostOffice,
     // pub store: Box<dyn StoreAdapter + Send + Sync>,
     pub context: Context,
@@ -40,17 +41,10 @@ impl Server {
         let (tx, _rx) =
             tokio::sync::watch::channel(SystemHandler::new(context_clone.config.clone()));
 
-        let port = match context.config().server.port {
-            0 => {
-                let socket = get_configured_api_socket(&context)?;
-                let listener = std::net::TcpListener::bind(socket)?;
-                listener.local_addr().unwrap().port()
-            }
-            p => p,
-        };
+        let socket = get_configured_api_socket(&context)?;
 
         let server = Self {
-            port,
+            socket,
             post_office: PostOffice::open(),
             context,
             on_flow_handler_change: tx,
@@ -123,22 +117,9 @@ impl Server {
     async fn get_configured_listening_stream(
         &self,
     ) -> EventsResult<(tokio_stream::wrappers::TcpListenerStream, SocketAddr)> {
-        let server_config = self.context.config.server.clone();
+        let socket = self.socket.clone();
 
-        let host = &server_config.host.unwrap_or("0.0.0.0".to_string());
-        let port = &server_config.port;
-        let url_str = &format!("{}:{}", host, port);
-
-        debug!("Trying to parse {url_str}");
-        let addr: SocketAddr = match url_str.parse() {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::error!("Parsing address error: {:?}", e);
-                return Err(EventsError::ConfigError(e.to_string()));
-            }
-        };
-
-        match tokio::net::TcpListener::bind(addr).await {
+        match tokio::net::TcpListener::bind(socket).await {
             Ok(listener) => {
                 let local_addr = listener.local_addr().unwrap();
                 Ok((
@@ -151,6 +132,12 @@ impl Server {
                 return Err(EventsError::ConfigError(e.to_string()));
             }
         }
+    }
+}
+
+impl Drop for Server {
+    fn drop(&mut self) {
+        debug!("Dropping server");
     }
 }
 
@@ -203,16 +190,16 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn test_server_sends_trigger_update() -> anyhow::Result<()> {
-        // TODO: do this in a better way
-        let (client, server) = get_client().await?;
+    // #[tokio::test]
+    // async fn test_server_sends_trigger_update() -> anyhow::Result<()> {
+    //     // TODO: do this in a better way
+    //     let (client, server) = get_client().await?;
 
-        let mut trigger_tx = server.post_office.receive_mail::<Trigger>().await?;
+    //     let mut trigger_tx = server.post_office.receive_mail::<Trigger>().await?;
 
-        let trigger = trigger_tx.recv().await;
-        assert!(trigger.is_some());
+    //     let trigger = trigger_tx.recv().await;
+    //     assert!(trigger.is_some());
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }

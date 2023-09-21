@@ -219,6 +219,7 @@ dependencies = [
  "postage",
  "prost 0.12.1",
  "prost-types",
+ "rand",
  "serde",
  "serde_json",
  "sqlx",

@@ -8,21 +8,16 @@ use postage::{
 use tonic::transport::Channel;
 
 use crate::{
-    generated::events_client::EventsClient, internal::test_helper::get_test_context, Server,
+    generated::events_client::EventsClient, internal::test_helper::get_test_context,
+    utils::net::get_unused_port, Server,
 };
 
 static SERVER: tokio::sync::OnceCell<Arc<Server>> = tokio::sync::OnceCell::const_new();
 
-fn get_unused_port() -> u16 {
-    // Get unused port
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    listener.local_addr().unwrap().port()
-}
-
-async fn start_server(mut tx: Sender<Arc<Server>>) -> anyhow::Result<()> {
+async fn start_server(port: Arc<u16>, mut tx: Sender<Arc<Server>>) -> anyhow::Result<()> {
     let mut context = get_test_context().await;
 
-    context.config.server.port = get_unused_port();
+    context.config.server.port = *port;
 
     let server = Server::new(context).await?;
     let cloned_server = server.clone();
@@ -32,26 +27,32 @@ async fn start_server(mut tx: Sender<Arc<Server>>) -> anyhow::Result<()> {
 }
 
 pub async fn get_client() -> anyhow::Result<(EventsClient<Channel>, Arc<Server>)> {
+    let unused_port = get_unused_port().await.unwrap();
+    let unused_port_arc = Arc::new(unused_port);
     let (tx, mut rx) = mpsc::channel(1);
     SERVER
         .get_or_init(|| async {
-            println!("Starting server in ONCECELL");
-            tokio::spawn(async { start_server(tx).await });
+            tokio::spawn(async { start_server(unused_port_arc, tx).await });
             rx.recv().await.unwrap()
         })
         .await;
 
     let server = SERVER.get().unwrap();
-    println!("Got server from ONCECELL: {:?}", server.port);
+    let port = server.socket.port();
+    let host = server.socket.ip().to_string();
+    let addr = format!("http://[{}]:{}", host, port);
 
-    loop {
-        match EventsClient::connect(format!("http://[::]:{}", server.port)).await {
+    let (client, server) = loop {
+        match EventsClient::connect(addr.clone()).await {
             Ok(client) => {
-                return Ok((client, server.clone()));
+                break (client, server.clone());
             }
-            Err(_) => {
+            Err(e) => {
+                println!("Error connecting to server: {:?}", e);
                 tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
             }
         }
-    }
+    };
+
+    Ok((client, server))
 }
