@@ -1,4 +1,4 @@
-use std::{net::TcpListener, sync::Arc};
+use std::sync::Arc;
 
 use postage::{
     mpsc::{self, Sender},
