@@ -20,12 +20,12 @@ impl TriggerRepoImpl {
 }
 
 #[async_trait::async_trait]
-pub trait FlowRepo {
+pub trait TriggerRepo {
     async fn create_trigger(&self, create_trigger: CreateTrigger) -> EventsResult<TriggerId>;
 }
 
 #[async_trait::async_trait]
-impl FlowRepo for TriggerRepoImpl {
+impl TriggerRepo for TriggerRepoImpl {
     async fn create_trigger(&self, create_trigger: CreateTrigger) -> EventsResult<TriggerId> {
         let row = sqlx::query(
             r#"
@@ -72,6 +72,7 @@ mod tests {
             .await;
 
         assert!(res.is_ok());
+
         let row = res.unwrap();
         assert_eq!(row.get::<String, _>("event_name"), dummy_create.event_name);
 
