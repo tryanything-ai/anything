@@ -37,6 +37,17 @@ export const createFlow = async ({
   return await invoke("create_flow", { flow_name, flow_id });
 };
 
+//TODO: probs bad need to pick this somewhere
+export const saveToml = async({
+  toml, 
+  flow_id
+}: {
+  toml: string;
+  flow_id: string;
+}) => {
+  return await invoke("save_toml", { toml, flow_id });
+}
+
 //Models
 // export const startModel = async (args: any) => {
 //   return await invoke("start", args);
