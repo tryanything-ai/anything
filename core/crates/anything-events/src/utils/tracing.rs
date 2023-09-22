@@ -1,78 +1,117 @@
-use opentelemetry::{
-    global,
-    runtime::Tokio,
-    sdk::{propagation::TraceContextPropagator, trace, Resource},
-    KeyValue,
-};
+use std::fmt::{Debug, Result as FmtResult};
 
-use opentelemetry_otlp::WithExportConfig;
-use tracing::Subscriber;
-use tracing_subscriber::registry::LookupSpan;
-use tracing_subscriber::EnvFilter;
-use tracing_subscriber::{fmt, prelude::*};
+use chrono::SecondsFormat;
+use opentelemetry::{global, sdk::propagation::TraceContextPropagator};
 
 use crate::config::AnythingEventsConfig;
+use colored::Colorize;
+use tracing::{
+    field::{Field, Visit},
+    Event, Level, Subscriber,
+};
+use tracing_log::NormalizeEvent;
+use tracing_subscriber::{
+    field::RecordFields,
+    fmt::{self, format::Writer, FmtContext, FormatEvent, FormatFields, FormattedFields},
+    prelude::*,
+    registry::LookupSpan,
+    EnvFilter,
+};
 
-pub fn setup_tracing(service_name: String, config: &AnythingEventsConfig) {
+pub fn setup_tracing(_service_name: String, _config: &AnythingEventsConfig) {
     global::set_text_map_propagator(TraceContextPropagator::new());
 
-    let subscriber = tracing_subscriber::registry();
+    let filter_layer = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new("info"))
+        .unwrap();
 
-    match &config.tracing.otel_endpoint {
-        None => setup_tracing_without_otel_collector(subscriber, service_name),
-        Some(otel_endpoint) => {
-            setup_tracing_with_otel_collector(subscriber, service_name, otel_endpoint.clone())
-        }
+    let fmt_layer = fmt::layer()
+        .event_format(SemiCompact)
+        .fmt_fields(SemiCompact);
+
+    tracing_subscriber::registry()
+        .with(filter_layer)
+        .with(fmt_layer)
+        .init();
+}
+
+fn level_color(level: Level, msg: String) -> impl std::fmt::Display {
+    match level {
+        Level::ERROR => msg.bright_red(),
+        Level::WARN => msg.bright_yellow(),
+        Level::INFO => msg.bright_green(),
+        Level::DEBUG => msg.bright_blue(),
+        Level::TRACE => msg.bright_purple(),
     }
 }
 
-/// Setup tracing without otel collector
-fn setup_tracing_without_otel_collector<S>(subscriber: S, _service_name: String)
-where
-    S: Subscriber + for<'a> LookupSpan<'a> + Send + Sync,
-{
-    let filter_layer = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
-        .unwrap();
-
-    let fmt_layer = fmt::layer();
-
-    subscriber.with(filter_layer).with(fmt_layer).init();
+struct SemiCompactVisitor {
+    fields: String,
+    message: String,
 }
 
-/// Setup tracing with otel collector
-fn setup_tracing_with_otel_collector<S>(subscriber: S, service_name: String, otel_endpoint: String)
+impl Visit for SemiCompactVisitor {
+    fn record_debug(&mut self, field: &Field, value: &dyn Debug) {
+        match field.name() {
+            "message" => self.message = format!("{value:?}\n"),
+            name if name.starts_with("log.") => (),
+            name => {
+                self.fields
+                    .push_str(&format!("    {}: {:?}\n", name.cyan(), value));
+            }
+        };
+    }
+}
+
+struct SemiCompact;
+
+impl<C, N> FormatEvent<C, N> for SemiCompact
 where
-    S: Subscriber + for<'a> LookupSpan<'a> + Send + Sync,
+    C: Subscriber + for<'a> LookupSpan<'a>,
+    N: for<'a> FormatFields<'a> + 'static,
 {
-    let filter_layer = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
-        .unwrap();
+    fn format_event(
+        &self,
+        ctx: &FmtContext<'_, C, N>,
+        mut writer: Writer<'_>,
+        event: &Event<'_>,
+    ) -> FmtResult {
+        let normalized_meta = event.normalized_metadata();
+        let meta = normalized_meta.as_ref().unwrap_or_else(|| event.metadata());
 
-    let fmt_layer = fmt::layer();
-    let tracer = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(
-            opentelemetry_otlp::new_exporter()
-                .tonic()
-                .with_endpoint(otel_endpoint),
-        )
-        .with_trace_config(
-            trace::config().with_resource(Resource::new(vec![KeyValue::new(
-                "service.name",
-                service_name.to_string(),
-            )])),
-        )
-        .install_batch(Tokio)
-        .unwrap();
+        let header = format!(
+            "[{} {} {}]",
+            chrono::Local::now().to_rfc3339_opts(SecondsFormat::Secs, false),
+            meta.level(),
+            meta.target(),
+        );
 
-    let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+        writeln!(writer, "{}", level_color(*meta.level(), header))?;
 
-    subscriber
-        .with(filter_layer)
-        .with(fmt_layer)
-        .with(otel_layer)
-        .init();
+        ctx.field_format().format_fields(writer.by_ref(), event)?;
+
+        ctx.visit_spans(|span| {
+            //write!(writer, "    -> {}\n", span.name().bold())?;
+            let ext = span.extensions();
+            let data = ext.get::<FormattedFields<SemiCompact>>().unwrap();
+            write!(writer, "{data}")
+        })?;
+
+        Ok(())
+    }
+}
+
+impl<'w> FormatFields<'w> for SemiCompact {
+    fn format_fields<R: RecordFields>(&self, mut writer: Writer<'w>, fields: R) -> FmtResult {
+        let mut visitor = SemiCompactVisitor {
+            fields: String::new(),
+            message: String::new(),
+        };
+        fields.record(&mut visitor);
+        write!(writer, "{}", visitor.message.bright_white())?;
+        write!(writer, "{}", visitor.fields)?;
+        Ok(())
+    }
 }
 
 /// Macro for instrumenting spans
