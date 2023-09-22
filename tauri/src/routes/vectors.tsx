@@ -2,7 +2,7 @@ import { useLocalFileContext } from "../context/LocalFileProvider";
 import { Link } from "react-router-dom";
 
 export default function Vectors() {
-  //   const { flowPaths, createNewFlow } = useLocalFileContext();
+
   return (
     <div className="flex h-full w-full p-10">
       <div className="flex flex-col text-5xl m-5 w-full">

@@ -2,7 +2,8 @@ import { useLocalFileContext } from "../context/LocalFileProvider";
 import { Link } from "react-router-dom";
 
 export default function Flows() {
-  const { flowPaths, createNewFlow } = useLocalFileContext();
+  const { createNewFlow, flows } = useLocalFileContext();
+
   return (
     <div className="flex h-full w-full p-10">
       <div className="flex flex-col text-5xl m-5 w-full">
@@ -18,7 +19,7 @@ export default function Flows() {
           </button>
         </div>
         <ul className="mt-4">
-          {flowPaths.map((flow) => {
+          {flows.map((flow) => {
             return (
               <Link
                 key={flow.name}

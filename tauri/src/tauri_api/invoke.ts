@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/tauri";
 
 export const getFlows = async () => {
+  console.log("Invoking Get FLows");
   return await invoke("get_flows");
 };
 
@@ -9,15 +10,31 @@ export const getChatFlows = async () => {
 };
 
 export const getFlow = async (flow_id: string) => {
-  return await invoke("get_flow", {flow_id});
+  return await invoke("get_flow", { flow_id });
 };
 
 export const getNodes = async () => {
   return await invoke("get_nodes");
 };
 
-export const getFlowNode = async (flow_id: string, node_id: string) => {
+export const getFlowNode = async ({
+  flow_id,
+  node_id,
+}: {
+  flow_id: string;
+  node_id: string;
+}) => {
   return await invoke("get_flow_node", { flow_id, node_id });
+};
+
+export const createFlow = async ({
+  flow_name,
+  flow_id,
+}: {
+  flow_name: string;
+  flow_id: string;
+}) => {
+  return await invoke("create_flow", { flow_name, flow_id });
 };
 
 //Models
@@ -55,13 +72,13 @@ export const getFlowNode = async (flow_id: string, node_id: string) => {
 //   await invoke("plugin:sqlite|load");
 // };
 
-export const executeSqlLite = async (args: any) => {
-  return await invoke("plugin:sqlite|execute", args);
-};
+// export const executeSqlLite = async (args: any) => {
+//   return await invoke("plugin:sqlite|execute", args);
+// };
 
-export const selectSqlLite = async (args: any) => {
-  return await invoke("plugin:sqlite|select", args);
-};
+// export const selectSqlLite = async (args: any) => {
+//   return await invoke("plugin:sqlite|select", args);
+// };
 
 // export const sendPrompt = async (args: any) => {
 //   return await invoke("prompt", args);

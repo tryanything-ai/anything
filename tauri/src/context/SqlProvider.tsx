@@ -105,18 +105,19 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getEvent = async (event_id: string) => {
-    const event = await api.db.select(`SELECT * FROM events WHERE event_id = $1;`, [
-      event_id,
-    ]);
+    const event = await api.db.select(
+      `SELECT * FROM events WHERE event_id = $1;`,
+      [event_id]
+    );
     return event[0];
   };
 
-  useEffect(() => {
-    const go = async () => {
-      await getTables();
-    };
-    go();
-  }, []);
+  // useEffect(() => {
+  //   const go = async () => {
+  //     await getTables();
+  //   };
+  //   go();
+  // }, []);
 
   return (
     <SqlContext.Provider
