@@ -7,7 +7,7 @@ import { useSqlContext } from "../context/SqlProvider";
 import BaseCard from "../components/baseCard";
 
 export default function Home() {
-  const { flowPaths, createNewFlow } = useLocalFileContext();
+  const { flows, createNewFlow } = useLocalFileContext();
 
   const { tables } = useSqlContext();
 
@@ -30,7 +30,7 @@ export default function Home() {
         </div>
 
         <ul>
-          {flowPaths.map((flow) => {
+          {flows.map((flow) => {
             return (
               <BaseCard
                 as={Link}
