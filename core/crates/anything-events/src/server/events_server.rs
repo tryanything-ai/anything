@@ -12,12 +12,12 @@ use tonic::{metadata, Request, Response, Status};
 use crate::{
     context::Context,
     errors::EventsError,
-    generated::events::{
-        events_server::Events, GetEventRequest, GetEventResponse, TriggerEventRequest,
-        TriggerEventResponse,
+    generated::{
+        events::{GetEventRequest, GetEventResponse, TriggerEventRequest, TriggerEventResponse},
+        events_service_server::EventsService,
     },
     models::event::{CreateEvent, Event},
-    repositories::event_repo::EventRepo,
+    repositories::{event_repo::EventRepo, AnythingRepo},
 };
 
 use crate::generated::events::Event as ProtoEvent;
@@ -53,7 +53,7 @@ impl EventManager {
 }
 
 #[tonic::async_trait]
-impl Events for EventManager {
+impl EventsService for EventManager {
     async fn trigger_event(
         &self,
         request: Request<TriggerEventRequest>,
@@ -101,24 +101,9 @@ impl Events for EventManager {
                 return Err(Status::internal(UNABLE_TO_SAVE_EVENT));
             }
         };
-        let mut update_tx = self.update_tx.clone();
-
-        let event = match self
-            .context
-            .repositories
-            .event_repo
-            .find_by_id(event_id.clone())
-            .await
-        {
-            Ok(r) => {
-                update_tx.send(r).await;
-            }
-            Err(err) => {
-                // Something should be done here... maybe?
-                println!("Unable to save event {:?}", err);
-                return Err(Status::internal("error saving event"));
-            }
-        };
+        event_repo
+            .and_confirm(&event_id, self.update_tx.clone())
+            .await?;
 
         Ok(Response::new(TriggerEventResponse {
             status: "success".into(),
@@ -166,7 +151,6 @@ mod tests {
     use crate::models::event::Event;
     use crate::{internal::test_helper::get_test_config, utils::bootstrap};
 
-    use crate::generated::events::{events_client::EventsClient, events_server::EventsServer};
     use serde::{Deserialize, Serialize};
 
     use super::*;
@@ -210,24 +194,24 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_sends_update() -> anyhow::Result<()> {
-        // let context = get_test_context().await;
-        // let test = TestEventRepo::new().await;
-        // let mut test_tx = test.with_sender().await;
-        // let mut test_rx = test.with_receiver().await;
-        // let event_manager = EventManager::new(&context, test_tx.clone());
+        let context = get_test_context().await;
+        let test = TestEventRepo::new().await;
+        let mut test_tx = test.with_sender().await;
+        let mut test_rx = test.with_receiver().await;
+        let event_manager = EventManager::new(&context, test_tx.clone());
 
-        // let event = test.dummy_create_event();
-        // let create_event_request = TriggerEventRequest {
-        //     event: Some(event.clone().into()),
-        // };
+        let event = test.dummy_create_event();
+        let create_event_request = TriggerEventRequest {
+            event: Some(event.clone().into()),
+        };
 
-        // let request = Request::new(create_event_request);
-        // let _response = event_manager.trigger_event(request).await;
+        let request = Request::new(create_event_request);
+        let _response = event_manager.trigger_event(request).await;
 
-        // let msg = test_rx.recv().await;
-        // assert!(msg.is_some());
-        // let msg = msg.unwrap();
-        // assert_eq!(msg.event_name, event.event_name);
+        let msg = test_rx.recv().await;
+        assert!(msg.is_some());
+        let msg = msg.unwrap();
+        assert_eq!(msg.name, event.name);
 
         Ok(())
     }

@@ -14,6 +14,7 @@ pub mod models;
 pub(crate) mod notifications;
 pub(crate) mod post_office;
 pub(crate) mod repositories;
+pub mod rpc;
 pub(crate) mod server;
 pub(crate) mod utils;
 pub(crate) mod workers;
@@ -28,8 +29,6 @@ pub use notifications::*;
 pub use server::server::Server;
 pub use utils::bootstrap;
 
-pub mod clients {
-    pub use crate::generated::flows::*;
-}
+pub use rpc::*;
 
-pub use crate::models::*;
+pub mod prelude;

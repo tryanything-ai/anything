@@ -74,6 +74,7 @@ impl Engine for RestEngine {
         &mut self,
         node: &Node,
         global_context: &ExecutionContext,
+        event_payload: &serde_json::Value,
     ) -> EngineResult<NodeExecutionContext> {
         let mut exec_context = NodeExecutionContext {
             node: node.clone(),
@@ -86,13 +87,14 @@ impl Engine for RestEngine {
         };
 
         let url = self.config.url.clone();
-        let evaluated_url = global_context.render_string(&exec_context, url);
+        let evaluated_url = global_context.render_string(&exec_context, event_payload, url);
 
         self.config.url = evaluated_url.clone();
         rest_action.url = evaluated_url.clone();
 
         if let Some(body) = &self.config.body {
-            let evaluated_body = global_context.render_string(&exec_context, body.clone());
+            let evaluated_body =
+                global_context.render_string(&exec_context, event_payload, body.clone());
             self.config.body = Some(evaluated_body.clone());
             rest_action.body = Some(evaluated_body.clone());
         }
@@ -100,7 +102,8 @@ impl Engine for RestEngine {
         let mut evaluated_qs: HashMap<String, String> = HashMap::new();
         if let Some(qs) = &self.config.query_params {
             for (key, val) in qs.into_iter() {
-                let evaluated_val = global_context.render_string(&exec_context, val.clone());
+                let evaluated_val =
+                    global_context.render_string(&exec_context, event_payload, val.clone());
                 evaluated_qs.insert(key.clone(), evaluated_val);
             }
             rest_action.query_params = Some(evaluated_qs.clone());
@@ -109,7 +112,8 @@ impl Engine for RestEngine {
         let mut evaluated_headers: HashMap<String, String> = HashMap::new();
         if let Some(args) = &self.config.headers {
             for (key, val) in args.into_iter() {
-                let evaluated_val = global_context.render_string(&exec_context, val.clone());
+                let evaluated_val =
+                    global_context.render_string(&exec_context, event_payload, val.clone());
                 evaluated_headers.insert(key.clone(), evaluated_val);
             }
             rest_action.headers = Some(evaluated_headers.clone());

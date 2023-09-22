@@ -6,7 +6,7 @@ description = "A simple flow that echos holiday cheer"
 variables = []
 
 [trigger]
-name = "FileChange"
+name = "file"
 
 [trigger.settings]
 file = "/Users/auser/Desktop/watch-directory"

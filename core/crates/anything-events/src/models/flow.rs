@@ -6,9 +6,9 @@ use sqlx::{Column, FromRow};
 use sqlx::{Error, Row};
 
 use crate::generated::flows::{
-    CreateFlow as ProtoCreateFlow, Flow as ProtoFlow, FlowVersion as ProtoFlowVersion,
-    Node as ProtoNode, UpdateFlow as ProtoUpdateFlow, UpdateFlowVersion as ProtoUpdateFlowVersion,
-    Variable as ProtoVariable,
+    CreateFlow as ProtoCreateFlow, CreateFlowVersion as ProtoCreateFlowVersion, Flow as ProtoFlow,
+    FlowVersion as ProtoFlowVersion, Node as ProtoNode, UpdateFlow as ProtoUpdateFlow,
+    UpdateFlowVersion as ProtoUpdateFlowVersion, Variable as ProtoVariable,
 };
 
 pub type FlowId = String;
@@ -200,22 +200,23 @@ impl Into<ProtoFlowVersion> for FlowVersion {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateFlow {
     pub flow_name: String,
-    pub active: bool,
+    pub active: Option<bool>,
     pub version: Option<String>,
-    pub description: Option<String>,
 }
 
 impl Into<ProtoCreateFlow> for CreateFlow {
     fn into(self) -> ProtoCreateFlow {
-        use crate::generated::flows::create_flow::{Description, Version};
+        use crate::generated::flows::create_flow::Version;
+        // oneof version { string version_string = 1;};
+        // string flow_name = 2;
+        // optional bool active = 3;
         ProtoCreateFlow {
-            flow_id: uuid::Uuid::new_v4().to_string(),
             flow_name: self.flow_name,
             version: Some(self.version.map_or_else(
                 || Version::VersionString("0.0.1".to_string()),
                 Version::VersionString,
             )),
-            description: self.description.map(Description::Present),
+            active: self.active,
         }
     }
 }
@@ -230,15 +231,52 @@ pub struct UpdateFlow {
 
 impl Into<ProtoUpdateFlow> for UpdateFlow {
     fn into(self) -> ProtoUpdateFlow {
-        use crate::generated::flows::update_flow::{Description, Version};
+        // use crate::generated::flows::update_flow::{Description, Version};
         ProtoUpdateFlow {
             flow_name: self.flow_name,
+            version: Some(self.version.unwrap_or("0.0.1".to_string())),
+            description: Some(self.description.unwrap_or("".to_string())),
+            active: self.active,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CreateFlowVersion {
+    pub flow_id: FlowId,
+    pub version: Option<String>,
+    pub flow_definition: String,
+    pub published: Option<bool>,
+    pub description: Option<String>,
+}
+
+impl Default for CreateFlowVersion {
+    fn default() -> Self {
+        Self {
+            flow_id: "".to_string(),
+            version: Some("0.0.1".to_string()),
+            flow_definition: "{}".to_string(),
+            published: Some(false),
+            description: None,
+        }
+    }
+}
+
+impl Into<ProtoCreateFlowVersion> for CreateFlowVersion {
+    fn into(self) -> ProtoCreateFlowVersion {
+        use crate::generated::flows::create_flow_version::{Description, Version};
+        // oneof version { string version_string = 1;};
+        // string flow_name = 2;
+        // optional bool active = 3;
+        ProtoCreateFlowVersion {
+            flow_id: self.flow_id,
             version: Some(self.version.map_or_else(
                 || Version::VersionString("0.0.1".to_string()),
                 Version::VersionString,
             )),
+            published: self.published,
             description: self.description.map(Description::Present),
-            active: self.active,
+            flow_definition: self.flow_definition,
         }
     }
 }
@@ -253,19 +291,11 @@ pub struct UpdateFlowVersion {
 
 impl Into<ProtoUpdateFlowVersion> for UpdateFlowVersion {
     fn into(self) -> ProtoUpdateFlowVersion {
-        use crate::generated::flows::update_flow_version::{
-            Description, FlowDefinition, Published, Version,
-        };
         ProtoUpdateFlowVersion {
-            version: Some(self.version.map_or_else(
-                || Version::VersionString("0.0.1".to_string()),
-                Version::VersionString,
-            )),
-            flow_definition: self
-                .flow_definition
-                .map(FlowDefinition::FlowDefinitionString),
-            published: self.published.map(Published::PublishedBool),
-            description: self.description.map(Description::Present),
+            version: Some(self.version.unwrap_or_default()),
+            flow_definition: Some(self.flow_definition.unwrap_or_default()),
+            published: self.published,
+            description: self.description,
         }
     }
 }
