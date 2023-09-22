@@ -200,6 +200,7 @@ dependencies = [
  "config",
  "data-encoding",
  "dirs 5.0.1",
+ "futures",
  "humantime",
  "lazy_static",
  "once_cell",
@@ -208,6 +209,7 @@ dependencies = [
  "opentelemetry-otlp",
  "opentelemetry-semantic-conventions",
  "serde",
+ "serde_json",
  "sha2",
  "thiserror",
  "tokio",
@@ -216,6 +218,7 @@ dependencies = [
  "tracing-opentelemetry",
  "tracing-subscriber",
  "tracing-tree",
+ "url",
 ]
 
 [[package]]
@@ -252,6 +255,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
+ "colored",
  "config",
  "derive_builder",
  "dotenv",
@@ -266,12 +270,14 @@ dependencies = [
  "postage",
  "prost 0.12.1",
  "prost-types",
+ "rand 0.8.5",
  "serde",
  "serde_json",
  "sqlx",
  "tempfile",
  "thiserror",
  "tokio",
+ "tokio-stream",
  "tonic 0.10.0",
  "tonic-build",
  "tonic-reflection",
@@ -280,6 +286,7 @@ dependencies = [
  "tracing-log",
  "tracing-opentelemetry",
  "tracing-subscriber",
+ "url",
  "uuid",
 ]
 
@@ -299,6 +306,7 @@ dependencies = [
  "thiserror",
  "toml 0.7.8",
  "tracing",
+ "url",
  "uuid",
 ]
 

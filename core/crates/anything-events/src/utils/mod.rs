@@ -1,3 +1,4 @@
+pub mod anythingfs;
 pub mod backends;
 pub mod bootstrap;
 pub mod loader;
