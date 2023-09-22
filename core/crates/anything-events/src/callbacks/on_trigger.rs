@@ -23,8 +23,6 @@ pub async fn process_triggers(server: Arc<Server>) -> anyhow::Result<()> {
 
         // TODO: update this
 
-        println!("in event handler: {:?}", evt);
-
         let all_triggered_flows = system_handler
             .lock()
             .await

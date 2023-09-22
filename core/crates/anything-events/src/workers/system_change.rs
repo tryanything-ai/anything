@@ -72,7 +72,6 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
 
     while let Some(msg) = directory_change_rx.recv().await {
         // while let msg = directory_change_rx.recv().await {
-        println!("msg: {:?}", msg);
         match msg.change_type {
             SystemChangeType::Flows => {
                 info!("Flows change ({:?}) at {:?}", msg.kind, msg.path);

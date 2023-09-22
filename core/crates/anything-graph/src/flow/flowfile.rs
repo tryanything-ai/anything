@@ -51,6 +51,7 @@ struct ParseFlowfile {
     version: Option<String>,
     trigger: ParseTrigger,
     nodes: Vec<ParseNode>,
+    variables: Option<Vec<HashMap<String, String>>>,
 }
 
 impl Into<Flow> for ParseFlowfile {
@@ -60,6 +61,7 @@ impl Into<Flow> for ParseFlowfile {
         flow.id = self.id.unwrap_or(uuid::Uuid::new_v4().to_string());
         flow.version = self.version;
         flow.trigger = self.trigger.into();
+        flow.variables = optional_vec_map_into_hashmap(self.variables).unwrap_or_default();
         for node in self.nodes {
             let node: Node = node.into();
             flow.add_node_obj(&node).expect("unable to add node");
