@@ -57,19 +57,6 @@ pub async fn process_triggers(server: Arc<Server>) -> anyhow::Result<()> {
         for t in &tasks {
             println!("task: {:?}", t);
         }
-        // all_triggered_flows.into_iter().for_each(f)
-
-        // let flows = get_flows_interested_in_event(evt)
-        // Hardcoded for now
-        // let flow = Flowfile::from_file(PathBuf::from("examples/simple_flow.toml"))
-        //     .unwrap()
-        //     .flow;
-
-        // let mut executor = Executor::new(&flow);
-        // let _run = executor.run().await;
-        // let run_context = executor.context.lock().unwrap();
-        // let latest_output = run_context.latest_output.clone();
-        // println!("Latest output: {:?}", latest_output);
     }
 
     Ok(())
