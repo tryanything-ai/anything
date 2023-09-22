@@ -1,5 +1,5 @@
-root_dir = "/tmp/eventurous"
-log = "warn,eventurous=info"
+root_dir = "/tmp/anything"
+log = "warn,anything=info"
 json_log = false
 log_retention = "4h"
 
