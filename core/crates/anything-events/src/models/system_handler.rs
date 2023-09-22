@@ -5,7 +5,10 @@ use anything_graph::flow::{flow::Flow, flowfile::Flowfile};
 use futures::lock::Mutex;
 use once_cell::sync::OnceCell;
 
-use crate::{config::AnythingEventsConfig, errors::EventsResult, Trigger};
+use crate::{
+    config::AnythingEventsConfig, errors::EventsResult, utils::anythingfs::safe_read_directory,
+    Trigger,
+};
 
 pub static SYSTEM_HANDLER: OnceCell<Mutex<SystemHandler>> = OnceCell::new();
 
@@ -66,13 +69,12 @@ impl SystemHandler {
         let mut root_dir = self.config.root_dir.clone();
         root_dir.push("flows");
         // READ DIRECTORY AND RELOAD FLOWS
-        let flow_files = std::fs::read_dir(root_dir)?;
-        for flow_file in flow_files {
-            let flow_file = flow_file?;
-            let flow_file_path = flow_file.path();
+        let flow_files = safe_read_directory(root_dir, vec!["toml".to_string()])?;
+        for flow_file_path in flow_files {
             let flow = match Flowfile::from_file(flow_file_path) {
                 Ok(flowfile) => flowfile.flow,
                 Err(e) => {
+                    println!("loaded flow_file: {:?}", e);
                     tracing::error!("Failed to load flow: {}", e.to_string());
                     continue;
                 }
@@ -161,6 +163,8 @@ mod tests {
 
         let flows_triggers = system_handler.get_all_flows_for_trigger(evt);
         assert_eq!(flows_triggers.len(), 1);
+        let first_flow = flows_triggers.first().unwrap();
+        assert_eq!(first_flow.name, "EmptyFlow".to_string());
         Ok(())
     }
 

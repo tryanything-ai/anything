@@ -76,6 +76,15 @@ struct ParseTrigger {
     settings: Value,
 }
 
+/// Parse a trigger into the appropriate trigger type
+///
+/// Available trigger names
+///
+/// - manual
+/// - file_change
+/// - webhook
+/// - schedule
+/// - empty (default)
 impl Into<Trigger> for ParseTrigger {
     fn into(self) -> Trigger {
         match self.name.as_str() {
@@ -211,7 +220,7 @@ mod tests {
         let simple_file = PathBuf::from("tests/resources/simple.toml");
 
         let _flow_file = Flowfile::from_file(simple_file)?;
-        // println!("flow file: {:#?}", flow_file);
+
         Ok(())
     }
 }
