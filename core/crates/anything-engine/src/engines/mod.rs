@@ -33,5 +33,6 @@ pub trait Engine {
         &mut self,
         node: &Node,
         global_context: &ExecutionContext,
+        event_payload: &serde_json::Value,
     ) -> EngineResult<NodeExecutionContext>;
 }

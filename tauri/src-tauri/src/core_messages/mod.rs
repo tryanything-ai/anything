@@ -1,10 +1,12 @@
-use anything_events::clients::{flows_client::FlowsClient, Flow, GetFlowRequest, GetFlowsRequest};
+use anything_events::clients::{
+    flows_service_client::FlowsServiceClient, GetFlowRequest, GetFlowsRequest,
+};
 use anything_events::models::Flow as FlowModel;
 use tonic::Request;
 
 #[tauri::command]
 pub async fn get_flows() -> Result<Vec<FlowModel>, ()> {
-    let mut client = FlowsClient::connect("http://localhost:50234")
+    let mut client = FlowsServiceClient::connect("http://localhost:50234")
         .await
         .unwrap();
     let request = Request::new(GetFlowsRequest {});
@@ -28,21 +30,22 @@ pub fn get_chat_flows() -> String {
 
 #[tauri::command]
 pub async fn get_flow(flow_id: String) -> Result<FlowModel, ()> {
-    let mut client = FlowsClient::connect("http://localhost:50234")
-        .await
-        .unwrap();
-    let request = Request::new(GetFlowRequest {
-        flow_id: flow_id.clone(),
-    });
-    let response = client
-        .get_flow(request)
-        .await
-        .expect("error making request");
+    // let mut client = FlowsServiceClient::connect("http://localhost:50234")
+    //     .await
+    //     .unwrap();
+    // let request = Request::new(GetFlowRequest {
+    //     flow_id: flow_id.clone(),
+    // });
+    // let response = client
+    //     .get_flow(request)
+    //     .await
+    //     .expect("error making request");
 
-    match response.into_inner().flow {
-        Some(flow) => Ok(FlowModel::from(flow)),
-        None => Err(()),
-    }
+    // match response.into_inner().flow {
+    //     Some(flow) => Ok(FlowModel::from(flow)),
+    //     None => Err(()),
+    // }
+    Err(())
 }
 
 #[tauri::command]

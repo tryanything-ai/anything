@@ -51,6 +51,7 @@ struct ParseFlowfile {
     version: Option<String>,
     trigger: ParseTrigger,
     nodes: Vec<ParseNode>,
+    variables: Option<Vec<HashMap<String, String>>>,
 }
 
 impl Into<Flow> for ParseFlowfile {
@@ -60,6 +61,7 @@ impl Into<Flow> for ParseFlowfile {
         flow.id = self.id.unwrap_or(uuid::Uuid::new_v4().to_string());
         flow.version = self.version;
         flow.trigger = self.trigger.into();
+        flow.variables = optional_vec_map_into_hashmap(self.variables).unwrap_or_default();
         for node in self.nodes {
             let node: Node = node.into();
             flow.add_node_obj(&node).expect("unable to add node");
@@ -74,6 +76,15 @@ struct ParseTrigger {
     settings: Value,
 }
 
+/// Parse a trigger into the appropriate trigger type
+///
+/// Available trigger names
+///
+/// - manual
+/// - file_change
+/// - webhook
+/// - schedule
+/// - empty (default)
 impl Into<Trigger> for ParseTrigger {
     fn into(self) -> Trigger {
         match self.name.as_str() {
@@ -209,7 +220,7 @@ mod tests {
         let simple_file = PathBuf::from("tests/resources/simple.toml");
 
         let _flow_file = Flowfile::from_file(simple_file)?;
-        // println!("flow file: {:#?}", flow_file);
+
         Ok(())
     }
 }

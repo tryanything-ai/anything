@@ -38,6 +38,25 @@ pub struct Flow {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateFlow {
+    #[prost(string, tag = "2")]
+    pub flow_name: ::prost::alloc::string::String,
+    #[prost(bool, optional, tag = "3")]
+    pub active: ::core::option::Option<bool>,
+    #[prost(oneof = "create_flow::Version", tags = "1")]
+    pub version: ::core::option::Option<create_flow::Version>,
+}
+/// Nested message and enum types in `CreateFlow`.
+pub mod create_flow {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Version {
+        #[prost(string, tag = "1")]
+        VersionString(::prost::alloc::string::String),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowVersion {
     #[prost(string, tag = "1")]
     pub version_id: ::prost::alloc::string::String,
@@ -65,89 +84,25 @@ pub mod flow_version {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateFlow {
+pub struct CreateFlowVersion {
     #[prost(string, tag = "1")]
     pub flow_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub flow_name: ::prost::alloc::string::String,
-    #[prost(oneof = "create_flow::Version", tags = "2")]
-    pub version: ::core::option::Option<create_flow::Version>,
-    #[prost(oneof = "create_flow::Description", tags = "5")]
-    pub description: ::core::option::Option<create_flow::Description>,
+    pub flow_definition: ::prost::alloc::string::String,
+    #[prost(bool, optional, tag = "5")]
+    pub published: ::core::option::Option<bool>,
+    #[prost(oneof = "create_flow_version::Version", tags = "2")]
+    pub version: ::core::option::Option<create_flow_version::Version>,
+    #[prost(oneof = "create_flow_version::Description", tags = "4")]
+    pub description: ::core::option::Option<create_flow_version::Description>,
 }
-/// Nested message and enum types in `CreateFlow`.
-pub mod create_flow {
+/// Nested message and enum types in `CreateFlowVersion`.
+pub mod create_flow_version {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Version {
         #[prost(string, tag = "2")]
         VersionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Description {
-        #[prost(string, tag = "5")]
-        Present(::prost::alloc::string::String),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateFlow {
-    #[prost(string, tag = "2")]
-    pub flow_name: ::prost::alloc::string::String,
-    #[prost(bool, tag = "4")]
-    pub active: bool,
-    #[prost(oneof = "update_flow::Version", tags = "1")]
-    pub version: ::core::option::Option<update_flow::Version>,
-    #[prost(oneof = "update_flow::Description", tags = "3")]
-    pub description: ::core::option::Option<update_flow::Description>,
-}
-/// Nested message and enum types in `UpdateFlow`.
-pub mod update_flow {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Version {
-        #[prost(string, tag = "1")]
-        VersionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Description {
-        #[prost(string, tag = "3")]
-        Present(::prost::alloc::string::String),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateFlowVersion {
-    #[prost(oneof = "update_flow_version::Version", tags = "1")]
-    pub version: ::core::option::Option<update_flow_version::Version>,
-    #[prost(oneof = "update_flow_version::FlowDefinition", tags = "2")]
-    pub flow_definition: ::core::option::Option<update_flow_version::FlowDefinition>,
-    #[prost(oneof = "update_flow_version::Published", tags = "3")]
-    pub published: ::core::option::Option<update_flow_version::Published>,
-    #[prost(oneof = "update_flow_version::Description", tags = "4")]
-    pub description: ::core::option::Option<update_flow_version::Description>,
-}
-/// Nested message and enum types in `UpdateFlowVersion`.
-pub mod update_flow_version {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Version {
-        #[prost(string, tag = "1")]
-        VersionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum FlowDefinition {
-        #[prost(string, tag = "2")]
-        FlowDefinitionString(::prost::alloc::string::String),
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Published {
-        #[prost(bool, tag = "3")]
-        PublishedBool(bool),
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -156,12 +111,36 @@ pub mod update_flow_version {
         Present(::prost::alloc::string::String),
     }
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlow {
+    #[prost(string, optional, tag = "1")]
+    pub version: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "2")]
+    pub flow_name: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "3")]
+    pub description: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, tag = "4")]
+    pub active: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFlowVersion {
+    #[prost(string, optional, tag = "1")]
+    pub version: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "2")]
+    pub flow_definition: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, optional, tag = "3")]
+    pub published: ::core::option::Option<bool>,
+    #[prost(string, optional, tag = "4")]
+    pub description: ::core::option::Option<::prost::alloc::string::String>,
+}
 /// Create a flow
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateFlowRequest {
     #[prost(message, optional, tag = "1")]
-    pub flow: ::core::option::Option<Flow>,
+    pub flow: ::core::option::Option<CreateFlow>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -195,8 +174,8 @@ pub struct GetFlowResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateFlowRequest {
-    #[prost(message, optional, tag = "1")]
-    pub flow: ::core::option::Option<Flow>,
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
     pub update_flow: ::core::option::Option<UpdateFlow>,
 }
@@ -220,7 +199,7 @@ pub struct UpdateFlowVersionRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateFlowVersionResponse {
     #[prost(message, optional, tag = "1")]
-    pub flow: ::core::option::Option<Flow>,
+    pub flow_version: ::core::option::Option<FlowVersion>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -235,15 +214,15 @@ pub struct PublishFlowResponse {
     pub flow: ::core::option::Option<Flow>,
 }
 /// Generated client implementations.
-pub mod flows_client {
+pub mod flows_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct FlowsClient<T> {
+    pub struct FlowsServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl FlowsClient<tonic::transport::Channel> {
+    impl FlowsServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -254,7 +233,7 @@ pub mod flows_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> FlowsClient<T>
+    impl<T> FlowsServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -272,7 +251,7 @@ pub mod flows_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> FlowsClient<InterceptedService<T, F>>
+        ) -> FlowsServiceClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -286,7 +265,7 @@ pub mod flows_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            FlowsClient::new(InterceptedService::new(inner, interceptor))
+            FlowsServiceClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -336,9 +315,12 @@ pub mod flows_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/flows.Flows/CreateFlow");
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/CreateFlow",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "CreateFlow"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "CreateFlow"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_flows(
@@ -358,9 +340,12 @@ pub mod flows_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/flows.Flows/GetFlows");
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/GetFlows",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "GetFlows"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "GetFlows"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_flow(
@@ -380,9 +365,12 @@ pub mod flows_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/flows.Flows/GetFlow");
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/GetFlow",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "GetFlow"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "GetFlow"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn update_flow(
@@ -402,9 +390,12 @@ pub mod flows_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/flows.Flows/UpdateFlow");
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/UpdateFlow",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("flows.Flows", "UpdateFlow"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "UpdateFlow"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn update_flow_version(
@@ -425,22 +416,22 @@ pub mod flows_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/flows.Flows/UpdateFlowVersion",
+                "/flows.FlowsService/UpdateFlowVersion",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("flows.Flows", "UpdateFlowVersion"));
+                .insert(GrpcMethod::new("flows.FlowsService", "UpdateFlowVersion"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod flows_server {
+pub mod flows_service_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with FlowsServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with FlowsServiceServer.
     #[async_trait]
-    pub trait Flows: Send + Sync + 'static {
+    pub trait FlowsService: Send + Sync + 'static {
         async fn create_flow(
             &self,
             request: tonic::Request<super::CreateFlowRequest>,
@@ -475,7 +466,7 @@ pub mod flows_server {
         >;
     }
     #[derive(Debug)]
-    pub struct FlowsServer<T: Flows> {
+    pub struct FlowsServiceServer<T: FlowsService> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -483,7 +474,7 @@ pub mod flows_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Flows> FlowsServer<T> {
+    impl<T: FlowsService> FlowsServiceServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -535,9 +526,9 @@ pub mod flows_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for FlowsServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for FlowsServiceServer<T>
     where
-        T: Flows,
+        T: FlowsService,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -553,10 +544,12 @@ pub mod flows_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/flows.Flows/CreateFlow" => {
+                "/flows.FlowsService/CreateFlow" => {
                     #[allow(non_camel_case_types)]
-                    struct CreateFlowSvc<T: Flows>(pub Arc<T>);
-                    impl<T: Flows> tonic::server::UnaryService<super::CreateFlowRequest>
+                    struct CreateFlowSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::CreateFlowRequest>
                     for CreateFlowSvc<T> {
                         type Response = super::CreateFlowResponse;
                         type Future = BoxFuture<
@@ -569,7 +562,7 @@ pub mod flows_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Flows>::create_flow(&inner, request).await
+                                <T as FlowsService>::create_flow(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -597,10 +590,12 @@ pub mod flows_server {
                     };
                     Box::pin(fut)
                 }
-                "/flows.Flows/GetFlows" => {
+                "/flows.FlowsService/GetFlows" => {
                     #[allow(non_camel_case_types)]
-                    struct GetFlowsSvc<T: Flows>(pub Arc<T>);
-                    impl<T: Flows> tonic::server::UnaryService<super::GetFlowsRequest>
+                    struct GetFlowsSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::GetFlowsRequest>
                     for GetFlowsSvc<T> {
                         type Response = super::GetFlowsResponse;
                         type Future = BoxFuture<
@@ -613,7 +608,7 @@ pub mod flows_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Flows>::get_flows(&inner, request).await
+                                <T as FlowsService>::get_flows(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -641,10 +636,12 @@ pub mod flows_server {
                     };
                     Box::pin(fut)
                 }
-                "/flows.Flows/GetFlow" => {
+                "/flows.FlowsService/GetFlow" => {
                     #[allow(non_camel_case_types)]
-                    struct GetFlowSvc<T: Flows>(pub Arc<T>);
-                    impl<T: Flows> tonic::server::UnaryService<super::GetFlowRequest>
+                    struct GetFlowSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::GetFlowRequest>
                     for GetFlowSvc<T> {
                         type Response = super::GetFlowResponse;
                         type Future = BoxFuture<
@@ -657,7 +654,7 @@ pub mod flows_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Flows>::get_flow(&inner, request).await
+                                <T as FlowsService>::get_flow(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -685,10 +682,12 @@ pub mod flows_server {
                     };
                     Box::pin(fut)
                 }
-                "/flows.Flows/UpdateFlow" => {
+                "/flows.FlowsService/UpdateFlow" => {
                     #[allow(non_camel_case_types)]
-                    struct UpdateFlowSvc<T: Flows>(pub Arc<T>);
-                    impl<T: Flows> tonic::server::UnaryService<super::UpdateFlowRequest>
+                    struct UpdateFlowSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::UpdateFlowRequest>
                     for UpdateFlowSvc<T> {
                         type Response = super::UpdateFlowResponse;
                         type Future = BoxFuture<
@@ -701,7 +700,7 @@ pub mod flows_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Flows>::update_flow(&inner, request).await
+                                <T as FlowsService>::update_flow(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -729,11 +728,11 @@ pub mod flows_server {
                     };
                     Box::pin(fut)
                 }
-                "/flows.Flows/UpdateFlowVersion" => {
+                "/flows.FlowsService/UpdateFlowVersion" => {
                     #[allow(non_camel_case_types)]
-                    struct UpdateFlowVersionSvc<T: Flows>(pub Arc<T>);
+                    struct UpdateFlowVersionSvc<T: FlowsService>(pub Arc<T>);
                     impl<
-                        T: Flows,
+                        T: FlowsService,
                     > tonic::server::UnaryService<super::UpdateFlowVersionRequest>
                     for UpdateFlowVersionSvc<T> {
                         type Response = super::UpdateFlowVersionResponse;
@@ -747,7 +746,8 @@ pub mod flows_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Flows>::update_flow_version(&inner, request).await
+                                <T as FlowsService>::update_flow_version(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -790,7 +790,7 @@ pub mod flows_server {
             }
         }
     }
-    impl<T: Flows> Clone for FlowsServer<T> {
+    impl<T: FlowsService> Clone for FlowsServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -802,7 +802,7 @@ pub mod flows_server {
             }
         }
     }
-    impl<T: Flows> Clone for _Inner<T> {
+    impl<T: FlowsService> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -812,7 +812,7 @@ pub mod flows_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Flows> tonic::server::NamedService for FlowsServer<T> {
-        const NAME: &'static str = "flows.Flows";
+    impl<T: FlowsService> tonic::server::NamedService for FlowsServiceServer<T> {
+        const NAME: &'static str = "flows.FlowsService";
     }
 }

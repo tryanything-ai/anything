@@ -1,3 +1,4 @@
+use postage::{dispatch::Sender, sink::Sink};
 use sqlx::Row;
 use sqlx::SqlitePool;
 
@@ -5,6 +6,8 @@ use crate::{
     errors::{EventsError, EventsResult},
     models::event::{CreateEvent, Event, EventId},
 };
+
+use super::AnythingRepo;
 
 #[derive(Debug, Clone)]
 pub struct EventRepoImpl {
@@ -15,6 +18,15 @@ pub struct EventRepoImpl {
 impl EventRepoImpl {
     pub fn new(pool: &SqlitePool) -> Self {
         Self { pool: pool.clone() }
+    }
+}
+
+#[async_trait::async_trait]
+impl AnythingRepo<Event> for EventRepoImpl {
+    async fn and_confirm(&self, item_id: &str, mut tx: Sender<Event>) -> EventsResult<()> {
+        let trigger = self.find_by_id(item_id.to_string()).await?;
+        tx.send(trigger).await?;
+        Ok(())
     }
 }
 

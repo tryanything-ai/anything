@@ -66,15 +66,15 @@ pub struct GetEventResponse {
     pub event: ::core::option::Option<Event>,
 }
 /// Generated client implementations.
-pub mod events_client {
+pub mod events_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct EventsClient<T> {
+    pub struct EventsServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl EventsClient<tonic::transport::Channel> {
+    impl EventsServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -85,7 +85,7 @@ pub mod events_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> EventsClient<T>
+    impl<T> EventsServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -103,7 +103,7 @@ pub mod events_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> EventsClient<InterceptedService<T, F>>
+        ) -> EventsServiceClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -117,7 +117,7 @@ pub mod events_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            EventsClient::new(InterceptedService::new(inner, interceptor))
+            EventsServiceClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -169,11 +169,11 @@ pub mod events_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/events.Events/TriggerEvent",
+                "/events.EventsService/TriggerEvent",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("events.Events", "TriggerEvent"));
+                .insert(GrpcMethod::new("events.EventsService", "TriggerEvent"));
             self.inner.unary(req, path, codec).await
         }
         /// Get an event
@@ -194,20 +194,23 @@ pub mod events_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/events.Events/GetEvent");
+            let path = http::uri::PathAndQuery::from_static(
+                "/events.EventsService/GetEvent",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("events.Events", "GetEvent"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("events.EventsService", "GetEvent"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod events_server {
+pub mod events_service_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with EventsServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with EventsServiceServer.
     #[async_trait]
-    pub trait Events: Send + Sync + 'static {
+    pub trait EventsService: Send + Sync + 'static {
         /// Send an event
         async fn trigger_event(
             &self,
@@ -226,7 +229,7 @@ pub mod events_server {
         >;
     }
     #[derive(Debug)]
-    pub struct EventsServer<T: Events> {
+    pub struct EventsServiceServer<T: EventsService> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -234,7 +237,7 @@ pub mod events_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Events> EventsServer<T> {
+    impl<T: EventsService> EventsServiceServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -286,9 +289,9 @@ pub mod events_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for EventsServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for EventsServiceServer<T>
     where
-        T: Events,
+        T: EventsService,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -304,11 +307,11 @@ pub mod events_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/events.Events/TriggerEvent" => {
+                "/events.EventsService/TriggerEvent" => {
                     #[allow(non_camel_case_types)]
-                    struct TriggerEventSvc<T: Events>(pub Arc<T>);
+                    struct TriggerEventSvc<T: EventsService>(pub Arc<T>);
                     impl<
-                        T: Events,
+                        T: EventsService,
                     > tonic::server::UnaryService<super::TriggerEventRequest>
                     for TriggerEventSvc<T> {
                         type Response = super::TriggerEventResponse;
@@ -322,7 +325,7 @@ pub mod events_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Events>::trigger_event(&inner, request).await
+                                <T as EventsService>::trigger_event(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -350,10 +353,12 @@ pub mod events_server {
                     };
                     Box::pin(fut)
                 }
-                "/events.Events/GetEvent" => {
+                "/events.EventsService/GetEvent" => {
                     #[allow(non_camel_case_types)]
-                    struct GetEventSvc<T: Events>(pub Arc<T>);
-                    impl<T: Events> tonic::server::UnaryService<super::GetEventRequest>
+                    struct GetEventSvc<T: EventsService>(pub Arc<T>);
+                    impl<
+                        T: EventsService,
+                    > tonic::server::UnaryService<super::GetEventRequest>
                     for GetEventSvc<T> {
                         type Response = super::GetEventResponse;
                         type Future = BoxFuture<
@@ -366,7 +371,7 @@ pub mod events_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Events>::get_event(&inner, request).await
+                                <T as EventsService>::get_event(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -409,7 +414,7 @@ pub mod events_server {
             }
         }
     }
-    impl<T: Events> Clone for EventsServer<T> {
+    impl<T: EventsService> Clone for EventsServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -421,7 +426,7 @@ pub mod events_server {
             }
         }
     }
-    impl<T: Events> Clone for _Inner<T> {
+    impl<T: EventsService> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -431,7 +436,7 @@ pub mod events_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Events> tonic::server::NamedService for EventsServer<T> {
-        const NAME: &'static str = "events.Events";
+    impl<T: EventsService> tonic::server::NamedService for EventsServiceServer<T> {
+        const NAME: &'static str = "events.EventsService";
     }
 }

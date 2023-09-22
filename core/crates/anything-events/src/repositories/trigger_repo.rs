@@ -1,11 +1,13 @@
-use chrono::Utc;
-use sqlx::Row;
-use sqlx::SqlitePool;
-
+use super::AnythingRepo;
+use crate::Trigger;
 use crate::{
     errors::{EventsError, EventsResult},
     models::trigger::{CreateTrigger, TriggerId},
 };
+use chrono::Utc;
+use postage::{dispatch::Sender, sink::Sink};
+use sqlx::Row;
+use sqlx::SqlitePool;
 
 #[derive(Debug, Clone)]
 pub struct TriggerRepoImpl {
@@ -20,12 +22,22 @@ impl TriggerRepoImpl {
 }
 
 #[async_trait::async_trait]
-pub trait FlowRepo {
-    async fn create_trigger(&self, create_trigger: CreateTrigger) -> EventsResult<TriggerId>;
+impl AnythingRepo<Trigger> for TriggerRepoImpl {
+    async fn and_confirm(&self, item_id: &str, mut tx: Sender<Trigger>) -> EventsResult<()> {
+        let trigger = self.get_trigger_by_id(item_id.to_string()).await?;
+        tx.send(trigger).await?;
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
-impl FlowRepo for TriggerRepoImpl {
+pub trait TriggerRepo {
+    async fn create_trigger(&self, create_trigger: CreateTrigger) -> EventsResult<TriggerId>;
+    async fn get_trigger_by_id(&self, trigger_id: TriggerId) -> EventsResult<Trigger>;
+}
+
+#[async_trait::async_trait]
+impl TriggerRepo for TriggerRepoImpl {
     async fn create_trigger(&self, create_trigger: CreateTrigger) -> EventsResult<TriggerId> {
         let row = sqlx::query(
             r#"
@@ -45,6 +57,17 @@ impl FlowRepo for TriggerRepoImpl {
 
         let id = row.get("trigger_id");
         Ok(id)
+    }
+
+    async fn get_trigger_by_id(&self, trigger_id: TriggerId) -> EventsResult<Trigger> {
+        let trigger =
+            sqlx::query_as::<_, Trigger>(r#"SELECT * from triggers WHERE trigger_id = ?1"#)
+                .bind(&trigger_id)
+                .fetch_one(&self.pool)
+                .await
+                .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(trigger)
     }
 }
 
@@ -72,8 +95,25 @@ mod tests {
             .await;
 
         assert!(res.is_ok());
+
         let row = res.unwrap();
         assert_eq!(row.get::<String, _>("event_name"), dummy_create.event_name);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_trigger_by_trigger_id() -> anyhow::Result<()> {
+        let test_repo = TestTriggerRepo::new().await;
+        let dummy_create = test_repo.dummy_create_trigger();
+        let trigger_id = test_repo
+            .insert_create_trigger(dummy_create.clone())
+            .await?;
+
+        let res = test_repo.trigger_repo.get_trigger_by_id(trigger_id).await;
+        assert!(res.is_ok());
+        let trigger = res.unwrap();
+        assert_eq!(trigger.payload, dummy_create.payload);
 
         Ok(())
     }

@@ -72,7 +72,6 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
 
     while let Some(msg) = directory_change_rx.recv().await {
         // while let msg = directory_change_rx.recv().await {
-        println!("msg: {:?}", msg);
         match msg.change_type {
             SystemChangeType::Flows => {
                 info!("Flows change ({:?}) at {:?}", msg.kind, msg.path);
@@ -98,7 +97,12 @@ fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Resul
     let watcher = RecommendedWatcher::new(
         move |res| {
             futures::executor::block_on(async {
-                tx.send(res).await.unwrap();
+                match tx.send(res).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("watch error: {:?}", e);
+                    }
+                }
             })
         },
         Config::default(),

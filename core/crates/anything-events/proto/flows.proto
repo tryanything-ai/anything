@@ -3,7 +3,7 @@ package flows;
 
 // import "types.proto";
 
-service Flows {
+service FlowsService {
     rpc CreateFlow (CreateFlowRequest) returns (CreateFlowResponse) {}
     rpc GetFlows (GetFlowsRequest) returns (GetFlowsResponse) {}
     rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}
@@ -33,6 +33,12 @@ message Flow {
     repeated FlowVersion flow_versions = 5;
 }
 
+message CreateFlow {
+    oneof version { string version_string = 1;};
+    string flow_name = 2;
+    optional bool active = 3;
+}
+
 message FlowVersion {
     string version_id = 1;
     string flow_id = 2;
@@ -43,30 +49,31 @@ message FlowVersion {
     int64 updated_at = 7;
 }
 
-message CreateFlow {
+message CreateFlowVersion {
     string flow_id = 1;
     oneof version { string version_string = 2;};
-    string flow_name = 3;
-    oneof description { string present = 5; };
+    string flow_definition = 3;
+    oneof description { string present = 4; };
+    optional bool published = 5;
 }
 
 message UpdateFlow {
-    oneof version { string version_string = 1;};
+    optional string version = 1;
     string flow_name = 2;
-    oneof description { string present = 3; };
+    optional string description = 3;
     bool active = 4;
 }
 
 message UpdateFlowVersion {
-    oneof version { string version_string = 1;};
-    oneof flow_definition {string flow_definition_string = 2; };
-    oneof published { bool published_bool = 3;};
-    oneof description { string present = 4; };
+    optional string version = 1;
+    optional string flow_definition = 2;
+    optional bool published = 3;
+    optional string description = 4;
 }
 
 // Create a flow
 message CreateFlowRequest {
-    Flow flow = 1;
+    CreateFlow flow = 1;
 }
 
 message CreateFlowResponse {
@@ -89,7 +96,7 @@ message GetFlowResponse {
 }
 
 message UpdateFlowRequest {
-    Flow flow = 1;
+    string flow_id = 1;
     UpdateFlow update_flow = 2;
 }
 message UpdateFlowResponse {
@@ -103,7 +110,7 @@ message UpdateFlowVersionRequest {
 }
 
 message UpdateFlowVersionResponse {
-    Flow flow = 1;
+    FlowVersion flow_version = 1;
 }
 
 message PublishFlowRequest {
