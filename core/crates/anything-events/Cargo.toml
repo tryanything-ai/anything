@@ -64,8 +64,9 @@ tempfile.workspace = true
 lazy_static = { workspace = true }
 tokio-stream = { workspace = true }
 rand = { workspace = true }
-color-eyre = { workspace = true }
 url = { workspace = true }
+colored = { workspace = true }
+
 
 [dev-dependencies]
 fake = { version = "2.8", features = ["derive"] }

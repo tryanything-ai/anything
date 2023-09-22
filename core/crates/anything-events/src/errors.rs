@@ -1,5 +1,4 @@
 use anything_core::error::AnythingError;
-use color_eyre::eyre::Result;
 use thiserror::Error;
 
 use crate::internal_notification::ShutdownNotification;
@@ -49,7 +48,4 @@ pub enum EventsError {
 
     #[error("not found: {0}")]
     NotFoundError(String),
-
-    #[error(transparent)]
-    ErrReport(#[from] color_eyre::eyre::ErrReport),
 }

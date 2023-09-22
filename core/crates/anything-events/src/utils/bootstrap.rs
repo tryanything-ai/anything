@@ -8,11 +8,9 @@ use crate::{
 };
 
 pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Context> {
-    info!("Bootstrapping anything");
-    color_eyre::install()?;
-
-    bootstrap_directory(config)?;
     setup_tracing("anything".to_string(), &config);
+    info!("Bootstrapping anything");
+    bootstrap_directory(config)?;
     setup_system(config).await?;
 
     // Create context
