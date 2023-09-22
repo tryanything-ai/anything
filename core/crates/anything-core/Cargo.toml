@@ -19,6 +19,7 @@ config = { version = "0.13", default-features = false, features = [
 data-encoding = { workspace = true }
 sha2 = { workspace = true }
 url = { workspace = true }
+futures = { workspace = true }
 
 chrono = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

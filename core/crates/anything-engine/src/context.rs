@@ -46,14 +46,23 @@ impl ExecutionContext {
     pub fn render_string_for_node(
         &mut self,
         node: Node,
+        event_payload: &serde_json::Value,
         mut engine: Box<dyn Engine + Send>,
     ) -> NodeExecutionContext {
-        engine.render(&node, &self).expect("unable to render node")
-    }  
+        engine
+            .render(&node, &self, event_payload)
+            .expect("unable to render node")
+    }
 
-    pub fn render_string(&self, node: &NodeExecutionContext, string: String) -> String {
+    pub fn render_string(
+        &self,
+        node: &NodeExecutionContext,
+        event_payload: &serde_json::Value,
+        string: String,
+    ) -> String {
         let mut context = self.build_global_render_context();
         let mut context = self.build_node_render_context(&mut context, &node);
+        let mut context = self.build_payload_render_context(&mut context, event_payload);
 
         self.render_with_tera(&mut context, string)
     }
@@ -61,7 +70,29 @@ impl ExecutionContext {
     fn render_with_tera(&self, context: &mut tera::Context, string: String) -> String {
         let mut tera = Tera::default();
         tera.add_raw_template("string", &string).unwrap();
-        tera.render("string", &context).unwrap()
+        match tera.render("string", &context) {
+            Ok(rendered) => rendered,
+            Err(e) => {
+                tracing::error!("Error rendering string: {:?}", e);
+                string
+            }
+        }
+    }
+
+    fn build_payload_render_context(
+        &self,
+        context: &mut tera::Context,
+        payload: &serde_json::Value,
+    ) -> tera::Context {
+        if !payload.is_object() {
+            return context.clone();
+        }
+        let mut executed_context: HashMap<String, &str> = HashMap::new();
+        for (key, value) in payload.as_object().unwrap().iter() {
+            executed_context.insert(key.clone(), value.as_str().unwrap());
+        }
+        context.insert("payload", &executed_context);
+        context.clone()
     }
 
     fn build_node_render_context(
@@ -115,7 +146,10 @@ mod tests {
 
     use anything_graph::flow::{flow::FlowBuilder, node::NodeBuilder};
 
-    use crate::types::{ProcessBuilder, ProcessStateBuilder};
+    use crate::{
+        test_helper::test_payload,
+        types::{ProcessBuilder, ProcessStateBuilder},
+    };
 
     use super::*;
 
@@ -129,7 +163,8 @@ mod tests {
         let exec_context = ExecutionContext::new(&flow);
 
         let node_exec = NodeExecutionContext::default();
-        let result = exec_context.render_string(&node_exec, "Hello {{name}}".to_string());
+        let result =
+            exec_context.render_string(&node_exec, &test_payload(), "Hello {{name}}".to_string());
         assert_eq!(result, "Hello ducks");
     }
 
@@ -143,7 +178,8 @@ mod tests {
         let exec_context = ExecutionContext::new(&flow);
 
         let node_exec = NodeExecutionContext::default();
-        let result = exec_context.render_string(&node_exec, "Hello {{name}}".to_string());
+        let result =
+            exec_context.render_string(&node_exec, &test_payload(), "Hello {{name}}".to_string());
         assert_eq!(result, "Hello ducks");
     }
 
@@ -165,8 +201,42 @@ mod tests {
             .node(node)
             .build()
             .unwrap();
-        let result = execution_context.render_string(&node, "Hello {{name}}".to_string());
+        let result =
+            execution_context.render_string(&node, &test_payload(), "Hello {{name}}".to_string());
         assert_eq!(result, "Hello mantalope");
+    }
+
+    #[test]
+    fn test_render_variables_are_available_from_payload() {
+        let flow = FlowBuilder::default().build().unwrap();
+
+        let execution_context = ExecutionContext::new(&flow);
+
+        let node = NodeBuilder::default()
+            .variables(HashMap::from([(
+                "name".to_string(),
+                "mantalope".to_string(),
+            )]))
+            .build()
+            .unwrap();
+
+        let node = NodeExecutionContextBuilder::default()
+            .node(node)
+            .build()
+            .unwrap();
+
+        let mut payload = test_payload();
+        payload.as_object_mut().unwrap().insert(
+            "name".to_string(),
+            serde_json::Value::String("ari".to_string()),
+        );
+
+        let result = execution_context.render_string(
+            &node,
+            &payload,
+            "Hello {{payload.name}} {{name}}".to_string(),
+        );
+        assert_eq!(result, "Hello ari mantalope");
     }
 
     #[test]
@@ -193,7 +263,8 @@ mod tests {
             .node(node)
             .build()
             .unwrap();
-        let result = execution_context.render_string(&node, "Hello {{name}}".to_string());
+        let result =
+            execution_context.render_string(&node, &test_payload(), "Hello {{name}}".to_string());
         assert_eq!(result, "Hello will be boys");
     }
 
@@ -243,8 +314,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = execution_context
-            .render_string(&node_exec2, r#"Hello {{simple['stdout']}}"#.to_string());
+        let result = execution_context.render_string(
+            &node_exec2,
+            &test_payload(),
+            r#"Hello {{simple['stdout']}}"#.to_string(),
+        );
         assert_eq!(result, "Hello output_from_dummy_data");
     }
 
@@ -290,8 +364,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let result =
-            execution_context.render_string(&node_exec2, r#"Hello {{simple.stderr}}"#.to_string());
+        let result = execution_context.render_string(
+            &node_exec2,
+            &test_payload(),
+            r#"Hello {{simple.stderr}}"#.to_string(),
+        );
         assert_eq!(result, "Hello error_from_dummy_data");
     }
 
@@ -337,8 +414,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let result =
-            execution_context.render_string(&node_exec2, r#"Hello {{simple.status}}"#.to_string());
+        let result = execution_context.render_string(
+            &node_exec2,
+            &test_payload(),
+            r#"Hello {{simple.status}}"#.to_string(),
+        );
         assert_eq!(result, "Hello success");
     }
 }

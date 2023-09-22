@@ -137,6 +137,7 @@ dependencies = [
  "config",
  "data-encoding",
  "dirs",
+ "futures",
  "humantime",
  "lazy_static",
  "once_cell",

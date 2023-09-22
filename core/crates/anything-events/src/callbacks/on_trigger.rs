@@ -1,5 +1,5 @@
-use anything_engine::executor::Executor;
-use futures::Future;
+use anything_engine::{executor::Executor, types::ProcessState};
+use anything_graph::flow::node::NodeState;
 use postage::prelude::Stream;
 use std::sync::Arc;
 
@@ -25,20 +25,36 @@ pub async fn process_triggers(server: Arc<Server>) -> anyhow::Result<()> {
 
         println!("in event handler: {:?}", evt);
 
-        let all_triggered_flows = system_handler.lock().await.get_all_flows_for_trigger(evt);
+        let all_triggered_flows = system_handler
+            .lock()
+            .await
+            .get_all_flows_for_trigger(evt.clone());
+        let payload = evt.payload.clone();
 
         // Trigger parallel runs
-        let tasks = join_parallel(all_triggered_flows.into_iter().map(|flow| {
-            let flow = flow.clone();
-            async move {
-                let mut executor = Executor::new(&flow);
-                let _run = executor.run().await;
-                let run_context = executor.context.lock().unwrap();
-                let latest_output = run_context.latest_output.clone();
-                latest_output
-            }
-        }))
-        .await;
+        let tasks =
+            anything_core::spawning::join_parallel(all_triggered_flows.into_iter().map(|flow| {
+                let flow = flow.clone();
+                let payload = payload.clone();
+                async move {
+                    let mut executor = Executor::new(&flow);
+                    match executor.run(&payload.clone()).await {
+                        Ok(_) => {
+                            let run_context = executor.context.lock().unwrap();
+                            let latest_output = run_context.latest_output.clone();
+                            latest_output
+                        }
+                        Err(e) => {
+                            tracing::error!("run failed: {:?}", e);
+                            ProcessState {
+                                status: Some(NodeState::Failed),
+                                ..Default::default()
+                            }
+                        }
+                    }
+                }
+            }))
+            .await;
 
         for t in &tasks {
             println!("task: {:?}", t);
@@ -59,17 +75,4 @@ pub async fn process_triggers(server: Arc<Server>) -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-async fn join_parallel<T: Send + 'static>(
-    futs: impl IntoIterator<Item = impl Future<Output = T> + Send + 'static>,
-) -> Vec<T> {
-    let tasks: Vec<_> = futs.into_iter().map(tokio::spawn).collect();
-    // unwrap the Result because it is introduced by tokio::spawn()
-    // and isn't something our caller can handle
-    futures::future::join_all(tasks)
-        .await
-        .into_iter()
-        .map(Result::unwrap)
-        .collect()
 }
