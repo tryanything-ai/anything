@@ -50,6 +50,7 @@ fn main() {
             core_messages::get_flow,
             core_messages::get_flow_node,
             core_messages::get_nodes,
+            core_messages::create_flow,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

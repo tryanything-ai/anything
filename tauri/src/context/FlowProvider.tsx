@@ -74,7 +74,6 @@ interface FlowContextInterface {
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
-  setFlowCenter: () => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -92,7 +91,6 @@ export const FlowContext = createContext<FlowContextInterface>({
   addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
-  setFlowCenter: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -113,7 +111,6 @@ type SessionComplete = {
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
-  const { appDocuments } = useTauriContext();
   const { renameFlowFiles } = useLocalFileContext();
   const { flow_name } = useParams();
   const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
@@ -231,14 +228,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     [addNode]
   );
 
-  //TODO: get working someday
-  const setFlowCenter = () => {
-    console.log("setting flow center  center");
-    if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
-    reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
-    // reactFlowInstance.fitView();
-  };
-
   const updateFlowFrontmatter = async (
     flow_name: string,
     keysToUpdate: any
@@ -257,27 +246,29 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const writeToml = async (toml: string, explicit_flow_name?: string) => {
-    if (!appDocuments || !flow_name) {
-      throw new Error("appDocuments or flow_name is undefined");
-    }
-
-    console.log("writing toml in FlowProvider");
-    let name = explicit_flow_name ? explicit_flow_name : flow_name;
-    return await api.fs.writeTextFile(
-      appDocuments + "/flows/" + name + "/flow.toml",
-      toml
-    );
+    // if (!flow_name) {
+    //   throw new Error("appDocuments or flow_name is undefined");
+    // }
+    // console.log("writing toml in FlowProvider");
+    // let name = explicit_flow_name ? explicit_flow_name : flow_name;
+    // await api.saveToml({ toml, flow_id: name });
+    // return await api.fs.writeTextFile(
+    //   appDocuments + "/flows/" + name + "/flow.toml",
+    //   toml
+    // );
   };
 
   const readToml = async () => {
     try {
-      if (!appDocuments || !flow_name) {
-        throw new Error("appDocuments or flow_name is undefined");
-      }
-      console.log("reading toml in FlowProvider");
-      return await api.fs.readTextFile(
-        appDocuments + "/flows/" + flow_name + "/flow.toml"
-      );
+      // if (!flow_name) {
+      //   throw new Error("appDocuments or flow_name is undefined");
+      // }
+      // console.log("reading toml in FlowProvider");
+      // return await api.fs.readTextFile(
+      //   appDocuments + "/flows/" + flow_name + "/flow.toml"
+      // );
+
+      return "";
     } catch (error) {
       console.log("error reading toml in FlowProvider", error);
     }
@@ -311,7 +302,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (flow_name && appDocuments && !initialTomlLoaded && !loadingToml) {
+      if (flow_name && !initialTomlLoaded && !loadingToml) {
         console.log("hydrating initial TOML");
         setLoadingToml(true);
         await updateStateFromToml();
@@ -321,9 +312,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     };
 
     fetchData();
-  }, [flow_name, appDocuments, initialTomlLoaded]);
+  }, [flow_name, initialTomlLoaded]);
 
-  //Debounced write state to toml
+  //Debounced write state to toml used for when we draggin things around.
   useEffect(() => {
     // Clear any existing timers
     if (timerRef.current) {
@@ -356,40 +347,30 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   }, [nodes, edges, flowFrontmatter]);
 
   //Watch TOML file for changes
-  useEffect(() => {
-    if (!initialTomlLoaded) return;
-    let stopWatching = () => {};
-    let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
+  // useEffect(() => {
+  //   if (!initialTomlLoaded) return;
+  //   let stopWatching = () => {};
+  //   let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
 
-    console.log(`Watching ${path} for changes`);
+  //   console.log(`Watching ${path} for changes`);
 
-    const watchThisFile = async () => {
-      stopWatching = await api.watch.watchImmediate(path, (event) => {
-        console.log("TOML file changed");
-        updateStateFromToml();
-      });
-    };
+  //   const watchThisFile = async () => {
+  //     stopWatching = await api.watch.watchImmediate(path, (event) => {
+  //       console.log("TOML file changed");
+  //       updateStateFromToml();
+  //     });
+  //   };
 
-    watchThisFile();
-    return () => {
-      stopWatching();
-    };
-  }, [initialTomlLoaded]);
+  //   watchThisFile();
+  //   return () => {
+  //     stopWatching();
+  //   };
+  // }, [initialTomlLoaded]);
 
   //Watch event processing for fun ui updates
   useEffect(() => {
     let unlisten = api.subscribeToEvent("event_processing", (event: any) => {
-      // console.log("setCurrentProcessingStatus", event);
       setCurrentProcessingStatus(event);
-    //   console.log(`event.session_id is: "${event.session_id}" and its type is ${typeof event.session_id}`);
-    // console.log(`currentProcessingSessionId is: "${currentProcessingSessionId}" and its type is ${typeof currentProcessingSessionId}`);
-
-      // if (event.session_id != currentProcessingSessionId) {
-      //   console.log("setCurrentProcessingSessionId", event.session_id);
-        // setCurrentProcessingSessionId(event.session_id);
-      // } else {
-      //   console.log("session_id is the same, not updating in context");
-      // }
     });
     let unlisten2 = api.subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
@@ -418,7 +399,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         addNode,
         setReactFlowInstance,
         updateFlowFrontmatter,
-        setFlowCenter,
       }}
     >
       {children}
