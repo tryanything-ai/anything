@@ -30,3 +30,5 @@ pub use server::server::Server;
 pub use utils::bootstrap;
 
 pub use rpc::*;
+
+pub mod prelude;

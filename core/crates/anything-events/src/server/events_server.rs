@@ -17,7 +17,7 @@ use crate::{
         events_service_server::EventsService,
     },
     models::event::{CreateEvent, Event},
-    repositories::event_repo::EventRepo,
+    repositories::{event_repo::EventRepo, AnythingRepo},
 };
 
 use crate::generated::events::Event as ProtoEvent;
@@ -101,24 +101,9 @@ impl EventsService for EventManager {
                 return Err(Status::internal(UNABLE_TO_SAVE_EVENT));
             }
         };
-        let mut update_tx = self.update_tx.clone();
-
-        let event = match self
-            .context
-            .repositories
-            .event_repo
-            .find_by_id(event_id.clone())
-            .await
-        {
-            Ok(r) => {
-                update_tx.send(r).await;
-            }
-            Err(err) => {
-                // Something should be done here... maybe?
-                println!("Unable to save event {:?}", err);
-                return Err(Status::internal("error saving event"));
-            }
-        };
+        event_repo
+            .and_confirm(&event_id, self.update_tx.clone())
+            .await?;
 
         Ok(Response::new(TriggerEventResponse {
             status: "success".into(),

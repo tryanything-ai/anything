@@ -1,12 +1,13 @@
-use chrono::Utc;
-use sqlx::Row;
-use sqlx::SqlitePool;
-
+use super::AnythingRepo;
 use crate::Trigger;
 use crate::{
     errors::{EventsError, EventsResult},
     models::trigger::{CreateTrigger, TriggerId},
 };
+use chrono::Utc;
+use postage::{dispatch::Sender, sink::Sink};
+use sqlx::Row;
+use sqlx::SqlitePool;
 
 #[derive(Debug, Clone)]
 pub struct TriggerRepoImpl {
@@ -17,6 +18,15 @@ pub struct TriggerRepoImpl {
 impl TriggerRepoImpl {
     pub fn new(pool: &SqlitePool) -> Self {
         Self { pool: pool.clone() }
+    }
+}
+
+#[async_trait::async_trait]
+impl AnythingRepo<Trigger> for TriggerRepoImpl {
+    async fn and_confirm(&self, item_id: &str, mut tx: Sender<Trigger>) -> EventsResult<()> {
+        let trigger = self.get_trigger_by_id(item_id.to_string()).await?;
+        tx.send(trigger).await?;
+        Ok(())
     }
 }
 
