@@ -12,7 +12,6 @@ use crate::generated::flows_service_server::FlowsServiceServer;
 use crate::generated::triggers_service_server::TriggersServiceServer;
 use crate::internal_notification::ShutdownNotification;
 use crate::models::event::Event;
-use crate::models::system_handler::SystemHandler;
 use crate::server::events_server::EventManager;
 use crate::server::flows_server::FlowManager;
 use crate::server::triggers_server::TriggersManager;
@@ -34,22 +33,17 @@ pub struct Server {
     pub post_office: PostOffice,
     // pub store: Box<dyn StoreAdapter + Send + Sync>,
     pub context: Context,
-    pub on_flow_handler_change: tokio::sync::watch::Sender<SystemHandler>,
+    // pub on_flow_handler_change: tokio::sync::watch::Sender<SystemHandler>,
 }
 
 impl Server {
     pub async fn new(context: Context) -> EventsResult<Arc<Self>> {
-        let context_clone = context.clone();
-        let (tx, _rx) =
-            tokio::sync::watch::channel(SystemHandler::new(context_clone.config.clone()));
-
         let socket = get_configured_api_socket(&context)?;
 
         let server = Self {
             socket,
             post_office: PostOffice::open(),
             context,
-            on_flow_handler_change: tx,
         };
 
         Ok(Arc::new(server))
@@ -78,6 +72,12 @@ impl Server {
             self.clone(),
             workers::system_change::handle_system_change,
         );
+
+        // spawn_or_crash(
+        //     "update_system_process",
+        //     self.clone(),
+        //     callbacks::system_change_events::process_system_change_events,
+        // );
 
         // let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");

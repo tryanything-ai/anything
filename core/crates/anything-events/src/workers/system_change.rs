@@ -76,7 +76,7 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
             SystemChangeType::Flows => {
                 info!("Flows change ({:?}) at {:?}", msg.kind, msg.path);
                 // TODO: Reload the flows
-                let mut fh = SystemHandler::global().lock().await;
+                let mut fh = SystemHandler::global().await.lock().await;
                 fh.reload_flows().await?;
                 // Check for checksum changes and insert new flows or update them
                 // SELECT * from flow_versions where flow_id = flow_version_id AND checksum != "new_checksum";

@@ -1,14 +1,17 @@
+#![allow(unused)]
 use anything_graph::flow::trigger::TriggerType;
-use std::collections::HashMap;
-
 use anything_graph::flow::{flow::Flow, flowfile::Flowfile};
 use futures::lock::Mutex;
 use once_cell::sync::OnceCell;
+use postage::{dispatch::Sender, sink::Sink};
+use std::collections::HashMap;
 
+use crate::repositories::flow_repo::FlowRepo;
 use crate::{
     config::AnythingEventsConfig, errors::EventsResult, utils::anythingfs::safe_read_directory,
-    Trigger,
+    Context, Trigger,
 };
+use crate::{SystemChangeEvent, UpdateFlow};
 
 pub static SYSTEM_HANDLER: OnceCell<Mutex<SystemHandler>> = OnceCell::new();
 
@@ -16,21 +19,26 @@ pub static SYSTEM_HANDLER: OnceCell<Mutex<SystemHandler>> = OnceCell::new();
 #[derive(Debug, Clone)]
 pub struct SystemHandler {
     flows: HashMap<String, Flow>,
-    config: AnythingEventsConfig,
+    // config: AnythingEventsConfig,
+    context: Context,
 }
 
 impl SystemHandler {
-    pub async fn setup<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()> {
-        let instance = SystemHandler::new(config.clone());
+    pub async fn setup<'a>(context: Context) -> EventsResult<()> {
+        let mut instance = SystemHandler::new(context.clone());
+        instance.reload_flows().await?;
         SYSTEM_HANDLER
             .set(Mutex::new(instance.clone()))
             .expect("unable to set global flow handler");
         Ok(())
     }
 
-    pub fn global() -> &'static Mutex<SystemHandler> {
+    pub async fn global() -> &'static Mutex<SystemHandler> {
         if SYSTEM_HANDLER.get().is_none() {
-            let instance = SystemHandler::new(AnythingEventsConfig::default());
+            let default_context = Context::new(AnythingEventsConfig::default())
+                .await
+                .expect("unable to create default global system handler");
+            let instance = SystemHandler::new(default_context);
             SYSTEM_HANDLER
                 .set(Mutex::new(instance.clone()))
                 .expect("unable to set global flow handler");
@@ -38,10 +46,10 @@ impl SystemHandler {
         SYSTEM_HANDLER.get().expect("flow handler not initialized")
     }
 
-    pub fn new(config: AnythingEventsConfig) -> Self {
+    pub fn new(context: Context) -> Self {
         Self {
             flows: HashMap::new(),
-            config,
+            context,
         }
     }
 
@@ -66,20 +74,41 @@ impl SystemHandler {
     }
 
     pub async fn reload_flows(&mut self) -> EventsResult<()> {
-        let mut root_dir = self.config.root_dir.clone();
+        let mut root_dir = self.context.config.root_dir.clone();
         root_dir.push("flows");
         // READ DIRECTORY AND RELOAD FLOWS
         let flow_files = safe_read_directory(root_dir, vec!["toml".to_string()])?;
+        let mut update_tx = self
+            .context
+            .post_office
+            .post_mail::<SystemChangeEvent>()
+            .await?;
         for flow_file_path in flow_files {
             let flow = match Flowfile::from_file(flow_file_path) {
                 Ok(flowfile) => flowfile.flow,
                 Err(e) => {
-                    println!("loaded flow_file: {:?}", e);
                     tracing::error!("Failed to load flow: {}", e.to_string());
                     continue;
                 }
             };
-            self.add_flow(flow);
+            self.add_flow(flow.clone());
+            for flow in self.get_all_flows().into_iter() {
+                tracing::info!("Flow: {:?}", flow);
+                self.context
+                    .repositories
+                    .flow_repo
+                    .find_or_create_and_update(
+                        flow.id,
+                        UpdateFlow {
+                            flow_name: flow.name,
+                            version: flow.version,
+                        },
+                    )
+                    .await;
+            }
+            // update_tx
+            //     .send(SystemChangeEvent::FlowChange(crate::Flow::from(flow)))
+            //     .await?;
         }
         Ok(())
     }
@@ -132,8 +161,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_system_handler_loads_flows() -> anyhow::Result<()> {
-        let config = setup_test_directory()?;
-        let mut system_handler = SystemHandler::new(config);
+        let context = setup_test_directory().await?;
+        let (tx, _) = postage::dispatch::channel::<SystemChangeEvent>(1);
+        let mut system_handler = SystemHandler::new(context);
         system_handler
             .reload_flows()
             .await
@@ -190,8 +220,8 @@ mod tests {
     // Helpers
     // -------------------------------
     async fn setup_system_handler() -> SystemHandler {
-        let config = setup_test_directory().unwrap();
-        let mut system_handler = SystemHandler::new(config);
+        let context = setup_test_directory().await.unwrap();
+        let mut system_handler = SystemHandler::new(context);
         build_test_flows()
             .iter()
             .for_each(|flow| system_handler.add_flow(flow.clone()));

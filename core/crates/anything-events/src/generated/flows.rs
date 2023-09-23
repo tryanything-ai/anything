@@ -118,10 +118,6 @@ pub struct UpdateFlow {
     pub version: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "2")]
     pub flow_name: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "3")]
-    pub description: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(bool, tag = "4")]
-    pub active: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -212,6 +208,20 @@ pub struct PublishFlowRequest {
 pub struct PublishFlowResponse {
     #[prost(message, optional, tag = "1")]
     pub flow: ::core::option::Option<Flow>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ActivateFlowVersionRequest {
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub version_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ActivateFlowVersionResponse {
+    #[prost(string, tag = "1")]
+    pub flow_version_id: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod flows_service_client {
@@ -373,6 +383,31 @@ pub mod flows_service_client {
                 .insert(GrpcMethod::new("flows.FlowsService", "GetFlow"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn activate_flow_version(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ActivateFlowVersionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ActivateFlowVersionResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/ActivateFlowVersion",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "ActivateFlowVersion"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn update_flow(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateFlowRequest>,
@@ -450,6 +485,13 @@ pub mod flows_service_server {
             &self,
             request: tonic::Request<super::GetFlowRequest>,
         ) -> std::result::Result<tonic::Response<super::GetFlowResponse>, tonic::Status>;
+        async fn activate_flow_version(
+            &self,
+            request: tonic::Request<super::ActivateFlowVersionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ActivateFlowVersionResponse>,
+            tonic::Status,
+        >;
         async fn update_flow(
             &self,
             request: tonic::Request<super::UpdateFlowRequest>,
@@ -667,6 +709,53 @@ pub mod flows_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetFlowSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/flows.FlowsService/ActivateFlowVersion" => {
+                    #[allow(non_camel_case_types)]
+                    struct ActivateFlowVersionSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::ActivateFlowVersionRequest>
+                    for ActivateFlowVersionSvc<T> {
+                        type Response = super::ActivateFlowVersionResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ActivateFlowVersionRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as FlowsService>::activate_flow_version(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = ActivateFlowVersionSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

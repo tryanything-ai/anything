@@ -29,7 +29,7 @@ pub struct ServerConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct DatabaseConfig {
-    pub uri: String,
+    pub uri: Option<String>,
 
     pub max_connections: Option<u32>,
 }
@@ -70,7 +70,7 @@ impl Default for AnythingEventsConfig {
                 port: 8080,
             },
             database: DatabaseConfig {
-                uri: "sqlite://:memory:".to_string(),
+                uri: None,
                 max_connections: None,
             },
             tracing: TracingConfig {
