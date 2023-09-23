@@ -34,11 +34,11 @@ export default function Home() {
             return (
               <BaseCard
                 as={Link}
-                key={flow.name}
-                to={`flows/${flow.name}`}
+                key={flow.flow_name}
+                to={`flows/${flow.flow_name}`}
                 className="w-96"
               >
-                <h2 className="card-title">{flow.name}</h2>
+                <h2 className="card-title">{flow.flow_name}</h2>
               </BaseCard>
             );
           })}

@@ -7,15 +7,14 @@ import {
 } from "../context/FlowNavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 import ManualNode from "../components/nodes/manualNode";
-import NodeConfigPanel from "../components/nodeConfigPanel";
 import SuperNode from "../components/nodes/superNode";
-
-import { Allotment } from "allotment";
-import "allotment/dist/style.css";
-
-import "reactflow/dist/style.css";
 import FlowName from "../components/flowName";
 import RightPanel from "../components/RightPanel";
+
+//Sliding Panels
+import { Allotment } from "allotment";
+import "allotment/dist/style.css";
+import "reactflow/dist/style.css";
 
 function Flows() {
   const {

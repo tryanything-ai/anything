@@ -11,6 +11,7 @@ pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Con
     setup_tracing("anything".to_string(), &config);
     info!("Bootstrapping anything");
     bootstrap_directory(config)?;
+    info!("Root Dir {:?}", config.root_dir);
     // Create context
     let context = Context::new(config.clone()).await?;
     setup_system(context.clone()).await?;

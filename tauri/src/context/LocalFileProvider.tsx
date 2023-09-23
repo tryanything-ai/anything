@@ -8,14 +8,12 @@ import {
 
 import { useTauriContext } from "./TauriProvider";
 
-import { FileEntry } from "../tauri_api/fs";
 import api from "../tauri_api/api";
 import { v4 as uuidv4 } from "uuid";
 import { stringify, parse } from "iarna-toml-esm";
 import { Rust_Flow } from "../tauri_api/types";
 
 interface LocalFileContextInterface {
-  // flowPaths: FileEntry[];
   flows: Rust_Flow[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
@@ -25,7 +23,6 @@ interface LocalFileContextInterface {
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
-  // flowPaths: [],
   flows: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
@@ -37,7 +34,7 @@ export const LocalFileContext = createContext<LocalFileContextInterface>({
 export const useLocalFileContext = () => useContext(LocalFileContext);
 
 export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
-  const { appDocuments, loading } = useTauriContext();
+  const { loading } = useTauriContext();
   // const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
   const [flows, setFlows] = useState<Rust_Flow[]>([]);
 
@@ -143,7 +140,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   //TODO: RUST_MIGRATION
   const readNodeConfig = async (nodeId: string, flowName: string) => {
     try {
-      if (!appDocuments || !flowName) {
+      if (!flowName) {
         throw new Error("appDocuments or flowName is undefined");
       }
       console.log("reading node config in FlowProvider");
@@ -171,7 +168,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     data: any
   ) => {
     try {
-      if (!appDocuments || !flowName) {
+      if (!flowName) {
         throw new Error("appDocuments or flowName is undefined");
       }
       console.log("writing node config in FlowProvider");
