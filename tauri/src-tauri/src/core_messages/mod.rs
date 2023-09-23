@@ -61,6 +61,23 @@ pub async fn get_flow(flow_id: String) -> Result<FlowModel, ()> {
 }
 
 #[tauri::command]
+pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
+    //TODO: change to correct request
+    let mut client = FlowsServiceClient::connect("http://localhost:50234")
+        .await
+        .unwrap();
+    let request = Request::new(GetFlowRequest { flow_id });
+    let response = client
+        .get_flow(request)
+        .await
+        .expect("error making request");
+
+    let flow = FlowModel::from(response.into_inner().flow.unwrap()); 
+
+    Ok(flow)
+}
+
+#[tauri::command]
 pub fn get_flow_node(flow_id: String, node_id: String) -> String {
     format!(
         "Stub for Flow of id == {} to get node id == {}",

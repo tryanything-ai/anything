@@ -12,10 +12,10 @@ export const getChatFlows = async () => {
 
 export const getFlow = async (flow_id: string) => {
   return await invoke("get_flow", { flow_id });
-}
+};
 
 export const getFlowByName = async (flow_name: string) => {
-  return await invoke("get_flow", { flow_name });
+  return await invoke("get_flow_by_name", { flow_name });
 };
 
 export const getNodes = async () => {
@@ -43,20 +43,20 @@ export const createFlow = async ({
 };
 
 //TODO: probs bad need to pick this somewhere
-export const saveToml = async({
-  toml, 
-  flow_id
+export const saveToml = async ({
+  toml,
+  flow_id,
 }: {
   toml: string;
   flow_id: string;
 }) => {
   return await invoke("save_toml", { toml, flow_id });
-}
+};
 
 export const createEvent = async (eventInput: EventInput) => {
   return await invoke("create_event", eventInput);
-}
-  
+};
+
 //Models
 // export const startModel = async (args: any) => {
 //   return await invoke("start", args);
