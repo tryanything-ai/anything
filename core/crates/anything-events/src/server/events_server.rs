@@ -96,7 +96,6 @@ impl EventsService for EventManager {
         {
             Ok(v) => v,
             Err(e) => {
-                println!("ERROR => {:?}", e);
                 tracing::error!("Error saving a new event {:?}", e);
                 return Err(Status::internal(UNABLE_TO_SAVE_EVENT));
             }

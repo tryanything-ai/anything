@@ -6,8 +6,8 @@ use anything_graph::flow::{flow::Flow, flowfile::Flowfile};
 use crate::{errors::EventsResult, post_office::PostOffice};
 
 // Should we rename this?
-pub(crate) mod engine_event;
 pub(crate) mod on_trigger;
+pub(crate) mod system_change_events;
 
 #[derive(Debug)]
 pub struct FlowRunner {

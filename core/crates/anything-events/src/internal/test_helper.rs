@@ -35,7 +35,7 @@ use std::{borrow::BorrowMut, collections::HashMap, panic, sync::Arc};
 
 pub fn get_test_config() -> AnythingEventsConfig {
     let mut config = AnythingEventsConfig::default();
-    config.database.uri = "sqlite::memory:".to_string();
+    config.database.uri = Some("sqlite::memory:".to_string());
     config.server.port = 0;
     config
 }
@@ -51,12 +51,11 @@ pub async fn get_test_context() -> Context {
         flow_repo: flow_repo.flow_repo,
         trigger_repo: trigger_repo.trigger_repo,
     });
-    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
-        system_handler,
+        post_office: Arc::new(PostOffice::open()),
     }
 }
 
@@ -71,12 +70,11 @@ pub async fn get_test_context_with_config(config: AnythingEventsConfig) -> Conte
         flow_repo: flow_repo.flow_repo,
         trigger_repo: trigger_repo.trigger_repo,
     });
-    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
-        system_handler,
+        post_office: Arc::new(PostOffice::open()),
     }
 }
 
@@ -91,12 +89,11 @@ pub async fn get_test_context_from_pool(pool: &SqlitePool) -> Context {
         flow_repo: flow_repo.flow_repo,
         trigger_repo: trigger_repo.trigger_repo,
     });
-    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
-        system_handler,
+        post_office: Arc::new(PostOffice::open()),
     }
 }
 
@@ -279,6 +276,10 @@ impl TestFlowRepo {
         .map_err(|e| EventsError::DatabaseError(e))?;
 
         let flow_id = row.get(0);
+
+        let all = sqlx::query_as::<_, Flow>("SELECT * from flows")
+            .fetch_all(&self.pool)
+            .await;
 
         Ok((flow_id, version_id))
     }
@@ -524,10 +525,11 @@ pub fn get_fixtures_dir() -> PathBuf {
     d
 }
 
-pub fn setup_test_directory() -> EventsResult<AnythingEventsConfig> {
+pub async fn setup_test_directory() -> EventsResult<Context> {
     let simple_fixture_dir = get_fixtures_dir().join("simple");
     let temp_dir = setup_temp_dir(simple_fixture_dir)?;
     let mut config = AnythingEventsConfig::default();
     config.root_dir = temp_dir.clone();
-    Ok(config)
+    let context = get_test_context_with_config(config.clone()).await;
+    Ok(context)
 }

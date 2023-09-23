@@ -11,10 +11,9 @@ pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Con
     setup_tracing("anything".to_string(), &config);
     info!("Bootstrapping anything");
     bootstrap_directory(config)?;
-    setup_system(config).await?;
-
     // Create context
     let context = Context::new(config.clone()).await?;
+    setup_system(context.clone()).await?;
 
     Ok(context)
 }
@@ -22,8 +21,8 @@ pub async fn bootstrap<'a>(config: &'a AnythingEventsConfig) -> EventsResult<Con
 // -----------------------------------------------------------------
 // Bootstrap systems
 // -----------------------------------------------------------------
-async fn setup_system<'a>(_config: &'a AnythingEventsConfig) -> EventsResult<()> {
-    SystemHandler::setup(_config).await?;
+async fn setup_system<'a>(context: Context) -> EventsResult<()> {
+    SystemHandler::setup(context).await?;
     Ok(())
 }
 

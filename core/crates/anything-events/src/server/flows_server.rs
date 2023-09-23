@@ -3,7 +3,8 @@
 use crate::{
     generated::GetFlowsRequest,
     generated::{
-        flows_service_server::FlowsService, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
+        flows_service_server::FlowsService, ActivateFlowVersionRequest,
+        ActivateFlowVersionResponse, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
         GetFlowResponse, GetFlowsResponse, UpdateFlowRequest, UpdateFlowResponse,
         UpdateFlowVersionRequest, UpdateFlowVersionResponse,
     },
@@ -151,22 +152,12 @@ impl FlowsService for FlowManager {
             Some(v) => v.to_string(),
             None => "".to_string(),
         });
-        let description = flow.description;
-        let active = flow.active;
 
         let res = match self
             .context
             .repositories
             .flow_repo
-            .update_flow(
-                flow_id.clone(),
-                crate::UpdateFlow {
-                    flow_name,
-                    active,
-                    version,
-                    description,
-                },
-            )
+            .update_flow(flow_id.clone(), crate::UpdateFlow { flow_name, version })
             .await
         {
             Ok(flow) => flow,
@@ -227,6 +218,36 @@ impl FlowsService for FlowManager {
 
         Ok(Response::new(UpdateFlowVersionResponse {
             flow_version: Some(res.into()),
+        }))
+    }
+
+    async fn activate_flow_version(
+        &self,
+        request: Request<ActivateFlowVersionRequest>,
+    ) -> Result<Response<ActivateFlowVersionResponse>, Status> {
+        let req = request.into_inner();
+
+        let flow_id = req.flow_id;
+        let version_id = req.version_id;
+
+        let res = match self
+            .context
+            .repositories
+            .flow_repo
+            .activate_flow_version(flow_id, version_id)
+            .await
+        {
+            Ok(flow) => flow,
+            Err(e) => {
+                return Err(Status::internal(format!(
+                    "Unable to update flow version: {}",
+                    e.to_string()
+                )))
+            }
+        };
+
+        Ok(Response::new(ActivateFlowVersionResponse {
+            flow_version_id: res.into(),
         }))
     }
 }
@@ -337,12 +358,13 @@ mod tests {
         let dummy_flow = test.dummy_create_flow();
         let (final_flow_id, version_id) = test.insert_create_flow(dummy_flow.clone()).await?;
         let dummy_create_flow_version = test.dummy_create_flow_version(final_flow_id.clone());
-        test.insert_create_flow_version(
-            final_flow_id.clone(),
-            version_id.clone(),
-            dummy_create_flow_version.clone(),
-        )
-        .await?;
+        let out = test
+            .insert_create_flow_version(
+                final_flow_id.clone(),
+                version_id.clone(),
+                dummy_create_flow_version.clone(),
+            )
+            .await?;
 
         let flow_manager = FlowManager::new(&context, test.with_sender().await);
 
@@ -350,9 +372,7 @@ mod tests {
             flow_id: final_flow_id.clone(),
             update_flow: Some(UpdateFlow {
                 flow_name: "new name".to_string(),
-                active: true,
                 version: Some("0.0.2".to_string()),
-                description: Some("new description".to_string()),
             }),
         });
         let res = flow_manager.update_flow(req).await;
