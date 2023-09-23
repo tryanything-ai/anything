@@ -74,7 +74,7 @@ impl From<anything_graph::flow::flow::Flow> for Flow {
             flow_id: value.id,
             flow_name: value.name,
             latest_version_id: "unimportant".to_string(),
-            active: value.active,
+            active: false,
             updated_at: Utc::now(),
             versions: Vec::default(),
         }
