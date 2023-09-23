@@ -1,3 +1,4 @@
+use anything_events::clients::GetFlowByNameRequest;
 use anything_events::clients::{
     flows_service_client::FlowsServiceClient, GetFlowRequest, GetFlowResponse, GetFlowsRequest,
     GetFlowsResponse,
@@ -5,11 +6,11 @@ use anything_events::clients::{
 use anything_events::models::Flow as FlowModel;
 use tonic::Request;
 
+static BACKEND_ENDPOINT: &str = "http://localhost:50234";
+
 #[tauri::command]
 pub async fn get_flows() -> Result<Vec<FlowModel>, ()> {
-    let mut client = FlowsServiceClient::connect("http://localhost:50234")
-        .await
-        .unwrap();
+    let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowsRequest {});
     let response = client
         .get_flows(request)
@@ -27,9 +28,7 @@ pub async fn get_flows() -> Result<Vec<FlowModel>, ()> {
 #[tauri::command]
 pub async fn get_chat_flows() -> Result<Vec<FlowModel>, ()> {
     //TODO: actually only send over flows with chats
-    let mut client = FlowsServiceClient::connect("http://localhost:50234")
-        .await
-        .unwrap();
+    let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowsRequest {});
     let response = client
         .get_flows(request)
@@ -46,16 +45,14 @@ pub async fn get_chat_flows() -> Result<Vec<FlowModel>, ()> {
 
 #[tauri::command]
 pub async fn get_flow(flow_id: String) -> Result<FlowModel, ()> {
-    let mut client = FlowsServiceClient::connect("http://localhost:50234")
-        .await
-        .unwrap();
+    let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowRequest { flow_id });
     let response = client
         .get_flow(request)
         .await
         .expect("error making request");
 
-    let flow = FlowModel::from(response.into_inner().flow.unwrap()); 
+    let flow = FlowModel::from(response.into_inner().flow.unwrap());
 
     Ok(flow)
 }
@@ -66,13 +63,13 @@ pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
     let mut client = FlowsServiceClient::connect("http://localhost:50234")
         .await
         .unwrap();
-    let request = Request::new(GetFlowRequest { flow_id });
+    let request = Request::new(GetFlowByNameRequest { flow_name });
     let response = client
-        .get_flow(request)
+        .get_flow_by_name(request)
         .await
         .expect("error making request");
 
-    let flow = FlowModel::from(response.into_inner().flow.unwrap()); 
+    let flow = FlowModel::from(response.into_inner().flow.unwrap());
 
     Ok(flow)
 }
