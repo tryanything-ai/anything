@@ -7,6 +7,7 @@ service FlowsService {
     rpc CreateFlow (CreateFlowRequest) returns (CreateFlowResponse) {}
     rpc GetFlows (GetFlowsRequest) returns (GetFlowsResponse) {}
     rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}
+    rpc GetFlowByName (GetFlowByNameRequest) returns (GetFlowByNameResponse) {}
     rpc ActivateFlowVersion (ActivateFlowVersionRequest) returns (ActivateFlowVersionResponse) {}
     rpc UpdateFlow (UpdateFlowRequest) returns (UpdateFlowResponse) {}
     rpc UpdateFlowVersion (UpdateFlowVersionRequest) returns (UpdateFlowVersionResponse) {}
@@ -91,6 +92,14 @@ message GetFlowRequest {
 }
 
 message GetFlowResponse {
+    Flow flow = 1;
+}
+
+message GetFlowByNameRequest {
+    string flow_name = 1;
+}
+
+message GetFlowByNameResponse {
     Flow flow = 1;
 }
 
