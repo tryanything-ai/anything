@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/tauri";
+import { EventInput } from "./types";
 
 export const getFlows = async () => {
   console.log("Invoking Get FLows");
@@ -48,6 +49,10 @@ export const saveToml = async({
   return await invoke("save_toml", { toml, flow_id });
 }
 
+export const createEvent = async (eventInput: EventInput) => {
+  return await invoke("create_event", eventInput);
+}
+  
 //Models
 // export const startModel = async (args: any) => {
 //   return await invoke("start", args);
