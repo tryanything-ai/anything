@@ -1,6 +1,6 @@
 export type Rust_Flow = {
   id: string;
-  name: string;
+  flow_name: string;
   version: string;
   description: string;
   trigger: any;
@@ -8,7 +8,6 @@ export type Rust_Flow = {
   dag: any;
   root: any;
 };
-
 
 export type EventInput = {
   flow_id: string; //flow needs a computer friendly name that can be changed without changing processing
