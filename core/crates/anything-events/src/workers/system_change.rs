@@ -71,6 +71,7 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
     let mut directory_change_rx = server.post_office.receive_mail::<ChangeMessage>().await?;
 
     while let Some(msg) = directory_change_rx.recv().await {
+        println!("got a chane message: {:?}", msg);
         // while let msg = directory_change_rx.recv().await {
         match msg.change_type {
             SystemChangeType::Flows => {

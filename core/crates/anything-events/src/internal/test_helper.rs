@@ -37,6 +37,7 @@ pub fn get_test_config() -> AnythingEventsConfig {
     let mut config = AnythingEventsConfig::default();
     config.database.uri = Some("sqlite::memory:".to_string());
     config.server.port = 0;
+    config.run_mode = "test".to_string();
     config
 }
 
@@ -277,11 +278,16 @@ impl TestFlowRepo {
 
         let flow_id = row.get(0);
 
-        let all = sqlx::query_as::<_, Flow>("SELECT * from flows")
-            .fetch_all(&self.pool)
-            .await;
-
         Ok((flow_id, version_id))
+    }
+
+    pub async fn get_flow_by_id(&self, flow_id: String) -> EventsResult<Flow> {
+        let flow = sqlx::query_as::<_, Flow>("SELECT * FROM flows WHERE flow_id = ?1")
+            .bind(flow_id.clone())
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(flow)
     }
 
     pub async fn insert_create_flow_version(

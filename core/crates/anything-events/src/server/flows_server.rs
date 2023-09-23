@@ -358,13 +358,12 @@ mod tests {
         let dummy_flow = test.dummy_create_flow();
         let (final_flow_id, version_id) = test.insert_create_flow(dummy_flow.clone()).await?;
         let dummy_create_flow_version = test.dummy_create_flow_version(final_flow_id.clone());
-        let out = test
-            .insert_create_flow_version(
-                final_flow_id.clone(),
-                version_id.clone(),
-                dummy_create_flow_version.clone(),
-            )
-            .await?;
+        test.insert_create_flow_version(
+            final_flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow_version.clone(),
+        )
+        .await?;
 
         let flow_manager = FlowManager::new(&context, test.with_sender().await);
 

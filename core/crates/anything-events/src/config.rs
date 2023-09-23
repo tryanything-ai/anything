@@ -46,6 +46,7 @@ pub struct TracingConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AnythingEventsConfig {
+    pub run_mode: String, // "dev", "test", or "prod"
     pub root_dir: PathBuf,
     pub json_log: bool,
     pub log: String,
@@ -61,6 +62,7 @@ pub struct AnythingEventsConfig {
 impl Default for AnythingEventsConfig {
     fn default() -> Self {
         Self {
+            run_mode: "prod".to_string(), // "dev", "test", or "prod
             root_dir: PathBuf::from("./.anything"),
             json_log: false,
             log: "info".to_string(),
