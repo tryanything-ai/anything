@@ -77,3 +77,8 @@ pub fn get_nodes() -> String {
 pub fn create_flow() -> String {
     "Stub for creating a flow".to_string()
 }
+
+#[tauri::command]
+pub fn create_event(event: String) -> String {
+    "Stub for creating an event".to_string()
+}
