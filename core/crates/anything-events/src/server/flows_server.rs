@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use crate::{
+    clients::{GetFlowByNameRequest, GetFlowByNameResponse},
     generated::GetFlowsRequest,
     generated::{
         flows_service_server::FlowsService, ActivateFlowVersionRequest,
@@ -84,6 +85,39 @@ impl FlowsService for FlowManager {
         };
 
         Ok(Response::new(GetFlowResponse {
+            flow: Some(flow.into()),
+        }))
+    }
+
+    async fn get_flow_by_name(
+        &self,
+        request: Request<GetFlowByNameRequest>,
+    ) -> Result<Response<GetFlowByNameResponse>, Status> {
+        let req = request.into_inner();
+
+        let flow_name = req.flow_name;
+
+        if flow_name.is_empty() {
+            return Err(Status::invalid_argument("No flow name provided"));
+        }
+
+        let flow = match self
+            .context
+            .repositories
+            .flow_repo
+            .get_flow_by_name(flow_name)
+            .await
+        {
+            Ok(flow) => flow,
+            Err(e) => {
+                return Err(Status::internal(format!(
+                    "Unable to get flow: {}",
+                    e.to_string()
+                )))
+            }
+        };
+
+        Ok(Response::new(GetFlowByNameResponse {
             flow: Some(flow.into()),
         }))
     }
@@ -310,6 +344,39 @@ mod tests {
             flow_id: final_flow_id.clone(),
         });
         let res = flow_manager.get_flow(req).await;
+        assert!(res.is_ok());
+        let response = res.unwrap().into_inner();
+        let flow = response.flow;
+        assert!(flow.is_some());
+        let flow = flow.unwrap();
+        assert_eq!(flow.flow_name, dummy_flow.flow_name);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_flows_returns_a_specific_flow_by_name() -> Result<()> {
+        let pool = get_test_pool().await.unwrap();
+        let context = get_test_context_from_pool(&pool).await;
+        let test = TestFlowRepo::new_with_pool(&context.pool);
+
+        test.insert_create_flow(test.dummy_create_flow()).await?;
+        let dummy_flow = test.dummy_create_flow();
+        let (final_flow_id, version_id) = test.insert_create_flow(dummy_flow.clone()).await?;
+        let dummy_create_flow_version = test.dummy_create_flow_version(final_flow_id.clone());
+        test.insert_create_flow_version(
+            final_flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow_version.clone(),
+        )
+        .await?;
+
+        let flow_manager = FlowManager::new(&context, test.with_sender().await);
+
+        let req = Request::new(GetFlowByNameRequest {
+            flow_name: dummy_flow.flow_name.clone(),
+        });
+        let res = flow_manager.get_flow_by_name(req).await;
         assert!(res.is_ok());
         let response = res.unwrap().into_inner();
         let flow = response.flow;
