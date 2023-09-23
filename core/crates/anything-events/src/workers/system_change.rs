@@ -71,6 +71,7 @@ pub async fn handle_system_change(server: Arc<Server>) -> anyhow::Result<()> {
     let mut directory_change_rx = server.post_office.receive_mail::<ChangeMessage>().await?;
 
     while let Some(msg) = directory_change_rx.recv().await {
+        println!("got a chane message: {:?}", msg);
         // while let msg = directory_change_rx.recv().await {
         match msg.change_type {
             SystemChangeType::Flows => {
@@ -113,6 +114,8 @@ fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Resul
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use crate::workers::test_helper::TestHarness;
 
     use super::*;
@@ -143,8 +146,9 @@ mod tests {
         let mut test: TestHarness<ChangeMessage> = TestHarness::setup().await?;
         let mut test_clone = test.clone();
 
+        let deep_flow = PathBuf::from("one-simple-flow".to_string()).join("simple_flow.toml");
         let change = async move {
-            test.modify_flow_file("simple_flow.toml".to_string(), None);
+            test.modify_flow_file(deep_flow.as_os_str().to_string_lossy().to_string(), None);
 
             if let Some(msg) = test.change_receiver.recv().await {
                 let msg = msg.clone() as ChangeMessage;
@@ -164,8 +168,9 @@ mod tests {
         let mut test: TestHarness<ChangeMessage> = TestHarness::setup().await?;
         let mut test_clone = test.clone();
 
+        let deep_flow = PathBuf::from("one-simple-flow".to_string()).join("simple_flow.toml");
         let change = async move {
-            test.remove_flow_file("simple_flow.toml".to_string())
+            test.remove_flow_file(deep_flow.as_os_str().to_string_lossy().to_string())
                 .unwrap();
 
             if let Some(msg) = test.change_receiver.recv().await {
