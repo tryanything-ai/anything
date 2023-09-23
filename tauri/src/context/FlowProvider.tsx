@@ -27,6 +27,7 @@ import { stringify, parse } from "iarna-toml-esm";
 import { useParams } from "react-router-dom";
 import { useLocalFileContext } from "./LocalFileProvider";
 import api from "../tauri_api/api";
+import { P } from "@tauri-apps/api/event-41a9edf5";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -259,7 +260,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const readToml = async () => {
     try {
-      //TODO: 
+      //TODO:
       //RUST_MIGRATION
       // if (!flow_name) {
       //   throw new Error("appDocuments or flow_name is undefined");
@@ -301,19 +302,31 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (flow_name && !initialTomlLoaded && !loadingToml) {
-        console.log("hydrating initial TOML");
-        setLoadingToml(true);
-        await updateStateFromToml();
-        setInitialTomlLoaded(true);
-        setLoadingToml(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (flow_name && !initialTomlLoaded && !loadingToml) {
+  //       console.log("hydrating initial TOML");
+  //       setLoadingToml(true);
+  //       await updateStateFromToml();
+  //       setInitialTomlLoaded(true);
+  //       setLoadingToml(false);
+  //     }
+  //   };
 
-    fetchData();
-  }, [flow_name, initialTomlLoaded]);
+  //   fetchData();
+  // }, [flow_name, initialTomlLoaded]);
+
+  const fetchFlow = async () => {
+    try {
+      let flow = api.getFlowByName(flow_name); 
+    } catch (e) {
+      console.log("error in fetch flow", JSON.stringify(e, null, 3));
+    }
+  };
+
+  useEffect(() => {
+    fetchFlow();
+  }, [flow_name]);
 
   //Debounced write state to toml used for when we draggin things around.
   useEffect(() => {

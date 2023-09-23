@@ -12,6 +12,10 @@ export const getChatFlows = async () => {
 
 export const getFlow = async (flow_id: string) => {
   return await invoke("get_flow", { flow_id });
+}
+
+export const getFlowByName = async (flow_name: string) => {
+  return await invoke("get_flow", { flow_name });
 };
 
 export const getNodes = async () => {
