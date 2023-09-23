@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::repositories::flow_repo::FlowRepo;
+use crate::utils::anythingfs::read_flow_directories;
 use crate::{
     config::AnythingEventsConfig, errors::EventsResult, utils::anythingfs::safe_read_directory,
     Context, Trigger,
@@ -81,7 +82,7 @@ impl SystemHandler {
         let mut root_dir = self.context.config.root_dir.clone();
         root_dir.push("flows");
         // READ DIRECTORY AND RELOAD FLOWS
-        let flow_files = safe_read_directory(root_dir, vec!["toml".to_string()])?;
+        let flow_files = read_flow_directories(root_dir, vec!["toml".to_string()])?;
         let mut update_tx = self
             .context
             .post_office
