@@ -67,19 +67,3 @@ impl Into<CreateTriggerRequest> for CreateTrigger {
         }
     }
 }
-
-// impl Into<ProtoTrigger> for CreateTrigger {
-//     fn into(self) -> ProtoTrigger {
-//         let metadata = match self.metadata {
-//             Some(m) => m,
-//             None => Value::Null,
-//         }
-//         .to_string();
-//         ProtoTrigger {
-//             event_name: self.event_name,
-//             payload: self.payload.to_string(),
-//             metadata,
-//             trigger_id: self.trigger_id,
-//         }
-//     }
-// }

@@ -1,10 +1,10 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-mod core_messages; 
+mod core_messages;
 use anything_core::{build_runtime, spawn_or_crash};
+use anything_events::config as anything_events_config;
 use std::path::PathBuf;
 use tracing::info;
-use anything_events::config as anything_events_config;
 
 // Run core server
 async fn setup_anything_server(_nothing: ()) -> anyhow::Result<()> {
@@ -31,11 +31,7 @@ async fn setup_anything_server(_nothing: ()) -> anyhow::Result<()> {
     Ok(())
 }
 
-
-
-
 fn main() {
-
     let rt = build_runtime().expect("building runtime");
     rt.spawn(async move {
         println!("Spawning anything-server");
@@ -55,4 +51,28 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    // .invoke_handler(tauri::generate_handler![
+    //     local_models::get_architectures,
+    //     local_models::get_models,
+    //     local_models::get_prompt_templates,
+    //     local_models::download_model,
+    //     local_models::start,
+    //     local_models::prompt,
+    //     local_models::get_downloaded_models,
+    //     file_manager::get_chat_flows,
+    // ])
+    // .plugin(local_models::init())
+    // .setup(|app| {
+    //     let app_handle = app.handle();
+    //     // let window = app_handle.get_window("main").unwrap();
+    //     // Spawn a new asynchronous task for scheduler
+    //     tauri::async_runtime::spawn(async move {
+    //         scheduler(&app_handle).await;
+    //     });
+
+    //     Ok(())
+    // })
+    // .manage(ManagerState(Mutex::new(None)))
+    // .manage(Canceller::default())
 }

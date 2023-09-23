@@ -7,7 +7,7 @@ use crate::{
     config::AnythingEventsConfig,
     db::create_sqlite_pool,
     errors::EventsResult,
-    models::system_handler::SystemHandler,
+    post_office::PostOffice,
     repositories::{
         event_repo::EventRepoImpl, flow_repo::FlowRepoImpl, trigger_repo::TriggerRepoImpl,
         Repositories,
@@ -20,7 +20,8 @@ pub struct Context {
     pub pool: Arc<SqlitePool>,
     pub config: AnythingEventsConfig,
     pub repositories: Arc<Repositories>,
-    pub system_handler: Arc<SystemHandler>,
+    // pub system_handler: Arc<&'static Mutex<SystemHandler>>,
+    pub post_office: Arc<PostOffice>,
 }
 
 impl Context {
@@ -32,12 +33,14 @@ impl Context {
             flow_repo: FlowRepoImpl::new(&pool),
             trigger_repo: TriggerRepoImpl::new(&pool),
         };
-        let system_handler = Arc::new(SystemHandler::new(config.clone()));
+        // let system_handler = Arc::new(SystemHandler::global().clone());
+        // let system_handler = Arc::new(SystemHandler::new(config.clone()));
         Ok(Self {
             config,
             pool: Arc::new(pool),
             repositories: Arc::new(repositories),
-            system_handler,
+            post_office: Arc::new(PostOffice::open()),
+            // system_handler,
         })
     }
 

@@ -23,6 +23,7 @@ pub struct Flow {
     pub description: Option<String>,
     pub trigger: Trigger,
     pub variables: HashMap<String, String>,
+    pub active: bool,
     dag: Dag<Node, ()>,
     root: NodeIndex,
 }
@@ -43,7 +44,7 @@ impl Flow {
             root: parent,
             trigger: Trigger::default(),
             variables: HashMap::new(),
-            // active_version: FlowVersion::default(),
+            active: false, // active_version: FlowVersion::default(),
         }
     }
 

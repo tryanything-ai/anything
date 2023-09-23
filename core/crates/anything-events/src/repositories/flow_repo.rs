@@ -38,12 +38,22 @@ pub trait FlowRepo {
         version_id: FlowVersionId,
     ) -> EventsResult<FlowVersion>;
     async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<Flow>;
+    async fn find_or_create_and_update(
+        &self,
+        flow_id: FlowId,
+        update_flow: UpdateFlow,
+    ) -> EventsResult<Flow>;
     async fn update_flow_version(
         &self,
         flow_id: FlowId,
         version_id: FlowVersionId,
         update_flow_version: UpdateFlowVersion,
     ) -> EventsResult<FlowVersion>;
+    async fn activate_flow_version(
+        &self,
+        flow_id: FlowId,
+        version_id: FlowVersionId,
+    ) -> EventsResult<FlowVersionId>;
 }
 
 #[derive(Debug, Clone)]
@@ -183,6 +193,28 @@ impl FlowRepo for FlowRepoImpl {
         Ok(flow)
     }
 
+    // TODO: test this thing
+    async fn find_or_create_and_update(
+        &self,
+        flow_id: FlowId,
+        update_flow: UpdateFlow,
+    ) -> EventsResult<Flow> {
+        let flow = match self.get_flow_by_id(flow_id.clone()).await {
+            Ok(f) => f,
+            Err(e) => {
+                tracing::error!("Unable to find flow by id: {:?}", flow_id.clone());
+                self.create_flow(CreateFlow {
+                    flow_name: update_flow.flow_name,
+                    version: update_flow.version,
+                    active: Some(true),
+                })
+                .await?;
+                return Err(e);
+            }
+        };
+        Ok(flow)
+    }
+
     async fn get_flows(&self) -> EventsResult<Vec<Flow>> {
         let flows = sqlx::query_as::<_, Flow>("SELECT * from flows")
             .fetch_all(&self.pool)
@@ -230,17 +262,19 @@ impl FlowRepo for FlowRepoImpl {
     async fn update_flow(&self, flow_id: FlowId, update_flow: UpdateFlow) -> EventsResult<Flow> {
         let flow = sqlx::query_as::<_, Flow>(
             r#"
-            UPDATE flows SET flow_name = ?1, active = ?2, updated_at = ?3 WHERE flow_id = ?4
+            UPDATE flows SET flow_name = ?1, updated_at = ?2 WHERE flow_id = ?3
             RETURNING *
             "#,
         )
         .bind(update_flow.flow_name)
-        .bind(update_flow.active)
         .bind(Utc::now().timestamp())
         .bind(flow_id.clone())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| EventsError::DatabaseError(e))?;
+        .map_err(|e| {
+            tracing::error!("Unable to update flow by id: {:?}", flow_id.clone());
+            EventsError::DatabaseError(e)
+        })?;
 
         let flow_id = flow.flow_id;
 
@@ -308,6 +342,30 @@ impl FlowRepo for FlowRepoImpl {
 
         let version_id = row.get("version_id");
         self.get_flow_version_by_id(flow_id, version_id).await
+    }
+
+    async fn activate_flow_version(
+        &self,
+        flow_id: FlowId,
+        version_id: FlowVersionId,
+    ) -> EventsResult<FlowVersionId> {
+        let row = sqlx::query(
+            r#"
+            UPDATE flow_versions SET 
+                active = ?1
+            WHERE version_id = ?7 AND flow_id = ?8
+            RETURNING version_id
+            "#,
+        )
+        .bind(true)
+        .bind(flow_id.clone())
+        .bind(version_id.clone())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        let version_id = row.get("version_id");
+        Ok(version_id)
     }
 }
 
@@ -434,9 +492,7 @@ mod tests {
 
         let update_flow = UpdateFlow {
             flow_name: "new name".to_string(),
-            active: true,
             version: Some("0.0.2".to_string()),
-            description: Some("new description".to_string()),
         };
 
         // BEFORE UPDATE
@@ -448,7 +504,6 @@ mod tests {
         let flow_name: String = row.get("flow_name");
 
         assert_eq!(flow_name, dummy_create.flow_name);
-        assert_eq!(row.get::<bool, _>("active"), false);
 
         let res = test
             .flow_repo
@@ -466,7 +521,6 @@ mod tests {
         let flow_name: String = row.get("flow_name");
 
         assert_eq!(flow_name, "new name".to_string());
-        assert_eq!(row.get::<bool, _>("active"), true);
 
         Ok(())
     }
