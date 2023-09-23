@@ -73,11 +73,11 @@ impl Server {
             workers::system_change::handle_system_change,
         );
 
-        spawn_or_crash(
-            "update_system_process",
-            self.clone(),
-            callbacks::system_change_events::process_system_change_events,
-        );
+        // spawn_or_crash(
+        //     "update_system_process",
+        //     self.clone(),
+        //     callbacks::system_change_events::process_system_change_events,
+        // );
 
         // let addr = get_configured_api_socket(&self.context)?;
         debug!("Starting server...");
