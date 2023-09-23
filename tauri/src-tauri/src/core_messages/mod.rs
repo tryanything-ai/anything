@@ -66,7 +66,7 @@ pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
     let mut client = FlowsServiceClient::connect("http://localhost:50234")
         .await
         .unwrap();
-    let request = Request::new(GetFlowRequest { flow_id });
+    let request = Request::new(GetFLow { flow_name });
     let response = client
         .get_flow(request)
         .await
