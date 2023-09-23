@@ -44,6 +44,7 @@ fn main() {
             core_messages::get_flows,
             core_messages::get_chat_flows,
             core_messages::get_flow,
+            core_messages::get_flow_by_name,
             core_messages::get_flow_node,
             core_messages::get_nodes,
             core_messages::create_flow,
