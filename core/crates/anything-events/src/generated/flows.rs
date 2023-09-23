@@ -169,6 +169,18 @@ pub struct GetFlowResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFlowByNameRequest {
+    #[prost(string, tag = "1")]
+    pub flow_name: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFlowByNameResponse {
+    #[prost(message, optional, tag = "1")]
+    pub flow: ::core::option::Option<Flow>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateFlowRequest {
     #[prost(string, tag = "1")]
     pub flow_id: ::prost::alloc::string::String,
@@ -383,6 +395,31 @@ pub mod flows_service_client {
                 .insert(GrpcMethod::new("flows.FlowsService", "GetFlow"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn get_flow_by_name(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetFlowByNameRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetFlowByNameResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/GetFlowByName",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "GetFlowByName"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn activate_flow_version(
             &mut self,
             request: impl tonic::IntoRequest<super::ActivateFlowVersionRequest>,
@@ -485,6 +522,13 @@ pub mod flows_service_server {
             &self,
             request: tonic::Request<super::GetFlowRequest>,
         ) -> std::result::Result<tonic::Response<super::GetFlowResponse>, tonic::Status>;
+        async fn get_flow_by_name(
+            &self,
+            request: tonic::Request<super::GetFlowByNameRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetFlowByNameResponse>,
+            tonic::Status,
+        >;
         async fn activate_flow_version(
             &self,
             request: tonic::Request<super::ActivateFlowVersionRequest>,
@@ -709,6 +753,52 @@ pub mod flows_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetFlowSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/flows.FlowsService/GetFlowByName" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetFlowByNameSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::GetFlowByNameRequest>
+                    for GetFlowByNameSvc<T> {
+                        type Response = super::GetFlowByNameResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetFlowByNameRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as FlowsService>::get_flow_by_name(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetFlowByNameSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
