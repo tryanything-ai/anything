@@ -31,6 +31,7 @@ pub trait FlowRepo {
     async fn create_flow(&self, create_flow: CreateFlow) -> EventsResult<Flow>;
     async fn get_flows(&self) -> EventsResult<Vec<Flow>>;
     async fn get_flow_by_id(&self, flow_id: FlowId) -> EventsResult<Flow>;
+    async fn get_flow_by_name(&self, name: String) -> EventsResult<Flow>;
     async fn get_flow_versions(&self, flow_id: FlowId) -> EventsResult<Vec<FlowVersion>>;
     async fn get_flow_version_by_id(
         &self,
@@ -193,6 +194,16 @@ impl FlowRepo for FlowRepoImpl {
         Ok(flow)
     }
 
+    async fn get_flow_by_name(&self, name: String) -> EventsResult<Flow> {
+        let flow = sqlx::query_as::<_, Flow>(&format!("{} WHERE f.flow_name = ?1", GET_FLOW_SQL))
+            .bind(name)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(flow)
+    }
+
     // TODO: test this thing
     async fn find_or_create_and_update(
         &self,
@@ -202,7 +213,6 @@ impl FlowRepo for FlowRepoImpl {
         let flow = match self.get_flow_by_id(flow_id.clone()).await {
             Ok(f) => f,
             Err(e) => {
-                tracing::error!("Unable to find flow by id: {:?}", flow_id.clone());
                 self.create_flow(CreateFlow {
                     flow_name: update_flow.flow_name,
                     version: update_flow.version,
@@ -472,6 +482,36 @@ mod tests {
 
         assert_eq!(flow.flow_name, dummy_create.flow_name);
         assert_eq!(flow.versions[0].flow_version, dummy_create.version.unwrap());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_flow_by_name() -> Result<()> {
+        let test = TestFlowRepo::new().await;
+        let dummy_create = test.dummy_create_flow();
+
+        let (flow_id, version_id) = test.insert_create_flow(dummy_create.clone()).await?;
+        let dummy_create_flow = test.dummy_create_flow_version(flow_id.clone());
+        test.insert_create_flow_version(
+            flow_id.clone(),
+            version_id.clone(),
+            dummy_create_flow.clone(),
+        )
+        .await?;
+
+        let flow = test.get_flow_by_id(flow_id.clone()).await?;
+
+        let res = test
+            .flow_repo
+            .get_flow_by_name(flow.flow_name.clone())
+            .await;
+        assert!(res.is_ok());
+        let flow = res.unwrap();
+
+        assert_eq!(flow.flow_name, dummy_create.flow_name);
+        assert_eq!(flow.versions[0].flow_version, dummy_create.version.unwrap());
+        assert_eq!(flow.flow_id, flow_id);
 
         Ok(())
     }

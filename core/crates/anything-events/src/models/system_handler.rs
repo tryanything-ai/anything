@@ -5,13 +5,14 @@ use futures::lock::Mutex;
 use once_cell::sync::OnceCell;
 use postage::{dispatch::Sender, sink::Sink};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use crate::repositories::flow_repo::FlowRepo;
 use crate::{
     config::AnythingEventsConfig, errors::EventsResult, utils::anythingfs::safe_read_directory,
     Context, Trigger,
 };
-use crate::{SystemChangeEvent, UpdateFlow};
+use crate::{ChangeMessage, SystemChangeEvent, UpdateFlow};
 
 pub static SYSTEM_HANDLER: OnceCell<Mutex<SystemHandler>> = OnceCell::new();
 
@@ -26,7 +27,10 @@ pub struct SystemHandler {
 impl SystemHandler {
     pub async fn setup<'a>(context: Context) -> EventsResult<()> {
         let mut instance = SystemHandler::new(context.clone());
-        instance.reload_flows().await?;
+        if let Err(e) = instance.reload_flows().await {
+            tracing::error!("Failed to load flows: {}", e.to_string());
+        }
+        // instance.reload_flows().await?;
         SYSTEM_HANDLER
             .set(Mutex::new(instance.clone()))
             .expect("unable to set global flow handler");
@@ -34,15 +38,15 @@ impl SystemHandler {
     }
 
     pub async fn global() -> &'static Mutex<SystemHandler> {
-        if SYSTEM_HANDLER.get().is_none() {
-            let default_context = Context::new(AnythingEventsConfig::default())
-                .await
-                .expect("unable to create default global system handler");
-            let instance = SystemHandler::new(default_context);
-            SYSTEM_HANDLER
-                .set(Mutex::new(instance.clone()))
-                .expect("unable to set global flow handler");
-        }
+        // if SYSTEM_HANDLER.get().is_none() {
+        //     let default_context = Context::new(AnythingEventsConfig::default())
+        //         .await
+        //         .expect("unable to create default global system handler");
+        //     let instance = SystemHandler::new(default_context);
+        //     SYSTEM_HANDLER
+        //         .set(Mutex::new(instance.clone()))
+        //         .expect("unable to set global flow handler");
+        // }
         SYSTEM_HANDLER.get().expect("flow handler not initialized")
     }
 
@@ -93,7 +97,6 @@ impl SystemHandler {
             };
             self.add_flow(flow.clone());
             for flow in self.get_all_flows().into_iter() {
-                tracing::info!("Flow: {:?}", flow);
                 self.context
                     .repositories
                     .flow_repo

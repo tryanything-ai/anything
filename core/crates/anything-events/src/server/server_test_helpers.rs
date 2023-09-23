@@ -37,7 +37,8 @@ pub async fn get_client() -> anyhow::Result<&'static (EventsServiceClient<Channe
             SERVER
                 .get_or_init(|| async {
                     tokio::spawn(async { start_server(unused_port_arc, tx).await });
-                    rx.recv().await.unwrap()
+                    let thing = rx.recv().await;
+                    thing.unwrap()
                 })
                 .await;
 
