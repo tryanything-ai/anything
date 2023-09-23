@@ -14,8 +14,8 @@ export const getFlow = async (flow_id: string) => {
   return await invoke("get_flow", { flow_id });
 };
 
-export const getFlowByName = async (flow_name: string) => {
-  return await invoke("get_flow_by_name", { flow_name });
+export const getFlowByName = async (flowName: string) => {
+  return await invoke("get_flow_by_name", { flowName });
 };
 
 export const getNodes = async () => {

@@ -32,11 +32,16 @@ async fn setup_anything_server(_nothing: ()) -> anyhow::Result<()> {
 }
 
 fn main() {
+    // let rt = build_runtime().expect("building runtime");
+    // rt.spawn(async move {
+    //     println!("Spawning anything-server");
+    //     spawn_or_crash("anything-server", (), setup_anything_server);
+    // });
+
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
         .setup(|_app| {
-            let rt = build_runtime().expect("building runtime");
-            rt.spawn(async move {
+            tauri::async_runtime::spawn(async {
                 println!("Spawning anything-server");
                 spawn_or_crash("anything-server", (), setup_anything_server);
             });
@@ -49,8 +54,6 @@ fn main() {
             core_messages::get_flow_by_name,
             core_messages::get_flow_node,
             core_messages::get_nodes,
-            core_messages::create_flow,
-            core_messages::create_event
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
