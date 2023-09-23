@@ -23,6 +23,8 @@ pub enum EventsError {
     TriggerSendError(#[from] postage::sink::SendError<Trigger>),
     #[error("event send error: {0}")]
     EventSendError(#[from] postage::sink::SendError<Event>),
+    #[error("updating flows send error: {0}")]
+    FlowsSendError(#[from] postage::sink::SendError<SystemChangeEvent>),
 
     #[error("io error: {0}")]
     IOError(#[from] std::io::Error),

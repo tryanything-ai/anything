@@ -10,7 +10,7 @@ use tonic::transport::Channel;
 
 use crate::{
     generated::events_service_client::EventsServiceClient, internal::test_helper::get_test_context,
-    utils::net::get_unused_port, Server,
+    system_handler::SystemHandler, utils::net::get_unused_port, Server,
 };
 
 static SERVER: tokio::sync::OnceCell<Arc<Server>> = tokio::sync::OnceCell::const_new();
@@ -19,9 +19,8 @@ static INIT: tokio::sync::OnceCell<(EventsServiceClient<Channel>, Arc<Server>)> 
 
 async fn start_server(port: Arc<u16>, mut tx: Sender<Arc<Server>>) -> anyhow::Result<()> {
     let mut context = get_test_context().await;
-
     context.config.server.port = *port;
-
+    SystemHandler::setup(context.clone()).await?;
     let server = Server::new(context).await?;
     let cloned_server = server.clone();
     let _ = tx.send(cloned_server.clone()).await;

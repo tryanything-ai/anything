@@ -6,10 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{
-    internal::test_helper::{get_test_context_with_config, setup_test_directory},
-    Context, Server,
-};
+use crate::{internal::test_helper::setup_test_directory, Context, Server};
 
 use super::system_change::file_watcher;
 
@@ -26,14 +23,14 @@ where
     T: Clone + Sync + Send,
 {
     pub async fn setup() -> anyhow::Result<Self> {
-        let config = setup_test_directory()?;
-        let context = get_test_context_with_config(config.clone()).await;
+        let context = setup_test_directory().await?;
         let server = Server::new(context.clone()).await?;
 
         let change_receiver = server.post_office.receive_mail::<T>().await.unwrap();
+        let root_dir = context.config.root_dir.clone();
 
         Ok(Self {
-            root_dir: config.root_dir,
+            root_dir,
             context,
             server,
             change_receiver,

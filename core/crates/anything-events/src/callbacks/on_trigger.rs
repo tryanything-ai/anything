@@ -9,7 +9,7 @@ use crate::{server::server::Server, system_handler::SystemHandler, Trigger};
 
 pub async fn process_triggers(server: Arc<Server>) -> anyhow::Result<()> {
     let mut trigger_rx = server.post_office.receive_mail::<Trigger>().await?;
-    let system_handler = SystemHandler::global();
+    let system_handler = SystemHandler::global().await;
     // let mut system_handler = server.system_handler.clone();
     // let handler_rx = server
     //     .post_office

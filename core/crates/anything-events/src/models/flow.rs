@@ -68,6 +68,19 @@ pub struct Flow {
     // pub nodes: Vec<Node>,
 }
 
+impl From<anything_graph::flow::flow::Flow> for Flow {
+    fn from(value: anything_graph::flow::flow::Flow) -> Self {
+        Self {
+            flow_id: value.id,
+            flow_name: value.name,
+            latest_version_id: "unimportant".to_string(),
+            active: value.active,
+            updated_at: Utc::now(),
+            versions: Vec::default(),
+        }
+    }
+}
+
 impl Into<ProtoFlow> for Flow {
     // use crate::generated::
     fn into(self) -> ProtoFlow {
@@ -224,9 +237,26 @@ impl Into<ProtoCreateFlow> for CreateFlow {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UpdateFlow {
     pub flow_name: String,
-    pub active: bool,
     pub version: Option<String>,
-    pub description: Option<String>,
+    // pub description: Option<String>,
+}
+
+impl UpdateFlow {
+    pub fn new(flow_name: String) -> Self {
+        Self {
+            flow_name,
+            version: None,
+        }
+    }
+}
+
+impl From<anything_graph::flow::flow::Flow> for UpdateFlow {
+    fn from(value: anything_graph::flow::flow::Flow) -> Self {
+        Self {
+            flow_name: value.name,
+            version: value.version,
+        }
+    }
 }
 
 impl Into<ProtoUpdateFlow> for UpdateFlow {
@@ -235,8 +265,6 @@ impl Into<ProtoUpdateFlow> for UpdateFlow {
         ProtoUpdateFlow {
             flow_name: self.flow_name,
             version: Some(self.version.unwrap_or("0.0.1".to_string())),
-            description: Some(self.description.unwrap_or("".to_string())),
-            active: self.active,
         }
     }
 }
