@@ -25,7 +25,8 @@ pub struct SystemHandler {
 
 impl SystemHandler {
     pub async fn setup<'a>(context: Context) -> EventsResult<()> {
-        let instance = SystemHandler::new(context.clone());
+        let mut instance = SystemHandler::new(context.clone());
+        instance.reload_flows().await?;
         SYSTEM_HANDLER
             .set(Mutex::new(instance.clone()))
             .expect("unable to set global flow handler");
@@ -91,9 +92,23 @@ impl SystemHandler {
                 }
             };
             self.add_flow(flow.clone());
-            update_tx
-                .send(SystemChangeEvent::FlowChange(crate::Flow::from(flow)))
-                .await?;
+            for flow in self.get_all_flows().into_iter() {
+                tracing::info!("Flow: {:?}", flow);
+                self.context
+                    .repositories
+                    .flow_repo
+                    .find_or_create_and_update(
+                        flow.id,
+                        UpdateFlow {
+                            flow_name: flow.name,
+                            version: flow.version,
+                        },
+                    )
+                    .await;
+            }
+            // update_tx
+            //     .send(SystemChangeEvent::FlowChange(crate::Flow::from(flow)))
+            //     .await?;
         }
         Ok(())
     }
