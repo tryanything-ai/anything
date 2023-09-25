@@ -1,10 +1,10 @@
-use anything_events::clients::GetFlowByNameRequest;
 use anything_events::clients::{
-    flows_service_client::FlowsServiceClient, GetFlowRequest, GetFlowResponse, GetFlowsRequest,
-    GetFlowsResponse, GetFlowByNameRequest
+    flows_service_client::FlowsServiceClient, GetFlowByNameRequest, GetFlowRequest, GetFlowsRequest,
 };
 use anything_events::models::Flow as FlowModel;
 use tonic::Request;
+
+use tracing::info;
 
 static BACKEND_ENDPOINT: &str = "http://localhost:50234";
 
@@ -59,7 +59,6 @@ pub async fn get_flow(flow_id: String) -> Result<FlowModel, ()> {
 
 #[tauri::command]
 pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
-    //TODO: change to correct request
     let mut client = FlowsServiceClient::connect("http://localhost:50234")
         .await
         .unwrap();
@@ -69,9 +68,15 @@ pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
         .await
         .expect("error making request");
 
-    let flow = FlowModel::from(response.into_inner().flow.unwrap());
+    info!("Get_flow_by_name respone {:?}", response);
 
-    Ok(flow)
+    // Try to access the Flow from the response, returning an error if not found.
+    let flow_option = response.into_inner().flow;
+    let flow = flow_option.ok_or(())?; // If the flow is None, return an error.
+
+    let flow_model = FlowModel::from(flow);
+
+    Ok(flow_model)
 }
 
 #[tauri::command]

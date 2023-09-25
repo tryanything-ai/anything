@@ -320,7 +320,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("Fetch Flow By Name", flow_name);
       if (!flow_name) return;
-      let flow = api.getFlowByName(flow_name);
+      let flow = await api.getFlowByName(flow_name);
       console.log(
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)
