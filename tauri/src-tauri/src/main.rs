@@ -32,14 +32,21 @@ async fn setup_anything_server(_nothing: ()) -> anyhow::Result<()> {
 }
 
 fn main() {
-    let rt = build_runtime().expect("building runtime");
-    rt.spawn(async move {
-        println!("Spawning anything-server");
-        spawn_or_crash("anything-server", (), setup_anything_server);
-    });
+    // let rt = build_runtime().expect("building runtime");
+    // rt.spawn(async move {
+    //     println!("Spawning anything-server");
+    //     spawn_or_crash("anything-server", (), setup_anything_server);
+    // });
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
+        .setup(|_app| {
+            tauri::async_runtime::spawn(async {
+                println!("Spawning anything-server");
+                spawn_or_crash("anything-server", (), setup_anything_server);
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             core_messages::get_flows,
             core_messages::get_chat_flows,
@@ -47,8 +54,6 @@ fn main() {
             core_messages::get_flow_by_name,
             core_messages::get_flow_node,
             core_messages::get_nodes,
-            core_messages::create_flow,
-            core_messages::create_event
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
