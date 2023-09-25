@@ -318,13 +318,21 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchFlow = async () => {
     try {
-      let flow = api.getFlowByName(flow_name); 
+      console.log("Fetch Flow By Name", flow_name);
+      if (!flow_name) return;
+      let flow = api.getFlowByName(flow_name);
+      console.log(
+        "FLow Result in flow provider",
+        JSON.stringify(flow, null, 3)
+      );
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
   };
 
   useEffect(() => {
+    if (!flow_name) return;
+
     fetchFlow();
   }, [flow_name]);
 

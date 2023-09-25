@@ -1,6 +1,6 @@
 use anything_events::clients::{
     flows_service_client::FlowsServiceClient, GetFlowRequest, GetFlowResponse, GetFlowsRequest,
-    GetFlowsResponse,
+    GetFlowsResponse, GetFlowByNameRequest
 };
 use anything_events::models::Flow as FlowModel;
 use tonic::Request;
@@ -66,9 +66,9 @@ pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
     let mut client = FlowsServiceClient::connect("http://localhost:50234")
         .await
         .unwrap();
-    let request = Request::new(GetFLow { flow_name });
+    let request = Request::new(GetFlowByNameRequest { flow_name });
     let response = client
-        .get_flow(request)
+        .get_flow_by_name(request)
         .await
         .expect("error making request");
 
