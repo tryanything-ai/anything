@@ -245,26 +245,26 @@ export const NODES: Node[] = [
       trigger: false,
     },
   },
-  {
-    nodeType: "superNode",
-    nodeConfigurationData: {
-      url: "https://api.gmail.com/",
-      method: "",
-      headers: "",
-      body: "",
-    },
-    nodePresentationData: {
-      node_label: "Gmail Action",
-      alt: "Gmail Action",
-      icon: "https://www.vectorlogo.zone/logos/google_gmail/google_gmail-icon.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "gmail_action",
-      trigger: false,
-    },
-  },
+  // {
+  //   nodeType: "superNode",
+  //   nodeConfigurationData: {
+  //     url: "https://api.gmail.com/",
+  //     method: "",
+  //     headers: "",
+  //     body: "",
+  //   },
+  //   nodePresentationData: {
+  //     node_label: "Gmail Action",
+  //     alt: "Gmail Action",
+  //     icon: "https://www.vectorlogo.zone/logos/google_gmail/google_gmail-icon.svg",
+  //     handles: BaseHandles,
+  //   },
+  //   nodeProcessData: {
+  //     worker_type: "rest",
+  //     worker_name: "gmail_action",
+  //     trigger: false,
+  //   },
+  // },
   {
     nodeType: "superNode",
     nodeConfigurationData: {

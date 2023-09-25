@@ -15,6 +15,8 @@ export const getFlow = async (flow_id: string) => {
 };
 
 export const getFlowByName = async (flowName: string) => {
+  console.log("Flow Name in tauri invoke -> ", flowName);
+
   return await invoke("get_flow_by_name", { flowName });
 };
 
