@@ -44,10 +44,5 @@ fn bootstrap_directory<'a>(config: &'a AnythingEventsConfig) -> EventsResult<()>
             fs::create_dir_all(dir).unwrap();
         }
     });
-
-    // // If the parent directory does not exist, create it.
-    // if !db_dir.exists() {
-    //     fs::create_dir_all(db_dir).unwrap();
-    // }
     Ok(())
 }
