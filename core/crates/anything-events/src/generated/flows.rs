@@ -157,6 +157,18 @@ pub struct GetFlowsResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFlowVersionsRequest {
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFlowVersionsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub flow_versions: ::prost::alloc::vec::Vec<FlowVersion>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetFlowRequest {
     #[prost(string, tag = "1")]
     pub flow_id: ::prost::alloc::string::String,
@@ -178,6 +190,20 @@ pub struct GetFlowByNameRequest {
 pub struct GetFlowByNameResponse {
     #[prost(message, optional, tag = "1")]
     pub flow: ::core::option::Option<Flow>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFlowVersionRequest {
+    #[prost(string, tag = "1")]
+    pub flow_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub flow_version_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFlowVersionResponse {
+    #[prost(message, optional, tag = "1")]
+    pub flow_version: ::core::option::Option<FlowVersion>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -370,6 +396,31 @@ pub mod flows_service_client {
                 .insert(GrpcMethod::new("flows.FlowsService", "GetFlows"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn get_flow_versions(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetFlowVersionsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetFlowVersionsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/GetFlowVersions",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "GetFlowVersions"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn get_flow(
             &mut self,
             request: impl tonic::IntoRequest<super::GetFlowRequest>,
@@ -418,6 +469,31 @@ pub mod flows_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("flows.FlowsService", "GetFlowByName"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_flow_version_by_id(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetFlowVersionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetFlowVersionResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/flows.FlowsService/GetFlowVersionById",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("flows.FlowsService", "GetFlowVersionById"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn activate_flow_version(
@@ -518,6 +594,13 @@ pub mod flows_service_server {
             tonic::Response<super::GetFlowsResponse>,
             tonic::Status,
         >;
+        async fn get_flow_versions(
+            &self,
+            request: tonic::Request<super::GetFlowVersionsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetFlowVersionsResponse>,
+            tonic::Status,
+        >;
         async fn get_flow(
             &self,
             request: tonic::Request<super::GetFlowRequest>,
@@ -527,6 +610,13 @@ pub mod flows_service_server {
             request: tonic::Request<super::GetFlowByNameRequest>,
         ) -> std::result::Result<
             tonic::Response<super::GetFlowByNameResponse>,
+            tonic::Status,
+        >;
+        async fn get_flow_version_by_id(
+            &self,
+            request: tonic::Request<super::GetFlowVersionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetFlowVersionResponse>,
             tonic::Status,
         >;
         async fn activate_flow_version(
@@ -722,6 +812,53 @@ pub mod flows_service_server {
                     };
                     Box::pin(fut)
                 }
+                "/flows.FlowsService/GetFlowVersions" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetFlowVersionsSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::GetFlowVersionsRequest>
+                    for GetFlowVersionsSvc<T> {
+                        type Response = super::GetFlowVersionsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetFlowVersionsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as FlowsService>::get_flow_versions(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetFlowVersionsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/flows.FlowsService/GetFlow" => {
                     #[allow(non_camel_case_types)]
                     struct GetFlowSvc<T: FlowsService>(pub Arc<T>);
@@ -799,6 +936,53 @@ pub mod flows_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetFlowByNameSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/flows.FlowsService/GetFlowVersionById" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetFlowVersionByIdSvc<T: FlowsService>(pub Arc<T>);
+                    impl<
+                        T: FlowsService,
+                    > tonic::server::UnaryService<super::GetFlowVersionRequest>
+                    for GetFlowVersionByIdSvc<T> {
+                        type Response = super::GetFlowVersionResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetFlowVersionRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as FlowsService>::get_flow_version_by_id(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetFlowVersionByIdSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

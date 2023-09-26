@@ -6,8 +6,10 @@ package flows;
 service FlowsService {
     rpc CreateFlow (CreateFlowRequest) returns (CreateFlowResponse) {}
     rpc GetFlows (GetFlowsRequest) returns (GetFlowsResponse) {}
+    rpc GetFlowVersions (GetFlowVersionsRequest) returns (GetFlowVersionsResponse) {}
     rpc GetFlow (GetFlowRequest) returns (GetFlowResponse) {}
     rpc GetFlowByName (GetFlowByNameRequest) returns (GetFlowByNameResponse) {}
+    rpc GetFlowVersionById (GetFlowVersionRequest) returns (GetFlowVersionResponse) {}
     rpc ActivateFlowVersion (ActivateFlowVersionRequest) returns (ActivateFlowVersionResponse) {}
     rpc UpdateFlow (UpdateFlowRequest) returns (UpdateFlowResponse) {}
     rpc UpdateFlowVersion (UpdateFlowVersionRequest) returns (UpdateFlowVersionResponse) {}
@@ -87,6 +89,14 @@ message GetFlowsResponse {
     repeated Flow flows = 1;
 }
 
+message GetFlowVersionsRequest {
+    string flow_id = 1; 
+}
+
+message GetFlowVersionsResponse {
+    repeated FlowVersion flow_versions = 1; 
+}
+
 message GetFlowRequest {
     string flow_id = 1;
 }
@@ -101,6 +111,15 @@ message GetFlowByNameRequest {
 
 message GetFlowByNameResponse {
     Flow flow = 1;
+}
+
+message GetFlowVersionRequest {
+    string flow_id = 1;
+    string flow_version_id = 2; 
+}
+
+message GetFlowVersionResponse { 
+    FlowVersion flow_version = 1; 
 }
 
 message UpdateFlowRequest {

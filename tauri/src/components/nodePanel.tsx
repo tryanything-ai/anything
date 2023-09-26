@@ -29,8 +29,17 @@ const NodePanel = () => {
 
 const NodeDnD = ({ node }: { node: Node }) => {
   const onDragStart = (event: any) => {
-    console.log("drag started", node.nodeType);
-    event.dataTransfer.setData("nodeType", node.nodeType);
+    let nodeType;
+
+    if (!node.nodePresentationData.nodeType) {
+      nodeType = "superNode";
+    } else {
+      nodeType = node.nodePresentationData.nodeType;
+    }
+
+    console.log("drag started", nodeType);
+
+    event.dataTransfer.setData("nodeType", nodeType);
     event.dataTransfer.setData(
       "nodeProcessData",
       JSON.stringify(node.nodeProcessData)

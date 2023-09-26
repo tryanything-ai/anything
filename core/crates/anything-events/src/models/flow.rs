@@ -11,6 +11,8 @@ use crate::generated::flows::{
     UpdateFlowVersion as ProtoUpdateFlowVersion, Variable as ProtoVariable,
 };
 
+use crate::clients;
+
 pub type FlowId = String;
 pub type FlowVersionId = String;
 

@@ -1,7 +1,9 @@
 use anything_events::clients::{
-    flows_service_client::FlowsServiceClient, GetFlowByNameRequest, GetFlowRequest, GetFlowsRequest,
+    flows_service_client::FlowsServiceClient, GetFlowByNameRequest, GetFlowRequest,
+    GetFlowVersionsRequest, GetFlowsRequest,
 };
-use anything_events::models::Flow as FlowModel;
+use anything_events::models::Flow;
+use anything_events::models::FlowVersion;
 use tonic::Request;
 
 use tracing::info;
@@ -9,7 +11,7 @@ use tracing::info;
 static BACKEND_ENDPOINT: &str = "http://localhost:50234";
 
 #[tauri::command]
-pub async fn get_flows() -> Result<Vec<FlowModel>, ()> {
+pub async fn get_flows() -> Result<Vec<Flow>, ()> {
     let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowsRequest {});
     let response = client
@@ -18,15 +20,29 @@ pub async fn get_flows() -> Result<Vec<FlowModel>, ()> {
         .expect("error making request");
 
     let flows = response.into_inner().flows;
-    let flows: Vec<FlowModel> = flows
-        .into_iter()
-        .map(|flow| FlowModel::from(flow))
-        .collect();
+    let flows: Vec<Flow> = flows.into_iter().map(|flow| Flow::from(flow)).collect();
     Ok(flows)
 }
 
+// #[tauri::command]
+// pub async fn get_flow_versions(flow_id: String) -> Result<Vec<FlowVersion>, ()> {
+//     let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
+//     let request = Request::new(GetFlowVersionsRequest { flow_id });
+//     let response = client
+//         .get_flow_versions(request)
+//         .await
+//         .expect("error making request");
+
+//     let flow_versions = response.into_inner().flow_versions;
+//     let flow_versions: Vec<FlowVersion> = flow_versions
+//         .into_iter()
+//         .map(|flow_version| FlowVersion::from(flow_version))
+//         .collect();
+//     Ok(flow_versions)
+// }
+
 #[tauri::command]
-pub async fn get_chat_flows() -> Result<Vec<FlowModel>, ()> {
+pub async fn get_chat_flows() -> Result<Vec<Flow>, ()> {
     //TODO: actually only send over flows with chats
     let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowsRequest {});
@@ -36,15 +52,12 @@ pub async fn get_chat_flows() -> Result<Vec<FlowModel>, ()> {
         .expect("error making request");
 
     let flows = response.into_inner().flows;
-    let flows: Vec<FlowModel> = flows
-        .into_iter()
-        .map(|flow| FlowModel::from(flow))
-        .collect();
+    let flows: Vec<Flow> = flows.into_iter().map(|flow| Flow::from(flow)).collect();
     Ok(flows)
 }
 
 #[tauri::command]
-pub async fn get_flow(flow_id: String) -> Result<FlowModel, ()> {
+pub async fn get_flow(flow_id: String) -> Result<Flow, ()> {
     let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowRequest { flow_id });
     let response = client
@@ -52,13 +65,13 @@ pub async fn get_flow(flow_id: String) -> Result<FlowModel, ()> {
         .await
         .expect("error making request");
 
-    let flow = FlowModel::from(response.into_inner().flow.unwrap());
+    let flow = Flow::from(response.into_inner().flow.unwrap());
 
     Ok(flow)
 }
 
 #[tauri::command]
-pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
+pub async fn get_flow_by_name(flow_name: String) -> Result<Flow, ()> {
     let mut client = FlowsServiceClient::connect("http://localhost:50234")
         .await
         .unwrap();
@@ -74,7 +87,7 @@ pub async fn get_flow_by_name(flow_name: String) -> Result<FlowModel, ()> {
     let flow_option = response.into_inner().flow;
     let flow = flow_option.ok_or(())?; // If the flow is None, return an error.
 
-    let flow_model = FlowModel::from(flow);
+    let flow_model = Flow::from(flow);
 
     Ok(flow_model)
 }

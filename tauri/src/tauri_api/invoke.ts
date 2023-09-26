@@ -14,11 +14,21 @@ export const getFlow = async (flow_id: string) => {
   return await invoke("get_flow", { flow_id });
 };
 
-export const getFlowByName = async (flowName: string) => {
-  console.log("Flow Name in tauri invoke -> ", flowName);
-
-  return await invoke("get_flow_by_name", { flowName });
+export const getFlowByName = async (flow_name: string) => {
+  return await invoke("get_flow_by_name", { flowName: flow_name });
 };
+
+export const getFlowVersions = async (flow_id: string) => {
+  return await invoke("get_flow_versions", {flow_id}); 
+}
+
+// export const getPublishedFlowVersion = async (flow_id: string) => {
+//   return await invoke("get_published_flow_version", { flow_id });
+// };
+
+// export const getFlowCurrentUnpublishedVersion = async (flow_id: string) => {
+//   return await invoke("get_flow_current_unpublished_version", { flow_id });
+// };
 
 export const getNodes = async () => {
   return await invoke("get_nodes");
