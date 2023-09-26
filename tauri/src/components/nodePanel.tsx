@@ -2,27 +2,75 @@ import { useEffect, useState } from "react";
 import { Node } from "../utils/nodeUtils";
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
 import BaseNodeIcon from "./baseNodeIcon";
+import React, { ChangeEvent, MouseEventHandler } from "react";
+
+import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
+import BaseSearch from "./baseSearch";
 
 const NodePanel = () => {
   const [triggerNodes, setTriggerNodes] = useState<Node[]>([]);
   const [actionNodes, setActionNodes] = useState<Node[]>([]);
+  const [showActions, setShowActions] = useState(true);
+  const [showTriggers, setShowTriggers] = useState(true);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(event.target.value);
+  };
+
+  const handleSearchClick = () => {
+    console.log(`Searching for: ${searchValue}`);
+    // Here, you can implement whatever logic you want when the search button is clicked.
+    // For instance, you might want to call an API to perform a search using the searchValue.
+  };
 
   useEffect(() => {
     setTriggerNodes(getTriggerNodes());
     setActionNodes(getActionNodes());
   }, []);
 
-  //TODO: add flows in some future where we can facilitate
   return (
-    <div className="flex flex-col h-full p-4 overflow-y-auto hide-scrollbar">
-      <h1 className="text-2xl font-bold pb-2">Triggers</h1>
-      {triggerNodes.map((node: Node) => (
-        <NodeDnD node={node} key={node.nodePresentationData.node_label} />
-      ))}
-      <h1 className="text-2xl font-bold py-2">Actions</h1>
-      {actionNodes.map((node: Node) => (
-        <NodeDnD node={node} key={node.nodePresentationData.node_label} />
-      ))}
+    <div className="max-h-screen overflow-y-auto p-4 hide-scrollbar">
+      <div className="py-4">
+        <BaseSearch
+          value={searchValue}
+          onClick={handleSearchClick}
+          onChange={handleSearchChange}
+        />
+      </div>
+
+      <h1
+        onClick={() => setShowTriggers(!showTriggers)}
+        className="h-12 py-2 text-xl font-bold pb-2 flex flex-row justify-between"
+      >
+        Triggers
+        {showTriggers ? <VscChevronDown /> : <VscChevronUp />}
+      </h1>
+      <div
+        className={`overflow-hidden transition-max-height duration-500 ease-in-out pb-2 ${
+          showTriggers ? "max-h-auto" : "max-h-0"
+        }`}
+      >
+        {triggerNodes.map((node: Node) => (
+          <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+        ))}
+      </div>
+      <h1
+        onClick={() => setShowActions(!showActions)}
+        className="text-xl py-2 font-bold pb-2 flex flex-row justify-between"
+      >
+        Actions
+        {showActions ? <VscChevronDown /> : <VscChevronUp />}
+      </h1>
+      <div
+        className={`overflow-hidden transition-max-height duration-500 ease-in-out pb-2 ${
+          showActions ? "max-h-auto" : "max-h-0"
+        }`}
+      >
+        {actionNodes.map((node: Node) => (
+          <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+        ))}
+      </div>
     </div>
   );
 };
