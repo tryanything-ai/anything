@@ -21,6 +21,7 @@ import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
 import { ModelProvider } from "./context/ModelsProvider";
 import "./styles.css";
+import Templates from "./routes/templates";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,14 @@ const router = createBrowserRouter([
       {
         path: "/flows",
         element: <Flows />,
+      },
+      {
+        path: "/templates",
+        element: <Templates />,
+      },
+      {
+        path: "/templates/:author_name/:template_name",
+        element: <Templates />,
       },
       {
         path: "/models",

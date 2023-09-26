@@ -1,18 +1,16 @@
 #![allow(dead_code)]
 
 use crate::{
-    clients::{GetFlowByNameRequest, GetFlowByNameResponse},
-    generated::GetFlowsRequest,
     generated::{
         flows_service_server::FlowsService, ActivateFlowVersionRequest,
-        ActivateFlowVersionResponse, CreateFlowRequest, CreateFlowResponse, GetFlowRequest,
+        ActivateFlowVersionResponse, CreateFlowRequest, CreateFlowResponse, GetFlowRequest, GetFlowsRequest, GetFlowVersionsRequest, GetFlowVersionsResponse,
         GetFlowResponse, GetFlowsResponse, UpdateFlowRequest, UpdateFlowResponse,
-        UpdateFlowVersionRequest, UpdateFlowVersionResponse,
+        UpdateFlowVersionRequest, UpdateFlowVersionResponse, GetFlowVersionResponse, GetFlowVersionRequest, GetFlowByNameResponse, GetFlowByNameRequest
     },
     models::flow::Flow,
     repositories::flow_repo::FlowRepo,
     Context, CreateFlow,
-};
+}; 
 use postage::dispatch::Sender;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -52,6 +50,36 @@ impl FlowsService for FlowManager {
 
         let response = GetFlowsResponse {
             flows: flows.into_iter().map(|f| f.into()).collect(),
+        };
+        Ok(Response::new(response))
+    }
+
+    async fn get_flow_versions(
+        &self,
+        request: Request<GetFlowVersionsRequest>,
+    ) -> Result<Response<GetFlowVersionsResponse>, Status> {
+        
+
+        let req = request.into_inner();
+
+        let flow_id = req.flow_id;
+
+        if flow_id.is_empty() {
+            return Err(Status::invalid_argument("No flow id provided"));
+        }
+
+        let flow_versions = match self.context.repositories.flow_repo.get_flow_versions(flow_id).await {
+            Ok(flow_versions) => flow_versions,
+            Err(e) => {
+                return Err(Status::internal(format!(
+                    "Unable to get flows: {}",
+                    e.to_string()
+                )))
+            }
+        };
+
+        let response = GetFlowVersionsResponse {
+            flow_versions: flow_versions.into_iter().map(|f| f.into()).collect(),
         };
         Ok(Response::new(response))
     }
@@ -119,6 +147,45 @@ impl FlowsService for FlowManager {
 
         Ok(Response::new(GetFlowByNameResponse {
             flow: Some(flow.into()),
+        }))
+    }
+
+
+    async fn get_flow_version_by_id(
+        &self,
+        request: Request<GetFlowVersionRequest>,
+    ) -> Result<Response<GetFlowVersionResponse>, Status> {
+        let req = request.into_inner();
+
+        let flow_id = req.flow_id;
+        let flow_version_id = req.flow_version_id; 
+
+        if flow_id.is_empty() {
+            return Err(Status::invalid_argument("No flow id provided"));
+        }
+
+        if flow_version_id.is_empty() {
+            return Err(Status::invalid_argument("No flow version id provided"));
+        }
+
+        let flow_version = match self
+            .context
+            .repositories
+            .flow_repo
+            .get_flow_version_by_id(flow_id, flow_version_id)
+            .await
+        {
+            Ok(flow_version) => flow_version,
+            Err(e) => {
+                return Err(Status::internal(format!(
+                    "Unable to get flow_version: {}",
+                    e.to_string()
+                )))
+            }
+        };
+
+        Ok(Response::new(GetFlowVersionResponse {
+            flow_version: Some(flow_version.into()),
         }))
     }
 

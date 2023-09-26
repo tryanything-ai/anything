@@ -13,8 +13,11 @@ use crate::{
 };
 
 const GET_FLOW_SQL: &str = r#"
-SELECT f.flow_id, f.flow_name, f.latest_version_id,
-        f.active, f.updated_at,
+SELECT  f.flow_id, 
+        f.flow_name, 
+        f.latest_version_id,
+        f.active, 
+        f.updated_at,
         fv.version_id AS fv_id,
         fv.description AS fv_description,
         fv.flow_version AS fv_version,
@@ -253,7 +256,7 @@ impl FlowRepo for FlowRepoImpl {
     async fn get_flow_version_by_id(
         &self,
         flow_id: FlowId,
-        version_id: FlowVersionId,
+        flow_version_id: FlowVersionId,
     ) -> EventsResult<FlowVersion> {
         let flow_version = sqlx::query_as::<_, FlowVersion>(
             r#"
@@ -261,7 +264,7 @@ impl FlowRepo for FlowRepoImpl {
         "#,
         )
         .bind(flow_id.clone())
-        .bind(version_id.clone())
+        .bind(flow_version_id.clone())
         .fetch_one(&self.pool)
         .await
         .map_err(|e| EventsError::DatabaseError(e))?;
