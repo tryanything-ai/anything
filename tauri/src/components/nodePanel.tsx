@@ -24,7 +24,7 @@ const NodePanel = () => {
     // For instance, you might want to call an API to perform a search using the searchValue.
   };
 
-  useEffect(() => {
+useEffect(() => {
     setTriggerNodes(getTriggerNodes());
     setActionNodes(getActionNodes());
   }, []);
