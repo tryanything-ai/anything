@@ -2,7 +2,7 @@ import { RustFlow, RustTrigger } from "./flowConversion";
 
 export const MockFlowDefinitions: RustFlow[] = [
   {
-    flow_name: "SimpleFlow",
+    flow_name: "Simple Cron Flow",
     author: "Author 1",
     author_id: "1",
     flow_id: "1",
@@ -56,10 +56,10 @@ export const MockFlowDefinitions: RustFlow[] = [
     },
   },
   {
-    flow_name: "SimpleFlow",
+    flow_name: "Simple AI Flow",
     author: "Author 1",
     author_id: "1",
-    flow_id: "1",
+    flow_id: "2",
     version: "0.1",
     description: "A simple flow that echos holiday cheer",
     variables: [],
