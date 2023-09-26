@@ -26,16 +26,13 @@ import Templates from "./routes/templates";
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
+import posthog from 'posthog-js';
 import { PostHogProvider } from "posthog-js/react";
 
-let posthog;
-
-if (
-  import.meta.env.mode === "production"
-) {
+if (import.meta.env.mode === "production") {
   console.log("Initializing PostHog in production");
-  posthog.init(process.env.VITE_PUBLIC_POSTHOG_KEY, {
-    api_host: process.env.VITE_PUBLIC_POSTHOG_HOST,
+  posthog.init(VITE_PUBLIC_POSTHOG_KEY, {
+    api_host: VITE_PUBLIC_POSTHOG_HOST,
   });
 } else {
   console.log("Initializing PostHog in development");
