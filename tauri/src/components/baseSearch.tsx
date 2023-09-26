@@ -1,10 +1,11 @@
 import { useEffect, useState, ChangeEvent, MouseEventHandler } from "react";
-import { useFuseSearch } from "../hooks/useFuseSearch";
+import { DeepKeys, useFuseSearch } from "../hooks/useFuseSearch";
+
 
 interface BaseSearchProps<T> {
   data: T[];
   onResultsChange: (results: T[]) => void;
-  searchKey: keyof T | (keyof T)[];
+  searchKey: DeepKeys<T> | DeepKeys<T>[], 
   placeholder?: string;
 }
 
