@@ -14,28 +14,25 @@ const NodePanel = () => {
   const [showTriggers, setShowTriggers] = useState(true);
   const [searchValue, setSearchValue] = useState("");
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(event.target.value);
-  };
-
-  const handleSearchClick = () => {
-    console.log(`Searching for: ${searchValue}`);
-    // Here, you can implement whatever logic you want when the search button is clicked.
-    // For instance, you might want to call an API to perform a search using the searchValue.
-  };
-
-useEffect(() => {
+  useEffect(() => {
     setTriggerNodes(getTriggerNodes());
     setActionNodes(getActionNodes());
   }, []);
+
+  const setResults = (results: Node[]) => {
+    console.log("results", results);
+    setTriggerNodes(results.filter((node) => node.nodeProcessData.trigger));
+    setActionNodes(results.filter((node) => !node.nodeProcessData.trigger));
+  };
 
   return (
     <div className="max-h-screen overflow-y-auto p-4 hide-scrollbar">
       <div className="py-4">
         <BaseSearch
-          value={searchValue}
-          onClick={handleSearchClick}
-          onChange={handleSearchChange}
+          data={[...triggerNodes, ...actionNodes]}
+          //TODO: create flat interface for nodes to power search
+          searchKey={["nodePresentationData"]}
+          onResultsChange={(results) => setResults(results)}
         />
       </div>
 
