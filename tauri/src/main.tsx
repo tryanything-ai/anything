@@ -23,6 +23,25 @@ import { ModelProvider } from "./context/ModelsProvider";
 import "./styles.css";
 import Templates from "./routes/templates";
 
+const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
+const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
+
+import { PostHogProvider } from "posthog-js/react";
+
+let posthog;
+
+if (
+  import.meta.env.mode === "production"
+) {
+  console.log("Initializing PostHog in production");
+  posthog.init(process.env.VITE_PUBLIC_POSTHOG_KEY, {
+    api_host: process.env.VITE_PUBLIC_POSTHOG_HOST,
+  });
+} else {
+  console.log("Initializing PostHog in development");
+  console.log("import.meta.env", import.meta.env);
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -83,16 +102,18 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <TauriProvider>
-      <LocalFileProvider>
-        <ModelProvider>
-          <SqlProvider>
-            <SettingsProvider>
-              <RouterProvider router={router} />
-            </SettingsProvider>
-          </SqlProvider>
-        </ModelProvider>
-      </LocalFileProvider>
-    </TauriProvider>
+    <PostHogProvider client={posthog}>
+      <TauriProvider>
+        <LocalFileProvider>
+          <ModelProvider>
+            <SqlProvider>
+              <SettingsProvider>
+                <RouterProvider router={router} />
+              </SettingsProvider>
+            </SqlProvider>
+          </ModelProvider>
+        </LocalFileProvider>
+      </TauriProvider>
+    </PostHogProvider>
   </React.StrictMode>
 );
