@@ -20,6 +20,16 @@ export interface UseFuseSearchOptions<T = unknown> {
   fuseOptions?: Fuse.IFuseOptions<T>;
 }
 
+
+export type DeepKeys<T> = {
+  [K in keyof T]: K extends string
+    ? T[K] extends Record<string, any>
+      ? `${K}.${DeepKeys<T[K]>}` | K
+      : K
+    : never;
+}[keyof T];
+
+
 /**
  * Uses fuse to perform client-side fuzzy searching.
  * @param list The full list of items that can be searched.
@@ -31,7 +41,7 @@ export interface UseFuseSearchOptions<T = unknown> {
 export function useFuseSearch<T = unknown>(
   list: readonly T[],
   search: string | Fuse.Expression,
-  keys: keyof T | (keyof T)[], // TODO deep keys? Supported by fuse but typing them is awkward
+  keys: DeepKeys<T> | DeepKeys<T>[], // TODO deep keys? Supported by fuse but typing them is awkward
   options?: UseFuseSearchOptions,
 ): Fuse.FuseResult<T>[] {
   const { fuseOptions = {}, noInputEmptyList = false, max } = options ?? {};

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Node } from "../utils/nodeUtils";
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
 import BaseNodeIcon from "./baseNodeIcon";
-import React, { ChangeEvent, MouseEventHandler } from "react";
 
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 import BaseSearch from "./baseSearch";
@@ -30,8 +29,7 @@ const NodePanel = () => {
       <div className="py-4">
         <BaseSearch
           data={[...triggerNodes, ...actionNodes]}
-          //TODO: create flat interface for nodes to power search
-          searchKey={["nodePresentationData"]}
+          searchKey={["nodePresentationData.node_label"]}
           onResultsChange={(results) => setResults(results)}
         />
       </div>
