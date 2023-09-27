@@ -1,7 +1,8 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useSettingsContext } from "./SettingsProvider";
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "../types/supabase.types";
+import { Database, Json } from "../types/supabase.types";
+import { RustFlow } from "../utils/flowConversion";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -11,16 +12,16 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 interface WebFeaturesContextInterface {
   searchTemplates: (searchTerm: string) => void;
-  fetchTemplates: () => void;
+  fetchTemplates: () => Promise<RustFlow[]>;
   saveTemplate: (template: any) => void;
   updaetTemplate: (template: any) => void;
 }
 
 export const WebFeaturesContext = createContext<WebFeaturesContextInterface>({
-  searchTemplates: (searchTerm) => {},
-  fetchTemplates: () => {},
-  saveTemplate: (template) => {},
-  updaetTemplate: (template) => {},
+  searchTemplates: () => {},
+  fetchTemplates: () => Promise.resolve([]),
+  saveTemplate: () => {},
+  updaetTemplate: () => {},
 });
 
 export const useWebFeaturesContext = () => useContext(WebFeaturesContext);
@@ -51,10 +52,15 @@ export const WebFeaturesProvider = ({ children }: { children: ReactNode }) => {
 
     if (error) {
       console.log(error);
-      throw error;
+      return [];
     }
 
-    return flow_templates;
+    let templates = flow_templates?.map((template) => {
+      //TODO: this might be very naughty
+      return template.flow_json as unknown as RustFlow;
+    });
+
+    return templates || [];
   };
 
   const saveTemplate = (template: any) => {
