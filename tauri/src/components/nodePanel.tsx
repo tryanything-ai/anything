@@ -51,7 +51,7 @@ const NodePanel = () => {
 
       <h1
         onClick={() => setShowTriggers(!showTriggers)}
-        className="h-12 py-2 text-xl font-bold pb-2 flex flex-row justify-between"
+        className="h-12 py-2 text-xl font-bold pb-2 flex flex-row justify-between cursor-pointer"
       >
         Triggers
         {showTriggers ? <VscChevronDown /> : <VscChevronUp />}
@@ -67,7 +67,7 @@ const NodePanel = () => {
       </div>
       <h1
         onClick={() => setShowActions(!showActions)}
-        className="text-xl py-2 font-bold pb-2 flex flex-row justify-between"
+        className="text-xl py-2 font-bold pb-2 flex flex-row justify-between cursor-pointer"
       >
         Actions
         {showActions ? <VscChevronDown /> : <VscChevronUp />}
