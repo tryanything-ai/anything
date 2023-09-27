@@ -1,5 +1,5 @@
-import Fuse from 'fuse.js';
-import { useEffect, useMemo, useRef } from 'react';
+import Fuse from "fuse.js";
+import { useEffect, useMemo, useRef } from "react";
 
 // taken from rivet https://github.com/Ironclad/rivet/blob/08d8b5a6988a75cb887a4bb7d5291f958c1c0523/packages/app/src/hooks/useFuseSearch.ts#L29
 
@@ -20,7 +20,6 @@ export interface UseFuseSearchOptions<T = unknown> {
   fuseOptions?: Fuse.IFuseOptions<T>;
 }
 
-
 export type DeepKeys<T> = {
   [K in keyof T]: K extends string
     ? T[K] extends Record<string, any>
@@ -28,7 +27,6 @@ export type DeepKeys<T> = {
       : K
     : never;
 }[keyof T];
-
 
 /**
  * Uses fuse to perform client-side fuzzy searching.
@@ -41,15 +39,17 @@ export type DeepKeys<T> = {
 export function useFuseSearch<T = unknown>(
   list: readonly T[],
   search: string | Fuse.Expression,
-  keys: DeepKeys<T> | DeepKeys<T>[], // TODO deep keys? Supported by fuse but typing them is awkward
-  options?: UseFuseSearchOptions,
+  keys: DeepKeys<T> | DeepKeys<T>[],
+  options?: UseFuseSearchOptions
 ): Fuse.FuseResult<T>[] {
   const { fuseOptions = {}, noInputEmptyList = false, max } = options ?? {};
   list = list.length === 0 ? (none as readonly T[]) : list; // Let empty array be passed in without memoizing 🤷‍♂️
 
   const fuseRef = useRef<Fuse<T> | undefined>();
-  const keyList = (Array.isArray(keys) ? keys : [keys]) as Fuse.FuseOptionKey<T>[];
-  const searchInput = typeof search === 'string' ? search.trim() : search;
+  const keyList = (
+    Array.isArray(keys) ? keys : [keys]
+  ) as Fuse.FuseOptionKey<T>[];
+  const searchInput = typeof search === "string" ? search.trim() : search;
 
   // TODO is there ever a legit reason to search fuse with an empty string?
   const enabled = (options?.enabled ?? true) && !!searchInput;
@@ -86,16 +86,23 @@ export function useFuseSearch<T = unknown>(
 
   const searchResults = useMemo(
     () =>
-      enabled ? fuse.search(searchInput, max != null ? { limit: max } : undefined) : (none as Fuse.FuseResult<T>[]),
-    [fuse, searchInput, enabled, max],
+      enabled
+        ? fuse.search(searchInput, max != null ? { limit: max } : undefined)
+        : (none as Fuse.FuseResult<T>[]),
+    [fuse, searchInput, enabled, max]
   );
 
   const noResults = useMemo(
     () =>
       noInputEmptyList
         ? (none as Fuse.FuseResult<T>[])
-        : list.map<Fuse.FuseResult<T>>((item) => ({ item, refIndex: 0, matches: [], score: 0 })),
-    [list, noInputEmptyList],
+        : list.map<Fuse.FuseResult<T>>((item) => ({
+            item,
+            refIndex: 0,
+            matches: [],
+            score: 0,
+          })),
+    [list, noInputEmptyList]
   );
 
   return enabled ? searchResults : noResults;
