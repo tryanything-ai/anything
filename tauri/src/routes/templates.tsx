@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BaseCard from "../components/baseCard";
 import { MockFlowDefinitions } from "../utils/mocks";
 import BaseSearch from "../components/baseSearch";
 import { RustFlow } from "../utils/flowConversion";
+import { useWebFeaturesContext } from "../context/WebFeaturesProvider";
 
 export default function Templates() {
   const [results, setResults] = useState<RustFlow[]>(MockFlowDefinitions);
+
+  const { fetchTemplates } = useWebFeaturesContext(); 
+
+  useEffect(() => {
+    async function fetchTemplatesAsync() {
+      let templates = await fetchTemplates();
+      setResults(templates);
+    }
+
+    fetchTemplatesAsync();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
