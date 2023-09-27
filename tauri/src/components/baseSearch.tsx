@@ -1,20 +1,23 @@
-import { useEffect, useState, ChangeEvent, MouseEventHandler } from "react";
+import React, {
+  useEffect,
+  useState,
+  memo,
+} from "react";
 import { DeepKeys, useFuseSearch } from "../hooks/useFuseSearch";
-
 
 interface BaseSearchProps<T> {
   data: T[];
   onResultsChange: (results: T[]) => void;
-  searchKey: DeepKeys<T> | DeepKeys<T>[], 
+  searchKey: DeepKeys<T> | DeepKeys<T>[];
   placeholder?: string;
 }
 
-const BaseSearch = <T,>({
+const BaseSearch: React.FC<BaseSearchProps<any>> = ({
   data,
   searchKey,
   onResultsChange,
   placeholder = "Search…",
-}: BaseSearchProps<T>) => {
+}) => {
   const [value, setValue] = useState("");
   const results = useFuseSearch(data, value, searchKey, {
     // Any other options you'd like to pass
@@ -28,7 +31,6 @@ const BaseSearch = <T,>({
 
   return (
     <div className="form-control w-full">
-      {/* <div className="input-group w-full max-w-96"> */}
       <input
         type="text"
         placeholder={placeholder}
@@ -36,25 +38,8 @@ const BaseSearch = <T,>({
         className="input input-bordered w-full"
         onChange={(e) => setValue(e.target.value)}
       />
-      {/* <button className="btn btn-square" onClick={onClick}>
-          <svg
-            xmlns="http:www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </button> */}
     </div>
-    // </div>
   );
 };
 
-export default BaseSearch;
+export default memo(BaseSearch);
