@@ -26,7 +26,7 @@ import Templates from "./routes/templates";
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
-import posthog from 'posthog-js';
+import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 
 if (import.meta.env.mode === "production") {
@@ -99,18 +99,18 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <PostHogProvider client={posthog}>
-      <TauriProvider>
-        <LocalFileProvider>
-          <ModelProvider>
-            <SqlProvider>
-              <SettingsProvider>
+    <SettingsProvider>
+      <PostHogProvider client={posthog}>
+        <TauriProvider>
+          <LocalFileProvider>
+            <ModelProvider>
+              <SqlProvider>
                 <RouterProvider router={router} />
-              </SettingsProvider>
-            </SqlProvider>
-          </ModelProvider>
-        </LocalFileProvider>
-      </TauriProvider>
-    </PostHogProvider>
+              </SqlProvider>
+            </ModelProvider>
+          </LocalFileProvider>
+        </TauriProvider>
+      </PostHogProvider>
+    </SettingsProvider>
   </React.StrictMode>
 );
