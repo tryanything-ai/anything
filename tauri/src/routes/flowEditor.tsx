@@ -42,15 +42,12 @@ function Flows() {
 
   return (
     <div className="h-full w-full overscroll-none">
-      {/* <Header /> */}
       <div className="flex flex-row h-full w-full">
         <Allotment defaultSizes={[100, 500, 100]}>
           {/* Left Side */}
-          {/* {nodePanel ? ( */}
           <Allotment.Pane preferredSize={300} maxSize={600} minSize={250}>
             <NodePanel />
           </Allotment.Pane>
-          {/* ) : null} */}
           {/* Editor */}
           <Allotment.Pane preferredSize={800}>
             <div className="flex flex-row h-full w-full" ref={reactFlowWrapper}>
@@ -58,13 +55,14 @@ function Flows() {
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}
+                // defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onDragOver={onDragOver}
                 onInit={setReactFlowInstance}
                 onDrop={(e) => onDrop(e, reactFlowWrapper)}
                 onConnect={onConnect}
-                fitView
+                // fitView
               >
                 <FlowName />
                 <Controls style={{ background: "darkgray" }} />
@@ -78,10 +76,9 @@ function Flows() {
             </div>
           </Allotment.Pane>
           {/* Right Side */}
-          <Allotment.Pane preferredSize={300} maxSize={600} minSize={250}>
+          <Allotment.Pane preferredSize={350} maxSize={600} minSize={300}>
             <RightPanel />
           </Allotment.Pane>
-         
         </Allotment>
       </div>
     </div>

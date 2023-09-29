@@ -7,6 +7,7 @@ import { RustFlow } from "../utils/flowConversion";
 import { useWebFeaturesContext } from "../context/WebFeaturesProvider";
 
 export default function Templates() {
+  const [allTemplates, setAllTemplates] = useState<RustFlow[]>([]);
   const [results, setResults] = useState<RustFlow[]>(MockFlowDefinitions);
 
   const { fetchTemplates } = useWebFeaturesContext(); 
@@ -14,7 +15,8 @@ export default function Templates() {
   useEffect(() => {
     async function fetchTemplatesAsync() {
       let templates = await fetchTemplates();
-      setResults(templates);
+
+      setAllTemplates([...templates, ...MockFlowDefinitions]);
     }
 
     fetchTemplatesAsync();
@@ -28,7 +30,7 @@ export default function Templates() {
             <h1 className="text-7xl">Choose a Template</h1>
           </div>
           <BaseSearch
-            data={MockFlowDefinitions}
+            data={allTemplates}
             searchKey={["flow_name"]}
             onResultsChange={(results) => setResults(results)}
           />
