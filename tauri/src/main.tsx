@@ -28,6 +28,7 @@ const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
+import Template from "./routes/template";
 
 if (import.meta.env.mode === "production") {
   console.log("Initializing PostHog in production");
@@ -59,7 +60,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/templates/:author_name/:template_name",
-        element: <Templates />,
+        element: <Template />,
       },
       {
         path: "/models",

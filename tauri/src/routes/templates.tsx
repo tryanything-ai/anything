@@ -4,13 +4,13 @@ import BaseCard from "../components/baseCard";
 import { MockFlowDefinitions } from "../utils/mocks";
 import BaseSearch from "../components/baseSearch";
 import { RustFlow } from "../utils/flowConversion";
-import { useWebFeaturesContext } from "../context/MarketplaceProvider";
+import { useMarketplaceContext } from "../context/MarketplaceProvider";
 
 export default function Templates() {
   const [allTemplates, setAllTemplates] = useState<RustFlow[]>([]);
   const [results, setResults] = useState<RustFlow[]>(MockFlowDefinitions);
 
-  const { fetchTemplates } = useWebFeaturesContext();
+  const { fetchTemplates } = useMarketplaceContext();
 
   useEffect(() => {
     async function fetchTemplatesAsync() {
@@ -53,7 +53,7 @@ const TemplateCard = ({ template }: { template: RustFlow }) => {
     <BaseCard
       key={template.flow_id}
       as={Link}
-      to={`/templates/${template.flow_id}`}
+      to={`/templates/${template.author}/${template.flow_id}`}
     >
       {template.flow_name}
     </BaseCard>
