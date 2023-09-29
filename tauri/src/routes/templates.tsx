@@ -10,7 +10,7 @@ export default function Templates() {
   const [allTemplates, setAllTemplates] = useState<RustFlow[]>([]);
   const [results, setResults] = useState<RustFlow[]>(MockFlowDefinitions);
 
-  const { fetchTemplates } = useWebFeaturesContext(); 
+  const { fetchTemplates } = useWebFeaturesContext();
 
   useEffect(() => {
     async function fetchTemplatesAsync() {
@@ -39,16 +39,23 @@ export default function Templates() {
         {/* Grid of templates */}
         <div className="grid grid-cols-3 gap-6 w-full max-w-5xl pt-10">
           {results.map((template, index) => (
-            <BaseCard
-              key={template.flow_id}
-              as={Link}
-              to={`/templates/${template.flow_id}`}
-            >
-              {template.flow_name}
-            </BaseCard>
+            <TemplateCard key={template.flow_id} template={template} />
           ))}
         </div>
       </div>
     </div>
   );
 }
+
+const TemplateCard = ({ template }: { template: RustFlow }) => {
+  //TODO: make the icons for the trigger and the actions
+  return (
+    <BaseCard
+      key={template.flow_id}
+      as={Link}
+      to={`/templates/${template.flow_id}`}
+    >
+      {template.flow_name}
+    </BaseCard>
+  );
+};

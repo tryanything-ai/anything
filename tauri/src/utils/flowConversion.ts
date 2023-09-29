@@ -5,15 +5,19 @@ export interface RustFlow {
   flow_id?: string;
   version: string;
   description: string;
-  variables: any[]; // Empty array provided in example, so using any[] for now.
+  variables: Variable[];
   trigger: RustTrigger;
-  nodes: FlowNode[];
+  actions: FlowNode[];
   environment: Environment;
 }
 
 export interface RustTrigger {
   name: string;
   settings: TriggerSettings;
+}
+
+interface Variable {
+  [key: string]: string; // Using an index signature since the keys can vary.
 }
 
 interface TriggerSettings {
@@ -28,9 +32,7 @@ interface FlowNode {
   action: Action;
 }
 
-interface Variable {
-  [key: string]: string; // Using an index signature since the keys can vary.
-}
+
 
 interface Action {
   action_type: string;

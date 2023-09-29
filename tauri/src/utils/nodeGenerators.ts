@@ -1,6 +1,5 @@
 import { Node } from "./nodeUtils";
 import { HandleProps, Position } from "reactflow";
-import { TRIGGERS } from "./mocks";
 
 const BaseHandles: HandleProps[] = [
   {
