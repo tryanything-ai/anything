@@ -23,7 +23,6 @@ action_type = "Shell"
 [nodes.action.config]
 command = "echo 'Jingle Bells'"
 
-
 [[nodes]]
 name = "say-cheers"
 label = "say holiday cheer"
