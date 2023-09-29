@@ -1,4 +1,4 @@
-import { HandleProps, NodeProps } from "reactflow";
+import { HandleProps, NodeProps, Edge } from "reactflow";
 
 export type Flow = {
   flow_name: string;
@@ -6,11 +6,12 @@ export type Flow = {
   author_username?: string;
   author_id?: string;
   version: string;
-  description: string;
-  variables: Variable[];
-  trigger: Trigger;
-  actions: Action[];
-  environment: string;
+  description: string;          
+  variables: Variable[];        //Global variables
+  environment: string;          //Stub for future
+  trigger: Trigger;             //Triggering
+  actions: Action[];            //Processing
+  edges: Edge[];                //Needed for BFS traversal and flow render
 };
 
 // General Representation of a Node
@@ -20,7 +21,7 @@ interface Node {
   icon: string; //VSCode icon or url to image //TODO: make svg
   node_label: string;
   description?: string;
-  variables: Variable[];
+  variables: Variable[];        //Local variables
   config: Variable;
   presentation?: NodePresentation;
   handles: HandleProps[];

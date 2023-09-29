@@ -10,27 +10,27 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 //TODO: Perhaps move Supabase stuff to a serverless function so oss contributors don't need keys
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-interface WebFeaturesContextInterface {
+interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
   fetchTemplates: () => Promise<RustFlow[]>;
   saveTemplate: (template: any) => void;
   updaetTemplate: (template: any) => void;
 }
 
-export const WebFeaturesContext = createContext<WebFeaturesContextInterface>({
+export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   searchTemplates: () => {},
   fetchTemplates: () => Promise.resolve([]),
   saveTemplate: () => {},
   updaetTemplate: () => {},
 });
 
-export const useWebFeaturesContext = () => useContext(WebFeaturesContext);
+export const useWebFeaturesContext = () => useContext(MarketplaceContext);
 
 //We will break compatability of templates and will need to know what version of templates we are using.
 //was used to create a template to manage compatability and conversion
 const FLOW_TEMPLATES_VERSION = "0.0.1";
 
-export const WebFeaturesProvider = ({ children }: { children: ReactNode }) => {
+export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const { webFeaturesDisabled } = useSettingsContext();
   //fetch Supabaes Flow Templates
   //expose Supabase Search for Flows, Actions, Triggers, Templates, etc
@@ -76,10 +76,10 @@ export const WebFeaturesProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <WebFeaturesContext.Provider
+    <MarketplaceContext.Provider
       value={{ searchTemplates, fetchTemplates, saveTemplate, updaetTemplate }}
     >
       {children}
-    </WebFeaturesContext.Provider>
+    </MarketplaceContext.Provider>
   );
 };
