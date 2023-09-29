@@ -4,7 +4,7 @@ import BaseCard from "../components/baseCard";
 import { MockFlowDefinitions } from "../utils/mocks";
 import BaseSearch from "../components/baseSearch";
 import { RustFlow } from "../utils/flowConversion";
-import { useWebFeaturesContext } from "../context/WebFeaturesProvider";
+import { useWebFeaturesContext } from "../context/MarketplaceProvider";
 
 export default function Templates() {
   const [allTemplates, setAllTemplates] = useState<RustFlow[]>([]);
