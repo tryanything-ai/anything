@@ -36,8 +36,8 @@ if (import.meta.env.mode === "production") {
     api_host: VITE_PUBLIC_POSTHOG_HOST,
   });
 } else {
-  console.log("Initializing PostHog in development");
-  console.log("import.meta.env", import.meta.env);
+  // console.log("Initializing PostHog in development");
+  // console.log("import.meta.env", import.meta.env);
 }
 
 const router = createBrowserRouter([
@@ -59,7 +59,7 @@ const router = createBrowserRouter([
         element: <Templates />,
       },
       {
-        path: "/templates/:author_name/:template_name",
+        path: "/templates/:author_username/:template_name",
         element: <Template />,
       },
       {
