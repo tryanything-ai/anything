@@ -17,6 +17,7 @@ import ChatInterface from "./routes/chatInterface";
 // Contexts
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
+import { NotificationsProvider } from "./context/NotificationProvider";
 import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
 import { ModelProvider } from "./context/ModelsProvider";
@@ -27,6 +28,7 @@ const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
 import posthog from "posthog-js";
+
 import { PostHogProvider } from "posthog-js/react";
 import Template from "./routes/template";
 
@@ -101,17 +103,19 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <SettingsProvider>
-      <PostHogProvider client={posthog}>
-        <TauriProvider>
-          <LocalFileProvider>
-            <ModelProvider>
-              <SqlProvider>
-                <RouterProvider router={router} />
-              </SqlProvider>
-            </ModelProvider>
-          </LocalFileProvider>
-        </TauriProvider>
-      </PostHogProvider>
+      <NotificationsProvider>
+        <PostHogProvider client={posthog}>
+          <TauriProvider>
+            <LocalFileProvider>
+              <ModelProvider>
+                <SqlProvider>
+                  <RouterProvider router={router} />
+                </SqlProvider>
+              </ModelProvider>
+            </LocalFileProvider>
+          </TauriProvider>
+        </PostHogProvider>
+      </NotificationsProvider>
     </SettingsProvider>
   </React.StrictMode>
 );

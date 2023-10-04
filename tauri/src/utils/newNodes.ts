@@ -11,7 +11,7 @@ export type Flow = {
   environment: string;          //Stub for future
   trigger: Trigger;             //Triggering
   actions: Action[];            //Processing
-  edges: Edge[];                //Needed for BFS traversal and flow render
+  edges: Edge[];            //Needed for BFS traversal and flow render
 };
 
 // General Representation of a Node
