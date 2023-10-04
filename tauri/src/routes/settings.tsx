@@ -1,13 +1,44 @@
+import React from "react";
 import themes from "../utils/themes";
 import { useSettingsContext } from "../context/SettingsProvider";
 import clsx from "clsx";
 
 export default function Settings() {
-  const { setTheme, theme: currentTheme } = useSettingsContext();
+  const {
+    setTheme,
+    theme: currentTheme,
+    setWebFeaturesDisabled,
+    webFeaturesDisabled,
+  } = useSettingsContext();
 
+  const text = `This is a master shutoff for all features that have are web based.
+  - Find Templates from Marketplace
+   - Product Analytics
+    - Crash Reporting Analytics`;
+
+  const newText = text.split("\n").map((str, index) => (
+    <React.Fragment key={index}>
+      {str}
+      <br />
+    </React.Fragment>
+  ));
   return (
-    <div className="flex flex-row h-full w-full p-6">
-      <div className="dropdown">
+    <div className="flex flex-col h-full w-full p-6">
+      <div className="form-control w-52">
+        <label className="cursor-pointer label">
+          <span className="label-text  text-2xl">Web Features</span>
+          <input
+            type="checkbox"
+            onChange={() => {
+              setWebFeaturesDisabled(!webFeaturesDisabled);
+            }}
+            className="toggle toggle-primary"
+            checked={!webFeaturesDisabled}
+          />
+        </label>
+      </div>
+      <div>{newText}</div>
+      <div className="dropdown mt-2">
         <label tabIndex={0} className="btn m-1">
           Choose Theme
         </label>

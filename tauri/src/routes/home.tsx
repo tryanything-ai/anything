@@ -1,15 +1,9 @@
 import { useLocalFileContext } from "../context/LocalFileProvider";
-
 import { Link } from "react-router-dom";
-
-import { useSqlContext } from "../context/SqlProvider";
-
 import BaseCard from "../components/baseCard";
 
 export default function Home() {
-  const { flowPaths, createNewFlow } = useLocalFileContext();
-
-  const { tables } = useSqlContext();
+  const { flows, createNewFlow } = useLocalFileContext();
 
   return (
     <div className="flex flex-row h-full w-full m-10">
@@ -30,15 +24,15 @@ export default function Home() {
         </div>
 
         <ul>
-          {flowPaths.map((flow) => {
+          {flows.map((flow) => {
             return (
               <BaseCard
                 as={Link}
-                key={flow.name}
-                to={`flows/${flow.name}`}
+                key={flow.flow_name}
+                to={`flows/${flow.flow_name}`}
                 className="w-96"
               >
-                <h2 className="card-title">{flow.name}</h2>
+                <h2 className="card-title">{flow.flow_name}</h2>
               </BaseCard>
             );
           })}
@@ -49,51 +43,17 @@ export default function Home() {
 
       <div className="flex flex-col text-5xl m- w-96 m-5">
         <div className="flex flex-row justify-between">
-          <div>Vectors</div>
+          <div>Templates</div>
 
-          <button
+          <Link
             className="btn btn-primary m-1 ml-4"
-            onClick={() => {
-              // createNewVector();
-            }}
+            to="/templates"
           >
-            New Vector
-          </button>
+            Explore
+          </Link>
         </div>
 
         <ul></ul>
-      </div>
-
-      {/* Tables */}
-
-      <div className="flex flex-col text-5xl m-5">
-        <div className="flex flex-row justify-between">
-          <div>Tables</div>
-
-          <button
-            className="btn btn-primary m-1 ml-4"
-            onClick={() => {
-              // createNewTable();
-            }}
-          >
-            New Table
-          </button>
-        </div>
-
-        <ul>
-          {tables.map((table) => {
-            return (
-              <BaseCard
-                as={Link}
-                key={table.name}
-                to={`tables/${table.name}`}
-                className="w-96"
-              >
-                <h2 className="card-title">{table.name}</h2>
-              </BaseCard>
-            );
-          })}
-        </ul>
       </div>
     </div>
   );

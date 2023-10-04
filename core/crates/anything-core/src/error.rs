@@ -13,6 +13,18 @@ pub enum AnythingError {
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
 
+    #[error("error in trigger: {0}")]
+    TriggerError(String),
+
+    #[error("parsing error: {0}")]
+    ParsingError(String),
+
+    #[error(transparent)]
+    JsonParsingError(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    UrlParsingError(#[from] url::ParseError),
+
     #[error("message decoding error")]
     MessageDecodingError,
 

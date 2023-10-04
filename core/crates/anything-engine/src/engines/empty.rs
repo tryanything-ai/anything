@@ -35,6 +35,7 @@ impl Engine for EmptyEngine {
         &mut self,
         node: &Node,
         _global_context: &ExecutionContext,
+        _event_payload: &serde_json::Value,
     ) -> EngineResult<NodeExecutionContext> {
         let exec_context = NodeExecutionContext {
             node: node.clone(),

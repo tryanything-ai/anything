@@ -1,6 +1,8 @@
+use crate::prelude::*;
 use anything_core::error::AnythingError;
-use sqlx::error::BoxDynError;
 use thiserror::Error;
+
+use crate::internal_notification::ShutdownNotification;
 
 pub type EventsResult<T> = Result<T, EventsError>;
 
@@ -12,17 +14,38 @@ pub enum EventsError {
     #[error("configuration error: {0}")]
     ConfigError(String),
 
+    #[error("tcp address parse error: {0}")]
+    TcpListeningError(#[from] std::net::AddrParseError),
+
+    #[error("postoffice send error: {0}")]
+    PostOfficeSendError(#[from] postage::sink::SendError<ShutdownNotification>),
+    #[error("trigger send error: {0}")]
+    TriggerSendError(#[from] postage::sink::SendError<Trigger>),
+    #[error("event send error: {0}")]
+    EventSendError(#[from] postage::sink::SendError<Event>),
+    #[error("updating flows send error: {0}")]
+    FlowsSendError(#[from] postage::sink::SendError<SystemChangeEvent>),
+
     #[error("io error: {0}")]
     IOError(#[from] std::io::Error),
 
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
 
+    #[error("sending update error")]
+    SenderError,
+
     #[error("database error {0}")]
-    DatabaseError(DatabaseError),
+    DatabaseError(#[from] sqlx::Error),
+
+    #[error("migration error {0}")]
+    MigrationError(#[from] sqlx::migrate::MigrateError),
 
     #[error("server error")]
     EventServerError(#[from] tonic::transport::Error),
+
+    #[error("trigger error: {0}")]
+    TriggerError(String),
 
     #[error("configuration error")]
     ConfigurationError(#[from] AnythingError),
@@ -37,11 +60,11 @@ pub enum EventsError {
     NotFoundError(String),
 }
 
-#[derive(Error, Debug)]
-pub enum DatabaseError {
-    #[error("{0}")]
-    DBError(#[source] BoxDynError),
-
-    #[error(transparent)]
-    DatabaseError(#[from] sqlx::Error),
+impl From<EventsError> for tonic::Status {
+    fn from(value: EventsError) -> Self {
+        match value {
+            EventsError::SenderError => tonic::Status::internal("Sender error"),
+            _ => tonic::Status::internal(value.to_string()),
+        }
+    }
 }

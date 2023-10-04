@@ -29,7 +29,7 @@ pub struct ServerConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct DatabaseConfig {
-    pub uri: String,
+    pub uri: Option<String>,
 
     pub max_connections: Option<u32>,
 }
@@ -46,6 +46,7 @@ pub struct TracingConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AnythingEventsConfig {
+    pub run_mode: String, // "dev", "test", or "prod"
     pub root_dir: PathBuf,
     pub json_log: bool,
     pub log: String,
@@ -61,7 +62,8 @@ pub struct AnythingEventsConfig {
 impl Default for AnythingEventsConfig {
     fn default() -> Self {
         Self {
-            root_dir: PathBuf::from("./.eventurous"),
+            run_mode: "prod".to_string(), // "dev", "test", or "prod
+            root_dir: PathBuf::from("./.anything"),
             json_log: false,
             log: "info".to_string(),
             log_retention: 86400,
@@ -70,7 +72,7 @@ impl Default for AnythingEventsConfig {
                 port: 8080,
             },
             database: DatabaseConfig {
-                uri: "sqlite://:memory:".to_string(),
+                uri: None,
                 max_connections: None,
             },
             tracing: TracingConfig {
@@ -96,7 +98,7 @@ pub fn loader(file: Option<&PathBuf>) -> ConfigBuilder<DefaultState> {
     }
 
     builder.add_source(
-        Environment::with_prefix("EVENTUROUS")
+        Environment::with_prefix("ANYTHING")
             .list_separator(",")
             .try_parsing(true)
             .with_list_parse_key("cluster_seed_nodes"),

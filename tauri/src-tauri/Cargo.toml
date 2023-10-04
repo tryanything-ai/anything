@@ -22,6 +22,7 @@ tauri = { version = "1.4", features = [
     "path-all",
     "shell-open",
 ] }
+tonic = "0.10.0"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -58,6 +59,8 @@ chrono = "0.4.26"
 llm = { git = "https://github.com/rustformers/llm", branch = "main", features = [
     "metal",
 ] } #remove this when llm is published
+sentry-tauri = "0.2.0"
+dotenv = "0.15.0"
 
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]

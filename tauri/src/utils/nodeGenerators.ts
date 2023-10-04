@@ -32,7 +32,6 @@ const EndHandles: HandleProps[] = [
 
 export const NODES: Node[] = [
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       pattern: "",
     },
@@ -49,7 +48,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       code: "",
     },
@@ -66,9 +64,9 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "manualNode",
     nodeConfigurationData: {},
     nodePresentationData: {
+      nodeType: "manualNode",
       node_label: "Manual Trigger",
       alt: "Manual Trigger",
       icon: "VscPerson",
@@ -81,7 +79,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       filename: "",
       prompt: "",
@@ -100,12 +97,12 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       url: "https://api.openai.com/v1/chat/completions",
       method: "POST",
-      headers: '{"Authorization":"Bearer OPEN_AI_API_KEY", "Content-Type":"application/json"}',
-      body: '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Act like Hermione Granger and be pithy. She just tried a spell and it mostly worked."}], "temperature": 0.7 }'
+      headers:
+        '{"Authorization":"Bearer OPEN_AI_API_KEY", "Content-Type":"application/json"}',
+      body: '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Act like Hermione Granger and be pithy. She just tried a spell and it mostly worked."}], "temperature": 0.7 }',
     },
     nodePresentationData: {
       node_label: "OpenAI Action",
@@ -120,7 +117,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       url: "",
       method: "",
@@ -140,7 +136,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       code: "",
     },
@@ -157,7 +152,7 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
+  
     nodeConfigurationData: {
       message: "",
     },
@@ -174,7 +169,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       pattern: "",
     },
@@ -191,7 +185,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       command: "",
     },
@@ -208,7 +201,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       db: "",
       params: [],
@@ -226,7 +218,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       url: "https://api.salesforce.com/",
       method: "",
@@ -246,27 +237,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
-    nodeConfigurationData: {
-      url: "https://api.gmail.com/",
-      method: "",
-      headers: "",
-      body: "",
-    },
-    nodePresentationData: {
-      node_label: "Gmail Action",
-      alt: "Gmail Action",
-      icon: "https://www.vectorlogo.zone/logos/google_gmail/google_gmail-icon.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "gmail_action",
-      trigger: false,
-    },
-  },
-  {
-    nodeType: "superNode",
     nodeConfigurationData: {
       url: "https://api.slack.com/",
       method: "",
@@ -286,7 +256,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       url: "https://api.twitter.com/",
       method: "",
@@ -306,7 +275,6 @@ export const NODES: Node[] = [
     },
   },
   {
-    nodeType: "superNode",
     nodeConfigurationData: {
       url: "https://api.github.com/",
       method: "",

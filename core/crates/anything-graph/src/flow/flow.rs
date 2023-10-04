@@ -17,11 +17,13 @@ use super::{
 #[derive(Clone, Debug, Deserialize, Serialize, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct Flow {
+    pub id: String,
     pub name: String,
     pub version: Option<String>,
     pub description: Option<String>,
     pub trigger: Trigger,
     pub variables: HashMap<String, String>,
+    pub active: bool,
     dag: Dag<Node, ()>,
     root: NodeIndex,
 }
@@ -34,6 +36,7 @@ impl Flow {
 
         let parent = new_dag.add_node(root_node);
         Self {
+            id: uuid::Uuid::new_v4().to_string(),
             name: String::default(),
             version: None,
             description: None,
@@ -41,7 +44,7 @@ impl Flow {
             root: parent,
             trigger: Trigger::default(),
             variables: HashMap::new(),
-            // active_version: FlowVersion::default(),
+            active: false, // active_version: FlowVersion::default(),
         }
     }
 
@@ -276,6 +279,13 @@ impl Flow {
 
     fn find_node_by_name(&self, name: &str) -> Option<(NodeIndex, &Node)> {
         find_node_recursive(&self.dag, name, self.root)
+    }
+}
+
+impl Into<String> for Flow {
+    fn into(self) -> String {
+        let flow = toml::to_string(&self).unwrap();
+        flow
     }
 }
 

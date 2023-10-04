@@ -2,5 +2,15 @@
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml"
     ],
-    "rust-analyzer.showUnlinkedFileNotification": false
+    "rust-analyzer.showUnlinkedFileNotification": false,
+    "protoc": {
+        "path": "protoc",
+        "compile_on_save": false,
+        "options": [
+            "--experimental_allow_proto3_optional",
+            "--proto_path=../proto",
+            "--proto_path=./proto",
+            "--proto_path=${workspaceFolder}/proto",
+        ]
+    }
 }

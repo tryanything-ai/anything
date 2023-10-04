@@ -125,6 +125,7 @@ impl Engine for ShellEngine {
         &mut self,
         node: &Node,
         global_context: &ExecutionContext,
+        event_payload: &serde_json::Value,
     ) -> EngineResult<NodeExecutionContext> {
         let mut exec_context = NodeExecutionContext {
             node: node.clone(),
@@ -133,14 +134,15 @@ impl Engine for ShellEngine {
         };
 
         let command = self.config.command.clone();
-        let evaluated_command = global_context.render_string(&exec_context, command);
+        let evaluated_command = global_context.render_string(&exec_context, event_payload, command);
 
         self.config.command = evaluated_command.clone();
 
         let mut evaluated_args: HashMap<String, String> = HashMap::new();
         if let Some(args) = &self.config.args {
             for (key, val) in args.into_iter() {
-                let evaluated_val = global_context.render_string(&exec_context, val.clone());
+                let evaluated_val =
+                    global_context.render_string(&exec_context, event_payload, val.clone());
                 evaluated_args.insert(key.clone(), evaluated_val);
             }
         }
