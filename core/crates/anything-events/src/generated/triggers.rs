@@ -1,57 +1,29 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Event {
+pub struct CreateTriggerRequest {
     #[prost(string, tag = "1")]
-    pub event_id: ::prost::alloc::string::String,
-    /// Source of the event
+    pub event_name: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub source_id: ::prost::alloc::string::String,
-    /// Event payload
-    #[prost(string, tag = "3")]
     pub payload: ::prost::alloc::string::String,
-    /// Event name, like files/changed
-    #[prost(string, tag = "4")]
-    pub name: ::prost::alloc::string::String,
-    /// repeated string tags = 4;
-    #[prost(string, optional, tag = "5")]
+    #[prost(string, optional, tag = "3")]
     pub metadata: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct TriggerEventRequest {
-    #[prost(message, optional, tag = "1")]
-    pub event: ::core::option::Option<Event>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct TriggerEventResponse {
+pub struct CreateTriggerResponse {
     #[prost(string, tag = "1")]
-    pub status: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub event_id: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetEventRequest {
-    #[prost(string, tag = "1")]
-    pub event_id: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetEventResponse {
-    #[prost(message, optional, tag = "1")]
-    pub event: ::core::option::Option<Event>,
+    pub trigger_id: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
-pub mod events_client {
+pub mod triggers_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct EventsClient<T> {
+    pub struct TriggersServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl EventsClient<tonic::transport::Channel> {
+    impl TriggersServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -62,7 +34,7 @@ pub mod events_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> EventsClient<T>
+    impl<T> TriggersServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -80,7 +52,7 @@ pub mod events_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> EventsClient<InterceptedService<T, F>>
+        ) -> TriggersServiceClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -94,7 +66,7 @@ pub mod events_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            EventsClient::new(InterceptedService::new(inner, interceptor))
+            TriggersServiceClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -127,12 +99,11 @@ pub mod events_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
-        /// Send an event
-        pub async fn trigger_event(
+        pub async fn create_trigger(
             &mut self,
-            request: impl tonic::IntoRequest<super::TriggerEventRequest>,
+            request: impl tonic::IntoRequest<super::CreateTriggerRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::TriggerEventResponse>,
+            tonic::Response<super::CreateTriggerResponse>,
             tonic::Status,
         > {
             self.inner
@@ -146,64 +117,32 @@ pub mod events_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/events.Events/TriggerEvent",
+                "/triggers.TriggersService/CreateTrigger",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("events.Events", "TriggerEvent"));
-            self.inner.unary(req, path, codec).await
-        }
-        /// Get an event
-        pub async fn get_event(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GetEventRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::GetEventResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/events.Events/GetEvent");
-            let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("events.Events", "GetEvent"));
+                .insert(GrpcMethod::new("triggers.TriggersService", "CreateTrigger"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod events_server {
+pub mod triggers_service_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with EventsServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with TriggersServiceServer.
     #[async_trait]
-    pub trait Events: Send + Sync + 'static {
-        /// Send an event
-        async fn trigger_event(
+    pub trait TriggersService: Send + Sync + 'static {
+        async fn create_trigger(
             &self,
-            request: tonic::Request<super::TriggerEventRequest>,
+            request: tonic::Request<super::CreateTriggerRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::TriggerEventResponse>,
-            tonic::Status,
-        >;
-        /// Get an event
-        async fn get_event(
-            &self,
-            request: tonic::Request<super::GetEventRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::GetEventResponse>,
+            tonic::Response<super::CreateTriggerResponse>,
             tonic::Status,
         >;
     }
     #[derive(Debug)]
-    pub struct EventsServer<T: Events> {
+    pub struct TriggersServiceServer<T: TriggersService> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -211,7 +150,7 @@ pub mod events_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Events> EventsServer<T> {
+    impl<T: TriggersService> TriggersServiceServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -263,9 +202,9 @@ pub mod events_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for EventsServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for TriggersServiceServer<T>
     where
-        T: Events,
+        T: TriggersService,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -281,25 +220,26 @@ pub mod events_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/events.Events/TriggerEvent" => {
+                "/triggers.TriggersService/CreateTrigger" => {
                     #[allow(non_camel_case_types)]
-                    struct TriggerEventSvc<T: Events>(pub Arc<T>);
+                    struct CreateTriggerSvc<T: TriggersService>(pub Arc<T>);
                     impl<
-                        T: Events,
-                    > tonic::server::UnaryService<super::TriggerEventRequest>
-                    for TriggerEventSvc<T> {
-                        type Response = super::TriggerEventResponse;
+                        T: TriggersService,
+                    > tonic::server::UnaryService<super::CreateTriggerRequest>
+                    for CreateTriggerSvc<T> {
+                        type Response = super::CreateTriggerResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::TriggerEventRequest>,
+                            request: tonic::Request<super::CreateTriggerRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Events>::trigger_event(&inner, request).await
+                                <T as TriggersService>::create_trigger(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -311,51 +251,7 @@ pub mod events_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = TriggerEventSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                "/events.Events/GetEvent" => {
-                    #[allow(non_camel_case_types)]
-                    struct GetEventSvc<T: Events>(pub Arc<T>);
-                    impl<T: Events> tonic::server::UnaryService<super::GetEventRequest>
-                    for GetEventSvc<T> {
-                        type Response = super::GetEventResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::GetEventRequest>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Events>::get_event(&inner, request).await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let inner = inner.0;
-                        let method = GetEventSvc(inner);
+                        let method = CreateTriggerSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -386,7 +282,7 @@ pub mod events_server {
             }
         }
     }
-    impl<T: Events> Clone for EventsServer<T> {
+    impl<T: TriggersService> Clone for TriggersServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -398,7 +294,7 @@ pub mod events_server {
             }
         }
     }
-    impl<T: Events> Clone for _Inner<T> {
+    impl<T: TriggersService> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -408,7 +304,7 @@ pub mod events_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Events> tonic::server::NamedService for EventsServer<T> {
-        const NAME: &'static str = "events.Events";
+    impl<T: TriggersService> tonic::server::NamedService for TriggersServiceServer<T> {
+        const NAME: &'static str = "triggers.TriggersService";
     }
 }

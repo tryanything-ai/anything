@@ -28,6 +28,10 @@ impl Flowfile {
             return Err(AppError::FileNotFound(file.to_string_lossy().to_string()));
         }
         let toml_contents = std::fs::read_to_string(file)?;
+        Self::from_string(toml_contents)
+    }
+
+    pub fn from_string(toml_contents: String) -> AppResult<Self> {
         let parsed_flow = toml::from_str::<ParseFlowfile>(&toml_contents)?;
         let flow: Flow = parsed_flow.into();
         let flowfile = Flowfile { flow };
@@ -42,18 +46,22 @@ impl Flowfile {
 
 #[derive(Deserialize, Debug, Clone)]
 struct ParseFlowfile {
+    id: Option<String>,
     name: String,
     version: Option<String>,
     trigger: ParseTrigger,
     nodes: Vec<ParseNode>,
+    variables: Option<Vec<HashMap<String, String>>>,
 }
 
 impl Into<Flow> for ParseFlowfile {
     fn into(self) -> Flow {
         let mut flow = Flow::new();
         flow.name = self.name;
+        flow.id = self.id.unwrap_or(uuid::Uuid::new_v4().to_string());
         flow.version = self.version;
         flow.trigger = self.trigger.into();
+        flow.variables = optional_vec_map_into_hashmap(self.variables).unwrap_or_default();
         for node in self.nodes {
             let node: Node = node.into();
             flow.add_node_obj(&node).expect("unable to add node");
@@ -68,6 +76,15 @@ struct ParseTrigger {
     settings: Value,
 }
 
+/// Parse a trigger into the appropriate trigger type
+///
+/// Available trigger names
+///
+/// - manual
+/// - file_change
+/// - webhook
+/// - schedule
+/// - empty (default)
 impl Into<Trigger> for ParseTrigger {
     fn into(self) -> Trigger {
         match self.name.as_str() {
@@ -203,7 +220,7 @@ mod tests {
         let simple_file = PathBuf::from("tests/resources/simple.toml");
 
         let _flow_file = Flowfile::from_file(simple_file)?;
-        // println!("flow file: {:#?}", flow_file);
+
         Ok(())
     }
 }

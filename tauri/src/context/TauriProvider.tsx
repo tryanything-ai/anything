@@ -58,30 +58,30 @@ export function TauriProvider({ children }: { children: ReactNode }) {
         const _fileSep = _osType === "Windows_NT" ? "\\" : "/";
         setFileSep(_fileSep);
         //Create App Folder
-        await api.fs.createDir(APP_NAME, {
-          dir: api.fs.BaseDirectory.Document,
-          recursive: true,
-        });
+        // await api.fs.createDir(APP_NAME, {
+        //   dir: api.fs.BaseDirectory.Document,
+        //   recursive: true,
+        // });
         //Create Flows Folder
-        await api.fs.createDir(APP_NAME + "/flows", {
-          dir: api.fs.BaseDirectory.Document,
-          recursive: true,
-        });
+        // await api.fs.createDir(APP_NAME + "/flows", {
+        //   dir: api.fs.BaseDirectory.Document,
+        //   recursive: true,
+        // });
         //Create Nodes Folder
-        await api.fs.createDir(APP_NAME + "/nodes", {
-          dir: api.fs.BaseDirectory.Document,
-          recursive: true,
-        });
+        // await api.fs.createDir(APP_NAME + "/nodes", {
+        //   dir: api.fs.BaseDirectory.Document,
+        //   recursive: true,
+        // });
         //Create Settings Folder
-        await api.fs.createDir(APP_NAME + "/settings", {
-          dir: api.fs.BaseDirectory.Document,
-          recursive: true,
-        });
+        // await api.fs.createDir(APP_NAME + "/settings", {
+        //   dir: api.fs.BaseDirectory.Document,
+        //   recursive: true,
+        // });
         //Create Assets Folder
-        await api.fs.createDir(APP_NAME + "/assets", {
-          dir: api.fs.BaseDirectory.Document,
-          recursive: true,
-        });
+        // await api.fs.createDir(APP_NAME + "/assets", {
+        //   dir: api.fs.BaseDirectory.Document,
+        //   recursive: true,
+        // });
         setAppDocuments(`${_documents}${APP_NAME}`);
         console.log("appDocuments", `${_documents}${APP_NAME}`);
         setLoading(false);

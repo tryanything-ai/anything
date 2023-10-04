@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
+import { EventInput } from "./types";
 
 export const getFlows = async () => {
+  console.log("Invoking Get FLows");
   return await invoke("get_flows");
 };
 
@@ -9,15 +11,62 @@ export const getChatFlows = async () => {
 };
 
 export const getFlow = async (flow_id: string) => {
-  return await invoke("get_flow", {flow_id});
+  return await invoke("get_flow", { flow_id });
 };
+
+export const getFlowByName = async (flow_name: string) => {
+  return await invoke("get_flow_by_name", { flowName: flow_name });
+};
+
+export const getFlowVersions = async (flow_id: string) => {
+  return await invoke("get_flow_versions", {flow_id}); 
+}
+
+// export const getPublishedFlowVersion = async (flow_id: string) => {
+//   return await invoke("get_published_flow_version", { flow_id });
+// };
+
+// export const getFlowCurrentUnpublishedVersion = async (flow_id: string) => {
+//   return await invoke("get_flow_current_unpublished_version", { flow_id });
+// };
 
 export const getNodes = async () => {
   return await invoke("get_nodes");
 };
 
-export const getFlowNode = async (flow_id: string, node_id: string) => {
+export const getFlowNode = async ({
+  flow_id,
+  node_id,
+}: {
+  flow_id: string;
+  node_id: string;
+}) => {
   return await invoke("get_flow_node", { flow_id, node_id });
+};
+
+export const createFlow = async ({
+  flow_name,
+  flow_id,
+}: {
+  flow_name: string;
+  flow_id: string;
+}) => {
+  return await invoke("create_flow", { flow_name, flow_id });
+};
+
+//TODO: probs bad need to pick this somewhere
+export const saveToml = async ({
+  toml,
+  flow_id,
+}: {
+  toml: string;
+  flow_id: string;
+}) => {
+  return await invoke("save_toml", { toml, flow_id });
+};
+
+export const createEvent = async (eventInput: EventInput) => {
+  return await invoke("create_event", eventInput);
 };
 
 //Models
@@ -55,13 +104,13 @@ export const getFlowNode = async (flow_id: string, node_id: string) => {
 //   await invoke("plugin:sqlite|load");
 // };
 
-export const executeSqlLite = async (args: any) => {
-  return await invoke("plugin:sqlite|execute", args);
-};
+// export const executeSqlLite = async (args: any) => {
+//   return await invoke("plugin:sqlite|execute", args);
+// };
 
-export const selectSqlLite = async (args: any) => {
-  return await invoke("plugin:sqlite|select", args);
-};
+// export const selectSqlLite = async (args: any) => {
+//   return await invoke("plugin:sqlite|select", args);
+// };
 
 // export const sendPrompt = async (args: any) => {
 //   return await invoke("prompt", args);

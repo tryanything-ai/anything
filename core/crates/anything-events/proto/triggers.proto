@@ -1,0 +1,15 @@
+syntax = "proto3";
+package triggers;
+
+service TriggersService {
+    rpc CreateTrigger (CreateTriggerRequest) returns (CreateTriggerResponse) {}
+}
+
+message CreateTriggerRequest {
+    string event_name = 1;
+    string payload = 2;
+    optional string metadata = 3;
+}
+message CreateTriggerResponse {
+    string trigger_id = 1;
+}

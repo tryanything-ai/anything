@@ -6,7 +6,7 @@ description = "A simple flow that echos holiday cheer"
 variables = []
 
 [trigger]
-name = "FileChange"
+name = "file_change"
 
 [trigger.settings]
 file = "/Users/auser/Desktop/watch-directory"
@@ -22,7 +22,6 @@ action_type = "Shell"
 
 [nodes.action.config]
 command = "echo 'Jingle Bells'"
-
 
 [[nodes]]
 name = "say-cheers"

@@ -8,14 +8,13 @@ import {
 
 import { useTauriContext } from "./TauriProvider";
 
-import { FileEntry } from "../tauri_api/fs";
 import api from "../tauri_api/api";
 import { v4 as uuidv4 } from "uuid";
 import { stringify, parse } from "iarna-toml-esm";
-import { getFlows } from "../tauri_api/invoke";
+import { Rust_Flow } from "../tauri_api/types";
 
 interface LocalFileContextInterface {
-  flowPaths: FileEntry[];
+  flows: Rust_Flow[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
   renameFlowFiles: (flowName: string, newFlowName: string) => void;
@@ -24,7 +23,7 @@ interface LocalFileContextInterface {
 }
 
 export const LocalFileContext = createContext<LocalFileContextInterface>({
-  flowPaths: [],
+  flows: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
   renameFlowFiles: () => {},
@@ -35,185 +34,113 @@ export const LocalFileContext = createContext<LocalFileContextInterface>({
 export const useLocalFileContext = () => useContext(LocalFileContext);
 
 export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
-  const { appDocuments, loading } = useTauriContext();
-  const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
+  const { loading } = useTauriContext();
+  // const [flowPaths, setFlowPaths] = useState<FileEntry[]>([]);
+  const [flows, setFlows] = useState<Rust_Flow[]>([]);
 
-  const getRootFolder = () => {
-    try {
-      if (appDocuments === undefined) {
-        throw new Error("appDocuments is undefined");
-      }
+  // const getLocalFiles = async () => {
+  //   try {
+  //     if (appDocuments !== undefined) {
+  //       let entries = await api.fs.readDir(appDocuments + "/flows", {
+  //         recursive: true,
+  //       });
+  //       // filter out .DS_Store files
+  //       entries = entries.filter((entry) => !entry.path.endsWith(".DS_Store"));
 
-      return appDocuments;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getFlowFolder = (flowName: string) => {
-    try {
-      //TODO: introduce Vaults
-      if (appDocuments === undefined) {
-        throw new Error("appDocuments is undefined");
-      }
-
-      return appDocuments + "/flows/" + flowName;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getFlowDisplayFileLocation = (flowName: string) => {
-    try {
-      if (appDocuments === undefined) {
-        throw new Error("appDocuments is undefined");
-      }
-
-      return getFlowFolder(flowName) + "/display.toml";
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getFlowConfigFileLocation = (flowName: string) => {
-    try {
-      if (appDocuments === undefined) {
-        throw new Error("appDocuments is undefined");
-      }
-
-      return getFlowFolder(flowName) + "/flow.toml";
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getFlowEnvFileLocation = (flowName: string) => {
-    try {
-      if (appDocuments === undefined) {
-        throw new Error("appDocuments is undefined");
-      }
-
-      return getFlowFolder(flowName) + "/.env";
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getRootEnvFileLocation = (flowName: string) => {
-    try {
-      if (appDocuments === undefined) {
-        throw new Error("appDocuments is undefined");
-      }
-
-      return getRootFolder() + "/.env";
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getLocalFiles = async () => {
-    try {
-      if (appDocuments !== undefined) {
-        let entries = await api.fs.readDir(appDocuments + "/flows", {
-          recursive: true,
-        });
-        // filter out .DS_Store files
-        entries = entries.filter((entry) => !entry.path.endsWith(".DS_Store"));
-
-        // console.log("entries", entries);
-        //TODO: check for properly formed file structure
-        setFlowPaths(entries);
-      } else {
-        console.log("appDocuments is undefined still");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  //       // console.log("entries", entries);
+  //       //TODO: check for properly formed file structure
+  //       setFlowPaths(entries);
+  //     } else {
+  //       console.log("appDocuments is undefined still");
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   //BUG: there is a bug where when you add new flows the names colide because we write files as names.
   //TODO: more sophisticated way of determining new flow name
   const createNewFlow = async () => {
     try {
-      let flowName = "Flow" + " " + (flowPaths.length + 1);
-      console.log("new flow name", flowName);
-      let flowId = uuidv4();
-      // Basic TOML structure for the flow.toml file
-      const flowTomlContent = `
-    [flow]
-    name = "${flowName}"
-    id =  "${flowId}"
-    version = "0.0.1"
-    author = "Your Name <your.email@example.com>"
-    description = "Description of your flow"
-    `;
+      let flow_name = "Flow" + " " + (flows.length + 1);
+      console.log("new flow name", flow_name);
+      let flow_id = uuidv4();
 
-      // Basic TOML structure for the settings.toml file (modify as needed)
-      const settingsTomlContent = `
-    [settings]
-    some_key = "some_value"
-    `;
-
-      if (appDocuments !== undefined) {
-        await api.fs.createDir(appDocuments + "/flows/" + flowName, {
-          recursive: true,
-        });
-
-        await api.fs.writeTextFile(
-          appDocuments + "/flows/" + flowName + "/flow.toml",
-          flowTomlContent
-        );
-        await api.fs.writeTextFile(
-          appDocuments + "/flows/" + flowName + "/settings.toml",
-          settingsTomlContent
-        );
-
-        // get local files for ui again
-        await getLocalFiles();
-      }
+     await api.createFlow({ flow_name, flow_id });
+      //   // Basic TOML structure for the flow.toml file
+      //   const flowTomlContent = `
+      // [flow]
+      // name = "${flowName}"
+      // id =  "${flowId}"
+      // version = "0.0.1"
+      // author = "Your Name <your.email@example.com>"
+      // description = "Description of your flow"
+      // `;
+      //   // Basic TOML structure for the settings.toml file (modify as needed)
+      //   const settingsTomlContent = `
+      // [settings]
+      // some_key = "some_value"
+      // `;
+      //   if (appDocuments !== undefined) {
+      //     await api.fs.createDir(appDocuments + "/flows/" + flowName, {
+      //       recursive: true,
+      //     });
+      //     await api.fs.writeTextFile(
+      //       appDocuments + "/flows/" + flowName + "/flow.toml",
+      //       flowTomlContent
+      //     );
+      //     await api.fs.writeTextFile(
+      //       settingsTomlContent
+      //     );
+      //     // get local files for ui again
+      //     await getLocalFiles();
+      // }
     } catch (error) {
       console.error(error);
+    } finally {
+      getFlows();
     }
   };
 
   const deleteFlow = async (flowName: string) => {
     //TODO: deal with situation where there are flow events in the db
     try {
-      if (appDocuments !== undefined) {
-        await api.fs.removeDir(appDocuments + "/flows/" + flowName, {
-          recursive: true,
-        });
-
-        // get local files for ui again
-        await getLocalFiles();
-      }
+      // if (appDocuments !== undefined) {
+      //   await api.fs.removeDir(appDocuments + "/flows/" + flowName, {
+      //     recursive: true,
+      //   });
+      //   // get local files for ui again
+      //   await getLocalFiles();
+      // }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const allPathsExist = async (paths: string[]) => {
-    const results = await Promise.all(paths.map((path) => api.fs.exists(path)));
-    return results.every((result) => result);
-  };
+  // const allPathsExist = async (paths: string[]) => {
+  //   const results = await Promise.all(paths.map((path) => api.fs.exists(path)));
+  //   return results.every((result) => result);
+  // };
 
   const readToml = async (flow_name: string) => {
     try {
-      if (!appDocuments || !flow_name) {
-        throw new Error("appDocuments or flow_name is undefined");
-      }
-      console.log("reading toml in FlowProvider");
-      return await api.fs.readTextFile(
-        appDocuments + "/flows/" + flow_name + "/flow.toml"
-      );
+      // if (!appDocuments || !flow_name) {
+      //   throw new Error("appDocuments or flow_name is undefined");
+      // }
+      // console.log("reading toml in FlowProvider");
+      // return await api.fs.readTextFile(
+      //   appDocuments + "/flows/" + flow_name + "/flow.toml"
+      // );
+      return "";
     } catch (error) {
       console.log("error reading toml in FlowProvider", error);
     }
   };
 
+  //TODO: RUST_MIGRATION
   const readNodeConfig = async (nodeId: string, flowName: string) => {
     try {
-      if (!appDocuments || !flowName) {
+      if (!flowName) {
         throw new Error("appDocuments or flowName is undefined");
       }
       console.log("reading node config in FlowProvider");
@@ -241,7 +168,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
     data: any
   ) => {
     try {
-      if (!appDocuments || !flowName) {
+      if (!flowName) {
         throw new Error("appDocuments or flowName is undefined");
       }
       console.log("writing node config in FlowProvider");
@@ -266,41 +193,35 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const renameFlowFiles = async (flowName: string, newFlowName: string) => {
-    console.log("renameFlowFiles", flowName, newFlowName);
+    // console.log("renameFlowFiles", flowName, newFlowName);
     try {
-      // if(true) throw Error("Not implemented yet");
-      if (appDocuments === undefined) throw Error("AppDocuments Undefiend");
-      if (flowName === newFlowName) throw Error("Flow names are the same");
-
-      let allExist = await allPathsExist([
-        appDocuments + "/flows/" + flowName + "/flow.toml",
-        appDocuments + "/flows/" + flowName + "/settings.toml",
-      ]);
-
-      if (!allExist) throw Error("Flow files do not all exist");
-
-      //make new dir first
-      await api.fs.createDir(appDocuments + "/flows/" + newFlowName, {
-        recursive: true,
-      });
-      //copy files over
-      await api.fs.copyFile(
-        appDocuments + "/flows/" + flowName + "/flow.toml",
-        appDocuments + "/flows/" + newFlowName + "/flow.toml"
-      );
-      await api.fs.copyFile(
-        appDocuments + "/flows/" + flowName + "/settings.toml",
-        appDocuments + "/flows/" + newFlowName + "/settings.toml"
-      );
-
-      //delete old dir
-      await api.fs.removeDir(appDocuments + "/flows/" + flowName, {
-        recursive: true,
-      });
-
-      //TODO: update file frontmatter
-
-      await getLocalFiles();
+      //   // if(true) throw Error("Not implemented yet");
+      //   if (appDocuments === undefined) throw Error("AppDocuments Undefiend");
+      //   if (flowName === newFlowName) throw Error("Flow names are the same");
+      //   let allExist = await allPathsExist([
+      //     appDocuments + "/flows/" + flowName + "/flow.toml",
+      //     appDocuments + "/flows/" + flowName + "/settings.toml",
+      //   ]);
+      //   if (!allExist) throw Error("Flow files do not all exist");
+      //   //make new dir first
+      //   await api.fs.createDir(appDocuments + "/flows/" + newFlowName, {
+      //     recursive: true,
+      //   });
+      //   //copy files over
+      //   await api.fs.copyFile(
+      //     appDocuments + "/flows/" + flowName + "/flow.toml",
+      //     appDocuments + "/flows/" + newFlowName + "/flow.toml"
+      //   );
+      //   await api.fs.copyFile(
+      //     appDocuments + "/flows/" + flowName + "/settings.toml",
+      //     appDocuments + "/flows/" + newFlowName + "/settings.toml"
+      //   );
+      //   //delete old dir
+      //   await api.fs.removeDir(appDocuments + "/flows/" + flowName, {
+      //     recursive: true,
+      //   });
+      //   //TODO: update file frontmatter
+      //   await getLocalFiles();
     } catch (error) {
       console.error("Error renaming flow" + error);
     }
@@ -311,50 +232,52 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Your watch function
     if (!loading) {
-      let stopWatching = () => {};
-      console.log("Watching ", appDocuments, " for changes");
-      const watchThisFile = async () => {
-        stopWatching = await api.watch.watchImmediate(
-          appDocuments,
-          (event) => {
-            console.log("File changed: ", JSON.stringify(event, null, 3));
-            // console.log("toml file changed, sniffed in file watcher");
-            // readToml(); //TODO: do this in a less chatty way
-            getLocalFiles();
-          }
-          // { recursive: true }
-        );
-      };
-
-      watchThisFile();
-
-      // Cleanup function
-      return () => {
-        stopWatching(); // Call the stopWatching function to kill the watch
-      };
+      // let stopWatching = () => {};
+      // console.log("Watching ", appDocuments, " for changes");
+      // const watchThisFile = async () => {
+      //   stopWatching = await api.watch.watchImmediate(
+      //     appDocuments,
+      //     (event) => {
+      //       console.log("File changed: ", JSON.stringify(event, null, 3));
+      //       // console.log("toml file changed, sniffed in file watcher");
+      //       // readToml(); //TODO: do this in a less chatty way
+      //       getLocalFiles();
+      //     }
+      //     // { recursive: true }
+      //   );
+      // };
+      // watchThisFile();
+      // // Cleanup function
+      // return () => {
+      //   stopWatching(); // Call the stopWatching function to kill the watch
+      // };
     }
   }, [loading]);
 
   //RUST_MIGRATION
-  const get = async () => {
-    let res = await getFlows();
+  const getFlows = async () => {
+    console.log("Getting FLows from Tauri API?");
+    let res: any = await api.getFlows();
+    setFlows(res);
+
     console.log("res from new rust stub", res);
   };
 
   useEffect(() => {
-    get();
+    getFlows();
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      getLocalFiles();
-    }
-  }, [loading]);
+  // useEffect(() => {
+  // if (!loading) {
+  //   getLocalFiles();
+  // }
+  // }, [loading]);
 
   return (
     <LocalFileContext.Provider
       value={{
-        flowPaths,
+        flows,
+        // flowPaths,
         createNewFlow,
         deleteFlow,
         renameFlowFiles,

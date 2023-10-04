@@ -16,8 +16,14 @@ config = { version = "0.13", default-features = false, features = [
     "yaml",
 ] }
 
+data-encoding = { workspace = true }
+sha2 = { workspace = true }
+url = { workspace = true }
+futures = { workspace = true }
+
 chrono = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 anyhow = { workspace = true }
 lazy_static = { workspace = true }
 dirs = { version = "5.0" }

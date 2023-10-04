@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anything-core = { path = "../anything-core" }
 
 chrono = { workspace = true, features = ["serde"] }
 daggy = { version = "0.8.0", features = ["serde-1"] }
@@ -15,8 +16,8 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 anyhow = { workspace = true }
 tera = "1.19.0"
+url = { workspace = true }
 
-anything-core = { workspace = true }
 serde_json.workspace = true
 indexmap = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4", "serde"] }

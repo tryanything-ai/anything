@@ -1,10 +1,10 @@
-root_dir = "/tmp/eventurous"
-log = "warn,eventurous=info"
+run_mode = "prod"
+root_dir = "/tmp/anything"
+log = "warn,anything=info"
 json_log = false
 log_retention = "4h"
 
 [database]
-uri = "sqlite:///tmp/anything/anything.db"
 
 [server]
 port = 50234

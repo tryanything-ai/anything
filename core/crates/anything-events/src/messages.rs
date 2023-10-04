@@ -26,10 +26,7 @@ pub struct EventNotification {
 impl EventNotification {
     pub fn from_zmq(msg: zmq::Message) -> EventsResult<Self> {
         match msg.as_str() {
-            Some(msg) => {
-                println!("Message: {:?}", msg);
-                serde_json::from_str(msg).map_err(|e| EventsError::DecodingError(e))
-            }
+            Some(msg) => serde_json::from_str(msg).map_err(|e| EventsError::DecodingError(e)),
             None => Err(crate::errors::EventsError::EncodingError),
         }
     }
