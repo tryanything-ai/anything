@@ -1,6 +1,8 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@t3-oss/env-nextjs': ^0.7.0
+  '@tailwindcss/forms': ^0.5.6
   '@types/node': ^20
   '@types/react': ^18
   '@types/react-dom': ^18
@@ -16,7 +18,9 @@ specifiers:
   react-icons: ^4.11.0
   tailwind-merge: ^1.14.0
   tailwindcss: ^3
+  tailwindcss-animate: ^1.0.7
   typescript: ^5
+  zod: ^3.22.4
 
 dependencies:
   clsx: 2.0.0
@@ -27,6 +31,8 @@ dependencies:
   tailwind-merge: 1.14.0
 
 devDependencies:
+  '@t3-oss/env-nextjs': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
+  '@tailwindcss/forms': 0.5.6_tailwindcss@3.3.3
   '@types/node': 20.8.2
   '@types/react': 18.2.24
   '@types/react-dom': 18.2.9
@@ -36,7 +42,9 @@ devDependencies:
   eslint-config-next: 13.5.4_jk7qbkaijtltyu4ajmze3dfiwa
   postcss: 8.4.31
   tailwindcss: 3.3.3
+  tailwindcss-animate: 1.0.7_tailwindcss@3.3.3
   typescript: 5.2.2
+  zod: 3.22.4
 
 packages:
 
@@ -265,6 +273,42 @@ packages:
     dependencies:
       tslib: 2.6.2
     dev: false
+
+  /@t3-oss/env-core/0.7.0_5t6euwxcdh5fbfdut3slz5dieu:
+    resolution: {integrity: sha512-cgunN82CqgQOOyuMOK/bGtujX5/ooXQTwGMJVWI6mCowq6WE5EgRLOqF/DRcrElI0gSFGA9i9GrxzCnk73HZLQ==}
+    peerDependencies:
+      typescript: '>=4.7.2'
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      typescript: 5.2.2
+      zod: 3.22.4
+    dev: true
+
+  /@t3-oss/env-nextjs/0.7.0_5t6euwxcdh5fbfdut3slz5dieu:
+    resolution: {integrity: sha512-rjQIt6P3tac2eRx4BNQLNaJ+AIb2P8wXw4uFvYbEekqMGShikkUALnX3hUn1twYiGVGHXRm6UbU+LqtjIktuGg==}
+    peerDependencies:
+      typescript: '>=4.7.2'
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@t3-oss/env-core': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
+      typescript: 5.2.2
+      zod: 3.22.4
+    dev: true
+
+  /@tailwindcss/forms/0.5.6_tailwindcss@3.3.3:
+    resolution: {integrity: sha512-Fw+2BJ0tmAwK/w01tEFL5TiaJBX1NLT1/YbWgvm7ws3Qcn11kiXxzNTEQDMs5V3mQemhB56l3u0i9dwdzSQldA==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
+    dependencies:
+      mini-svg-data-uri: 1.4.4
+      tailwindcss: 3.3.3
+    dev: true
 
   /@types/json5/0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
@@ -1755,6 +1799,11 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /mini-svg-data-uri/1.4.4:
+    resolution: {integrity: sha512-r9deDe9p5FJUPZAk3A59wGH7Ii9YrjjWw0jmw/liSbHl2CHiyXj6FcDXDu2K3TjVAXqiJdaw3xxwlZZr9E6nHg==}
+    hasBin: true
+    dev: true
+
   /minimatch/3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
     dependencies:
@@ -2382,6 +2431,14 @@ packages:
     resolution: {integrity: sha512-3mFKyCo/MBcgyOTlrY8T7odzZFx+w+qKSMAmdFzRvqBfLlSigU6TZnlFHK0lkMwj9Bj8OYU+9yW9lmGuS0QEnQ==}
     dev: false
 
+  /tailwindcss-animate/1.0.7_tailwindcss@3.3.3:
+    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || insiders'
+    dependencies:
+      tailwindcss: 3.3.3
+    dev: true
+
   /tailwindcss/3.3.3:
     resolution: {integrity: sha512-A0KgSkef7eE4Mf+nKJ83i75TMyq8HqY3qmFIJSWy8bNt0v1lG7jUcpGpoTFxAwYcWOphcTBLPPJg+bDfhDf52w==}
     engines: {node: '>=14.0.0'}
@@ -2634,4 +2691,8 @@ packages:
   /yocto-queue/0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+    dev: true
+
+  /zod/3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
     dev: true
