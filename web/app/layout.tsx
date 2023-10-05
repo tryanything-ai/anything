@@ -13,14 +13,11 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: [
-    "Tier",
-    "Metered Pricing",
-    "React",
-    "NextJS",
-    "Tailwind CSS",
-    "App Router",
-    "OpenAI",
-    "Server Components",
+    "Automation",
+    "AI", 
+    "Zapier",
+    "Node Red",
+    "N8N"
   ],
   authors: [
     {
@@ -45,7 +42,7 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: ["/og.jpg"],
-    creator: "@tierrun",
+    creator: "@carllippert",
   },
   icons: {
     icon: "/favicons/favicon.ico",

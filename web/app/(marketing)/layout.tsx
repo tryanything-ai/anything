@@ -13,7 +13,7 @@ export default async function MarketingLayout({
   children,
 }: MarketingLayoutProps) {
   const res = await fetch(
-    "https://api.github.com/repos/tierrun/tier-vercel-openai",
+    "https://api.github.com/repos/tryanything-ai/anything",
     {
       method: "GET",
       next: { revalidate: 60 },
