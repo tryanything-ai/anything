@@ -2,7 +2,7 @@
 
 // import { signIn } from "next-auth/react";
 
-// import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 
 export function SignUpButton({ className }: { className: string }) {
   async function handleGithub() {
@@ -11,16 +11,16 @@ export function SignUpButton({ className }: { className: string }) {
 
   return (
     <div className="flex flex-col items-center gap-2 md:flex-row md:gap-4">
-      <button
+      <Button
         type="button"
-        // variant="primary"
-        className={className + "btn"}
+        variant="primary"
+        className={className}
         onClick={() => {
           handleGithub();
         }}
       >
         Sign up with Github
-      </button>
+      </Button>
     </div>
   );
 }

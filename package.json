@@ -1,0 +1,8 @@
+{
+	"dependencies": {
+		"@headlessui/react": "^1.7.17",
+		"class-variance-authority": "^0.7.0",
+		"i": "^0.3.7",
+		"pnpm": "^8.8.0"
+	}
+}
