@@ -16,14 +16,14 @@ export const Stargazer = ({ count }: { count: number }) => {
   return (
     <div className="flex">
       <Link
-        href="https://github.com/tierrun/tier-vercel-openai"
+        href="https://github.com/tryanything-ai/anything"
         className="caption-s flex items-center gap-1 rounded-l-[4px] border border-slate-7 bg-slate-3 px-2 py-[2px] font-medium text-slate-12 hover:border-slate-8 hover:bg-slate-4"
       >
         <GitHubIcon className="h-5 w-5 fill-slate-12" />
         <span className="">Star</span>
       </Link>
       <Link
-        href="https://github.com/tierrun/tier-vercel-openai/stargazers"
+        href="https://github.com/tryanything-ai/anything/stargazers"
         className="group inline-flex items-center rounded-r-[4px] border-y border-r border-slate-7 bg-slate-1 px-2 py-[2px] hover:bg-slate-2"
       >
         <span className="caption-s font-medium text-slate-12 group-hover:text-crimson-9">

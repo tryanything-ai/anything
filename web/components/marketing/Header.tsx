@@ -4,12 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dialog } from "@headlessui/react";
-// import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 
 import { VscThreeBars, VscClose } from "react-icons/vsc";
-
-
 
 import { Stargazer } from "@/components/ui/Stargazer";
 import { SignInButton } from "@/components/marketing/LandingSignIn";
@@ -18,7 +15,7 @@ import { SignUpButton } from "@/components/marketing/LandingSignUp";
 
 const navigation = [
   { name: "Home", href: "/" },
-  { name: "Pricing", href: "/pricing" },
+  { name: "Templates", href: "/templates" },
 ];
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
@@ -34,10 +31,10 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
       >
         <div className="flex items-center gap-4 lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">Blip</span>
+            <span className="sr-only">Anything</span>
             <div className="flex gap-2">
               {/* <BlipLogo /> */}
-              <span className="body-semibold">Blip</span>
+              <span className="body-semibold">Anything</span>
             </div>
           </Link>
           <Stargazer count={stargazers_count} />
@@ -75,10 +72,10 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         <Dialog.Panel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-slate-1 p-6 sm:max-w-sm sm:ring-1 sm:ring-slate-6">
           <div className="flex items-center justify-between">
             <Link href="/" className="-m-1.5 p-1.5">
-              <span className="sr-only">Blip</span>
+              <span className="sr-only">Anything</span>
               <div className="flex gap-2">
                 {/* <BlipLogo /> */}
-                <span className="body-semibold">Blip</span>
+                <span className="body-semibold">Anything</span>
               </div>
             </Link>
             <button
