@@ -20,11 +20,10 @@ export default async function TemplatePage() {
       {/* Hero Copy */}
       <div className="mt-16 flex flex-col items-center gap-4">
         <h1 className="md:h1 h2 w-full px-4 text-center md:w-[805px] md:px-0">
-          Easy & flexible pricing
+            Anything Templates
         </h1>
         <p className="body-xl w-full px-4 text-center text-slate-11 md:w-[572px] md:px-0">
-          Whatever plan you choose, know that our AI will generate the best
-          marketing copy.
+            Automate anything with ready to use templates 
         </p>
       </div>
 

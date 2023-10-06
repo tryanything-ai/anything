@@ -45,10 +45,7 @@ export default function Home() {
         <div className="flex flex-row justify-between">
           <div>Templates</div>
 
-          <Link
-            className="btn btn-primary m-1 ml-4"
-            to="/templates"
-          >
+          <Link className="btn btn-primary m-1 ml-4" to="/templates">
             Explore
           </Link>
         </div>
