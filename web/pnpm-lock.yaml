@@ -1,12 +1,14 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@headlessui/react': ^1.7.17
   '@t3-oss/env-nextjs': ^0.7.0
   '@tailwindcss/forms': ^0.5.6
   '@types/node': ^20
   '@types/react': ^18
   '@types/react-dom': ^18
   autoprefixer: ^10
+  class-variance-authority: ^0.7.0
   clsx: ^2.0.0
   daisyui: ^3.8.3
   eslint: ^8
@@ -23,15 +25,18 @@ specifiers:
   zod: ^3.22.4
 
 dependencies:
+  '@headlessui/react': 1.7.17_biqbaboplfbrettd7655fr4n2y
+  '@t3-oss/env-nextjs': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
+  class-variance-authority: 0.7.0
   clsx: 2.0.0
   next: 13.5.4_biqbaboplfbrettd7655fr4n2y
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-icons: 4.11.0_react@18.2.0
   tailwind-merge: 1.14.0
+  zod: 3.22.4
 
 devDependencies:
-  '@t3-oss/env-nextjs': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
   '@tailwindcss/forms': 0.5.6_tailwindcss@3.3.3
   '@types/node': 20.8.2
   '@types/react': 18.2.24
@@ -44,7 +49,6 @@ devDependencies:
   tailwindcss: 3.3.3
   tailwindcss-animate: 1.0.7_tailwindcss@3.3.3
   typescript: 5.2.2
-  zod: 3.22.4
 
 packages:
 
@@ -101,6 +105,18 @@ packages:
     resolution: {integrity: sha512-NCC3zz2+nvYd+Ckfh87rA47zfu2QsQpvc6k1yzTk+b9KzRj0wkGa8LSoGOXN6Zv4lRf/EIoZ80biDh9HOI+RNQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
+
+  /@headlessui/react/1.7.17_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-4am+tzvkqDSSgiwrsEpGWqgGo9dz8qU5M3znCkC4PgkpY4HcCZzEDEvozltGGGHIKl9jbXbZPSH5TWn4sWJdow==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: ^16 || ^17 || ^18
+      react-dom: ^16 || ^17 || ^18
+    dependencies:
+      client-only: 0.0.1
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    dev: false
 
   /@humanwhocodes/config-array/0.11.11:
     resolution: {integrity: sha512-N2brEuAadi0CcdeMXUkhbZB84eskAc8MEX1By6qEchoVywSgXPIjou4rYsl0V3Hj0ZnuGycGCjdNgockbzeWNA==}
@@ -285,7 +301,7 @@ packages:
     dependencies:
       typescript: 5.2.2
       zod: 3.22.4
-    dev: true
+    dev: false
 
   /@t3-oss/env-nextjs/0.7.0_5t6euwxcdh5fbfdut3slz5dieu:
     resolution: {integrity: sha512-rjQIt6P3tac2eRx4BNQLNaJ+AIb2P8wXw4uFvYbEekqMGShikkUALnX3hUn1twYiGVGHXRm6UbU+LqtjIktuGg==}
@@ -299,7 +315,7 @@ packages:
       '@t3-oss/env-core': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
       typescript: 5.2.2
       zod: 3.22.4
-    dev: true
+    dev: false
 
   /@tailwindcss/forms/0.5.6_tailwindcss@3.3.3:
     resolution: {integrity: sha512-Fw+2BJ0tmAwK/w01tEFL5TiaJBX1NLT1/YbWgvm7ws3Qcn11kiXxzNTEQDMs5V3mQemhB56l3u0i9dwdzSQldA==}
@@ -666,6 +682,12 @@ packages:
     optionalDependencies:
       fsevents: 2.3.3
     dev: true
+
+  /class-variance-authority/0.7.0:
+    resolution: {integrity: sha512-jFI8IQw4hczaL4ALINxqLEXQbWcNjoSkloa4IaufXCJr6QawJyw7tuRysRsrE8w2p/4gGaxKIt/hX3qz/IbD1A==}
+    dependencies:
+      clsx: 2.0.0
+    dev: false
 
   /client-only/0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
@@ -2579,7 +2601,6 @@ packages:
     resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
     engines: {node: '>=14.17'}
     hasBin: true
-    dev: true
 
   /unbox-primitive/1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
@@ -2695,4 +2716,4 @@ packages:
 
   /zod/3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-    dev: true
+    dev: false
