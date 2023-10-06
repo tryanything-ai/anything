@@ -1,38 +1,29 @@
+"use client";
 // import { Metadata } from "next";
 import { clsx } from "clsx";
 import { Flow, MockNewFlows } from "../../../../tauri/src/utils/newNodes";
 import { TemplateCard } from "@/components/templateCard";
-// import { pullPricingTableData } from "@/lib/services/pricingTableData";
-// import { BgPattern } from "@/components/ui/Bgpattern";
-import { SignUpButton } from "@/components/marketing/pricing/LandingSignUp";
-// import { CheckBoxIcon } from "@/res/icons/CheckBoxIcon";
 
-// export const metadata: Metadata = {
-//   title: "Pricing",
-// };
+export default function TemplatePage() {
 
-export default async function TemplatePage() {
-  // const pricing = await pullPricingTableData();
   return (
     <>
-      {/* Bg Pattern */}
-      {/* <BgPattern /> */}
       {/* Hero Copy */}
       <div className="mt-16 flex flex-col items-center gap-4">
         <h1 className="md:h1 h2 w-full px-4 text-center md:w-[805px] md:px-0">
-            Anything Templates
+          Anything Templates
         </h1>
         <p className="body-xl w-full px-4 text-center text-slate-11 md:w-[572px] md:px-0">
-            Automate anything with ready to use templates 
+          Automate anything with ready to use templates
         </p>
       </div>
 
       {/* Pricing */}
       <div className="my-16 flex flex-col items-center">
         <div className="mx-auto flex flex-col items-start gap-6 md:flex-row">
-          {MockNewFlows.map((template, index) => (
+          {/* {MockNewFlows.map((template, index) => (
             <TemplateCard key={index} template={template} />
-          ))}
+          ))} */}
           {/* {pricing.map((plan, planIndex) => (
             <div
               key={planIndex}
