@@ -12,13 +12,7 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  keywords: [
-    "Automation",
-    "AI", 
-    "Zapier",
-    "Node Red",
-    "N8N"
-  ],
+  keywords: ["Automation", "AI", "Zapier", "Node Red", "N8N"],
   authors: [
     {
       name: "anything",
@@ -52,12 +46,20 @@ export const metadata: Metadata = {
   manifest: `${siteConfig.url}/favicons/site.webmanifest`,
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className={`${inter.variable} ${dm_sans.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${dm_sans.variable}`}
+      suppressHydrationWarning
+    >
       <head />
       {/* Body */}
-      <body className="bg-slate-1 font-sans text-slate-12">
+      <body className="font-sans text-slate-12">
         {children}
         {/* <Toaster /> */}
       </body>

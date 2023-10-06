@@ -19,7 +19,7 @@ export default function Layout() {
 
   return (
     <div className="flex flex-row min-w-screen min-h-screen overflow-hidden overscroll-none">
-      <div className="w-14 bg-base-200 flex flex-col gap-3 px-2 pt-3">
+      <div className="w-14 flex flex-col gap-3 px-2 pt-3">
         <Link className={linkClass} to="/">
           <VscHome
             className={clsx(defaultClass, {
