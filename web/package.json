@@ -9,13 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "@t3-oss/env-nextjs": "^0.7.0",
+    "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "next": "13.5.4",
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^4.11.0",
     "tailwind-merge": "^1.14.0",
-    "@t3-oss/env-nextjs": "^0.7.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
