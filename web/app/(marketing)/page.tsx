@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { BgPattern } from "@/components/ui/Bgpattern";
+// import { BgPattern } from "@/components/ui/Bgpattern";
 import { SignUpButton } from "@/components/marketing/LandingSignUp";
 
 export default async function IndexPage() {
   return (
     <>
       {/* Bg Pattern */}
-      <BgPattern />
+      {/* <BgPattern /> */}
       {/* Hero Copy */}
       <div className="mt-16 flex flex-col items-center gap-4">
         <h1 className="md:display h2 w-full px-4 text-center md:w-[802px] md:px-0">
