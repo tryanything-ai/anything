@@ -1,11 +1,65 @@
 "use client";
 // import { Metadata } from "next";
 import { clsx } from "clsx";
-import { Flow, MockNewFlows } from "../../../../tauri/src/utils/newNodes";
+import { MockNewFlows } from "../../../../tauri/src/utils/newNodes";
 import { TemplateCard } from "@/components/templateCard";
+import { Database } from "@/types/supabase.types";
 
+type Flow = Database["public"]["Tables"]["flow_templates"]["Row"];
+
+const mockRows: Flow[] = [
+  {
+    anonymous: true,
+    created_at: "2023-04-15T12:30:00.000Z",
+    flow_json: JSON.stringify(MockNewFlows[0]),
+    flow_name: "Flow 1",
+    flow_templates_version: "v1.0.1",
+    published: true,
+    publisher_id: "pub12345",
+    template_id: "temp1",
+  },
+  {
+    anonymous: false,
+    created_at: "2023-03-20T10:20:00.000Z",
+    flow_json: JSON.stringify(MockNewFlows[0]),
+    flow_name: "Flow 2",
+    flow_templates_version: "v1.0.2",
+    published: false,
+    publisher_id: "pub67890",
+    template_id: "temp2",
+  },
+  {
+    anonymous: null,
+    created_at: "2023-04-01T15:15:00.000Z",
+    flow_json: JSON.stringify(MockNewFlows[0]),
+    flow_name: null,
+    flow_templates_version: "v1.0.3",
+    published: true,
+    publisher_id: "pub11121",
+    template_id: "temp3",
+  },
+  {
+    anonymous: true,
+    created_at: "2023-05-10T09:10:00.000Z",
+    flow_json: JSON.stringify(MockNewFlows[0]),
+    flow_name: "Flow 4",
+    flow_templates_version: "v1.0.4",
+    published: false,
+    publisher_id: "pub23111",
+    template_id: "temp4",
+  },
+  {
+    anonymous: false,
+    created_at: "2023-04-25T14:50:00.000Z",
+    flow_json: JSON.stringify(MockNewFlows[0]),
+    flow_name: "Flow 5",
+    flow_templates_version: "v1.0.5",
+    published: true,
+    publisher_id: "pub99887",
+    template_id: "temp5",
+  },
+];
 export default function TemplatePage() {
-
   return (
     <>
       {/* Hero Copy */}
@@ -20,10 +74,10 @@ export default function TemplatePage() {
 
       {/* Pricing */}
       <div className="my-16 flex flex-col items-center">
-        <div className="mx-auto flex flex-col items-start gap-6 md:flex-row">
-          {/* {MockNewFlows.map((template, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mx-auto max-w-5xl">
+          {mockRows.map((template, index) => (
             <TemplateCard key={index} template={template} />
-          ))} */}
+          ))}
           {/* {pricing.map((plan, planIndex) => (
             <div
               key={planIndex}
