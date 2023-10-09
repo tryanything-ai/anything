@@ -49,6 +49,7 @@ export interface Database {
           flow_templates_version: string
           published: boolean
           publisher_id: string
+          slug: string
           template_id: string
         }
         Insert: {
@@ -59,6 +60,7 @@ export interface Database {
           flow_templates_version?: string
           published?: boolean
           publisher_id: string
+          slug: string
           template_id?: string
         }
         Update: {
@@ -69,6 +71,7 @@ export interface Database {
           flow_templates_version?: string
           published?: boolean
           publisher_id?: string
+          slug?: string
           template_id?: string
         }
         Relationships: [
