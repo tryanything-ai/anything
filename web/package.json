@@ -12,6 +12,7 @@
   "dependencies": {
     "@faker-js/faker": "^8.1.0",
     "@headlessui/react": "^1.7.17",
+    "@sentry/nextjs": "^7.73.0",
     "@supabase/supabase-js": "^2.38.0",
     "@t3-oss/env-nextjs": "^0.7.0",
     "class-variance-authority": "^0.7.0",
