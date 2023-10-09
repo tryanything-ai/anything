@@ -1,7 +1,8 @@
 import "./globals.css";
 
 import { Metadata } from "next";
-
+import { ReactNode, Suspense } from "react";
+import { PHProvider, PostHogPageview } from "./providers";
 import { siteConfig } from "@/config/site";
 import { dm_sans, inter } from "@/lib/fonts";
 // import { Toaster } from "@/components/ui/toaster";
@@ -59,10 +60,16 @@ export default async function RootLayout({
     >
       <head />
       {/* Body */}
-      <body className="font-sans text-slate-12">
+      <Suspense>
+        <PostHogPageview />
+      </Suspense>
+      <PHProvider>
+        <body className="font-sans text-slate-12">{children}</body>
+      </PHProvider>
+      {/* <body className="font-sans text-slate-12">
         {children}
-        {/* <Toaster /> */}
-      </body>
+        <Toaster />
+      </body> */}
     </html>
   );
 }
