@@ -1,20 +1,27 @@
 import React from "react";
+import { sanitize } from "dompurify";
 
 interface Props {
   icon: string; // Expected to be SVG content
   className?: string; // Optional className property
 }
+function removeWidthHeight(svgString: string) {
+  return svgString
+    .replace(/\s*width="[^"]*"/, "")
+    .replace(/\s*height="[^"]*"/, "");
+}
 
 const BaseNodeOrIcon: React.FC<Props> = ({ icon, className }) => {
   const combinedClasses = `w-full h-full ${className ?? ""}`;
+  const cleanIcon = sanitize(icon);
+  const cleanSizedIcon = removeWidthHeight(cleanIcon);
 
   // If it's an SVG content, render the SVG
-  if (icon.startsWith("<svg")) {
+  if (cleanSizedIcon.startsWith("<svg")) {
     return (
       <div
         className={combinedClasses}
-        // style={{ width: "100%", height: "100%" }}
-        dangerouslySetInnerHTML={{ __html: icon }}
+        dangerouslySetInnerHTML={{ __html: cleanSizedIcon }}
       />
     );
   }

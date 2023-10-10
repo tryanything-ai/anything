@@ -7,6 +7,7 @@ specifiers:
   '@supabase/supabase-js': ^2.38.0
   '@t3-oss/env-nextjs': ^0.7.0
   '@tailwindcss/forms': ^0.5.6
+  '@types/dompurify': ^3.0.3
   '@types/node': ^20
   '@types/react': ^18
   '@types/react-dom': ^18
@@ -14,6 +15,7 @@ specifiers:
   class-variance-authority: ^0.7.0
   clsx: ^2.0.0
   daisyui: ^3.8.3
+  dompurify: ^3.0.6
   dotenv: ^16.3.1
   eslint: ^8
   eslint-config-next: 13.5.4
@@ -37,8 +39,10 @@ dependencies:
   '@sentry/nextjs': 7.73.0_next@13.5.4+react@18.2.0
   '@supabase/supabase-js': 2.38.0
   '@t3-oss/env-nextjs': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
+  '@types/dompurify': 3.0.3
   class-variance-authority: 0.7.0
   clsx: 2.0.0
+  dompurify: 3.0.6
   next: 13.5.4_biqbaboplfbrettd7655fr4n2y
   posthog-js: 1.82.3
   posthog-node: 3.1.2
@@ -595,6 +599,12 @@ packages:
       tailwindcss: 3.3.3
     dev: true
 
+  /@types/dompurify/3.0.3:
+    resolution: {integrity: sha512-odiGr/9/qMqjcBOe5UhcNLOFHSYmKFOyr+bJ/Xu3Qp4k1pNPAlNLUVNNLcLfjQI7+W7ObX58EdD3H+3p3voOvA==}
+    dependencies:
+      '@types/trusted-types': 2.0.4
+    dev: false
+
   /@types/estree/1.0.2:
     resolution: {integrity: sha512-VeiPZ9MMwXjO32/Xu7+OwflfmeoRwkE/qzndw42gGtgJwZopBnzy2gD//NN1+go1mADzkDcqf/KnFRSjTJ8xJA==}
     dev: false
@@ -631,6 +641,10 @@ packages:
   /@types/scheduler/0.16.4:
     resolution: {integrity: sha512-2L9ifAGl7wmXwP4v3pN4p2FLhD0O1qsJpvKmNin5VA8+UvNVb447UDaAEV6UdrkA+m/Xs58U1RFps44x6TFsVQ==}
     dev: true
+
+  /@types/trusted-types/2.0.4:
+    resolution: {integrity: sha512-IDaobHimLQhjwsQ/NMwRVfa/yL7L/wriQPMhw1ZJall0KX6E1oxk29XMDeilW5qTIg5aoiqf5Udy8U/51aNoQQ==}
+    dev: false
 
   /@types/websocket/1.0.7:
     resolution: {integrity: sha512-62Omr8U0PO+hgjLCpPnMsmjh2/FRwIGOktZHyYAUzooEJotwkXHMp7vCacdYi8haxBNOiw9bc2HIHI+b/MPNjA==}
@@ -1237,6 +1251,10 @@ packages:
     dependencies:
       esutils: 2.0.3
     dev: true
+
+  /dompurify/3.0.6:
+    resolution: {integrity: sha512-ilkD8YEnnGh1zJ240uJsW7AzE+2qpbOUYjacomn3AvJ6J4JhKGSZ2nh4wUIXPZrEPppaCLx5jFe8T89Rk8tQ7w==}
+    dev: false
 
   /dotenv/16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}

@@ -3,6 +3,7 @@ import { Database } from "@/types/supabase.types";
 import BaseNodeIcon from "./baseNodeIcons";
 import { Flow as LocalFlow } from "../../tauri/src/utils/newNodes";
 import clsx from "clsx";
+import { VscArrowSmallRight } from "react-icons/vsc";
 
 type Flow = Database["public"]["Tables"]["flow_templates"]["Row"];
 
@@ -48,19 +49,24 @@ export async function TemplateCard({ template }: { template: Flow }) {
 export const NodeArray = ({ flow }: { flow: LocalFlow }) => {
   //Loop through trigger and all actions to create icons
   const icons = [
-    flow.trigger.icon,
+    // flow.trigger.icon,
     ...flow.actions.map((action) => action.icon),
   ];
   const visibleIcons = icons.slice(0, 4);
   const hiddenIconsCount = icons.length - visibleIcons.length;
 
   return (
-    <div className="flex flex-row gap-2">
+    <div className="flex flex-row gap-2 h-full">
+      <BaseNodeIcon icon={flow.trigger.icon} className="text-pink-500" />
+      <div className="h-14 font-bold flex justify-center items-center">
+        <VscArrowSmallRight className="w-6 text-3xl" />
+      </div>
       {visibleIcons.map((icon, index) => (
-        <BaseNodeIcon key={index} icon={icon} className={clsx({ 'text-pink-500': index === 0 })} />
+        <BaseNodeIcon key={index} icon={icon} />
       ))}
       {hiddenIconsCount > 0 && <span>+{hiddenIconsCount}</span>}
     </div>
   );
   // return <BaseNodeIcon icon={flow.trigger.icon} />;
 };
+``
