@@ -1,5 +1,5 @@
 import React from "react";
-import { sanitize } from "dompurify";
+import { sanitize } from "isomorphic-dompurify";
 
 interface Props {
   icon: string; // Expected to be SVG content

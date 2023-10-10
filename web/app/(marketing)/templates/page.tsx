@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 // import { Metadata } from "next";
 import { clsx } from "clsx";
 import { MockNewFlows } from "../../../../tauri/src/utils/newNodes";

@@ -1,4 +1,3 @@
-"use client";
 import Link from "next/link";
 import { Database } from "@/types/supabase.types";
 import BaseNodeIcon from "./baseNodeIcons";
@@ -23,7 +22,7 @@ export function TemplateCard({ template }: { template: Flow }) {
       //     />
       //   </figure>
       // }
-      href={template.slug}
+      href={"/templates/" + template.slug}
     >
       <div className="card card-compact bg-base-300 overflow-hidden shadow-xl max-w-md sm:w-96 mx-2 transition-all duration-200 ease-in-out transform hover:scale-105">
         <div className="card-body">
@@ -52,12 +51,9 @@ export function TemplateCard({ template }: { template: Flow }) {
 
 export const NodeArray = ({ flow }: { flow: LocalFlow }) => {
   //Loop through trigger and all actions to create icons
-  const actions = [
-    ...flow.actions.map((action) => action.icon),
-  ];
+  const actions = [...flow.actions.map((action) => action.icon)];
   const visibleActions = actions.slice(0, 4);
   const hiddenIconsCount = actions.length - visibleActions.length;
-  console.log("actions.lenght -> " + actions.length);
 
   return (
     <div className="flex flex-row gap-2 h-full">
