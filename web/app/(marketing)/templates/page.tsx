@@ -56,7 +56,7 @@ const mockRows: Flow[] = [
     anonymous: false,
     slug: "flow-5",
     created_at: "2023-04-25T14:50:00.000Z",
-    flow_json: JSON.stringify(MockNewFlows[0]),
+    flow_json: JSON.stringify(MockNewFlows[1]),
     flow_name: "Flow 5",
     flow_templates_version: "v1.0.5",
     published: true,
