@@ -2,8 +2,11 @@
 // `pages` directory
 // import ProfileLayout from '@/components/post-layout'
 // import { GetStaticPathsContext, GetStaticPropsContext, NextPageContext } from "next"
+import { Database } from "@/types/supabase.types";
 import { GetStaticProps, GetStaticPaths, GetServerSideProps } from "next";
 import { notFound } from "next/navigation";
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 // export const getStaticPaths: GetStaticPaths = async () => {
 //   //TODO: fetch profiles from db

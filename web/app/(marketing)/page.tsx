@@ -1,24 +1,12 @@
-"use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-
+// import Link from "next/link";
+import { headers } from 'next/headers'
 // import { BgPattern } from "@/components/ui/Bgpattern";
-import { SignUpButton } from "@/components/marketing/LandingSignUp";
+// import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import { Button } from "@/components/ui/Button";
 
 export default function IndexPage() {
-  const [referrerDomain, setReferrerDomain] = useState<string>("");
-  // Effect to run when the component mounts
-  useEffect(() => {
-    // Get the referrer URL
-    const referrerUrl = document.referrer; // Extract the domain from the URL
-    if (referrerUrl) {
-      const url = new URL(referrerUrl);
-      const domain = url.hostname;
-      // Update the state variable
-      setReferrerDomain(domain);
-    }
-  }, []);
+  const headerList = headers()
+  const referringDomain = headerList.get('referer')
 
   return (
     <>
@@ -46,7 +34,7 @@ export default function IndexPage() {
            */}
           <Button
             variant={"primary"}
-            href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referrerDomain}&hide_referring_domain=true`}
+            href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             target="_blank"
             rel="noopener noreferrer"
           >

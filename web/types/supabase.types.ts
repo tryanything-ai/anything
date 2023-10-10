@@ -30,7 +30,7 @@ export interface Database {
             foreignKeyName: "flow_template_tags_flow_template_id_fkey"
             columns: ["flow_template_id"]
             referencedRelation: "flow_templates"
-            referencedColumns: ["template_id"]
+            referencedColumns: ["flow_template_id"]
           },
           {
             foreignKeyName: "flow_template_tags_tag_id_fkey"
@@ -40,39 +40,91 @@ export interface Database {
           }
         ]
       }
-      flow_templates: {
+      flow_template_versions: {
         Row: {
-          anonymous: boolean | null
+          anything_flow_template_version: string
+          commit_message: string | null
           created_at: string
-          flow_json: Json | null
-          flow_name: string | null
-          flow_templates_version: string
+          flow_template_id: string
+          flow_template_json: Json | null
+          flow_template_version: string
+          flow_template_version_id: string
+          flow_template_version_name: string | null
           published: boolean
           publisher_id: string
-          slug: string
-          template_id: string
         }
         Insert: {
-          anonymous?: boolean | null
+          anything_flow_template_version: string
+          commit_message?: string | null
           created_at?: string
-          flow_json?: Json | null
-          flow_name?: string | null
-          flow_templates_version?: string
+          flow_template_id: string
+          flow_template_json?: Json | null
+          flow_template_version?: string
+          flow_template_version_id?: string
+          flow_template_version_name?: string | null
           published?: boolean
           publisher_id: string
-          slug: string
-          template_id?: string
         }
         Update: {
-          anonymous?: boolean | null
+          anything_flow_template_version?: string
+          commit_message?: string | null
           created_at?: string
-          flow_json?: Json | null
-          flow_name?: string | null
-          flow_templates_version?: string
+          flow_template_id?: string
+          flow_template_json?: Json | null
+          flow_template_version?: string
+          flow_template_version_id?: string
+          flow_template_version_name?: string | null
           published?: boolean
           publisher_id?: string
-          slug?: string
-          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_template_versions_flow_template_id_fkey"
+            columns: ["flow_template_id"]
+            referencedRelation: "flow_templates"
+            referencedColumns: ["flow_template_id"]
+          },
+          {
+            foreignKeyName: "flow_template_versions_publisher_id_fkey"
+            columns: ["publisher_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      flow_templates: {
+        Row: {
+          anonymous_publish: boolean
+          created_at: string
+          flow_template_description: string | null
+          flow_template_id: string
+          flow_template_name: string | null
+          published: boolean
+          publisher_id: string
+          recommended_version_id: string
+          slug: string | null
+        }
+        Insert: {
+          anonymous_publish: boolean
+          created_at?: string
+          flow_template_description?: string | null
+          flow_template_id?: string
+          flow_template_name?: string | null
+          published: boolean
+          publisher_id: string
+          recommended_version_id: string
+          slug?: string | null
+        }
+        Update: {
+          anonymous_publish?: boolean
+          created_at?: string
+          flow_template_description?: string | null
+          flow_template_id?: string
+          flow_template_name?: string | null
+          published?: boolean
+          publisher_id?: string
+          recommended_version_id?: string
+          slug?: string | null
         }
         Relationships: [
           {
@@ -80,6 +132,12 @@ export interface Database {
             columns: ["publisher_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flow_templates_recommended_version_id_fkey"
+            columns: ["recommended_version_id"]
+            referencedRelation: "flow_template_versions"
+            referencedColumns: ["flow_template_version_id"]
           }
         ]
       }
@@ -87,26 +145,44 @@ export interface Database {
         Row: {
           avatar_url: string | null
           full_name: string | null
+          github: string | null
           id: string
+          instagram: string | null
+          linkedin: string | null
+          tiktok: string | null
+          twitter: string | null
           updated_at: string | null
           username: string | null
           website: string | null
+          youtube: string | null
         }
         Insert: {
           avatar_url?: string | null
           full_name?: string | null
+          github?: string | null
           id: string
+          instagram?: string | null
+          linkedin?: string | null
+          tiktok?: string | null
+          twitter?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null
+          youtube?: string | null
         }
         Update: {
           avatar_url?: string | null
           full_name?: string | null
+          github?: string | null
           id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          tiktok?: string | null
+          twitter?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null
+          youtube?: string | null
         }
         Relationships: [
           {
@@ -121,19 +197,25 @@ export interface Database {
         Row: {
           created_at: string
           id: string
+          tag_Icon: string | null
           tag_label: string
+          tag_slug: string
           tag_uuid: string
         }
         Insert: {
           created_at?: string
           id: string
+          tag_Icon?: string | null
           tag_label: string
+          tag_slug: string
           tag_uuid?: string
         }
         Update: {
           created_at?: string
           id?: string
+          tag_Icon?: string | null
           tag_label?: string
+          tag_slug?: string
           tag_uuid?: string
         }
         Relationships: []
