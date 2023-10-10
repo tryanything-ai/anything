@@ -67,7 +67,12 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           <SignInButton className="block" />
         </div>
       </nav>
-      <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
+      <Dialog
+        as="div"
+        className="lg:hidden"
+        open={mobileMenuOpen}
+        onClose={setMobileMenuOpen}
+      >
         <div className="fixed inset-0 z-10" />
         <Dialog.Panel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-slate-1 p-6 sm:max-w-sm sm:ring-1 sm:ring-slate-6">
           <div className="flex items-center justify-between">
@@ -94,6 +99,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
                   <Link
                     key={item.name}
                     href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
                     className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-slate-11 hover:bg-slate-3"
                   >
                     {item.name}

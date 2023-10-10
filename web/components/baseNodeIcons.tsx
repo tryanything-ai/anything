@@ -6,9 +6,17 @@ interface Props {
   className?: string; // Optional className property
 }
 function removeWidthHeight(svgString: string) {
-  return svgString
+  let cleanedSvgString = svgString
     .replace(/\s*width="[^"]*"/, "")
     .replace(/\s*height="[^"]*"/, "");
+
+  // Check if fill attribute already exists
+  if (!cleanedSvgString.includes('fill="')) {
+    // Add fill attribute with currentValue
+    cleanedSvgString = cleanedSvgString.replace('<svg', '<svg fill="currentColor"');
+  }
+
+  return cleanedSvgString;
 }
 
 const BaseNodeOrIcon: React.FC<Props> = ({ icon, className }) => {
