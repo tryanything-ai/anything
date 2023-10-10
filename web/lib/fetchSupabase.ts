@@ -44,14 +44,17 @@ const _fetchProfiles = async () => {
 
 export const fetchProfiles = env.NEXT_PUBLIC_MOCK_ALL ? () => FakeProfiles : _fetchProfiles;
 
-const _fetchProfile = async (username: string) => {
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+
+const _fetchProfile = async (username: string): Promise<Profile | undefined> => {
     try {
         let { data: profile, error } = await supabase
             .from("profiles")
             .select("*")
-            .eq("username", username);
+            .eq("username", username)
+            .single(); 
 
-        if (error) throw error;
+        if (error || !profile) throw error;
 
         return profile;
         

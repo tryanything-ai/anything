@@ -1,13 +1,25 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   experimental: {
     externalDir: true,
   },
-  
+  images: {
+    loader: "custom", 
+    loaderFile: './lib/supabaseImageLoader.ts',
+    // domains: [process.env.NEXT_PUBLIC_SUPABASE_URL],
+    // remotePatterns: [
+    //   {
+    //     protocol: "https",
+    //     hostname: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    //     // port: '',
+    //     // pathname: '/my-bucket/**',
+    //   },
+    // ],
+  },
 };
 
 module.exports = nextConfig;
-
 
 // Injected content via Sentry wizard below
 

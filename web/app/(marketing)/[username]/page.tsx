@@ -2,12 +2,10 @@
 // `pages` directory
 // import ProfileLayout from '@/components/post-layout'
 // import { GetStaticPathsContext, GetStaticPropsContext, NextPageContext } from "next"
-import { fetchProfiles, fetchProfile } from "@/lib/fetchSupabase";
-import { Database } from "@/types/supabase.types";
+import { fetchProfiles, fetchProfile, Profile } from "@/lib/fetchSupabase";
 import { GetStaticProps, GetStaticPaths, GetServerSideProps } from "next";
 import { notFound } from "next/navigation";
-
-type Profile = Database['public']['Tables']['profiles']['Row']
+import Image from "next/image";
 
 // export const getStaticPaths: GetStaticPaths = async () => {
 //   //TODO: fetch profiles from db
@@ -36,14 +34,14 @@ export const generateStaticParams = async () => {
   // return { props: { post: { ...params, content: "derp" } } };
   // return [{ username: "carl" }, { username: "jim" }];
 
-  let profiles = await fetchProfiles(); 
+  let profiles = await fetchProfiles();
   // console.log("profiles", profiles);
-  return profiles; 
+  return profiles;
 };
 
 // async function getProfile(params: any) {
 //   console.log("params", params);
-  
+
 //   // const res = await fetch(`https://.../posts/${params.id}`)
 //   // const post = await res.json()
 //   // console.log("username", username);
@@ -60,7 +58,20 @@ export default async function Profile({ params }: any) {
   if (!profile) {
     notFound();
   }
-  
-  return <div>{JSON.stringify(profile, null, 3)}</div>;
-  // return <PostLayout post={post} />
+
+  return (
+    <div>
+      <div className="avatar">
+        <div className="w-24 rounded-full">
+          <Image
+            width={100}
+            height={100}
+            src={profile.avatar_url ? profile.avatar_url : ""}
+            alt={profile.username ? profile.username : "user profile picture"}
+          />
+        </div>
+      </div>
+      <div>{JSON.stringify(profile, null, 3)}</div>
+    </div>
+  );
 }
