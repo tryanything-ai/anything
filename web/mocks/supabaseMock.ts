@@ -52,16 +52,17 @@ export const FakeProfiles: Profile[] = [
         full_name: "Albus Percival Wulfric Brian Dumbledore",
     bio: "Headmaster of Hogwarts School of Witchcraft and Wizardry",    
       public: true,
-    github: null,
+  
         id: "1",
         instagram: "albus_insta_magic",
         linkedin: null,
-        tiktok: "albus_tiktok_spells",
-        twitter: "headmasterAlbus",
+        github: "https://github.com/dumbledore",
+        tiktok: "https://tiktok.com/@albus_tiktok_spells",
+        twitter: "https://twitter.com/headmasterAlbus",
         updated_at: "2023-10-09",
         username: "dumbledore",
         website: "https://hogwarts.edu/faculty/dumbledore",
-        youtube: "DumbledoreMagicChannel"
+        youtube: "https://youtube.com/@DumbledoreMagicChannel"
       },
       {
         avatar_url: "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/harry.webp",
@@ -70,14 +71,14 @@ export const FakeProfiles: Profile[] = [
         public: true,
         github: null,
         id: "2",
-        instagram: "theboywholived_official",
-        linkedin: null,
-        tiktok: "lightning_scar_tiktok",
-        twitter: "real_harrypotter",
+        instagram: "https://instagram.com/theboywholived_official",
+        linkedin: "https://linkedin.com/in/harrypotter",
+        tiktok: "https://tiktok.com/lightning_scar_tiktok",
+        twitter: "http://twitter.com/real_harrypotter",
         updated_at: "2023-10-09",
         username: "harry",
         website: "https://hogwarts.edu/students/harrypotter",
-        youtube: "PotterQuidditchPlays"
+        youtube: "http://youtube.com/PotterQuidditchPlays"
       },
       // {
       //   avatar_url: "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/harry.webp",

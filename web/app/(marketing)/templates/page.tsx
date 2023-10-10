@@ -9,7 +9,7 @@ type Flow = Database["public"]["Tables"]["flow_templates"]["Row"];
 
 const mockRows: Flow[] = [
   {
-    anonymous: true,
+    // anonymous: true,
     slug: "flow-1",
     created_at: "2023-04-15T12:30:00.000Z",
     flow_json: JSON.stringify(MockNewFlows[0]),
