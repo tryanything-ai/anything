@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import fs from 'fs';
-import { Database as mockConfig } from '@/types/supabase.types';
+import { Database, Database as mockConfig } from '@/types/supabase.types';
 
 type GeneratorType = 'string' | 'date' | 'uuid' | 'boolean' | 'json';
 
@@ -43,3 +43,79 @@ function generateMockData(config: Record<string, Record<string, Record<string, G
 
 
 // console.log(mockDatabaseData);
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+export const FakeProfiles: Profile[] = [
+    {
+        avatar_url: "https://hogwarts.edu/avatars/albus_dumbledore.jpg",
+        full_name: "Albus Percival Wulfric Brian Dumbledore",
+        github: null,
+        id: "1",
+        instagram: "albus_insta_magic",
+        linkedin: null,
+        tiktok: "albus_tiktok_spells",
+        twitter: "headmasterAlbus",
+        updated_at: "2023-10-09",
+        username: "dumbledore",
+        website: "https://hogwarts.edu/faculty/dumbledore",
+        youtube: "DumbledoreMagicChannel"
+      },
+      {
+        avatar_url: "https://hogwarts.edu/avatars/harry_potter.jpg",
+        full_name: "Harry James Potter",
+        github: null,
+        id: "2",
+        instagram: "theboywholived_official",
+        linkedin: null,
+        tiktok: "lightning_scar_tiktok",
+        twitter: "real_harrypotter",
+        updated_at: "2023-10-09",
+        username: "harry",
+        website: "https://hogwarts.edu/students/harrypotter",
+        youtube: "PotterQuidditchPlays"
+      },
+      {
+        avatar_url: "https://hogwarts.edu/avatars/hermione_granger.jpg",
+        full_name: "Hermione Jean Granger",
+        github: null,
+        id: "3",
+        instagram: "smartwitch_hermione",
+        linkedin: "hermione_professional",
+        tiktok: null,
+        twitter: "bookworm_hermione",
+        updated_at: "2023-10-09",
+        username: "hermione_g",
+        website: "https://hogwarts.edu/students/hermionegranger",
+        youtube: "HermioneStudyGuides"
+      },
+      {
+        avatar_url: "https://hogwarts.edu/avatars/ron_weasley.jpg",
+        full_name: "Ronald Bilius Weasley",
+        github: null,
+        id: "4",
+        instagram: "weasleyisourking_ron",
+        linkedin: null,
+        tiktok: "ron_tiktok_chess",
+        twitter: "ron_the_king",
+        updated_at: "2023-10-09",
+        username: "ron_weasley",
+        website: "https://hogwarts.edu/students/ronweasley",
+        youtube: "WeasleyJokes"
+      },
+      {
+        avatar_url: "https://hogwarts.edu/avatars/draco_malfoy.jpg",
+        full_name: "Draco Lucius Malfoy",
+        github: null,
+        id: "5",
+        instagram: "pureblood_draco",
+        linkedin: "draco_malfoy_enterprises",
+        tiktok: null,
+        twitter: "slytherin_prince",
+        updated_at: "2023-10-09",
+        username: "draco_m",
+        website: "https://hogwarts.edu/students/dracomalfoy",
+        youtube: "MalfoyManorTours"
+      }
+      
+]
