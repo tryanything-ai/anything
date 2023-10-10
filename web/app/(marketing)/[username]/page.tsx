@@ -2,6 +2,7 @@
 // `pages` directory
 // import ProfileLayout from '@/components/post-layout'
 // import { GetStaticPathsContext, GetStaticPropsContext, NextPageContext } from "next"
+import { fetchProfiles, fetchProfile } from "@/lib/fetchSupabase";
 import { Database } from "@/types/supabase.types";
 import { GetStaticProps, GetStaticPaths, GetServerSideProps } from "next";
 import { notFound } from "next/navigation";
@@ -33,22 +34,28 @@ export const generateStaticParams = async () => {
   //   slug: post.slug,
   // }))
   // return { props: { post: { ...params, content: "derp" } } };
-  return [{ username: "carl" }, { username: "jim" }];
+  // return [{ username: "carl" }, { username: "jim" }];
+
+  let profiles = await fetchProfiles(); 
+  // console.log("profiles", profiles);
+  return profiles; 
 };
 
-async function getProfile({ username }: any) {
-  // const res = await fetch(`https://.../posts/${params.id}`)
-  // const post = await res.json()
-  console.log("username", username);
-  if (username != "carl" && username != "jim") {
-    return undefined;
-  } else {
-    return { username, content: "derp" };
-  }
-}
+// async function getProfile(params: any) {
+//   console.log("params", params);
+  
+//   // const res = await fetch(`https://.../posts/${params.id}`)
+//   // const post = await res.json()
+//   // console.log("username", username);
+//   // if (username != "carl" && username != "jim") {
+//   //   return undefined;
+//   // } else {
+//     return { ...params, content: "derp" };
+//   // }
+// }
 
 export default async function Profile({ params }: any) {
-  const profile = await getProfile(params);
+  const profile = await fetchProfile(params.username);
 
   if (!profile) {
     notFound();
