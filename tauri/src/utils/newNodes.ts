@@ -193,7 +193,6 @@ export const MockNewFlows: Flow[] = [
         action_type: "Mock Action Type",
         depends_on: [],
       },
-      // ... (and so on until Mock Action 9)
     ],
     edges: [],
   },
