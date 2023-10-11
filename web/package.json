@@ -26,6 +26,7 @@
     "react-dom": "^18",
     "react-icons": "^4.11.0",
     "tailwind-merge": "^1.14.0",
+    "type-fest": "^4.4.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

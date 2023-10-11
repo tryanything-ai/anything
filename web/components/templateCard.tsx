@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { Database } from "@/types/supabase.types";
 import BaseNodeIcon from "./baseNodeIcons";
 import { Flow as LocalFlow } from "../../tauri/src/utils/newNodes";
 import { VscArrowSmallRight } from "react-icons/vsc";
+import { Json } from "@/types/supabase.types";
 
-type Flow = Database["public"]["Tables"]["flow_templates"]["Row"];
+export type CardProps = { slug: string, flow_name: string, flow_template_json: Json }
 
-export function TemplateCard({ template }: { template: Flow }) {
+export function TemplateCard({ flow_template_json, slug, flow_name }: CardProps) {
   const flowJson =
-    typeof template.flow_json === "string"
-      ? JSON.parse(template.flow_json)
-      : template.flow_json;
+    typeof flow_template_json === "string"
+      ? JSON.parse(flow_template_json)
+      : flow_template_json;
 
   return (
     <Link
@@ -22,12 +22,12 @@ export function TemplateCard({ template }: { template: Flow }) {
       //     />
       //   </figure>
       // }
-      href={"/templates/" + template.slug}
+      href={"/templates/" + slug}
     >
       <div className="card card-compact bg-base-300 overflow-hidden shadow-xl max-w-md sm:w-96 mx-2 transition-all duration-200 ease-in-out transform hover:scale-105">
         <div className="card-body">
           <h2 className="card-title text-2xl text-ellipsis">
-            {template.flow_name}
+            {flow_name}
             {/* <div className="badge badge-secondary">NEW</div> */}
           </h2>
           <div className="mb-2 flex gap-1">
@@ -49,7 +49,7 @@ export function TemplateCard({ template }: { template: Flow }) {
   );
 }
 
-export const NodeArray = ({ flow }: { flow: LocalFlow }) => {
+const NodeArray = ({ flow }: { flow: LocalFlow }) => {
   //Loop through trigger and all actions to create icons
   const actions = [...flow.actions.map((action) => action.icon)];
   const visibleActions = actions.slice(0, 4);

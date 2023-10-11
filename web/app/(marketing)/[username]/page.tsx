@@ -30,6 +30,7 @@ const formatUrl = (url: string): string => {
 
 export const generateStaticParams = async () => {
   let profiles = await fetchProfiles();
+  // has username key to populate route
   return profiles;
 };
 
