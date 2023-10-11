@@ -2,9 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/supabase.types";
 import { FAKE_FLOW_VERSIONS, FAKE_PROFILES } from "@/mocks/supabaseMock";
 
-import * as SUPABASE from  "@/types/supabase.types";
+import * as SUPABASE from "@/types/supabase.types";
 export * from "@/types/supabase.types";
-
 
 import { env } from "@/env.mjs";
 
@@ -13,16 +12,19 @@ const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
+//TODO: probably need to make a view for this
 const templatesQuery = supabase
-  .from("flow_template_versions")
-  .select("*, flow_template_tags:flow_template_id(*)");
+  .from("flow_templates")
+  .select("*, flow_template_versions(*), tags(*), profiles(*)");
 
-export const _fetchTemplates = async (): Promise<SUPABASE.FlowTemplateVersion[] | undefined> => {
+export type BigFlow = SUPABASE.DbResultOk<typeof templatesQuery>
+
+export const fetchTemplates = async (): Promise<BigFlow | undefined> => {
   try {
     const { data, error }: SUPABASE.DbResult<typeof templatesQuery> =
       await templatesQuery;
-    
-    console.log("data", data); 
+
+    // console.log("data", JSON.stringify(data, null, 3));
     if (error || !data) throw error;
 
     return data;
@@ -31,10 +33,6 @@ export const _fetchTemplates = async (): Promise<SUPABASE.FlowTemplateVersion[] 
     return undefined;
   }
 };
-
-export const fetchTemplates = env.NEXT_PUBLIC_MOCK_ALL
-  ? () => FAKE_FLOW_VERSIONS
-  : _fetchTemplates;
 
 const _fetchProfiles = async () => {
   try {
@@ -52,9 +50,8 @@ const _fetchProfiles = async () => {
   }
 };
 
-export const fetchProfiles = env.NEXT_PUBLIC_MOCK_ALL
-  ? () => FAKE_PROFILES
-  : _fetchProfiles;
+export const fetchProfiles =
+  env.NEXT_PUBLIC_MOCK_ALL === "true" ? () => FAKE_PROFILES : _fetchProfiles;
 
 const _fetchProfile = async (
   username: string
@@ -75,7 +72,8 @@ const _fetchProfile = async (
   }
 };
 
-export const fetchProfile = env.NEXT_PUBLIC_MOCK_ALL
-  ? (username: string) =>
-      FAKE_PROFILES.find((profile) => profile.username === username)
-  : _fetchProfile;
+export const fetchProfile =
+  env.NEXT_PUBLIC_MOCK_ALL === "true"
+    ? (username: string) =>
+        FAKE_PROFILES.find((profile) => profile.username === username)
+    : _fetchProfile;

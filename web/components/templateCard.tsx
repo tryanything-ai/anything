@@ -2,11 +2,23 @@ import Link from "next/link";
 import BaseNodeIcon from "./baseNodeIcons";
 import { Flow as LocalFlow } from "../../tauri/src/utils/newNodes";
 import { VscArrowSmallRight } from "react-icons/vsc";
-import { Json } from "@/types/supabase.types";
+import { Json, Tag } from "@/types/supabase.types";
 
-export type CardProps = { slug: string, flow_name: string, flow_template_json: Json }
+export type CardProps = {
+  slug: string;
+  description: string; 
+  flow_name: string;
+  flow_template_json: Json;
+  tags: Tag[];
+};
 
-export function TemplateCard({ flow_template_json, slug, flow_name }: CardProps) {
+export function TemplateCard({
+  flow_template_json,
+  tags,
+  slug,
+  description, 
+  flow_name,
+}: CardProps) {
   const flowJson =
     typeof flow_template_json === "string"
       ? JSON.parse(flow_template_json)
@@ -28,17 +40,22 @@ export function TemplateCard({ flow_template_json, slug, flow_name }: CardProps)
         <div className="card-body">
           <h2 className="card-title text-2xl text-ellipsis">
             {flow_name}
-            {/* <div className="badge badge-secondary">NEW</div> */}
           </h2>
-          <div className="mb-2 flex gap-1">
-            <div className="badge badge-outline">Fashion</div>
-            <div className="badge badge-outline">Products</div>
-          </div>
-          <p className="line-clamp-2 overflow-ellipsis overflow-hidden mb-2">
-            {flowJson.description}
-          </p>
-          {/* //TODO: add tags from supabase. make them clickable */}
+          {tags ? (
+            <div className="mb-2 flex gap-1">
+              {tags.map((tag, index) => {
+                return (
+                  <div className="badge badge-outline" key={index}>
+                    {tag.tag_label}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
 
+          <p className="line-clamp-2 overflow-ellipsis overflow-hidden mb-2">
+            {description}
+          </p>
           <figure>
             <div className="h-px bg-white  w-full bg-opacity-30 mb-1" />
           </figure>
