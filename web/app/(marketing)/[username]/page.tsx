@@ -177,7 +177,7 @@ export default async function Profile({ params }: any) {
       {/* Right Column */}
       <div className="flex flex-col p-2 md:pl-5">
         <div className="text-2xl pl-2 pb-4">Templates</div>
-        <TemplateGrid templates={templates} />
+        <TemplateGrid templates={templates} profile={false} />
       </div>
     </div>
   );
