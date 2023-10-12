@@ -6,7 +6,7 @@ import { Json, Tag } from "@/types/supabase.types";
 
 export type CardProps = {
   slug: string;
-  description: string; 
+  description: string;
   flow_name: string;
   flow_template_json: Json;
   tags: Tag[];
@@ -16,7 +16,7 @@ export function TemplateCard({
   flow_template_json,
   tags,
   slug,
-  description, 
+  description,
   flow_name,
 }: CardProps) {
   const flowJson =
@@ -36,11 +36,9 @@ export function TemplateCard({
       // }
       href={"/templates/" + slug}
     >
-      <div className="card card-compact bg-base-300 overflow-hidden shadow-xl max-w-md sm:w-96 mx-2 transition-all duration-200 ease-in-out transform hover:scale-105">
+      <div className="card card-compact bg-base-300 overflow-hidden shadow-xl max-w-md sm:w-96 mx-1 transition-all duration-200 ease-in-out transform hover:scale-105">
         <div className="card-body">
-          <h2 className="card-title text-2xl text-ellipsis">
-            {flow_name}
-          </h2>
+          <h2 className="card-title text-2xl text-ellipsis">{flow_name}</h2>
           {tags ? (
             <div className="mb-2 flex gap-1">
               {tags.map((tag, index) => {

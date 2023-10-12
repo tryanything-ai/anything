@@ -1,9 +1,9 @@
-// Profile page
-// `pages` directory
-// import ProfileLayout from '@/components/post-layout'
-// import { GetStaticPathsContext, GetStaticPropsContext, NextPageContext } from "next"
-import { fetchProfiles, fetchProfile, Profile } from "@/lib/fetchSupabase";
-import { GetStaticProps, GetStaticPaths, GetServerSideProps } from "next";
+import {
+  fetchProfiles,
+  fetchProfile,
+  Profile,
+  fetchProfileTemplates,
+} from "@/lib/fetchSupabase";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import {
@@ -16,6 +16,7 @@ import {
   FaXTwitter,
 } from "react-icons/fa6";
 import Link from "next/link";
+import { TemplateGrid } from "@/components/templateGrid";
 
 const formatUrl = (url: string): string => {
   // Remove the http or https from the beginning
@@ -48,15 +49,16 @@ const hasLinks = (profile: Profile) => {
 
 export default async function Profile({ params }: any) {
   const profile = await fetchProfile(params.username);
+  const templates = await fetchProfileTemplates(params.username);
 
-  if (!profile) {
+  if (!profile || !templates) {
+    //only show users that exist with templates
     notFound();
   }
-
   return (
     <div className="my-16 flex flex-col md:flex-row max-w-7xl mx-auto">
       {/* Left Column */}
-      <div className="w-72  max-w-sm h-full">
+      <div className="max-w-sm h-full p-6">
         <div className="avatar">
           <div className="w-24 rounded-full">
             <Image
@@ -170,7 +172,10 @@ export default async function Profile({ params }: any) {
         {/* <div>{JSON.stringify(profile, null, 3)}</div> */}
       </div>
       {/* Right Column */}
-      <div>Templates</div>
+      <div className="flex flex-col p-2 md:pl-5">
+        <div className="text-2xl pl-2 pb-4">Templates</div>
+        <TemplateGrid templates={templates} />
+      </div>
     </div>
   );
 }
