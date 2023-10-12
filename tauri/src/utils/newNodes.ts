@@ -16,7 +16,7 @@ export type Flow = {
 };
 
 // General Representation of a Node
-interface Node {
+export interface Node {
   trigger: boolean;
   node_name: string; //will use as nodeID
   icon: string; 
@@ -44,13 +44,13 @@ interface NodePresentation {
   };
 }
 
-interface Action extends Node {
+export interface Action extends Node {
   trigger: false; 
   action_type: string;
   depends_on: string[]; //node_name for parallelization
 }
 
-interface Trigger extends Node {
+export interface Trigger extends Node {
   trigger: true;
   trigger_type: string;
 }
