@@ -8,6 +8,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 // import { TemplateGrid } from "@/components/templateGrid";
 import { ProfileLinks } from "@/components/profileLinks";
+import { AvatarAndUsername } from "@/components/avatarAndUsername";
+import { Button } from "@/components/ui/Button";
+import { Tags } from "@/components/tags";
 
 export const generateStaticParams = async () => {
   let templates = await fetchTemplates();
@@ -35,33 +38,31 @@ export default async function Template({
     : undefined;
 
   return (
-    <div className="my-6 md:my-16 flex flex-col md:flex-row max-w-7xl mx-auto">
-      {/* Left Column */}
-      <div className="max-w-sm h-full p-6">
-        <div className="avatar">
-          <div className="w-24 rounded-full">
-            <Image
-              width={100}
-              height={100}
-              src={profile && profile.avatar_url ? profile.avatar_url : ""}
-              alt={
-                profile && profile.username
-                  ? profile.username
-                  : "user profile picture"
-              }
-            />
-          </div>
+    <div className="my-6 mx-4 md:my-16 flex flex-col max-w-4xl md:mx-auto">
+      <div className="text-3xl md:text-5xl font-semibold mb-6 min-h-16  ">
+        {template.flow_template_name}
+      </div>
+      <div className="flex flex-row justify-between">
+        {/* Left */}
+        <div>
+          <AvatarAndUsername
+            profile_name={profile?.full_name ? profile.full_name : ""}
+            avatar_url={profile?.avatar_url ? profile.avatar_url : ""}
+          />
         </div>
-        {/* <div className="text-3xl">{profile.full_name}</div>
-        <div className="mt-2 opacity-70">@{profile.username}</div>
-        <div className="mt-2">{profile.bio}</div> */}
-        {profile && <ProfileLinks profile={profile} />}
+        {/* Right */}
+        <div>
+          <Button>Use this template</Button>
+        </div>
       </div>
-      {/* Right Column */}
-      <div className="flex flex-col p-2 md:pl-5">
-        <div className="text-2xl pl-2 pb-4">Templates</div>
-        {/* <TemplateGrid templates={templates} profile={false} /> */}
-      </div>
+      <div className="font-semibold mt-8 mb-2">About this template</div>
+      <div className="">{template.flow_template_description}</div>
+      <div className="font-semibold mt-8 mb-2">Tags</div>
+      <Tags tags={template.tags} />
+      <div className="font-semibold mt-8 mb-2">Trigger</div>
+      <div>TRIGGER</div>
+      <div className="font-semibold mt-8 mb-2">Actions</div>
+      <div>ACTIONS</div>
     </div>
   );
 }
