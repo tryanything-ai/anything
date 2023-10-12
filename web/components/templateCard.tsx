@@ -3,7 +3,7 @@ import BaseNodeIcon from "./baseNodeIcons";
 import { Flow as LocalFlow } from "../../tauri/src/utils/newNodes";
 import { VscArrowSmallRight } from "react-icons/vsc";
 import { Json, Tag } from "@/types/supabase.types";
-import Image from "next/image";
+import { AvatarAndUsername } from "./avatarAndUsername";
 
 export type CardProps = {
   slug: string;
@@ -38,35 +38,8 @@ export function TemplateCard({
           <h2 className="card-title text-2xl text-ellipsis">{flow_name}</h2>
           {/* User */}
           {profile ? (
-            <div className="flex flex-row">
-              <div className="avatar">
-                <div className="w-10 rounded-full">
-                  <Image
-                    width={100}
-                    height={100}
-                    src={avatar_url}
-                    alt={profile_name}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col pl-4 justify-center">
-                <div className="text-ellipsis">{profile_name}</div>
-                {/* <div className="opacity-70">20 templates</div> */}
-              </div>
-            </div>
+            <AvatarAndUsername avatar_url={avatar_url} profile_name={profile_name} />
           ) : null}
-
-          {/* {tags ? (
-            <div className="mb-2 flex gap-1">
-              {tags.map((tag, index) => {
-                return (
-                  <div className="badge badge-outline" key={index}>
-                    {tag.tag_label}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null} */}
 
           <p className="line-clamp-2 overflow-ellipsis overflow-hidden mb-2">
             {description}

@@ -12,7 +12,6 @@ const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-//TODO: probably need to make a view for this
 const templatesQuery = supabase
   .from("flow_templates")
   .select("*, flow_template_versions(*), tags(*), profiles(*)");
@@ -25,6 +24,23 @@ export const fetchTemplates = async (): Promise<BigFlow | undefined> => {
       await templatesQuery;
 
     // console.log("data", JSON.stringify(data, null, 3));
+    if (error || !data) throw error;
+
+    return data;
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
+};
+
+export const fetchTemplateBySlug = async (
+  slug: string
+): Promise<BigFlow | undefined> => {
+  try {
+    const { data, error }: SUPABASE.DbResult<typeof templatesQuery> =
+      await templatesQuery.eq("slug", slug);
+
+    // console.log("data in fetchTemplateBySlug", JSON.stringify(data, null, 3));
     if (error || !data) throw error;
 
     return data;

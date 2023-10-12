@@ -13,8 +13,6 @@ export default async function TemplatePage() {
     notFound();
   }
 
-  console.log("templates", templates);
-
   return (
     <>
       {/* Hero Copy */}

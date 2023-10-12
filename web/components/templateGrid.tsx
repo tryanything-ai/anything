@@ -5,10 +5,7 @@ export const TemplateGrid = ({ templates, profile = true }: { templates: BigFlow
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 gap-6 mx-auto max-w-7xl">
       {templates.map((template, index) => {
-  console.log(
-    "template in templateGride",
-    JSON.stringify(template, null, 3)
-  );
+
         // TODO: this whole thing is kinda garbage and related to typescript problems with supabase queryes that are nested
         let flow_json: any; 
 

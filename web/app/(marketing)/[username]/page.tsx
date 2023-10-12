@@ -6,51 +6,18 @@ import {
 } from "@/lib/fetchSupabase";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import {
-  FaTiktok,
-  FaGithub,
-  FaYoutube,
-  FaGlobe,
-  FaLinkedin,
-  FaInstagram,
-  FaXTwitter,
-} from "react-icons/fa6";
-import Link from "next/link";
 import { TemplateGrid } from "@/components/templateGrid";
-
-const formatUrl = (url: string): string => {
-  // Remove the http or https and "www." from the beginning
-  const formattedUrl = url.replace(/^(https?:\/\/)?(www\.)?/, "");
-
-  // Remove trailing slash if it exists
-  const cleanedUrl = formattedUrl.endsWith("/") ? formattedUrl.slice(0, -1) : formattedUrl;
-
-  // If the string is longer than 30 characters, truncate and add ellipses
-  if (cleanedUrl.length > 32) {
-    return `${cleanedUrl.substring(0, 29)}...`;
-  }
-  return cleanedUrl;
-};
+import { ProfileLinks } from "@/components/profileLinks";
 
 export const generateStaticParams = async () => {
   let profiles = await fetchProfiles();
   // has username key to populate route
+  console.log("profiles in generateStaticParams", profiles);
   return profiles;
 };
 
-const hasLinks = (profile: Profile) => {
-  return (
-    profile.twitter ||
-    profile.linkedin ||
-    profile.github ||
-    profile.website ||
-    profile.instagram ||
-    profile.tiktok ||
-    profile.youtube
-  );
-};
-
-export default async function Profile({ params }: any) {
+export default async function Profile({ params }: { params: { username: string } }) {
+  console.log("params in ProfilePage", params);
   const profile = await fetchProfile(params.username);
   const templates = await fetchProfileTemplates(params.username);
 
@@ -58,6 +25,7 @@ export default async function Profile({ params }: any) {
     //only show users that exist with templates
     notFound();
   }
+
   return (
     <div className="my-6 md:my-16 flex flex-col md:flex-row max-w-7xl mx-auto">
       {/* Left Column */}
@@ -75,104 +43,7 @@ export default async function Profile({ params }: any) {
         <div className="text-3xl">{profile.full_name}</div>
         <div className="mt-2 opacity-70">@{profile.username}</div>
         <div className="mt-2">{profile.bio}</div>
-        {hasLinks(profile) && (
-          <div className="mt-6">
-            <div className="opacity-70 mb-1">Links</div>
-            {profile.twitter && (
-              <div className="flex flex-row h-6">
-                <FaXTwitter className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.twitter)}
-                </Link>
-              </div>
-            )}
-            {profile.linkedin && (
-              <div className="flex flex-row h-6">
-                <FaLinkedin className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.linkedin)}
-                </Link>
-              </div>
-            )}
-            {profile.github && (
-              <div className="flex flex-row h-6">
-                <FaGithub className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.github)}
-                </Link>
-              </div>
-            )}
-            {profile.website && (
-              <div className="flex flex-row h-6">
-                <FaGlobe className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.website)}
-                </Link>
-              </div>
-            )}
-            {profile.instagram && (
-              <div className="flex flex-row h-6">
-                <FaInstagram className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.instagram)}
-                </Link>
-              </div>
-            )}
-            {profile.tiktok && (
-              <div className="flex flex-row h-6">
-                <FaTiktok className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.tiktok)}
-                </Link>
-              </div>
-            )}
-            {profile.youtube && (
-              <div className="flex flex-row h-6">
-                <FaYoutube className="h-6 w-3 mr-2" />
-                <Link
-                  href={profile.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm"
-                >
-                  {formatUrl(profile.youtube)}
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* <div>{JSON.stringify(profile, null, 3)}</div> */}
+        <ProfileLinks profile={profile} />
       </div>
       {/* Right Column */}
       <div className="flex flex-col p-2 md:pl-5">
