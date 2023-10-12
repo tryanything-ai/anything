@@ -11,6 +11,9 @@ import { ProfileLinks } from "@/components/profileLinks";
 import { AvatarAndUsername } from "@/components/avatarAndUsername";
 import { Button } from "@/components/ui/Button";
 import { Tags } from "@/components/tags";
+import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
+import { Flow } from "../../../../../tauri/src/utils/newNodes";
+import { BaseNodeWeb } from "@/components/baseNodeWeb";
 
 export const generateStaticParams = async () => {
   let templates = await fetchTemplates();
@@ -37,6 +40,8 @@ export default async function Template({
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
+  let flow = flowJsonFromBigFLow(template) as Flow;
+
   return (
     <div className="my-6 mx-4 md:my-16 flex flex-col max-w-4xl md:mx-auto">
       <div className="text-3xl md:text-5xl font-semibold mb-6 min-h-16  ">
@@ -57,12 +62,25 @@ export default async function Template({
       </div>
       <div className="font-semibold mt-8 mb-2">About this template</div>
       <div className="">{template.flow_template_description}</div>
+
+      <div className="font-semibold mt-8 mb-2">Trigger</div>
+      <div>
+        <BaseNodeWeb node={flow.trigger} />
+      </div>
+      <div className="font-semibold mt-8 mb-2">Actions</div>
+      <div>
+        {flow.actions.map((action, index) => {
+          return <BaseNodeWeb node={action} key={action.node_label} />;
+        })}
+      </div>
       <div className="font-semibold mt-8 mb-2">Tags</div>
       <Tags tags={template.tags} />
-      <div className="font-semibold mt-8 mb-2">Trigger</div>
-      <div>TRIGGER</div>
-      <div className="font-semibold mt-8 mb-2">Actions</div>
-      <div>ACTIONS</div>
+      {profile ? (
+        <>
+          <div className="font-semibold mt-8 mb-2">About the creator</div>
+          <ProfileLinks profile={profile} />
+        </>
+      ) : null}
     </div>
   );
 }
