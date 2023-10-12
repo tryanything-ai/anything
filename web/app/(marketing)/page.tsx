@@ -1,22 +1,21 @@
 // import Link from "next/link";
-import { headers } from 'next/headers'
+import { headers } from "next/headers";
 // import { BgPattern } from "@/components/ui/Bgpattern";
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import { Button } from "@/components/ui/Button";
 
 export default function IndexPage() {
-  const headerList = headers()
-  const referringDomain = headerList.get('referer')
+  const headerList = headers();
+  const referringDomain = headerList.get("referer");
 
   return (
     <>
       {/* Bg Pattern */}
       {/* <BgPattern /> */}
       {/* Hero Copy */}
-      <div className="mt-16 flex flex-col items-center gap-4 text-5xl">
-        <h1 className="md:display h2 w-full px-4 text-center md:w-[900px] md:px-0">
-          The simplest way to build{" "}
-          <span className="text-crimson-9">AI Automations</span> for your
+      <div className="mt-16 flex flex-col items-center gap-4">
+        <h1 className="md:display h2 w-full px-4 text-center md:w-[802px] md:px-0">
+          Build <span className="text-crimson-9">AI Automations</span> for your
           startup
         </h1>
         {/* <p className="body-xl px-4 text-center text-slate-11 md:w-[572px] md:px-0">
