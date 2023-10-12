@@ -19,14 +19,17 @@ import Link from "next/link";
 import { TemplateGrid } from "@/components/templateGrid";
 
 const formatUrl = (url: string): string => {
-  // Remove the http or https from the beginning
-  const formattedUrl = url.replace(/^https?:\/\//, "");
+  // Remove the http or https and "www." from the beginning
+  const formattedUrl = url.replace(/^(https?:\/\/)?(www\.)?/, "");
+
+  // Remove trailing slash if it exists
+  const cleanedUrl = formattedUrl.endsWith("/") ? formattedUrl.slice(0, -1) : formattedUrl;
 
   // If the string is longer than 30 characters, truncate and add ellipses
-  if (formattedUrl.length > 32) {
-    return `${formattedUrl.substring(0, 29)}...`;
+  if (cleanedUrl.length > 32) {
+    return `${cleanedUrl.substring(0, 29)}...`;
   }
-  return formattedUrl;
+  return cleanedUrl;
 };
 
 export const generateStaticParams = async () => {
@@ -56,7 +59,7 @@ export default async function Profile({ params }: any) {
     notFound();
   }
   return (
-    <div className="my-16 flex flex-col md:flex-row max-w-7xl mx-auto">
+    <div className="my-6 md:my-16 flex flex-col md:flex-row max-w-7xl mx-auto">
       {/* Left Column */}
       <div className="max-w-sm h-full p-6">
         <div className="avatar">
