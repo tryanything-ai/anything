@@ -1,5 +1,6 @@
 import { HandleProps, NodeProps, Edge } from "reactflow";
 
+// Typescript version of Flow TOML
 export type Flow = {
   flow_name: string;
   flow_id?: string;
@@ -11,14 +12,14 @@ export type Flow = {
   environment: string; //Stub for future
   trigger: Trigger; //Triggering
   actions: Action[]; //Processing
-  edges: Edge[]; //Needed for BFS traversal and flow render
+  edges: Edge[]; //Needed for BFS traversal and flow rendering
 };
 
 // General Representation of a Node
 interface Node {
   trigger: boolean;
   node_name: string; //will use as nodeID
-  icon: string; //VSCode icon or url to image //TODO: make svg
+  icon: string; 
   node_label: string;
   description?: string;
   variables: Variable[]; //Local variables
@@ -27,6 +28,7 @@ interface Node {
   handles: HandleProps[];
 }
 
+// Presentation data only needed for react flow but we need all of it
 interface NodePresentation {
   position: {
     x: number;
@@ -43,7 +45,7 @@ interface NodePresentation {
 }
 
 interface Action extends Node {
-  trigger: false;
+  trigger: false; 
   action_type: string;
   depends_on: string[]; //node_name for parallelization
 }
@@ -59,6 +61,7 @@ interface Variable {
 
 export type AnythingNodeProps = NodeProps<Action | Trigger>;
 
+// Mocks for testing etc
 export const MockNewFlows: Flow[] = [
   {
     flow_name: "Mock Flow",
