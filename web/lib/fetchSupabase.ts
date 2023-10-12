@@ -17,7 +17,7 @@ const templatesQuery = supabase
   .from("flow_templates")
   .select("*, flow_template_versions(*), tags(*), profiles(*)");
 
-export type BigFlow = SUPABASE.DbResultOk<typeof templatesQuery>
+export type BigFlow = SUPABASE.DbResultOk<typeof templatesQuery>;
 
 export const fetchTemplates = async (): Promise<BigFlow | undefined> => {
   try {
@@ -34,7 +34,24 @@ export const fetchTemplates = async (): Promise<BigFlow | undefined> => {
   }
 };
 
-const _fetchProfiles = async () => {
+export const fetchProfileTemplates = async (
+  username: string
+): Promise<BigFlow | undefined> => {
+  try {
+    const { data, error }: SUPABASE.DbResult<typeof templatesQuery> =
+      await templatesQuery.eq("profiles.username", username);
+
+    // console.log("data", JSON.stringify(data, null, 3));
+    if (error || !data) throw error;
+
+    return data;
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
+};
+
+export const fetchProfiles = async () => {
   try {
     let { data: profiles, error } = await supabase
       .from("profiles")
@@ -50,10 +67,10 @@ const _fetchProfiles = async () => {
   }
 };
 
-export const fetchProfiles =
-  env.NEXT_PUBLIC_MOCK_ALL === "true" ? () => FAKE_PROFILES : _fetchProfiles;
+// export const fetchProfiles =
+//   env.NEXT_PUBLIC_MOCK_ALL === "true" ? () => FAKE_PROFILES : _fetchProfiles;
 
-const _fetchProfile = async (
+export const fetchProfile = async (
   username: string
 ): Promise<SUPABASE.Profile | undefined> => {
   try {
@@ -72,8 +89,8 @@ const _fetchProfile = async (
   }
 };
 
-export const fetchProfile =
-  env.NEXT_PUBLIC_MOCK_ALL === "true"
-    ? (username: string) =>
-        FAKE_PROFILES.find((profile) => profile.username === username)
-    : _fetchProfile;
+// export const fetchProfile =
+//   env.NEXT_PUBLIC_MOCK_ALL === "true"
+//     ? (username: string) =>
+//         FAKE_PROFILES.find((profile) => profile.username === username)
+//     : _fetchProfile;

@@ -28,7 +28,9 @@ export default async function TemplatePage() {
       </div>
 
       {/* Grid */}
-      <TemplateGrid templates={templates} />
+      <div className="my-16 flex flex-col items-center">
+        <TemplateGrid templates={templates} />
+      </div>
     </>
   );
 }
