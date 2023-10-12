@@ -52,6 +52,7 @@ export interface Database {
           flow_template_version_name: string
           published: boolean
           publisher_id: string
+          recommended_version: boolean
           slug: string
         }
         Insert: {
@@ -65,6 +66,7 @@ export interface Database {
           flow_template_version_name: string
           published?: boolean
           publisher_id: string
+          recommended_version?: boolean
           slug: string
         }
         Update: {
@@ -78,6 +80,7 @@ export interface Database {
           flow_template_version_name?: string
           published?: boolean
           publisher_id?: string
+          recommended_version?: boolean
           slug?: string
         }
         Relationships: [
@@ -90,7 +93,7 @@ export interface Database {
           {
             foreignKeyName: "flow_template_versions_publisher_id_fkey"
             columns: ["publisher_id"]
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           }
         ]
@@ -104,7 +107,6 @@ export interface Database {
           flow_template_name: string
           published: boolean
           publisher_id: string
-          recommended_version_id: string
           slug: string
         }
         Insert: {
@@ -115,7 +117,6 @@ export interface Database {
           flow_template_name: string
           published: boolean
           publisher_id: string
-          recommended_version_id: string
           slug: string
         }
         Update: {
@@ -126,21 +127,14 @@ export interface Database {
           flow_template_name?: string
           published?: boolean
           publisher_id?: string
-          recommended_version_id?: string
           slug?: string
         }
         Relationships: [
           {
             foreignKeyName: "flow_templates_publisher_id_fkey"
             columns: ["publisher_id"]
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "flow_templates_recommended_version_id_fkey"
-            columns: ["recommended_version_id"]
-            referencedRelation: "flow_template_versions"
-            referencedColumns: ["flow_template_version_id"]
           }
         ]
       }

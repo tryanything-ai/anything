@@ -1,4 +1,4 @@
-// import { MergeDeep } from 'type-fest'
+import { MergeDeep } from 'type-fest'
 import { Database as DatabaseGenerated, Json } from './supabase.generated-types'
 import { PostgrestError } from '@supabase/supabase-js'
 
@@ -26,8 +26,8 @@ export type DbResultErr = PostgrestError
 //   DatabaseGenerated,
 //   {
 //     public: {
-//       Views: {
-//         movies_view: {
+//       Tables: {
+//         profiles: {
 //           Row: {
 //             // id is a primary key in public.movies, so it must be `not null`
 //             id: number
