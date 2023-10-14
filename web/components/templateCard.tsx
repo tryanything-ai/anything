@@ -11,6 +11,7 @@ export type CardProps = {
   profile_name: string;
   profile: boolean;
   avatar_url: string;
+  username: string;
   flow_name: string;
   flow_template_json: Json;
   tags: Tag[];
@@ -19,6 +20,7 @@ export type CardProps = {
 export function TemplateCard({
   flow_template_json,
   avatar_url,
+  username,
   profile_name,
   profile,
   tags,
@@ -38,7 +40,12 @@ export function TemplateCard({
           <h2 className="card-title text-2xl text-ellipsis">{flow_name}</h2>
           {/* User */}
           {profile ? (
-            <AvatarAndUsername avatar_url={avatar_url} profile_name={profile_name} />
+            <AvatarAndUsername
+              link={false}
+              avatar_url={avatar_url}
+              profile_name={profile_name}
+              username={username}
+            />
           ) : null}
 
           <p className="line-clamp-2 overflow-ellipsis overflow-hidden mb-2">

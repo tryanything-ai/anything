@@ -5,15 +5,58 @@ import {
   fetchTemplates,
 } from "@/lib/fetchSupabase";
 import { notFound } from "next/navigation";
-import Image from "next/image";
-// import { TemplateGrid } from "@/components/templateGrid";
+
 import { ProfileLinks } from "@/components/profileLinks";
 import { AvatarAndUsername } from "@/components/avatarAndUsername";
 import { Button } from "@/components/ui/Button";
 import { Tags } from "@/components/tags";
-import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
+import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
 import { Flow } from "../../../../../tauri/src/utils/newNodes";
 import { BaseNodeWeb } from "@/components/baseNodeWeb";
+import type { Metadata, ResolvingMetadata } from "next";
+
+type Props = {
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  let Metadata: Metadata = {};
+
+  // fetch data
+  const templateResponse = await fetchTemplateBySlug(params.slug);
+
+  if (templateResponse) {
+    let template = templateResponse[0];
+
+    let profile: Profile | undefined = template?.profiles?.username
+      ? await fetchProfile(template.profiles.username)
+      : undefined;
+
+    let flow = flowJsonFromBigFLow(template) as Flow;
+
+    // optionally access and extend (rather than replace) parent metadata
+    // const previousImages = (await parent).openGraph?.images || []
+    Metadata = {
+      title: template.flow_template_name,
+      description: template?.flow_template_description,
+      // openGraph: {
+      //   images: [profile?.avatar_url],
+      // },
+      authors: [
+        {
+          name: profile?.full_name || undefined,
+          url: profile ? getAProfileLink(profile) : undefined,
+        },
+      ],
+    };
+  }
+
+  return Metadata;
+}
 
 export const generateStaticParams = async () => {
   let templates = await fetchTemplates();
@@ -22,11 +65,7 @@ export const generateStaticParams = async () => {
   return templates;
 };
 
-export default async function Template({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function Template({ params }: Props) {
   console.log("params in TemplatePage", params);
   const templateResponse = await fetchTemplateBySlug(params.slug);
 
@@ -53,6 +92,7 @@ export default async function Template({
           <AvatarAndUsername
             profile_name={profile?.full_name ? profile.full_name : ""}
             avatar_url={profile?.avatar_url ? profile.avatar_url : ""}
+            username={profile?.username ? profile.username : ""}
           />
         </div>
         {/* Right */}

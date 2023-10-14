@@ -15,6 +15,7 @@ export const TemplateGrid = ({ templates, profile = true }: { templates: BigFlow
             profile={profile}
             tags={template.tags}
             avatar_url={template?.profiles?.avatar_url || ""}
+            username={template?.profiles?.username || ""}
             profile_name={template?.profiles?.full_name || ""}
             description={
               template.flow_template_description

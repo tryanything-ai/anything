@@ -29,6 +29,18 @@ export const hasLinks = (profile: Profile) => {
   );
 };
 
+export const getAProfileLink = (profile: Profile): string | undefined => {
+  if (profile.twitter) return profile.twitter;
+  if (profile.linkedin) return profile.linkedin;
+  if (profile.github) return profile.github;
+  if (profile.website) return profile.website;
+  if (profile.instagram) return profile.instagram;
+  if (profile.tiktok) return profile.tiktok;
+  if (profile.youtube) return profile.youtube;
+  return undefined;
+};
+
+
 export const flowJsonFromBigFLow = (template: any) => {
   // TODO: this whole thing is kinda garbage and related to typescript problems with supabase queryes that are nested
   let flow_json: any;

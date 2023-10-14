@@ -9,6 +9,11 @@ interface MarketingLayoutProps {
   children: React.ReactNode;
 }
 
+export const metadata: Metadata = {
+  // title: "Anything",
+  description: "Automate anything",
+};
+
 export default async function MarketingLayout({
   children,
 }: MarketingLayoutProps) {
