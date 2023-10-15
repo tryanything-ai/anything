@@ -5,7 +5,6 @@ export function isRelativeUrl(url: string): boolean {
   return url.startsWith('/');
 }
 
-
 export default function supabaseLoader({ src, width, quality }: any) {
   if(isRelativeUrl(src)) return src;
   let url = new URL(src);
