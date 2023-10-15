@@ -5,8 +5,9 @@ const nextConfig = {
     externalDir: true,
   },
   images: {
-    loader: "custom", 
-    loaderFile: './lib/supabaseImageLoader.ts',
+    loader: "custom",
+    loaderFile: "./lib/supabaseImageLoader.ts",
+    // path: "https://"
     // domains: [process.env.NEXT_PUBLIC_SUPABASE_URL],
     // remotePatterns: [
     //   {

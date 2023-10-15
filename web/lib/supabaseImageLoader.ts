@@ -1,8 +1,14 @@
 // Docs: https://supabase.com/docs/guides/storage/image-transformations#nextjs-loader
 import { env } from "@/env.mjs";
-export default function supabaseLoader({ src, width, quality }: any) {
-  let url = new URL(src);
 
+export function isRelativeUrl(url: string): boolean {
+  return url.startsWith('/');
+}
+
+
+export default function supabaseLoader({ src, width, quality }: any) {
+  if(isRelativeUrl(src)) return src;
+  let url = new URL(src);
   if (url.protocol + "//" + url.hostname !== env.NEXT_PUBLIC_SUPABASE_URL) {
     console.log(url.hostname);
     console.log(url.protocol);
