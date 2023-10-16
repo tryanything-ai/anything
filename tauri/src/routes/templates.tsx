@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BaseCard from "../components/baseCard";
-import { MockFlowDefinitions } from "../utils/mocks";
+// import { MockFlowDefinitions } from "../utils/mocks";
 import BaseSearch from "../components/baseSearch";
 import { RustFlow } from "../utils/flowConversion";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
 
 export default function Templates() {
   const [allTemplates, setAllTemplates] = useState<RustFlow[]>([]);
-  const [results, setResults] = useState<RustFlow[]>(MockFlowDefinitions);
+  const [results, setResults] = useState<RustFlow[]>();
 
   const { fetchTemplates } = useMarketplaceContext();
 
@@ -16,7 +16,8 @@ export default function Templates() {
     async function fetchTemplatesAsync() {
       let templates = await fetchTemplates();
 
-      setAllTemplates([...templates, ...MockFlowDefinitions]);
+      // setAllTemplates([...templates, ...MockFlowDefinitions]);
+      setAllTemplates([...templates]);
     }
 
     fetchTemplatesAsync();
@@ -38,9 +39,9 @@ export default function Templates() {
         <div className="flex w-full items-center justify-center"></div>
         {/* Grid of templates */}
         <div className="grid grid-cols-3 gap-6 w-full max-w-5xl pt-10">
-          {results.map((template, index) => (
+          {/* {results.map((template, index) => (
             <TemplateCard key={template.flow_id} template={template} />
-          ))}
+          ))} */}
         </div>
       </div>
     </div>

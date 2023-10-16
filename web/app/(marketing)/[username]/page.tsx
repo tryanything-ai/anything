@@ -13,10 +13,18 @@ export const generateStaticParams = async () => {
   let profiles = await fetchProfiles();
   // has username key to populate route
   console.log("profiles in generateStaticParams", profiles);
-  return profiles;
+  if (!profiles) return [];
+  let goodProfiles = profiles
+    .filter((profile) => profile.username !== null)
+    .map((profile) => profile.username);
+  return goodProfiles;
 };
 
-export default async function Profile({ params }: { params: { username: string } }) {
+export default async function Profile({
+  params,
+}: {
+  params: { username: string };
+}) {
   console.log("params in ProfilePage", params);
   const profile = await fetchProfile(params.username);
   const templates = await fetchProfileTemplates(params.username);

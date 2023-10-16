@@ -13,7 +13,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "typeRoots": ["../tauri/src/utils/newNodes.ts"],
+    // "typeRoots": ["../shared/types/tauri/src"],
+    // "types": ["Edge", "HandleProps"],
     "plugins": [
       {
         "name": "next"
@@ -23,12 +24,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "app/(marketing)/templates/[slug]"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
