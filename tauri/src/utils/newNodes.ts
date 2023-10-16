@@ -1,6 +1,4 @@
-import { HandleProps, NodeProps, Edge } from "reactflow";
-
-export type { HandleProps, Edge };
+import { HandleProps, NodeProps, Edge } from "./nodeUtils";
 
 // Typescript version of Flow TOML
 export type Flow = {
@@ -21,7 +19,7 @@ export type Flow = {
 export interface Node {
   trigger: boolean;
   node_name: string; //will use as nodeID
-  icon: string; 
+  icon: string;
   node_label: string;
   description?: string;
   variables: Variable[]; //Local variables
@@ -47,7 +45,7 @@ interface NodePresentation {
 }
 
 export interface Action extends Node {
-  trigger: false; 
+  trigger: false;
   action_type: string;
   depends_on: string[]; //node_name for parallelization
 }
