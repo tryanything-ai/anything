@@ -1,5 +1,7 @@
 import { HandleProps, NodeProps, Edge } from "reactflow";
 
+export type { HandleProps, Edge };
+
 // Typescript version of Flow TOML
 export type Flow = {
   flow_name: string;

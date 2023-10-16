@@ -83,9 +83,6 @@ export const fetchProfiles = async () => {
   }
 };
 
-// export const fetchProfiles =
-//   env.NEXT_PUBLIC_MOCK_ALL === "true" ? () => FAKE_PROFILES : _fetchProfiles;
-
 export const fetchProfile = async (
   username: string
 ): Promise<SUPABASE.Profile | undefined> => {
@@ -105,8 +102,3 @@ export const fetchProfile = async (
   }
 };
 
-// export const fetchProfile =
-//   env.NEXT_PUBLIC_MOCK_ALL === "true"
-//     ? (username: string) =>
-//         FAKE_PROFILES.find((profile) => profile.username === username)
-//     : _fetchProfile;
