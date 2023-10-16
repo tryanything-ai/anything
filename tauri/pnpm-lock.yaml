@@ -5,8 +5,8 @@ dependencies:
     specifier: ^4.5.1
     version: 4.5.1(monaco-editor@0.40.0)(react-dom@18.2.0)(react@18.2.0)
   '@supabase/supabase-js':
-    specifier: ^2.36.0
-    version: 2.36.0
+    specifier: ^2.38.1
+    version: 2.38.1
   '@tanstack/react-table':
     specifier: ^8.9.7
     version: 8.10.0(react-dom@18.2.0)(react@18.2.0)
@@ -76,9 +76,6 @@ dependencies:
   tauri-plugin-fs-watch-api:
     specifier: github:tauri-apps/tauri-plugin-fs-watch#v1
     version: github.com/tauri-apps/tauri-plugin-fs-watch/dac5524d0b13d81e2ae2eb609fcfbc7869c08dc9
-  ts-dedent:
-    specifier: ^2.2.0
-    version: 2.2.0
   uuid:
     specifier: ^9.0.0
     version: 9.0.0
@@ -740,8 +737,8 @@ packages:
       '@supabase/node-fetch': 2.6.14
     dev: false
 
-  /@supabase/gotrue-js@2.54.0:
-    resolution: {integrity: sha512-JjtbchtPbpgK0O8NIMIvKLk7HHv0kd23L3UO5a398nczCcBkI0IvmbPtbS4Xs5AUIuJ+JHtV6siOZR1ha5EzQw==}
+  /@supabase/gotrue-js@2.55.0:
+    resolution: {integrity: sha512-wZAP66Lo68iROKo33m8seY30rCeGiR34leMEZ80j9fPm+/ar6h3y43Hb7f9F2STVMwT3Sv+aM+w0yCon5bih4g==}
     dependencies:
       '@supabase/node-fetch': 2.6.14
     dev: false
@@ -753,15 +750,16 @@ packages:
       whatwg-url: 5.0.0
     dev: false
 
-  /@supabase/postgrest-js@1.8.4:
-    resolution: {integrity: sha512-ELjpvhb04wILUiJz9zIsTSwaz9LQNlX+Ig5/LgXQ7k68qQI6NqHVn+ISRNt53DngUIyOnLHjeqqIRHBZ7zpgGA==}
+  /@supabase/postgrest-js@1.8.5:
+    resolution: {integrity: sha512-XvoqN5e5Z4TsQOYWLQYLW0HIlZtFSzwAcwiuToaSBSTpLOGCg4NaZ7au5GfBzCQJZdZPY5vk5FvwthfDsQK/Jw==}
     dependencies:
       '@supabase/node-fetch': 2.6.14
     dev: false
 
-  /@supabase/realtime-js@2.7.4:
-    resolution: {integrity: sha512-FzSzs1k9ruh/uds5AJ95Nc3beiMCCIhougExJ3O98CX1LMLAKUKFy5FivKLvcNhXnNfUEL0XUfGMb4UH2J7alg==}
+  /@supabase/realtime-js@2.8.1:
+    resolution: {integrity: sha512-bka5U4OeoKMdorGMPjdF30cl8n8nbhn+I9H4iySKzbN45W6AGxi7xoODnxdq/QwaDGtVyTMVbU+GVWre0QCdtw==}
     dependencies:
+      '@supabase/node-fetch': 2.6.14
       '@types/phoenix': 1.6.2
       '@types/websocket': 1.0.7
       websocket: 1.0.34
@@ -775,14 +773,14 @@ packages:
       '@supabase/node-fetch': 2.6.14
     dev: false
 
-  /@supabase/supabase-js@2.36.0:
-    resolution: {integrity: sha512-K9ze4BpQrOZsmYUvF2j9FfIkTfxR4K8GJx6F6DTOfJ8fZg4JSNjfzlGvhCVDwiV4w1NRrmEQ/F89THNt3eXXhg==}
+  /@supabase/supabase-js@2.38.1:
+    resolution: {integrity: sha512-WbdwKiZMMPiELL+8A4WJRHHq+xVKN+3tXxKnJWbR0XZG8HgeGVeQWhlchatTttaxsNKyx68gE7wWNvhin0V+Mg==}
     dependencies:
       '@supabase/functions-js': 2.1.5
-      '@supabase/gotrue-js': 2.54.0
+      '@supabase/gotrue-js': 2.55.0
       '@supabase/node-fetch': 2.6.14
-      '@supabase/postgrest-js': 1.8.4
-      '@supabase/realtime-js': 2.7.4
+      '@supabase/postgrest-js': 1.8.5
+      '@supabase/realtime-js': 2.8.1
       '@supabase/storage-js': 2.5.4
     transitivePeerDependencies:
       - supports-color
@@ -1293,8 +1291,8 @@ packages:
       node-releases: 2.0.13
       update-browserslist-db: 1.0.11(browserslist@4.21.9)
 
-  /bufferutil@4.0.7:
-    resolution: {integrity: sha512-kukuqc39WOHtdxtw4UScxF/WVnMFVSQVKhtx3AjZJzhd0RGZZldcrfSEbVsWWe6KNH253574cq5F+wpv0G9pJw==}
+  /bufferutil@4.0.8:
+    resolution: {integrity: sha512-4T53u4PdgsXqKaIctwF8ifXlRTTmEPJ8iEPWFdGZvcf7sbwYo6FKFEX9eNNAnzFZ7EzJAQ3CJeOtCRA4rDp7Pw==}
     engines: {node: '>=6.14.2'}
     requiresBuild: true
     dependencies:
@@ -1329,7 +1327,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
 
   /chownr@2.0.0:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
@@ -1761,8 +1759,8 @@ packages:
   /fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+  /fsevents@2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
@@ -2471,7 +2469,7 @@ packages:
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /run-parallel@1.2.0:
@@ -2656,11 +2654,6 @@ packages:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
     dev: false
 
-  /ts-dedent@2.2.0:
-    resolution: {integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==}
-    engines: {node: '>=6.10'}
-    dev: false
-
   /ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
@@ -2810,7 +2803,7 @@ packages:
       postcss: 8.4.27
       rollup: 3.26.3
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /web-streams-polyfill@3.2.1:
@@ -2826,7 +2819,7 @@ packages:
     resolution: {integrity: sha512-PRDso2sGwF6kM75QykIesBijKSVceR6jL2G8NGYyq2XrItNC2P5/qL5XeR056GhA+Ly7JMFvJb9I312mJfmqnQ==}
     engines: {node: '>=4.0.0'}
     dependencies:
-      bufferutil: 4.0.7
+      bufferutil: 4.0.8
       debug: 2.6.9
       es5-ext: 0.10.62
       typedarray-to-buffer: 3.1.5

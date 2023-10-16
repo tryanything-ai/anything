@@ -16,7 +16,10 @@ interface MarketplaceContextInterface {
   fetchTemplates: () => Promise<RustFlow[]>;
   saveTemplate: (template: any) => void;
   updateTemplate: (template: any) => void;
-  fetchTemplate: (author_username: string, template_name: string) => Promise<any>;
+  fetchTemplate: (
+    author_username: string,
+    template_name: string
+  ) => Promise<any>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
@@ -58,12 +61,12 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       return [];
     }
 
-    let templates = flow_templates?.map((template) => {
-      //TODO: this might be very naughty
-      return template.flow_json as unknown as RustFlow;
-    });
-
-    return templates || [];
+    // let templates = flow_templates?.map((template) => {
+    //   //TODO: this might be very naughty
+    //   return template.flow_json as unknown as RustFlow;
+    // });
+    //TODO: rebuild with new types
+    return [];
   };
 
   const fetchTemplate = async (

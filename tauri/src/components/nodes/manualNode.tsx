@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnythingNodeProps } from "../../utils/nodeUtils";
-import { useSqlContext, EventInput } from "../../context/SqlProvider";
+import { useSqlContext } from "../../context/SqlProvider";
+import { EventInput } from "../../tauri_api/types";
 import { useParams } from "react-router-dom";
 import clsx from "clsx";
 import BaseNode from "./baseNode";

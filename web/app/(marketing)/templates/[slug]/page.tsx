@@ -62,6 +62,7 @@ export const generateStaticParams = async () => {
   let templates = await fetchTemplates();
   // console.log("templates in generateStaticParams", templates);
   // has "slug" key to populate route
+  if (!templates) return [];
   return templates;
 };
 

@@ -16,6 +16,10 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "src/components/baseCard.tsx", "src/utils/generateSupabaseTypes.js"],
+  "include": [
+    "src",
+    "src/components/baseCard.tsx",
+    "src/utils/generateSupabaseTypes.js"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

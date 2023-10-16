@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.5.1",
-    "@supabase/supabase-js": "^2.36.0",
+    "@supabase/supabase-js": "^2.38.1",
     "@tanstack/react-table": "^8.9.7",
     "@tauri-apps/api": "1.4.0",
     "allotment": "^1.19.3",

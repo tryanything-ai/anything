@@ -182,11 +182,11 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       let node = nodes.find((node: any) => node.id === nodeId);
       if (!node) throw new Error("node is undefined");
       node.data = data;
-      let newToml = stringify(parsedToml);
-      await api.fs.writeTextFile(
-        appDocuments + "/flows/" + flowName + "/flow.toml",
-        newToml
-      );
+      // let newToml = stringify(parsedToml);
+      // await api.fs.writeTextFile(
+      //   appDocuments + "/flows/" + flowName + "/flow.toml",
+      //   newToml
+      // );
     } catch (error) {
       console.log("error writing node config in FlowProvider", error);
     }
