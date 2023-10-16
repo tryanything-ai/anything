@@ -1,5 +1,5 @@
-import { HandleProps, NodeProps } from "reactflow";
-
+import { HandleProps, Edge, NodeProps } from "reactflow";
+export type { HandleProps, Edge, NodeProps }; 
 //Things configured mandatory by node author
 export type NodeProcessData = {
   worker_type: string;
