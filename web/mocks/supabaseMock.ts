@@ -1,50 +1,9 @@
-import { faker } from "@faker-js/faker";
-
-import { Profile, FlowTemplateVersion, FlowTemplate } from "@/types/supabase.types";
+import {
+  Profile,
+  FlowTemplateVersion,
+  FlowTemplate,
+} from "@/types/supabase.types";
 import { MockNewFlows } from "../../tauri/src/utils/newNodes";
-
-type GeneratorType = "string" | "date" | "uuid" | "boolean" | "json";
-
-const generators: Record<GeneratorType, () => any> = {
-  string: () => faker.random.word(),
-  date: () => faker.date.recent().toISOString(),
-  uuid: () => faker.datatype.uuid(),
-  boolean: () => faker.datatype.boolean(),
-  json: () => ({ key: faker.random.word() }),
-  // ... add more as needed
-};
-
-function generateMockData(
-  config: Record<string, Record<string, Record<string, GeneratorType>>>
-) {
-  const mockData: any = {};
-
-  for (const tableName in config) {
-    mockData[tableName] = {};
-    for (const rowType in config[tableName]) {
-      mockData[tableName][rowType] = {};
-      const fields = config[tableName][rowType];
-      for (const field in fields) {
-        const generatorType = fields[field];
-        const generator = generators[generatorType];
-        if (generator) {
-          mockData[tableName][rowType][field] = generator();
-        }
-      }
-    }
-  }
-
-  return mockData;
-}
-
-// const mockDatabaseData = generateMockData(mockConfig);
-
-// Write the mock data to a JSON file
-// fs.writeFileSync('mockData.json', JSON.stringify(mockDatabaseData, null, 2));
-
-// console.log('Mock data generated and saved to mockData.json');
-
-// console.log(mockDatabaseData);
 
 export const FAKE_PROFILES: Profile[] = [
   {
@@ -131,70 +90,70 @@ export const FAKE_PROFILES: Profile[] = [
 
 export const FAKE_FLOW_VERSIONS: FlowTemplateVersion[] = [
   {
-      anything_flow_template_version: 'v1.0',
-      commit_message: 'Initial version',
-      created_at: '2023-10-01T12:00:00Z',
-      flow_template_id: 'ft001',
-      flow_template_json: JSON.stringify(MockNewFlows[0]), 
-      flow_template_version: 'v1.0',
-      flow_template_version_id: 'ftv001',
-      flow_template_version_name: 'Send message on file change',
-      published: true,
-      publisher_id: 'pub001',
-      slug: 'version-one'
+    anything_flow_template_version: "v1.0",
+    commit_message: "Initial version",
+    created_at: "2023-10-01T12:00:00Z",
+    flow_template_id: "ft001",
+    flow_template_json: JSON.stringify(MockNewFlows[0]),
+    flow_template_version: "v1.0",
+    flow_template_version_id: "ftv001",
+    flow_template_version_name: "Send message on file change",
+    published: true,
+    publisher_id: "pub001",
+    recommended_version: false,
   },
   {
-      anything_flow_template_version: 'v1.1',
-      commit_message: 'Bug fixes',
-      created_at: '2023-10-05T14:00:00Z',
-      flow_template_id: 'ft001',
-      flow_template_json: JSON.stringify(MockNewFlows[0]), 
-      flow_template_version: 'v1.1',
-      flow_template_version_id: 'ftv002',
-      flow_template_version_name: 'Move Cursor during earthquake',
-      published: true,
-      publisher_id: 'pub002',
-      slug: 'version-one-point-one'
+    anything_flow_template_version: "v1.1",
+    commit_message: "Bug fixes",
+    created_at: "2023-10-05T14:00:00Z",
+    flow_template_id: "ft001",
+    flow_template_json: JSON.stringify(MockNewFlows[0]),
+    flow_template_version: "v1.1",
+    flow_template_version_id: "ftv002",
+    flow_template_version_name: "Move Cursor during earthquake",
+    published: true,
+    publisher_id: "pub002",
+    recommended_version: false,
   },
   {
-      anything_flow_template_version: 'v2.0',
-      commit_message: 'New features added',
-      created_at: '2023-10-10T10:00:00Z',
-      flow_template_id: 'ft002',
-      flow_template_json: JSON.stringify(MockNewFlows[0]), 
-      flow_template_version: 'v2.0',
-      flow_template_version_id: 'ftv003',
-      flow_template_version_name: 'Derp Test AI Magic',
-      published: false,
-      publisher_id: 'pub003',
-      slug: 'version-two'
+    anything_flow_template_version: "v2.0",
+    commit_message: "New features added",
+    created_at: "2023-10-10T10:00:00Z",
+    flow_template_id: "ft002",
+    flow_template_json: JSON.stringify(MockNewFlows[0]),
+    flow_template_version: "v2.0",
+    flow_template_version_id: "ftv003",
+    flow_template_version_name: "Derp Test AI Magic",
+    published: false,
+    publisher_id: "pub003",
+    recommended_version: false,
   },
   {
-      anything_flow_template_version: 'v2.1',
-      commit_message: null,
-      created_at: '2023-10-12T10:00:00Z',
-      flow_template_id: 'ft002',
-      flow_template_json: JSON.stringify(MockNewFlows[1]), 
-      flow_template_version: 'v2.1',
-      flow_template_version_id: 'ftv004',
-      flow_template_version_name: 'Message Person for Thing',
-      published: false,
-      publisher_id: 'pub004',
-      slug: 'version-two-point-one'
+    anything_flow_template_version: "v2.1",
+    commit_message: null,
+    created_at: "2023-10-12T10:00:00Z",
+    flow_template_id: "ft002",
+    flow_template_json: JSON.stringify(MockNewFlows[1]),
+    flow_template_version: "v2.1",
+    flow_template_version_id: "ftv004",
+    flow_template_version_name: "Message Person for Thing",
+    published: false,
+    publisher_id: "pub004",
+    recommended_version: false,
   },
   {
-      anything_flow_template_version: 'v3.0',
-      commit_message: 'Major overhaul',
-      created_at: '2023-10-15T18:00:00Z',
-      flow_template_id: 'ft003',
-      flow_template_json: JSON.stringify(MockNewFlows[1]), 
-      flow_template_version: 'v3.0',
-      flow_template_version_id: 'ftv005',
-      flow_template_version_name: 'Do Stuff For Thing',
-      published: true,
-      publisher_id: 'pub005',
-      slug: 'version-three'
-  }
+    anything_flow_template_version: "v3.0",
+    commit_message: "Major overhaul",
+    created_at: "2023-10-15T18:00:00Z",
+    flow_template_id: "ft003",
+    flow_template_json: JSON.stringify(MockNewFlows[1]),
+    flow_template_version: "v3.0",
+    flow_template_version_id: "ftv005",
+    flow_template_version_name: "Do Stuff For Thing",
+    published: true,
+    publisher_id: "pub005",
+    recommended_version: false,
+  },
 ];
 
 export const FAKE_FLOWS: FlowTemplate[] = [
@@ -206,7 +165,6 @@ export const FAKE_FLOWS: FlowTemplate[] = [
     flow_template_name: "Test Flow 1",
     published: true,
     publisher_id: "pub-123",
-    recommended_version_id: "rv-001",
     slug: "test-flow-1",
   },
   {
@@ -217,7 +175,6 @@ export const FAKE_FLOWS: FlowTemplate[] = [
     flow_template_name: "Example Flow 2",
     published: false,
     publisher_id: "pub-456",
-    recommended_version_id: "rv-002",
     slug: "example-flow-2",
   },
   {
@@ -228,8 +185,7 @@ export const FAKE_FLOWS: FlowTemplate[] = [
     flow_template_name: "Sample Flow 3",
     published: true,
     publisher_id: "pub-789",
-    recommended_version_id: "rv-003",
-    slug: null,
+    slug: "derp",
   },
   {
     anonymous_publish: false,
@@ -239,7 +195,6 @@ export const FAKE_FLOWS: FlowTemplate[] = [
     flow_template_name: "Demo Flow 4",
     published: true,
     publisher_id: "pub-012",
-    recommended_version_id: "rv-004",
     slug: "demo-flow-4",
   },
   {
@@ -247,10 +202,9 @@ export const FAKE_FLOWS: FlowTemplate[] = [
     created_at: "2023-06-11T10:56:23Z",
     flow_template_description: "Final test flow template in the mock data set.",
     flow_template_id: "ft-005",
-    flow_template_name: null,
+    flow_template_name: "test flow",
     published: false,
     publisher_id: "pub-345",
-    recommended_version_id: "rv-005",
     slug: "final-test-flow",
   },
 ];
