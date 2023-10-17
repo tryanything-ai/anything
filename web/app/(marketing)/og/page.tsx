@@ -3,7 +3,7 @@ import Logo from "@/public/icon.png";
 import Image from "next/image";
 import { AvatarAndUsername } from "@/components/avatarAndUsername";
 import { BaseNodeWeb } from "@/components/baseNodeWeb";
-import { MockNewFlows, Node } from "../../../../tauri/src/utils/newNodes";
+import { MockNewFlows, Node } from "../../../types/flow"
 import BaseNodeIcon from "@/components/baseNodeIcons";
 
 const mockFlowProps: FlowTemplateOgImage = {

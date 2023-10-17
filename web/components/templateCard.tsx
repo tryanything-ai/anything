@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BaseNodeIcon from "./baseNodeIcons";
-import { Flow as LocalFlow } from "../../tauri/src/utils/newNodes";
+import { FlowTemplate } from "../types/flow";
 import { VscArrowSmallRight } from "react-icons/vsc";
 import { Json, Tag } from "@/types/supabase.types";
 import { AvatarAndUsername } from "./avatarAndUsername";
@@ -61,7 +61,7 @@ export function TemplateCard({
   );
 }
 
-const NodeArray = ({ flow }: { flow: LocalFlow }) => {
+const NodeArray = ({ flow }: { flow: FlowTemplate }) => {
   //Loop through trigger and all actions to create icons
   const actions = [...flow.actions.map((action) => action.icon)];
   const visibleActions = actions.slice(0, 4);
