@@ -24,6 +24,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^4.11.0",
+    "sharp": "^0.32.6",
     "tailwind-merge": "^1.14.0",
     "zod": "^3.22.4"
   },
