@@ -1,9 +1,10 @@
 import { fetchTemplateBySlug } from "@/lib/fetchSupabase";
 import { ImageResponse } from "next/server";
-import { FlowTemplateOgImage } from "../../og/page";
+import { FlowTemplateOgImage } from "@/components/og/template";
 import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
 import { fetchProfile, Profile } from "@/lib/fetchSupabase";
 import { FlowTemplate } from "@/types/flow";
+
 // Route segment config
 export const runtime = "edge";
 
@@ -18,10 +19,20 @@ export const contentType = "image/png";
 
 // Image generation
 export default async function Image({ params }: { params: { slug: string } }) {
-  // Font
+  console.log(
+    "params in TemplatePageOgImage Generation",
+    JSON.stringify(params)
+  );
   const templateResponse = await fetchTemplateBySlug(params.slug);
 
-  if (!templateResponse) return null;
+  if (!templateResponse) {
+    console.log(
+      "templateResponse in TemplatePage",
+      JSON.stringify(templateResponse, null, 3)
+    );
+    throw new Error("Template not found");
+  }
+
   let template = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 
@@ -30,7 +41,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
     : undefined;
 
   let flow = flowJsonFromBigFLow(template) as FlowTemplate;
-
+ 
   return new ImageResponse(
     (
       <FlowTemplateOgImage
@@ -43,10 +54,11 @@ export default async function Image({ params }: { params: { slug: string } }) {
       />
     ),
     {
+      
       // For convenience, we can re-use the exported opengraph-image
       // size config to also set the ImageResponse's width and height.
       ...size,
-      
+
       // fonts: [
       //   {
       //     name: 'Inter',
