@@ -8,9 +8,9 @@ import BaseNodeIcon from "@/components/baseNodeIcons";
 
 const mockFlowProps: FlowTemplateOgImage = {
   title: "Flow Title",
-  username: "Mock Creator",
+  username: "mockCreator",
+  profileName: "Mock Creator",
   profileImage: "",
-  mainTitle: "Anything Templates",
   trigger: MockNewFlows[0].trigger,
   actions: MockNewFlows[0].actions,
 };
