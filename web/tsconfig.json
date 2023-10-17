@@ -13,8 +13,6 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    // "typeRoots": ["../shared/types/tauri/src"],
-    // "types": ["Edge", "HandleProps"],
     "plugins": [
       {
         "name": "next"

@@ -11,7 +11,7 @@ import { AvatarAndUsername } from "@/components/avatarAndUsername";
 import { Button } from "@/components/ui/Button";
 import { Tags } from "@/components/tags";
 import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
-import { Flow } from "../../../../../tauri/src/utils/newNodes";
+import { FlowTemplate } from "../../../../types/flow";
 import { BaseNodeWeb } from "@/components/baseNodeWeb";
 import type { Metadata, ResolvingMetadata } from "next";
 
@@ -36,7 +36,7 @@ export async function generateMetadata(
       ? await fetchProfile(template.profiles.username)
       : undefined;
 
-    let flow = flowJsonFromBigFLow(template) as Flow;
+    let flow = flowJsonFromBigFLow(template) as FlowTemplate;
 
     // optionally access and extend (rather than replace) parent metadata
     // const previousImages = (await parent).openGraph?.images || []
@@ -80,7 +80,7 @@ export default async function Template({ params }: Props) {
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
-  let flow = flowJsonFromBigFLow(template) as Flow;
+  let flow = flowJsonFromBigFLow(template) as FlowTemplate;
 
   return (
     <div className="my-6 mx-4 md:my-16 flex flex-col max-w-4xl md:mx-auto">

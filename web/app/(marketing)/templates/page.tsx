@@ -1,7 +1,3 @@
-import { clsx } from "clsx";
-import { MockNewFlows } from "../../../../tauri/src/utils/newNodes";
-import { TemplateCard } from "@/components/templateCard";
-import { Database } from "@/types/supabase.types";
 import { TemplateGrid } from "@/components/templateGrid";
 import { fetchTemplates } from "@/lib/fetchSupabase";
 import { notFound } from "next/navigation";

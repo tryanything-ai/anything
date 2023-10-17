@@ -1,4 +1,4 @@
-import { Action, Node } from "../../tauri/src/utils/newNodes";
+import { Node } from "../types/flow";
 import BaseNodeIcon from "./baseNodeIcons";
 
 export const BaseNodeWeb = ({
