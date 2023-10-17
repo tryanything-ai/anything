@@ -3,12 +3,12 @@ import Logo from "@/public/icon.png";
 import Image from "next/image";
 import { AvatarAndUsername } from "@/components/avatarAndUsername";
 import { BaseNodeWeb } from "@/components/baseNodeWeb";
-import { MockNewFlows, Node } from "../../../types/flow"
+import { MockNewFlows, Node } from "@/types/flow";
 import BaseNodeIcon from "@/components/baseNodeIcons";
 
 const mockFlowProps: FlowTemplateOgImage = {
   title: "Flow Title",
-  creator: "Mock Creator",
+  username: "Mock Creator",
   profileImage: "",
   mainTitle: "Anything Templates",
   trigger: MockNewFlows[0].trigger,
@@ -64,10 +64,9 @@ export default function OgTemplates() {
       <MulitContainer>
         <FlowTemplateOgImage
           title={mockFlowProps.title}
-          creator={mockFlowProps.creator}
-          // profileImage={templateOgImageProps.profileImage}
+          profileName={mockFlowProps.profileName}
+          username={mockFlowProps.username}
           profileImage={Logo.src}
-          mainTitle={mockFlowProps.mainTitle}
           trigger={mockFlowProps.trigger}
           actions={mockFlowProps.actions}
         />
@@ -78,18 +77,18 @@ export default function OgTemplates() {
 
 type FlowTemplateOgImage = {
   title: string;
-  creator: string;
+  username: string;
+  profileName: string;
   profileImage: string;
-  mainTitle: string;
   trigger: Node;
   actions: Node[];
 };
 
-const FlowTemplateOgImage: React.FC<FlowTemplateOgImage> = ({
+export const FlowTemplateOgImage: React.FC<FlowTemplateOgImage> = ({
   title,
-  creator,
+  username,
+  profileName,
   profileImage,
-  mainTitle,
   trigger,
   actions,
 }) => {
@@ -110,9 +109,9 @@ const FlowTemplateOgImage: React.FC<FlowTemplateOgImage> = ({
         <div className="w-1/2 flex flex-col justify-between">
           <div>
             <AvatarAndUsername
-              username={creator}
+              username={username}
               avatar_url={profileImage}
-              profile_name={creator}
+              profile_name={profileName}
             />
           </div>
           <div className="text-xl">Anything Templates</div>
@@ -145,7 +144,7 @@ type ProfileOgImage = {
   profileImage: string;
 };
 
-const UserProfileOgImage: React.FC<ProfileOgImage> = ({
+export const UserProfileOgImage: React.FC<ProfileOgImage> = ({
   fullName,
   username,
   profileImage,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BaseNodeIcon from "./baseNodeIcons";
-import { FlowTemplate } from "../types/flow";
+import { FlowTemplate } from "@/types/flow";
 import { VscArrowSmallRight } from "react-icons/vsc";
 import { Json, Tag } from "@/types/supabase.types";
 import { AvatarAndUsername } from "./avatarAndUsername";
