@@ -1,4 +1,4 @@
-import { Node } from "../types/flow";
+import { Node } from "@/types/flow";
 import BaseNodeIcon from "./baseNodeIcons";
 
 export const BaseNodeWeb = ({

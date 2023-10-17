@@ -11,7 +11,7 @@ import { AvatarAndUsername } from "@/components/avatarAndUsername";
 import { Button } from "@/components/ui/Button";
 import { Tags } from "@/components/tags";
 import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
-import { FlowTemplate } from "../../../../types/flow";
+import { FlowTemplate } from "@/types/flow";
 import { BaseNodeWeb } from "@/components/baseNodeWeb";
 import type { Metadata, ResolvingMetadata } from "next";
 

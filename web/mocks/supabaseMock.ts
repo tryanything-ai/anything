@@ -3,7 +3,7 @@ import {
   FlowTemplateVersion,
   FlowTemplate,
 } from "@/types/supabase.types";
-import { MockNewFlows } from "../types/flow";
+import { MockNewFlows } from "@/types/flow";
 
 export const FAKE_PROFILES: Profile[] = [
   {
