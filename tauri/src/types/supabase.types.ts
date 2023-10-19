@@ -53,7 +53,6 @@ export interface Database {
           published: boolean
           publisher_id: string
           recommended_version: boolean
-          slug: string
         }
         Insert: {
           anything_flow_template_version: string
@@ -67,7 +66,6 @@ export interface Database {
           published?: boolean
           publisher_id: string
           recommended_version?: boolean
-          slug: string
         }
         Update: {
           anything_flow_template_version?: string
@@ -81,7 +79,6 @@ export interface Database {
           published?: boolean
           publisher_id?: string
           recommended_version?: boolean
-          slug?: string
         }
         Relationships: [
           {
