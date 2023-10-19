@@ -15,6 +15,8 @@ import Vectors from "./routes/vectors";
 import Chats from "./routes/chats";
 import ChatInterface from "./routes/chatInterface";
 import Templates from "./routes/templates";
+import Profile from "./routes/profile";
+import Login from "./routes/login";
 // Contexts
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
@@ -94,8 +96,16 @@ const router = createBrowserRouter([
         element: <TableData />,
       },
       {
+        path: "/login", 
+        element: <Login />
+      },
+      {
         path: "/settings",
         element: <Settings />,
+      },
+      {
+        path: "/settings/profile",
+        element: <Profile />,
       },
     ],
   },
