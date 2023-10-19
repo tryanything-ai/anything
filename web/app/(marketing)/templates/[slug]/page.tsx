@@ -98,7 +98,9 @@ export default async function Template({ params }: Props) {
         </div>
         {/* Right */}
         <div>
-          <Button>Use this template</Button>
+          <Button>
+            <a href="anything://template?id=faketemplateid">Open in Anything</a>
+          </Button>
         </div>
       </div>
       <div className="font-semibold mt-8 mb-2">About this template</div>

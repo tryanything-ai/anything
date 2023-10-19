@@ -1,6 +1,7 @@
 import React from "react";
 import themes from "../utils/themes";
 import { useSettingsContext } from "../context/SettingsProvider";
+import { Link } from "react-router-dom";
 import clsx from "clsx";
 
 export default function Settings() {
@@ -24,6 +25,9 @@ export default function Settings() {
   ));
   return (
     <div className="flex flex-col h-full w-full p-6">
+      <Link to="/settings/profile" className="btn btn-primary m-1 ml-4">
+        Edit Profile
+      </Link>
       <div className="form-control w-52">
         <label className="cursor-pointer label">
           <span className="label-text  text-2xl">Web Features</span>

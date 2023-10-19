@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "../utils/initSupabase";
 import { Database } from "../types/supabase.types";
 import { useSettingsContext } from "./SettingsProvider";
+import { Session} from '@supabase/supabase-js'
+
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -32,6 +34,7 @@ export const AuthenticationProvider = ({
   const { webFeaturesDisabled } = useSettingsContext();
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null)
 
   const signUpWithEmail = async (email: string, password: string) => {
     if (webFeaturesDisabled) return null;
@@ -101,6 +104,32 @@ export const AuthenticationProvider = ({
     await supabase.auth.signOut();
     setProfile(null);
   };
+
+  
+  useEffect(() => {
+    // Hydrate Session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("session found in AuthenticationProvider", session)
+      setSession(session)
+    }); 
+
+    //Subscribe to changes in auth state
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("session changed in AuthenticationProvider", session)
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // if (!session) {
+  //   return (<Auth supabaseClient={supabase} appearance={{ theme: ThemeSupa }} />)
+  // }
+  // else {
+  //   return (<div>Logged in!</div>)
+  // }
 
   return (
     <AuthenticationContext.Provider
