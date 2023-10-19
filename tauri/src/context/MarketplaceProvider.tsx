@@ -4,12 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Database, Json } from "../types/supabase.types";
 import { RustFlow } from "../utils/flowConversion";
 import { localDataDir } from "@tauri-apps/api/path";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-//TODO: Perhaps move Supabase stuff to a serverless function so oss contributors don't need keys
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+import { supabase } from "../utils/initSupabase";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;

@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@headlessui/react': ^1.7.17
   '@sentry/nextjs': ^7.73.0
+  '@supabase/auth-helpers-nextjs': ^0.8.1
   '@supabase/supabase-js': ^2.38.0
   '@t3-oss/env-nextjs': ^0.7.0
   '@tailwindcss/forms': ^0.5.6
@@ -34,6 +35,7 @@ specifiers:
 dependencies:
   '@headlessui/react': 1.7.17_biqbaboplfbrettd7655fr4n2y
   '@sentry/nextjs': 7.73.0_next@13.5.4+react@18.2.0
+  '@supabase/auth-helpers-nextjs': 0.8.1_2vyqjlqmusnm2qp5obbp2a4xrm
   '@supabase/supabase-js': 2.38.0
   '@t3-oss/env-nextjs': 0.7.0_5t6euwxcdh5fbfdut3slz5dieu
   class-variance-authority: 0.7.0
@@ -491,6 +493,25 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
+    dev: false
+
+  /@supabase/auth-helpers-nextjs/0.8.1_2vyqjlqmusnm2qp5obbp2a4xrm:
+    resolution: {integrity: sha512-ZO/UGDE9oaVXwPL4gpzGu2NpPwfKOgxTUnuK6no51So8Ah9BUuUUsTj+BdZlx7jJoZEIAkHWdRIx65WuQgWAiQ==}
+    peerDependencies:
+      '@supabase/supabase-js': ^2.19.0
+    dependencies:
+      '@supabase/auth-helpers-shared': 0.5.0_2vyqjlqmusnm2qp5obbp2a4xrm
+      '@supabase/supabase-js': 2.38.0
+      set-cookie-parser: 2.6.0
+    dev: false
+
+  /@supabase/auth-helpers-shared/0.5.0_2vyqjlqmusnm2qp5obbp2a4xrm:
+    resolution: {integrity: sha512-kioUeYDBZ89cfqOTZFOLEFIO7kGczL0XJYZdVv/bKt5efXqhiY14NbzgGWiMvvD9o9Iluo0+YEV2tG3ZZ5W06A==}
+    peerDependencies:
+      '@supabase/supabase-js': ^2.19.0
+    dependencies:
+      '@supabase/supabase-js': 2.38.0
+      jose: 4.15.4
     dev: false
 
   /@supabase/functions-js/2.1.5:
@@ -2325,6 +2346,10 @@ packages:
     hasBin: true
     dev: true
 
+  /jose/4.15.4:
+    resolution: {integrity: sha512-W+oqK4H+r5sITxfxpSU+MMdr/YSWGvgZMQDIsNoBDGGy4i7GBPTtvFKibQzW06n3U3TqHjhvBJsirShsEJ6eeQ==}
+    dev: false
+
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -3150,6 +3175,10 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+
+  /set-cookie-parser/2.6.0:
+    resolution: {integrity: sha512-RVnVQxTXuerk653XfuliOxBP81Sf0+qfQE73LIYKcyMYHG94AuH0kgrQpRDuTZnSmjpysHmzxJXKNfa6PjFhyQ==}
+    dev: false
 
   /set-function-name/2.0.1:
     resolution: {integrity: sha512-tMNCiqYVkXIZgc2Hnoy2IvC/f8ezc5koaRFkCjrpWzGpCd3qbZXPzVy9MAZzK1ch/X0jvSkojys3oqJN0qCmdA==}
