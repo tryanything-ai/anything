@@ -1,7 +1,5 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useSettingsContext } from "./SettingsProvider";
-import { createClient } from "@supabase/supabase-js";
-import { Database, Json } from "../types/supabase.types";
 import { RustFlow } from "../utils/flowConversion";
 import { localDataDir } from "@tauri-apps/api/path";
 import { supabase } from "../utils/initSupabase";
