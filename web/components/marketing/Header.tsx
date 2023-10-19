@@ -64,7 +64,8 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           ))}
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-5">
-          <SignInButton className="block" />
+          {/* //TODO: user login on web */}
+          {/* <SignInButton className="block" /> */}
         </div>
       </nav>
       <Dialog

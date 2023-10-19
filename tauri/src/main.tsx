@@ -14,6 +14,7 @@ import Models from "./routes/models";
 import Vectors from "./routes/vectors";
 import Chats from "./routes/chats";
 import ChatInterface from "./routes/chatInterface";
+import Templates from "./routes/templates";
 // Contexts
 import { TauriProvider } from "./context/TauriProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
@@ -22,7 +23,6 @@ import { LocalFileProvider } from "./context/LocalFileProvider";
 import { SqlProvider } from "./context/SqlProvider";
 import { ModelProvider } from "./context/ModelsProvider";
 import "./styles.css";
-import Templates from "./routes/templates";
 
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
@@ -31,6 +31,7 @@ import posthog from "posthog-js";
 
 import { PostHogProvider } from "posthog-js/react";
 import Template from "./routes/template";
+import { AuthenticationProvider } from "./context/AuthenticaionProvider";
 
 if (import.meta.env.mode === "production") {
   console.log("Initializing PostHog in production");
@@ -103,19 +104,21 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <SettingsProvider>
-      <NotificationsProvider>
-        <PostHogProvider client={posthog}>
-          <TauriProvider>
-            <LocalFileProvider>
-              <ModelProvider>
-                <SqlProvider>
-                  <RouterProvider router={router} />
-                </SqlProvider>
-              </ModelProvider>
-            </LocalFileProvider>
-          </TauriProvider>
-        </PostHogProvider>
-      </NotificationsProvider>
+      <AuthenticationProvider>
+        <NotificationsProvider>
+          <PostHogProvider client={posthog}>
+            <TauriProvider>
+              <LocalFileProvider>
+                <ModelProvider>
+                  <SqlProvider>
+                    <RouterProvider router={router} />
+                  </SqlProvider>
+                </ModelProvider>
+              </LocalFileProvider>
+            </TauriProvider>
+          </PostHogProvider>
+        </NotificationsProvider>
+      </AuthenticationProvider>
     </SettingsProvider>
   </React.StrictMode>
 );
