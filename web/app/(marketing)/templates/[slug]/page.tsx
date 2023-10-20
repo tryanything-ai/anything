@@ -14,6 +14,7 @@ import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
 import { FlowTemplate } from "@/types/flow";
 import { BaseNodeWeb } from "@/components/baseNodeWeb";
 import type { Metadata, ResolvingMetadata } from "next";
+import Deeplink from "@/components/deepLink";
 
 type Props = {
   params: { slug: string };
@@ -99,7 +100,7 @@ export default async function Template({ params }: Props) {
         {/* Right */}
         <div>
           <Button>
-            <a href="anything://template?id=faketemplateid">Open in Anything</a>
+            <Deeplink href="anything://templateid">Open in App </Deeplink>
           </Button>
         </div>
       </div>
