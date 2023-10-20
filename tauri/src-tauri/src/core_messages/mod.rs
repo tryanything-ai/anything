@@ -12,6 +12,7 @@ static BACKEND_ENDPOINT: &str = "http://localhost:50234";
 
 #[tauri::command]
 pub async fn get_flows() -> Result<Vec<Flow>, ()> {
+    
     let mut client = FlowsServiceClient::connect(BACKEND_ENDPOINT).await.unwrap();
     let request = Request::new(GetFlowsRequest {});
     let response = client

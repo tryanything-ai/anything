@@ -1,8 +1,10 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, useEffect, ReactNode } from "react";
 import { useSettingsContext } from "./SettingsProvider";
 import { RustFlow } from "../utils/flowConversion";
 import { localDataDir } from "@tauri-apps/api/path";
 import { supabase } from "../utils/initSupabase";
+import api from "../tauri_api/api";
+import { listen } from "@tauri-apps/api/event";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
@@ -95,6 +97,31 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
     //Do supabase stuff.
   };
+  const listenFunc = async () => {
+    console.log("Listening in listenFunc");
+
+    await listen("click", (event) => {
+      // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
+      // event.payload is the payload object
+      console.log("ListenFunc Received", JSON.stringify(event, null, 3));
+    });
+
+    // return unlisten;
+  };
+
+  //Listen for deep link message to navigate to template
+  useEffect(() => {
+    listenFunc();
+    console.log("Listening to Deep Link");
+    let unlisten = api.subscribeToEvent("deeplink", (event: any) => {
+      console.log("Deep Link Listener Fired", JSON.stringify(event, null, 3));
+    });
+
+    return () => {
+      unlisten.then((unlisten) => unlisten());
+      // unlisten2.then((unlisten) => unlisten());
+    };
+  }, []);
 
   return (
     <MarketplaceContext.Provider

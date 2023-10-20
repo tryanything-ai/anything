@@ -4,6 +4,7 @@ mod core_messages;
 use anything_core::spawn_or_crash;
 use anything_events::config as anything_events_config;
 use std::env;
+use std::io::Write;
 use std::path::PathBuf;
 use tracing::info;
 extern crate dotenv;
@@ -66,16 +67,21 @@ fn main() {
         .plugin(tauri_plugin_fs_watch::init())
         .plugin(sentry_tauri::plugin())
         .setup(|app| {
+
+
             //DEEPLINK
             // If you need macOS support this must be called in .setup() !
             // Otherwise this could be called right after prepare() but then you don't have access to tauri APIs
+            let main_window = app.get_window("main").unwrap();
             let handle = app.handle();
             tauri_plugin_deep_link::register(
               "anything",
               move |request| {
                 dbg!(&request);
-                println!("Got deep link request: {:?}", request);
-                handle.emit_all("scheme-request-received", request).unwrap();
+               
+                println!("Got deep link request: {:?}", request); 
+                // main_window.emit("deeplink", request.clone()).unwrap();
+                // handle.emit_all("deeplink", request).unwrap();
               },
             )
             .unwrap(/* If listening to the scheme is optional for your app, you don't want to unwrap here. */);
