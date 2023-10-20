@@ -100,7 +100,8 @@ export default async function Template({ params }: Props) {
         {/* Right */}
         <div>
           <Button>
-            <Deeplink href="anything://templateid">Open in App </Deeplink>
+            {/* <Deeplink href="anything://templateid">Open in App </Deeplink> */}
+            <a href={`anything://templateid`}>Open in App</a>
           </Button>
         </div>
       </div>

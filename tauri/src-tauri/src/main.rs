@@ -69,22 +69,6 @@ fn main() {
         .setup(|app| {
 
 
-            //DEEPLINK
-            // If you need macOS support this must be called in .setup() !
-            // Otherwise this could be called right after prepare() but then you don't have access to tauri APIs
-            let main_window = app.get_window("main").unwrap();
-            let handle = app.handle();
-            tauri_plugin_deep_link::register(
-              "anything",
-              move |request| {
-                dbg!(&request);
-               
-                println!("Got deep link request: {:?}", request); 
-                // main_window.emit("deeplink", request.clone()).unwrap();
-                // handle.emit_all("deeplink", request).unwrap();
-              },
-            )
-            .unwrap(/* If listening to the scheme is optional for your app, you don't want to unwrap here. */);
               
             // If you also need the url when the primary instance was started by the custom scheme, you currently have to read it yourself
             /*
@@ -96,7 +80,26 @@ fn main() {
       
             Ok(())
           })
-        .setup(|_app| {
+        .setup(|app| {
+            //DEEPLINK
+            // If you need macOS support this must be called in .setup() !
+            // Otherwise this could be called right after prepare() but then you don't have access to tauri APIs
+            // let main_window = app.get_window("main").unwrap();
+            let handle = app.handle();
+            
+            tauri_plugin_deep_link::register(
+              "anything",
+              move |request| {
+                dbg!(&request);
+               
+                println!("Got deep link request: {:?}", request); 
+                // main_window.emit("deeplink", request.clone()).unwrap();
+                handle.emit_all("deeplink", request).unwrap();
+              },
+            )
+            .unwrap(/* If listening to the scheme is optional for your app, you don't want to unwrap here. */);
+
+
             tauri::async_runtime::spawn(async {
                 println!("Spawning anything-server");
                 spawn_or_crash("anything-server", (), setup_anything_server);
