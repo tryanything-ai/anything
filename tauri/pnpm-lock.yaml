@@ -35,6 +35,7 @@ specifiers:
   react-json-view: ^1.21.3
   react-router-dom: ^6.14.1
   reactflow: ^11.7.4
+  slugify: ^1.6.6
   sort-by: ^1.2.0
   supabase: ^1.106.1
   tailwindcss: ^3.3.2
@@ -68,6 +69,7 @@ dependencies:
   react-json-view: 1.21.3_bxrmbjnqr3kinjaicr3qomjske
   react-router-dom: 6.17.0_biqbaboplfbrettd7655fr4n2y
   reactflow: 11.9.4_bxrmbjnqr3kinjaicr3qomjske
+  slugify: 1.6.6
   sort-by: 1.2.0
   tailwindcss: 3.3.3
   tauri-plugin-fs-watch-api: github.com/tauri-apps/tauri-plugin-fs-watch/abeb03702eefa1f3c0287d48f2ed81a5afc5d6f7
@@ -2555,6 +2557,11 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
     dev: true
+
+  /slugify/1.6.6:
+    resolution: {integrity: sha512-h+z7HKHYXj6wJU+AnS/+IH8Uh9fdcX1Lrhg1/VMdf9PwoBQXFcXiAdsy2tSK0P6gKwJLXp02r90ahUCqHk9rrw==}
+    engines: {node: '>=8.0.0'}
+    dev: false
 
   /sort-by/1.2.0:
     resolution: {integrity: sha512-aRyW65r3xMnf4nxJRluCg0H/woJpksU1dQxRtXYzau30sNBOmf5HACpDd9MZDhKh7ALQ5FgSOfMPwZEtUmMqcg==}
