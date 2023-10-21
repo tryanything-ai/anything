@@ -1,13 +1,19 @@
 import clsx from "clsx";
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider"; // replace with your actual path
-import TomlPanel from "../components/tomlPanel";
-import DebugPanel from "../components/debugPanel";
-import SettingsPanel from "../components/settingsPanel";
+import TomlPanel from "./tomlPanel";
+import DebugPanel from "./debugPanel";
+import SettingsPanel from "./settingsPanel";
 import NodeConfigPanel from "./nodeConfigPanel";
 
 const RightPanel = () => {
-  const { debugPanel, settingsPanel, tomlPanel, nodeConfigPanel, closeAllPanelsOpenOne, nodeId } =
-    useFlowNavigationContext();
+  const {
+    debugPanel,
+    settingsPanel,
+    tomlPanel,
+    nodeConfigPanel,
+    closeAllPanelsOpenOne,
+    nodeId,
+  } = useFlowNavigationContext();
 
   return (
     <div className="w-full">
@@ -23,7 +29,7 @@ const RightPanel = () => {
           onClick={() => closeAllPanelsOpenOne("nodeConfig")}
         >
           Node Config
-        </a> 
+        </a>
         <a
           className={clsx("tab", { "tab-active": settingsPanel })}
           onClick={() => closeAllPanelsOpenOne("settings")}
@@ -37,27 +43,27 @@ const RightPanel = () => {
           Editor
         </a> */}
         {/* You can also control this one similarly */}
-          </div>
-           {debugPanel ? (
-            // <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
-              <DebugPanel />
-            // </Allotment.Pane>
-          ) : null}
-          {settingsPanel ? (
-            // <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
-              <SettingsPanel />
-            // </Allotment.Pane>
-          ) : null}
-          {/* {tomlPanel ? (
+      </div>
+      {debugPanel ? (
+        // <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+        <DebugPanel />
+      ) : // </Allotment.Pane>
+      null}
+      {settingsPanel ? (
+        // <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
+        <SettingsPanel />
+      ) : // </Allotment.Pane>
+      null}
+      {/* {tomlPanel ? (
             // <Allotment.Pane preferredSize={300} minSize={200}>
               <TomlPanel />
             // </Allotment.Pane>
           ) : null} */}
-           {nodeConfigPanel ? (
-            // <Allotment.Pane preferredSize={700} minSize={200}>
-              <NodeConfigPanel key={nodeId} />
-            // </Allotment.Pane>
-          ) : null}
+      {nodeConfigPanel ? (
+        // <Allotment.Pane preferredSize={700} minSize={200}>
+        <NodeConfigPanel key={nodeId} />
+      ) : // </Allotment.Pane>
+      null}
     </div>
   );
 };
