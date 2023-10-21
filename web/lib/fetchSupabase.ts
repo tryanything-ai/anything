@@ -26,7 +26,7 @@ export const fetchTemplates = async (): Promise<BigFlow | undefined> => {
     // console.log("data", JSON.stringify(data, null, 3));
     if (error || !data) throw error;
 
-    return data;
+    return data;  
   } catch (e) {
     console.log(e);
     return undefined;

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import { useSettingsContext } from "./SettingsProvider";
-import { RustFlow } from "../utils/flowConversion";
+import { Flow } from "../utils/newNodes";
 import { localDataDir } from "@tauri-apps/api/path";
 import { supabase } from "../utils/initSupabase";
 import api from "../tauri_api/api";
@@ -8,7 +8,7 @@ import { listen } from "@tauri-apps/api/event";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
-  fetchTemplates: () => Promise<RustFlow[]>;
+  fetchTemplates: () => Promise<Flow[]>;
   saveTemplate: (template: any) => void;
   updateTemplate: (template: any) => void;
   fetchTemplate: (

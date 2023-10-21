@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import BaseCard from "../components/baseCard";
 // import { MockFlowDefinitions } from "../utils/mocks";
 import BaseSearch from "../components/baseSearch";
-import { RustFlow } from "../utils/flowConversion";
+import { Flow } from "../utils/newNodes";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
 
 export default function Templates() {
-  const [allTemplates, setAllTemplates] = useState<RustFlow[]>([]);
-  const [results, setResults] = useState<RustFlow[]>();
+  const [allTemplates, setAllTemplates] = useState<Flow[]>([]);
+  const [results, setResults] = useState<Flow[]>();
 
   const { fetchTemplates } = useMarketplaceContext();
 
@@ -16,7 +16,6 @@ export default function Templates() {
     async function fetchTemplatesAsync() {
       let templates = await fetchTemplates();
 
-      // setAllTemplates([...templates, ...MockFlowDefinitions]);
       setAllTemplates([...templates]);
     }
 

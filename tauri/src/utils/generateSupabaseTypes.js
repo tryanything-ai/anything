@@ -19,7 +19,7 @@ if (!projectId) {
   process.exit(1);
 }
 
-const outputPath = path.join(__dirname, "../types/supabase.types.ts");
+const outputPath = path.join(__dirname, "../types/supabase.generated-types.ts");
 
 const command = `npx -y supabase gen types typescript --project-id "${projectId}" --schema public > ${outputPath}`;
 execSync(command, { stdio: "inherit" });
