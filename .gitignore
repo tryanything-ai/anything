@@ -27,3 +27,6 @@ dist-ssr
 /target/
 
 **/*/.next
+
+# Adding to do pnpm workspaces
+node_modules

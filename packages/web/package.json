@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "@anything/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -40,7 +40,6 @@
     "postcss": "^8",
     "supabase": "^1.99.5",
     "tailwindcss": "^3",
-    "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5"
+    "tailwindcss-animate": "^1.0.7"
   }
 }
