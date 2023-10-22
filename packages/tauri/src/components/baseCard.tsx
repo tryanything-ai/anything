@@ -1,6 +1,5 @@
-import React, { FC, HTMLAttributes, ComponentType } from "react";
-
 import clsx from "clsx";
+import React, { ComponentType,FC, HTMLAttributes } from "react";
 
 interface LinkProps {
   to: string;

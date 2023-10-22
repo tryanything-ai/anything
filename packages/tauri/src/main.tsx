@@ -1,42 +1,40 @@
+import "./styles.css";
+
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Layout from "./layout";
-import ErrorPage from "./error-page";
 
-// Routes
-import Home from "./routes/home";
-import Settings from "./routes/settings";
-import Tables from "./routes/tables";
-import FlowEditor from "./routes/flowEditor";
-import TableData from "./routes/tableData";
-import Flows from "./routes/flows";
-import Models from "./routes/models";
-import Vectors from "./routes/vectors";
-import Chats from "./routes/chats";
-import ChatInterface from "./routes/chatInterface";
-import Templates from "./routes/templates";
-import Profile from "./routes/profile";
-import Login from "./routes/login";
-
+import { AuthenticationProvider } from "./context/AuthenticaionProvider";
+import { LocalFileProvider } from "./context/LocalFileProvider";
+import { MarketplaceProvider } from "./context/MarketplaceProvider";
+import { ModelProvider } from "./context/ModelsProvider";
+import { NotificationsProvider } from "./context/NotificationProvider";
+import { SettingsProvider } from "./context/SettingsProvider";
+import { SqlProvider } from "./context/SqlProvider";
 // Contexts
 import { TauriProvider } from "./context/TauriProvider";
-import { SettingsProvider } from "./context/SettingsProvider";
-import { NotificationsProvider } from "./context/NotificationProvider";
-import { LocalFileProvider } from "./context/LocalFileProvider";
-import { SqlProvider } from "./context/SqlProvider";
-import { ModelProvider } from "./context/ModelsProvider";
-import "./styles.css";
+import ErrorPage from "./error-page";
+import Layout from "./layout";
+import ChatInterface from "./routes/chatInterface";
+import Chats from "./routes/chats";
+import FlowEditor from "./routes/flowEditor";
+import Flows from "./routes/flows";
+// Routes
+import Home from "./routes/home";
+import Login from "./routes/login";
+import Models from "./routes/models";
+import Profile from "./routes/profile";
+import Settings from "./routes/settings";
+import TableData from "./routes/tableData";
+import Tables from "./routes/tables";
+import Template from "./routes/template";
+import Templates from "./routes/templates";
+import Vectors from "./routes/vectors";
 
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
-
-import posthog from "posthog-js";
-
-import { PostHogProvider } from "posthog-js/react";
-import Template from "./routes/template";
-import { AuthenticationProvider } from "./context/AuthenticaionProvider";
-import { MarketplaceProvider } from "./context/MarketplaceProvider";
 
 if (import.meta.env.mode === "production") {
   console.log("Initializing PostHog in production");

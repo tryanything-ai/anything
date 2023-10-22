@@ -1,5 +1,6 @@
-import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
 import { Link } from "react-router-dom";
+
+import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
 
 export default function Profile() {
   const { profile } = useAuthenticaionContext();

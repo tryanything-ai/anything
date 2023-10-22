@@ -1,5 +1,6 @@
 // import Link from "next/link";
 import { headers } from "next/headers";
+
 // import { BgPattern } from "@/components/ui/Bgpattern";
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import { Button } from "@/components/ui/Button";

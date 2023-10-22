@@ -1,14 +1,14 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import clsx from "clsx";
 import {
+  VscComment,
   VscHome,
+  VscHubot,
+  VscReferences,
   VscRepoForked,
   VscSettingsGear,
   VscTable,
-  VscHubot,
-  VscComment,
-  VscReferences,
 } from "react-icons/vsc";
-import clsx from "clsx";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 export default function Layout() {
   const location = useLocation();

@@ -1,5 +1,5 @@
-import { Node } from "@/types/flow";
 import BaseNodeIcon from "@/components/baseNodeIcons";
+import { Node } from "@/types/flow";
 
 export const BaseNodeWeb = ({
   node: { trigger, node_label, icon },

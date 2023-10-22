@@ -1,6 +1,6 @@
 import React from "react";
-import * as VsIcons from "react-icons/vsc";
 import { IconType } from "react-icons";
+import * as VsIcons from "react-icons/vsc";
 
 // Determines whether a string is a URL
 const isURL = (str: string): boolean => {

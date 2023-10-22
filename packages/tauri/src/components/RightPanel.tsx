@@ -1,9 +1,10 @@
 import clsx from "clsx";
+
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider"; // replace with your actual path
-import TomlPanel from "./tomlPanel";
 import DebugPanel from "./debugPanel";
-import SettingsPanel from "./settingsPanel";
 import NodeConfigPanel from "./nodeConfigPanel";
+import SettingsPanel from "./settingsPanel";
+import TomlPanel from "./tomlPanel";
 
 const RightPanel = () => {
   const {

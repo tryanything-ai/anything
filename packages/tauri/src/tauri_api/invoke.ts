@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/tauri";
+
 import { EventInput } from "./types";
 
 export const getFlows = async () => {

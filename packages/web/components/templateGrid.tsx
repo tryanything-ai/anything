@@ -1,6 +1,7 @@
 import { BigFlow } from "@/lib/fetchSupabase";
-import { TemplateCard } from "./templateCard";
 import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
+
+import { TemplateCard } from "./templateCard";
 
 export const TemplateGrid = ({ templates, profile = true }: { templates: BigFlow, profile?: boolean }) => {
   return (

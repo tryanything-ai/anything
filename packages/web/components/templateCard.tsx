@@ -1,9 +1,11 @@
 import Link from "next/link";
-import BaseNodeIcon from "./baseNodeIcons";
-import { FlowTemplate } from "@/types/flow";
 import { VscArrowSmallRight } from "react-icons/vsc";
+
+import { FlowTemplate } from "@/types/flow";
 import { Json, Tag } from "@/types/supabase.types";
+
 import { AvatarAndUsername } from "./avatarAndUsername";
+import BaseNodeIcon from "./baseNodeIcons";
 
 export type CardProps = {
   slug: string;

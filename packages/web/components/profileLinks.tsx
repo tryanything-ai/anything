@@ -1,15 +1,16 @@
-import {
-FaTiktok,
-FaGithub,
-FaYoutube,
-FaGlobe,
-FaLinkedin,
-FaInstagram,
-FaXTwitter,
-} from "react-icons/fa6";
 import Link from "next/link";
-import { formatUrl, hasLinks} from "@/utils/frontEndUtils";
+import {
+FaGithub,
+FaGlobe,
+FaInstagram,
+FaLinkedin,
+FaTiktok,
+FaXTwitter,
+FaYoutube,
+} from "react-icons/fa6";
+
 import { Profile } from "@/types/supabase.types";
+import { formatUrl, hasLinks} from "@/utils/frontEndUtils";
 
 export const ProfileLinks = ({ profile }: { profile: Profile }) => {
     if (hasLinks(profile)) {

@@ -2,9 +2,11 @@ import "./globals.css";
 
 import { Metadata } from "next";
 import { ReactNode, Suspense } from "react";
-import { PHProvider, PostHogPageview } from "./providers";
+
 import { siteConfig } from "@/config/site";
 import { dm_sans, inter } from "@/lib/fonts";
+
+import { PHProvider, PostHogPageview } from "./providers";
 // import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {

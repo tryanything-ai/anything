@@ -1,5 +1,5 @@
-import { useModelContext } from "../context/ModelsProvider";
 import ModelCard from "../components/downloadedModelCard";
+import { useModelContext } from "../context/ModelsProvider";
 
 export default function Models() {
   const { models, downloadModel, downloadedModels } = useModelContext();

@@ -1,5 +1,5 @@
-import BaseNode from "./baseNode";
 import { AnythingNodeProps } from "../../utils/nodeUtils";
+import BaseNode from "./baseNode";
 
 export default function SuperNode({ id, data }: AnythingNodeProps) {
   return (

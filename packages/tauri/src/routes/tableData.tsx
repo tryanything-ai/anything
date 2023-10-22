@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { useSqlContext } from "../context/SqlProvider";
-import { createColumnHelper } from "@tanstack/react-table";
-import {
-  useReactTable,
-  getCoreRowModel,
+import { createColumnHelper ,
   flexRender,
+  getCoreRowModel,
   getSortedRowModel,
   SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+import { useSqlContext } from "../context/SqlProvider";
 
 interface Event {
   event_id: string;

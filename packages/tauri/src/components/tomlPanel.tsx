@@ -1,10 +1,10 @@
-import { useParams } from "react-router-dom";
-import { useFlowContext } from "../context/FlowProvider";
 import Editor from "@monaco-editor/react";
-import api from "../tauri_api/api";
-
-import { useTauriContext } from "../context/TauriProvider";
 import { parse } from "iarna-toml-esm";
+import { useParams } from "react-router-dom";
+
+import { useFlowContext } from "../context/FlowProvider";
+import { useTauriContext } from "../context/TauriProvider";
+import api from "../tauri_api/api";
 
 const TomlPanel = () => {
   const { toml } = useFlowContext();

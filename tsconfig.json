@@ -4,19 +4,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "strict": true,
-    //   "target": "ESNext",
-    //   "useDefineForClassFields": true,
-    //   "module": "ESNext",
-    //   "moduleResolution": "Node",
-    //   "strict": true,
-    //   "jsx": "preserve",
-    //   "resolveJsonModule": true,
-    //   "isolatedModules": true,
-    //   "esModuleInterop": true,
-    //   "lib": ["ESNext", "DOM"],
-    //   "skipLibCheck": true
+    "strict": true
   },
   "references": [
     {
@@ -25,8 +13,5 @@
     {
       "path": "packages/tauri"
     }
-    //   {
-    //     "path": "shared/ui"
-    //   }
   ]
 }

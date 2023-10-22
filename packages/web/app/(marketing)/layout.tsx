@@ -1,9 +1,8 @@
+import type { Metadata } from "next";
 import React from "react";
 
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/marketing/Header";
-
-import type { Metadata } from "next";
 
 interface MarketingLayoutProps {
   children: React.ReactNode;

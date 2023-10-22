@@ -1,13 +1,14 @@
-import {
-  fetchProfiles,
-  fetchProfile,
-  Profile,
-  fetchProfileTemplates,
-} from "@/lib/fetchSupabase";
-import { notFound } from "next/navigation";
 import Image from "next/image";
-import { TemplateGrid } from "@/components/templateGrid";
+import { notFound } from "next/navigation";
+
 import { ProfileLinks } from "@/components/profileLinks";
+import { TemplateGrid } from "@/components/templateGrid";
+import {
+  fetchProfile,
+  fetchProfiles,
+  fetchProfileTemplates,
+  Profile,
+} from "@/lib/fetchSupabase";
 
 export const generateStaticParams = async () => {
   let profiles = await fetchProfiles();

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
+import { Controller,useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
+
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
-import { useForm, Controller } from "react-hook-form";
 
 const NodeConfigPanel = () => {
   const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();

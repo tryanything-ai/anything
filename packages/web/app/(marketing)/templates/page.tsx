@@ -1,6 +1,7 @@
+import { notFound } from "next/navigation";
+
 import { TemplateGrid } from "@/components/templateGrid";
 import { fetchTemplates } from "@/lib/fetchSupabase";
-import { notFound } from "next/navigation";
 
 export default async function TemplatePage() {
   const templates = await fetchTemplates();

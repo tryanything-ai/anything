@@ -1,9 +1,9 @@
-import {
-  Profile,
-  FlowTemplateVersion,
-  FlowTemplate,
-} from "@/types/supabase.types";
 import { MockNewFlows } from "@/types/flow";
+import {
+  FlowTemplate,
+  FlowTemplateVersion,
+  Profile,
+} from "@/types/supabase.types";
 
 export const FAKE_PROFILES: Profile[] = [
   {

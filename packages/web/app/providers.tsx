@@ -1,9 +1,10 @@
 "use client";
 
+import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
-import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+
 import { env } from "@/env.mjs";
 
 const NEXT_PUBLIC_POSTHOG_KEY = env.NEXT_PUBLIC_POSTHOG_KEY;

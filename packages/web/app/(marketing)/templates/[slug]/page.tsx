@@ -1,20 +1,20 @@
+import type { Metadata, ResolvingMetadata } from "next";
+import { notFound } from "next/navigation";
+
+import { AvatarAndUsername } from "@/components/avatarAndUsername";
+import { BaseNodeWeb } from "@/components/baseNodeWeb";
+import Deeplink from "@/components/deepLink";
+import { ProfileLinks } from "@/components/profileLinks";
+import { Tags } from "@/components/tags";
+import { Button } from "@/components/ui/Button";
 import {
-  Profile,
   fetchProfile,
   fetchTemplateBySlug,
   fetchTemplates,
+  Profile,
 } from "@/lib/fetchSupabase";
-import { notFound } from "next/navigation";
-
-import { ProfileLinks } from "@/components/profileLinks";
-import { AvatarAndUsername } from "@/components/avatarAndUsername";
-import { Button } from "@/components/ui/Button";
-import { Tags } from "@/components/tags";
-import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
 import { FlowTemplate } from "@/types/flow";
-import { BaseNodeWeb } from "@/components/baseNodeWeb";
-import type { Metadata, ResolvingMetadata } from "next";
-import Deeplink from "@/components/deepLink";
+import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
 
 type Props = {
   params: { slug: string };
