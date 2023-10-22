@@ -1,8 +1,9 @@
-import React from "react";
-import themes from "../utils/themes";
-import { useSettingsContext } from "../context/SettingsProvider";
-import { Link } from "react-router-dom";
 import clsx from "clsx";
+import React from "react";
+import { Link } from "react-router-dom";
+
+import { useSettingsContext } from "../context/SettingsProvider";
+import themes from "../utils/themes";
 
 export default function Settings() {
   const {

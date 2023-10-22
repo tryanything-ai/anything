@@ -1,8 +1,9 @@
 import React, {
+  memo,
   useEffect,
   useState,
-  memo,
 } from "react";
+
 import { DeepKeys, useFuseSearch } from "../hooks/useFuseSearch";
 
 interface BaseSearchProps<T> {

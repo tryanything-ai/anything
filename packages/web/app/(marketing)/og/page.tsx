@@ -1,13 +1,13 @@
 import React from "react";
-import Logo from "@/public/icon.png";
-import { MockNewFlows } from "@/types/flow";
 
 import {
   FlowTemplateOgImage,
-  UserProfileOgImage,
   FlowTemplateOgImageProps,
   ProfileOgImageProps,
+  UserProfileOgImage,
 } from "@/components/og/template";
+import Logo from "@/public/icon.png";
+import { MockNewFlows } from "@/types/flow";
 
 const mockFlowProps: FlowTemplateOgImageProps = {
   title: "Flow Title",

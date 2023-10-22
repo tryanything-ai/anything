@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { SubmitHandler,useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
+
 import api from "../tauri_api/api";
 
 type Inputs = {
-  message: string;
+  message: string; 
 };
 
 type Message = {

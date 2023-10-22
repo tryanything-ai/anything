@@ -1,20 +1,21 @@
+import "allotment/dist/style.css";
+import "reactflow/dist/style.css";
+
+//Sliding Panels
+import { Allotment } from "allotment";
 import { useMemo, useRef } from "react";
 import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
+
+import FlowName from "../components/flowName";
 import NodePanel from "../components/nodePanel";
+import ManualNode from "../components/nodes/manualNode";
+import SuperNode from "../components/nodes/superNode";
+import RightPanel from "../components/RightPanel";
 import {
   FlowNavigationProvider,
   useFlowNavigationContext,
 } from "../context/FlowNavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
-import ManualNode from "../components/nodes/manualNode";
-import SuperNode from "../components/nodes/superNode";
-import FlowName from "../components/flowName";
-import RightPanel from "../components/RightPanel";
-
-//Sliding Panels
-import { Allotment } from "allotment";
-import "allotment/dist/style.css";
-import "reactflow/dist/style.css";
 
 function Flows() {
   const {

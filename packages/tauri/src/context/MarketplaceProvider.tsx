@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, ReactNode } from "react";
-import { useSettingsContext } from "./SettingsProvider";
-import { Flow } from "../utils/newNodes";
-import { localDataDir } from "@tauri-apps/api/path";
-import { supabase } from "../utils/initSupabase";
-import api from "../tauri_api/api";
 import { listen } from "@tauri-apps/api/event";
+import { localDataDir } from "@tauri-apps/api/path";
+import { createContext, ReactNode,useContext, useEffect } from "react";
+
+import api from "../tauri_api/api";
+import { supabase } from "../utils/initSupabase";
+import { Flow } from "../utils/newNodes";
+import { useSettingsContext } from "./SettingsProvider";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
@@ -71,7 +72,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     if (webFeaturesDisabled) return [];
 
     //Do supabase stuff.
-    let { data, error } = await supabase
+    let { error } = await supabase
       .from("flow_templates")
       .select("*")
       .eq("author_username", author_username)

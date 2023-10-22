@@ -1,9 +1,9 @@
-import { fetchTemplateBySlug } from "@/lib/fetchSupabase";
 import { ImageResponse } from "next/server";
+
 import { FlowTemplateOgImage } from "@/components/og/template";
-import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
-import { fetchProfile, Profile } from "@/lib/fetchSupabase";
+import { fetchProfile, fetchTemplateBySlug , Profile } from "@/lib/fetchSupabase";
 import { FlowTemplate } from "@/types/flow";
+import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
 
 // Route segment config
 export const runtime = "edge";

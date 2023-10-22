@@ -1,10 +1,11 @@
-import React from "react";
-import Logo from "@/public/icon.png";
 import Image from "next/image";
+import React from "react";
+
 import { AvatarAndUsername } from "@/components/avatarAndUsername";
-import { BaseNodeWeb } from "@/components/baseNodeWeb";
-import { Node } from "@/types/flow";
 import BaseNodeIcon from "@/components/baseNodeIcons";
+import { BaseNodeWeb } from "@/components/baseNodeWeb";
+import Logo from "@/public/icon.png";
+import { Node } from "@/types/flow";
 
 export type FlowTemplateOgImageProps = {
   title: string;

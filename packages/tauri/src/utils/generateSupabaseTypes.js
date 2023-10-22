@@ -1,8 +1,8 @@
-import { fileURLToPath } from "url";
-import path from "path";
-import fs from "fs";
-import dotenv from "dotenv";
 import { execSync } from "child_process";
+import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 

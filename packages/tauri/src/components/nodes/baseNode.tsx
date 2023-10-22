@@ -1,10 +1,11 @@
+import clsx from "clsx";
 import { ReactNode, useEffect, useState } from "react";
+import { VscClose, VscEllipsis, VscGear } from "react-icons/vsc";
+import { Handle,HandleProps } from "reactflow";
+
+import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { useFlowContext } from "../../context/FlowProvider";
 import { NodeData } from "../../utils/nodeUtils";
-import { VscEllipsis, VscClose, VscGear } from "react-icons/vsc";
-import clsx from "clsx";
-import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
-import { HandleProps, Handle } from "reactflow";
 import BaseNodeIcon from "../baseNodeIcon";
 
 export default function BaseNode({

@@ -1,8 +1,7 @@
-import { useModelContext } from "../context/ModelsProvider";
-import api from "../tauri_api/api";
 import { useEffect, useState } from "react";
 
-import { Model } from "../context/ModelsProvider";
+import { Model,useModelContext  } from "../context/ModelsProvider";
+import api from "../tauri_api/api";
 
 const DownloadedModelCard = ({ model }: { model: Model }) => {
   const [loading, setLoading] = useState<boolean>(false);

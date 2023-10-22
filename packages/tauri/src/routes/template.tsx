@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useParams } from "react-router-dom";
+
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
 
 const Template = () => {

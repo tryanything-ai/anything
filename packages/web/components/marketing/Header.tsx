@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Dialog } from "@headlessui/react";
 import clsx from "clsx";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { VscClose,VscThreeBars } from "react-icons/vsc";
 
-import { VscThreeBars, VscClose } from "react-icons/vsc";
-
-import { Stargazer } from "@/components/ui/Stargazer";
 import { SignInButton } from "@/components/marketing/LandingSignIn";
 import { SignUpButton } from "@/components/marketing/LandingSignUp";
+import { Stargazer } from "@/components/ui/Stargazer";
 // import { BlipLogo } from "@/res/logos/BlipLogo";
 
 const navigation = [

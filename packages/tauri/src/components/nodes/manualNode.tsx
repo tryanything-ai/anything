@@ -1,12 +1,13 @@
+import clsx from "clsx";
 import { useState } from "react";
-import { AnythingNodeProps } from "../../utils/nodeUtils";
+import { useParams } from "react-router-dom";
+
+import { useFlowContext } from "../../context/FlowProvider";
 import { useSqlContext } from "../../context/SqlProvider";
 import { EventInput } from "../../tauri_api/types";
-import { useParams } from "react-router-dom";
-import clsx from "clsx";
-import BaseNode from "./baseNode";
-import { useFlowContext } from "../../context/FlowProvider";
+import { AnythingNodeProps } from "../../utils/nodeUtils";
 import BaseNodeIcon from "../baseNodeIcon";
+import BaseNode from "./baseNode";
 
 export default function ManualNode({ id, data }: AnythingNodeProps) {
   const { addEvent } = useSqlContext();

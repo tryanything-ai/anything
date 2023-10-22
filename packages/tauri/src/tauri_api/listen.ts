@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+
 export type { UnlistenFn } from "@tauri-apps/api/event";
 
 export type EventCallback = (payload: any) => void;

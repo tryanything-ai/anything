@@ -1,5 +1,5 @@
-import React, { FC, HTMLAttributes, ComponentType, ReactNode } from "react";
 import clsx from "clsx";
+import React, { ComponentType, FC, HTMLAttributes, ReactNode } from "react";
 
 interface LinkProps {
   href: string;

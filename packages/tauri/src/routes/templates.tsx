@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import BaseCard from "../components/baseCard";
 // import { MockFlowDefinitions } from "../utils/mocks";
 import BaseSearch from "../components/baseSearch";
-import { Flow } from "../utils/newNodes";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
+import { Flow } from "../utils/newNodes";
 
 export default function Templates() {
   const [allTemplates, setAllTemplates] = useState<Flow[]>([]);

@@ -1,17 +1,16 @@
+import { parse,stringify } from "iarna-toml-esm";
 import {
   createContext,
-  useState,
-  useEffect,
-  useContext,
   ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
-
-import { useTauriContext } from "./TauriProvider";
+import { v4 as uuidv4 } from "uuid";
 
 import api from "../tauri_api/api";
-import { v4 as uuidv4 } from "uuid";
-import { stringify, parse } from "iarna-toml-esm";
 import { Rust_Flow } from "../tauri_api/types";
+import { useTauriContext } from "./TauriProvider";
 
 interface LocalFileContextInterface {
   flows: Rust_Flow[];
@@ -26,7 +25,7 @@ export const LocalFileContext = createContext<LocalFileContextInterface>({
   flows: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
-  renameFlowFiles: () => {},
+  renameFlowFiles: (flowName: string, newFlowName: string) => {},
   readNodeConfig: () => {},
   writeNodeConfig: () => {},
 });

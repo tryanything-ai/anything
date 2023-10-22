@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useSqlContext } from "../context/SqlProvider";
-import { useParams } from "react-router-dom";
-import { useFlowContext } from "../context/FlowProvider";
 import clsx from "clsx";
-import ReactJson from "react-json-view";
 import { formatDistanceToNow } from "date-fns";
+import React, { useEffect,useState } from "react";
+import ReactJson from "react-json-view";
+import { useParams } from "react-router-dom";
+
+import { useFlowContext } from "../context/FlowProvider";
+import { useSqlContext } from "../context/SqlProvider";
 
 const DebugPanel = () => {
   const { getSessionEvents } = useSqlContext();

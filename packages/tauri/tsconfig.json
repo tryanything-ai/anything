@@ -7,6 +7,7 @@
     "allowJs": false,
     "composite": true,
     "outDir": "./dist",
+    "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
