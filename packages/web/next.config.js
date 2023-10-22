@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  experimental: {
-    externalDir: true,
-  },
+  // experimental: {
+  //   externalDir: true,
+  // },
   images: {
     loader: "custom",
     loaderFile: "./lib/supabaseImageLoader.ts",
