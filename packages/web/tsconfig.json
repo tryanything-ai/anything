@@ -4,6 +4,8 @@
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    "composite": true,
+    "outDir": "./dist",
     "module": "esnext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
