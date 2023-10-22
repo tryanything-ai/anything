@@ -1,11 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/supabase.types";
-import { FAKE_FLOW_VERSIONS, FAKE_PROFILES } from "@/mocks/supabaseMock";
-
-import * as SUPABASE from "@/types/supabase.types";
-export * from "@/types/supabase.types";
 
 import { env } from "@/env.mjs";
+import { FAKE_FLOW_VERSIONS, FAKE_PROFILES } from "@/mocks/supabaseMock";
+import { Database } from "@/types/supabase.types";
+import * as SUPABASE from "@/types/supabase.types";
+
+export * from "@/types/supabase.types";
 
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

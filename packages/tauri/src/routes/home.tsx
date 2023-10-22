@@ -1,16 +1,17 @@
+import { Button } from "@anything/ui";
 import { Link } from "react-router-dom";
 
 import BaseCard from "../components/baseCard";
 import { useLocalFileContext } from "../context/LocalFileProvider";
-
+ 
 export default function Home() {
   const { flows, createNewFlow } = useLocalFileContext();
 
   return (
-    <div className="flex flex-row h-full w-full m-10">
+    <div className="m-10 flex h-full w-full flex-row">
       {/* FLows */}
 
-      <div className="flex flex-col text-5xl m-5">
+      <div className="m-5 flex flex-col text-5xl">
         <div className="flex flex-row justify-between">
           <div>Flows</div>
 
@@ -42,7 +43,7 @@ export default function Home() {
 
       {/* Tables */}
 
-      <div className="flex flex-col text-5xl m- w-96 m-5">
+      <div className="m- m-5 flex w-96 flex-col text-5xl">
         <div className="flex flex-row justify-between">
           <div>Templates</div>
 
@@ -50,7 +51,7 @@ export default function Home() {
             Explore
           </Link>
         </div>
-
+        <Button />
         <ul></ul>
       </div>
     </div>
