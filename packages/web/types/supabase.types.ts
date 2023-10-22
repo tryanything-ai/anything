@@ -1,5 +1,6 @@
-import { Database as DatabaseGenerated, Json } from './supabase.generated-types'
 import { PostgrestError } from '@supabase/supabase-js'
+
+import { Database as DatabaseGenerated, Json } from './supabase.generated-types'
 
 export type Database = DatabaseGenerated; 
 export type { Json }; 
