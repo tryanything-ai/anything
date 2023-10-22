@@ -12,6 +12,9 @@
     },
     {
       "path": "packages/tauri"
+    }, 
+    {
+      "path": "shared/ui"
     }
   ]
 }

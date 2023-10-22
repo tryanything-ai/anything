@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "start": "next dev",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "next_start": "next start",
     "lint": "next lint",
     "generate-supabase-types": "node ./types/generateSupabaseTypes.cjs"
   },
   "dependencies": {
+    "@anything/ui": "workspace:^0.0.0",
     "@headlessui/react": "^1.7.17",
     "@sentry/nextjs": "^7.73.0",
     "@supabase/auth-helpers-nextjs": "^0.8.1",

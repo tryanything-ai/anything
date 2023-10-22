@@ -6,8 +6,8 @@
   "scripts": {
     "web": "pnpm --filter @anything/web",
     "tauri": "pnpm --filter @anything/tauri",
-    "lib": "pnpm --filter @mihailtd/ui-lib",
-    "dev": "pnpm --recursive --parallel --stream run dev"
+    "ui": "pnpm --filter @anything/ui",
+    "dev": "pnpm --recursive --parallel --stream run start"
   },
   "keywords": [],
   "author": "",

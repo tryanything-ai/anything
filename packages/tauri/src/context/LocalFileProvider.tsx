@@ -1,4 +1,4 @@
-import { parse,stringify } from "iarna-toml-esm";
+import { parse, stringify } from "iarna-toml-esm";
 import {
   createContext,
   ReactNode,
@@ -25,7 +25,7 @@ export const LocalFileContext = createContext<LocalFileContextInterface>({
   flows: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
-  renameFlowFiles: (flowName: string, newFlowName: string) => {},
+  renameFlowFiles: () => {},
   readNodeConfig: () => {},
   writeNodeConfig: () => {},
 });
@@ -65,7 +65,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       console.log("new flow name", flow_name);
       let flow_id = uuidv4();
 
-     await api.createFlow({ flow_name, flow_id });
+      await api.createFlow({ flow_name, flow_id });
       //   // Basic TOML structure for the flow.toml file
       //   const flowTomlContent = `
       // [flow]
