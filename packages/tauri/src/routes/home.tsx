@@ -1,9 +1,8 @@
-import { Button } from "@anything/ui";
 import { Link } from "react-router-dom";
 
 import BaseCard from "../components/baseCard";
 import { useLocalFileContext } from "../context/LocalFileProvider";
- 
+
 export default function Home() {
   const { flows, createNewFlow } = useLocalFileContext();
 
@@ -51,7 +50,6 @@ export default function Home() {
             Explore
           </Link>
         </div>
-        <Button />
         <ul></ul>
       </div>
     </div>

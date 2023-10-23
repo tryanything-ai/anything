@@ -1,5 +1,3 @@
-// import Link from "next/link";
-import { Button as SharedButton } from "@anything/ui";
 import { headers } from "next/headers";
 
 // import { BgPattern } from "@/components/ui/Bgpattern";
@@ -41,7 +39,6 @@ export default function IndexPage() {
           >
             Get Early Access
           </Button>
-          <SharedButton />
         </div>
         {/* <p className="caption text-slate-11">No credit card required</p> */}
       </div>
