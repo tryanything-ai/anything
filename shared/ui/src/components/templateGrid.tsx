@@ -1,5 +1,4 @@
-import { BigFlow } from "@anything/web/lib/fetchSupabase";
-import { flowJsonFromBigFLow } from "@anything/web/utils/frontEndUtils";
+import { BigFlow,flowJsonFromBigFLow } from "@anything/utils";
 import React from "react"
 
 import TemplateCard from "./templateCard";
@@ -17,7 +16,7 @@ const TemplateGrid = ({
 }) => {
   return (
     <div className="3xl:grid-cols-4 mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-      {templates.map((template, index) => {
+      {templates.map((template, index: number) => {
         let flow_json = flowJsonFromBigFLow(template);
         // get profile name
         //get avatar url from rpfoile
@@ -25,10 +24,7 @@ const TemplateGrid = ({
         return (
           <TemplateCard
             AvatarComponent={() => (
-              <Avatar
-                avatar_url={template?.profiles?.avatar_url || ""}
-                profile_name={template?.profiles?.full_name || ""}
-              />
+            <AvatarComponent />
             )}
             Link={Link}
             key={index}

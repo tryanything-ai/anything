@@ -1,5 +1,4 @@
-import { Json, Tag } from '@anything/utils';
-import { FlowTemplate } from "@anything/web/types/flow";
+import { FlowTemplate,Json, Tag } from '@anything/utils';
 import React from "react";
 import { VscArrowSmallRight } from "react-icons/vsc";
 
