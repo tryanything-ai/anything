@@ -15,6 +15,7 @@
   "rules": {
     "import/no-unresolved": "off",
     "no-unused-vars": "off",
+    "no-explicit-any": "off",
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
     "import/first": "error",
