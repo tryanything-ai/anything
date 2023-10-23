@@ -5,9 +5,10 @@ module.exports = {
   theme: {
     extend: {},
   },
-  corePlugins: { //https://miyauchi.dev/posts/lib-vite-tailwindcss/
-    preflight: false,
+  corePlugins: {
+    //https://miyauchi.dev/posts/lib-vite-tailwindcss/
+    // preflight: false,
   },
   // prefix: 'ui-', //https://miyauchi.dev/posts/lib-vite-tailwindcss/
-  plugins: [], // 
+  plugins: [], //
 };
