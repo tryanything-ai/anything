@@ -27,6 +27,7 @@ importers:
   packages/tauri:
     specifiers:
       '@anything/ui': workspace:^0.0.0
+      '@anything/utils': workspace:^0.0.0
       '@monaco-editor/react': ^4.5.1
       '@rollup/plugin-commonjs': ^25.0.7
       '@supabase/auth-ui-react': ^0.4.6
@@ -70,6 +71,7 @@ importers:
       vite: ^4.5.0
     dependencies:
       '@anything/ui': link:../../shared/ui
+      '@anything/utils': link:../../shared/utils
       '@monaco-editor/react': 4.6.0_zwszyzws36eupxxmzxlyrhs4aq
       '@supabase/auth-ui-react': 0.4.6_rgudrdz3awkjoj33x7lc3ayen4
       '@supabase/auth-ui-shared': 0.1.8_rgudrdz3awkjoj33x7lc3ayen4

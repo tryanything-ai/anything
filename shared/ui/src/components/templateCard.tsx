@@ -5,17 +5,17 @@ import { VscArrowSmallRight } from "react-icons/vsc";
 import { AvatarAndUsername } from "./avatarAndUsername";
 import BaseNodeIcon from "./baseNodeIcons";
 
-export type CardProps = {
-  next?: boolean;
+export type TemplateCardProps = {
+  // next?: boolean;
   slug: string;
   description: string;
   profile_name: string;
   profile: boolean;
-  avatar_url: string;
+  // avatar_url: string;
   username: string;
   flow_name: string;
   flow_template_json: Json;
-  tags: Tag[];
+  // tags: Tag[];
   Link: React.ComponentType<any>;
   AvatarComponent: React.ComponentType;
 };
@@ -32,7 +32,7 @@ const TemplateCard = ({
   flow_name,
   Link,
   AvatarComponent,
-}: CardProps) => {
+}: TemplateCardProps) => {
   const flowJson =
     typeof flow_template_json === "string"
       ? JSON.parse(flow_template_json)

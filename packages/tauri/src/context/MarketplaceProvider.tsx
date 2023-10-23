@@ -1,3 +1,4 @@
+import { fetchTemplates } from '@anything/utils'; 
 import { listen } from "@tauri-apps/api/event";
 import { localDataDir } from "@tauri-apps/api/path";
 import { createContext, ReactNode,useContext, useEffect } from "react";
@@ -43,26 +44,32 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     //Do supabase stuff.
   };
 
-  const fetchTemplates = async () => {
+  const _fetchTemplates = async () => {
     if (webFeaturesDisabled) return [];
 
-    //Do supabase stuff.
+    //Do supabase stuff.  
 
-    let { data: flow_templates, error } = await supabase
-      .from("flow_templates")
-      .select("*");
+    let templateResponse = await fetchTemplates(); 
 
-    if (error) {
-      console.log(error);
-      return [];
-    }
+    // let templates = await fetchTemplates(); 
+    // let { data: flow_templates, error } = await supabase
+    //   .from("flow_templates")
+    //   .select("*");
+
+    if (!templateResponse) return [];
+    else return templateResponse;
+
+    // if (error) {
+    //   console.log(error);
+    //   return [];
+    // }
 
     // let templates = flow_templates?.map((template) => {
     //   //TODO: this might be very naughty
     //   return template.flow_json as unknown as RustFlow;
     // });
     //TODO: rebuild with new types
-    return [];
+    // return [];
   };
 
   const fetchTemplate = async (
@@ -128,7 +135,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     <MarketplaceContext.Provider
       value={{
         searchTemplates,
-        fetchTemplates,
+        fetchTemplates: _fetchTemplates, 
         saveTemplate,
         updateTemplate,
         fetchTemplate,
