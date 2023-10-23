@@ -1,5 +1,5 @@
+import { Json, Tag } from '@anything/utils';
 import { FlowTemplate } from "@anything/web/types/flow";
-import { Json, Tag } from "@anything/web/types/supabase.types";
 import React from "react";
 import { VscArrowSmallRight } from "react-icons/vsc";
 
