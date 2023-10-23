@@ -1,9 +1,5 @@
 const SharedButton = () => {
-  return (
-    <button className="btn bg-pink-400 text-black">
-      Shared Button That Works Everywhere
-    </button>
-  );
+  return <div className="btn text-pink-400">Shared Button with more text</div>;
 };
 
 export default SharedButton;

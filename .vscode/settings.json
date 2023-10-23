@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.linkedProjects": ["./packages/tauri/src-tauri/Cargo.toml"],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
+}
