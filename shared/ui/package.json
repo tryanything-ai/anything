@@ -16,7 +16,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@anything/web": "workspace:^0.1.0",
+    "@anything/web": "workspace:^0.0.0",
+    "@anything/utils": "workspace:^0.0.0",
     "react-icons": "^4.11.0"
   },
   "peerDependencies": {
