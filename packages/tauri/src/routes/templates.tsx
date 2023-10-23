@@ -48,7 +48,7 @@ export default function Templates() {
   );
 }
 
-const TemplateCard = ({ template }: { template: RustFlow }) => {
+const TemplateCard = ({ template }: { template: any }) => {
   //TODO: make the icons for the trigger and the actions
   return (
     <BaseCard
