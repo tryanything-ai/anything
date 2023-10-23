@@ -7,7 +7,6 @@ import {
   fetchProfile,
   fetchProfiles,
   fetchProfileTemplates,
-  Profile,
 } from "@/lib/fetchSupabase";
 
 export const generateStaticParams = async () => {

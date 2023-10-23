@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import posthog from "posthog-js";
+import posthogClient from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
-import { useEffect } from "react";
+import React, {JSX, useEffect } from "react";
 
 import { env } from "@/env.mjs";
 
@@ -11,7 +11,7 @@ const NEXT_PUBLIC_POSTHOG_KEY = env.NEXT_PUBLIC_POSTHOG_KEY;
 const NEXT_PUBLIC_POSTHOG_HOST = env.NEXT_PUBLIC_POSTHOG_HOST;
 
 if (typeof window !== "undefined") {
-  posthog.init(NEXT_PUBLIC_POSTHOG_KEY, {
+  posthogClient.init(NEXT_PUBLIC_POSTHOG_KEY, {
     api_host: NEXT_PUBLIC_POSTHOG_HOST,
     capture_pageview: false, // Disable automatic pageview capture, as we capture manually
   });
@@ -27,7 +27,7 @@ export function PostHogPageview(): JSX.Element {
       if (searchParams && searchParams.toString()) {
         url = url + `?${searchParams.toString()}`;
       }
-      posthog.capture("$pageview", {
+      posthogClient.capture("$pageview", {
         $current_url: url,
       });
     }
@@ -37,5 +37,5 @@ export function PostHogPageview(): JSX.Element {
 }
 
 export function PHProvider({ children }: { children: React.ReactNode }) {
-  return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
+  return <PostHogProvider client={posthogClient}>{children}</PostHogProvider>;
 }
