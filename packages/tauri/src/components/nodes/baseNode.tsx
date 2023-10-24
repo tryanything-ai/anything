@@ -1,12 +1,12 @@
+import { BaseNodeIcon } from "@anything/ui";
 import clsx from "clsx";
 import { ReactNode, useEffect, useState } from "react";
 import { VscClose, VscEllipsis, VscGear } from "react-icons/vsc";
-import { Handle,HandleProps } from "reactflow";
+import { Handle, HandleProps } from "reactflow";
 
 import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { useFlowContext } from "../../context/FlowProvider";
 import { NodeData } from "../../utils/nodeUtils";
-import BaseNodeIcon from "../baseNodeIcon";
 
 export default function BaseNode({
   children,
@@ -39,7 +39,7 @@ export default function BaseNode({
   return (
     <div
       className={clsx(
-        "bg-primary text-primary-content w-80 h-20 rounded-md flex flex-row text-xl",
+        "bg-primary text-primary-content flex h-20 w-80 flex-row rounded-md text-xl",
         {
           "bg-secondary text-secondary-content": data.trigger === true,
         }
@@ -56,24 +56,24 @@ export default function BaseNode({
         );
       })}
       {processing ? (
-        <div className=" bg-white rounded-full w-10 h-10 absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 flex items-center justify-center p-0.5 overflow-hidden shadow z-10">
+        <div className=" absolute right-0 top-0 z-10 flex h-10 w-10 -translate-y-1/2 translate-x-1/2 transform items-center justify-center overflow-hidden rounded-full bg-white p-0.5 shadow">
           <span className="loading loading-spinner text-accent"></span>
         </div>
       ) : null}
       {/* Container */}
-      <div className="p-3 flex flex-row h-full w-full items-center">
+      <div className="flex h-full w-full flex-row items-center p-3">
         {hideIcon ? null : <BaseNodeIcon icon={data.icon} />}
         <div className="flex flex-col">{children}</div>
         {nodeConfigPanel && nodeId === id ? (
           <button
-            className="m-1 absolute top-0 right-0"
+            className="absolute right-0 top-0 m-1"
             onClick={() => setNodeConfigPanel(false, "")}
           >
             <VscClose />
           </button>
         ) : (
           <button
-            className="m-1 absolute top-0 right-0"
+            className="absolute right-0 top-0 m-1"
             onClick={() => closeAllPanelsOpenOne("nodeConfig", id)}
           >
             <VscGear />

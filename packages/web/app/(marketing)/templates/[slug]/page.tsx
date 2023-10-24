@@ -1,5 +1,5 @@
 import { TemplateView } from "@anything/ui";
-import { flowJsonFromBigFlow, getAProfileLink } from "@anything/utils";
+import { getAProfileLink } from "@anything/utils";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,7 +11,6 @@ import {
   fetchTemplates,
   Profile,
 } from "@/lib/fetchSupabase";
-import { FlowTemplate } from "@/types/flow";
 
 type Props = {
   params: { slug: string };

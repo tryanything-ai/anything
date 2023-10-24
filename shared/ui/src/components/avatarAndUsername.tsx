@@ -1,4 +1,4 @@
-import React from "react";
+import { ComponentType} from "react";
 
 export const AvatarAndUsername = ({
   profile_name,
@@ -9,8 +9,8 @@ export const AvatarAndUsername = ({
 }: {
   profile_name: string;
   username: string;
-  Link: React.ComponentType<any>;
-  AvatarComponent: React.ComponentType;
+  Link: ComponentType<any>;
+  AvatarComponent: ComponentType;
   link?: boolean;
 }) => {
   const Component = () => {

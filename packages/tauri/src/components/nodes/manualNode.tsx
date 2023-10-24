@@ -1,3 +1,4 @@
+import { BaseNodeIcon } from "@anything/ui";
 import clsx from "clsx";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
@@ -6,7 +7,6 @@ import { useFlowContext } from "../../context/FlowProvider";
 import { useSqlContext } from "../../context/SqlProvider";
 import { EventInput } from "../../tauri_api/types";
 import { AnythingNodeProps } from "../../utils/nodeUtils";
-import BaseNodeIcon from "../baseNodeIcon";
 import BaseNode from "./baseNode";
 
 export default function ManualNode({ id, data }: AnythingNodeProps) {
@@ -48,7 +48,7 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
     <BaseNode id={id} data={data} hideIcon>
       <div className="flex flex-row">
         <button
-          className={clsx(loading && "bg-green-500 rounded-md h-14 w-14")}
+          className={clsx(loading && "h-14 w-14 rounded-md bg-green-500")}
           onClick={() => createEvent()}
         >
           <BaseNodeIcon icon="VscPlayCircle" />

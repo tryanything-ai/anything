@@ -1,11 +1,12 @@
+import { AvatarAndUsername, BaseNodeIcon, BaseNodeWeb } from "@anything/ui";
+import { Node } from "@anything/utils";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
-import { AvatarAndUsername } from "@/components/avatarAndUsername";
-import BaseNodeIcon from "@/components/baseNodeIcons";
-import { BaseNodeWeb } from "@/components/baseNodeWeb";
 import Logo from "@/public/icon.png";
-import { Node } from "@/types/flow";
+
+import { Avatar } from "../avatar";
 
 export type FlowTemplateOgImageProps = {
   title: string;
@@ -25,35 +26,39 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
   actions,
 }) => {
   return (
-    <div className="flex flex-col w-full h-full bg-base-100 p-6">
+    <div className="bg-base-100 flex h-full w-full flex-col p-6">
       {/* Top */}
-      <div className="flex flex-row mb-5">
-        <div className="text-5xl mb-3 font-semibold w-full overflow-ellipsis">
+      <div className="mb-5 flex flex-row">
+        <div className="mb-3 w-full overflow-ellipsis text-5xl font-semibold">
           {title}
         </div>
       </div>
 
       {/* Left */}
-      <div className="flex flex-row h-full">
-        <div className="w-1/2 flex flex-col justify-between">
+      <div className="flex h-full flex-row">
+        <div className="flex w-1/2 flex-col justify-between">
           <div>
             <AvatarAndUsername
-              username={username}
-              avatar_url={profileImage}
+              AvatarComponent={() =>
+                Avatar({ avatar_url: profileImage, profile_name: profileName })
+              }
+              Link={Link}
+              link={false}
               profile_name={profileName}
+              username={username}
             />
           </div>
           <div className="text-xl">Anything Templates</div>
         </div>
         {/* Right */}
-        <div className="w-1/2 flex flex-col">
+        <div className="flex w-1/2 flex-col">
           <div className="mb-4">
             <div className="text-2xl">When:</div>
             <BaseNodeWeb node={trigger} />
           </div>
           <div>
             <div className="text-2xl">Do:</div>
-            <div className="flex flex-row gap-2 mt-2">
+            <div className="mt-2 flex flex-row gap-2">
               {actions.map((action, index) => {
                 return (
                   <BaseNodeIcon icon={action.icon} key={action.node_label} />
@@ -79,8 +84,8 @@ export const UserProfileOgImage: React.FC<ProfileOgImageProps> = ({
   profileImage,
 }) => {
   return (
-    <div className="flex flex-row  w-full h-full bg-base-100 p-6">
-      <div className="w-2/3 flex flex-col justify-between">
+    <div className="bg-base-100 flex  h-full w-full flex-row p-6">
+      <div className="flex w-2/3 flex-col justify-between">
         <div className="text-xl">Anything Templates</div>
         <div>
           <div className="text-4xl font-semibold">{fullName}</div>
@@ -91,9 +96,9 @@ export const UserProfileOgImage: React.FC<ProfileOgImageProps> = ({
         </div>
       </div>
       {/* Right */}
-      <div className="w-1/3 flex flex-col justify-center h-full">
+      <div className="flex h-full w-1/3 flex-col justify-center">
         <div className="avatar">
-          <div className="rounded-full h-42 w-42">
+          <div className="h-42 w-42 rounded-full">
             <Image src={Logo} alt={fullName} />
           </div>
         </div>
