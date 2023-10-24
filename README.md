@@ -1,82 +1,51 @@
-# 🚀 Anything [Alpha Pre Release]
+# Turborepo Tailwind CSS starter
 
-✨ Think Zapier, but on your Mac, completely focused on AI!
+This is an official starter Turborepo.
 
-### Drag it and drop it
+## Using this example
 
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_dnd_sept_11.gif)
+Run the following command:
 
-### Make Anything happen
-
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_sept_11.gif)
-
-### 🌟 Welcome to Anything - the future of local automation!
-
-Looking for a tool that blends the simplicity of Zapier, the flexibility of AI, and the power of a code editor?
-
-Look no further.
-
-Anything will be the first tool you go to grab when your dreaming of putting AI to work for you.
-
-### 💡 Why Anything?
-
-- Local Power: Why get locked into some SaaS when you've got Apple Silicon under the sheets?
-- AI Integration: Boost your workflows with integrated AI models.
-- WYSIWYG Designer: Visualize your automation workflows like never before.
-- 100% Open Source: Freedom to modify, integrate, and extend.
-
-### 🛠 Technologies Used
-
-- React: For our intuitive and seamless UI.
-- Rust: Ensuring robust and lightning-fast operations.
-- Tauri: Local apps that aren't a whole chrome browser.
-
-### Where we're going
-
-![Agent Library](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/agent_library.png)
-
-### 🤝 Contribute
-
-We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build.
-
-But first.
-
-Check out our [contributors guide](https://github.com/tryanything-ai/anything/tree/main/.github/CONTRIBUTING.md).
-
-### 🔧 Setting Up
-
-```bash
-git clone https://github.com/tryanything-ai/anything.git
-cd tauri
-pnpm i
-pnpm start
+```sh
+npx create-turbo@latest -e with-tailwind
 ```
 
-### Flows are defined as TOML Files
+## What's inside?
 
-- All flows are just files
-- Inspired by NextJS routing a flow just lives at ~/Documents/Flows/{Flow Name} in your computer
+This Turborepo includes the following packages/apps:
 
-[Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/docs/examples)
+### Apps and Packages
 
-### 🤖 Roadmap
+- `docs`: a [Next.js](https://nextjs.org/) app with [Tailwind CSS](https://tailwindcss.com/)
+- `web`: another [Next.js](https://nextjs.org/) app with [Tailwind CSS](https://tailwindcss.com/)
+- `ui`: a stub React component library with [Tailwind CSS](https://tailwindcss.com/) shared by both `web` and `docs` applications
+- `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
+- `tsconfig`: `tsconfig.json`s used throughout the monorepo
 
-- [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
-- [x] Embeded Sqlite DB
-- [ ] Event System ( 90% WIP )
-- [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
-- [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models
-- [ ] WASM Nodes or
-- [ ] Python Interpreter or
-- [ ] Javascript Runtime w/ [Deno](https://github.com/denoland/deno)
-- [ ] Integration with popular local apps and services
+Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
-Share your ideas!
+### Building packages/ui
 
-### 💌 Feedback
+This example is setup to build `packages/ui` and output the transpiled source and compiled styles to `dist/`. This was chosen to make sharing one `tailwind.config.js` as easy as possible, and to ensure only the CSS that is used by the current application and its dependencies is generated.
 
-Love Anything? Give us a star ⭐️!
+Another option is to consume `packages/ui` directly from source without building. If using this option, you will need to update your `tailwind.config.js` to be aware of your package locations, so it can find all usages of the `tailwindcss` class names.
 
-### Contact
+For example, in [tailwind.config.js](packages/tailwind-config/tailwind.config.js):
 
-Carl Lippert on [Twitter](https://twitter.com/carllippert)
+```js
+  content: [
+    // app content
+    `src/**/*.{js,ts,jsx,tsx}`,
+    // include packages if not transpiling
+    "../../packages/**/*.{js,ts,jsx,tsx}",
+  ],
+```
+
+### Utilities
+
+This Turborepo has some additional tools already setup for you:
+
+- [Tailwind CSS](https://tailwindcss.com/) for styles
+- [TypeScript](https://www.typescriptlang.org/) for static type checking
+- [ESLint](https://eslint.org/) for code linting
+- [Prettier](https://prettier.io) for code formatting
