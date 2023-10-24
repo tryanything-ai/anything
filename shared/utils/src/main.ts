@@ -8,8 +8,8 @@ export {
 } from "./supabase/fetchSupabase";
 export {
   flowJsonFromBigFlow,
-  formatUrl,
   getAProfileLink,
+  formatUrl,
   hasLinks,
 } from "./supabase/helpers";
 export type {

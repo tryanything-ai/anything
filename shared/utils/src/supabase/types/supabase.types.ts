@@ -11,7 +11,7 @@ export type Enums<T extends keyof Database['public']['Enums']> = Database['publi
 
 //Tables
 export type Profile = Tables<'profiles'>
-export type FlowTemplate = Tables<'flow_templates'>
+// export type FlowTemplate = Tables<'flow_templates'>
 export type FlowTemplateTag = Tables<'flow_template_tags'>
 export type Tag = Tables<'tags'>
 export type FlowTemplateVersion = Tables<'flow_template_versions'>

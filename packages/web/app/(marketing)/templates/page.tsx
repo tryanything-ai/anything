@@ -1,9 +1,9 @@
 import { TemplateGrid } from "@anything/ui";
+import { fetchTemplates } from "@anything/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar } from "@/components/avatar";
-import { fetchTemplates } from "@/lib/fetchSupabase";
 
 export default async function TemplatePage() {
   const templates = await fetchTemplates();
