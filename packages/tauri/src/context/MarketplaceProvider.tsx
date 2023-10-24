@@ -1,28 +1,27 @@
-import { fetchTemplates } from '@anything/utils'; 
+import { BigFlow, fetchProfile, fetchTemplateBySlug, fetchTemplates, Profile } from "@anything/utils";
+import { template } from "@supabase/auth-ui-shared";
 import { listen } from "@tauri-apps/api/event";
 import { localDataDir } from "@tauri-apps/api/path";
-import { createContext, ReactNode,useContext, useEffect } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 
 import api from "../tauri_api/api";
 import { supabase } from "../utils/initSupabase";
-import { Flow } from "../utils/newNodes";
 import { useSettingsContext } from "./SettingsProvider";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
-  fetchTemplates: () => Promise<Flow[]>;
+  fetchTemplates: () => Promise<BigFlow[]>;
   saveTemplate: (template: any) => void;
   updateTemplate: (template: any) => void;
-  fetchTemplate: (
-    author_username: string,
-    template_name: string
-  ) => Promise<any>;
+  fetchTemplateBySlug: (slug: string) => Promise<BigFlow | undefined>;
+  fetchProfile: (username: string) => Promise<Profile | undefined>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   searchTemplates: () => {},
   fetchTemplates: () => Promise.resolve([]),
-  fetchTemplate: () => Promise.resolve({}),
+  fetchTemplateBySlug: () => Promise.resolve(undefined),
+  fetchProfile: () => Promise.resolve(undefined),
   saveTemplate: () => {},
   updateTemplate: () => {},
 });
@@ -47,11 +46,11 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const _fetchTemplates = async () => {
     if (webFeaturesDisabled) return [];
 
-    //Do supabase stuff.  
+    //Do supabase stuff.
 
-    let templateResponse = await fetchTemplates(); 
+    let templateResponse = await fetchTemplates();
 
-    // let templates = await fetchTemplates(); 
+    // let templates = await fetchTemplates();
     // let { data: flow_templates, error } = await supabase
     //   .from("flow_templates")
     //   .select("*");
@@ -72,27 +71,24 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     // return [];
   };
 
-  const fetchTemplate = async (
-    author_username: string,
-    template_name: string
-  ) => {
-    if (webFeaturesDisabled) return [];
+  const _fetchTemplateBySlug = async (slug: string) => {
+    if (webFeaturesDisabled) return undefined;
+
+    let templateResponse = await fetchTemplateBySlug(slug);
+
+    if (!templateResponse) return undefined;
+    else return templateResponse;
+  };
+
+  const _fetchProfile = async (username: string) => {
+    if (webFeaturesDisabled) return undefined;
 
     //Do supabase stuff.
-    let { error } = await supabase
-      .from("flow_templates")
-      .select("*")
-      .eq("author_username", author_username)
-      .eq("template_name", template_name)
-      .single();
+    let profile = await fetchProfile(username);
+    if (!profile) return undefined;
+    else return profile as Profile
+  }
 
-    if (error) {
-      console.log(error);
-      return [];
-    }
-
-    return localDataDir;
-  };
 
   const saveTemplate = (template: any) => {
     if (webFeaturesDisabled) return false;
@@ -135,10 +131,11 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     <MarketplaceContext.Provider
       value={{
         searchTemplates,
-        fetchTemplates: _fetchTemplates, 
+        fetchTemplates: _fetchTemplates,
         saveTemplate,
         updateTemplate,
-        fetchTemplate,
+        fetchTemplateBySlug: _fetchTemplateBySlug,
+        fetchProfile: _fetchProfile,
       }}
     >
       {children}

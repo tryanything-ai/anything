@@ -71,6 +71,7 @@ export default async function Template({ params }: Props) {
   if (!templateResponse) {
     notFound();
   }
+  
   let template = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 

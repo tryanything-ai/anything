@@ -26,7 +26,7 @@ const TemplateView = ({
 
   return (
     <>
-      <div className="min-h-16 mb-6 text-3xl font-semibold md:text-5xl  ">
+      <div className="min-h-16 mb-6 text-3xl font-semibold md:text-5xl">
         {template.flow_template_name}
       </div>
       <div className="flex flex-row justify-between">
