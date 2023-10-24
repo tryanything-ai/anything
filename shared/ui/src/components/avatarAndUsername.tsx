@@ -9,7 +9,7 @@ export const AvatarAndUsername = ({
 }: {
   profile_name: string;
   username: string;
-  Link: React.ComponentType<any>
+  Link: React.ComponentType<any>;
   AvatarComponent: React.ComponentType;
   link?: boolean;
 }) => {
@@ -30,7 +30,7 @@ export const AvatarAndUsername = ({
 
   if (link) {
     return (
-      <Link  href={"/" + username}>
+      <Link href={"/" + username} to={"/" + username}>
         <Component />
       </Link>
     );

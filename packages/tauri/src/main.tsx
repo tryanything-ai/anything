@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import posthog from "posthog-js";
+import posthogClient from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -38,7 +38,7 @@ const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
 if (import.meta.env.mode === "production") {
   console.log("Initializing PostHog in production");
-  posthog.init(VITE_PUBLIC_POSTHOG_KEY, {
+  posthogClient.init(VITE_PUBLIC_POSTHOG_KEY, {
     api_host: VITE_PUBLIC_POSTHOG_HOST,
   });
 } else {
@@ -65,7 +65,7 @@ const router = createBrowserRouter([
         element: <Templates />,
       },
       {
-        path: "/templates/:author_username/:template_name",
+        path: "/templates/:slug",
         element: <Template />,
       },
       {
@@ -118,7 +118,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <AuthenticationProvider>
         <MarketplaceProvider>
           <NotificationsProvider>
-            <PostHogProvider client={posthog}>
+            <PostHogProvider client={posthogClient}>
               <TauriProvider>
                 <LocalFileProvider>
                   <ModelProvider>

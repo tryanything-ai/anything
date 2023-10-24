@@ -39,7 +39,7 @@ const TemplateCard = ({
       : flow_template_json;
 
   return (
-    <Link href={"/templates/" + slug}>
+    <Link href={"/templates/" + slug} to={"/templates/" + slug}>
       <div className="card card-compact bg-base-300 mx-1 max-w-md transform overflow-hidden shadow-xl transition-all duration-200 ease-in-out hover:scale-105 sm:w-96">
         <div className="card-body">
           <h2 className="card-title text-ellipsis text-2xl">{flow_name}</h2>
