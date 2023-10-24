@@ -1,16 +1,16 @@
 import { TemplateView } from "@anything/ui";
-import { getAProfileLink } from "@anything/utils";
+import {
+  fetchProfile,
+  fetchTemplateBySlug,
+  fetchTemplates,
+  getAProfileLink,
+  Profile,
+} from "@anything/utils";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar } from "@/components/avatar";
-import {
-  fetchProfile,
-  fetchTemplateBySlug,
-  fetchTemplates,
-  Profile,
-} from "@/lib/fetchSupabase";
 
 type Props = {
   params: { slug: string };
@@ -70,7 +70,7 @@ export default async function Template({ params }: Props) {
   if (!templateResponse) {
     notFound();
   }
-  
+
   let template = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 

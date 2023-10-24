@@ -1,17 +1,14 @@
-// import { TemplateGrid } from "@/components/templateGrid";
-import { TemplateGrid } from "@anything/ui";
-import { flowJsonFromBigFlow } from "@anything/utils";
+import { ProfileLinks,TemplateGrid } from "@anything/ui";
+import {
+  fetchProfile,
+  fetchProfiles,
+  fetchProfileTemplates,
+} from "@anything/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar } from "@/components/avatar";
-import { ProfileLinks } from "@/components/profileLinks";
-import {
-  fetchProfile,
-  fetchProfiles,
-  fetchProfileTemplates,
-} from "@/lib/fetchSupabase";
 
 export const generateStaticParams = async () => {
   let profiles = await fetchProfiles();
@@ -19,8 +16,8 @@ export const generateStaticParams = async () => {
   console.log("profiles in generateStaticParams", profiles);
   if (!profiles) return [];
   let goodProfiles = profiles
-    .filter((profile) => profile.username !== null)
-    .map((profile) => profile.username);
+    .filter((profile: any) => profile.username !== null)
+    .map((profile: any) => profile.username);
   return goodProfiles;
 };
 
@@ -55,7 +52,7 @@ export default async function Profile({
         <div className="text-3xl">{profile.full_name}</div>
         <div className="mt-2 opacity-70">@{profile.username}</div>
         <div className="mt-2">{profile.bio}</div>
-        <ProfileLinks profile={profile} />
+        <ProfileLinks profile={profile} Link={Link} />
       </div>
       {/* Right Column */}
       <div className="flex flex-col p-2 md:pl-5">

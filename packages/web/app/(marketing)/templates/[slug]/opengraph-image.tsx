@@ -1,8 +1,12 @@
-import { flowJsonFromBigFlow } from "@anything/utils";
+import {
+  fetchProfile,
+  fetchTemplateBySlug,
+  flowJsonFromBigFlow,
+  Profile,
+} from "@anything/utils";
 import { ImageResponse } from "next/server";
 
 import { FlowTemplateOgImage } from "@/components/og/template";
-import { fetchProfile, fetchTemplateBySlug , Profile } from "@/lib/fetchSupabase";
 import { FlowTemplate } from "@/types/flow";
 
 // Route segment config
@@ -41,7 +45,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
     : undefined;
 
   let flow = flowJsonFromBigFlow(template) as FlowTemplate;
- 
+
   return new ImageResponse(
     (
       <FlowTemplateOgImage
@@ -54,7 +58,6 @@ export default async function Image({ params }: { params: { slug: string } }) {
       />
     ),
     {
-      
       // For convenience, we can re-use the exported opengraph-image
       // size config to also set the ImageResponse's width and height.
       ...size,
