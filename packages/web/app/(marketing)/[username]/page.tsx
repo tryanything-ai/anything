@@ -1,8 +1,12 @@
+// import { TemplateGrid } from "@/components/templateGrid";
+import { TemplateGrid } from "@anything/ui";
+import { flowJsonFromBigFlow } from "@anything/utils";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Avatar } from "@/components/avatar";
 import { ProfileLinks } from "@/components/profileLinks";
-import { TemplateGrid } from "@/components/templateGrid";
 import {
   fetchProfile,
   fetchProfiles,
@@ -35,9 +39,9 @@ export default async function Profile({
   }
 
   return (
-    <div className="my-6 md:my-16 flex flex-col md:flex-row max-w-7xl mx-auto">
+    <div className="mx-auto my-6 flex max-w-7xl flex-col md:my-16 md:flex-row">
       {/* Left Column */}
-      <div className="max-w-sm h-full p-6">
+      <div className="h-full max-w-sm p-6">
         <div className="avatar">
           <div className="w-24 rounded-full">
             <Image
@@ -55,8 +59,13 @@ export default async function Profile({
       </div>
       {/* Right Column */}
       <div className="flex flex-col p-2 md:pl-5">
-        <div className="text-2xl pl-2 pb-4">Templates</div>
-        <TemplateGrid templates={templates} profile={false} />
+        <div className="pb-4 pl-2 text-2xl">Templates</div>
+        <TemplateGrid
+          LinkComponent={Link}
+          AvatarComponent={Avatar}
+          templates={templates}
+          profile={false}
+        />
       </div>
     </div>
   );

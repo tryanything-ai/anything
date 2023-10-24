@@ -1,3 +1,4 @@
+import { formatUrl, hasLinks} from "@anything/utils";
 import Link from "next/link";
 import {
 FaGithub,
@@ -10,7 +11,6 @@ FaYoutube,
 } from "react-icons/fa6";
 
 import { Profile } from "@/types/supabase.types";
-import { formatUrl, hasLinks} from "@/utils/frontEndUtils";
 
 export const ProfileLinks = ({ profile }: { profile: Profile }) => {
     if (hasLinks(profile)) {

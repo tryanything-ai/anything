@@ -1,12 +1,10 @@
+import { TemplateView } from "@anything/ui";
+import { flowJsonFromBigFlow, getAProfileLink } from "@anything/utils";
 import type { Metadata, ResolvingMetadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AvatarAndUsername } from "@/components/avatarAndUsername";
-import { BaseNodeWeb } from "@/components/baseNodeWeb";
-import Deeplink from "@/components/deepLink";
-import { ProfileLinks } from "@/components/profileLinks";
-import { Tags } from "@/components/tags";
-import { Button } from "@/components/ui/Button";
+import { Avatar } from "@/components/avatar";
 import {
   fetchProfile,
   fetchTemplateBySlug,
@@ -14,7 +12,6 @@ import {
   Profile,
 } from "@/lib/fetchSupabase";
 import { FlowTemplate } from "@/types/flow";
-import { flowJsonFromBigFLow, getAProfileLink } from "@/utils/frontEndUtils";
 
 type Props = {
   params: { slug: string };
@@ -37,7 +34,7 @@ export async function generateMetadata(
       ? await fetchProfile(template.profiles.username)
       : undefined;
 
-    let flow = flowJsonFromBigFLow(template) as FlowTemplate;
+    // let flow = flowJsonFromBigFlow(template) as FlowTemplate;
 
     // optionally access and extend (rather than replace) parent metadata
     // const previousImages = (await parent).openGraph?.images || []
@@ -81,51 +78,16 @@ export default async function Template({ params }: Props) {
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
-  let flow = flowJsonFromBigFLow(template) as FlowTemplate;
+  // let flow = flowJsonFromBigFlow(template) as FlowTemplate;
 
   return (
-    <div className="my-6 mx-4 md:my-16 flex flex-col max-w-4xl md:mx-auto">
-      <div className="text-3xl md:text-5xl font-semibold mb-6 min-h-16  ">
-        {template.flow_template_name}
-      </div>
-      <div className="flex flex-row justify-between">
-        {/* Left */}
-        <div>
-          <AvatarAndUsername
-            profile_name={profile?.full_name ? profile.full_name : ""}
-            avatar_url={profile?.avatar_url ? profile.avatar_url : ""}
-            username={profile?.username ? profile.username : ""}
-          />
-        </div>
-        {/* Right */}
-        <div>
-          <Button>
-            {/* <Deeplink href="anything://templateid">Open in App </Deeplink> */}
-            <a href={`anything://templateid`}>Open in App</a>
-          </Button>
-        </div>
-      </div>
-      <div className="font-semibold mt-8 mb-2">About this template</div>
-      <div className="">{template.flow_template_description}</div>
-
-      <div className="font-semibold mt-8 mb-2">Trigger</div>
-      <div>
-        <BaseNodeWeb node={flow.trigger} />
-      </div>
-      <div className="font-semibold mt-8 mb-2">Actions</div>
-      <div>
-        {flow.actions.map((action, index) => {
-          return <BaseNodeWeb node={action} key={action.node_label} />;
-        })}
-      </div>
-      <div className="font-semibold mt-8 mb-2">Tags</div>
-      <Tags tags={template.tags} />
-      {profile ? (
-        <>
-          <div className="font-semibold mt-8 mb-2">About the creator</div>
-          <ProfileLinks profile={profile} />
-        </>
-      ) : null}
+    <div className="mx-4 my-6 flex max-w-4xl flex-col md:mx-auto md:my-16">
+      <TemplateView
+        template={template}
+        profile={profile}
+        Avatar={Avatar}
+        Link={Link}
+      />
     </div>
   );
 }

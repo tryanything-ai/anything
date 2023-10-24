@@ -1,8 +1,5 @@
-import { TemplateCard,TemplateGrid } from "@anything/ui";
-import {
-  BigFlow, 
-  flowJsonFromBigFLow
-} from "@anything/utils";
+import { TemplateGrid } from "@anything/ui";
+import { BigFlow, flowJsonFromBigFlow } from "@anything/utils";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -28,9 +25,9 @@ export default function Templates() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-grow flex flex-col items-center">
-        <div className="flex flex-col items-center justify-center h-72 ">
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-grow flex-col items-center">
+        <div className="flex h-72 flex-col items-center justify-center ">
           <div className="my-10">
             <h1 className="text-7xl">Choose a Template</h1>
           </div>
@@ -42,42 +39,11 @@ export default function Templates() {
         </div>
         <div className="flex w-full items-center justify-center"></div>
         {/* Grid of templates */}
-        <TemplateGrid>
-          {results?.map((template, index) => {
-            let flow_json = flowJsonFromBigFLow(template);
-            return (
-              <TemplateCard
-                AvatarComponent={() => (
-                  <Avatar
-                    avatar_url={template?.profiles?.avatar_url || ""}
-                    profile_name={template?.profiles?.full_name || ""}
-                  />
-                )}
-                Link={Link}
-                key={index}
-                profile={true}
-                // tags={template.tags}
-                // avatar_url={template?.profiles?.avatar_url || ""}
-                username={template?.profiles?.username || ""}
-                profile_name={template?.profiles?.full_name || ""}
-                description={
-                  template.flow_template_description
-                    ? template.flow_template_description
-                    : ""
-                }
-                flow_template_json={flow_json}
-                slug={template.slug}
-                flow_name={template.flow_template_name}
-              />
-            )
-          })}
-        </TemplateGrid>
-        
-        {/* <div className="grid grid-cols-3 gap-6 w-full max-w-5xl pt-10">
-          {results.map((template, index) => (
-            <TemplateCard key={template.flow_id} template={template} />
-          ))}
-        </div> */}
+        <TemplateGrid
+          AvatarComponent={Avatar}
+          LinkComponent={Link}
+          templates={allTemplates}
+        />
       </div>
     </div>
   );

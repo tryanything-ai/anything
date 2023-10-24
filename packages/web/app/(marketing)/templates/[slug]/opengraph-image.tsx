@@ -1,9 +1,9 @@
+import { flowJsonFromBigFlow } from "@anything/utils";
 import { ImageResponse } from "next/server";
 
 import { FlowTemplateOgImage } from "@/components/og/template";
 import { fetchProfile, fetchTemplateBySlug , Profile } from "@/lib/fetchSupabase";
 import { FlowTemplate } from "@/types/flow";
-import { flowJsonFromBigFLow } from "@/utils/frontEndUtils";
 
 // Route segment config
 export const runtime = "edge";
@@ -40,7 +40,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
-  let flow = flowJsonFromBigFLow(template) as FlowTemplate;
+  let flow = flowJsonFromBigFlow(template) as FlowTemplate;
  
   return new ImageResponse(
     (
