@@ -6,6 +6,16 @@ export {
   fetchTemplateBySlug,
   fetchTemplates,
 } from "./supabase/fetchSupabase";
-export { flowJsonFromBigFLow } from "./supabase/helpers";
-export type { Database, Json, Tag } from "./supabase/types/supabase.types";
+export {
+  flowJsonFromBigFlow,
+  formatUrl,
+  getAProfileLink,
+  hasLinks,
+} from "./supabase/helpers";
+export type {
+  Database,
+  Json,
+  Profile,
+  Tag,
+} from "./supabase/types/supabase.types";
 export * from "./types/flow";

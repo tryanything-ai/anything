@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anything/ui": "workspace:^0.0.0",
+    "@anything/utils": "workspace:^0.0.0",
     "@headlessui/react": "^1.7.17",
     "@sentry/nextjs": "^7.73.0",
     "@supabase/auth-helpers-nextjs": "^0.8.1",

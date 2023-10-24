@@ -118,6 +118,7 @@ importers:
   packages/web:
     specifiers:
       '@anything/ui': workspace:^0.0.0
+      '@anything/utils': workspace:^0.0.0
       '@headlessui/react': ^1.7.17
       '@sentry/nextjs': ^7.73.0
       '@supabase/auth-helpers-nextjs': ^0.8.1
@@ -149,6 +150,7 @@ importers:
       zod: ^3.22.4
     dependencies:
       '@anything/ui': link:../../shared/ui
+      '@anything/utils': link:../../shared/utils
       '@headlessui/react': 1.7.17_biqbaboplfbrettd7655fr4n2y
       '@sentry/nextjs': 7.74.1_next@13.5.4+react@18.2.0
       '@supabase/auth-helpers-nextjs': 0.8.1_rgudrdz3awkjoj33x7lc3ayen4
