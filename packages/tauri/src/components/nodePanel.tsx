@@ -1,9 +1,9 @@
-import { useEffect, useMemo,useState } from "react";
+import { BaseNodeIcon } from "@anything/ui";
+import { useEffect, useMemo, useState } from "react";
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
 import { Node } from "../utils/nodeUtils";
-import BaseNodeIcon from "./baseNodeIcon";
 import BaseSearch from "./baseSearch";
 
 const NodePanel = () => {
@@ -37,7 +37,7 @@ const NodePanel = () => {
   };
 
   return (
-    <div className="max-h-screen overflow-y-auto p-4 hide-scrollbar">
+    <div className="hide-scrollbar max-h-screen overflow-y-auto p-4">
       <div className="py-4">
         <BaseSearch
           data={allNodes}
@@ -51,13 +51,13 @@ const NodePanel = () => {
 
       <h1
         onClick={() => setShowTriggers(!showTriggers)}
-        className="h-12 py-2 text-xl font-bold pb-2 flex flex-row justify-between cursor-pointer"
+        className="flex h-12 cursor-pointer flex-row justify-between py-2 pb-2 text-xl font-bold"
       >
         Triggers
         {showTriggers ? <VscChevronDown /> : <VscChevronUp />}
       </h1>
       <div
-        className={`overflow-hidden transition-max-height duration-500 ease-in-out pb-2 ${
+        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${
           showTriggers ? "max-h-auto" : "max-h-0"
         }`}
       >
@@ -67,13 +67,13 @@ const NodePanel = () => {
       </div>
       <h1
         onClick={() => setShowActions(!showActions)}
-        className="text-xl py-2 font-bold pb-2 flex flex-row justify-between cursor-pointer"
+        className="flex cursor-pointer flex-row justify-between py-2 pb-2 text-xl font-bold"
       >
         Actions
         {showActions ? <VscChevronDown /> : <VscChevronUp />}
       </h1>
       <div
-        className={`overflow-hidden transition-max-height duration-500 ease-in-out pb-2 ${
+        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${
           showActions ? "max-h-auto" : "max-h-0"
         }`}
       >
@@ -115,7 +115,7 @@ const NodeDnD = ({ node }: { node: Node }) => {
 
   return (
     <div
-      className="flex flex-row mt-2 pb-2 max-w-md cursor-grab bg-white bg-opacity-5 rounded-md p-2 items-center"
+      className="mt-2 flex max-w-md cursor-grab flex-row items-center rounded-md bg-white bg-opacity-5 p-2 pb-2"
       onDragStart={(event) => onDragStart(event)}
       draggable
     >
@@ -125,7 +125,7 @@ const NodeDnD = ({ node }: { node: Node }) => {
           node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
         }`}
       />
-      <h1 className="text-lg truncate overflow-ellipsis pl-2">
+      <h1 className="truncate overflow-ellipsis pl-2 text-lg">
         {node.nodePresentationData.node_label}
       </h1>
     </div>

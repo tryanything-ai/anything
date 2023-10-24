@@ -45,12 +45,6 @@ const Template = () => {
     fetchTemplate();
   }, [slug]);
 
-  useEffect(() => {
-    if (slug) {
-      console.log("slug in template.tsx", slug);
-    }
-  }, [slug]);
-
   return (
     <div className="hide-scrollbar mx-4 my-6 flex h-full min-h-screen max-w-4xl flex-col overflow-scroll md:mx-auto md:py-16">
       {template ? (

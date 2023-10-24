@@ -1,4 +1,4 @@
-import BaseNodeIcon from "./baseNodeIcon";
+import { BaseNodeIcon } from "@anything/ui";
 
 const StartButton = () => {
   return (
