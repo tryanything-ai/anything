@@ -1,15 +1,7 @@
 {
-  "rust-analyzer.linkedProjects": ["./packages/tauri/src-tauri/Cargo.toml"],
-  "files.associations": {
-    "*.css": "tailwindcss"
-  },
-  "editor.formatOnSave": true,
-  "eslint.run": "onSave",
-  "eslint.enable": true,
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
   ]
 }
