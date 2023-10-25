@@ -9,21 +9,39 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "@sentry/nextjs": "^7.75.0",
+    "@supabase/auth-helpers-nextjs": "^0.8.1",
+    "@supabase/supabase-js": "^2.38.3",
+    "@t3-oss/env-nextjs": "^0.7.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
     "next": "^13.4.19",
+    "pnpm": "^8.9.2",
+    "posthog-js": "^1.85.2",
+    "posthog-node": "^3.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "ui": "workspace:*"
+    "react-icons": "^4.11.0",
+    "sharp": "^0.32.6",
+    "tailwind-merge": "^1.14.0",
+    "ui": "workspace:*",
+    "utils": "workspace:*", 
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^13.4.19",
+    "@tailwindcss/forms": "^0.5.6",
     "@types/node": "^18.11.17",
     "@types/react": "^18.2.5",
     "@types/react-dom": "^18.2.4",
     "autoprefixer": "^10.4.13",
+    "daisyui": "^3.9.3",
     "eslint-config-custom": "workspace:*",
     "postcss": "^8.4.20",
     "tailwind-config": "workspace:*",
     "tailwindcss": "^3.2.4",
+    "tailwindcss-animate": "^1.0.7",
     "tsconfig": "workspace:*",
     "typescript": "^5.1.6"
   }

@@ -1,0 +1,10 @@
+{
+  "name": "utils",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@supabase/postgrest-js": "^1.8.5",
+    "@supabase/supabase-js": "^2.38.3",
+    "typescript": "latest"
+  }
+}
