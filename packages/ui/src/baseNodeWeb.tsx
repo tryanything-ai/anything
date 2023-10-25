@@ -1,6 +1,6 @@
 import { Node } from "utils";
 
-import BaseNodeIcon from "./baseNodeIcons";
+import { BaseNodeIcon } from "./baseNodeIcons";
 
 export const BaseNodeWeb = ({
   node: { trigger, node_label, icon },

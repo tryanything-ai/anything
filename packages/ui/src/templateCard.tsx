@@ -3,7 +3,7 @@ import React from "react";
 import { VscArrowSmallRight } from "react-icons/vsc";
 
 import { AvatarAndUsername } from "./avatarAndUsername";
-import BaseNodeIcon from "./baseNodeIcons";
+import { BaseNodeIcon } from "./baseNodeIcons";
 
 export type TemplateCardProps = {
   // next?: boolean;

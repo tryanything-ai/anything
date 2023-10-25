@@ -7,8 +7,12 @@ import * as SUPABASE from "@/types/supabase.types";
 
 export * from "@/types/supabase.types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? process.env.NEXT_PUBLIC_SUPABASE_URL
+  : "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  : "";
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
@@ -26,7 +30,7 @@ export const fetchTemplates = async (): Promise<BigFlow | undefined> => {
     // console.log("data", JSON.stringify(data, null, 3));
     if (error || !data) throw error;
 
-    return data;  
+    return data;
   } catch (e) {
     console.log(e);
     return undefined;
@@ -101,4 +105,3 @@ export const fetchProfile = async (
     return undefined;
   }
 };
-

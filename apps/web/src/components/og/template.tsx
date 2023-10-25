@@ -6,7 +6,7 @@ import React from "react";
 
 import Logo from "@/public/icon.png";
 
-import { Avatar } from "../avatar";
+import { Avatar } from "@/components/avatar";
 
 export type FlowTemplateOgImageProps = {
   title: string;
