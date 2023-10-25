@@ -66,7 +66,7 @@ export default async function RootLayout({
         <PostHogPageview />
       </Suspense>
       <PHProvider>
-        <body className="bg-slate-1 text-slate-12 font-sans">{children}</body>
+        <body className=" text-slate-12 font-sans">{children}</body>
       </PHProvider>
       {/* <body className="font-sans text-slate-12">
         {children}
