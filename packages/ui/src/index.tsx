@@ -10,5 +10,5 @@ export * from "./card";
 // export * from "./profileLinks"
 // export * from "./tags"
 // export * from "./templateCard"
-// export * from "./templateGrid"
+export * from "./templateGrid"
 // export * from "./templateView"

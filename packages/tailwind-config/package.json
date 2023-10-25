@@ -6,5 +6,10 @@
   "types": "index.ts",
   "devDependencies": {
     "tailwindcss": "^3.2.4"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.6",
+    "daisyui": "^3.9.3",
+    "tailwindcss-animate": "^1.0.7"
   }
 }

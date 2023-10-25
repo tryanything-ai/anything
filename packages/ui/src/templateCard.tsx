@@ -76,7 +76,7 @@ const NodeArray = ({ flow }: { flow: FlowTemplate }) => {
   const hiddenIconsCount = actions.length - visibleActions.length;
 
   return (
-    <div className="flex h-full flex-row gap-2">
+    <div className="flex h-full flex-row gap-2 ">
       <BaseNodeIcon icon={flow.trigger.icon} className="text-pink-500" />
       <div className="flex h-14 items-center justify-center font-bold">
         <VscArrowSmallRight className="w-6 text-3xl" />

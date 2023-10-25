@@ -7,17 +7,12 @@ import { ProfileLinks } from "./profileLinks";
 import { Tags } from "./tags";
 
 interface TemplateViewProps extends CommonProps {
-  template: BigFlow;
+  template: any;
   profile: Profile | undefined;
 }
 
-function TemplateView({
-  template,
-  profile,
-  Link,
-  Avatar,
-}: TemplateViewProps) {
-  let flow = flowJsonFromBigFlow(template) as FlowTemplate;
+function TemplateView({ template, profile, Link, Avatar }: TemplateViewProps) {
+  let flow = flowJsonFromBigFlow(template);
 
   return (
     <>
@@ -57,7 +52,7 @@ function TemplateView({
       </div>
       <div className="mb-2 mt-8 font-semibold">Actions</div>
       <div>
-        {flow.actions.map((action) => {
+        {flow.actions.map((action: any) => {
           return <BaseNodeWeb node={action} key={action.node_label} />;
         })}
       </div>

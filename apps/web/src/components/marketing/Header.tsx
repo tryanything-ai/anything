@@ -5,7 +5,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { VscClose,VscThreeBars } from "react-icons/vsc";
+import { VscClose, VscThreeBars } from "react-icons/vsc";
 
 import { SignInButton } from "@/components/marketing/LandingSignIn";
 import { SignUpButton } from "@/components/marketing/LandingSignUp";
@@ -38,7 +38,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           </Link>
           <Stargazer count={stargazers_count} />
         </div>
-        <div className="flex lg:hidden">
+        <div className="lg:hidden">
           <button
             type="button"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-11"

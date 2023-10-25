@@ -3,7 +3,7 @@ import { ComponentType, JSX } from "react";
 
 import TemplateCard from "./templateCard";
 
-const TemplateGrid = ({
+export const TemplateGrid = ({
   templates,
   AvatarComponent,
   LinkComponent,
@@ -49,5 +49,3 @@ const TemplateGrid = ({
     </div>
   );
 };
-
-export default TemplateGrid;
