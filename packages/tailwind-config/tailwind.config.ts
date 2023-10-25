@@ -68,9 +68,9 @@ const config: Config = {
     },
   },
   plugins: [
-    // require("daisyui"),
     require("tailwindcss-animate"),
     require("@tailwindcss/forms"),
+    require("daisyui"),
   ],
   // theme: {
   //   extend: {
