@@ -1,4 +1,5 @@
 import "./globals.css";
+import "ui/styles.css";
 
 import type { Metadata } from "next";
 import { ReactNode, Suspense } from "react";

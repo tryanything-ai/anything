@@ -17,25 +17,25 @@ module.exports = {
   //   "@vercel/style-guide/eslint/typescript",
   //   "@vercel/style-guide/eslint/react",
   // ].map(require.resolve),
-  // parserOptions: {
-  //   project,
-  // },
-  // globals: {
-  //   JSX: true,
-  // },
-  // settings: {
-  //   "import/resolver": {
-  //     typescript: {
-  //       project,
-  //     },
-  //     node: {
-  //       extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx"],
-  //     },
-  //   },
-  // },
-  // ignorePatterns: ["node_modules/", "dist/", ".eslintrc.js", "**/*.css"],
-  // // add rules configurations here
-  // rules: {
-  //   "import/no-default-export": "off",
-  // },
+  parserOptions: {
+    project,
+  },
+  globals: {
+    JSX: true,
+  },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project,
+      },
+      node: {
+        extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx"],
+      },
+    },
+  },
+  ignorePatterns: ["node_modules/", "dist/", ".eslintrc.js", "**/*.css"],
+  // add rules configurations here
+  rules: {
+    "import/no-default-export": "off",
+  },
 };

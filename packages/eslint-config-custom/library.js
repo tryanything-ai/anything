@@ -16,22 +16,22 @@ module.exports = {
   //   "@vercel/style-guide/eslint/node",
   //   "@vercel/style-guide/eslint/typescript",
   // ].map(require.resolve),
-  // parserOptions: {
-  //   project,
-  // },
-  // globals: {
-  //   React: true,
-  //   JSX: true,
-  // },
-  // settings: {
-  //   "import/resolver": {
-  //     typescript: {
-  //       project,
-  //     },
-  //     node: {
-  //       extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx"],
-  //     },
-  //   },
-  // },
-  // ignorePatterns: ["node_modules/", "dist/"],
+  parserOptions: {
+    project,
+  },
+  globals: {
+    React: true,
+    JSX: true,
+  },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project,
+      },
+      node: {
+        extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx"],
+      },
+    },
+  },
+  ignorePatterns: ["node_modules/", "dist/"],
 };

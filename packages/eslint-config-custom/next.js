@@ -20,26 +20,26 @@ module.exports = {
   //   "@vercel/style-guide/eslint/next",
   //   "eslint-config-turbo",
   // ].map(require.resolve),
-  // parserOptions: {
-  //   project,
-  // },
-  // globals: {
-  //   React: true,
-  //   JSX: true,
-  // },
-  // settings: {
-  //   "import/resolver": {
-  //     typescript: {
-  //       project,
-  //     },
-  //     node: {
-  //       extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx"],
-  //     },
-  //   },
-  // },
-  // ignorePatterns: ["node_modules/", "dist/"],
-  // // add rules configurations here
-  // rules: {
-  //   "import/no-default-export": "off",
-  // },
+  parserOptions: {
+    project,
+  },
+  globals: {
+    React: true,
+    JSX: true,
+  },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project,
+      },
+      node: {
+        extensions: [".mjs", ".js", ".jsx", ".ts", ".tsx"],
+      },
+    },
+  },
+  ignorePatterns: ["node_modules/", "dist/"],
+  // add rules configurations here
+  rules: {
+    "import/no-default-export": "off",
+  },
 };
