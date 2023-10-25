@@ -14,7 +14,9 @@ export default function IndexPage() {
       {/* <BgPattern /> */}
       {/* Hero Copy */}
       <div className="mt-16 flex flex-col items-center gap-4">
-        <h1 className="md:display h2 w-full px-4 text-center md:w-[802px] md:px-0">
+        {/*  */}
+        {/* <h1 className="font-display text-[80px] font-semibold leading-[88px] tracking-[-2%] h2 w-full px-4 text-center md:w-[802px] md:px-0"> */}
+          <h1 className="md:display h2 w-full px-4 text-center md:w-[802px] md:px-0">
           Build <span className="text-crimson-9">AI Automations</span> for your
           startup
         </h1>

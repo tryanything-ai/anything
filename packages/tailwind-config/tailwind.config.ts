@@ -26,10 +26,10 @@ const config: Config = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-          // backgroundImage: {
-            //       "glow-conic":
-            //         "conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg)",
-            //     },
+        // backgroundImage: {
+        //       "glow-conic":
+        //         "conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg)",
+        //     },
       },
       fontFamily: {
         sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
@@ -68,13 +68,13 @@ const config: Config = {
     },
   },
   plugins: [
+    // require("daisyui"),
     require("tailwindcss-animate"),
     require("@tailwindcss/forms"),
-    require("daisyui"),
   ],
   // theme: {
   //   extend: {
-  //     
+  //
   //   },
   // },
   // plugins: [],
