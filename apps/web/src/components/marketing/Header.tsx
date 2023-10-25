@@ -16,7 +16,7 @@ const navigation = [
   { name: "Home", href: "/" },
   { name: "Templates", href: "/templates" },
 ];
-
+  
 export function Header({ stargazers_count }: { stargazers_count: number }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,7 +38,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           </Link>
           <Stargazer count={stargazers_count} />
         </div>
-        <div className="lg:hidden">
+        <div className="lg:hidden block">
           <button
             type="button"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-11"

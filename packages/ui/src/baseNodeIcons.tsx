@@ -45,7 +45,7 @@ const BaseNodeOrIcon: React.FC<Props> = ({
   return <span className="bg-red-500 p-2 border rounded">Invalid</span>;
 };
 
-const BaseNodeIcon: React.FC<Props> = ({ icon, className }) => {
+export const BaseNodeIcon: React.FC<Props> = ({ icon, className }) => {
   return (
     <div
       className={` h-14 w-14 p-2 rounded-md bg-white bg-opacity-30 ${
@@ -56,5 +56,3 @@ const BaseNodeIcon: React.FC<Props> = ({ icon, className }) => {
     </div>
   );
 };
-
-export default BaseNodeIcon;

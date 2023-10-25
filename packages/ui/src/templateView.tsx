@@ -11,7 +11,7 @@ interface TemplateViewProps extends CommonProps {
   profile: Profile | undefined;
 }
 
-function TemplateView({ template, profile, Link, Avatar }: TemplateViewProps) {
+export function TemplateView({ template, profile, Link, Avatar }: TemplateViewProps) {
   let flow = flowJsonFromBigFlow(template);
 
   return (
@@ -67,5 +67,3 @@ function TemplateView({ template, profile, Link, Avatar }: TemplateViewProps) {
     </>
   );
 }
-
-export default TemplateView;
