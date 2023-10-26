@@ -10,7 +10,8 @@
     "build": "tsup",
     "lint": "eslint src/",
     "dev": "tsup --watch",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "generate-supabase-types": "node ./src/supabase/generateSupabaseTypes.ts"
   },
   "dependencies": {
     "@supabase/postgrest-js": "^1.8.5",
