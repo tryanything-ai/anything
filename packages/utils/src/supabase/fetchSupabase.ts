@@ -1,58 +1,10 @@
 // @ts-ignore
 import { PostgrestBuilder } from "@supabase/postgrest-js";
-import { createClient } from "@supabase/supabase-js";
-
-import { Database } from "./types/supabase.types";
 import * as SUPABASE from "./types/supabase.types";
 
 export * from "./types/supabase.types";
 
-//For tauri because we need import.meta for vite build and cant find a good solution
-const loadEnv = (VAR_NAME: string): string => {
-  if (typeof process !== "undefined" && process.env) {
-    console.log("using process.env");
-    // Node.js environment
-    return process.env[VAR_NAME] || "";
-  } else {
-    console.log("using import.meta");
-    return import.meta.env[VAR_NAME] || "";
-  }
-};
-
-let supabaseUrl = loadEnv("NEXT_PUBLIC_SUPABASE_URL");
-
-// if (typeof process !== "undefined" && process.env) {
-//   console.log("using process.env");
-//   // Node.js environment
-//   supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-//     ? process.env.NEXT_PUBLIC_SUPABASE_URL
-//     : "";
-// } else {
-//   console.log("using import.meta");
-//   supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-//     ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-//     : "";
-// }
-
-let supabaseAnonKey = loadEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-
-// if (typeof process !== "undefined" && process.env) {
-//   console.log("using process.env");
-//   // Node.js environment
-//   supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     : "";
-// } else {
-//   console.log("using import.meta");
-//   supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     : "";
-// }
-
-// export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ? process.env.NEXT_PUBLIC_SUPABASE_URL : "";
-// const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : "";
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+import { supabase } from "./client";
 
 const templatesQuery = supabase
   .from("flow_templates")
