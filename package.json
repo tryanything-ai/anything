@@ -1,6 +1,8 @@
 {
   "private": true,
   "scripts": {
+    "fullstack": "pnpm i && pnpm build && pnpm --filter tauri --filter web dev",
+    "quick": "pnpm i && pnpm build && pnpm --filter tauri dev",
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
