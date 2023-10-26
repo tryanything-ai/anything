@@ -1,66 +1,81 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
-  "build": {
-    "beforeBuildCommand": "pnpm build",
-    "beforeDevCommand": "pnpm beforeDev",
-    "devPath": "http://localhost:5173",
-    "distDir": "../build"
-  },
-  "package": {
-    "productName": "Anything",
-    "version": "0.0.1"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false
+    "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+    "build": {
+      "beforeBuildCommand": "pnpm build",
+      "beforeDevCommand": "pnpm beforeDev",
+      "devPath": "http://localhost:5173",
+      "distDir": "../build"
     },
-    "bundle": {
-      "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
-      "deb": {
-        "depends": []
+    "package": {
+      "productName": "Anything",
+      "version": "0.0.0"
+    },
+    "tauri": {
+      "allowlist": {
+        "all": false,
+        "path": {
+            "all": true
+        },
+        "os": {
+            "all": true
+          },
+          "fs": {
+            "all": true,
+            "scope": ["$APP/**/*", "$DOWNLOAD/**/*", "$DOCUMENT/**/*"]
+          },
+          "shell": {
+            "all": false,
+            "open": true
+          }
       },
-      "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "xyz.anything.dev",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
+      "bundle": {
+        "active": true,
+        "category": "DeveloperTool",
+        "copyright": "",
+        "deb": {
+          "depends": []
+        },
+        "externalBin": [],
+        "icon": [
+          "icons/32x32.png",
+          "icons/128x128.png",
+          "icons/128x128@2x.png",
+          "icons/icon.icns",
+          "icons/icon.ico"
+        ],
+        "identifier": "xyz.anything.dev",
+        "longDescription": "",
+        "macOS": {
+          "entitlements": null,
+          "exceptionDomain": "",
+          "frameworks": [],
+          "providerShortName": null,
+          "signingIdentity": null
+        },
+        "resources": [],
+        "shortDescription": "",
+        "targets": "all",
+        "windows": {
+          "certificateThumbprint": null,
+          "digestAlgorithm": "sha256",
+          "timestampUrl": ""
+        }
       },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
-    },
-    "security": {
-      "csp": null
-    },
-    "updater": {
-      "active": false
-    },
-    "windows": [
-      {
-        "fullscreen": false,
-        "height": 600,
-        "resizable": true,
-        "title": "anything",
-        "width": 800
-      }
-    ]
+      "security": {
+        "csp": null
+      },
+      "updater": {
+        "active": false
+      },
+      "windows": [
+        {
+          "fullscreen": false,
+          "maximized": true,
+          "resizable": true,
+          "title": "Anything",
+          "fileDropEnabled": false
+        }
+      ]
+    }
   }
-}
+  

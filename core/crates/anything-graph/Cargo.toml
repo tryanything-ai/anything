@@ -1,0 +1,24 @@
+[package]
+name = "anything-graph"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anything-core = { path = "../anything-core" }
+
+chrono = { workspace = true, features = ["serde"] }
+daggy = { version = "0.8.0", features = ["serde-1"] }
+serde = { workspace = true, features = [] }
+derive_builder = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+tera = "1.19.0"
+url = { workspace = true }
+
+serde_json.workspace = true
+indexmap = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
+toml = "0.7.8"

@@ -14,6 +14,7 @@ module.exports = {
         'warn',
         { allowConstantExport: true },
       ],
+      "@types"
     },
   }
   
