@@ -1,12 +1,8 @@
-import { Session} from '@supabase/supabase-js'
+import { Session } from '@supabase/supabase-js'
 import { createContext, ReactNode,useContext, useEffect, useState } from "react";
 
-import { Database } from "../types/supabase.types";
-import { supabase } from "../utils/initSupabase";
+import { supabaseClient, Profile } from "utils";
 import { useSettingsContext } from "./SettingsProvider";
-
-
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 interface AuthenticationContextInterface {
   signInWithEmail: (email: string, password: string) => void;
@@ -40,7 +36,7 @@ export const AuthenticationProvider = ({
   const signUpWithEmail = async (email: string, password: string) => {
     if (webFeaturesDisabled) return null;
     if (!email || !password) return console.log("no email or password");
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabaseClient.auth.signUp({
       email,
       password,
       options: {
@@ -65,7 +61,7 @@ export const AuthenticationProvider = ({
   const signInWithEmail = async (email: string, password: string) => {
     if (webFeaturesDisabled) return null;
     if (!email || !password) return console.log("no email or password");
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -82,7 +78,7 @@ export const AuthenticationProvider = ({
   const fetchProfile = async (user_id: string) => {
     if (webFeaturesDisabled) return null;
     try {
-      let { data: profile, error } = await supabase
+      let { data: profile, error } = await supabaseClient
         .from("profiles")
         .select("*")
         .eq("id", user_id);
@@ -102,14 +98,14 @@ export const AuthenticationProvider = ({
 
   const signOut = async () => {
     if (webFeaturesDisabled) return null;
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     setProfile(null);
   };
 
   
   useEffect(() => {
     // Hydrate Session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
       console.log("session found in AuthenticationProvider", session)
       setSession(session)
     }); 
@@ -117,7 +113,7 @@ export const AuthenticationProvider = ({
     //Subscribe to changes in auth state
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       console.log("session changed in AuthenticationProvider", session)
       setSession(session)
     })

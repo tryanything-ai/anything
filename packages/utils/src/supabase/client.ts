@@ -19,4 +19,7 @@ const loadEnv = (VAR_NAME: string): string => {
 let supabaseUrl = loadEnv("NEXT_PUBLIC_SUPABASE_URL");
 let supabaseAnonKey = loadEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = createClient<Database>(
+  supabaseUrl,
+  supabaseAnonKey
+);

@@ -98,9 +98,6 @@ importers:
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.3.1
       fuse.js:
         specifier: ^6.6.2
         version: 6.6.2
