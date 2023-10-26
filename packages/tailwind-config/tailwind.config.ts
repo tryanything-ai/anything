@@ -2,7 +2,8 @@ import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}", "./index.html"],
+
   // https://github.com/vercel/turbo/tree/main/examples/with-tailwind
   theme: {
     // fontSize: {f
@@ -31,10 +32,10 @@ const config: Config = {
         //         "conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg)",
         //     },
       },
-      fontFamily: {
-        sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
-        display: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
-      },
+      // fontFamily: {
+      //   sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
+      //   display: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
+      // },
       colors: {
         slate: {
           1: "hsl(200, 7.0%, 8.8%)",
@@ -68,6 +69,7 @@ const config: Config = {
     },
   },
   plugins: [
+    require("@tailwindcss/typography"),
     require("tailwindcss-animate"),
     require("@tailwindcss/forms"),
     require("daisyui"),
