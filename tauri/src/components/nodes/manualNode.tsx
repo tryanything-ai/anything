@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnythingNodeProps } from "../../utils/nodeUtils";
-import { useSqlContext, EventInput } from "../../context/SqlProvider";
+import { useSqlContext } from "../../context/SqlProvider";
+import { EventInput } from "../../tauri_api/types";
 import { useParams } from "react-router-dom";
 import clsx from "clsx";
 import BaseNode from "./baseNode";
@@ -13,6 +14,7 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
   const { flow_name } = useParams();
   const [loading, setLoading] = useState(false);
   const createEvent = async () => {
+    console.log("Creating event");
     if (flow_name === undefined) return;
     if (flowFrontmatter === undefined) return;
     setLoading(true);

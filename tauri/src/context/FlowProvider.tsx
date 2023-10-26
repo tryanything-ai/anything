@@ -23,13 +23,10 @@ import {
   ReactFlowInstance,
 } from "reactflow";
 
-import { useTauriContext } from "./TauriProvider";
-import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { stringify, parse } from "iarna-toml-esm";
-import { watchImmediate } from "tauri-plugin-fs-watch-api";
 import { useParams } from "react-router-dom";
 import { useLocalFileContext } from "./LocalFileProvider";
-import { useEventLoopContext } from "./EventLoopProvider";
+import api from "../tauri_api/api";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -76,7 +73,6 @@ interface FlowContextInterface {
   addNode: (type: string, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
-  setFlowCenter: () => void;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -94,7 +90,6 @@ export const FlowContext = createContext<FlowContextInterface>({
   addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
-  setFlowCenter: () => {},
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -115,9 +110,7 @@ type SessionComplete = {
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
-  const { appDocuments } = useTauriContext();
   const { renameFlowFiles } = useLocalFileContext();
-  const { subscribeToEvent } = useEventLoopContext();
   const { flow_name } = useParams();
   const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -234,14 +227,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     [addNode]
   );
 
-  //TODO: get working someday
-  const setFlowCenter = () => {
-    console.log("setting flow center  center");
-    if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
-    reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
-    // reactFlowInstance.fitView();
-  };
-
   const updateFlowFrontmatter = async (
     flow_name: string,
     keysToUpdate: any
@@ -260,27 +245,31 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const writeToml = async (toml: string, explicit_flow_name?: string) => {
-    if (!appDocuments || !flow_name) {
-      throw new Error("appDocuments or flow_name is undefined");
-    }
-
-    console.log("writing toml in FlowProvider");
-    let name = explicit_flow_name ? explicit_flow_name : flow_name;
-    return await writeTextFile(
-      appDocuments + "/flows/" + name + "/flow.toml",
-      toml
-    );
+    // if (!flow_name) {
+    //   throw new Error("appDocuments or flow_name is undefined");
+    // }
+    // console.log("writing toml in FlowProvider");
+    // let name = explicit_flow_name ? explicit_flow_name : flow_name;
+    // await api.saveToml({ toml, flow_id: name });
+    // return await api.fs.writeTextFile(
+    //   appDocuments + "/flows/" + name + "/flow.toml",
+    //   toml
+    // );
   };
 
   const readToml = async () => {
     try {
-      if (!appDocuments || !flow_name) {
-        throw new Error("appDocuments or flow_name is undefined");
-      }
-      console.log("reading toml in FlowProvider");
-      return await readTextFile(
-        appDocuments + "/flows/" + flow_name + "/flow.toml"
-      );
+      //TODO:
+      //RUST_MIGRATION
+      // if (!flow_name) {
+      //   throw new Error("appDocuments or flow_name is undefined");
+      // }
+      // console.log("reading toml in FlowProvider");
+      // return await api.fs.readTextFile(
+      //   appDocuments + "/flows/" + flow_name + "/flow.toml"
+      // );
+
+      return "";
     } catch (error) {
       console.log("error reading toml in FlowProvider", error);
     }
@@ -312,21 +301,52 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (flow_name && !initialTomlLoaded && !loadingToml) {
+  //       console.log("hydrating initial TOML");
+  //       setLoadingToml(true);
+  //       await updateStateFromToml();
+  //       setInitialTomlLoaded(true);
+  //       setLoadingToml(false);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [flow_name, initialTomlLoaded]);
+
+  const fetchFlow = async () => {
+    try {
+      console.log("Fetch Flow By Name", flow_name);
+      if (!flow_name) return;
+      let flow: any = await api.getFlowByName(flow_name);
+      console.log(
+        "FLow Result in flow provider",
+        JSON.stringify(flow, null, 3)
+      );
+
+      // let flow_versions = await api.getFlowVersions(flow.flow_id);
+
+      // console.log(
+      //   "Flow versions response",
+      //   JSON.stringify(flow_versions, null, 3)
+      // );
+
+      let flow_versions = [
+        {"id": "a3893cf7-4683-40cd-9b42-b3de6e32e7e0", "version": "0.0.1", "description": ""}
+      ]
+    } catch (e) {
+      console.log("error in fetch flow", JSON.stringify(e, null, 3));
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (flow_name && appDocuments && !initialTomlLoaded && !loadingToml) {
-        console.log("hydrating initial TOML");
-        setLoadingToml(true);
-        await updateStateFromToml();
-        setInitialTomlLoaded(true);
-        setLoadingToml(false);
-      }
-    };
+    if (!flow_name) return;
 
-    fetchData();
-  }, [flow_name, appDocuments, initialTomlLoaded]);
+    fetchFlow();
+  }, [flow_name]);
 
-  //Debounced write state to toml
+  //Debounced write state to toml used for when we draggin things around.
   useEffect(() => {
     // Clear any existing timers
     if (timerRef.current) {
@@ -359,42 +379,32 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   }, [nodes, edges, flowFrontmatter]);
 
   //Watch TOML file for changes
-  useEffect(() => {
-    if (!initialTomlLoaded) return;
-    let stopWatching = () => {};
-    let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
+  // useEffect(() => {
+  //   if (!initialTomlLoaded) return;
+  //   let stopWatching = () => {};
+  //   let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
 
-    console.log(`Watching ${path} for changes`);
+  //   console.log(`Watching ${path} for changes`);
 
-    const watchThisFile = async () => {
-      stopWatching = await watchImmediate(path, (event) => {
-        console.log("TOML file changed");
-        updateStateFromToml();
-      });
-    };
+  //   const watchThisFile = async () => {
+  //     stopWatching = await api.watch.watchImmediate(path, (event) => {
+  //       console.log("TOML file changed");
+  //       updateStateFromToml();
+  //     });
+  //   };
 
-    watchThisFile();
-    return () => {
-      stopWatching();
-    };
-  }, [initialTomlLoaded]);
+  //   watchThisFile();
+  //   return () => {
+  //     stopWatching();
+  //   };
+  // }, [initialTomlLoaded]);
 
   //Watch event processing for fun ui updates
   useEffect(() => {
-    let unlisten = subscribeToEvent("event_processing", (event: any) => {
-      // console.log("setCurrentProcessingStatus", event);
+    let unlisten = api.subscribeToEvent("event_processing", (event: any) => {
       setCurrentProcessingStatus(event);
-    //   console.log(`event.session_id is: "${event.session_id}" and its type is ${typeof event.session_id}`);
-    // console.log(`currentProcessingSessionId is: "${currentProcessingSessionId}" and its type is ${typeof currentProcessingSessionId}`);
-
-      // if (event.session_id != currentProcessingSessionId) {
-      //   console.log("setCurrentProcessingSessionId", event.session_id);
-        // setCurrentProcessingSessionId(event.session_id);
-      // } else {
-      //   console.log("session_id is the same, not updating in context");
-      // }
     });
-    let unlisten2 = subscribeToEvent("session_complete", (event: any) => {
+    let unlisten2 = api.subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
     });
 
@@ -421,7 +431,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         addNode,
         setReactFlowInstance,
         updateFlowFrontmatter,
-        setFlowCenter,
       }}
     >
       {children}
