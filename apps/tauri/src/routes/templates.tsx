@@ -6,10 +6,9 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../components/avatar";
 import BaseSearch from "../components/baseSearch";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
-// import { Flow } from "../utils/newNodes";
 
 export default function Templates() {
-  const [allTemplates, setAllTemplates] = useState<BigFlow>();
+  const [allTemplates, setAllTemplates] = useState<BigFlow>([]);
   const [results, setResults] = useState<BigFlow>();
 
   const { fetchTemplates } = useMarketplaceContext();
@@ -17,7 +16,7 @@ export default function Templates() {
   useEffect(() => {
     async function fetchTemplatesAsync() {
       let templates = await fetchTemplates();
-
+      console.log("templates", JSON.stringify(templates, null, 3));
       setAllTemplates([...templates]);
     }
 
@@ -27,15 +26,15 @@ export default function Templates() {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex flex-grow flex-col items-center">
-        <div className="flex h-72 flex-col items-center justify-center ">
+        <div className="flex h-72 flex-col items-center justify-center">
           <div className="my-10">
             <h1 className="text-7xl">Choose a Template</h1>
           </div>
-          <BaseSearch
+          {/* <BaseSearch
             data={allTemplates}
             searchKey={["flow_name"]}
             onResultsChange={(results) => setResults(results)}
-          />
+          /> */}
         </div>
         <div className="flex w-full items-center justify-center"></div>
         {/* Grid of templates */}
