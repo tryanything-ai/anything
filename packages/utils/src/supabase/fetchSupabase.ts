@@ -5,9 +5,9 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types/supabase.types";
 import * as SUPABASE from "./types/supabase.types";
 
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 
-dotenv.config();
+// dotenv.config();
 // declare global {
 //   interface ImportMeta {
 //     env: Record<string, string>;
@@ -25,35 +25,38 @@ export * from "./types/supabase.types";
 //   ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 //   : "";
 
-let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? process.env.NEXT_PUBLIC_SUPABASE_URL
-  : "";
+// let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+//   ? process.env.NEXT_PUBLIC_SUPABASE_URL
+//   : "";
 
-// if (typeof process !== "undefined" && process.env) {
-//   // Node.js environment
-//   supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-//     ? process.env.NEXT_PUBLIC_SUPABASE_URL
-//     : "";
-// } else {
-//   supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-//     ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-//     : "";
-// }
+let supabaseUrl; 
 
-let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  : "";
+if (typeof process !== "undefined" && process.env) {
+  // Node.js environment
+  supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : "";
+} else {
+  supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
+    ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL
+    : "";
+}
 
-// if (typeof process !== "undefined" && process.env) {
-//   // Node.js environment
-//   supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     : "";
-// } else {
-//   supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//     : "";
-// }
+// let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//   ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//   : "";
+
+let supabaseAnonKey;
+if (typeof process !== "undefined" && process.env) {
+  // Node.js environment
+  supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : "";
+} else {
+  supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : "";
+}
 
 // export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 // const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ? process.env.NEXT_PUBLIC_SUPABASE_URL : "";
