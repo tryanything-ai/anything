@@ -4,7 +4,7 @@ import {
   fetchTemplateBySlug,
   fetchTemplates,
   getAProfileLink,
-  Profile,
+Profile,
 } from "utils";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
