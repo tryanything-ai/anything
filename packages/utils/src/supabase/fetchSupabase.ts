@@ -5,58 +5,49 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types/supabase.types";
 import * as SUPABASE from "./types/supabase.types";
 
-// import dotenv from "dotenv";
-
-// dotenv.config();
-// declare global {
-//   interface ImportMeta {
-//     env: Record<string, string>;
-//   }
-// }
-
 export * from "./types/supabase.types";
 
-// console.log("import.meta.env", import.meta.env);
+//For tauri because we need import.meta for vite build and cant find a good solution
+const loadEnv = (VAR_NAME: string): string => {
+  if (typeof process !== "undefined" && process.env) {
+    console.log("using process.env");
+    // Node.js environment
+    return process.env[VAR_NAME] || "";
+  } else {
+    console.log("using import.meta");
+    return import.meta.env[VAR_NAME] || "";
+  }
+};
 
-// const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-//   ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-//   : "";
-// const supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//   ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//   : "";
+let supabaseUrl = loadEnv("NEXT_PUBLIC_SUPABASE_URL");
 
-// let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-//   ? process.env.NEXT_PUBLIC_SUPABASE_URL
-//   : "";
+// if (typeof process !== "undefined" && process.env) {
+//   console.log("using process.env");
+//   // Node.js environment
+//   supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+//     ? process.env.NEXT_PUBLIC_SUPABASE_URL
+//     : "";
+// } else {
+//   console.log("using import.meta");
+//   supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
+//     ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL
+//     : "";
+// }
 
-let supabaseUrl; 
+let supabaseAnonKey = loadEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
-if (typeof process !== "undefined" && process.env) {
-  // Node.js environment
-  supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    ? process.env.NEXT_PUBLIC_SUPABASE_URL
-    : "";
-} else {
-  supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-    ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-    : "";
-}
-
-// let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//   ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-//   : "";
-
-let supabaseAnonKey;
-if (typeof process !== "undefined" && process.env) {
-  // Node.js environment
-  supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    : "";
-} else {
-  supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    : "";
-}
+// if (typeof process !== "undefined" && process.env) {
+//   console.log("using process.env");
+//   // Node.js environment
+//   supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//     ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//     : "";
+// } else {
+//   console.log("using import.meta");
+//   supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//     ? import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//     : "";
+// }
 
 // export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 // const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ? process.env.NEXT_PUBLIC_SUPABASE_URL : "";
