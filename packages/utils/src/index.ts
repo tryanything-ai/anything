@@ -14,6 +14,7 @@ export {
   fetchTemplateBySlug,
   fetchTemplates,
 } from "./supabase/fetchSupabase";
+export { supabaseClient } from "./supabase/client";
 export {
   flowJsonFromBigFlow,
   getAProfileLink,

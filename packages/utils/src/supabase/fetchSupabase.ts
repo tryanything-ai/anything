@@ -4,9 +4,9 @@ import * as SUPABASE from "./types/supabase.types";
 
 export * from "./types/supabase.types";
 
-import { supabase } from "./client";
+import { supabaseClient } from "./client";
 
-const templatesQuery = supabase
+const templatesQuery = supabaseClient
   .from("flow_templates")
   .select("*, flow_template_versions(*), tags(*), profiles(*)");
 
@@ -63,7 +63,7 @@ export const fetchProfileTemplates = async (
 
 export const fetchProfiles = async () => {
   try {
-    let { data: profiles, error } = await supabase
+    let { data: profiles, error } = await supabaseClient
       .from("profiles")
       .select("*")
       .eq("public", true);
@@ -81,7 +81,7 @@ export const fetchProfile = async (
   username: string
 ): Promise<SUPABASE.Profile | undefined> => {
   try {
-    let { data: profile, error } = await supabase
+    let { data: profile, error } = await supabaseClient
       .from("profiles")
       .select("*")
       .eq("username", username)

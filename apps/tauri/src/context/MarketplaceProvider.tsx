@@ -5,13 +5,11 @@ import {
   fetchTemplates,
   Profile,
 } from "utils";
-import { template } from "@supabase/auth-ui-shared";
+
 import { listen } from "@tauri-apps/api/event";
-import { localDataDir } from "@tauri-apps/api/path";
 import { createContext, ReactNode, useContext, useEffect } from "react";
 
 import api from "../tauri_api/api";
-import { supabase } from "../utils/initSupabase";
 import { useSettingsContext } from "./SettingsProvider";
 
 interface MarketplaceContextInterface {
