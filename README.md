@@ -47,10 +47,20 @@ Check out our [contributors guide](https://github.com/tryanything-ai/anything/tr
 
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
-cd tauri
-pnpm i
-pnpm start
+pnpm quick
 ```
+
+### 💻 Developing
+```bash
+pnpm dev
+```
+-> runs all shared packages in watch mode. 
+-> runs tauri && website && docs (soon)
+
+For a lighter weight experience just run dev on the app you are working on in /apps and remember to build or dev the packages it consumes if your working on them
+
+Repo structure based on turborepo tailwind template
+-> https://github.com/vercel/turbo/tree/main/examples/with-tailwind
 
 ### Flows are defined as TOML Files
 
