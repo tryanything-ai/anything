@@ -89,6 +89,9 @@ importers:
       ui:
         specifier: workspace:*
         version: link:../../packages/ui
+      utils:
+        specifier: workspace:*
+        version: link:../../packages/utils
     devDependencies:
       '@tauri-apps/cli':
         specifier: ^1.5.6
