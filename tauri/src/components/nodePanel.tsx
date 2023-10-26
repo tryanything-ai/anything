@@ -1,20 +1,27 @@
 import { useEffect, useState } from "react";
 import { Node } from "../utils/nodeUtils";
-import { NODES, getNodesForNodePanel } from "../utils/nodeGenerators";
+import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
+import BaseNodeIcon from "./baseNodeIcon";
 
 const NodePanel = () => {
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [triggerNodes, setTriggerNodes] = useState<Node[]>([]);
+  const [actionNodes, setActionNodes] = useState<Node[]>([]);
 
   useEffect(() => {
-    setNodes(getNodesForNodePanel());
+    setTriggerNodes(getTriggerNodes());
+    setActionNodes(getActionNodes());
   }, []);
 
   //TODO: add flows in some future where we can facilitate
   return (
-    <div className="flex flex-col h-full p-4 border-l border-gray-500 overflow-y-auto">
-      <h1 className="text-2xl font-bold">Nodes</h1>
-      {nodes.map((node: Node) => (
-        <NodeDnD node={node} key={node.nodePresentationData.title} />
+    <div className="flex flex-col h-full p-4 overflow-y-auto hide-scrollbar">
+      <h1 className="text-2xl font-bold pb-2">Triggers</h1>
+      {triggerNodes.map((node: Node) => (
+        <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+      ))}
+      <h1 className="text-2xl font-bold py-2">Actions</h1>
+      {actionNodes.map((node: Node) => (
+        <NodeDnD node={node} key={node.nodePresentationData.node_label} />
       ))}
     </div>
   );
@@ -41,21 +48,19 @@ const NodeDnD = ({ node }: { node: Node }) => {
 
   return (
     <div
-      className="btn btn-neutral mt-2 pb-2 max-w-md cursor-grab"
+      className="flex flex-row mt-2 pb-2 max-w-md cursor-grab bg-white bg-opacity-5 rounded-md p-2 items-center"
       onDragStart={(event) => onDragStart(event)}
       draggable
     >
-      {node.nodePresentationData.image_src ? (
-        <img
-          src={node.nodePresentationData.image_src}
-          alt={node.nodePresentationData.alt}
-          className="max-w-full max-h-full mt-2 ml-4"
-        />
-      ) : (
-        <h1 className="text-lg truncate overflow-ellipsis">
-          {node.nodePresentationData.title}
-        </h1>
-      )}
+      <BaseNodeIcon
+        icon={node.nodePresentationData.icon}
+        className={`h-9 w-9 bg-opacity-80 ${
+          node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
+        }`}
+      />
+      <h1 className="text-lg truncate overflow-ellipsis pl-2">
+        {node.nodePresentationData.node_label}
+      </h1>
     </div>
   );
 };

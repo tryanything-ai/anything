@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.4", features = [] }
 
 [dependencies]
-tauri = { version = "1.4", features = [ "fs-all", "os-all", "path-all", "shell-open"] }
+tauri = { version = "1.4", features = [ "shell-open", "os-all", "fs-all", "path-all"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
@@ -24,7 +24,7 @@ sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls" ] } #trying
 tokio = { version = "1", features = ["full"] } #for use in db also
 futures-core = "0.3"
 time = "0.3" # for parsing sql
-thiserror = "1.0" # for sql plugin adopted from tauri example
+thiserror = "1.0" # for sql plugin adopted fro`m tauri example
 lazy_static = "1.4.0"
 # llm = "0.1.1"
 anyhow = "1.0.71"
@@ -40,6 +40,7 @@ uuid = "1.4.1"
 chrono = "0.4.26"
 
 llm = { git = "https://github.com/rustformers/llm" , branch = "main", features= ["metal"] } #remove this when llm is published
+
 # inspiration for all rustformers cargo packages https://github.com/clarkmcc/chitchat/blob/main/src-tauri/Cargo.toml
 # [target.'cfg(target_os = "macos")'.dependencies]
 # llm = { git = "https://github.com/rustformers/llm", branch = "main", features= ["metal"] }
