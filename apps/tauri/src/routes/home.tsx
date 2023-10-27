@@ -9,10 +9,13 @@ export default function Home() {
   return (
     <div className="m-10 flex h-full w-full flex-row">
       {/* FLows */}
-
-      <div className="m-5 flex flex-col text-5xl">
+      <h1 className="md:display h2 w-full px-4 text-center md:w-[802px] md:px-0">
+        Build <span className="text-crimson-9">AI Automations</span> for your
+        startup
+      </h1>
+      {/* <div className="m-5 flex flex-col text-5xl">
         <div className="flex flex-row justify-between">
-          <div>Flows</div>
+          <div className="h1">Flows</div>
 
           <button
             className="btn btn-primary m-1 ml-4"
@@ -38,11 +41,11 @@ export default function Home() {
             );
           })}
         </ul>
-      </div>
+      </div> */}
 
       {/* Tables */}
 
-      <div className="m- m-5 flex w-96 flex-col text-5xl">
+      {/* <div className="m- m-5 flex w-96 flex-col text-5xl">
         <div className="flex flex-row justify-between">
           <div>Templates</div>
 
@@ -51,7 +54,7 @@ export default function Home() {
           </Link>
         </div>
         <ul></ul>
-      </div>
+      </div> */}
     </div>
   );
 }

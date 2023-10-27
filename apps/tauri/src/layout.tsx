@@ -18,8 +18,8 @@ export default function Layout() {
   const linkClass = "hover:text-primary w-10 h-10";
 
   return (
-    <div className="flex flex-row min-w-screen min-h-screen overflow-hidden overscroll-none">
-      <div className="w-14 flex flex-col gap-3 px-2 pt-3">
+    <div className="flex flex-row min-w-screen min-h-screen overflow-hidden overscroll-none text-slate-12 font-sans">
+      <div className="w-14 flex flex-col gap-3 px-2 pt-3 border- border-slate-6">
         <Link className={linkClass} to="/">
           <VscHome
             className={clsx(defaultClass, {
