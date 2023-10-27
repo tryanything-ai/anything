@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { useSettingsContext } from "../context/SettingsProvider";
 import themes from "../utils/themes";
+import PageLayout from "../pageLayout";
 
 export default function Settings() {
   const {
@@ -13,23 +14,12 @@ export default function Settings() {
     webFeaturesDisabled,
   } = useSettingsContext();
 
-  const text = `This is a master shutoff for all features that have are web based.
-  - Find Templates from Marketplace
-   - Product Analytics
-    - Crash Reporting Analytics`;
-
-  const newText = text.split("\n").map((str, index) => (
-    <React.Fragment key={index}>
-      {str}
-      <br />
-    </React.Fragment>
-  ));
   return (
-    <div className="flex flex-col h-full w-full p-6">
+    <PageLayout>
       <Link to="/settings/profile" className="btn btn-primary m-1 ml-4">
         Edit Profile
       </Link>
-      <div className="form-control w-52">
+      {/* <div className="form-control w-52">
         <label className="cursor-pointer label">
           <span className="label-text  text-2xl">Web Features</span>
           <input
@@ -41,9 +31,9 @@ export default function Settings() {
             checked={!webFeaturesDisabled}
           />
         </label>
-      </div>
-      <div>{newText}</div>
-      <div className="dropdown mt-2">
+      </div> */}
+      {/* <div>{newText}</div> */}
+      {/* <div className="dropdown mt-2">
         <label tabIndex={0} className="btn m-1">
           Choose Theme
         </label>
@@ -67,7 +57,7 @@ export default function Settings() {
             );
           })}
         </ul>
-      </div>
-    </div>
+      </div> */}
+    </PageLayout>
   );
 }
