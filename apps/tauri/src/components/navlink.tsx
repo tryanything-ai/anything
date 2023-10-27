@@ -18,11 +18,16 @@ const NavLink: React.FC<NavLinkProps> = ({ link, icon: Icon }) => {
   return (
     <Link
       to={link}
-      className={location.pathname === link ? selectedLinkClass : linkClass}
+      className={
+        location.pathname === link || (location.pathname.includes(link) && link !== "/")
+          ? selectedLinkClass
+          : linkClass
+      }
     >
       <Icon
         className={clsx(defaultButtonClass, {
-          [selectedButtonClass]: location.pathname === link,
+          [selectedButtonClass]:
+            location.pathname === link || (location.pathname.includes(link) && link !== "/"),
         })}
       />
     </Link>

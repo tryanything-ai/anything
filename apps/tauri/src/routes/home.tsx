@@ -35,7 +35,6 @@ export default function Home() {
       </div>
 
       {/* Tables */}
-
       <div className="flex flex-col w-1/3 pl-10">
         <PageHeader
           title="Templates"

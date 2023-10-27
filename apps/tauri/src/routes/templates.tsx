@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../components/avatar";
 import BaseSearch from "../components/baseSearch";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
+import PageLayout from "../pageLayout";
 
 export default function Templates() {
   const [allTemplates, setAllTemplates] = useState<BigFlow>([]);
@@ -24,7 +25,7 @@ export default function Templates() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <PageLayout>
       <div className="flex flex-grow flex-col items-center">
         <div className="flex h-72 flex-col items-center justify-center">
           <div className="my-10">
@@ -44,7 +45,7 @@ export default function Templates() {
           templates={allTemplates}
         />
       </div>
-    </div>
+    </PageLayout>
   );
 }
 

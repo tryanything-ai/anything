@@ -1,11 +1,12 @@
 import ModelCard from "../components/downloadedModelCard";
 import { useModelContext } from "../context/ModelsProvider";
+import PageLayout from "../pageLayout";
 
 export default function Models() {
   const { models, downloadModel, downloadedModels } = useModelContext();
 
   return (
-    <div className="flex flex-col w-full p-10 h-screen overflow-y-auto">
+    <PageLayout>
       {/* Downloaded Models */}
       <div className="flex flex-col text-5xl w-full">
         <div className="flex flex-col">
@@ -58,6 +59,6 @@ export default function Models() {
           })}
         </ul>
       </div>
-    </div>
+    </PageLayout>
   );
 }
