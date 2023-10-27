@@ -12,36 +12,38 @@ export default function Home() {
   return (
     <PageLayout>
       {/* FLows */}
-      <div className="flex flex-col w-1/3">
-        <PageHeader
-          title="Flows"
-          callback={createNewFlow}
-          buttonLabel="New Flow"
-        />
-        <ul>
-          {flows.map((flow) => {
-            return (
-              <BaseCard
-                as={Link}
-                key={flow.flow_name}
-                to={`flows/${flow.flow_name}`}
-                className="w-96"
-              >
-                <h2 className="card-title">{flow.flow_name}</h2>
-              </BaseCard>
-            );
-          })}
-        </ul>
-      </div>
+      <div className="flex flex-row w-full h-full">
+        <div className="flex flex-col w-1/3">
+          <PageHeader
+            title="Flows"
+            callback={createNewFlow}
+            buttonLabel="New Flow"
+          />
+          <ul>
+            {flows.map((flow) => {
+              return (
+                <BaseCard
+                  as={Link}
+                  key={flow.flow_name}
+                  to={`flows/${flow.flow_name}`}
+                  className="w-96"
+                >
+                  <h2 className="card-title">{flow.flow_name}</h2>
+                </BaseCard>
+              );
+            })}
+          </ul>
+        </div>
 
-      {/* Tables */}
-      <div className="flex flex-col w-1/3 pl-10">
-        <PageHeader
-          title="Templates"
-          callback={() => navigate("/templates")}
-          buttonLabel="Explore"
-        />
-        <ul></ul>
+        {/* Tables */}
+        <div className="flex flex-col w-1/3 pl-10">
+          <PageHeader
+            title="Templates"
+            callback={() => navigate("/templates")}
+            buttonLabel="Explore"
+          />
+          <ul></ul>
+        </div>
       </div>
     </PageLayout>
   );
