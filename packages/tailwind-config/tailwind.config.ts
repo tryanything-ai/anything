@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}", "./index.html"],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   // https://github.com/vercel/turbo/tree/main/examples/with-tailwind
   theme: {
     fontSize: {
@@ -68,9 +68,7 @@ const config: Config = {
     },
   },
   plugins: [
-    // require("@tailwindcss/typography"),
     require("tailwindcss-animate"),
-    require("@tailwindcss/forms"),
     require("daisyui"),
   ],
 };

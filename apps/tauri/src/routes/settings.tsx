@@ -16,24 +16,26 @@ export default function Settings() {
 
   return (
     <PageLayout>
-      <Link to="/settings/profile" className="btn btn-primary m-1 ml-4">
-        Edit Profile
-      </Link>
-      {/* <div className="form-control w-52">
-        <label className="cursor-pointer label">
-          <span className="label-text  text-2xl">Web Features</span>
-          <input
-            type="checkbox"
-            onChange={() => {
-              setWebFeaturesDisabled(!webFeaturesDisabled);
-            }}
-            className="toggle toggle-primary"
-            checked={!webFeaturesDisabled}
-          />
-        </label>
-      </div> */}
-      {/* <div>{newText}</div> */}
-      {/* <div className="dropdown mt-2">
+      <div className="flex flex-col">
+        <Link to="/settings/profile" className="btn btn-primary m-1 ml-4">
+          Edit Profile
+        </Link>
+
+        <div className="form-control w-96 mt-10">
+          <label className="cursor-pointer label">
+            <span className="label-text  text-2xl">Web Features</span>
+            <input
+              type="checkbox"
+              onChange={() => {
+                setWebFeaturesDisabled(!webFeaturesDisabled);
+              }}
+              className="toggle toggle-primary"
+              checked={!webFeaturesDisabled}
+            />
+          </label>
+        </div>
+        {/* <div>{newText}</div> */}
+        {/* <div className="dropdown mt-2">
         <label tabIndex={0} className="btn m-1">
           Choose Theme
         </label>
@@ -58,6 +60,7 @@ export default function Settings() {
           })}
         </ul>
       </div> */}
+      </div>
     </PageLayout>
   );
 }
