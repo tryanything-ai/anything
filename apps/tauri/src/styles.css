@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* complement same fonts on marketing site */
+:root {
+  --font-inter: "Inter", sans-serif;
+  --font-dm-sans: "DM Sans", sans-serif;
+}
+
+/* For Tauri */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -29,11 +36,8 @@
   opacity: 1;
 }
 
-/* From web for consistency? */
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
-/* 
+/* From web for consistency */
+
 @layer components {
   .display {
     @apply font-display text-[80px] font-semibold leading-[88px] tracking-[-2%];
@@ -95,4 +99,4 @@
   .caption-s-semibold {
     @apply font-sans text-[12px] font-semibold leading-[16px] tracking-[0%];
   }
-} */
+}
