@@ -34,6 +34,7 @@ import Tables from "./routes/tables";
 import Template from "./routes/template";
 import Templates from "./routes/templates";
 import Vectors from "./routes/vectors";
+import { DeeplinkProvider } from "./context/DeeplinkProvider";
 
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
@@ -103,6 +104,10 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
+        path: "/login/:",
+        element: <Login />,
+      },
+      {
         path: "/settings",
         element: <Settings />,
       },
@@ -117,23 +122,23 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <SettingsProvider>
-      <AuthenticationProvider>
-        <MarketplaceProvider>
-          <NotificationsProvider>
-            <PostHogProvider client={posthogClient}>
-              <TauriProvider>
-                <LocalFileProvider>
-                  <ModelProvider>
-                    <SqlProvider>
-                      <RouterProvider router={router} />
-                    </SqlProvider>
-                  </ModelProvider>
-                </LocalFileProvider>
-              </TauriProvider>
-            </PostHogProvider>
-          </NotificationsProvider>
-        </MarketplaceProvider>
-      </AuthenticationProvider>
+        <AuthenticationProvider>
+          <MarketplaceProvider>
+            <NotificationsProvider>
+              <PostHogProvider client={posthogClient}>
+                <TauriProvider>
+                  <LocalFileProvider>
+                    <ModelProvider>
+                      <SqlProvider>
+                        <RouterProvider router={router} />
+                      </SqlProvider>
+                    </ModelProvider>
+                  </LocalFileProvider>
+                </TauriProvider>
+              </PostHogProvider>
+            </NotificationsProvider>
+          </MarketplaceProvider>
+        </AuthenticationProvider>
     </SettingsProvider>
   </React.StrictMode>
 );

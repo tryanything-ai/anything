@@ -39,7 +39,7 @@ export function TemplateView({ template, profile, Link, Avatar }: TemplateViewPr
           {/* //TODO: deeplink or no */}
           <button>
             {/* <Deeplink href="anything://templateid">Open in App </Deeplink> */}
-            <a href={`anything://templateid`}>Open in App</a>
+            <a href={`anything://templates/${template.slug}`}>Open in App</a>
           </button>
         </div>
       </div>
