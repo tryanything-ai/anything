@@ -19,20 +19,20 @@ export default function Settings() {
   return (
     <PageLayout>
       <div className="flex flex-col gap-4">
-        <Link to="/settings/profile" className="btn btn-primary">
+        <Link to="/settings/profile" className="btn btn-primary w-72">
           Edit Profile
         </Link>
         {session ? (
-          <div onClick={signOut} className="btn btn-ghost">
+          <div onClick={signOut} className="btn btn-ghost w-72">
             Sign Out
           </div>
         ) : (
-          <Link to="/login" className="btn btn-primary">
+          <Link to="/login" className="btn btn-primary w-72">
             Sign In
           </Link>
         )}
 
-        <div className="form-control w-96">
+        <div className="form-control w-72">
           <label className="cursor-pointer label">
             <span className="label-text  text-2xl">Web Features</span>
             <input
