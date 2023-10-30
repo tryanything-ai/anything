@@ -4,7 +4,7 @@ import {
   fetchTemplateBySlug,
   fetchTemplates,
   getAProfileLink,
-Profile,
+  Profile,
 } from "utils";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
@@ -79,10 +79,26 @@ export default async function Template({ params }: Props) {
     : undefined;
 
   // let flow = flowJsonFromBigFlow(template) as FlowTemplate;
+  const Action = ({ slug }) => {
+    return (
+      <div className="flex flex-col gap-3 md:flex-row">
+        <div className="btn btn-sm btn-primary md:btn-md">
+          Download Anything
+        </div>
+        <a
+          className="btn btn-sm btn-primary md:btn-md"
+          href={`anything://templates/${slug}`}
+        >
+          Open in App
+        </a>
+      </div>
+    );
+  };
 
   return (
     <div className="mx-4 my-6 flex max-w-4xl flex-col md:mx-auto md:my-16">
       <TemplateView
+        ActionComponent={() => <Action slug={template.slug} />}
         template={template}
         profile={profile}
         Avatar={Avatar}
