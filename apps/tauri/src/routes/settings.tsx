@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useSettingsContext } from "../context/SettingsProvider";
 import themes from "../utils/themes";
 import PageLayout from "../pageLayout";
-import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
+import { useAuthenticationContext } from "../context/AuthenticaionProvider";
 
 export default function Settings() {
   const {
@@ -14,7 +14,7 @@ export default function Settings() {
     setWebFeaturesDisabled,
     webFeaturesDisabled,
   } = useSettingsContext();
-  const { signOut, session } = useAuthenticaionContext();
+  const { signOut, session } = useAuthenticationContext();
 
   return (
     <PageLayout>

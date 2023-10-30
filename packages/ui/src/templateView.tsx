@@ -61,7 +61,7 @@ export function TemplateView({
       <div className="mb-2 mt-8 font-semibold">Actions</div>
       <div>
         {flow.actions.map((action: any) => {
-          return <BaseNodeWeb node={action} key={action.node_label} />;
+          return <BaseNodeWeb key={action.node_name} node={action} />;
         })}
       </div>
       <div className="mb-2 mt-8 font-semibold">Tags</div>

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
-import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
+import { useAuthenticationContext } from "../context/AuthenticaionProvider";
 
 export default function EditAvatar({ profile_id, avatar_url, size }) {
   const [avatarUrl, setAvatarUrl] = useState(avatar_url);
   const [uploading, setUploading] = useState(false);
   const { uploadAvatar } = useMarketplaceContext();
-  const { fetchProfile } = useAuthenticaionContext();
+  const { fetchProfile } = useAuthenticationContext();
 
   async function _uploadAvatar(event) {
     try {
@@ -28,12 +28,11 @@ export default function EditAvatar({ profile_id, avatar_url, size }) {
         throw new Error("No result from Upload Avatar");
       }
 
-      
-      setAvatarUrl(result.avatar_url);  
+      setAvatarUrl(result.avatar_url);
       //refresh profile in user authentication system
       fetchProfile();
     } catch (error) {
-      console.log("Error uploading avatar: ", error.message); 
+      console.log("Error uploading avatar: ", error.message);
     } finally {
       setUploading(false);
     }
@@ -44,27 +43,18 @@ export default function EditAvatar({ profile_id, avatar_url, size }) {
       {avatarUrl ? (
         <div className="avatar pl-10">
           <div className="w-56 h-56 rounded-full">
-            <img
-              src={avatarUrl}
-              alt={""}
-            />
+            <img src={avatarUrl} alt={""} />
           </div>
         </div>
       ) : (
         <div className="avatar pl-10">
-        <div className="w-56 h-56 rounded-full">
-          <img
-            src={"placeholder image png"}
-            alt={""}
-          />
+          <div className="w-56 h-56 rounded-full">
+            <img src={"placeholder image png"} alt={""} />
+          </div>
         </div>
-      </div>
       )}
       <div style={{ width: size }}>
-        <label
-          htmlFor="single"
-          className="btn btn-primary w-56 ml-10"
-        >
+        <label htmlFor="single" className="btn btn-primary w-56 ml-10">
           {uploading ? "Uploading ..." : "Upload"}
         </label>
 
