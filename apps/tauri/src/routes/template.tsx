@@ -7,6 +7,7 @@ import { Avatar } from "../components/avatar";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
 import PageLayout from "../pageLayout";
 
+
 const Template = () => {
   const { slug } = useParams<{
     slug: string;
@@ -46,11 +47,16 @@ const Template = () => {
     fetchTemplate();
   }, [slug]);
 
+  const Action = () => {
+    return <div className="btn btn-primary">Use Template</div>;
+  };
+
   return (
     <PageLayout>
       <div className="flex flex-col md:mx-auto">
         {template ? (
           <TemplateView
+            ActionComponent={Action}
             template={template}
             profile={profile}
             Link={Link}
