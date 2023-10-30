@@ -1,28 +1,10 @@
 import "./styles.css";
 import "ui/styles.css";
-// import "unfonts.css";
 
-import posthogClient from "posthog-js";
-import { PostHogProvider } from "posthog-js/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import { AuthenticationProvider } from "./context/AuthenticaionProvider";
-import { LocalFileProvider } from "./context/LocalFileProvider";
-import { MarketplaceProvider } from "./context/MarketplaceProvider";
-import { ModelProvider } from "./context/ModelsProvider";
-import { NotificationsProvider } from "./context/NotificationProvider";
-import { SettingsProvider } from "./context/SettingsProvider";
-import { SqlProvider } from "./context/SqlProvider";
-// Contexts
-import { TauriProvider } from "./context/TauriProvider";
-import ErrorPage from "./error-page";
-import Layout from "./layout";
-import ChatInterface from "./routes/chatInterface";
-import Chats from "./routes/chats";
-import FlowEditor from "./routes/flowEditor";
-import Flows from "./routes/flows";
 // Routes
 import Home from "./routes/home";
 import Login from "./routes/login";
@@ -34,20 +16,14 @@ import Tables from "./routes/tables";
 import Template from "./routes/template";
 import Templates from "./routes/templates";
 import Vectors from "./routes/vectors";
-import { DeeplinkProvider } from "./context/DeeplinkProvider";
-
-const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
-const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
-
-if (import.meta.env.mode === "production") {
-  console.log("Initializing PostHog in production");
-  posthogClient.init(VITE_PUBLIC_POSTHOG_KEY, {
-    api_host: VITE_PUBLIC_POSTHOG_HOST,
-  });
-} else {
-  // console.log("Initializing PostHog in development");
-  // console.log("import.meta.env", import.meta.env);
-}
+import ErrorPage from "./error-page";
+import Layout from "./layout";
+import ChatInterface from "./routes/chatInterface";
+import Chats from "./routes/chats";
+import FlowEditor from "./routes/flowEditor";
+import Flows from "./routes/flows";
+import UpdatePassword from "./routes/updatePassword";
+import Context from "./context/context";
 
 const router = createBrowserRouter([
   {
@@ -104,8 +80,8 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
-        path: "/login/:",
-        element: <Login />,
+        path: "/update-password",
+        element: <UpdatePassword />,
       },
       {
         path: "/settings",
@@ -121,24 +97,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <SettingsProvider>
-        <AuthenticationProvider>
-          <MarketplaceProvider>
-            <NotificationsProvider>
-              <PostHogProvider client={posthogClient}>
-                <TauriProvider>
-                  <LocalFileProvider>
-                    <ModelProvider>
-                      <SqlProvider>
-                        <RouterProvider router={router} />
-                      </SqlProvider>
-                    </ModelProvider>
-                  </LocalFileProvider>
-                </TauriProvider>
-              </PostHogProvider>
-            </NotificationsProvider>
-          </MarketplaceProvider>
-        </AuthenticationProvider>
-    </SettingsProvider>
+    {/* <Context> */}
+      <RouterProvider router={router} />
+    {/* </Context> */}
   </React.StrictMode>
 );
