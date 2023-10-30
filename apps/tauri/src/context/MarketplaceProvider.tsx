@@ -1,6 +1,7 @@
 import {
   BigFlow,
   fetchProfile,
+  fetchProfileTemplates,
   fetchTemplateBySlug,
   fetchTemplates,
   Profile,
@@ -18,6 +19,7 @@ interface MarketplaceContextInterface {
   updateTemplate: (template: any) => void;
   fetchTemplateBySlug: (slug: string) => Promise<BigFlow | undefined>;
   fetchProfile: (username: string) => Promise<Profile | undefined>;
+  fetchProfileTemplates: (username: string) => Promise<BigFlow | undefined>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
@@ -25,6 +27,7 @@ export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   fetchTemplates: () => Promise.resolve([]),
   fetchTemplateBySlug: () => Promise.resolve(undefined),
   fetchProfile: () => Promise.resolve(undefined),
+  fetchProfileTemplates: () => Promise.resolve(undefined),
   saveTemplate: () => {},
   updateTemplate: () => {},
 });
@@ -92,6 +95,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     else return profile as Profile;
   };
 
+  const _fetchProfileTemplates = async (username: string) => {
+    if (webFeaturesDisabled) return undefined;
+    
+    let templates = await fetchProfileTemplates(username);
+    if (!templates) return undefined;
+    else return templates;
+  }
+
   const saveTemplate = (template: any) => {
     if (webFeaturesDisabled) return false;
 
@@ -113,6 +124,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         updateTemplate,
         fetchTemplateBySlug: _fetchTemplateBySlug,
         fetchProfile: _fetchProfile,
+        fetchProfileTemplates: _fetchProfileTemplates,
       }}
     >
       {children}
