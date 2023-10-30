@@ -21,6 +21,7 @@ interface AuthenticationContextInterface {
     refresh_token: string
   ) => Promise<Session | null>;
   signOut: () => void;
+  fetchProfile: () => void; 
   profile: Profile | null;
   session: Session | null;
 }
@@ -32,7 +33,8 @@ export const AuthenticationContext =
     createSession: () => null,
     exchangeAccessTokenForSession: () => {},
     getSession: () => {},
-    signOut: () => {},
+    signOut: () => { },
+    fetchProfile: () => { },
     profile: null,
     session: null,
   });
@@ -132,10 +134,16 @@ export const AuthenticationProvider = ({
     }
   };
 
+  const fetchCurrentUserProfile = async () => {
+    if (profile.id) {
+      await fetchProfile(profile.id);
+    }
+  }
+
   const signOut = async () => {
     if (webFeaturesDisabled) return null;
     await supabaseClient.auth.signOut();
-    ß;
+  
     setProfile(null);
   };
 
@@ -191,6 +199,7 @@ export const AuthenticationProvider = ({
     };
   }, []);
 
+
   return (
     <AuthenticationContext.Provider
       value={{
@@ -198,6 +207,7 @@ export const AuthenticationProvider = ({
         signUpWithEmail,
         signOut,
         profile,
+        fetchProfile: fetchCurrentUserProfile, 
         exchangeAccessTokenForSession,
         session,
         getSession,
