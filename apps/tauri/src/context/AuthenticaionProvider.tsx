@@ -12,34 +12,34 @@ import { useSettingsContext } from "./SettingsProvider";
 import { useNavigate } from "react-router-dom";
 
 interface AuthenticationContextInterface {
-  signInWithEmail: (email: string, password: string) => void;
-  signUpWithEmail: (email: string, password: string) => void;
-  exchangeAccessTokenForSession: (access_token: string) => void;
+  // signInWithEmail: (email: string, password: string) => void;
+  // signUpWithEmail: (email: string, password: string) => void;
+  // exchangeAccessTokenForSession: (access_token: string) => void;
   getSession: () => void;
   createSession: (
     access_token: string,
     refresh_token: string
   ) => Promise<Session | null>;
   signOut: () => void;
-  fetchProfile: () => void; 
+  fetchProfile: () => void;
   profile: Profile | null;
   session: Session | null;
 }
 
 export const AuthenticationContext =
   createContext<AuthenticationContextInterface>({
-    signInWithEmail: () => {},
-    signUpWithEmail: () => {},
+    // signInWithEmail: () => {},
+    // signUpWithEmail: () => {},
     createSession: () => null,
-    exchangeAccessTokenForSession: () => {},
+    // exchangeAccessTokenForSession: () => {},
     getSession: () => {},
-    signOut: () => { },
-    fetchProfile: () => { },
+    signOut: () => {},
+    fetchProfile: () => {},
     profile: null,
     session: null,
   });
 
-export const useAuthenticaionContext = () => useContext(AuthenticationContext);
+export const useAuthenticationContext = () => useContext(AuthenticationContext);
 
 //This is basically strictly for template sharing, and sharing in genreal
 //this is not for integration management which should be done closer to rust
@@ -71,60 +71,61 @@ export const AuthenticationProvider = ({
     return data.session;
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
-    if (webFeaturesDisabled) return null;
-    if (!email || !password) return console.log("no email or password");
-    const { data, error } = await supabaseClient.auth.signUp({
-      email,
-      password,
-      options: {
-        //TODO: deeplink?
-        emailRedirectTo: `${location.origin}/auth/callback`,
-      },
-    });
+  // const signUpWithEmail = async (email: string, password: string) => {
+  //   if (webFeaturesDisabled) return null;
+  //   if (!email || !password) return console.log("no email or password");
+  //   const { data, error } = await supabaseClient.auth.signUp({
+  //     email,
+  //     password,
+  //     options: {
+  //       //TODO: deeplink?
+  //       emailRedirectTo: `${location.origin}/auth/callback`,
+  //     },
+  //   });
 
-    if (error) {
-      console.log(error);
-      return;
-    }
+  //   if (error) {
+  //     console.log(error);
+  //     return;
+  //   }
 
-    console.log("Signup data", JSON.stringify(data, null, 3));
+  //   console.log("Signup data", JSON.stringify(data, null, 3));
 
-    if (data && data.user) {
-      //hydrate profile
-      await fetchProfile(data.user.id);
-    }
-  };
+  //   if (data && data.user) {
+  //     //hydrate profile
+  //     await fetchProfile(data.user.id);
+  //   }
+  // };
 
-  const signInWithEmail = async (email: string, password: string) => {
-    if (webFeaturesDisabled) return null;
-    if (!email || !password) return console.log("no email or password");
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password,
-    });
+  // const signInWithEmail = async (email: string, password: string) => {
+  //   if (webFeaturesDisabled) return null;
+  //   if (!email || !password) return console.log("no email or password");
+  //   const { data, error } = await supabaseClient.auth.signInWithPassword({
+  //     email,
+  //     password,
+  //   });
 
-    if (error) {
-      console.log(error);
-      return;
-    }
-    console.log("Login data", JSON.stringify(data, null, 3));
-    //hydrate profile
-    await fetchProfile(data.user.id);
-  };
+  //   if (error) {
+  //     console.log(error);
+  //     return;
+  //   }
+  //   console.log("Login data", JSON.stringify(data, null, 3));
+  //   //hydrate profile
+  //   await fetchProfile(data.user.id);
+  // };
 
-  const fetchProfile = async (user_id: string) => {
+  const fetchProfileFromUserId = async (user_id: string) => {
     if (webFeaturesDisabled) return null;
     try {
       let { data: profile, error } = await supabaseClient
         .from("profiles")
         .select("*")
-        .eq("id", user_id);
+        .eq("id", user_id)
+        .single(); 
 
       if (error) throw error;
       if (profile) {
-        setProfile(profile[0]);
-        return profile[0];
+        setProfile(profile);
+        return profile; 
       } else {
         return undefined;
       }
@@ -135,28 +136,30 @@ export const AuthenticationProvider = ({
   };
 
   const fetchCurrentUserProfile = async () => {
-    if (profile.id) {
-      await fetchProfile(profile.id);
+    if (profile && profile.id) {
+      await fetchProfileFromUserId(profile.id);
+    } else if (session && session.user && session.user.id) {
+      await fetchProfileFromUserId(session.user.id);
+    } else {
+      console.log("no profile or session user id found to fetchProfile");
     }
-  }
+  };
 
   const signOut = async () => {
-    if (webFeaturesDisabled) return null;
+    // if (webFeaturesDisabled) return null;
     await supabaseClient.auth.signOut();
-  
+    setSession(null);
     setProfile(null);
   };
 
-  const exchangeAccessTokenForSession = async (code: string) => {
-    let res = await supabaseClient.auth.exchangeCodeForSession(code);
-    console.log("exchangeCodeForSession", JSON.stringify(res, null, 3));
-  };
+  // const exchangeAccessTokenForSession = async (code: string) => {
+  //   let res = await supabaseClient.auth.exchangeCodeForSession(code);
+  //   console.log("exchangeCodeForSession", JSON.stringify(res, null, 3));
+  // };
 
   useEffect(() => {
     //update profile if sesssion exists
-    if (session) {
-      fetchProfile(session.user.id);
-    }
+    fetchCurrentUserProfile(); 
   }, [session]);
 
   const getSession = async () => {
@@ -185,12 +188,15 @@ export const AuthenticationProvider = ({
         console.log("SIGNED_IN");
         navigate("/");
       }
+     
       console.log("event", JSON.stringify(event, null, 3));
       console.log(
         "session changed in AuthenticationProvider",
         JSON.stringify(session, null, 3)
       );
       setSession(session);
+      // fetchProfileFromUserId(session?.user?.id);
+      // fethc
     });
 
     return () => {
@@ -199,16 +205,15 @@ export const AuthenticationProvider = ({
     };
   }, []);
 
-
   return (
     <AuthenticationContext.Provider
       value={{
-        signInWithEmail,
-        signUpWithEmail,
+        // signInWithEmail,
+        // signUpWithEmail,
         signOut,
         profile,
-        fetchProfile: fetchCurrentUserProfile, 
-        exchangeAccessTokenForSession,
+        fetchProfile: fetchCurrentUserProfile,
+        // exchangeAccessTokenForSession,
         session,
         getSession,
         createSession: createSessionFromUrl,

@@ -6,7 +6,7 @@ import { supabaseClient } from "utils";
 import PageLayout from "../pageLayout";
 // import { useLocation } from "react-router-dom";
 
-import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
+import { useAuthenticationContext } from "../context/AuthenticaionProvider";
 
 export default function UpdatePassword() {
   // const { getSession } = useAuthenticaionContext();

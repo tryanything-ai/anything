@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { useAuthenticaionContext } from "./context/AuthenticaionProvider";
+import { useAuthenticationContext } from "./context/AuthenticaionProvider";
 import { Link } from "react-router-dom";
 
 export default function PageLayout({
@@ -9,7 +9,7 @@ export default function PageLayout({
   children: ReactNode;
   requireAuth?: boolean;
 }) {
-  const { session } = useAuthenticaionContext();
+  const { session } = useAuthenticationContext();
 
   if (!session && requireAuth) {
     return (
