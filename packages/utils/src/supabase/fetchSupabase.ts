@@ -95,3 +95,21 @@ export const fetchProfile = async (
     return undefined;
   }
 };
+
+export const updateProfile = async (profile_id: string, updateData: any) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .update(updateData)
+      .eq("id", profile_id)
+      .select()
+      .single(); 
+
+    if (error) throw error;
+
+    return data;
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
+};

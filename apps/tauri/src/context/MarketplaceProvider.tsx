@@ -5,8 +5,8 @@ import {
   fetchTemplateBySlug,
   fetchTemplates,
   Profile,
+  updateProfile,
 } from "utils";
-
 
 import { createContext, ReactNode, useContext } from "react";
 
@@ -20,6 +20,10 @@ interface MarketplaceContextInterface {
   fetchTemplateBySlug: (slug: string) => Promise<BigFlow | undefined>;
   fetchProfile: (username: string) => Promise<Profile | undefined>;
   fetchProfileTemplates: (username: string) => Promise<BigFlow | undefined>;
+  updateProfile: (
+    profile_id: string,
+    data: any
+  ) => Promise<Profile | undefined>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
@@ -28,6 +32,7 @@ export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   fetchTemplateBySlug: () => Promise.resolve(undefined),
   fetchProfile: () => Promise.resolve(undefined),
   fetchProfileTemplates: () => Promise.resolve(undefined),
+  updateProfile: () => Promise.resolve(undefined),
   saveTemplate: () => {},
   updateTemplate: () => {},
 });
@@ -97,11 +102,11 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
   const _fetchProfileTemplates = async (username: string) => {
     if (webFeaturesDisabled) return undefined;
-    
+
     let templates = await fetchProfileTemplates(username);
     if (!templates) return undefined;
     else return templates;
-  }
+  };
 
   const saveTemplate = (template: any) => {
     if (webFeaturesDisabled) return false;
@@ -115,6 +120,13 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     //Do supabase stuff.
   };
 
+  const _updateProfile = async (profile_id: string, data: any) => {
+    if (webFeaturesDisabled) return undefined;
+    let proflile = await updateProfile(profile_id, data);
+    if (!proflile) return undefined;
+    else return proflile;
+  };
+
   return (
     <MarketplaceContext.Provider
       value={{
@@ -125,6 +137,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         fetchTemplateBySlug: _fetchTemplateBySlug,
         fetchProfile: _fetchProfile,
         fetchProfileTemplates: _fetchProfileTemplates,
+        updateProfile: _updateProfile,
       }}
     >
       {children}
