@@ -6,6 +6,7 @@ import {
   fetchTemplates,
   Profile,
   updateProfile,
+  uploadAvatar,
 } from "utils";
 
 import { createContext, ReactNode, useContext } from "react";
@@ -24,6 +25,11 @@ interface MarketplaceContextInterface {
     profile_id: string,
     data: any
   ) => Promise<Profile | undefined>;
+  uploadAvatar: (
+    profile_id: string,
+    filePath: string,
+    file: any
+  ) => Promise<any>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
@@ -33,6 +39,7 @@ export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   fetchProfile: () => Promise.resolve(undefined),
   fetchProfileTemplates: () => Promise.resolve(undefined),
   updateProfile: () => Promise.resolve(undefined),
+  uploadAvatar: () => Promise.resolve(undefined),
   saveTemplate: () => {},
   updateTemplate: () => {},
 });
@@ -127,6 +134,20 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     else return proflile;
   };
 
+  const _uploadAvatar = async (
+    profile_id: string,
+    filePath: string,
+    file: any
+  ): Promise<Profile | unknown> => {
+    try {
+      const result = await uploadAvatar(profile_id, filePath, file);
+      console.log(result);
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <MarketplaceContext.Provider
       value={{
@@ -138,6 +159,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         fetchProfile: _fetchProfile,
         fetchProfileTemplates: _fetchProfileTemplates,
         updateProfile: _updateProfile,
+        uploadAvatar: _uploadAvatar,
       }}
     >
       {children}

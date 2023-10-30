@@ -3,6 +3,7 @@ import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
 import PageLayout from "../pageLayout";
 import { useNavigate } from "react-router-dom";
 import { SubmitHandler, useForm } from "react-hook-form";
+import EditAvatar from "../components/editAvatar";
 
 import {
   FaGithub,
@@ -39,8 +40,6 @@ export default function EditProfile() {
     formState: { errors, isDirty },
   } = useForm<Inputs>();
 
-  const uploadAvatar = () => {};
-
   const onSubmit: SubmitHandler<Inputs> = async (data, event) => {
     try {
       setLoading(true);
@@ -68,24 +67,12 @@ export default function EditProfile() {
       {profile ? (
         <div className="flex flex-col h-full w-full gap-5 py-16">
           {/* Profile */}
-          <div className="avatar pl-10">
-            <div className="w-56 h-56 rounded-full">
-              <img
-                // width={20}
-                // height={20}
-                src={profile.avatar_url ? profile.avatar_url : ""}
-                alt={profile.username ? profile.username : ""}
-              />
-            </div>
-          </div>
-          <button
-            className="btn btn-primary w-56 ml-10"
-            onClick={() => {
-              uploadAvatar();
-            }}
-          >
-            Upload Avatar
-          </button>
+          <EditAvatar
+            key={profile.avatar_url}
+            profile_id={profile.id}
+            avatar_url={profile.avatar_url}
+            size={50}
+          />
           {/* Form */}
           <form
             onSubmit={handleSubmit(onSubmit)}

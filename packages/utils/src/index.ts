@@ -6,6 +6,7 @@ export {
   fetchTemplateBySlug,
   fetchTemplates,
   updateProfile, 
+  uploadAvatar, 
 } from "./supabase/fetchSupabase";
 export { supabaseClient } from "./supabase/client";
 export {

@@ -3,6 +3,7 @@ import { PostgrestBuilder } from "@supabase/postgrest-js";
 import * as SUPABASE from "./types/supabase.types";
 
 export * from "./types/supabase.types";
+import * as types from "./types/supabase.types";
 
 import { supabaseClient } from "./client";
 
@@ -103,7 +104,7 @@ export const updateProfile = async (profile_id: string, updateData: any) => {
       .update(updateData)
       .eq("id", profile_id)
       .select()
-      .single(); 
+      .single();
 
     if (error) throw error;
 
@@ -111,5 +112,43 @@ export const updateProfile = async (profile_id: string, updateData: any) => {
   } catch (e) {
     console.log(e);
     return undefined;
+  }
+};
+
+export const uploadAvatar = async (
+  profile_id: string,
+  filePath: string,
+  file: any
+): Promise<types.Profile | unknown> => {
+  try {
+    const { error: uploadError, data: uploadData } =
+      await supabaseClient.storage.from("avatars").upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    //get public url
+    const { data: publicUrlData } = supabaseClient.storage
+      .from("avatars")
+      .getPublicUrl(uploadData.path);
+
+    console.log("publicUrlData", publicUrlData);
+
+    if (!publicUrlData) throw new Error("publicUrlData is undefined");
+    //TODO: update profile with avatar url
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .update({ avatar_url: publicUrlData.publicUrl })
+      .eq("id", profile_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (e) {
+    console.log(e);
+    return e;
   }
 };
