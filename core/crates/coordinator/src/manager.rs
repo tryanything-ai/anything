@@ -1,0 +1,511 @@
+use anything_common::spawn_or_crash;
+use anything_graph::Flowfile;
+use anything_mq::new_client;
+use anything_runtime::{Runner, RuntimeConfig};
+use anything_store::FileStore;
+use std::{env::temp_dir, sync::Arc};
+
+use tokio::sync::{
+    mpsc::{self, Sender},
+    Mutex,
+};
+
+use crate::{
+    config::AnythingConfig,
+    error::CoordinatorResult,
+    events::StoreChangesPublisher,
+    handlers,
+    models::{Models, MODELS},
+};
+
+pub async fn start(
+    config: AnythingConfig,
+    shutdown_rx: mpsc::Receiver<()>,
+    ready_tx: mpsc::Sender<Arc<Manager>>,
+) -> CoordinatorResult<()> {
+    let mut runtime_config = config.runtime_config().clone();
+    let root_dir = match runtime_config.base_dir {
+        Some(v) => v,
+        None => temp_dir(),
+    };
+    runtime_config.base_dir = Some(root_dir);
+    let mut cfg = config.clone();
+    cfg.update_runtime_config(runtime_config);
+    let manager = Manager::new(cfg);
+
+    // Setup global models
+    Models::setup(manager.file_store.clone()).await?;
+
+    let arc = Arc::new(manager);
+    arc.start(shutdown_rx, ready_tx).await?;
+
+    Ok(())
+}
+
+#[derive(Debug, Clone)]
+pub struct Manager {
+    pub file_store: FileStore,
+    pub config: AnythingConfig,
+    pub executor: Option<Runner>,
+    pub shutdown_sender: Sender<()>,
+}
+
+impl Default for Manager {
+    fn default() -> Self {
+        let mut runtime_config = RuntimeConfig::default();
+        let temp_dir = temp_dir();
+        runtime_config.base_dir = Some(temp_dir);
+        let anything_config = AnythingConfig::new(runtime_config);
+        Self::new(anything_config)
+    }
+}
+
+impl Manager {
+    pub fn new(config: AnythingConfig) -> Self {
+        let runtime_config = config.runtime_config().clone();
+        let executor = Runner::new(runtime_config.clone());
+
+        let root_dir = match runtime_config.base_dir {
+            Some(v) => v.clone(),
+            None => tempfile::tempdir().unwrap().path().to_path_buf(),
+        };
+        let (shutdown_sender, _) = tokio::sync::mpsc::channel(4096);
+
+        let file_store = FileStore::create(root_dir.as_path(), &["anything"]).unwrap();
+
+        file_store.create_directory(&["flows"]).unwrap();
+
+        Manager {
+            file_store,
+            config: config.clone(),
+            executor: Some(executor),
+            shutdown_sender,
+            // post_office: PostOffice::open(),
+        }
+    }
+
+    pub async fn start(
+        self: Arc<Self>,
+        mut shutdown_rx: mpsc::Receiver<()>,
+        ready_tx: mpsc::Sender<Arc<Manager>>,
+    ) -> CoordinatorResult<()> {
+        spawn_or_crash(
+            "internal_events",
+            self.clone(),
+            handlers::system_handler::process_system_events,
+        );
+
+        spawn_or_crash(
+            "flow_events",
+            self.clone(),
+            handlers::flow_handler::process_flows,
+        );
+
+        spawn_or_crash(
+            "store_events",
+            self.clone(),
+            handlers::store_handler::process_store_events,
+        );
+
+        let arc_self = self.clone();
+        self.setup_file_handler().await;
+
+        // Notify changes for filestore
+        ready_tx.send(arc_self).await.unwrap();
+
+        // never quit
+        loop {
+            // Never quit
+            tokio::select! {
+
+                _ = shutdown_rx.recv() => {
+                    break;
+                }
+            }
+        }
+        tracing::debug!("shutting down");
+
+        Ok(())
+    }
+
+    /// The function `get_flows` returns a result containing a vector of `anything_graph::Flow` objects.
+    ///
+    /// Returns:
+    ///
+    /// The function `get_flows` returns a `CoordinatorResult` containing a `Vec` of
+    /// `anything_graph::Flow` objects.
+    pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_graph::Flow>> {
+        let flows = MODELS.get().unwrap().lock().await.get_flows();
+        Ok(flows)
+    }
+
+    pub async fn get_flow(&self, name: &str) -> CoordinatorResult<anything_graph::Flow> {
+        let flow = MODELS.get().unwrap().lock().await.get_flow(name);
+        match flow {
+            Some(flow) => Ok(flow),
+            None => Err(crate::error::CoordinatorError::FlowNotFound(
+                name.to_string(),
+            )),
+        }
+    }
+
+    pub async fn create_flow(
+        &self,
+        flow_name: String,
+        flow_id: String,
+    ) -> CoordinatorResult<anything_graph::Flow> {
+        let flow = MODELS
+            .get()
+            .unwrap()
+            .lock()
+            .await
+            .create_flow(flow_name, flow_id)?;
+
+        let new_directory = self
+            .file_store
+            .create_directory(&["flows", &flow.name])
+            .unwrap();
+
+        let flowfile: Flowfile = flow.clone().into();
+        let flow_str: String = flowfile.into();
+
+        self.file_store
+            .write_file(
+                &[
+                    "flows",
+                    new_directory
+                        .as_os_str()
+                        .to_os_string()
+                        .as_os_str()
+                        .to_str()
+                        .unwrap(),
+                    &flow.name,
+                ],
+                flow_str.as_bytes(),
+            )
+            .unwrap();
+
+        Ok(flow)
+    }
+
+    async fn setup_file_handler(self: Arc<Self>) {
+        let (tx, mut rx) = tokio::sync::mpsc::channel(4096);
+        let file_store = Arc::new(Mutex::new(self.file_store.clone()));
+
+        let client = new_client::<StoreChangesPublisher>().await.unwrap();
+
+        // Listen for changes on the file system
+        let _t1 = tokio::spawn(async move {
+            let mut fs = file_store.try_lock().expect("should be unlockable");
+            fs.notify_changes(tx.clone()).await.unwrap();
+        });
+
+        // Send changes to the coordinator
+        let _t2 = tokio::spawn(async move {
+            while let Some(msg) = rx.recv().await {
+                let _ = client
+                    .publish(
+                        "file-system-change",
+                        StoreChangesPublisher::ChangeMessage(msg),
+                    )
+                    .await;
+                // let _ = sender.send(StoreChangesPublisher::ChangeMessage(msg)).await;
+            }
+        });
+    }
+
+    pub async fn stop(self) -> CoordinatorResult<()> {
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use std::{path::PathBuf, time::Duration};
+
+    use crate::{
+        events::{FlowPublisher, InternalEventsPublisher, NewFlowPublisher, StringPublisher},
+        test_helper::add_flow_directory,
+    };
+    use anything_graph::Flowfile;
+    use anything_mq::new_client;
+    use anything_runtime::{EngineKind, PluginEngine};
+    use tokio::time::{sleep, timeout};
+    const SLEEP_TIME: u64 = 600;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_can_subscribe() {
+        let _manager = Manager::default();
+
+        let client = new_client().await.unwrap();
+
+        let sub = client.subscribe("not-used-yet").await.unwrap();
+        let tx = client.publisher().await.unwrap();
+
+        let msg = StringPublisher("A new string, bruh".to_string());
+        let res = tx.send(msg.clone()).await;
+        assert!(res.is_ok());
+
+        let StringPublisher(payload) = sub.recv().await.unwrap();
+        assert_eq!("A new string, bruh".to_string(), payload);
+    }
+
+    #[tokio::test]
+    async fn test_can_subscribe_to_a_new_flows_publisher() {
+        let _manager = Manager::default();
+
+        // let file = get_fixtures_directory().join("simple.toml");
+
+        let toml = r#"
+        name = "SimpleFlow"
+        version = "0.1"
+        description = "A simple flow that echos holiday cheer"
+
+        [[nodes]]
+        name = "echo-cheer"
+        label = "Holiday cheers"
+        depends_on = []
+        variables = { cheers = "Jingle Bells" }
+
+        [nodes.engine]
+        interpreter = "deno"
+        args = ["export default function() { return 'hello {{cheers}}' }"]
+
+        "#
+        .to_string();
+        let test_flow = Flowfile::from_string(toml);
+        let test_flow = test_flow.unwrap();
+
+        // let _ = join_handle.await;
+        let client1 = new_client().await.unwrap();
+        let client2 = new_client().await.unwrap();
+
+        let sub = client1.subscribe("new").await.unwrap();
+
+        let test_flow_name = test_flow.clone().name;
+        let msg = FlowPublisher::NewFlow(NewFlowPublisher { flow: test_flow });
+
+        let res = client2.publish("new", msg.clone()).await;
+        assert!(res.is_ok());
+        // po_sender.send(()).unwrap();
+
+        let res = sub.recv().await;
+        let payload: crate::events::FlowPublisher = res.unwrap();
+        let payload = match payload {
+            FlowPublisher::NewFlow(inner_payload) => inner_payload,
+            _ => unreachable!(),
+        };
+        assert_eq!(payload.flow.name, test_flow_name);
+
+        let first_node = payload.flow.nodes.first().unwrap();
+        let runtime = first_node.run_options.clone();
+
+        let mut deno_engine = PluginEngine::default();
+        deno_engine.engine = "deno".to_string();
+        deno_engine.args = Some(vec![
+            "export default function() { return 'hello {{cheers}}' }".to_string(),
+        ]);
+        assert_eq!(runtime.engine, Some(EngineKind::PluginEngine(deno_engine)));
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_to_execute_flow() {
+        let _manager = Manager::default();
+
+        let file = get_fixtures_directory().join("simple.toml");
+        let test_flow = Flowfile::from_file(file).unwrap();
+
+        let client1 = new_client().await.unwrap();
+        let client2 = new_client().await.unwrap();
+
+        let sub = client1.subscribe("new").await.unwrap();
+
+        let test_flow_name = test_flow.clone().name;
+        let msg = FlowPublisher::NewFlow(NewFlowPublisher { flow: test_flow });
+
+        let res = client2.publish("new", msg.clone()).await;
+        assert!(res.is_ok());
+        // po_sender.send(()).unwrap();
+
+        let res = sub.recv().await;
+        let payload: crate::events::FlowPublisher = res.unwrap();
+        let payload = match payload {
+            FlowPublisher::NewFlow(inner_payload) => inner_payload,
+            _ => unreachable!(),
+        };
+        assert_eq!(payload.flow.name, test_flow_name);
+
+        let first_node = payload.flow.nodes.first().unwrap();
+        let runtime = first_node.run_options.clone();
+
+        let mut deno_engine = PluginEngine::default();
+        deno_engine.engine = "system-shell".to_string();
+        deno_engine.args = Some(vec!["echo 'hello {{cheers}}'".to_string()]);
+        assert_eq!(runtime.engine, Some(EngineKind::PluginEngine(deno_engine)));
+
+        // po_sender.send(()).unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_to_store_changes() {
+        let manager = Manager::default();
+        let config = AnythingConfig::default();
+        let (stop_tx, stop_rx) = mpsc::channel(1);
+
+        let (ready_tx, mut ready_rx) = mpsc::channel(1);
+
+        tokio::spawn(async move {
+            let _res = start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        });
+
+        let store = manager.file_store.clone();
+        let server_task = tokio::spawn(async move {
+            let _v = ready_rx.recv().await;
+            sleep(Duration::from_millis(100)).await;
+            let res = store.write_file(&["just_a_test.txt"], "test".as_bytes());
+            let _ = sleep(Duration::from_millis(100));
+            assert!(res.is_ok());
+            stop_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(1), server_task).await;
+        assert!(res.is_ok(), "server task did not quit");
+    }
+
+    #[tokio::test]
+    async fn test_started_manager_receives_system_events() {
+        let _manager = Manager::default();
+        let config = AnythingConfig::default();
+        let (stop_tx, stop_rx) = mpsc::channel(1);
+        let (ready_tx, _ready_rx) = mpsc::channel(1);
+
+        let client = new_client().await.unwrap();
+
+        tokio::spawn(async move {
+            start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        });
+
+        let server_task = tokio::spawn(async move {
+            client
+                .publish("ping", InternalEventsPublisher::Ping)
+                .await
+                .unwrap();
+            sleep(Duration::from_millis(600)).await;
+            stop_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(10), server_task).await;
+        assert!(res.is_ok(), "Server task did not quit");
+    }
+
+    #[tokio::test]
+    async fn test_started_manager_receives_system_events_and_shutsdown_the_system() {
+        let _manager = Manager::default();
+        let config = AnythingConfig::default();
+        let (stop_tx, stop_rx) = mpsc::channel(1);
+        let (ready_tx, _ready_rx) = mpsc::channel(1);
+
+        let client = new_client().await.unwrap();
+
+        tokio::spawn(async move {
+            start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        });
+
+        let server_task = tokio::spawn(async move {
+            client
+                .publish("stop", InternalEventsPublisher::Shutdown)
+                .await
+                .unwrap();
+            stop_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(10), server_task).await;
+        assert!(res.is_ok(), "Server task did not quit");
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_process_flow_store_change() {
+        let config = get_unique_config();
+
+        let (stop_tx, stop_rx) = mpsc::channel(1);
+        let (ready_tx, mut ready_rx) = mpsc::channel(1);
+
+        let _listener_task = tokio::spawn(async move {
+            start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        });
+
+        let manager = ready_rx.recv().await.unwrap();
+        let rpath = manager.file_store.store_path(&["flows"]);
+
+        let manager_clone = manager.clone();
+
+        add_flow_directory(rpath.clone(), "some-simple-flow");
+
+        let manager = manager_clone;
+        sleep(Duration::from_millis(SLEEP_TIME)).await;
+        let flows = manager.get_flows().await.unwrap();
+        assert_eq!(flows.len(), 1);
+
+        sleep(Duration::from_millis(SLEEP_TIME)).await;
+        add_flow_directory(rpath.clone(), "one-other-flow");
+        sleep(Duration::from_millis(SLEEP_TIME)).await;
+        let flows = manager.get_flows().await.unwrap();
+        assert_eq!(flows.len(), 2);
+
+        manager.file_store.cleanup_base_dir().unwrap();
+
+        stop_tx.send(()).await.unwrap();
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_process_flow_can_fetch_loaded_flow() {
+        let config = get_unique_config();
+
+        let (stop_tx, stop_rx) = mpsc::channel(1);
+        let (ready_tx, mut ready_rx) = mpsc::channel(1);
+
+        let _listener_task = tokio::spawn(async move {
+            start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        });
+
+        let manager = ready_rx.recv().await.unwrap();
+        let rpath = manager.file_store.store_path(&["flows"]);
+
+        add_flow_directory(rpath.clone(), "some-simple-flow");
+        sleep(Duration::from_millis(SLEEP_TIME)).await;
+        let flow = manager.get_flow("some-simple-flow").await.unwrap();
+        assert_eq!(flow.name, "some-simple-flow");
+
+        manager.file_store.cleanup_base_dir().unwrap();
+
+        stop_tx.send(()).await.unwrap();
+    }
+
+    #[allow(unused)]
+    fn get_fixtures_directory() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+    }
+
+    #[allow(unused)]
+    fn get_unique_config() -> AnythingConfig {
+        let mut config = AnythingConfig::default();
+        let tmpdir = tempfile::tempdir()
+            .unwrap()
+            .path()
+            .to_path_buf()
+            .join(format!("test-{}", uuid::Uuid::new_v4()));
+        let mut runtime_config = config.runtime_config().clone();
+        runtime_config.base_dir = Some(tmpdir.clone());
+        config.update_runtime_config(runtime_config);
+        config
+    }
+
+    // async fn setup()
+}

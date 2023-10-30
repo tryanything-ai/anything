@@ -7,6 +7,8 @@ import * as SUPABASE from "@/types/supabase.types";
 
 export * from "@/types/supabase.types";
 
+console.log("process.env.NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? process.env.NEXT_PUBLIC_SUPABASE_URL
   : "";

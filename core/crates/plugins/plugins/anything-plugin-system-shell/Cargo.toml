@@ -1,0 +1,18 @@
+[package]
+name = "anything-plugin-system-shell"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "anything_plugin_system_shell"
+path = "src/lib.rs"
+
+crate-type = ["cdylib"]
+
+[dependencies]
+anything-runtime = { workspace = true }
+
+[build-dependencies]
+datetime = { version = "0.5.2", default_features = false }

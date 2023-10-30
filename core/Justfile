@@ -1,0 +1,47 @@
+set dotenv-load := true
+
+default:
+    @just --list --justfile {{justfile()}}
+
+# Install required tools
+install-required:
+    @echo "Installing tools"
+    @echo "Installing Rust nightly toolchain"
+    rustup toolchain install nightly
+
+    @echo "Install mdbook"
+    cargo install mdbook && cargo install mdbook-toc
+
+    @echo "Installing nextest"
+    cargo install cargo-nextest
+
+# Install both required tools and recommended ones
+install-recommended: install-required
+    @echo "Installing recommended tools..."
+    @echo "Installing git hooks"
+    pre-commit --version || pip install pre-commit
+    pre-commit install || echo "failed to install git hooks!" 1>&2
+
+
+# Test all crates
+test: test-graph test-mq test-runtime test-plugins test-store
+
+# Test graph crate
+test-graph:
+    cd crates/graph && cargo test -- --nocapture --color=always
+
+# Test mq crate
+test-mq:
+    cd crates/mq && cargo test -- --nocapture --color=always
+
+# Test runtime crate
+test-runtime:
+    cd crates/runtime && cargo test -- --nocapture --color=always
+
+# Test plugins crate
+test-plugins:
+    cd crates/plugins && cargo test -- --nocapture --color=always
+
+# Test store crate
+test-store:
+    cd crates/store && cargo test -- --nocapture --color=always
