@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useSettingsContext } from "../context/SettingsProvider";
 import themes from "../utils/themes";
 import PageLayout from "../pageLayout";
+import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
 
 export default function Settings() {
   const {
@@ -13,6 +14,7 @@ export default function Settings() {
     setWebFeaturesDisabled,
     webFeaturesDisabled,
   } = useSettingsContext();
+  const { signOut, session } = useAuthenticaionContext();
 
   return (
     <PageLayout>
@@ -34,6 +36,16 @@ export default function Settings() {
             />
           </label>
         </div>
+        {session ? (
+          <div onClick={signOut} className="btn btn-primary m-1 ml-4">
+            Sign Out
+          </div>
+        ) : (
+          <Link to="/login" className="btn btn-primary m-1 ml-4">
+            Sign In
+          </Link>
+        )}
+
         {/* <div>{newText}</div> */}
         {/* <div className="dropdown mt-2">
         <label tabIndex={0} className="btn m-1">

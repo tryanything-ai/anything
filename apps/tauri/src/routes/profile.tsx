@@ -4,11 +4,11 @@ import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
 import PageLayout from "../pageLayout";
 
 export default function Profile() {
-  const { profile } = useAuthenticaionContext();
+  const { session, profile } = useAuthenticaionContext();
 
   const uploadAvatar = () => {};
 
-  if (!profile)
+  if (!session)
     return (
       <PageLayout>
         <Link to="/login" className="btn btn-primary m-1 ml-4">
