@@ -150,7 +150,7 @@ export const AuthenticationProvider = ({
     console.log("updateUser called");
     let { data, error } = await supabaseClient.auth.updateUser({
       email: "carl@tryanything.xyz",
-      password: "derpderp59!",
+      password: "derpderp59!", 
       // data: {
       // full_name: "John Smith",
       // age: 32,
@@ -192,10 +192,15 @@ export const AuthenticationProvider = ({
       //   //   navigate("/update-password");
       // }
       //user has updated password ( most likely )
-      if (event === "USER_UPDATED") {
-        console.log("USER_UPDATED");
+      // if (event === "USER_UPDATED") {
+      //   console.log("USER_UPDATED");
+      //   navigate("/");
+      // }
+      if (event === "SIGNED_IN") {
+        console.log("SIGNED_IN");
         navigate("/");
       }
+      console.log("event", JSON.stringify(event, null, 3));
       console.log(
         "session changed in AuthenticationProvider",
         JSON.stringify(session, null, 3)
