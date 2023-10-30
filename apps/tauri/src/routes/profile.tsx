@@ -1,46 +1,51 @@
-import { Link } from "react-router-dom";
-
-import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ProfileView } from "ui";
 import PageLayout from "../pageLayout";
+import { useMarketplaceContext } from "../context/MarketplaceProvider";
+import type { Profile, BigFlow } from "utils";
+import { Avatar } from "../components/avatar";
 
-export default function Profile() {
-  const { session, profile } = useAuthenticaionContext();
+const Profile = ({}) => {
+  const { username } = useParams<{ username: string }>();
+  const { fetchProfile, fetchProfileTemplates } = useMarketplaceContext();
 
-  const uploadAvatar = () => {};
+  const [profile, setProfile] = useState<Profile>();
+  const [templates, setTemplates] = useState<BigFlow>();
 
-  if (!session)
-    return (
-      <PageLayout>
-        <Link to="/login" className="btn btn-primary m-1 ml-4">
-          Login
-        </Link>
-      </PageLayout>
-    );
+  const fetchAll = async () => {
+    let profile = await fetchProfile(username);
+    console.log("profile", profile);
+    if (profile) {
+      setProfile(profile);
+    }
+    let templates = await fetchProfileTemplates(username);
+    console.log("templates", templates);
+    if (templates) {
+      setTemplates(templates);
+    }
+  };
+
+  useEffect(() => {
+    if (username) {
+      fetchAll();
+    }
+  }, [username]);
 
   return (
     <PageLayout>
-      <div className="flex flex-row h-full w-full m-10">
-        {/* Profile */}
-        Profile
-        <div className="avatar">
-          <div className="w-100 rounded-full">
-            <img
-              width={100}
-              height={100}
-              src={profile.avatar_url ? profile.avatar_url : ""}
-              alt={profile.username ? profile.username : ""}
-            />
-          </div>
-        </div>
-        <button
-          className="btn btn-primary m-1 ml-4"
-          onClick={() => {
-            uploadAvatar();
-          }}
-        >
-          Upload Avatar
-        </button>
-      </div>
+      {profile && templates ? (
+        <ProfileView
+          profile={profile}
+          templates={templates}
+          Link={Link}
+          Avatar={Avatar}
+        />
+      ) : (
+        "Loading"
+      )}
     </PageLayout>
   );
-}
+};
+
+export default Profile;

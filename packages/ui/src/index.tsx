@@ -12,3 +12,4 @@ export * from "./templateGrid";
 export * from "./baseNodeWeb";
 export * from "./baseNodeIcons";
 export * from "./templateView";
+export * from "./profileView";

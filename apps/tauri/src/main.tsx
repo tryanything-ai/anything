@@ -1,6 +1,5 @@
 import "./styles.css";
 import "ui/styles.css";
-// import { supabaseClient } from "utils";
 
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -10,7 +9,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Home from "./routes/home";
 import Login from "./routes/login";
 import Models from "./routes/models";
-import Profile from "./routes/profile";
+import EditProfile from "./routes/editProfile";
 import Settings from "./routes/settings";
 import TableData from "./routes/tableData";
 import Tables from "./routes/tables";
@@ -24,7 +23,7 @@ import Chats from "./routes/chats";
 import FlowEditor from "./routes/flowEditor";
 import Flows from "./routes/flows";
 import UpdatePassword from "./routes/updatePassword";
-import Context from "./context/context";
+import Profile from "./routes/profile"; 
 
 const router = createBrowserRouter([
   {
@@ -35,6 +34,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "/:username",
+        element: <Profile />,
       },
       {
         path: "/flows",
@@ -90,7 +93,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/settings/profile",
-        element: <Profile />,
+        element: <EditProfile />,
       },
     ],
   },
@@ -99,7 +102,7 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     {/* <Context> */}
-      <RouterProvider router={router} />
+    <RouterProvider router={router} />
     {/* </Context> */}
   </React.StrictMode>
 );
