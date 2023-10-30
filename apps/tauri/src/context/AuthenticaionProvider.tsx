@@ -15,7 +15,6 @@ interface AuthenticationContextInterface {
   signInWithEmail: (email: string, password: string) => void;
   signUpWithEmail: (email: string, password: string) => void;
   exchangeAccessTokenForSession: (access_token: string) => void;
-  updateUser: () => void;
   getSession: () => void;
   createSession: (
     access_token: string,
@@ -30,7 +29,6 @@ export const AuthenticationContext =
   createContext<AuthenticationContextInterface>({
     signInWithEmail: () => {},
     signUpWithEmail: () => {},
-    updateUser: () => {},
     createSession: () => null,
     exchangeAccessTokenForSession: () => {},
     getSession: () => {},
@@ -137,28 +135,13 @@ export const AuthenticationProvider = ({
   const signOut = async () => {
     if (webFeaturesDisabled) return null;
     await supabaseClient.auth.signOut();
+    ß;
     setProfile(null);
   };
 
   const exchangeAccessTokenForSession = async (code: string) => {
     let res = await supabaseClient.auth.exchangeCodeForSession(code);
     console.log("exchangeCodeForSession", JSON.stringify(res, null, 3));
-  };
-
-  const updateUser = async () => {
-    if (webFeaturesDisabled) return null;
-    console.log("updateUser called");
-    let { data, error } = await supabaseClient.auth.updateUser({
-      email: "carl@tryanything.xyz",
-      password: "derpderp59!", 
-      // data: {
-      // full_name: "John Smith",
-      // age: 32,
-      // is_beta: true,
-      // },
-    });
-    if (error) console.log("updateUser error", error);
-    console.log("updateUser", JSON.stringify(data, null, 3));
   };
 
   useEffect(() => {
@@ -185,17 +168,11 @@ export const AuthenticationProvider = ({
     const {
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange((event, session) => {
-      //use has hit a magic link to "update password" or forgot password
-      // if (event === "PASSWORD_RECOVERY") {
-      //   console.log("PASSWORD_RECOVERY");
-      //   //   //send user to password update page
-      //   //   navigate("/update-password");
-      // }
       //user has updated password ( most likely )
-      // if (event === "USER_UPDATED") {
-      //   console.log("USER_UPDATED");
-      //   navigate("/");
-      // }
+      if (event === "USER_UPDATED") {
+        console.log("USER_UPDATED");
+        navigate("/");
+      }
       if (event === "SIGNED_IN") {
         console.log("SIGNED_IN");
         navigate("/");
@@ -214,13 +191,6 @@ export const AuthenticationProvider = ({
     };
   }, []);
 
-  // if (!session) {
-  //   return (<Auth supabaseClient={supabase} appearance={{ theme: ThemeSupa }} />)
-  // }
-  // else {
-  //   return (<div>Logged in!</div>)
-  // }
-
   return (
     <AuthenticationContext.Provider
       value={{
@@ -230,7 +200,6 @@ export const AuthenticationProvider = ({
         profile,
         exchangeAccessTokenForSession,
         session,
-        updateUser,
         getSession,
         createSession: createSessionFromUrl,
       }}

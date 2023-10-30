@@ -4,37 +4,36 @@ import { ThemeSupa, VIEWS } from "@supabase/auth-ui-shared";
 
 import { supabaseClient } from "utils";
 import PageLayout from "../pageLayout";
-import { useLocation } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
 
 import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
 
 export default function UpdatePassword() {
-  const { updateUser, getSession } = useAuthenticaionContext();
+  // const { getSession } = useAuthenticaionContext();
 
-  const location = useLocation();
+  // const location = useLocation();
 
-  useEffect(() => {
-    // Suapbase returns #access_token for update password email flow
-    const currentHash = location.hash;
-    console.log("currentHash", JSON.stringify(currentHash, null, 3));
-    if (currentHash.startsWith("#access_token")) {
-      console.log("currentHash has access token!", currentHash);
+  // useEffect(() => {
+  //   // Suapbase returns #access_token for update password email flow
+  //   const currentHash = location.hash;
+  //   console.log("currentHash", JSON.stringify(currentHash, null, 3));
+  //   if (currentHash.startsWith("#access_token")) {
+  //     console.log("currentHash has access token!", currentHash);
 
-      console.log("Access_toekn route detected");
-      //For Supabase auth links
-      let access_token = currentHash.replace("#access_token=", "");
-      console.log("access_token", access_token);
-      // exchange(access_token);
-    }
-  }, [location]);
+  //     console.log("Access_toekn route detected");
+  //     //For Supabase auth links
+  //     let access_token = currentHash.replace("#access_token=", "");
+  //     console.log("access_token", access_token);
+  //     // exchange(access_token);
+  //   }
+  // }, [location]);
 
-  useEffect(() => {
-    getSession();
-  }, []);
+  // useEffect(() => {
+  //   getSession();
+  // }, []);
 
   return (
     <PageLayout>
-      <button onClick={updateUser}>Update Password</button>
       <div className="flex flex-row h-full w-full justify-center items-center">
         <div className="w-96 text-white">
           <h1 className="text-4xl font-bold mb-4">Update Password</h1>
@@ -42,7 +41,7 @@ export default function UpdatePassword() {
             supabaseClient={supabaseClient}
             providers={[]}
             redirectTo="anything://" //will this go to home?
-            view={VIEWS.UPDATE_PASSOWRD}
+            view={"update_password"}
             showLinks={false}
             appearance={{
               theme: ThemeSupa,

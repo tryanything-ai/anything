@@ -18,12 +18,21 @@ export default function Settings() {
 
   return (
     <PageLayout>
-      <div className="flex flex-col">
-        <Link to="/settings/profile" className="btn btn-primary m-1 ml-4">
+      <div className="flex flex-col gap-4">
+        <Link to="/settings/profile" className="btn btn-primary">
           Edit Profile
         </Link>
+        {session ? (
+          <div onClick={signOut} className="btn btn-ghost">
+            Sign Out
+          </div>
+        ) : (
+          <Link to="/login" className="btn btn-primary">
+            Sign In
+          </Link>
+        )}
 
-        <div className="form-control w-96 mt-10">
+        <div className="form-control w-96">
           <label className="cursor-pointer label">
             <span className="label-text  text-2xl">Web Features</span>
             <input
@@ -36,15 +45,6 @@ export default function Settings() {
             />
           </label>
         </div>
-        {session ? (
-          <div onClick={signOut} className="btn btn-primary m-1 ml-4">
-            Sign Out
-          </div>
-        ) : (
-          <Link to="/login" className="btn btn-primary m-1 ml-4">
-            Sign In
-          </Link>
-        )}
 
         {/* <div>{newText}</div> */}
         {/* <div className="dropdown mt-2">
