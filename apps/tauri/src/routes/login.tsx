@@ -6,12 +6,14 @@ import PageLayout from "../pageLayout";
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthenticaionContext } from "../context/AuthenticaionProvider";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
+
 
 export default function Login() {
   // const { exchangeAccessTokenForSession } = useAuthenticaionContext();
   const { createSession, session } = useAuthenticaionContext();
   const location = useLocation();
+  const navigate = useNavigate();
   // const [searchParams, setSearchParams] = useSearchParams();
 
   //catch params and change UI
@@ -62,12 +64,14 @@ export default function Login() {
     return { access_token, refresh_token };
   };
 
-  const doIt = async () => {
+  const manageResetFlow = async () => {
     const currentHash = location.hash;
     let { access_token, refresh_token } = extractTokens(currentHash);
 
     let session = await createSession(access_token, refresh_token);
     console.log("session", session);
+
+    navigate("/update-password")
   };
 
   useEffect(() => {
@@ -94,7 +98,7 @@ export default function Login() {
 
     //if we have a link with an access_token
     if (currentHash.includes("#access_token")) {
-      doIt();
+      manageResetFlow();
     }
     //   console.log("currentHash has access token!", currentHash);
 

@@ -41,7 +41,7 @@ export default function UpdatePassword() {
           <Auth
             supabaseClient={supabaseClient}
             providers={[]}
-            // redirectTo="anything://" //will this go to home?
+            redirectTo="anything://" //will this go to home?
             view={VIEWS.UPDATE_PASSOWRD}
             showLinks={false}
             appearance={{

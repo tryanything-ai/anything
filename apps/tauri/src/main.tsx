@@ -1,5 +1,6 @@
 import "./styles.css";
 import "ui/styles.css";
+// import { supabaseClient } from "utils";
 
 import React from "react";
 import ReactDOM from "react-dom/client";
