@@ -76,101 +76,106 @@ export default function EditProfile() {
           </button>
         ) : null}
       </div>
-      {/* <PageHeader
-        title="Edit Profile"
-        buttonLabel={profile.public ? "View Public Profile" : ""}
-        callback={() => navigate("/" + profile.username)}
-      /> */}
       {profile ? (
         <div className="flex flex-col h-full w-full gap-5 py-16">
           {/* Profile */}
-          <EditAvatar
-            key={profile.avatar_url}
-            profile_id={profile.id}
-            avatar_url={profile.avatar_url}
-            size={50}
-          />
+          <div className="ml-8">
+            <EditAvatar
+              key={profile.avatar_url}
+              profile_id={profile.id}
+              avatar_url={profile.avatar_url}
+              size={50}
+            />
+          </div>
           {/* Form */}
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-5 mt-5"
+            className="flex flex-col gap-5  mt-5"
           >
-            {/* Public */}
-            <div className="flex flex-row">
-              <div className="flex mb-1 h-fulljustify-center items-center pr-4">
-                Public Profile
+            <div className="flex flex-col pl-8 gap-5">
+              {/* Public */}
+              <div className="flex flex-row">
+                <div className="flex mb-1 h-fulljustify-center items-center pr-4">
+                  Public Profile
+                </div>
+                <input
+                  type="checkbox"
+                  defaultChecked={profile.public}
+                  {...register("public")}
+                  className="toggle toggle-success"
+                />
               </div>
-              <input
-                type="checkbox"
-                defaultChecked={profile.public}
-                {...register("public")}
-                className="toggle toggle-success"
-              />
-            </div>
 
-            {/* Bio */}
-            <div className="flex flex-col">
-              <div className="flex mb-1 pr-4">Bio</div>
-              <textarea
-                // type="text"
-                placeholder="Type here"
-                className="w-96 h-32 textarea textarea-bordered textarea-md"
-                defaultValue={profile.bio}
-                {...register("bio")}
-              />
-            </div>
-            {/* Username */}
-            <div className="flex flex-col">
-              <div className="flex mb-1 items-center pr-4">Username</div>
-              <input
-                type="text"
-                placeholder="Type here"
-                className="input input-bordered input-md w-96"
-                defaultValue={profile.username}
-                {...register("username", {
-                  minLength: 4,
-                  maxLength: 20,
-                  required: true,
-                })}
-              />
-              {errors.username?.type === "required" && (
-                <p className="flex mb-1 h-full ">
-                  Username is required to update profile
-                </p>
-              )}
-              {errors.username?.type === "minLength" && (
-                <p className="flex mb-1 h-full pl-4">Username must be 4 long</p>
-              )}
-              {errors.username?.type === "maxLength" && (
-                <p className="flex mb-1 h-full">
-                  Username need to be less than 20 characters long
-                </p>
-              )}
-            </div>
-            {/* Full Name */}
-
-            <div className="flex flex-col">
-              <div className="flex  mb-1 items-center pr-4">Full Name</div>
-              <input
-                type="text"
-                placeholder="Type here"
-                className="input input-bordered input-md w-96"
-                defaultValue={profile.full_name}
-                {...register("full_name", {
-                  minLength: 2,
-                  maxLength: 60,
-                })}
-              />
-              {errors.full_name?.type === "minLength" && (
-                <p className="mb-1 h-full justify-center items-center pl-4">
-                  Name must be 2 long
-                </p>
-              )}
-              {errors.full_name?.type === "maxLength" && (
-                <p className="flex mb-1 h-full justify-center items-center pl-4">
-                  Name need to be less than 60 characters long
-                </p>
-              )}
+              {/* Bio */}
+              <div className="flex flex-col">
+                <div className="flex mb-1 pr-4">Bio</div>
+                <textarea
+                  // type="text"
+                  placeholder="Type here"
+                  className="w-96 h-32 textarea textarea-bordered textarea-md"
+                  defaultValue={profile.bio}
+                  {...register("bio")}
+                />
+              </div>
+              {/* Username */}
+              <div className="flex flex-col">
+                <div className="flex mb-1 items-center pr-4">Username</div>
+                <div className="flex flex-row">
+                  <input
+                    type="text"
+                    placeholder="Type here"
+                    className="input input-bordered input-md w-96"
+                    defaultValue={profile.username}
+                    {...register("username", {
+                      minLength: 4,
+                      maxLength: 20,
+                      required: true,
+                    })}
+                  />
+                  {errors.username?.type === "required" && (
+                    <p className="flex mb-1 h-full justify-center items-center pl-4">
+                      Username is required to update profile
+                    </p>
+                  )}
+                  {errors.username?.type === "minLength" && (
+                    <p className="flex mb-1 h-full justify-center items-center pl-4">
+                      Username must be 4 long
+                    </p>
+                  )}
+                  {errors.username?.type === "maxLength" && (
+                    <p className="flex mb-1 h-full justify-center items-center pl-4">
+                      Username need to be less than 20 characters long
+                    </p>
+                  )}
+                </div>
+              </div>
+              {/* Full Name */}
+              <div className="flex flex-col">
+                <div className="flex  mb-1 items-center pr-4">Full Name</div>
+                <div className="flex flex-row">
+                  {" "}
+                  <input
+                    type="text"
+                    placeholder="Type here"
+                    className="input input-bordered input-md w-96"
+                    defaultValue={profile.full_name}
+                    {...register("full_name", {
+                      minLength: 2,
+                      maxLength: 60,
+                    })}
+                  />
+                  {errors.full_name?.type === "minLength" && (
+                    <p className="flex mb-1 h-full justify-center items-center pl-4">
+                      Name must be 2 long
+                    </p>
+                  )}
+                  {errors.full_name?.type === "maxLength" && (
+                    <p className="flex mb-1 h-full justify-center items-center pl-4">
+                      Name need to be less than 60 characters long
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
             {/* Social */}
             <div className="flex flex-row">
