@@ -46,10 +46,6 @@ const boldFont = fetch("/fonts/DMSans-SemiBold.ttf").then((res) =>
 );
 
 // const boldFont = fetch(
-//   new URL("/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
-// ).then((res) => res.arrayBuffer());
-
-// const boldFont = fetch(
 //   new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", import.meta.url)
 // ).then((res) => res.arrayBuffer());
 
@@ -108,10 +104,14 @@ export default async function Image({
   //   boldFont
   // ]);
 
-  // const boldFontData = await boldFont;
   const boldFontData = await fetch(
-    new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", import.meta.url)
+    new URL("/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
   ).then((res) => res.arrayBuffer());
+
+  // const boldFontData = await boldFont;
+  // const boldFontData = await fetch(
+  //   new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
+  // ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
     (
