@@ -32,7 +32,7 @@ export default function EditAvatar({ profile_id, avatar_url, size }) {
       //refresh profile in user authentication system
       fetchProfile();
     } catch (error) {
-      console.log("Error uploading avatar: ", error.message);
+      console.log("Error uploading avatar: ", error);
     } finally {
       setUploading(false);
     }
@@ -41,15 +41,20 @@ export default function EditAvatar({ profile_id, avatar_url, size }) {
   return (
     <div>
       {avatarUrl ? (
-        <div className="avatar pl-10">
+        <div className="avatar ml-10 mb-5">
           <div className="w-56 h-56 rounded-full">
             <img src={avatarUrl} alt={""} />
           </div>
         </div>
       ) : (
-        <div className="avatar pl-10">
+        <div className="avatar  ml-10 mb-5">
           <div className="w-56 h-56 rounded-full">
-            <img src={"placeholder image png"} alt={""} />
+            <img
+              src={
+                "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png"
+              }
+              alt={""}
+            />
           </div>
         </div>
       )}

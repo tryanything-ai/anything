@@ -52,7 +52,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
         title={template.flow_template_name}
         username={profile?.username || ""}
         profileName={profile?.full_name || ""}
-        profileImage={profile?.avatar_url || ""}
+        profileImage={profile?.avatar_url || "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png"}
         trigger={flow.trigger}
         actions={flow.actions}
       />

@@ -23,7 +23,7 @@ export const ProfileView = ({
         <div className="avatar">
           <div className="w-24 rounded-full">
             <Avatar
-              avatar_url={profile.avatar_url ? profile.avatar_url : ""}
+              avatar_url={profile.avatar_url ? profile.avatar_url : "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png"}
               profile_name={profile.full_name ? profile.full_name : ""}
               // width={100}
             />
