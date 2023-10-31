@@ -8,6 +8,20 @@ import { ImageResponse } from "next/server";
 import { FlowTemplateOgImage } from "@/components/og/template2";
 import { FlowTemplate } from "@/types/flow";
 // import { dm_sans } from "@/lib/fonts";
+// import { DM_Sans, Inter } from "next/font/google";
+
+// export const inter = Inter({
+//   subsets: ["latin"],
+//   display: "swap",
+//   variable: "--font-inter",
+// });
+
+// export const dm_sans = DM_Sans({
+//   weight: ["400", "500", "700"],
+//   subsets: ["latin"],
+//   display: "swap",
+//   variable: "--font-dm-sans",
+// });
 
 // Route segment config
 export const runtime = "edge";
@@ -59,8 +73,12 @@ export default async function Image({
   //  const interSemiBold = fetch(
   //   new URL('./Inter-SemiBold.ttf', import.meta.url)
   //  ).then((res) => res.arrayBuffer())
-  
-  
+
+  const dmSansFontResponse = await fetch(
+    process.env.NEXT_PUBLIC_VERCEL_URL + "/fonts/DM_Sans.ttf"
+  );
+  const dmSansFontBuffer = await dmSansFontResponse.arrayBuffer();
+
   return new ImageResponse(
     (
       <div
@@ -87,29 +105,35 @@ export default async function Image({
     {
       ...size,
       // fonts: [
-        // {
-        //   name: 'DM Sans',
-        //   data: await dm_sans,
-        //   style: 'normal',
-        //   weight: 500,
-        //   subsets: ["latin"],
-        //   display: "swap",
-        //   variable: "--font-dm-sans",
-        // },
-        // {
-        //   name: 'Inter',
-        //   data: await inter,
-        //   style: 'normal',
-        //   weight: 400,
-        //   subsets: ["latin"],
-        //   display: "swap",
-        //   variable: "--font-inter",
-  //         weight: 500, 
-  // subsets: ["latin"],
-  // display: "swap",
-  // variable: "--font-dm-sans",
+      //   {
+      //     name: "dm-sans",
+      //     data: dmSansFontBuffer,
+      //   },
+      // ],
+      // fonts: [
+      // {
+      //   name: 'DM Sans',
+      //   data: await dm_sans,
+      //   style: 'normal',
+      //   weight: 500,
+      //   subsets: ["latin"],
+      //   display: "swap",
+      //   variable: "--font-dm-sans",
+      // },
+      // {
+      //   name: 'Inter',
+      //   data: await inter,
+      //   style: 'normal',
+      //   weight: 400,
+      //   subsets: ["latin"],
+      //   display: "swap",
+      //   variable: "--font-inter",
+      //         weight: 500,
+      // subsets: ["latin"],
+      // display: "swap",
+      // variable: "--font-dm-sans",
 
-        // },
+      // },
       // ]
     }
   );
