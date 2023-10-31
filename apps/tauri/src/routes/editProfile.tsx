@@ -121,7 +121,7 @@ export default function EditProfile() {
             </div>
             {/* Username */}
             <div className="flex flex-col">
-              <div className="flex mb-1 h-full items-center pr-4">Username</div>
+              <div className="flex mb-1 items-center pr-4">Username</div>
               <input
                 type="text"
                 placeholder="Type here"
@@ -134,42 +134,39 @@ export default function EditProfile() {
                 })}
               />
               {errors.username?.type === "required" && (
-                <p className="flex mb-1 h-full  pl-4 bg-purple-700">
+                <p className="flex mb-1 h-full ">
                   Username is required to update profile
                 </p>
               )}
-              {errors.username?.type === "min" && (
-                <p className="flex mb-1 h-full justify-center items-center pl-4">
-                  Username must be 4 long
-                </p>
+              {errors.username?.type === "minLength" && (
+                <p className="flex mb-1 h-full pl-4">Username must be 4 long</p>
               )}
-              {errors.username?.type === "max" && (
-                <p className="flex mb-1 h-full justify-center items-center pl-4">
+              {errors.username?.type === "maxLength" && (
+                <p className="flex mb-1 h-full">
                   Username need to be less than 20 characters long
                 </p>
               )}
             </div>
             {/* Full Name */}
-            <div className="flex flex-row">
-              <div className="flex flex-col mb-5 w-96">
-                <div className="flex h-full items-center pr-4">Full Name</div>
-                <input
-                  type="text"
-                  placeholder="Type here"
-                  className="input input-bordered input-md"
-                  defaultValue={profile.full_name}
-                  {...register("full_name", {
-                    minLength: 2,
-                    maxLength: 60,
-                  })}
-                />
-              </div>
-              {errors.full_name?.type === "min" && (
+
+            <div className="flex flex-col">
+              <div className="flex  mb-1 items-center pr-4">Full Name</div>
+              <input
+                type="text"
+                placeholder="Type here"
+                className="input input-bordered input-md w-96"
+                defaultValue={profile.full_name}
+                {...register("full_name", {
+                  minLength: 2,
+                  maxLength: 60,
+                })}
+              />
+              {errors.full_name?.type === "minLength" && (
                 <p className="mb-1 h-full justify-center items-center pl-4">
                   Name must be 2 long
                 </p>
               )}
-              {errors.full_name?.type === "max" && (
+              {errors.full_name?.type === "maxLength" && (
                 <p className="flex mb-1 h-full justify-center items-center pl-4">
                   Name need to be less than 60 characters long
                 </p>
