@@ -11,7 +11,7 @@ import { FlowTemplate } from "@/types/flow";
 // import path from "path";
 // import { fileURLToPath } from "url";
 
-const this_url = process.env.NEXT_PUBLIC_VERCEL_URL;
+const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
 // import { dm_sans } from "@/lib/fonts";
 // import { DM_Sans, Inter } from "next/font/google";
 

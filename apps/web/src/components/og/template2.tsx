@@ -13,8 +13,8 @@ import React, { ReactNode } from "react";
 
 import { Avatar } from "@/components/avatar";
 
-let svg = process.env.NEXT_PUBLIC_VERCEL_URL + "/3og.svg";
-let logo = process.env.NEXT_PUBLIC_VERCEL_URL + "/icon.png";
+let svg = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/3og.svg";
+let logo = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/icon.png";
 
 export type FlowTemplateOgImageProps = {
   title: string;
