@@ -58,7 +58,8 @@ impl TryFrom<EngineKind> for ExecuteConfig {
 
 /// The runtime configuration is used to configure the runtime environment
 /// for the execution of an entire flow
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Builder)]
+#[builder(setter(into, strip_option), default)]
 pub struct RuntimeConfig {
     pub base_dir: Option<PathBuf>,
     pub current_dir: Option<PathBuf>,

@@ -36,6 +36,10 @@ impl Models {
         }
     }
 
+    pub async fn reload_flows(&mut self) {
+        self.flows.reload_flows().await.unwrap();
+    }
+
     pub fn get_flows(&self) -> Vec<Flow> {
         self.flows.get_flows()
     }

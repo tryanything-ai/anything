@@ -3,6 +3,8 @@
 mod core_messages;
 // use anything_events::config as anything_events_config;
 use std::env;
+use anything_coordinator::{AnythingConfig, AnythingConfigBuilder};
+use anything_runtime::{RuntimeConfig, RuntimeConfigBuilder};
 use tauri::Manager;
 extern crate dotenv;
 
@@ -35,10 +37,14 @@ fn main() {
 
     let _guard = sentry_tauri::minidump::init(&client);
 
+    let base_dir = dirs::home_dir().unwrap().join(".anything");
+    let runtime_config = RuntimeConfigBuilder::default()
+    .base_dir(base_dir).build().unwrap();
+    let anything_config = AnythingConfigBuilder::default().runtime_config(runtime_config).build().unwrap();
     tauri::Builder::default()
         .plugin(tauri_plugin_fs_watch::init())
         .plugin(sentry_tauri::plugin())
-        .plugin(tauri_plugin_anything_tauri::init())
+        .plugin(tauri_plugin_anything_tauri::AnythingBuilder::default().config(anything_config).build())
         .setup(|app| {
             //DEEPLINK
             // If you need macOS support this must be called in .setup() !

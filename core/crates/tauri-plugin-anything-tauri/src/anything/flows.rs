@@ -1,19 +1,6 @@
-use serde::Serialize;
-use std::path::PathBuf;
-
+use crate::{error::FlowResult, AnythingState, Error};
 use anything_graph::Flow;
-use tauri::{AppHandle, Runtime};
-
-use crate::{AnythingState, Error};
-
-#[allow(unused)]
-#[derive(Clone)]
-pub struct Flows<R: Runtime> {
-    app: AppHandle<R>,
-    pub(crate) path: PathBuf,
-}
-
-pub type FlowResult<T> = Result<T, Error>;
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct GetFlowsResponse {

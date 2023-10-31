@@ -1,6 +1,8 @@
 use anything_coordinator::CoordinatorError;
 use serde::{Deserialize, Serialize};
 
+pub type FlowResult<T> = Result<T, Error>;
+
 /// The error types.
 #[derive(thiserror::Error, Debug, Serialize, Deserialize)]
 #[non_exhaustive]

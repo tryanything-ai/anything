@@ -31,6 +31,7 @@ pub async fn start(
     runtime_config.base_dir = Some(root_dir);
     let mut cfg = config.clone();
     cfg.update_runtime_config(runtime_config);
+
     let manager = Manager::new(cfg);
 
     // Setup global models
@@ -73,7 +74,10 @@ impl Manager {
 
         let file_store = FileStore::create(root_dir.as_path(), &["anything"]).unwrap();
 
+        // Create all the base directories required
+        file_store.create_base_dir().unwrap();
         file_store.create_directory(&["flows"]).unwrap();
+        file_store.create_directory(&["db"]).unwrap();
 
         Manager {
             file_store,
@@ -128,6 +132,12 @@ impl Manager {
         Ok(())
     }
 
+    pub async fn refresh_flows(&self) -> CoordinatorResult<()> {
+        let mut models = MODELS.get().unwrap().lock().await;
+        models.reload_flows().await;
+        Ok(())
+    }
+
     /// The function `get_flows` returns a result containing a vector of `anything_graph::Flow` objects.
     ///
     /// Returns:
@@ -179,7 +189,7 @@ impl Manager {
                         .as_os_str()
                         .to_str()
                         .unwrap(),
-                    &flow.name,
+                    &format!("{}.toml", flow.name),
                 ],
                 flow_str.as_bytes(),
             )

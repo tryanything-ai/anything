@@ -9,6 +9,6 @@ pub(crate) mod processing;
 pub(crate) mod test_helper;
 
 pub mod manager;
-pub use config::AnythingConfig;
+pub use config::{AnythingConfig, AnythingConfigBuilder};
 pub use error::*;
 pub use manager::{start, Manager};
