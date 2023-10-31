@@ -248,6 +248,16 @@ impl Manager {
         Ok(flow)
     }
 
+    /// The function `update_flow` updates a flow with the given name and returns the updated flow.
+    ///
+    /// Arguments:
+    ///
+    /// * `flow_name`: The `flow_name` parameter is a `String` that represents the name of the flow that
+    /// needs to be updated.
+    ///
+    /// Returns:
+    ///
+    /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
     pub async fn update_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
         let flow = MODELS
             .get()

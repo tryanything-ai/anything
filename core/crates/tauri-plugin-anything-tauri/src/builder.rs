@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::{anything::*, AnythingState};
+use anything_common::setup_tracing;
 use anything_coordinator::{start, AnythingConfig, Manager as AnythingManager};
 use tauri::{
     plugin::{self, TauriPlugin},
@@ -57,6 +58,8 @@ impl<R: Runtime> Builder<R> {
                         .await
                         .unwrap();
                 });
+
+                setup_tracing("anything")?;
 
                 let anything_config = self.anything_config.clone();
                 tauri::async_runtime::block_on(async move {
