@@ -35,8 +35,14 @@ export const size = {
 
 export const contentType = "image/png";
 
+console.log("import meta", JSON.stringify(import.meta));
+
+// const boldFont = fetch(
+//   new URL("/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
+// ).then((res) => res.arrayBuffer());
+
 const boldFont = fetch(
-  new URL("/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
+  new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", import.meta.url)
 ).then((res) => res.arrayBuffer());
 
 // Image generation
