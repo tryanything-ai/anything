@@ -40,7 +40,7 @@ export default async function Profile({
             <Image
               width={100}
               height={100}
-              src={profile.avatar_url ? profile.avatar_url : "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png"}
+              src={profile.avatar_url ? profile.avatar_url : ""}
               alt={profile.username ? profile.username : "user profile picture"}
             />
           </div>

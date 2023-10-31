@@ -60,7 +60,7 @@ export default function EditAvatar({ profile_id, avatar_url, size }) {
       )}
       <div style={{ width: size }}>
         <label htmlFor="single" className="btn btn-primary w-56 ml-10">
-          {uploading ? "Uploading ..." : "Upload"}
+          {uploading ? "Uploading ..." : "Upload Avatar"}
         </label>
 
         <input

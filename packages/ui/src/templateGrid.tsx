@@ -26,7 +26,7 @@ export const TemplateGrid = ({
           <TemplateCard
             AvatarComponent={() =>
               AvatarComponent({
-                avatar_url: template?.profiles?.avatar_url || "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png",
+                avatar_url: template?.profiles?.avatar_url || "",
                 profile_name: template?.profiles?.full_name || "",
               })
             }
