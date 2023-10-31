@@ -49,8 +49,14 @@ export const fetchProfileTemplates = async (
   username: string
 ): Promise<BigFlow | undefined> => {
   try {
-    const { data, error }: SUPABASE.DbResult<typeof templatesQuery> =
-      await templatesQuery.eq("profiles.username", username);
+    if (!username) throw new Error("username is undefined");
+    const templatesQuery2 = supabaseClient
+      .from("flow_templates")
+      .select("*, flow_template_versions(*), tags(*), profiles!inner(*)")
+      .eq("profiles.username", username);
+
+    const { data, error }: SUPABASE.DbResult<typeof templatesQuery2> =
+      await templatesQuery2;
 
     // console.log("data", JSON.stringify(data, null, 3));
     if (error || !data) throw error;
