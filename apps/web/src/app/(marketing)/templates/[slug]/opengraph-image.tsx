@@ -35,6 +35,10 @@ export const size = {
 
 export const contentType = "image/png";
 
+const boldFont = fetch(
+  new URL("/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
+).then((res) => res.arrayBuffer());
+
 // Image generation
 export default async function Image({
   params,
@@ -74,10 +78,16 @@ export default async function Image({
   //   new URL('./Inter-SemiBold.ttf', import.meta.url)
   //  ).then((res) => res.arrayBuffer())
 
-  const dmSansFontResponse = await fetch(
-    process.env.NEXT_PUBLIC_VERCEL_URL + "/fonts/DM_Sans.ttf"
-  );
-  const dmSansFontBuffer = await dmSansFontResponse.arrayBuffer();
+  // const dmSansFontResponse = await fetch(
+  //   process.env.NEXT_PUBLIC_VERCEL_URL + "/fonts/DM_Sans.ttf"
+  // );
+  // const dmSansFontBuffer = await dmSansFontResponse.arrayBuffer();
+  // const [regularFontData, boldFontData] = await Promise.all([
+  //   regularFont,
+  //   boldFont
+  // ]);
+
+  const boldFontData = await boldFont;
 
   return new ImageResponse(
     (
@@ -90,6 +100,9 @@ export default async function Image({
           // alignItems: 'center',
           // justifyContent: 'center',
           // backgroundColor: 'white',
+          // fontFamily: "derp",
+          fontFamily: "Dm_Sans",
+          // fontWeight: 700,
         }}
       >
         <FlowTemplateOgImage
@@ -104,12 +117,14 @@ export default async function Image({
     ),
     {
       ...size,
-      // fonts: [
-      //   {
-      //     name: "dm-sans",
-      //     data: dmSansFontBuffer,
-      //   },
-      // ],
+      fonts: [
+        {
+          name: "Dm_Sans",
+          data: boldFontData,
+          // style: "normal",
+          weight: 700,
+        },
+      ],
       // fonts: [
       // {
       //   name: 'DM Sans',
