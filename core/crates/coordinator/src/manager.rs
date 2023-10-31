@@ -149,6 +149,18 @@ impl Manager {
         Ok(flows)
     }
 
+    /// The function `get_flow` retrieves a flow by name and returns it as a result, or returns an error
+    /// if the flow is not found.
+    ///
+    /// Arguments:
+    ///
+    /// * `name`: A string representing the name of the flow to retrieve.
+    ///
+    /// Returns:
+    ///
+    /// The function `get_flow` returns a `CoordinatorResult` which can either be an `Ok` variant
+    /// containing a `anything_graph::Flow` or an `Err` variant containing a
+    /// `CoordinatorError::FlowNotFound` with the name of the flow as a string.
     pub async fn get_flow(&self, name: &str) -> CoordinatorResult<anything_graph::Flow> {
         let flow = MODELS.get().unwrap().lock().await.get_flow(name);
         match flow {
@@ -159,6 +171,17 @@ impl Manager {
         }
     }
 
+    /// The function `create_flow` creates a new flow, saves it to a file, and returns the created flow.
+    ///
+    /// Arguments:
+    ///
+    /// * `flow_name`: A string representing the name of the flow to be created.
+    /// * `flow_id`: The `flow_id` parameter is a unique identifier for the flow. It is used to
+    /// distinguish one flow from another and ensure that each flow has a unique identity.
+    ///
+    /// Returns:
+    ///
+    /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
     pub async fn create_flow(
         &self,
         flow_name: String,
@@ -198,6 +221,50 @@ impl Manager {
         Ok(flow)
     }
 
+    /// The function `delete_flow` deletes a flow and its associated files.
+    ///
+    /// Arguments:
+    ///
+    /// * `flow_name`: The `flow_name` parameter is a `String` that represents the name of the flow to
+    /// be deleted.
+    ///
+    /// Returns:
+    ///
+    /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
+    pub async fn delete_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
+        let flow = MODELS
+            .get()
+            .unwrap()
+            .lock()
+            .await
+            .delete_flow(flow_name)
+            .unwrap();
+
+        let _ = self
+            .file_store
+            .delete_directory(&["flows", &flow.name])
+            .unwrap();
+
+        Ok(flow)
+    }
+
+    pub async fn update_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
+        let flow = MODELS
+            .get()
+            .unwrap()
+            .lock()
+            .await
+            .update_flow(&flow_name)
+            .unwrap();
+
+        Ok(flow)
+    }
+
+    /*
+    INTERNAL FUNCTIONS
+     */
+
+    // Internal
     async fn setup_file_handler(self: Arc<Self>) {
         let (tx, mut rx) = tokio::sync::mpsc::channel(4096);
         let file_store = Arc::new(Mutex::new(self.file_store.clone()));

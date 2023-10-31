@@ -58,6 +58,17 @@ impl Models {
         // TODO: serialize flow into a file
         Ok(new_flow)
     }
+
+    pub fn delete_flow(&mut self, flow_name: String) -> CoordinatorResult<Flow> {
+        let flow = self.flows.remove_flow(&flow_name).unwrap();
+        Ok(flow)
+    }
+
+    pub fn update_flow(&mut self, flow_name: &str) -> CoordinatorResult<Flow> {
+        let flow = self.get_flow(flow_name).unwrap();
+        // TODO: Handle updates
+        Ok(flow)
+    }
 }
 
 #[cfg(test)]

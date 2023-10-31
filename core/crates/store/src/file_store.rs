@@ -52,6 +52,14 @@ impl FileStore {
             .map(|_| path)
     }
 
+    pub fn delete_directory(&self, dir_path: &[&str]) -> Result<()> {
+        let path = self.store_path(dir_path);
+        std::fs::remove_dir_all(&path).map_err(|err| StoreError::UnableToDeleteDirectory {
+            path: path.clone(),
+            err,
+        })
+    }
+
     pub fn create_base_dir(&self) -> Result<()> {
         std::fs::create_dir_all(&self.base_dir).map_err(|err| StoreError::UnableToCreateDirectory {
             path: self.base_dir.clone(),
