@@ -20,7 +20,6 @@ export class Anything {
     }
 
     async createFlow<T>(flowName: string, flowId: string): Promise<T> {
-        console.log("Called createFlow in API", flowId, flowName);
         return await invoke("plugin:anything|create_flow", {
             path: this.path,
             flowName: flowName,

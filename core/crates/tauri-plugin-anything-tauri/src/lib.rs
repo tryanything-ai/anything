@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use anything_coordinator::Manager as AnythingManager;
+use anything_coordinator::{start, AnythingConfig, Manager as AnythingManager};
 use init::init_anything;
 use tauri::{
     async_runtime::Mutex,
     plugin::{Builder, TauriPlugin},
-    Manager, RunEvent, Runtime,
+    AppHandle, Manager, RunEvent, Runtime,
 };
 
 mod error;
@@ -26,6 +26,33 @@ fn initialize() {
 }
 
 #[tauri::command]
+async fn setup() {
+    // println!("In initialize for anything tauri plugin");
+
+    // let (stop_tx, stop_rx) = tokio::sync::mpsc::channel(1);
+    // let (ready_tx, mut ready_rx) = tokio::sync::mpsc::channel(1);
+    // let anything_config = AnythingConfig::default();
+
+    // let ready_tx_clone = ready_tx.clone();
+    // tauri::async_runtime::spawn(async move {
+    //     start(anything_config, stop_rx, ready_tx_clone)
+    //         .await
+    //         .unwrap();
+    // });
+
+    // tauri::async_runtime::block_on(async move {
+    //     let arc_manager = ready_rx.recv().await;
+    //     let arc_manager = arc_manager.unwrap().clone();
+    //     let init_state = AnythingState {
+    //         inner: Mutex::new(arc_manager.clone()),
+    //         stop_tx: Some(stop_tx),
+    //     };
+    //     println!("Anything is ready to go!");
+    //     app_handle.manage(init_state);
+    // });
+}
+
+#[tauri::command]
 async fn stop(state: tauri::State<'_, AnythingState>) -> Result<(), Error> {
     let stop_tx = state.stop_tx.as_ref().unwrap();
     stop_tx.send(()).await.unwrap();
@@ -37,6 +64,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("anything")
         .invoke_handler(tauri::generate_handler![
             initialize,
+            setup,
             stop,
             get_flows,
             create_flow
@@ -44,8 +72,14 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .setup(|app_handle| {
             let (stop_tx, stop_rx) = tokio::sync::mpsc::channel(1);
             let (ready_tx, mut ready_rx) = tokio::sync::mpsc::channel(1);
+            let anything_config = AnythingConfig::default();
 
-            tauri::async_runtime::spawn(init_anything::<R>(app_handle.clone(), stop_rx, ready_tx));
+            tauri::async_runtime::spawn(init_anything::<R>(
+                app_handle.clone(),
+                anything_config,
+                stop_rx,
+                ready_tx,
+            ));
             tauri::async_runtime::block_on(async move {
                 let arc_manager = ready_rx.recv().await;
                 let arc_manager = arc_manager.unwrap().clone();

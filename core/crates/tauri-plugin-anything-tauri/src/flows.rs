@@ -45,7 +45,6 @@ pub async fn create_flow(
     flow_name: String,
     flow_id: String,
 ) -> FlowResult<CreateFlowResponse> {
-    eprintln!("create_flow in flows.rs: {} {}", flow_name, flow_id);
     match state.inner.try_lock() {
         Err(_e) => Err(Error::CoordinatorNotInitialized),
         Ok(ref inner) => match inner.create_flow(flow_name, flow_id).await {
