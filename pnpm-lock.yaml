@@ -249,6 +249,9 @@ importers:
       react-icons:
         specifier: ^4.11.0
         version: 4.11.0(react@18.2.0)
+      react-inlinesvg:
+        specifier: ^4.1.0
+        version: 4.1.0(react@18.2.0)
       sharp:
         specifier: ^0.32.6
         version: 0.32.6
@@ -5618,6 +5621,14 @@ packages:
       scheduler: 0.23.0
     dev: false
 
+  /react-from-dom@0.6.2(react@18.2.0):
+    resolution: {integrity: sha512-qvWWTL/4xw4k/Dywd41RBpLQUSq97csuv15qrxN+izNeLYlD9wn5W8LspbfYe5CWbaSdkZ72BsaYBPQf2x4VbQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+    dev: false
+
   /react-hook-form@7.47.0(react@18.2.0):
     resolution: {integrity: sha512-F/TroLjTICipmHeFlMrLtNLceO2xr1jU3CyiNla5zdwsGUGu2UOxxR4UyJgLlhMwLW/Wzp4cpJ7CPfgJIeKdSg==}
     engines: {node: '>=12.22.0'}
@@ -5633,6 +5644,15 @@ packages:
       react: '*'
     dependencies:
       react: 18.2.0
+    dev: false
+
+  /react-inlinesvg@4.1.0(react@18.2.0):
+    resolution: {integrity: sha512-S7kSE6ldKVpumEYTNXmCs4pAKoDzklP6TklI8oBx23fw8/+VBwO5X0M7/Ii0weieO1DqElUJg5EI8cq7zo5oPg==}
+    peerDependencies:
+      react: 16.8 - 18
+    dependencies:
+      react: 18.2.0
+      react-from-dom: 0.6.2(react@18.2.0)
     dev: false
 
   /react-is@16.13.1:

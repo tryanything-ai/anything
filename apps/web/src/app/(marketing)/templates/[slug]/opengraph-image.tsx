@@ -5,9 +5,9 @@ import {
   Profile,
 } from "utils";
 import { ImageResponse } from "next/server";
-
-import { FlowTemplateOgImage } from "@/components/og/template";
+import { FlowTemplateOgImage } from "@/components/og/template2";
 import { FlowTemplate } from "@/types/flow";
+// import { dm_sans } from "@/lib/fonts";
 
 // Route segment config
 export const runtime = "edge";
@@ -16,13 +16,17 @@ export const runtime = "edge";
 export const alt = "Anything Template";
 export const size = {
   width: 1200,
-  height: 630,
+  height: 628,
 };
 
 export const contentType = "image/png";
 
 // Image generation
-export default async function Image({ params }: { params: { slug: string } }) {
+export default async function Image({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<ImageResponse> {
   console.log(
     "params in TemplatePageOgImage Generation",
     JSON.stringify(params)
@@ -37,39 +41,96 @@ export default async function Image({ params }: { params: { slug: string } }) {
     throw new Error("Template not found");
   }
 
-  let template = templateResponse[0];
+  const template = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 
-  let profile: Profile | undefined = template?.profiles?.username
+  const profile: Profile | undefined = template?.profiles?.username
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
-  let flow = flowJsonFromBigFlow(template) as FlowTemplate;
+  const flow = (await flowJsonFromBigFlow(template)) as FlowTemplate;
 
+  console.log(
+    "params in TemplatePageOgImage Generation",
+    JSON.stringify(params)
+  );
+
+  //  // Font
+  //  const interSemiBold = fetch(
+  //   new URL('./Inter-SemiBold.ttf', import.meta.url)
+  //  ).then((res) => res.arrayBuffer())
+  
+  
   return new ImageResponse(
     (
-      <FlowTemplateOgImage
-        title={template.flow_template_name}
-        username={profile?.username || ""}
-        profileName={profile?.full_name || ""}
-        profileImage={profile?.avatar_url || ""}
-        trigger={flow.trigger}
-        actions={flow.actions}
-      />
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          // flexDirection: 'column',
+          // alignItems: 'center',
+          // justifyContent: 'center',
+          // backgroundColor: 'white',
+        }}
+      >
+        <FlowTemplateOgImage
+          actions={flow.actions}
+          profileImage={profile?.avatar_url || ""}
+          profileName={profile?.full_name || ""}
+          title={template.flow_template_name}
+          trigger={flow.trigger}
+          username={profile?.username || ""}
+        />
+      </div>
     ),
     {
-      // For convenience, we can re-use the exported opengraph-image
-      // size config to also set the ImageResponse's width and height.
       ...size,
-
       // fonts: [
-      //   {
-      //     name: 'Inter',
-      //     data: await interSemiBold,
-      //     style: 'normal',
-      //     weight: 400,
-      //   },
-      // ],
+        // {
+        //   name: 'DM Sans',
+        //   data: await dm_sans,
+        //   style: 'normal',
+        //   weight: 500,
+        //   subsets: ["latin"],
+        //   display: "swap",
+        //   variable: "--font-dm-sans",
+        // },
+        // {
+        //   name: 'Inter',
+        //   data: await inter,
+        //   style: 'normal',
+        //   weight: 400,
+        //   subsets: ["latin"],
+        //   display: "swap",
+        //   variable: "--font-inter",
+  //         weight: 500, 
+  // subsets: ["latin"],
+  // display: "swap",
+  // variable: "--font-dm-sans",
+
+        // },
+      // ]
     }
   );
 }
+
+/* <FlowTemplateOgImage
+          actions={flow.actions}
+          profileImage={profile?.avatar_url || ""}
+          profileName={profile?.full_name || ""}
+          title={template.flow_template_name}
+          trigger={flow.trigger}
+          username={profile?.username || ""}
+        /> */
+// For convenience, we can re-use the exported opengraph-image
+// size config to also set the ImageResponse's width and height.
+// ...size,
+// fonts: [
+//   {
+//     name: 'Inter',
+//     data: await interSemiBold,
+//     style: 'normal',
+//     weight: 400,
+//   },
+// ],

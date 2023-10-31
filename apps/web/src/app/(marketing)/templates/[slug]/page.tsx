@@ -1,5 +1,6 @@
 import { TemplateView } from "ui";
 import {
+  BigFlow,
   fetchProfile,
   fetchTemplateBySlug,
   fetchTemplates,
@@ -9,12 +10,11 @@ import {
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
 import { Avatar } from "@/components/avatar";
 
 type Props = {
   params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  // searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata(
@@ -27,9 +27,9 @@ export async function generateMetadata(
   const templateResponse = await fetchTemplateBySlug(params.slug);
 
   if (templateResponse) {
-    let template = templateResponse[0];
+    const template = templateResponse[0];
 
-    let profile: Profile | undefined = template?.profiles?.username
+    const profile: Profile | undefined = template?.profiles?.username
       ? await fetchProfile(template.profiles.username)
       : undefined;
 
@@ -40,9 +40,10 @@ export async function generateMetadata(
     Metadata = {
       title: template.flow_template_name,
       description: template?.flow_template_description,
-      // openGraph: {
-      //   images: [profile?.avatar_url],
-      // },
+      openGraph: {
+        description: template?.flow_template_description ?? undefined,
+        // images: [profile?.avatar_url],
+      },
       authors: [
         {
           name: profile?.full_name || undefined,
@@ -55,15 +56,17 @@ export async function generateMetadata(
   return Metadata;
 }
 
-export const generateStaticParams = async () => {
-  let templates = await fetchTemplates();
+export const generateStaticParams = async (): Promise<BigFlow> => {
+  const templates = await fetchTemplates();
   // console.log("templates in generateStaticParams", templates);
   // has "slug" key to populate route
   if (!templates) return [];
   return templates;
 };
 
-export default async function Template({ params }: Props) {
+export default async function Template({
+  params,
+}: Props): Promise<JSX.Element> {
   console.log("params in TemplatePage", params);
   const templateResponse = await fetchTemplateBySlug(params.slug);
 
@@ -71,15 +74,15 @@ export default async function Template({ params }: Props) {
     notFound();
   }
 
-  let template = templateResponse[0];
+  const template = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 
-  let profile: Profile | undefined = template?.profiles?.username
+  const profile: Profile | undefined = template?.profiles?.username
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
   // let flow = flowJsonFromBigFlow(template) as FlowTemplate;
-  const Action = ({ slug }) => {
+  function Action({ slug }): JSX.Element {
     return (
       <div className="flex flex-col gap-3 md:flex-row">
         <div className="btn btn-sm btn-primary md:btn-md">
@@ -93,16 +96,16 @@ export default async function Template({ params }: Props) {
         </a>
       </div>
     );
-  };
+  }
 
   return (
     <div className="mx-4 my-6 flex max-w-4xl flex-col md:mx-auto md:my-16">
       <TemplateView
         ActionComponent={() => <Action slug={template.slug} />}
-        template={template}
-        profile={profile}
         Avatar={Avatar}
         Link={Link}
+        profile={profile}
+        template={template}
       />
     </div>
   );
