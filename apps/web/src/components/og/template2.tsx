@@ -8,13 +8,13 @@ import { Node } from "utils";
 import Image from "next/image";
 import Link from "next/link";
 import React, { ReactNode } from "react";
-import SVG from "react-inlinesvg";
-// import Logo from "@/public/3og.svg";
+// import Logo from "@/public/icon.png";
 // import Logo from "@/public/3og.svg";
 
 import { Avatar } from "@/components/avatar";
 
 let svg = process.env.NEXT_PUBLIC_VERCEL_URL + "/3og.svg";
+let logo = process.env.NEXT_PUBLIC_VERCEL_URL + "/icon.png";
 
 export type FlowTemplateOgImageProps = {
   title: string;
@@ -32,7 +32,11 @@ const Div: React.FC<{ children: ReactNode; style?: React.CSSProperties }> = ({
   children,
   style,
 }) => {
-  return <div style={{ display: "flex", ...style }}>{children}</div>;
+  return (
+    <div className="font-display" style={{ display: "flex", ...style }}>
+      {children}
+    </div>
+  );
 };
 
 export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
@@ -49,15 +53,35 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
     <Div
       style={{
         flexDirection: "column",
-        backgroundColor: "#1d232a",
+        // backgroundColor: "#1d232a",
+        backgroundColor: "black",
         width: "100%",
         height: "100%",
         color: "#FFFFFF",
-        padding: "1.5rem",
+
+        // padding: "1.5rem",
         // justifyContent: "space-between",
       }}
     >
-      <Div style={{ fontSize: "80", height: "20%" }}>{title}</Div>
+      <Div
+        style={{
+          paddingLeft: "1.5rem",
+          paddingRight: "1.5rem",
+          paddingTop: "1.5rem",
+          //   fontSize: "80",
+          //   fontWeight: "700",
+          height: "20%",
+          //   fontFamily:
+          //     "sans-serif" /* You can replace 'DisplayFont' with the actual font name */,
+            fontSize: "80px",
+            fontWeight: "600",
+          lineHeight: "88px",
+        //   letterSpacing: "-2%",
+        //   fontFamily: '"dm-sans"',
+        }}
+      >
+        {title}
+      </Div>
       <Div
         style={{
           flexDirection: "row",
@@ -71,6 +95,9 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
             flexDirection: "column",
             justifyContent: "space-between",
             width: "50%",
+            padding: "1.5rem",
+            paddingTop: "3rem",
+            paddingBottom: "3rem",
           }}
         >
           {/* Avatar */}
@@ -98,7 +125,7 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
             </Div>
           </Div>
           {/* End Avatar */}
-          <Div style={{ fontSize: "50" }}>Anything Templates</Div>
+          <Div style={{ fontSize: "50px" }}>Anything Templates</Div>
         </Div>
         {/* Right */}
         <Div
@@ -111,7 +138,12 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
           <img
             src={svg}
             alt="Magic 3og"
-            style={{ maxWidth: "100%", maxHeight: "100%" }}
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              //   marginBottom: "-20px",
+              transform: "translateY(20px)",
+            }}
           />
           {/* <Div style={{ fontSize: "50" }}>When:</Div>
           <Div
