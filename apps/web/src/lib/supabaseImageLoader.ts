@@ -1,6 +1,4 @@
 // Docs: https://supabase.com/docs/guides/storage/image-transformations#nextjs-loader
-// import { env } from "@/env.mjs";
-
 export function isRelativeUrl(url: string): boolean {
   return url.startsWith('/');
 }

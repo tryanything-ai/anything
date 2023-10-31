@@ -5,8 +5,6 @@ import posthogClient from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 import React, {JSX, useEffect } from "react";
 
-// import { env } from "@/env.mjs";
-
 const NEXT_PUBLIC_POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ? process.env.NEXT_PUBLIC_POSTHOG_KEY : "";
 const NEXT_PUBLIC_POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ? process.env.NEXT_PUBLIC_POSTHOG_HOST : "";
 

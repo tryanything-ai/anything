@@ -1,17 +1,5 @@
-import {
-  AvatarAndUsername,
-  BaseNodeIcon,
-  BaseNodeWeb,
-  removeWidthHeight,
-} from "ui";
 import { Node } from "utils";
-import Image from "next/image";
-import Link from "next/link";
 import React, { ReactNode } from "react";
-// import Logo from "@/public/icon.png";
-// import Logo from "@/public/3og.svg";
-
-import { Avatar } from "@/components/avatar";
 
 let svg = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/3og.svg";
 let logo = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/icon.png";
@@ -47,20 +35,14 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
   trigger,
   actions,
 }) => {
-  const cleanSizedIcon = removeWidthHeight(trigger.icon);
-
   return (
     <Div
       style={{
         flexDirection: "column",
-        // backgroundColor: "#1d232a",
         backgroundColor: "black",
         width: "100%",
         height: "100%",
         color: "#FFFFFF",
-
-        // padding: "1.5rem",
-        // justifyContent: "space-between",
       }}
     >
       <Div
@@ -68,21 +50,13 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
           paddingLeft: "3rem",
           paddingRight: "3rem",
           paddingTop: "1.5rem",
-          //   fontSize: "80",
-          //   fontWeight: "700",
           height: "20%",
-          //   fontFamily:
-          //     "sans-serif" /* You can replace 'DisplayFont' with the actual font name */,
           fontSize: "80px",
           fontWeight: "700",
-          //   lineHeight: "88px",
-          //   letterSpacing: "-50%",
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
           letterSpacing: "-0.05em",
-
-          //   fontFamily: '"dm-sans"',
         }}
       >
         {title}
@@ -91,7 +65,6 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
         style={{
           flexDirection: "row",
           height: "80%",
-          //   backgroundColor: "green",
         }}
       >
         {/* Left */}
@@ -101,8 +74,6 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
             justifyContent: "space-between",
             width: "50%",
             padding: "3rem",
-            // paddingTop: "3rem",
-            // paddingBottom: "3rem",
           }}
         >
           {/* Avatar */}
@@ -137,7 +108,6 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
           style={{
             flexDirection: "column",
             width: "50%",
-            // backgroundColor: "pink",
           }}
         >
           <img
@@ -146,54 +116,9 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
             style={{
               maxWidth: "100%",
               maxHeight: "100%",
-              //   marginBottom: "-20px",
               transform: "translateY(20px)",
             }}
           />
-          {/* <Div style={{ fontSize: "50" }}>When:</Div>
-          <Div
-            style={{
-              //   marginTop: "2rem",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              borderRadius: "5px",
-              backgroundColor: "white",
-              opacity: "0.05",
-              padding: "2rem",
-              //   paddingBottom: "2rem",
-            }}
-          >
-            <Div
-              style={{
-                height: "5rem",
-                width: "5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "5px",
-                backgroundColor: "white",
-              }}
-            >
-              <Div
-                style={{
-                  fontSize: "4.5rem",
-                  padding: "0.25rem",
-                }}
-              >
-                ⚡️
-              </Div>
-            </Div>
-            <h1
-              style={{
-                textOverflow: "ellipsis",
-                paddingLeft: "4rem",
-                fontSize: "20",
-              }}
-            >
-              {trigger.node_label}
-            </h1>
-          </Div> */}
         </Div>
       </Div>
     </Div>

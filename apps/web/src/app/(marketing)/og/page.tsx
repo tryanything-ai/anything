@@ -4,7 +4,7 @@ import {
   FlowTemplateOgImageProps,
   ProfileOgImageProps,
   UserProfileOgImage,
-} from "@/components/og/template";
+} from "@/components/og/template_tailwind";
 import Logo from "@/public/icon.png";
 import { MockNewFlows } from "@/types/flow";
 
