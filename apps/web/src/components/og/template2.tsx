@@ -124,7 +124,7 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
                 paddingLeft: "2rem",
               }}
             >
-              <Div style={{ textOverflow: "ellipsis", fontSize: "50" }}>
+              <Div style={{ textOverflow: "ellipsis", fontSize: "50px" }}>
                 {profileName}
               </Div>
             </Div>
