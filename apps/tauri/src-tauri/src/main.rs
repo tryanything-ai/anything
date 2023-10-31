@@ -60,15 +60,6 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            // core_messages::get_flows,
-            // core_messages::get_flow_versions,
-            // core_messages::get_chat_flows,
-            // core_messages::get_flow,
-            // core_messages::get_flow_by_name,
-            // core_messages::get_flow_node,
-            // core_messages::get_nodes,
-        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
