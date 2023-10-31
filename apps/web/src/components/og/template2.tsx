@@ -65,19 +65,24 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
     >
       <Div
         style={{
-          paddingLeft: "1.5rem",
-          paddingRight: "1.5rem",
+          paddingLeft: "3rem",
+          paddingRight: "3rem",
           paddingTop: "1.5rem",
           //   fontSize: "80",
           //   fontWeight: "700",
           height: "20%",
           //   fontFamily:
           //     "sans-serif" /* You can replace 'DisplayFont' with the actual font name */,
-            fontSize: "80px",
-            fontWeight: "600",
-          lineHeight: "88px",
-        //   letterSpacing: "-2%",
-        //   fontFamily: '"dm-sans"',
+          fontSize: "80px",
+          fontWeight: "700",
+          //   lineHeight: "88px",
+          //   letterSpacing: "-50%",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          letterSpacing: "-0.05em",
+
+          //   fontFamily: '"dm-sans"',
         }}
       >
         {title}
@@ -95,9 +100,9 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
             flexDirection: "column",
             justifyContent: "space-between",
             width: "50%",
-            padding: "1.5rem",
-            paddingTop: "3rem",
-            paddingBottom: "3rem",
+            padding: "3rem",
+            // paddingTop: "3rem",
+            // paddingBottom: "3rem",
           }}
         >
           {/* Avatar */}
@@ -116,7 +121,7 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
-                paddingLeft: "4rem",
+                paddingLeft: "2rem",
               }}
             >
               <Div style={{ textOverflow: "ellipsis", fontSize: "50" }}>
