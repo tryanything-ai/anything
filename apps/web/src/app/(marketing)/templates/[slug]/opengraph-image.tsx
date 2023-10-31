@@ -7,6 +7,10 @@ import {
 import { ImageResponse } from "next/server";
 import { FlowTemplateOgImage } from "@/components/og/template2";
 import { FlowTemplate } from "@/types/flow";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
 // import { dm_sans } from "@/lib/fonts";
 // import { DM_Sans, Inter } from "next/font/google";
 
@@ -37,13 +41,24 @@ export const contentType = "image/png";
 
 console.log("import meta", JSON.stringify(import.meta));
 
+const boldFont = fetch("/fonts/DMSans-SemiBold.ttf").then((res) =>
+  res.arrayBuffer()
+);
+
 // const boldFont = fetch(
 //   new URL("/fonts/DMSans-SemiBold.ttf", process.env.NEXT_PUBLIC_VERCEL_URL)
 // ).then((res) => res.arrayBuffer());
 
-const boldFont = fetch(
-  new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
+// const boldFont = fetch(
+//   new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", import.meta.url)
+// ).then((res) => res.arrayBuffer());
+
+// const boldFont = fs.promises.readFile(
+//   path.join(
+//     fileURLToPath(import.meta.url),
+//     "../../../../../public/fonts/DMSans-SemiBold.ttf"
+//   )
+// );
 
 // Image generation
 export default async function Image({
@@ -93,7 +108,10 @@ export default async function Image({
   //   boldFont
   // ]);
 
-  const boldFontData = await boldFont;
+  // const boldFontData = await boldFont;
+  const boldFontData = await fetch(
+    new URL("../../../../../public/fonts/DMSans-SemiBold.ttf", import.meta.url)
+  ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
     (
