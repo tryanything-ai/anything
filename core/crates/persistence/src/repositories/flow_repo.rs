@@ -79,6 +79,11 @@ impl FlowRepoImpl {
             )
             .await?;
 
+        let save_flow_version: CreateFlowVersion = create_flow.into();
+
+        self.save_flow_version(&mut tx, flow_name, version_id, save_flow_version)
+            .await?;
+
         tx.commit()
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
@@ -157,7 +162,6 @@ impl FlowRepoImpl {
 
     async fn get_flow_by_id(&self, flow_id: FlowId) -> PersistenceResult<StoredFlow> {
         let pool = self.datastore.get_pool();
-        println!("get_flow_by_id: {:?}", flow_id);
 
         let flow =
             sqlx::query_as::<_, StoredFlow>(&format!("{} WHERE f.flow_id = ?1", GET_FLOW_SQL))
@@ -190,15 +194,15 @@ mod tests {
 
         let res = flow_repo.create_flow(create_flow).await;
 
-        let all = select_all_flows(&flow_repo.datastore.get_pool())
-            .await
-            .unwrap();
-        println!("all: {:?}", all);
-        println!("res: {:?}", res);
         assert!(res.is_ok());
 
         let stored_flow = res.unwrap();
 
-        println!("stored_flow: {:?}", stored_flow);
+        assert_eq!(stored_flow.flow_name, "test");
+        assert_eq!(stored_flow.active, false);
+        assert_eq!(
+            stored_flow.latest_version_id,
+            stored_flow.versions[0].version_id
+        );
     }
 }

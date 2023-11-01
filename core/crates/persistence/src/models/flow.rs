@@ -81,11 +81,35 @@ pub struct FlowVersion {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(FromRow, Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateFlowVersion {
-    pub flow_id: String,
-    pub flow_definition: serde_json::Value,
-    pub published: Option<bool>,
+    pub flow_id: FlowId,
     pub version: Option<String>,
+    pub flow_definition: String,
+    pub published: Option<bool>,
     pub description: Option<String>,
+}
+
+impl Default for CreateFlowVersion {
+    fn default() -> Self {
+        Self {
+            flow_id: "".to_string(),
+            version: Some("0.0.1".to_string()),
+            flow_definition: "{}".to_string(),
+            published: Some(false),
+            description: None,
+        }
+    }
+}
+
+impl Into<CreateFlowVersion> for CreateFlow {
+    fn into(self) -> CreateFlowVersion {
+        CreateFlowVersion {
+            flow_id: self.name.clone(),
+            version: Some("0.0.1".to_string()),
+            flow_definition: "{}".to_string(),
+            published: Some(false),
+            description: None,
+        }
+    }
 }
