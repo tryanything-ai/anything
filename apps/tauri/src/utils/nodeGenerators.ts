@@ -1,5 +1,7 @@
 import { Node } from "./nodeUtils";
 import { HandleProps, Position } from "reactflow";
+import * as rawIcons from './rawIcons'; 
+
 
 const BaseHandles: HandleProps[] = [
   {
@@ -38,7 +40,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Cron Trigger",
       alt: "Cron Trigger",
-      icon: "VscWatch",
+      icon: rawIcons.VscWatch,
       handles: StartHandles,
     },
     nodeProcessData: {
@@ -53,7 +55,7 @@ export const NODES: Node[] = [
     },
     nodePresentationData: {
       node_label: "JS Action",
-      icon: "VscCode",
+      icon: rawIcons.VscCode,
       alt: "JS Logo",
       handles: BaseHandles,
     },
@@ -69,7 +71,7 @@ export const NODES: Node[] = [
       nodeType: "manualNode",
       node_label: "Manual Trigger",
       alt: "Manual Trigger",
-      icon: "VscPerson",
+      icon: rawIcons.VscPerson,
       handles: StartHandles,
     },
     nodeProcessData: {
@@ -87,7 +89,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Model Action",
       alt: "Model Action",
-      icon: "VscWand",
+      icon: rawIcons.VscWand,
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -107,7 +109,8 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "OpenAI Action",
       alt: "OpenAI Action",
-      icon: "https://qcuguzlfpjtyiloqtysz.supabase.co/storage/v1/object/public/random/openai-logomark.svg",
+      icon: rawIcons.OpenAi,
+      // icon: "https://qcuguzlfpjtyiloqtysz.supabase.co/storage/v1/object/public/random/openai-logomark.svg",
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -126,7 +129,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Rest API Action",
       alt: "Rest API Action",
-      icon: "VscRadioTower",
+      icon: rawIcons.VscRadioTower,
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -142,7 +145,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Python Action",
       alt: "Python Action",
-      icon: "VscCode",
+      icon: rawIcons.VscCode, 
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -152,14 +155,13 @@ export const NODES: Node[] = [
     },
   },
   {
-  
     nodeConfigurationData: {
       message: "",
     },
     nodePresentationData: {
       node_label: "App Chat Trigger",
       alt: "App Chat Trigger",
-      icon: "VscMail",
+      icon: rawIcons.VscMail,
       handles: StartHandles,
     },
     nodeProcessData: {
@@ -174,7 +176,7 @@ export const NODES: Node[] = [
     },
     nodePresentationData: {
       node_label: "Send Chat Action",
-      icon: "VscSend",
+      icon: rawIcons.VscSend, 
       alt: "Send Chat Action",
       handles: BaseHandles,
     },
@@ -191,7 +193,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Terminal Action",
       alt: "Terminal Action",
-      icon: "VscTerminal",
+      icon: rawIcons.VscTerminal,
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -208,7 +210,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Vector Action",
       alt: "Vector Action",
-      icon: "VscReferences",
+      icon: rawIcons.VscReferences,
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -217,82 +219,82 @@ export const NODES: Node[] = [
       trigger: false,
     },
   },
-  {
-    nodeConfigurationData: {
-      url: "https://api.salesforce.com/",
-      method: "",
-      headers: "",
-      body: "",
-    },
-    nodePresentationData: {
-      node_label: "Salesforce Action",
-      alt: "Salesforce Action",
-      icon: "https://www.vectorlogo.zone/logos/salesforce/salesforce-icon.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "salesforce_action",
-      trigger: false,
-    },
-  },
-  {
-    nodeConfigurationData: {
-      url: "https://api.slack.com/",
-      method: "",
-      headers: "",
-      body: "",
-    },
-    nodePresentationData: {
-      node_label: "Slack Action",
-      alt: "Slack Action",
-      icon: "https://www.vectorlogo.zone/logos/slack/slack-icon.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "slack_action",
-      trigger: false,
-    },
-  },
-  {
-    nodeConfigurationData: {
-      url: "https://api.twitter.com/",
-      method: "",
-      headers: "",
-      body: "",
-    },
-    nodePresentationData: {
-      node_label: "Twitter Action",
-      alt: "Twitter Action",
-      icon: "https://www.vectorlogo.zone/logos/twitter/twitter-icon.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "twitter_action",
-      trigger: false,
-    },
-  },
-  {
-    nodeConfigurationData: {
-      url: "https://api.github.com/",
-      method: "",
-      headers: "",
-      body: "",
-    },
-    nodePresentationData: {
-      node_label: "GitHub Action",
-      alt: "GitHub Action",
-      icon: "https://www.vectorlogo.zone/logos/github/github-icon.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "github_action",
-      trigger: false,
-    },
-  },
+  // {
+  //   nodeConfigurationData: {
+  //     url: "https://api.salesforce.com/",
+  //     method: "",
+  //     headers: "",
+  //     body: "",
+  //   },
+  //   nodePresentationData: {
+  //     node_label: "Salesforce Action",
+  //     alt: "Salesforce Action",
+  //     icon: "https://www.vectorlogo.zone/logos/salesforce/salesforce-icon.svg",
+  //     handles: BaseHandles,
+  //   },
+  //   nodeProcessData: {
+  //     worker_type: "rest",
+  //     worker_name: "salesforce_action",
+  //     trigger: false,
+  //   },
+  // },
+  // {
+  //   nodeConfigurationData: {
+  //     url: "https://api.slack.com/",
+  //     method: "",
+  //     headers: "",
+  //     body: "",
+  //   },
+  //   nodePresentationData: {
+  //     node_label: "Slack Action",
+  //     alt: "Slack Action",
+  //     icon: "https://www.vectorlogo.zone/logos/slack/slack-icon.svg",
+  //     handles: BaseHandles,
+  //   },
+  //   nodeProcessData: {
+  //     worker_type: "rest",
+  //     worker_name: "slack_action",
+  //     trigger: false,
+  //   },
+  // },
+  // {
+  //   nodeConfigurationData: {
+  //     url: "https://api.twitter.com/",
+  //     method: "",
+  //     headers: "",
+  //     body: "",
+  //   },
+  //   nodePresentationData: {
+  //     node_label: "Twitter Action",
+  //     alt: "Twitter Action",
+  //     icon: "https://www.vectorlogo.zone/logos/twitter/twitter-icon.svg",
+  //     handles: BaseHandles,
+  //   },
+  //   nodeProcessData: {
+  //     worker_type: "rest",
+  //     worker_name: "twitter_action",
+  //     trigger: false,
+  //   },
+  // },
+  // {
+  //   nodeConfigurationData: {
+  //     url: "https://api.github.com/",
+  //     method: "",
+  //     headers: "",
+  //     body: "",
+  //   },
+  //   nodePresentationData: {
+  //     node_label: "GitHub Action",
+  //     alt: "GitHub Action",
+  //     icon: "https://www.vectorlogo.zone/logos/github/github-icon.svg",
+  //     handles: BaseHandles,
+  //   },
+  //   nodeProcessData: {
+  //     worker_type: "rest",
+  //     worker_name: "github_action",
+  //     trigger: false,
+  //   },
+  // },
 ];
 
 export const getTriggerNodes = (): Node[] => {
