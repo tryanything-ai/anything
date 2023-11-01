@@ -1,5 +1,3 @@
-use std::sync::atomic::AtomicUsize;
-
 use anything_runtime::{RawEnvironment, RawVariables};
 use derive_builder::Builder;
 use petgraph::prelude::DiGraph;
@@ -16,8 +14,6 @@ pub struct Flow {
     pub name: String,
     pub version: String,
     pub description: String,
-
-    pub active: bool,
 
     #[serde(default)]
     pub variables: RawVariables,
@@ -177,7 +173,6 @@ mod tests {
             r#"name = "DemoFlow"
 version = "0.1"
 description = ""
-active = false
 nodes = []
 
 [variables]
