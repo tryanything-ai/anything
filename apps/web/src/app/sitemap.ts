@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (templateResult) {
     templateResult.forEach((template) =>
       routes.push({
-        url: `${base_url}/${template.slug}`,
+        url: `${base_url}/templates/${template.slug}`,
         lastModified: template.created_at,
         changeFrequency: "monthly",
       })
