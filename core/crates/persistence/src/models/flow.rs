@@ -37,11 +37,10 @@ impl FromRow<'_, SqliteRow> for StoredFlow {
             let flow_def = row.get::<'_, String, &str>("fv_flow_definition");
             let flow_version = FlowVersion {
                 flow_id: flow_id.clone(),
-                flow_version: row.get::<'_, String, &str>("fv_version"),
+                flow_version: row.get::<'_, String, &str>("fv_flow_version"),
                 description: row.get::<'_, Option<String>, &str>("fv_description"),
                 flow_definition: serde_json::from_str(&flow_def).unwrap(),
                 checksum: row.get::<'_, String, &str>("fv_checksum"),
-                version_id: row.get::<'_, String, &str>("fv_id"),
                 published: row.get::<'_, bool, &str>("fv_published"),
                 updated_at: row.get::<'_, Option<DateTime<Utc>>, &str>("fv_updated_at"),
             };
@@ -76,7 +75,6 @@ pub struct FlowVersion {
     pub description: Option<String>,
     pub flow_definition: serde_json::Value,
     pub checksum: String,
-    pub version_id: String,
     pub published: bool,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -106,10 +104,42 @@ impl Into<CreateFlowVersion> for CreateFlow {
     fn into(self) -> CreateFlowVersion {
         CreateFlowVersion {
             flow_id: self.name.clone(),
-            version: Some("0.0.1".to_string()),
+            version: Some("v0.0.0".to_string()),
             flow_definition: serde_json::json!("{}"),
             published: Some(false),
             description: None,
         }
     }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct UpdateFlow {
+    pub flow_name: String,
+    pub version: Option<String>,
+}
+
+impl UpdateFlow {
+    pub fn new(flow_name: String) -> Self {
+        Self {
+            flow_name,
+            version: None,
+        }
+    }
+}
+
+impl From<anything_graph::Flow> for UpdateFlow {
+    fn from(value: anything_graph::Flow) -> Self {
+        Self {
+            flow_name: value.name,
+            version: Some(value.version),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct UpdateFlowVersion {
+    pub version: Option<String>,
+    pub flow_definition: Option<String>,
+    pub published: Option<bool>,
+    pub description: Option<String>,
 }

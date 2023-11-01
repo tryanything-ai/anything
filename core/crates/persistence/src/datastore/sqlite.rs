@@ -34,6 +34,7 @@ impl DatastoreTrait<sqlx::Sqlite> for SqliteDatastore {
                 tracing::error!("Error running migrations: {}", e);
                 PersistenceError::MigrationError(e)
             })?;
+
         Ok(())
     }
 
