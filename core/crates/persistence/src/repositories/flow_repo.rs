@@ -6,7 +6,7 @@ use chrono::Utc;
 use sqlx::Row;
 
 use crate::datastore::{DatabaseTransaction, RepoImpl};
-use crate::models::flow::CreateFlow;
+use crate::models::flow::{CreateFlow, StoredFlow};
 use crate::{
     datastore::Datastore,
     error::{PersistenceError, PersistenceResult},
@@ -68,7 +68,7 @@ impl<DB> FlowRepoImpl<DB>
 where
     DB: sqlx::Database + Send + Sync,
 {
-    async fn create_flow(&self, create_flow: CreateFlow) -> PersistenceResult<Flow> {
+    async fn create_flow(&self, create_flow: CreateFlow) -> PersistenceResult<StoredFlow> {
         let tx = (*self.datastore).begin_transaction().await?;
         let mut tx = tx.sqlite().unwrap().clone();
 
@@ -116,11 +116,12 @@ where
         Ok(row.get("flow_id"))
     }
 
-    async fn get_flow_by_id(&self, flow_id: String) -> PersistenceResult<Flow> {
-        let flow = sqlx::query_as::<_, Flow>(&format!("{} WHERE f.flow_id = ?1", GET_FLOW_SQL))
-            .bind(flow_id)
-            .fetch_one(&self.datastore.get_pool())
-            .await?;
+    async fn get_flow_by_id(&self, flow_id: String) -> PersistenceResult<StoredFlow> {
+        let flow =
+            sqlx::query_as::<_, StoredFlow>(&format!("{} WHERE f.flow_id = ?1", GET_FLOW_SQL))
+                .bind(flow_id)
+                .fetch_one(&self.datastore.get_pool())
+                .await?;
 
         Ok(flow)
     }
@@ -129,7 +130,6 @@ where
 #[cfg(test)]
 mod tests {
     use crate::test_helper::get_test_datastore;
-    use anything_graph::Flow;
 
     use super::*;
 
@@ -145,7 +145,11 @@ mod tests {
             version: None,
         };
 
-        let res = flow_repo.create_flow(create_flow).await.unwrap();
+        let res = flow_repo.create_flow(create_flow).await;
         assert!(res.is_ok());
+
+        let stored_flow = res.unwrap();
+
+        println!("stored_flow: {:?}", stored_flow);
     }
 }

@@ -3,8 +3,8 @@
 mod core_messages;
 // use anything_events::config as anything_events_config;
 use std::env;
-use anything_coordinator::{AnythingConfig, AnythingConfigBuilder};
-use anything_runtime::{RuntimeConfig, RuntimeConfigBuilder};
+use anything_coordinator::AnythingConfigBuilder;
+use anything_runtime::RuntimeConfigBuilder;
 use tauri::Manager;
 extern crate dotenv;
 
