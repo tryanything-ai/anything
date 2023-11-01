@@ -1,9 +1,4 @@
-use anything_events::clients::{
-    flows_service_client::FlowsServiceClient, GetFlowByNameRequest, GetFlowRequest,
-    GetFlowVersionsRequest, GetFlowsRequest,
-};
-use anything_events::models::Flow;
-use anything_events::models::FlowVersion;
+use anything_graph::Flow;
 use tonic::Request;
 
 use tracing::info;

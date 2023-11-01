@@ -1,0 +1,21 @@
+[package]
+name = "tauri-plugin-anything-tauri"
+version = "0.0.0"
+authors = [ "You" ]
+description = ""
+edition = "2021"
+rust-version = "1.60"
+exclude = ["/examples"]
+
+[dependencies]
+tauri = { version = "1.5.2" }
+
+anything-common = { workspace = true }
+anything-coordinator = { workspace = true }
+anything-runtime = { workspace = true }
+anything-graph = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }

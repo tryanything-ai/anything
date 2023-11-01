@@ -35,3 +35,5 @@ yarn-error.log*
 
 # ui
 dist/
+core/target
+core/crate/*/target
