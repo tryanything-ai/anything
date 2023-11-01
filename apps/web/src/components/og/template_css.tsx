@@ -1,5 +1,6 @@
 import { Node } from "utils";
-import React, { ReactNode } from "react";
+import React from "react";
+import { OgDiv } from "./baseOg";
 
 let svg = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/3og.svg";
 let logo = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/icon.png";
@@ -13,20 +14,6 @@ export type FlowTemplateOgImageProps = {
   actions: Node[];
 };
 
-//always need display: flex on all components for "sartori" and open image
-// https://github.com/vercel/satori#css
-//https://github.com/vercel/next.js/issues/48238
-const Div: React.FC<{ children: ReactNode; style?: React.CSSProperties }> = ({
-  children,
-  style,
-}) => {
-  return (
-    <div className="font-display" style={{ display: "flex", ...style }}>
-      {children}
-    </div>
-  );
-};
-
 export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
   title,
   username,
@@ -36,16 +23,14 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
   actions,
 }) => {
   return (
-    <Div
+    <OgDiv
       style={{
         flexDirection: "column",
-        backgroundColor: "black",
         width: "100%",
         height: "100%",
-        color: "#FFFFFF",
       }}
     >
-      <Div
+      <OgDiv
         style={{
           paddingLeft: "3rem",
           paddingRight: "3rem",
@@ -60,15 +45,15 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
         }}
       >
         {title}
-      </Div>
-      <Div
+      </OgDiv>
+      <OgDiv
         style={{
           flexDirection: "row",
           height: "80%",
         }}
       >
         {/* Left */}
-        <Div
+        <OgDiv
           style={{
             flexDirection: "column",
             justifyContent: "space-between",
@@ -77,17 +62,17 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
           }}
         >
           {/* Avatar */}
-          <Div style={{ flexDirection: "row" }}>
-            <Div>
-              <Div style={{ width: "6rem" }}>
+          <OgDiv style={{ flexDirection: "row" }}>
+            <OgDiv>
+              <OgDiv style={{ width: "6rem" }}>
                 <img
                   style={{ borderRadius: "50%" }}
                   src={profileImage}
                   alt={profileName}
                 />
-              </Div>
-            </Div>
-            <Div
+              </OgDiv>
+            </OgDiv>
+            <OgDiv
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -95,16 +80,16 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
                 paddingLeft: "2rem",
               }}
             >
-              <Div style={{ textOverflow: "ellipsis", fontSize: "50px" }}>
+              <OgDiv style={{ textOverflow: "ellipsis", fontSize: "50px" }}>
                 {profileName}
-              </Div>
-            </Div>
-          </Div>
+              </OgDiv>
+            </OgDiv>
+          </OgDiv>
           {/* End Avatar */}
-          <Div style={{ fontSize: "50px" }}>Anything Templates</Div>
-        </Div>
+          <OgDiv style={{ fontSize: "50px" }}>Anything Templates</OgDiv>
+        </OgDiv>
         {/* Right */}
-        <Div
+        <OgDiv
           style={{
             flexDirection: "column",
             width: "50%",
@@ -119,9 +104,9 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
               transform: "translateY(20px)",
             }}
           />
-        </Div>
-      </Div>
-    </Div>
+        </OgDiv>
+      </OgDiv>
+    </OgDiv>
   );
 };
 

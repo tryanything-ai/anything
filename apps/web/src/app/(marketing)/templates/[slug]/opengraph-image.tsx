@@ -68,6 +68,8 @@ export default async function Image({
           width: "100%",
           display: "flex",
           fontFamily: "Dm_Sans",
+          backgroundColor: "black",
+          color: "#FFFFFF",
         }}
       >
         <FlowTemplateOgImage
