@@ -2,26 +2,25 @@ import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}", "./index.html"],
-
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   // https://github.com/vercel/turbo/tree/main/examples/with-tailwind
   theme: {
-    // fontSize: {f
-    //   "2xs": ["0.75rem", { lineHeight: "1.25rem" }],
-    //   xs: ["0.8125rem", { lineHeight: "1.5rem" }],
-    //   sm: ["0.875rem", { lineHeight: "1.5rem" }],
-    //   base: ["1rem", { lineHeight: "1.75rem" }],
-    //   lg: ["1.125rem", { lineHeight: "1.75rem" }],
-    //   xl: ["1.25rem", { lineHeight: "1.75rem" }],
-    //   "2xl": ["1.5rem", { lineHeight: "2rem" }],
-    //   "3xl": ["1.875rem", { lineHeight: "2.25rem" }],
-    //   "4xl": ["2.25rem", { lineHeight: "2.5rem" }],
-    //   "5xl": ["3rem", { lineHeight: "1" }],
-    //   "6xl": ["3.75rem", { lineHeight: "1" }],
-    //   "7xl": ["4.5rem", { lineHeight: "1" }],
-    //   "8xl": ["6rem", { lineHeight: "1" }],
-    //   "9xl": ["8rem", { lineHeight: "1" }],
-    // },
+    fontSize: {
+      "2xs": ["0.75rem", { lineHeight: "1.25rem" }],
+      xs: ["0.8125rem", { lineHeight: "1.5rem" }],
+      sm: ["0.875rem", { lineHeight: "1.5rem" }],
+      base: ["1rem", { lineHeight: "1.75rem" }],
+      lg: ["1.125rem", { lineHeight: "1.75rem" }],
+      xl: ["1.25rem", { lineHeight: "1.75rem" }],
+      "2xl": ["1.5rem", { lineHeight: "2rem" }],
+      "3xl": ["1.875rem", { lineHeight: "2.25rem" }],
+      "4xl": ["2.25rem", { lineHeight: "2.5rem" }],
+      "5xl": ["3rem", { lineHeight: "1" }],
+      "6xl": ["3.75rem", { lineHeight: "1" }],
+      "7xl": ["4.5rem", { lineHeight: "1" }],
+      "8xl": ["6rem", { lineHeight: "1" }],
+      "9xl": ["8rem", { lineHeight: "1" }],
+    },
     extend: {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -32,10 +31,10 @@ const config: Config = {
         //         "conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg)",
         //     },
       },
-      // fontFamily: {
-      //   sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
-      //   display: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
-      // },
+      fontFamily: {
+        sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
+      },
       colors: {
         slate: {
           1: "hsl(200, 7.0%, 8.8%)",
@@ -69,16 +68,8 @@ const config: Config = {
     },
   },
   plugins: [
-    require("@tailwindcss/typography"),
     require("tailwindcss-animate"),
-    require("@tailwindcss/forms"),
     require("daisyui"),
   ],
-  // theme: {
-  //   extend: {
-  //
-  //   },
-  // },
-  // plugins: [],
 };
 export default config;

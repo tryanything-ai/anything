@@ -1,4 +1,5 @@
-import { createColumnHelper ,
+import {
+  createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
@@ -9,13 +10,14 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useSqlContext } from "../context/SqlProvider";
+import PageLayout from "../pageLayout";
 
 interface Event {
   event_id: string;
   session_id: string;
   node_id: string;
   node_type: string;
-  node_label: string; 
+  node_label: string;
   flow_id: string;
   flow_name: string;
   flow_version: string;
@@ -116,7 +118,7 @@ export const eventColumnDefs = [
   columnHelper.accessor((event: Event) => event.data, {
     id: "data",
     cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Data</span>,  
+    header: () => <span>Data</span>,
   }),
 ];
 
@@ -167,7 +169,7 @@ export default function Tables() {
     return () => clearInterval(intervalId);
   }, []);
   return (
-    <div className="flex flex-col h-full w-full">
+    <PageLayout>
       <div className="flex flex-row">
         <div className="text-5xl text-white m-5">table/{table}</div>
         <button onClick={hydrate}>Refresh</button>
@@ -224,6 +226,6 @@ export default function Tables() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageLayout>
   );
 }

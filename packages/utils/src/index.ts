@@ -1,11 +1,3 @@
-export const add = (a: number, b: number) => {
-  return a + b;
-};
-
-export const subtract = (a: number, b: number) => {
-  return a - b;
-};
-
 export type { BigFlow } from "./supabase/fetchSupabase";
 export {
   fetchProfile,
@@ -13,6 +5,8 @@ export {
   fetchProfileTemplates,
   fetchTemplateBySlug,
   fetchTemplates,
+  updateProfile, 
+  uploadAvatar, 
 } from "./supabase/fetchSupabase";
 export { supabaseClient } from "./supabase/client";
 export {
@@ -25,6 +19,7 @@ export type {
   Database,
   Json,
   Profile,
+  FlowTemplateVersion,
   Tag,
 } from "./supabase/types/supabase.types";
 export * from "./types/flow";

@@ -5,7 +5,7 @@ interface Props {
   className?: string; // Optional className property
 }
 
-function removeWidthHeight(svgString: string) {
+export function removeWidthHeight(svgString: string) {
   let cleanedSvgString = svgString
     .replace(/\s*width="[^"]*"/, "")
     .replace(/\s*height="[^"]*"/, "");
@@ -22,13 +22,10 @@ function removeWidthHeight(svgString: string) {
   return cleanedSvgString;
 }
 
-const BaseNodeOrIcon: React.FC<Props> = ({
-  icon,
-  className
-}) => {
+const BaseNodeOrIcon: React.FC<Props> = ({ icon, className }) => {
   const combinedClasses = `w-full h-full ${className ?? ""}`;
   let cleanIcon = icon;
-  
+
   const cleanSizedIcon = removeWidthHeight(cleanIcon);
 
   // If it's an SVG content, render the SVG

@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 
 import { useSettingsContext } from "../context/SettingsProvider";
 import themes from "../utils/themes";
+import PageLayout from "../pageLayout";
+import { useAuthenticationContext } from "../context/AuthenticaionProvider";
 
 export default function Settings() {
   const {
@@ -12,38 +14,40 @@ export default function Settings() {
     setWebFeaturesDisabled,
     webFeaturesDisabled,
   } = useSettingsContext();
+  const { signOut, session } = useAuthenticationContext();
 
-  const text = `This is a master shutoff for all features that have are web based.
-  - Find Templates from Marketplace
-   - Product Analytics
-    - Crash Reporting Analytics`;
-
-  const newText = text.split("\n").map((str, index) => (
-    <React.Fragment key={index}>
-      {str}
-      <br />
-    </React.Fragment>
-  ));
   return (
-    <div className="flex flex-col h-full w-full p-6">
-      <Link to="/settings/profile" className="btn btn-primary m-1 ml-4">
-        Edit Profile
-      </Link>
-      <div className="form-control w-52">
-        <label className="cursor-pointer label">
-          <span className="label-text  text-2xl">Web Features</span>
-          <input
-            type="checkbox"
-            onChange={() => {
-              setWebFeaturesDisabled(!webFeaturesDisabled);
-            }}
-            className="toggle toggle-primary"
-            checked={!webFeaturesDisabled}
-          />
-        </label>
-      </div>
-      <div>{newText}</div>
-      <div className="dropdown mt-2">
+    <PageLayout>
+      <div className="flex flex-col gap-4">
+        <Link to="/settings/profile" className="btn btn-primary w-72">
+          Edit Profile
+        </Link>
+        {session ? (
+          <div onClick={signOut} className="btn btn-ghost w-72">
+            Sign Out
+          </div>
+        ) : (
+          <Link to="/login" className="btn btn-primary w-72">
+            Sign In
+          </Link>
+        )}
+
+        <div className="form-control w-72">
+          <label className="cursor-pointer label">
+            <span className="label-text  text-2xl">Web Features</span>
+            <input
+              type="checkbox"
+              onChange={() => {
+                setWebFeaturesDisabled(!webFeaturesDisabled);
+              }}
+              className="toggle toggle-primary"
+              checked={!webFeaturesDisabled}
+            />
+          </label>
+        </div>
+
+        {/* <div>{newText}</div> */}
+        {/* <div className="dropdown mt-2">
         <label tabIndex={0} className="btn m-1">
           Choose Theme
         </label>
@@ -67,7 +71,8 @@ export default function Settings() {
             );
           })}
         </ul>
+      </div> */}
       </div>
-    </div>
+    </PageLayout>
   );
 }

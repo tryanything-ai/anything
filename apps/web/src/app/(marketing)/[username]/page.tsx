@@ -22,6 +22,12 @@ export default async function Profile({
 }: {
   params: { username: string };
 }) {
+  //weird hack problem with base og image firing this route with params
+  //{ username: 'opengraph-image' }
+  if (params.username === "opengraph-image") {
+    notFound();
+  }
+
   console.log("params in ProfilePage", params);
   const profile = await fetchProfile(params.username);
   const templates = await fetchProfileTemplates(params.username);
