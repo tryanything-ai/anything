@@ -105,6 +105,8 @@ export const fetchProfile = async (
 
 export const updateProfile = async (profile_id: string, updateData: any) => {
   try {
+    updateData.updated_at = new Date().toISOString();
+
     const { data, error } = await supabaseClient
       .from("profiles")
       .update(updateData)
