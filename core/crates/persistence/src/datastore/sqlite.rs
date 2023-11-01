@@ -5,6 +5,7 @@ use crate::error::{PersistenceError, PersistenceResult};
 
 use super::DatastoreTrait;
 
+#[derive(Debug, Clone)]
 pub struct SqliteDatastore {
     pool: sqlx::sqlite::SqlitePool,
 }
