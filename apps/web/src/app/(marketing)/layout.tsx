@@ -10,7 +10,7 @@ interface MarketingLayoutProps {
 
 export const metadata: Metadata = {
   // title: "Anything",
-  description: "Automate anything",
+  // description: "Automate",
 };
 
 export default async function MarketingLayout({

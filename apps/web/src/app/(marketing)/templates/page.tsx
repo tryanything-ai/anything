@@ -5,6 +5,13 @@ import { notFound } from "next/navigation";
 
 import { Avatar } from "../../../components/avatar";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Anything Templates",
+  description: " Automate anything with easy to customize templates",
+};
+
 export default async function TemplatePage() {
   const templates: any = await fetchTemplates();
 

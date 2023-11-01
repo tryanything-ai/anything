@@ -12,6 +12,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 
+
 type Props = {
   params: { slug: string };
   // searchParams: { [key: string]: string | string[] | undefined };
@@ -33,16 +34,14 @@ export async function generateMetadata(
       ? await fetchProfile(template.profiles.username)
       : undefined;
 
-    // let flow = flowJsonFromBigFlow(template) as FlowTemplate;
-
-    // optionally access and extend (rather than replace) parent metadata
-    // const previousImages = (await parent).openGraph?.images || []
     Metadata = {
       title: template.flow_template_name,
       description: template?.flow_template_description,
       openGraph: {
         description: template?.flow_template_description ?? undefined,
-        // images: [profile?.avatar_url],
+      },
+      twitter: {
+        description: template?.flow_template_description ?? undefined,
       },
       authors: [
         {
@@ -58,7 +57,6 @@ export async function generateMetadata(
 
 export const generateStaticParams = async (): Promise<BigFlow> => {
   const templates = await fetchTemplates();
-  // console.log("templates in generateStaticParams", templates);
   // has "slug" key to populate route
   if (!templates) return [];
   return templates;
@@ -81,7 +79,6 @@ export default async function Template({
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
-  // let flow = flowJsonFromBigFlow(template) as FlowTemplate;
   function Action({ slug }): JSX.Element {
     return (
       <div className="flex flex-col gap-3 md:flex-row">
