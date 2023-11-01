@@ -7,7 +7,13 @@ edition = "2021"
 
 [dependencies]
 anything-graph = { workspace = true }
+anything-common = { workspace = true }
+anything-coordinator = { workspace = true }
+
 async-trait.workspace = true
 sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio", "sqlite"] }
 thiserror = { workspace = true }
-# async_trait = { workspace = true}
+chrono = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true}
+uuid = { workspace = true}

@@ -84,3 +84,17 @@ impl Default for RuntimeConfig {
         }
     }
 }
+
+impl RuntimeConfig {
+    pub fn base_dir(&self) -> &PathBuf {
+        self.base_dir.as_ref().unwrap()
+    }
+
+    pub fn database_dir(&self) -> PathBuf {
+        self.base_dir().join("database")
+    }
+
+    pub fn flow_dir(&self) -> PathBuf {
+        self.base_dir().join("flow")
+    }
+}

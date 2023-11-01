@@ -4,6 +4,7 @@ pub(crate) mod graph;
 pub(crate) mod core;
 pub(crate) mod raw;
 
+pub use core::keyable::Keyable;
 pub use graph::flow::Flow;
 pub use graph::flow_graph::*;
 pub use graph::flowfile::Flowfile;

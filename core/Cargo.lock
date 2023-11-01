@@ -3061,10 +3061,16 @@ checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 name = "persistence"
 version = "0.1.0"
 dependencies = [
+ "anything-common",
+ "anything-coordinator",
  "anything-graph",
  "async-trait",
+ "chrono",
+ "serde",
  "sqlx",
  "thiserror",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
