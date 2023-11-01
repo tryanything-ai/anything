@@ -1,11 +1,5 @@
-use crate::error::PersistenceResult;
+pub mod connections;
+pub(crate) mod sqlite;
+pub(crate) mod types;
 
-mod sqlite;
-
-#[async_trait::async_trait]
-pub trait Datastore<T> {
-    fn create(&self, item: T) -> PersistenceResult<()>;
-    fn read(&self, id: u32) -> PersistenceResult<()>;
-    fn update(&self, item: T) -> PersistenceResult<()>;
-    fn delete(&self, id: u32) -> PersistenceResult<()>;
-}
+pub(crate) use types::*;

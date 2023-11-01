@@ -1,9 +1,11 @@
+use std::sync::atomic::AtomicUsize;
+
 use anything_runtime::{RawEnvironment, RawVariables};
 use derive_builder::Builder;
 use petgraph::prelude::DiGraph;
 use serde::{Deserialize, Serialize};
 
-use crate::{error::GraphResult, NodeType};
+use crate::{core::keyable::Keyable, error::GraphResult, NodeType};
 
 use super::{flow_graph::FlowGraph, flowfile::Flowfile, node::Task, trigger::Trigger};
 
@@ -14,6 +16,9 @@ pub struct Flow {
     pub name: String,
     pub version: String,
     pub description: String,
+
+    pub active: bool,
+
     #[serde(default)]
     pub variables: RawVariables,
 
@@ -26,6 +31,12 @@ pub struct Flow {
     #[serde(skip)]
     pub graph: FlowGraph,
     pub nodes: Vec<Task>,
+}
+
+impl Keyable for Flow {
+    fn key(&self) -> String {
+        format!("{}-{}", self.name, self.version)
+    }
 }
 
 #[allow(unused)]
@@ -166,6 +177,7 @@ mod tests {
             r#"name = "DemoFlow"
 version = "0.1"
 description = ""
+active = false
 nodes = []
 
 [variables]

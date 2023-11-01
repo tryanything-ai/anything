@@ -10,6 +10,6 @@ pub(crate) mod utils;
 pub mod prelude;
 
 pub use constants::*;
-pub use core::config::*;
+pub use crate::core::config::*;
 pub use exec::Runner;
 pub use prelude::*;

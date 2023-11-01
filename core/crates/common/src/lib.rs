@@ -7,5 +7,5 @@ pub mod utils;
 
 pub use posix::*;
 pub use spawning::*;
-pub use tracing::setup_tracing;
+pub use crate::tracing::setup_tracing;
 pub use utils::*;
