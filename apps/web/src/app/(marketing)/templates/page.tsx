@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar } from "../../../components/avatar";
+
 export default async function TemplatePage() {
   const templates: any = await fetchTemplates();
 
