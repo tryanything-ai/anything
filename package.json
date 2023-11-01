@@ -7,7 +7,10 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "clean": "turbo clean",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "dev:packages": "turbo dev --filter ./packages",
+    "dev:web": "turbo dev --filter ./apps/web",
+    "web": "npm run dev:packages && npm run dev:web"
   },
   "devDependencies": {
     "eslint": "^8.48.0",

@@ -1,15 +1,16 @@
 import {
   BigFlow,
   fetchProfile,
+  fetchProfileTemplates,
   fetchTemplateBySlug,
   fetchTemplates,
   Profile,
+  updateProfile,
+  uploadAvatar,
 } from "utils";
 
-import { listen } from "@tauri-apps/api/event";
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import { createContext, ReactNode, useContext } from "react";
 
-import api from "../tauri_api/api";
 import { useSettingsContext } from "./SettingsProvider";
 
 interface MarketplaceContextInterface {
@@ -19,6 +20,16 @@ interface MarketplaceContextInterface {
   updateTemplate: (template: any) => void;
   fetchTemplateBySlug: (slug: string) => Promise<BigFlow | undefined>;
   fetchProfile: (username: string) => Promise<Profile | undefined>;
+  fetchProfileTemplates: (username: string) => Promise<BigFlow | undefined>;
+  updateProfile: (
+    profile_id: string,
+    data: any
+  ) => Promise<Profile | undefined>;
+  uploadAvatar: (
+    profile_id: string,
+    filePath: string,
+    file: any
+  ) => Promise<any>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
@@ -26,6 +37,9 @@ export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   fetchTemplates: () => Promise.resolve([]),
   fetchTemplateBySlug: () => Promise.resolve(undefined),
   fetchProfile: () => Promise.resolve(undefined),
+  fetchProfileTemplates: () => Promise.resolve(undefined),
+  updateProfile: () => Promise.resolve(undefined),
+  uploadAvatar: () => Promise.resolve(undefined),
   saveTemplate: () => {},
   updateTemplate: () => {},
 });
@@ -93,6 +107,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     else return profile as Profile;
   };
 
+  const _fetchProfileTemplates = async (username: string) => {
+    if (webFeaturesDisabled) return undefined;
+
+    let templates = await fetchProfileTemplates(username);
+    if (!templates) return undefined;
+    else return templates;
+  };
+
   const saveTemplate = (template: any) => {
     if (webFeaturesDisabled) return false;
 
@@ -104,31 +126,27 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
     //Do supabase stuff.
   };
-  const listenFunc = async () => {
-    console.log("Listening in listenFunc");
 
-    await listen("click", (event) => {
-      // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
-      // event.payload is the payload object
-      console.log("ListenFunc Received", JSON.stringify(event, null, 3));
-    });
-
-    // return unlisten;
+  const _updateProfile = async (profile_id: string, data: any) => {
+    if (webFeaturesDisabled) return undefined;
+    let proflile = await updateProfile(profile_id, data);
+    if (!proflile) return undefined;
+    else return proflile;
   };
 
-  //Listen for deep link message to navigate to template
-  useEffect(() => {
-    listenFunc();
-    console.log("Listening to Deep Link");
-    let unlisten = api.subscribeToEvent("deeplink", (event: any) => {
-      console.log("Deep Link Listener Fired", JSON.stringify(event, null, 3));
-    });
-
-    return () => {
-      unlisten.then((unlisten) => unlisten());
-      // unlisten2.then((unlisten) => unlisten());
-    };
-  }, []);
+  const _uploadAvatar = async (
+    profile_id: string,
+    filePath: string,
+    file: any
+  ): Promise<Profile | unknown> => {
+    try {
+      const result = await uploadAvatar(profile_id, filePath, file);
+      console.log(result);
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <MarketplaceContext.Provider
@@ -139,6 +157,9 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         updateTemplate,
         fetchTemplateBySlug: _fetchTemplateBySlug,
         fetchProfile: _fetchProfile,
+        fetchProfileTemplates: _fetchProfileTemplates,
+        updateProfile: _updateProfile,
+        uploadAvatar: _uploadAvatar,
       }}
     >
       {children}

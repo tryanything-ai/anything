@@ -5,6 +5,8 @@ import { Link, useParams } from "react-router-dom";
 
 import { Avatar } from "../components/avatar";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
+import PageLayout from "../pageLayout";
+
 
 const Template = () => {
   const { slug } = useParams<{
@@ -23,7 +25,7 @@ const Template = () => {
     let templateResponse = await fetchTemplateBySlug(slug);
     if (!templateResponse) return;
 
-    let template: any = templateResponse[0]; 
+    let template: any = templateResponse[0];
 
     console.log("template in TemplatePage", JSON.stringify(template, null, 3));
     setTemplate(template);
@@ -45,19 +47,26 @@ const Template = () => {
     fetchTemplate();
   }, [slug]);
 
+  const Action = () => {
+    return <div className="btn btn-primary">Use Template</div>;
+  };
+
   return (
-    <div className="hide-scrollbar mx-4 my-6 flex h-full min-h-screen max-w-4xl flex-col overflow-scroll md:mx-auto md:py-16">
-      {template ? (
-        <TemplateView
-          template={template}
-          profile={profile}
-          Link={Link}
-          Avatar={Avatar}
-        />
-      ) : (
-        "loading?"
-      )}
-    </div>
+    <PageLayout>
+      <div className="flex flex-col md:mx-auto">
+        {template ? (
+          <TemplateView
+            ActionComponent={Action}
+            template={template}
+            profile={profile}
+            Link={Link}
+            Avatar={Avatar}
+          />
+        ) : (
+          "loading?"
+        )}
+      </div>
+    </PageLayout>
   );
 };
 

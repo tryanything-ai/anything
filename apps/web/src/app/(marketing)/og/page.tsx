@@ -1,11 +1,10 @@
 import React from "react";
-
 import {
   FlowTemplateOgImage,
   FlowTemplateOgImageProps,
   ProfileOgImageProps,
   UserProfileOgImage,
-} from "@/components/og/template";
+} from "@/components/og/template_tailwind";
 import Logo from "@/public/icon.png";
 import { MockNewFlows } from "@/types/flow";
 
@@ -58,20 +57,20 @@ export default function OgTemplates() {
       <div className="text-5xl">User Profiles</div>
       <MulitContainer>
         <UserProfileOgImage
-          username={mockProfileProps.username}
           fullName={mockProfileProps.fullName}
           profileImage={Logo.src}
+          username={mockProfileProps.username}
         />
       </MulitContainer>
       <div className="text-5xl">Flow Templates</div>
       <MulitContainer>
         <FlowTemplateOgImage
-          title={mockFlowProps.title}
-          profileName={mockFlowProps.profileName}
-          username={mockFlowProps.username}
-          profileImage={Logo.src}
-          trigger={mockFlowProps.trigger}
           actions={mockFlowProps.actions}
+          profileImage={Logo.src}
+          profileName={mockFlowProps.profileName}
+          title={mockFlowProps.title}
+          trigger={mockFlowProps.trigger}
+          username={mockFlowProps.username}
         />
       </MulitContainer>
     </div>

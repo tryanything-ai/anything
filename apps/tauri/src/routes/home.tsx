@@ -1,57 +1,50 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import BaseCard from "../components/baseCard";
 import { useLocalFileContext } from "../context/LocalFileProvider";
+import PageLayout from "../pageLayout";
+import { PageHeader } from "../components/wholePageHeader";
 
 export default function Home() {
   const { flows, createNewFlow } = useLocalFileContext();
+  const navigate = useNavigate();
 
   return (
-    <div className="m-10 flex h-full w-full flex-row">
+    <PageLayout>
       {/* FLows */}
-
-      <div className="m-5 flex flex-col text-5xl">
-        <div className="flex flex-row justify-between">
-          <div>Flows</div>
-
-          <button
-            className="btn btn-primary m-1 ml-4"
-            onClick={() => {
-              createNewFlow();
-            }}
-          >
-            New Flow
-          </button>
+      <div className="flex flex-row w-full h-full">
+        <div className="flex flex-col w-1/3">
+          <PageHeader
+            title="Flows"
+            callback={createNewFlow}
+            buttonLabel="New Flow"
+          />
+          <ul>
+            {flows.map((flow) => {
+              return (
+                <BaseCard
+                  as={Link}
+                  key={flow.name}
+                  to={`flows/${flow.name}`}
+                  className="w-96"
+                >
+                  <h2 className="card-title">{flow.name}</h2>
+                </BaseCard>
+              );
+            })}
+          </ul>
         </div>
 
-        <ul>
-          {flows.map((flow) => {
-            return (
-              <BaseCard
-                as={Link}
-                key={flow.name}
-                to={`flows/${flow.name}`}
-                className="w-96"
-              >
-                <h2 className="card-title">{flow.name}</h2>
-              </BaseCard>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* Tables */}
-
-      <div className="m- m-5 flex w-96 flex-col text-5xl">
-        <div className="flex flex-row justify-between">
-          <div>Templates</div>
-
-          <Link className="btn btn-primary m-1 ml-4" to="/templates">
-            Explore
-          </Link>
+        {/* Tables */}
+        <div className="flex flex-col w-1/3 pl-10">
+          <PageHeader
+            title="Templates"
+            callback={() => navigate("/templates")}
+            buttonLabel="Explore"
+          />
+          <ul></ul>
         </div>
-        <ul></ul>
       </div>
-    </div>
+    </PageLayout>
   );
 }

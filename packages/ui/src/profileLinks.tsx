@@ -27,6 +27,7 @@ export const ProfileLinks = ({
             <FaXTwitter className="mr-2 h-6 w-3" />
             <Link
               href={profile.twitter}
+              to={profile.twitter}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"
@@ -40,6 +41,7 @@ export const ProfileLinks = ({
             <FaLinkedin className="mr-2 h-6 w-3" />
             <Link
               href={profile.linkedin}
+              to={profile.linkedin}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"
@@ -53,6 +55,7 @@ export const ProfileLinks = ({
             <FaGithub className="mr-2 h-6 w-3" />
             <Link
               href={profile.github}
+              to={profile.github}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"
@@ -66,6 +69,7 @@ export const ProfileLinks = ({
             <FaGlobe className="mr-2 h-6 w-3" />
             <Link
               href={profile.website}
+              to={profile.website}  
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"
@@ -79,6 +83,7 @@ export const ProfileLinks = ({
             <FaInstagram className="mr-2 h-6 w-3" />
             <Link
               href={profile.instagram}
+              to={profile.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"
@@ -92,6 +97,7 @@ export const ProfileLinks = ({
             <FaTiktok className="mr-2 h-6 w-3" />
             <Link
               href={profile.tiktok}
+              to={profile.tiktok}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"
@@ -105,6 +111,7 @@ export const ProfileLinks = ({
             <FaYoutube className="mr-2 h-6 w-3" />
             <Link
               href={profile.youtube}
+              to={profile.youtube}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"

@@ -1,14 +1,15 @@
 import { Link } from "react-router-dom";
 
 import { useSqlContext } from "../context/SqlProvider";
+import PageLayout from "../pageLayout";
+import { PageHeader } from "../components/wholePageHeader";
 
 export default function Tables() {
   const { tables } = useSqlContext();
 
   return (
-    <div className="flex flex-col h-full w-full m-10">
-      <div className="text-5xl text-white mx-5">Tables</div>
-      <div className="text-2xl my-2 mx-5">A local sqlite database</div>
+    <PageLayout>
+      <PageHeader callback={() => {}} title="Tables" buttonLabel="New Table" />
       <ul>
         {tables.map((table) => {
           return (
@@ -18,6 +19,6 @@ export default function Tables() {
           );
         })}
       </ul>
-    </div>
+    </PageLayout>
   );
 }

@@ -5,8 +5,6 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-// import { env } from "@/env.mjs";
-
 if (process.env.NODE_ENV === "production") {
   Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,

@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { ReactNode, Suspense } from "react";
 import { siteConfig } from "../config/site";
 import { dm_sans, inter } from "../lib/fonts";
-
 import { PHProvider, PostHogPageview } from "./providers";
 // import { Toaster } from "@/components/ui/toaster";
 
