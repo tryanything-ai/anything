@@ -87,9 +87,9 @@ export const NODES: Node[] = [
       variables: [],
     },
     nodePresentationData: {
-      node_label: "Model Action",
-      alt: "Model Action",
-      icon: rawIcons.VscWand,
+      node_label: " Local Model Action",
+      alt: "Local Model Action",
+      icon: rawIcons.Llama,
       handles: BaseHandles,
     },
     nodeProcessData: {

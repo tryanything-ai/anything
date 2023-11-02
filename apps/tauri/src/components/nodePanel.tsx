@@ -121,9 +121,10 @@ const NodeDnD = ({ node }: { node: Node }) => {
     >
       <BaseNodeIcon
         icon={node.nodePresentationData.icon}
-        className={`h-9 w-9 bg-opacity-80 ${
-          node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
-        }`}
+        // className={`h-9 w-9 bg-opacity-80 ${
+        //   node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
+        //   }`}
+        className={`h-9 w-9 bg-opacity-80 text-white`}
       />
       <h1 className="truncate overflow-ellipsis pl-2 text-lg">
         {node.nodePresentationData.node_label}
