@@ -419,6 +419,7 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+ "xan-actor",
 ]
 
 [[package]]
@@ -5704,6 +5705,18 @@ dependencies = [
  "libc",
  "once_cell",
  "pkg-config",
+]
+
+[[package]]
+name = "xan-actor"
+version = "1.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13997b5f9e1a7a8fc0836e24753000c28618fc940a5d3d4e2d5762319b98b230"
+dependencies = [
+ "async-trait",
+ "log",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

@@ -23,20 +23,20 @@ use crate::{
     models::{Models, MODELS},
 };
 
-#[derive(Debug, Clone)]
-pub struct Repositories {
-    pub flow_repo: anything_persistence::FlowRepoImpl,
-    pub event_repo: anything_persistence::EventRepoImpl,
-    pub trigger_repo: anything_persistence::TriggerRepoImpl,
-}
+// #[derive(Debug, Clone)]
+// pub struct Repositories {
+//     pub flow_repo: anything_persistence::FlowRepoImpl,
+//     pub event_repo: anything_persistence::EventRepoImpl,
+//     pub trigger_repo: anything_persistence::TriggerRepoImpl,
+// }
 
 #[derive(Debug, Clone)]
 pub struct Manager {
     pub file_store: FileStore,
     pub config: AnythingConfig,
     pub executor: Option<Runner>,
-    pub shutdown_sender: Sender<()>,
-    pub repositories: Option<Repositories>,
+    // pub shutdown_sender: Sender<()>,
+    // pub repositories: Option<Repositories>,
 }
 
 impl Default for Manager {
@@ -60,7 +60,6 @@ impl Manager {
             None => tempfile::tempdir().unwrap().path().to_path_buf(),
         };
         runtime_config.base_dir = Some(root_dir.clone());
-        let (shutdown_sender, _) = tokio::sync::mpsc::channel(1);
 
         let file_store = FileStore::create(root_dir.as_path(), &["anything"]).unwrap();
 
@@ -74,8 +73,6 @@ impl Manager {
             file_store,
             config: config.clone(),
             executor: Some(executor),
-            shutdown_sender,
-            repositories: None, // post_office: PostOffice::open(),
         }
     }
 
@@ -87,14 +84,12 @@ impl Manager {
         )
         .await
         .unwrap();
-        let repositories = Repositories {
-            flow_repo: FlowRepoImpl::new_with_datastore(datastore.clone())
-                .expect("unable to create flow repo"),
-            event_repo: EventRepoImpl::new_with_datastore(datastore.clone())
-                .expect("unable to create event repo"),
-            trigger_repo: TriggerRepoImpl::new_with_datastore(datastore.clone())
-                .expect("unable to create trigger repo"),
-        };
+        let flow_repo = FlowRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create flow repo");
+        let event_repo = EventRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create event repo");
+        let trigger_repo = TriggerRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create trigger repo");
 
         let system = actix::System::new();
 
@@ -272,26 +267,26 @@ impl Manager {
         Ok(flow)
     }
 
-    pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {
-        match &self.repositories {
-            Some(repositories) => Ok(repositories.flow_repo.clone()),
-            None => Err(CoordinatorError::RepoNotInitialized),
-        }
-    }
+    // pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {
+    //     match &self.repositories {
+    //         Some(repositories) => Ok(repositories.flow_repo.clone()),
+    //         None => Err(CoordinatorError::RepoNotInitialized),
+    //     }
+    // }
 
-    pub fn event_repo(&self) -> CoordinatorResult<EventRepoImpl> {
-        match &self.repositories {
-            Some(repositories) => Ok(repositories.event_repo.clone()),
-            None => Err(CoordinatorError::RepoNotInitialized),
-        }
-    }
+    // pub fn event_repo(&self) -> CoordinatorResult<EventRepoImpl> {
+    //     match &self.repositories {
+    //         Some(repositories) => Ok(repositories.event_repo.clone()),
+    //         None => Err(CoordinatorError::RepoNotInitialized),
+    //     }
+    // }
 
-    pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
-        match &self.repositories {
-            Some(repositories) => Ok(repositories.trigger_repo.clone()),
-            None => Err(CoordinatorError::RepoNotInitialized),
-        }
-    }
+    // pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
+    //     match &self.repositories {
+    //         Some(repositories) => Ok(repositories.trigger_repo.clone()),
+    //         None => Err(CoordinatorError::RepoNotInitialized),
+    //     }
+    // }
 
     /*
     INTERNAL FUNCTIONS
