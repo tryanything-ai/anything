@@ -22,6 +22,9 @@ install-recommended: install-required
     pre-commit --version || pip install pre-commit
     pre-commit install || echo "failed to install git hooks!" 1>&2
 
+# Build plugins
+build-plugins:
+    cd crates/plugins && just build-all
 
 # Test all crates
 test: test-graph test-mq test-runtime test-plugins test-store

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::{anything::*, AnythingState};
-use anything_common::setup_tracing;
-use anything_coordinator::{start, AnythingConfig, Manager as AnythingManager};
+use anything_common::{setup_tracing, AnythingConfig};
+use anything_coordinator::{start, Manager as AnythingManager};
 use tauri::{
     plugin::{self, TauriPlugin},
     AppHandle, Manager, Runtime,

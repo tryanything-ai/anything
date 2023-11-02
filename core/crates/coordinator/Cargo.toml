@@ -6,26 +6,27 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anything-graph = { workspace = true}
-anything-runtime = {workspace = true}
-anything-store = { workspace = true}
-anything-mq = { workspace = true}
-anything-common = { workspace = true}
+anything-graph = { workspace = true }
+anything-runtime = { workspace = true }
+anything-store = { workspace = true }
+anything-mq = { workspace = true }
+anything-common = { workspace = true }
+anything-persistence = { workspace = true }
 
-derive_builder = {workspace = true}
+derive_builder = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
-indexmap = { workspace = true}
-tokio = { workspace = true}
-serde = { workspace = true}
-serde_json = {workspace = true}
+indexmap = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 serde_cbor = "0.11.2"
 anymap = "1.0.0-beta.2"
 # postage = "0.5.0"
-tracing = { workspace = true}
+tracing = { workspace = true }
 postage = "0.5.0"
 petgraph = { version = "0.6.4", features = ["serde"] }
-tempfile = {workspace = true }
+tempfile = { workspace = true }
 dashmap = { version = "5.5.3", features = ["serde"] }
 once_cell = "1.18.0"
 uuid = { workspace = true, features = ["v4", "serde"] }

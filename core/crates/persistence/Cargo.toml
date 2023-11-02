@@ -1,5 +1,5 @@
 [package]
-name = "persistence"
+name = "anything-persistence"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,7 +13,7 @@ postgres = ["sqlx/postgres"]
 [dependencies]
 anything-graph = { workspace = true }
 anything-common = { workspace = true }
-anything-coordinator = { workspace = true }
+anything-store = { workspace = true }
 
 async-trait.workspace = true
 sqlx = { version = "0.7.2", features = ["runtime-tokio", "chrono"] }

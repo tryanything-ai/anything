@@ -1,6 +1,11 @@
-use anything_common::spawn_or_crash;
+use anything_common::{spawn_or_crash, AnythingConfig};
 use anything_graph::Flowfile;
 use anything_mq::new_client;
+use anything_persistence::datastore::RepoImpl;
+use anything_persistence::{
+    create_sqlite_datastore_from_config_and_file_store, EventRepoImpl, FlowRepoImpl,
+    TriggerRepoImpl,
+};
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
 use std::{env::temp_dir, sync::Arc};
@@ -10,8 +15,8 @@ use tokio::sync::{
     Mutex,
 };
 
+use crate::CoordinatorError;
 use crate::{
-    config::AnythingConfig,
     error::CoordinatorResult,
     events::StoreChangesPublisher,
     handlers,
@@ -32,10 +37,28 @@ pub async fn start(
     let mut cfg = config.clone();
     cfg.update_runtime_config(runtime_config);
 
-    let manager = Manager::new(cfg);
+    let mut manager = Manager::new(cfg);
 
     // Setup global models
     Models::setup(manager.file_store.clone()).await?;
+
+    // Setup persistence
+    let datastore = create_sqlite_datastore_from_config_and_file_store(
+        config.clone(),
+        manager.file_store.clone(),
+    )
+    .await
+    .unwrap();
+    let repositories = Repositories {
+        flow_repo: FlowRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create flow repo"),
+        event_repo: EventRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create event repo"),
+        trigger_repo: TriggerRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create trigger repo"),
+    };
+
+    manager.repositories = Some(repositories);
 
     let arc = Arc::new(manager);
     arc.start(shutdown_rx, ready_tx).await?;
@@ -44,11 +67,19 @@ pub async fn start(
 }
 
 #[derive(Debug, Clone)]
+pub struct Repositories {
+    pub flow_repo: anything_persistence::FlowRepoImpl,
+    pub event_repo: anything_persistence::EventRepoImpl,
+    pub trigger_repo: anything_persistence::TriggerRepoImpl,
+}
+
+#[derive(Debug, Clone)]
 pub struct Manager {
     pub file_store: FileStore,
     pub config: AnythingConfig,
     pub executor: Option<Runner>,
     pub shutdown_sender: Sender<()>,
+    pub repositories: Option<Repositories>,
 }
 
 impl Default for Manager {
@@ -61,6 +92,7 @@ impl Default for Manager {
     }
 }
 
+// TODO: Move to use repositories instead of models
 impl Manager {
     pub fn new(config: AnythingConfig) -> Self {
         let runtime_config = config.runtime_config().clone();
@@ -84,7 +116,7 @@ impl Manager {
             config: config.clone(),
             executor: Some(executor),
             shutdown_sender,
-            // post_office: PostOffice::open(),
+            repositories: None, // post_office: PostOffice::open(),
         }
     }
 
@@ -268,6 +300,27 @@ impl Manager {
             .unwrap();
 
         Ok(flow)
+    }
+
+    pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.flow_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
+
+    pub fn event_repo(&self) -> CoordinatorResult<EventRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.event_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
+
+    pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.trigger_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
     }
 
     /*

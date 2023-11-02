@@ -34,6 +34,9 @@ pub enum CoordinatorError {
 
     #[error("Flow not found: {0}")]
     FlowNotFound(String),
+
+    #[error("repo not initialized")]
+    RepoNotInitialized,
 }
 
 impl<M> From<postage::sink::SendError<M>> for CoordinatorError {

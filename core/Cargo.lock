@@ -336,7 +336,9 @@ name = "anything-common"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "anything-runtime",
  "data-encoding",
+ "derive_builder",
  "futures",
  "indexmap 2.0.2",
  "opentelemetry",
@@ -361,6 +363,7 @@ dependencies = [
  "anything-common",
  "anything-graph",
  "anything-mq",
+ "anything-persistence",
  "anything-runtime",
  "anything-store",
  "dashmap",
@@ -420,6 +423,24 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "anything-persistence"
+version = "0.1.0"
+dependencies = [
+ "anything-common",
+ "anything-graph",
+ "anything-store",
+ "async-trait",
+ "chrono",
+ "derive_builder",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -3066,24 +3087,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
-name = "persistence"
-version = "0.1.0"
-dependencies = [
- "anything-common",
- "anything-coordinator",
- "anything-graph",
- "async-trait",
- "chrono",
- "derive_builder",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
- "uuid",
-]
-
-[[package]]
 name = "pest"
 version = "2.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4600,7 +4603,9 @@ dependencies = [
  "anything-common",
  "anything-coordinator",
  "anything-graph",
+ "anything-persistence",
  "anything-runtime",
+ "chrono",
  "serde",
  "tauri",
  "thiserror",

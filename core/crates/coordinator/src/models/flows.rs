@@ -73,7 +73,7 @@ impl FlowsModel {
 
 #[cfg(test)]
 mod tests {
-    use crate::{config::AnythingConfig, manager::Manager, test_helper::add_flow_directory};
+    use crate::{manager::Manager, test_helper::add_flow_directory};
 
     use super::*;
     use anything_graph::FlowBuilder;
@@ -148,7 +148,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_flows_model_can_reload_flows_in_a_directory() {
-        let mut config = AnythingConfig::default();
+        let mut config = anything_common::AnythingConfig::default();
         let tmpdir = tempfile::tempdir().unwrap().path().to_path_buf();
         let mut runtime_config = RuntimeConfig::default();
         runtime_config.base_dir = Some(tmpdir.clone());
