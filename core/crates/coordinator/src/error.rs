@@ -1,7 +1,9 @@
 use anything_runtime::RuntimeError;
+use ractor::ActorProcessingErr;
 use thiserror::Error;
 
 pub type CoordinatorResult<T> = Result<T, CoordinatorError>;
+pub type CoordinatorActorResult<T> = Result<T, ActorProcessingErr>;
 
 #[derive(Debug, Error)]
 pub enum CoordinatorError {

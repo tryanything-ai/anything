@@ -3,63 +3,6 @@
 version = 3
 
 [[package]]
-name = "actix"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cba56612922b907719d4a01cf11c8d5b458e7d3dba946d0435f20f58d6795ed2"
-dependencies = [
- "actix-macros",
- "actix-rt",
- "actix_derive",
- "bitflags 2.4.0",
- "bytes",
- "crossbeam-channel",
- "futures-core",
- "futures-sink",
- "futures-task",
- "futures-util",
- "log",
- "once_cell",
- "parking_lot",
- "pin-project-lite",
- "smallvec",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "actix-macros"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e01ed3140b2f8d422c68afa1ed2e85d996ea619c988ac834d255db32138655cb"
-dependencies = [
- "quote",
- "syn 2.0.32",
-]
-
-[[package]]
-name = "actix-rt"
-version = "2.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28f32d40287d3f402ae0028a9d54bef51af15c8769492826a69d28f81893151d"
-dependencies = [
- "actix-macros",
- "futures-core",
- "tokio",
-]
-
-[[package]]
-name = "actix_derive"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c7db3d5a9718568e4cf4a537cfd7070e6e6ff7481510d0237fb529ac850f6d3"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.32",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -237,8 +180,6 @@ dependencies = [
 name = "anything-coordinator"
 version = "0.1.0"
 dependencies = [
- "actix",
- "actix-rt",
  "anyhow",
  "anymap",
  "anything-common",
@@ -253,6 +194,7 @@ dependencies = [
  "once_cell",
  "petgraph",
  "postage",
+ "ractor",
  "serde",
  "serde_cbor",
  "serde_json",
@@ -261,7 +203,6 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "xan-actor",
 ]
 
 [[package]]
@@ -4169,6 +4110,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ractor"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4c76b29042a5b9819c04190895212b83b66f1f789b8e19270a4e7d18667eedc"
+dependencies = [
+ "async-trait",
+ "dashmap",
+ "futures",
+ "once_cell",
+ "rand 0.8.5",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "rand"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5994,6 +5950,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2 0.5.4",
  "tokio-macros",
+ "tracing",
  "windows-sys 0.48.0",
 ]
 
@@ -7116,18 +7073,6 @@ dependencies = [
  "libc",
  "once_cell",
  "pkg-config",
-]
-
-[[package]]
-name = "xan-actor"
-version = "1.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13997b5f9e1a7a8fc0836e24753000c28618fc940a5d3d4e2d5762319b98b230"
-dependencies = [
- "async-trait",
- "log",
- "thiserror",
- "tokio",
 ]
 
 [[package]]

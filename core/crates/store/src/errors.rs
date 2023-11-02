@@ -18,6 +18,10 @@ pub enum StoreError {
         path: std::path::PathBuf,
         err: std::io::Error,
     },
+    UnableToReadDirectory {
+        path: std::path::PathBuf,
+        err: std::io::Error,
+    },
     UnableToReadFile {
         path: std::path::PathBuf,
         err: std::io::Error,
@@ -34,6 +38,9 @@ impl std::fmt::Display for StoreError {
             }
             StoreError::UnableToDeleteDirectory { path, err } => {
                 write!(f, "Unable to delete directory {}: {}", path.display(), err)
+            }
+            StoreError::UnableToReadDirectory { path, err } => {
+                write!(f, "Unable to read directory {}: {}", path.display(), err)
             }
             StoreError::UnableToWriteFile { path, err } => {
                 write!(f, "Unable to write file {}: {}", path.display(), err)

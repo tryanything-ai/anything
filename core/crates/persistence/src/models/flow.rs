@@ -1,4 +1,5 @@
-use crate::models::model_types::default_bool;
+use crate::{error::PersistenceResult, models::model_types::default_bool};
+use anything_store::FileStore;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{sqlite::SqliteRow, Column, FromRow, Row};
@@ -103,6 +104,15 @@ impl Into<StoredFlow> for CreateFlow {
             updated_at: Utc::now(),
             versions: Vec::default(),
         }
+    }
+}
+
+impl StoredFlow {
+    pub async fn get_flow(&self, file_store: FileStore) -> PersistenceResult<anything_graph::Flow> {
+        let flow_path = file_store
+            .store_path(&["flows"])
+            .join(self.flow_name.clone());
+        Ok(flow)
     }
 }
 

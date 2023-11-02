@@ -3,11 +3,12 @@ use anything_graph::Flowfile;
 use anything_mq::new_client;
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
-    create_sqlite_datastore_from_config_and_file_store, EventRepoImpl, FlowRepoImpl,
+    create_sqlite_datastore_from_config_and_file_store, EventRepoImpl, FlowRepo, FlowRepoImpl,
     TriggerRepoImpl,
 };
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
+use ractor::{cast, Actor, ActorRef};
 use std::{env::temp_dir, sync::Arc};
 
 use tokio::sync::{
@@ -15,6 +16,7 @@ use tokio::sync::{
     Mutex,
 };
 
+use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
 use crate::CoordinatorError;
 use crate::{
     error::CoordinatorResult,
@@ -23,12 +25,12 @@ use crate::{
     models::{Models, MODELS},
 };
 
-// #[derive(Debug, Clone)]
-// pub struct Repositories {
-//     pub flow_repo: anything_persistence::FlowRepoImpl,
-//     pub event_repo: anything_persistence::EventRepoImpl,
-//     pub trigger_repo: anything_persistence::TriggerRepoImpl,
-// }
+#[derive(Debug, Clone)]
+pub struct Repositories {
+    pub flow_repo: anything_persistence::FlowRepoImpl,
+    pub event_repo: anything_persistence::EventRepoImpl,
+    pub trigger_repo: anything_persistence::TriggerRepoImpl,
+}
 
 #[derive(Debug, Clone)]
 pub struct Manager {
@@ -36,7 +38,7 @@ pub struct Manager {
     pub config: AnythingConfig,
     pub executor: Option<Runner>,
     // pub shutdown_sender: Sender<()>,
-    // pub repositories: Option<Repositories>,
+    pub repositories: Option<Repositories>,
 }
 
 impl Default for Manager {
@@ -47,6 +49,17 @@ impl Default for Manager {
         let anything_config = AnythingConfig::new(runtime_config);
         Self::new(anything_config)
     }
+}
+
+pub async fn start(
+    config: AnythingConfig,
+    shutdown_rx: mpsc::Receiver<()>,
+    ready_tx: mpsc::Sender<Arc<Manager>>,
+) -> CoordinatorResult<()> {
+    let mut manager = Manager::new(config);
+
+    manager.start(shutdown_rx, ready_tx).await?;
+    Ok(())
 }
 
 // TODO: Move to use repositories instead of models
@@ -73,10 +86,15 @@ impl Manager {
             file_store,
             config: config.clone(),
             executor: Some(executor),
+            repositories: None,
         }
     }
 
-    pub async fn start(&mut self, mut shutdown_rx: mpsc::Receiver<()>) -> CoordinatorResult<()> {
+    pub async fn start(
+        &mut self,
+        mut shutdown_rx: mpsc::Receiver<()>,
+        ready_tx: mpsc::Sender<Arc<Self>>,
+    ) -> CoordinatorResult<()> {
         // Setup persistence
         let datastore = create_sqlite_datastore_from_config_and_file_store(
             self.config.clone(),
@@ -91,39 +109,36 @@ impl Manager {
         let trigger_repo = TriggerRepoImpl::new_with_datastore(datastore.clone())
             .expect("unable to create trigger repo");
 
-        let system = actix::System::new();
+        self.repositories = Some(Repositories {
+            flow_repo: flow_repo.clone(),
+            event_repo: event_repo.clone(),
+            trigger_repo: trigger_repo.clone(),
+        });
 
-        // spawn_or_crash(
-        //     "internal_events",
-        //     self.clone(),
-        //     handlers::system_handler::process_system_events,
-        // );
-
-        // spawn_or_crash(
-        //     "flow_events",
-        //     self.clone(),
-        //     handlers::flow_handler::process_flows,
-        // );
-
-        // spawn_or_crash(
-        //     "store_events",
-        //     self.clone(),
-        //     handlers::store_handler::process_store_events,
-        // );
-
-        self.setup_file_handler().await;
+        // startup the actors
+        let (actor, _handle) = Actor::spawn(
+            Some("system-actor".to_string()),
+            SystemActor,
+            SystemActorState {
+                file_store: self.file_store.clone(),
+                flow_repo: flow_repo.clone(),
+            },
+        )
+        .await
+        .unwrap();
+        self.setup_file_handler(actor).await;
+        ready_tx.send(Arc::new(self.clone())).await.unwrap();
 
         // never quit
-        let _res = system.run();
-        // loop {
-        //     // Never quit
-        //     tokio::select! {
+        loop {
+            // Never quit
+            tokio::select! {
 
-        //         _ = shutdown_rx.recv() => {
-        //             break;
-        //         }
-        //     }
-        // }
+                _ = shutdown_rx.recv() => {
+                    break;
+                }
+            }
+        }
         tracing::debug!("shutting down");
 
         Ok(())
@@ -142,7 +157,8 @@ impl Manager {
     /// The function `get_flows` returns a `CoordinatorResult` containing a `Vec` of
     /// `anything_graph::Flow` objects.
     pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_graph::Flow>> {
-        let flows = MODELS.get().unwrap().lock().await.get_flows();
+        let flow_repo = self.flow_repo()?;
+        let flows = flow_repo.get_flows().await?;
         Ok(flows)
     }
 
@@ -267,33 +283,33 @@ impl Manager {
         Ok(flow)
     }
 
-    // pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {
-    //     match &self.repositories {
-    //         Some(repositories) => Ok(repositories.flow_repo.clone()),
-    //         None => Err(CoordinatorError::RepoNotInitialized),
-    //     }
-    // }
+    pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.flow_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
 
-    // pub fn event_repo(&self) -> CoordinatorResult<EventRepoImpl> {
-    //     match &self.repositories {
-    //         Some(repositories) => Ok(repositories.event_repo.clone()),
-    //         None => Err(CoordinatorError::RepoNotInitialized),
-    //     }
-    // }
+    pub fn event_repo(&self) -> CoordinatorResult<EventRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.event_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
 
-    // pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
-    //     match &self.repositories {
-    //         Some(repositories) => Ok(repositories.trigger_repo.clone()),
-    //         None => Err(CoordinatorError::RepoNotInitialized),
-    //     }
-    // }
+    pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.trigger_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
 
     /*
     INTERNAL FUNCTIONS
      */
 
     // Internal
-    async fn setup_file_handler(&mut self) {
+    async fn setup_file_handler(&mut self, actor: ActorRef<SystemMessage>) {
         let (tx, mut rx) = tokio::sync::mpsc::channel(4096);
         let file_store = Arc::new(Mutex::new(self.file_store.clone()));
 
@@ -308,12 +324,13 @@ impl Manager {
         // Send changes to the coordinator
         let _t2 = tokio::spawn(async move {
             while let Some(msg) = rx.recv().await {
-                let _ = client
-                    .publish(
-                        "file-system-change",
-                        StoreChangesPublisher::ChangeMessage(msg),
-                    )
-                    .await;
+                cast!(actor.clone(), SystemMessage::StoreChanged(msg)).unwrap();
+                // let _ = client
+                //     .publish(
+                //         "file-system-change",
+                //         StoreChangesPublisher::ChangeMessage(msg),
+                //     )
+                //     .await;
                 // let _ = sender.send(StoreChangesPublisher::ChangeMessage(msg)).await;
             }
         });
@@ -454,30 +471,32 @@ mod tests {
         // po_sender.send(()).unwrap();
     }
 
-    #[actix::test]
+    #[tokio::test]
     async fn test_subscribe_to_store_changes() {
-        let manager = Manager::default();
         let config = AnythingConfig::default();
-        let (stop_tx, stop_rx) = mpsc::channel(1);
 
-        let mut cloned_manager = manager.clone();
-        // arc_m.start(stop_rx, ready_tx).await;
-        actix_rt::spawn(async move {
-            let _res = cloned_manager.start(stop_rx).await;
+        let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
+        let (ready_tx, mut ready_rx) = mpsc::channel(1);
+
+        tokio::spawn(async move {
+            let res = start(config, shutdown_rx, ready_tx).await.unwrap();
         });
 
-        let store = manager.file_store.clone();
-        // let server_task = tokio::spawn(async move {
-        //     let _v = ready_rx.recv().await;
-        //     sleep(Duration::from_millis(100)).await;
-        //     let res = store.write_file(&["just_a_test.txt"], "test".as_bytes());
-        //     let _ = sleep(Duration::from_millis(100));
-        //     assert!(res.is_ok());
-        //     stop_tx.send(()).await.unwrap();
-        // });
+        let manager = ready_rx.recv().await.unwrap();
+        // let store = manager.file_store.clone();
 
-        // let res = timeout(Duration::from_secs(1), server_task).await;
-        // assert!(res.is_ok(), "server task did not quit");
+        let rpath = manager.file_store.store_path(&["flows"]);
+
+        let server_task = tokio::spawn(async move {
+            add_flow_directory(rpath.clone(), "some-simple-flow");
+            // let res = store.write_file(&["just_a_test.txt"], "test".as_bytes());
+            let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
+            // Get the flow to ensure it changed in the database
+            let found_flow = shutdown_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(5), server_task).await;
+        assert!(res.is_ok(), "server task did not quit");
     }
 
     // #[tokio::test]
