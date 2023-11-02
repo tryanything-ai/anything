@@ -13,6 +13,9 @@ fn default_version() -> Option<String> {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Flowfile {
     #[serde(default)]
+    pub flow_id: String,
+
+    #[serde(default)]
     flow: Flow,
 
     #[serde(default)]
@@ -75,6 +78,7 @@ impl TryFrom<String> for Flowfile {
 impl Into<String> for Flowfile {
     fn into(self) -> String {
         let mut flow = self.flow;
+        flow.flow_id = self.flow_id;
         flow.name = self.name;
         flow.version = self.version.unwrap_or(default_version().unwrap());
         flow.description = self.description.unwrap_or("".to_string());

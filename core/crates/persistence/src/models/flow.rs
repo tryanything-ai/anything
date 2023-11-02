@@ -59,6 +59,19 @@ impl FromRow<'_, SqliteRow> for StoredFlow {
     }
 }
 
+impl From<anything_graph::Flow> for StoredFlow {
+    fn from(value: anything_graph::Flow) -> Self {
+        Self {
+            flow_id: value.flow_id,
+            flow_name: value.name,
+            latest_version_id: value.version,
+            active: false,
+            updated_at: Utc::now(),
+            versions: Vec::default(),
+        }
+    }
+}
+
 // To support create_or_update, we need to convert a StoredFlow into a CreateFlow
 impl Into<CreateFlow> for StoredFlow {
     fn into(self) -> CreateFlow {
@@ -178,4 +191,22 @@ pub struct UpdateFlowVersion {
     pub flow_definition: Option<String>,
     pub published: Option<bool>,
     pub description: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_conversion_from_graph_flow_into_stored_flow() {
+        let flow = anything_graph::FlowBuilder::default()
+            .name("some-flow".to_string())
+            .version("v0.1.1".to_string())
+            .build()
+            .unwrap();
+
+        let stored_flow: StoredFlow = flow.into();
+        assert_eq!(stored_flow.flow_name, "some-flow".to_string());
+        assert_eq!(stored_flow.latest_version_id, "v0.1.1".to_string());
+    }
 }

@@ -357,10 +357,7 @@ mod tests {
         assert!(groups.is_ok());
         let groups = groups.unwrap();
         let graph = flow_graph.into_graph().unwrap();
-        println!(
-            "{:?}",
-            Dot::with_config(&graph, &[Config::EdgeNoLabel, Config::NodeIndexLabel])
-        );
+        // TODO: digraph goes here
     }
 }
 
