@@ -1,5 +1,6 @@
 #![allow(unused)]
 use crate::datastore::types::DatastoreTrait;
+use crate::models::event::StoreEvent;
 use crate::models::flow::{CreateFlow, CreateFlowVersion, FlowVersion, StoredFlow};
 use crate::models::trigger::StoredTrigger;
 use crate::{
@@ -105,5 +106,27 @@ impl TestTriggerHelper {
                 .unwrap();
 
         trigger
+    }
+}
+
+pub struct TestEventHelper {
+    pub datastore: SqliteDatastore,
+}
+
+impl TestEventHelper {
+    pub fn new(datastore: SqliteDatastore) -> Self {
+        Self { datastore }
+    }
+
+    pub async fn get_event_by_id(&self, event_id: String) -> StoreEvent {
+        let pool = self.datastore.get_pool();
+        let row = sqlx::query_as::<_, StoreEvent>("SELECT * from events WHERE id = ?1")
+            .bind(event_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))
+            .expect("unable to get event by id");
+
+        row
     }
 }
