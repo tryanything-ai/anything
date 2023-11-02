@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use crate::datastore::Datastore;
 use crate::error::PersistenceResult;
 

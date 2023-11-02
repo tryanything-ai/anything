@@ -28,7 +28,7 @@ impl From<SqliteError> for PersistenceError {
 }
 
 impl From<std::io::Error> for PersistenceError {
-    fn from(value: std::io::Error) -> Self {
+    fn from(_value: std::io::Error) -> Self {
         Self::RuntimeError
     }
 }

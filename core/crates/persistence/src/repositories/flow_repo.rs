@@ -371,11 +371,6 @@ impl FlowRepo for FlowRepoImpl {
             None => current_flow_version.description.clone().unwrap_or_default(),
         };
 
-        let version = match update_flow_version.version {
-            Some(v) => v,
-            None => current_flow_version.flow_version.clone(),
-        };
-
         let description = match update_flow_version.description {
             Some(d) => d,
             None => current_flow_version.description.clone().unwrap_or_default(),
@@ -492,10 +487,7 @@ impl FlowRepoImpl {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        datastore,
-        test_helper::{get_test_datastore, TestFlowHelper},
-    };
+    use crate::test_helper::{get_test_datastore, TestFlowHelper};
 
     use super::*;
 
@@ -723,7 +715,6 @@ mod tests {
         assert!(flow_version.is_ok());
         let original_flow_version = flow_version.unwrap();
 
-        let flow_description = original_flow_version.description;
         let original_checksum = original_flow_version.checksum;
 
         let update_flow_version = UpdateFlowVersion {

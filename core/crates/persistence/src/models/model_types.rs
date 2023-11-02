@@ -1,3 +1,4 @@
+#![allow(unused)]
 use serde::{Deserialize, Serialize};
 
 pub const fn default_bool<const V: bool>() -> bool {
