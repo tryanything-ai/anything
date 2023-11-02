@@ -16,6 +16,7 @@ pub trait EventRepo {
         &self,
         since_date: chrono::DateTime<chrono::Utc>,
     ) -> PersistenceResult<EventList>;
+    async fn find_flow_events(&self, flow_id: String) -> PersistenceResult<EventList>;
 }
 
 #[derive(Clone)]
@@ -101,6 +102,19 @@ impl EventRepo for EventRepoImpl {
 
         Ok(rows)
     }
+
+    async fn find_flow_events(&self, flow_id: String) -> PersistenceResult<EventList> {
+        let pool = self.datastore.get_pool();
+        let rows = sqlx::query_as::<_, StoreEvent>(
+            "SELECT * from events WHERE flow_id = ?1 ORDER BY started_at ASC",
+        )
+        .bind(flow_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(rows)
+    }
 }
 
 #[cfg(test)]
@@ -108,7 +122,7 @@ mod tests {
     use chrono::{Duration, Utc};
 
     use super::*;
-    use crate::test_helper::{get_test_datastore, TestEventHelper};
+    use crate::test_helper::{get_test_datastore, TestEventHelper, TestFlowHelper};
 
     #[tokio::test]
     async fn test_save_event() {
@@ -193,6 +207,48 @@ mod tests {
         assert!(stored_event.len() == 2);
         assert!(stored_event.iter().any(|e| e.id == event_id));
         assert!(stored_event.iter().any(|e| e.id == event_id3));
+    }
+
+    #[tokio::test]
+    async fn test_get_flow_events() {
+        let datastore = get_test_datastore().await.unwrap();
+        let event_repo = EventRepoImpl::new_with_datastore(datastore.clone()).unwrap();
+        // Create a dummy flow
+        let flow_id = String::from("test");
+        let test_flow_helper = TestFlowHelper::new(datastore.clone());
+        let create_flow = test_flow_helper.make_create_flow(flow_id.clone()).await;
+        test_flow_helper.create_flow(create_flow).await;
+
+        let event_id = create_event(
+            event_repo.clone(),
+            flow_id.clone(),
+            "test".to_string(),
+            None,
+            None,
+        )
+        .await;
+        let event_id2 = create_event(
+            event_repo.clone(),
+            flow_id.clone(),
+            "test".to_string(),
+            None,
+            Some(Utc::now() - Duration::days(31)),
+        )
+        .await;
+        let _event_id3 = create_event(
+            event_repo.clone(),
+            "not-the-same-event".to_string(),
+            "not-the-same-flow".to_string(),
+            None,
+            Some(Utc::now() - Duration::days(20)),
+        )
+        .await;
+
+        let stored_events = event_repo.find_flow_events(flow_id.clone()).await.unwrap();
+        assert!(stored_events.len() == 2);
+        // sorted backwards by ASC
+        assert!(stored_events[1].id == event_id);
+        assert!(stored_events[0].id == event_id2);
     }
 
     async fn create_event(

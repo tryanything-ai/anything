@@ -1,8 +1,11 @@
 #![allow(unused)]
 use crate::datastore::types::DatastoreTrait;
+use crate::datastore::types::RepoImpl;
 use crate::models::event::StoreEvent;
 use crate::models::flow::{CreateFlow, CreateFlowVersion, FlowVersion, StoredFlow};
 use crate::models::trigger::StoredTrigger;
+use crate::repositories::flow_repo::FlowRepo;
+use crate::repositories::flow_repo::FlowRepoImpl;
 use crate::{
     datastore::sqlite::SqliteDatastore,
     error::{PersistenceError, PersistenceResult},
@@ -83,6 +86,13 @@ impl TestFlowHelper {
             published: None,
             version: Some(flow_version),
         }
+    }
+
+    pub async fn create_flow(&self, create_flow: CreateFlow) -> StoredFlow {
+        let flow_repo = FlowRepoImpl::new_with_datastore(self.datastore.clone()).unwrap();
+        let res = flow_repo.create_flow(create_flow).await;
+        assert!(res.is_ok());
+        res.unwrap()
     }
 }
 
