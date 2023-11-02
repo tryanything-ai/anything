@@ -1,3 +1,4 @@
+use anything_store::errors::StoreError as FileStoreError;
 use sqlx::{migrate::MigrateError, sqlite::SqliteError};
 use thiserror::Error;
 
@@ -22,6 +23,9 @@ pub enum PersistenceError {
 
     #[error("sqlx error: {0}")]
     SqlxError(SqliteError),
+
+    #[error("file store error: {0}")]
+    StoreError(FileStoreError),
 }
 
 impl From<SqliteError> for PersistenceError {

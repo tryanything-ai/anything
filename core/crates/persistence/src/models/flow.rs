@@ -1,4 +1,8 @@
-use crate::{error::PersistenceResult, models::model_types::default_bool};
+use crate::{
+    error::{PersistenceError, PersistenceResult},
+    models::model_types::default_bool,
+};
+use anything_graph::Flowfile;
 use anything_store::FileStore;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -108,10 +112,25 @@ impl Into<StoredFlow> for CreateFlow {
 }
 
 impl StoredFlow {
-    pub async fn get_flow(&self, file_store: FileStore) -> PersistenceResult<anything_graph::Flow> {
+    pub async fn get_flow(
+        &self,
+        file_store: &mut FileStore,
+    ) -> PersistenceResult<anything_graph::Flow> {
         let flow_path = file_store
             .store_path(&["flows"])
             .join(self.flow_name.clone());
+        let files_in_flow_dir = file_store
+            .get_files_in_dir(&[&flow_path.as_os_str().to_str().unwrap()], &["toml"])
+            .await
+            .map_err(|e| PersistenceError::StoreError(e))?;
+
+        let flow_file = files_in_flow_dir
+            .iter()
+            .find(|f| f.file_name().unwrap().to_str().unwrap().starts_with("flow"));
+
+        let flow_file = Flowfile::from_file(flow_file.unwrap().clone()).unwrap();
+        let flow = flow_file.into();
+
         Ok(flow)
     }
 }

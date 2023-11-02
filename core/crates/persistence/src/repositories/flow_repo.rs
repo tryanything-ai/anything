@@ -636,7 +636,9 @@ impl FlowRepoImpl {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helper::{get_test_datastore, TestFlowHelper};
+    use anything_store::FileStore;
+
+    use crate::test_helper::{add_flow_directory, get_test_datastore, TestFlowHelper};
 
     use super::*;
 
@@ -945,5 +947,35 @@ mod tests {
         assert_eq!(new_flow_version.published, true);
 
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_flow_from_stored_flow() {
+        let datastore = get_test_datastore().await.unwrap();
+        let test_helper = TestFlowHelper::new(datastore.clone());
+        let flow_repo = FlowRepoImpl::new_with_datastore(datastore).unwrap();
+
+        let root_dir = tempfile::tempdir().unwrap().path().to_path_buf();
+        let mut file_store = FileStore::create(root_dir.as_path(), &["anything"]).unwrap();
+
+        // Create the flow on the file system and in the database
+        let flow_name = "test".to_string();
+        let create_flow = test_helper.make_create_flow(flow_name.clone()).await;
+        let _res = flow_repo.create_flow(create_flow.clone()).await;
+
+        // Two files in the directory
+        add_flow_directory(file_store.store_path(&["flows"]), flow_name.as_str());
+        let _ = file_store.write_file(
+            &["flows", "some-flow", "note.txt"],
+            "just a note".as_bytes(),
+        );
+
+        // Now get the flow from the database
+        let stored_flow = flow_repo.get_flow_by_name(flow_name.clone()).await.unwrap();
+        let flow = stored_flow.get_flow(&mut file_store).await.unwrap();
+
+        assert_eq!(flow.name, "test".to_string());
+        assert_eq!(flow.version, "v0.0.1".to_string());
+        assert_eq!(flow.description, "test flow".to_string());
     }
 }
