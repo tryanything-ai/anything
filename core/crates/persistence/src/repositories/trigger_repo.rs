@@ -11,6 +11,7 @@ use crate::{
 /// Guarenteed Methods available in the Trigger repo
 #[async_trait::async_trait]
 pub trait TriggerRepo {
+    // TODO: Add types
     async fn create_trigger(&self, create_trigger: CreateTrigger) -> PersistenceResult<TriggerId>;
     async fn get_trigger_by_id(&self, trigger_id: TriggerId) -> PersistenceResult<StoredTrigger>;
 }
