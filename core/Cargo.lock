@@ -3074,6 +3074,7 @@ dependencies = [
  "anything-graph",
  "async-trait",
  "chrono",
+ "derive_builder",
  "serde",
  "serde_json",
  "sqlx",

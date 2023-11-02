@@ -1,6 +1,7 @@
 #![allow(unused)]
 use crate::datastore::types::DatastoreTrait;
 use crate::models::flow::{CreateFlow, CreateFlowVersion, FlowVersion, StoredFlow};
+use crate::models::trigger::StoredTrigger;
 use crate::{
     datastore::sqlite::SqliteDatastore,
     error::{PersistenceError, PersistenceResult},
@@ -81,5 +82,28 @@ impl TestFlowHelper {
             published: None,
             version: Some(flow_version),
         }
+    }
+}
+
+pub struct TestTriggerHelper {
+    pub datastore: SqliteDatastore,
+}
+
+impl TestTriggerHelper {
+    pub fn new(datastore: SqliteDatastore) -> Self {
+        Self { datastore }
+    }
+
+    pub async fn get_trigger_by_id(&self, trigger_id: String) -> StoredTrigger {
+        let pool = self.datastore.get_pool();
+        let trigger =
+            sqlx::query_as::<_, StoredTrigger>(r#"SELECT * from triggers WHERE trigger_id = ?1"#)
+                .bind(&trigger_id)
+                .fetch_one(pool)
+                .await
+                .map_err(|e| PersistenceError::DatabaseError(e))
+                .unwrap();
+
+        trigger
     }
 }
