@@ -11,6 +11,9 @@ pub enum PersistenceError {
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
 
+    #[error("Flow not found: {0}")]
+    FlowNotFound(String),
+
     #[error("Invalid database")]
     InvalidDatabaseType,
 

@@ -6,7 +6,7 @@ use sqlx::{sqlite::SqliteRow, Column, FromRow, Row};
 pub type FlowId = String;
 pub type FlowVersionId = String;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct StoredFlow {
     pub flow_id: String,
     pub flow_name: String,
@@ -56,6 +56,40 @@ impl FromRow<'_, SqliteRow> for StoredFlow {
             updated_at,
             versions,
         })
+    }
+}
+
+// To support create_or_update, we need to convert a StoredFlow into a CreateFlow
+impl Into<CreateFlow> for StoredFlow {
+    fn into(self) -> CreateFlow {
+        CreateFlow {
+            name: self.flow_name,
+            active: self.active,
+            version: Some(self.latest_version_id),
+        }
+    }
+}
+
+impl Into<UpdateFlow> for StoredFlow {
+    fn into(self) -> UpdateFlow {
+        UpdateFlow {
+            flow_name: self.flow_name,
+            active: self.active,
+            version: Some(self.latest_version_id),
+        }
+    }
+}
+
+impl Into<StoredFlow> for CreateFlow {
+    fn into(self) -> StoredFlow {
+        StoredFlow {
+            flow_id: "".to_string(),
+            flow_name: self.name,
+            latest_version_id: "".to_string(),
+            active: self.active,
+            updated_at: Utc::now(),
+            versions: Vec::default(),
+        }
     }
 }
 
@@ -114,6 +148,7 @@ impl Into<CreateFlowVersion> for CreateFlow {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UpdateFlow {
     pub flow_name: String,
+    pub active: bool,
     pub version: Option<String>,
 }
 
@@ -121,6 +156,7 @@ impl UpdateFlow {
     pub fn new(flow_name: String) -> Self {
         Self {
             flow_name,
+            active: false,
             version: None,
         }
     }
@@ -130,6 +166,7 @@ impl From<anything_graph::Flow> for UpdateFlow {
     fn from(value: anything_graph::Flow) -> Self {
         Self {
             flow_name: value.name,
+            active: false,
             version: Some(value.version),
         }
     }

@@ -88,11 +88,25 @@ impl TestFlowHelper {
         }
     }
 
+    pub fn make_unique_stored_flow(&self) -> StoredFlow {
+        let mut stored_flow = StoredFlow::default();
+        stored_flow.flow_name = uuid::Uuid::new_v4().to_string();
+        stored_flow
+    }
+
     pub async fn create_flow(&self, create_flow: CreateFlow) -> StoredFlow {
         let flow_repo = FlowRepoImpl::new_with_datastore(self.datastore.clone()).unwrap();
         let res = flow_repo.create_flow(create_flow).await;
         assert!(res.is_ok());
         res.unwrap()
+    }
+
+    pub async fn get_flow_by_id(&self, name: String) -> Option<StoredFlow> {
+        let flow_repo = FlowRepoImpl::new_with_datastore(self.datastore.clone()).unwrap();
+        match flow_repo.get_flow_by_id(name).await {
+            Ok(flow) => Some(flow),
+            Err(_) => None,
+        }
     }
 }
 
