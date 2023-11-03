@@ -39,7 +39,7 @@ pub trait FlowRepo {
         &self,
         flow_id: String,
         flow_version: CreateFlowVersion,
-    ) -> PersistenceResult<String>;
+    ) -> PersistenceResult<FlowVersion>;
     async fn get_flow_versions(&self, flow_id: FlowId) -> PersistenceResult<Vec<FlowVersion>>;
     async fn get_flow_version_by_id(
         &self,
@@ -57,6 +57,8 @@ pub trait FlowRepo {
         version_id: FlowVersionId,
         update_flow_version: UpdateFlowVersion,
     ) -> PersistenceResult<FlowVersion>;
+    async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId>;
+    async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool>;
 }
 
 #[derive(Clone)]
@@ -110,7 +112,7 @@ impl FlowRepo for FlowRepoImpl {
         let flow_version = "v0.0.0".to_string();
 
         let saved_flow = self
-            .save(
+            .internal_save(
                 &mut tx,
                 flow_name.clone(),
                 flow_version.clone(),
@@ -130,7 +132,7 @@ impl FlowRepo for FlowRepoImpl {
 
         let flow_name = flow.flow_name.clone();
         let res = self
-            .save(
+            .internal_save(
                 &mut tx,
                 flow_name.clone(),
                 flow.latest_version_id.clone(),
@@ -158,7 +160,7 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let res = match self
-            .find_existing_flow_by_name(&mut tx, flow_id.clone())
+            .internal_find_existing_flow_by_name(&mut tx, flow_id.clone())
             .await
         {
             Some(existing_flow) => Ok(existing_flow),
@@ -204,7 +206,9 @@ impl FlowRepo for FlowRepoImpl {
         // let pool = self.datastore.get_pool();
         let mut tx = self.get_transaction().await?;
 
-        let res = self.find_existing_flow_by_name(&mut tx, name.clone()).await;
+        let res = self
+            .internal_find_existing_flow_by_name(&mut tx, name.clone())
+            .await;
 
         tx.commit()
             .await
@@ -238,32 +242,22 @@ impl FlowRepo for FlowRepoImpl {
         &self,
         flow_id: String,
         flow_version: CreateFlowVersion,
-    ) -> PersistenceResult<String> {
-        let pool = self.datastore.get_pool();
+    ) -> PersistenceResult<FlowVersion> {
+        let mut tx = self.get_transaction().await?;
 
-        let create_flow_version = flow_version.clone();
-        let input = format!(
-            r#"{{"id": "{}", "version": "{}", "description": "{}"}}"#,
-            flow_id.clone(),
-            flow_version.version.unwrap_or("0.0.1".to_string()),
-            flow_version.description.unwrap_or_default()
-        );
-        let checksum = hash_string_sha256(input.as_str())?;
+        let flow_version_id = self
+            .internal_save_flow_version(&mut tx, flow_id.clone(), flow_version)
+            .await?;
 
-        let row = sqlx::query(r#"
-        INSERT INTO flow_versions (flow_id, flow_version, description, checksum, flow_definition, updated_at)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-            RETURNING flow_version
-        "#)
-        .bind(flow_id)
-        .bind(create_flow_version.version.unwrap_or("0.0.1".to_string()))
-        .bind(create_flow_version.description.unwrap_or_default())
-        .bind(checksum)
-        .bind(flow_version.flow_definition)
-        .bind(Utc::now().timestamp())
-        .fetch_one(pool).await.map_err(|e| PersistenceError::DatabaseError(e))?;
+        let flow_version = self
+            .internal_find_existing_flow_version_by_id(&mut tx, flow_id, flow_version_id)
+            .await?;
 
-        Ok(row.get("flow_version"))
+        tx.commit()
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(flow_version)
     }
 
     /// The function `get_flow_versions` retrieves all versions of a flow from a database using SQL.
@@ -349,7 +343,7 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let res = self
-            .update_existing_flow(&mut tx, flow_id, update_flow)
+            .internal_update_existing_flow(&mut tx, flow_id, update_flow)
             .await;
 
         tx.commit()
@@ -368,9 +362,44 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let res = self
-            .update_existing_flow_version(&mut tx, flow_id, flow_version, update_flow_version)
+            .internal_update_existing_flow_version(
+                &mut tx,
+                flow_id,
+                flow_version,
+                update_flow_version,
+            )
             .await?;
 
+        tx.commit().await?;
+
+        Ok(res)
+    }
+
+    async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId> {
+        let mut tx = self.get_transaction().await?;
+
+        let res = match self
+            .internal_find_existing_flow_by_name(&mut tx, name.clone())
+            .await
+        {
+            Some(stored_flow) => {
+                self.internal_delete_flow_by_id(&mut tx, stored_flow.flow_id)
+                    .await
+            }
+            None => Err(PersistenceError::FlowNotFound(name)),
+        };
+
+        tx.commit().await?;
+
+        res
+    }
+
+    async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool> {
+        let mut tx = self.get_transaction().await?;
+
+        let res = self
+            .internal_delete_flow_version_by_id(&mut tx, version_id)
+            .await?;
         tx.commit().await?;
 
         Ok(res)
@@ -382,30 +411,35 @@ impl FlowRepoImpl {
     ///
     /// If a flow exists already, this will update the flow with the StoredFlow parameters
     /// otherwise it will create a new flow
-    async fn save(
+    async fn internal_save(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
         flow_version: String,
         flow: StoredFlow,
     ) -> PersistenceResult<StoredFlow> {
-        match self.find_existing_flow_by_name(tx, flow_id.clone()).await {
+        match self
+            .internal_find_existing_flow_by_name(tx, flow_id.clone())
+            .await
+        {
             Some(mut existing_flow) => {
                 existing_flow.latest_version_id = flow_version.clone();
                 let update_flow: UpdateFlow = flow.clone().into();
-                self.update_existing_flow(tx, flow_id, update_flow).await
+                self.internal_update_existing_flow(tx, flow_id, update_flow)
+                    .await
             }
             None => {
                 let mut create_flow: CreateFlow = flow.into();
                 create_flow.version = Some(flow_version);
-                self.create_new_flow(tx, flow_id, create_flow).await
+                self.internal_create_new_flow(tx, flow_id, create_flow)
+                    .await
             }
         }
     }
 
     /// Create a new flow in the database
     /// Also triggers creating a version of the flow
-    async fn create_new_flow(
+    async fn internal_create_new_flow(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
@@ -432,16 +466,16 @@ impl FlowRepoImpl {
 
         let save_flow_version: CreateFlowVersion = create_flow.into();
 
-        self.save_flow_version(tx, flow_id.clone(), save_flow_version)
+        self.internal_save_flow_version(tx, flow_id.clone(), save_flow_version)
             .await?;
 
-        match self.find_existing_flow_by_id(tx, flow_id).await {
+        match self.internal_find_existing_flow_by_id(tx, flow_id).await {
             Some(existing_flow) => Ok(existing_flow),
             None => Err(PersistenceError::FlowNotFound(flow_name)),
         }
     }
 
-    async fn update_existing_flow(
+    async fn internal_update_existing_flow(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
@@ -466,7 +500,10 @@ impl FlowRepoImpl {
 
         let flow_id = flow.flow_id;
 
-        match self.find_existing_flow_by_id(tx, flow_id.clone()).await {
+        match self
+            .internal_find_existing_flow_by_id(tx, flow_id.clone())
+            .await
+        {
             Some(existing_flow) => Ok(existing_flow),
             None => Err(PersistenceError::FlowNotFound(flow_id)),
         }
@@ -486,19 +523,19 @@ impl FlowRepoImpl {
     /// Returns:
     ///
     /// a `PersistenceResult<FlowVersionId>`.
-    async fn save_flow_version(
+    async fn internal_save_flow_version(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
-        create_flow: CreateFlowVersion,
+        create_flow_version: CreateFlowVersion,
     ) -> PersistenceResult<FlowVersionId> {
-        let create_flow_clone = create_flow.clone();
+        let create_flow_clone = create_flow_version.clone();
         // TODO: decide if this is how we want to handle the input or not
         let input = format!(
             r#"{{"id": "{}", "version": "{}", "description": "{}"}}"#,
             flow_id.clone(),
-            create_flow.version.unwrap_or("0.0.1".to_string()),
-            create_flow.description.unwrap_or_default()
+            create_flow_version.version.unwrap_or("0.0.1".to_string()),
+            create_flow_version.description.unwrap_or_default()
         );
         let checksum = hash_string_sha256(input.as_str())?;
         // Create flow version
@@ -521,7 +558,7 @@ impl FlowRepoImpl {
         Ok(row.get("flow_version"))
     }
 
-    async fn update_existing_flow_version(
+    async fn internal_update_existing_flow_version(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: FlowId,
@@ -576,11 +613,11 @@ impl FlowRepoImpl {
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
         let version_id = row.get("flow_version");
-        self.find_existing_flow_version_by_id(tx, flow_id, version_id)
+        self.internal_find_existing_flow_version_by_id(tx, flow_id, version_id)
             .await
     }
 
-    async fn find_existing_flow_version_by_id(
+    async fn internal_find_existing_flow_version_by_id(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: FlowId,
@@ -600,7 +637,7 @@ impl FlowRepoImpl {
         Ok(flow_version)
     }
 
-    async fn find_existing_flow_by_id(
+    async fn internal_find_existing_flow_by_id(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
@@ -618,7 +655,7 @@ impl FlowRepoImpl {
         }
     }
 
-    async fn find_existing_flow_by_name(
+    async fn internal_find_existing_flow_by_name(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_name: String,
@@ -631,6 +668,47 @@ impl FlowRepoImpl {
             Ok(existing_flow) => Some(existing_flow),
             Err(_e) => None,
         }
+    }
+
+    async fn internal_delete_flow_by_id(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        flow_id: String,
+    ) -> PersistenceResult<String> {
+        let row = sqlx::query(
+            r#"
+            DELETE FROM flows WHERE flow_id = ?1
+            RETURNING flow_id
+            "#,
+        )
+        .bind(flow_id)
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        let flow_id = row.get("flow_id");
+
+        Ok(flow_id)
+    }
+
+    async fn internal_delete_flow_version_by_id(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        version_id: FlowVersionId,
+    ) -> PersistenceResult<bool> {
+        let row = sqlx::query(
+            r#"
+            DELETE FROM flow_versions WHERE flow_version = ?1
+            "#,
+        )
+        .bind(version_id)
+        .execute(&mut **tx)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        let rows_affected = row.rows_affected();
+
+        Ok(rows_affected == 1)
     }
 }
 
@@ -815,15 +893,11 @@ mod tests {
         let create_flow_version = test_helper
             .make_flow_version(flow_name.clone(), format!("v0.0.{}", 1))
             .await;
-        let res = flow_repo
+        let flow_version = flow_repo
             .create_flow_version(flow_name.clone(), create_flow_version.clone())
             .await;
-        assert!(res.is_ok());
-
-        let flow_version = flow_repo
-            .get_flow_version_by_id(flow_name.clone(), res.unwrap())
-            .await;
         assert!(flow_version.is_ok());
+
         let flow_version = flow_version.unwrap();
         assert_eq!(flow_version.flow_id, flow_name);
         assert_eq!(flow_version.flow_version, "v0.0.1");
@@ -977,5 +1051,89 @@ mod tests {
         assert_eq!(flow.name, "test".to_string());
         assert_eq!(flow.version, "v0.0.1".to_string());
         assert_eq!(flow.description, "test flow".to_string());
+    }
+
+    #[tokio::test]
+    async fn test_can_delete_a_flow() {
+        let datastore = get_test_datastore().await.unwrap();
+        let test_helper = TestFlowHelper::new(datastore.clone());
+        let flow_repo = FlowRepoImpl::new_with_datastore(datastore).unwrap();
+
+        let create_flows = test_helper
+            .make_create_flows(vec!["alpha".to_string(), "beta".to_string()])
+            .await;
+
+        for f in create_flows {
+            let res = flow_repo.create_flow(f.clone()).await;
+            assert!(res.is_ok());
+        }
+
+        let all_flows = test_helper
+            .select_all_flows()
+            .await
+            .expect("unable to select all flows");
+        assert_eq!(all_flows.len(), 2);
+
+        let res = flow_repo.delete_flow("alpha".to_string()).await;
+        assert!(res.is_ok());
+
+        let all_flows = test_helper
+            .select_all_flows()
+            .await
+            .expect("unable to select all flows");
+        assert_eq!(all_flows.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_can_delete_a_flow_version() {
+        let datastore = get_test_datastore().await.unwrap();
+        let test_helper = TestFlowHelper::new(datastore.clone());
+        let flow_repo = FlowRepoImpl::new_with_datastore(datastore).unwrap();
+
+        let flow_name = "test".to_string();
+        let create_flow = test_helper.make_create_flow(flow_name.clone()).await;
+        let res = flow_repo.create_flow(create_flow.clone()).await;
+        assert!(res.is_ok());
+
+        // Create first version
+        let create_flow_version = test_helper
+            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 1))
+            .await;
+        let res = flow_repo
+            .create_flow_version(flow_name.clone(), create_flow_version.clone())
+            .await;
+        assert!(res.is_ok());
+
+        // Create a second version
+        let create_flow_version = test_helper
+            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 2))
+            .await;
+        let res = flow_repo
+            .create_flow_version(flow_name.clone(), create_flow_version.clone())
+            .await;
+        assert!(res.is_ok());
+
+        // Confirm there are two versions
+        let flow_versions = test_helper
+            .select_all_flow_versions(flow_name.clone())
+            .await;
+
+        assert!(flow_versions.is_ok());
+        assert_eq!(flow_versions.unwrap().len(), 3);
+
+        // Delete the first version
+        let res = flow_repo
+            .delete_flow_version("v0.0.1".to_string())
+            .await
+            .unwrap();
+        assert!(res);
+
+        // Confirm there is one version
+        let flow_versions = test_helper
+            .select_all_flow_versions(flow_name.clone())
+            .await;
+
+        assert!(flow_versions.is_ok());
+        assert_eq!(flow_versions.unwrap().len(), 2);
     }
 }

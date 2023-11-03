@@ -60,6 +60,23 @@ impl TestFlowHelper {
         Ok(result)
     }
 
+    pub async fn select_all_flow_versions(
+        &self,
+        flow_id: String,
+    ) -> PersistenceResult<Vec<FlowVersion>> {
+        let pool = self.datastore.get_pool();
+        let query =
+            sqlx::query_as::<_, FlowVersion>(r#"SELECT * FROM flow_versions WHERE flow_id = ?1"#)
+                .bind(flow_id);
+
+        let result = query.fetch_all(pool).await.map_err(|e| {
+            tracing::error!("Error fetching flows: {}", e);
+            PersistenceError::DatabaseError(e)
+        })?;
+
+        Ok(result)
+    }
+
     pub async fn make_create_flows(&self, names: Vec<String>) -> Vec<CreateFlow> {
         let mut flows = Vec::default();
         for name in names {
@@ -103,9 +120,30 @@ impl TestFlowHelper {
         res.unwrap()
     }
 
+    pub async fn create_flow_version(
+        &self,
+        flow_id: String,
+        create_flow_version: CreateFlowVersion,
+    ) -> FlowVersion {
+        let flow_repo = FlowRepoImpl::new_with_datastore(self.datastore.clone()).unwrap();
+        let res = flow_repo
+            .create_flow_version(flow_id, create_flow_version)
+            .await;
+        assert!(res.is_ok());
+        res.unwrap()
+    }
+
     pub async fn get_flow_by_id(&self, name: String) -> Option<StoredFlow> {
         let flow_repo = FlowRepoImpl::new_with_datastore(self.datastore.clone()).unwrap();
         match flow_repo.get_flow_by_id(name).await {
+            Ok(flow) => Some(flow),
+            Err(_) => None,
+        }
+    }
+
+    pub async fn find_flow_by_name(&self, name: String) -> Option<StoredFlow> {
+        let flow_repo = FlowRepoImpl::new_with_datastore(self.datastore.clone()).unwrap();
+        match flow_repo.get_flow_by_name(name).await {
             Ok(flow) => Some(flow),
             Err(_) => None,
         }

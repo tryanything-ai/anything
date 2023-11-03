@@ -262,13 +262,7 @@ impl Manager {
     ///
     /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
     pub async fn delete_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS
-            .get()
-            .unwrap()
-            .lock()
-            .await
-            .delete_flow(flow_name)
-            .unwrap();
+        let flow = self.flow_repo()?.delete_flow(flow_name.clone()).await?;
 
         let _ = self
             .file_store

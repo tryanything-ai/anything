@@ -143,7 +143,7 @@ pub struct CreateFlow {
     pub version: Option<String>,
 }
 
-#[derive(FromRow, Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct FlowVersion {
     pub flow_id: FlowId,
     pub flow_version: String,
@@ -152,6 +152,29 @@ pub struct FlowVersion {
     pub checksum: String,
     pub published: bool,
     pub updated_at: Option<DateTime<Utc>>,
+}
+
+impl FromRow<'_, SqliteRow> for FlowVersion {
+    fn from_row(row: &'_ SqliteRow) -> Result<Self, sqlx::Error> {
+        let flow_id = row.get::<'_, String, &str>("flow_id");
+        let flow_version = row.get::<'_, String, &str>("flow_version");
+
+        let flow_definition = row.get::<'_, String, &str>("flow_definition");
+        let description = row.get::<'_, Option<String>, &str>("description");
+        let checksum = row.get::<'_, String, &str>("checksum");
+        let published = row.get::<'_, bool, &str>("published");
+        let updated_at = row.get::<'_, Option<DateTime<Utc>>, &str>("updated_at");
+
+        Ok(FlowVersion {
+            flow_id,
+            flow_version,
+            flow_definition: serde_json::from_str(&flow_definition).unwrap(),
+            description,
+            checksum,
+            published,
+            updated_at,
+        })
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
