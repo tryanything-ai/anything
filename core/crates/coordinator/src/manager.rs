@@ -1,10 +1,10 @@
 use anything_common::{spawn_or_crash, AnythingConfig};
-use anything_graph::Flowfile;
+use anything_graph::{Flow, Flowfile};
 use anything_mq::new_client;
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
-    create_sqlite_datastore_from_config_and_file_store, EventRepoImpl, FlowRepo, FlowRepoImpl,
-    TriggerRepoImpl,
+    create_sqlite_datastore_from_config_and_file_store, CreateFlow, EventRepoImpl, FlowRepo,
+    FlowRepoImpl, TriggerRepoImpl,
 };
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
@@ -212,22 +212,23 @@ impl Manager {
     ///
     /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
     pub async fn create_flow(
-        &self,
+        &mut self,
         flow_name: String,
-        flow_id: String,
     ) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS
-            .get()
-            .unwrap()
-            .lock()
-            .await
-            .create_flow(flow_name, flow_id)?;
+        let create_flow = CreateFlow {
+            name: flow_name.clone(),
+            active: false,
+            version: None,
+        };
+
+        let flow = self.flow_repo()?.create_flow(create_flow).await?;
 
         let new_directory = self
             .file_store
-            .create_directory(&["flows", &flow.name])
+            .create_directory(&["flows", &flow.flow_name])
             .unwrap();
 
+        let flow: Flow = flow.clone().get_flow(&mut self.file_store).await.unwrap();
         let flowfile: Flowfile = flow.clone().into();
         let flow_str: String = flowfile.into();
 
@@ -241,7 +242,7 @@ impl Manager {
                         .as_os_str()
                         .to_str()
                         .unwrap(),
-                    &format!("{}.toml", flow.name),
+                    &format!("{}.toml", flow_name),
                 ],
                 flow_str.as_bytes(),
             )

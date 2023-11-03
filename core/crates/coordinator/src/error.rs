@@ -62,3 +62,9 @@ impl From<tokio::sync::TryLockError> for CoordinatorError {
         CoordinatorError::InternalError(value.to_string())
     }
 }
+
+impl From<PersistenceError> for CoordinatorError {
+    fn from(value: PersistenceError) -> Self {
+        CoordinatorError::PersistenceError(value)
+    }
+}
