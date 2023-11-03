@@ -3,27 +3,13 @@ use std::path::PathBuf;
 use anything_graph::{Flow, Flowfile};
 use anything_persistence::{FlowRepo, FlowRepoImpl};
 use anything_store::{types::ChangeMessage, FileStore};
-use ractor::{async_trait, message, Actor, ActorProcessingErr, ActorRef};
+use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
 
 use crate::{CoordinatorActorResult, CoordinatorError, CoordinatorResult};
 
 #[derive(Debug, Clone)]
 pub enum SystemMessage {
     StoreChanged(ChangeMessage),
-}
-
-impl SystemMessage {
-    fn next(&self) -> Self {
-        match self {
-            SystemMessage::StoreChanged(_) => SystemMessage::StoreChanged(ChangeMessage::default()),
-        }
-    }
-
-    fn print(&self) {
-        match self {
-            SystemMessage::StoreChanged(_) => println!("Store changed"),
-        }
-    }
 }
 
 pub struct SystemActor;
@@ -40,7 +26,7 @@ impl Actor for SystemActor {
 
     async fn pre_start(
         &self,
-        myself: ActorRef<Self::Msg>,
+        _myself: ActorRef<Self::Msg>,
         args: Self::Arguments,
     ) -> Result<Self::State, ActorProcessingErr> {
         Ok(args)

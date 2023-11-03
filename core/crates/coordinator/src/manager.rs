@@ -1,6 +1,5 @@
-use anything_common::{spawn_or_crash, AnythingConfig};
+use anything_common::AnythingConfig;
 use anything_graph::{Flow, Flowfile};
-use anything_mq::new_client;
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, EventRepoImpl, FlowRepo,
@@ -12,13 +11,13 @@ use ractor::{cast, Actor, ActorRef};
 use std::{env::temp_dir, sync::Arc};
 
 use tokio::sync::{
-    mpsc::{self, Sender},
+    mpsc::{self},
     Mutex,
 };
 
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
+use crate::error::CoordinatorResult;
 use crate::CoordinatorError;
-use crate::{error::CoordinatorResult, events::StoreChangesPublisher};
 
 #[derive(Debug, Clone)]
 pub struct Repositories {
@@ -314,8 +313,6 @@ impl Manager {
         let (tx, mut rx) = tokio::sync::mpsc::channel(4096);
         let file_store = Arc::new(Mutex::new(self.file_store.clone()));
 
-        let client = new_client::<StoreChangesPublisher>().await.unwrap();
-
         // Listen for changes on the file system
         let _t1 = tokio::spawn(async move {
             let mut fs = file_store.try_lock().expect("should be unlockable");
@@ -326,13 +323,6 @@ impl Manager {
         let _t2 = tokio::spawn(async move {
             while let Some(msg) = rx.recv().await {
                 cast!(actor.clone(), SystemMessage::StoreChanged(msg)).unwrap();
-                // let _ = client
-                //     .publish(
-                //         "file-system-change",
-                //         StoreChangesPublisher::ChangeMessage(msg),
-                //     )
-                //     .await;
-                // let _ = sender.send(StoreChangesPublisher::ChangeMessage(msg)).await;
             }
         });
     }
@@ -348,7 +338,7 @@ mod tests {
     use std::{path::PathBuf, time::Duration};
 
     use crate::{
-        events::{FlowPublisher, InternalEventsPublisher, NewFlowPublisher, StringPublisher},
+        events::{FlowPublisher, NewFlowPublisher, StringPublisher},
         test_helper::add_flow_directory,
     };
     use anything_graph::Flowfile;
