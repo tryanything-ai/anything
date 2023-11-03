@@ -158,8 +158,20 @@ impl Manager {
     /// `anything_graph::Flow` objects.
     pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_graph::Flow>> {
         let flow_repo = self.flow_repo()?;
-        let flows = flow_repo.get_flows().await?;
-        Ok(flows)
+        let mut file_store = self.file_store.clone();
+        let flows = flow_repo.get_flows().await.map_err(|e| {
+            tracing::error!("error when getting flows: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+        let mut graph_flows: Vec<anything_graph::Flow> = vec![];
+        for flow in flows.iter() {
+            let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
+                tracing::error!("error when getting flow: {:#?}", e);
+                CoordinatorError::PersistenceError(e)
+            })?;
+            graph_flows.push(flow.into());
+        }
+        Ok(graph_flows)
     }
 
     /// The function `get_flow` retrieves a flow by name and returns it as a result, or returns an error
@@ -174,14 +186,18 @@ impl Manager {
     /// The function `get_flow` returns a `CoordinatorResult` which can either be an `Ok` variant
     /// containing a `anything_graph::Flow` or an `Err` variant containing a
     /// `CoordinatorError::FlowNotFound` with the name of the flow as a string.
-    pub async fn get_flow(&self, name: &str) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS.get().unwrap().lock().await.get_flow(name);
-        match flow {
-            Some(flow) => Ok(flow),
-            None => Err(crate::error::CoordinatorError::FlowNotFound(
-                name.to_string(),
-            )),
-        }
+    pub async fn get_flow(&self, name: String) -> CoordinatorResult<anything_graph::Flow> {
+        let flow_repo = self.flow_repo()?;
+        let mut file_store = self.file_store.clone();
+        let flow = flow_repo.get_flow_by_name(name).await.map_err(|e| {
+            tracing::error!("error when getting flow: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+        let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
+            tracing::error!("error when getting flow: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+        Ok(flow.into())
     }
 
     /// The function `create_flow` creates a new flow, saves it to a file, and returns the created flow.

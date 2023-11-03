@@ -1,3 +1,4 @@
+use anything_persistence::error::PersistenceError;
 use anything_runtime::RuntimeError;
 use ractor::ActorProcessingErr;
 use thiserror::Error;
@@ -39,6 +40,9 @@ pub enum CoordinatorError {
 
     #[error("repo not initialized")]
     RepoNotInitialized,
+
+    #[error("persistence error: {0}")]
+    PersistenceError(PersistenceError),
 }
 
 impl<M> From<postage::sink::SendError<M>> for CoordinatorError {

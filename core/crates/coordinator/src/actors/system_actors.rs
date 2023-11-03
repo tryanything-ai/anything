@@ -57,7 +57,7 @@ impl Actor for SystemActor {
                 change_type: anything_store::types::SystemChangeType::Flows,
                 ..
             }) => {
-                println!("Flows changed");
+                tracing::debug!("Reloading flows");
                 self.reload_flows(myself, message, state).await?;
             }
             _ => {}
