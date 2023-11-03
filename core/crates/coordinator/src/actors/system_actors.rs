@@ -66,31 +66,6 @@ impl Actor for SystemActor {
     }
 }
 
-// // impl Actor for SystemActor {
-// //     type Context = Context<Self>;
-
-// //     fn on_start(&mut self, ctx: &mut Context<Self>) {
-// //         println!("in started: {:?}", System::current());
-// //         // ctx.run_later(Duration::from_millis(200), |act, ctx| {
-// //         //     println!("started later ");
-// //         // });
-// //     }
-// // }
-
-// // impl Handler<SystemMessages> for SystemActor {
-// //     type Result = crate::error::CoordinatorResult<()>;
-
-// //     fn handle(&mut self, msg: SystemMessages, _ctx: &mut Context<Self>) -> Self::Result {
-// //         println!("Handling system message got a message: {:?}", msg);
-// //         match msg {
-// //             SystemMessages::StoreChanged(_) => {
-// //                 println!("Store changed");
-// //                 Ok(())
-// //             }
-// //         }
-// //     }
-// // }
-
 impl SystemActor {
     pub async fn reload_flows(
         &self,

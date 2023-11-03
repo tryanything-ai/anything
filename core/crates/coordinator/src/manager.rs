@@ -4,7 +4,7 @@ use anything_mq::new_client;
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, EventRepoImpl, FlowRepo,
-    FlowRepoImpl, TriggerRepoImpl,
+    FlowRepoImpl, TriggerRepoImpl, UpdateFlow,
 };
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
@@ -18,12 +18,7 @@ use tokio::sync::{
 
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
 use crate::CoordinatorError;
-use crate::{
-    error::CoordinatorResult,
-    events::StoreChangesPublisher,
-    handlers,
-    models::{Models, MODELS},
-};
+use crate::{error::CoordinatorResult, events::StoreChangesPublisher};
 
 #[derive(Debug, Clone)]
 pub struct Repositories {
@@ -144,12 +139,6 @@ impl Manager {
         Ok(())
     }
 
-    pub async fn refresh_flows(&self) -> CoordinatorResult<()> {
-        let mut models = MODELS.get().unwrap().lock().await;
-        models.reload_flows().await;
-        Ok(())
-    }
-
     /// The function `get_flows` returns a result containing a vector of `anything_graph::Flow` objects.
     ///
     /// Returns:
@@ -261,15 +250,15 @@ impl Manager {
     /// Returns:
     ///
     /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
-    pub async fn delete_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = self.flow_repo()?.delete_flow(flow_name.clone()).await?;
+    pub async fn delete_flow(&self, flow_name: String) -> CoordinatorResult<String> {
+        let flow_name = self.flow_repo()?.delete_flow(flow_name.clone()).await?;
 
         let _ = self
             .file_store
-            .delete_directory(&["flows", &flow.name])
+            .delete_directory(&["flows", &flow_name])
             .unwrap();
 
-        Ok(flow)
+        Ok(flow_name)
     }
 
     /// The function `update_flow` updates a flow with the given name and returns the updated flow.
@@ -282,15 +271,16 @@ impl Manager {
     /// Returns:
     ///
     /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
-    pub async fn update_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS
-            .get()
-            .unwrap()
-            .lock()
-            .await
-            .update_flow(&flow_name)
-            .unwrap();
-
+    pub async fn update_flow(
+        &mut self,
+        flow_name: String,
+        update_flow: UpdateFlow,
+    ) -> CoordinatorResult<anything_graph::Flow> {
+        let stored_flow = self
+            .flow_repo()?
+            .update_flow(flow_name.clone(), update_flow)
+            .await?;
+        let flow = stored_flow.get_flow(&mut self.file_store).await?;
         Ok(flow)
     }
 
@@ -490,7 +480,7 @@ mod tests {
         let (ready_tx, mut ready_rx) = mpsc::channel(1);
 
         tokio::spawn(async move {
-            let res = start(config, shutdown_rx, ready_tx).await.unwrap();
+            start(config, shutdown_rx, ready_tx).await.unwrap();
         });
 
         let manager = ready_rx.recv().await.unwrap();
@@ -503,7 +493,7 @@ mod tests {
             // let res = store.write_file(&["just_a_test.txt"], "test".as_bytes());
             let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
             // Get the flow to ensure it changed in the database
-            let found_flow = shutdown_tx.send(()).await.unwrap();
+            let _found_flow = shutdown_tx.send(()).await.unwrap();
         });
 
         let res = timeout(Duration::from_secs(5), server_task).await;
