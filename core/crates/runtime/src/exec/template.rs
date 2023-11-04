@@ -24,7 +24,9 @@ pub fn render_string(name: &str, template: &str, scope: &Scope) -> RuntimeResult
 #[cfg(test)]
 mod tests {
 
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
+
+    use tokio::sync::Mutex;
 
     use crate::ExecutionResult;
 

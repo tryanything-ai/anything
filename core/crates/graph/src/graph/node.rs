@@ -226,15 +226,11 @@ mod tests {
         "#,
         );
         let node: Task = toml::from_str(&raw_toml).unwrap();
-        println!("node: {:#?}", node);
         assert_eq!(
             node.run_options.engine.unwrap(),
-            EngineKind::PluginEngine(PluginEngine {
-                engine: "deno".to_string(),
-                args: Some(vec!["index.js".to_string()]),
-                options: indexmap::indexmap! {
-                    "bob".to_string() => EngineOption::from("barky".to_string())
-                },
+            EngineKind::Internal(SystemShell {
+                interpreter: "sh".to_string(),
+                args: vec!["echo".to_string(), "hello world".to_string()]
             })
         );
     }

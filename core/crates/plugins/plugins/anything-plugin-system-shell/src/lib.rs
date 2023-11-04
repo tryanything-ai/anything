@@ -45,6 +45,10 @@ impl ExecutionPlugin for SystemShellPlugin {
             .export_environment(&scope.environment)
             .expect("unable to export environment");
 
+        for (k, v) in &scope.environment {
+            command.env(k, v);
+        }
+
         if let Some(value) = &self.config.current_dir {
             command.current_dir(value);
         }

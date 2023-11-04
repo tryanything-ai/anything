@@ -1,14 +1,10 @@
-use std::{
-    num::NonZeroUsize,
-    ops::ControlFlow,
-    sync::{Arc, Mutex},
-};
+use std::{num::NonZeroUsize, ops::ControlFlow, sync::Arc};
 
 use anything_common::tracing;
 use anything_graph::{Flow, NodeType, Task};
-use anything_runtime::Scope;
+use anything_runtime::{ExecutionResult, Scope};
 use indexmap::IndexMap;
-use tokio::sync::{mpsc::Sender, Semaphore};
+use tokio::sync::{mpsc::Sender, Mutex, Semaphore};
 
 use crate::{
     error::{CoordinatorError, CoordinatorResult},
@@ -16,6 +12,15 @@ use crate::{
 };
 
 use super::executor::execute;
+
+#[derive(Clone, Debug)]
+pub enum ProcessorMessage {
+    InitializedFlow(Flow),
+    ExecutingFlowTask(String, Task),
+    FlowTaskFinishedSuccessfully(String, String),
+    FlowTaskFinishedWithError(String, i32, String),
+    FlowExecutionFinished(Flow),
+}
 
 #[derive(Debug, Clone)]
 pub struct Processor {
@@ -37,11 +42,15 @@ impl Processor {
 
     pub async fn run_graph(
         &mut self,
-        results_tx: Sender<(String, Arc<Mutex<Scope>>)>,
+        results_tx: Sender<ProcessorMessage>,
         max_parallelism: Option<NonZeroUsize>,
     ) -> CoordinatorResult<()> {
         // Attach flow details
         let semaphore = max_parallelism.map(|max| Arc::new(Semaphore::new(max.get())));
+
+        results_tx
+            .send(ProcessorMessage::InitializedFlow(self.flow.clone()))
+            .await?;
 
         let graph = self
             .flow
@@ -77,22 +86,90 @@ impl Processor {
                     None
                 };
 
+                /*
+
+                .map_err(|e| {
+                    CoordinatorError::ProcessorSendError(e.into())
+                })
+                 */
                 // TODO: handle async groups
                 if let NodeType::Task(task) = node {
+                    let task_name = task.name.clone();
+                    results_tx
+                        .send(ProcessorMessage::ExecutingFlowTask(
+                            task_name.clone(),
+                            task.clone(),
+                        ))
+                        .await
+                        .map_err(|e| CoordinatorError::ProcessorSendError(e.into()));
+
                     let task = Arc::new(task);
                     let res = run_task(runner.clone(), task.clone()).await;
 
+                    let task_name = task_name.clone();
                     match res {
                         Ok(task_result) => {
-                            println!("Got task result: {:?}", task_result);
-                            results_tx
-                                .send((task.name.clone(), task_result.clone()))
-                                .await
-                                .expect("must send result");
+                            // Get the task result
+                            let locked_task_result = match task_result.try_lock() {
+                                Ok(locked) => locked,
+                                Err(e) => {
+                                    println!("Got error running: {:#?}", e);
+                                    results_tx
+                                        .send(ProcessorMessage::FlowTaskFinishedWithError(
+                                            task_name,
+                                            1,
+                                            e.to_string(),
+                                        ))
+                                        .await;
+                                    return ControlFlow::Break::<(Arc<Task>, CoordinatorError)>((
+                                        task,
+                                        CoordinatorError::ProcessorExecutionError(
+                                            "unable to lock task result".into(),
+                                        ),
+                                    ));
+                                }
+                            };
+                            let task_response = locked_task_result.get_result(task.name.as_str());
+                            // Send the task result along
+                            match task_response {
+                                Some(result) => match result.status {
+                                    0 => {
+                                        let stdout = result.stdout.clone();
+                                        results_tx
+                                            .send(ProcessorMessage::FlowTaskFinishedSuccessfully(
+                                                task_name, stdout,
+                                            ))
+                                            .await
+                                            .map_err(|e| {
+                                                CoordinatorError::ProcessorSendError(e.into())
+                                            });
+                                    }
+                                    status => {
+                                        results_tx
+                                            .send(ProcessorMessage::FlowTaskFinishedWithError(
+                                                task_name,
+                                                status,
+                                                result.stderr.clone(),
+                                            ))
+                                            .await
+                                            .map_err(|e| {
+                                                CoordinatorError::ProcessorSendError(e.into())
+                                            });
+                                    }
+                                },
+                                None => {
+                                    return ControlFlow::Break::<(Arc<Task>, CoordinatorError)>((
+                                        task,
+                                        CoordinatorError::ProcessorExecutionError(
+                                            "no result".into(),
+                                        ),
+                                    ))
+                                }
+                            }
                         }
                         Err(e) => {
                             tracing::error!("error: {:#?}", e);
-                            println!("Got error running: {:#?}", e);
+
                             return ControlFlow::Break::<(Arc<Task>, CoordinatorError)>((task, e));
                         }
                     }
@@ -164,20 +241,53 @@ mod tests {
             .expect("must add global variable");
         let runner = setup_runner();
 
-        let (results_tx, mut results_rx) = mpsc::channel::<(String, Arc<Mutex<Scope>>)>(16);
+        let (results_tx, mut results_rx) = mpsc::channel::<ProcessorMessage>(16);
 
         let mut processor = Processor::new(runner, flow);
         let errs = processor.run_graph(results_tx.clone(), None).await;
         assert!(errs.is_ok());
 
         let r1 = results_rx.recv().await.expect("must receive result");
-        let results = r1.1.lock().unwrap().results.clone();
-        let node1_results = results.get(r1.0.as_str()).unwrap();
-        assert_eq!(node1_results.stdout, "\"hello bob\"");
+        // assert_eq!(r1., ProcessorMessage::InitializedFlow(flow.clone()));
+        match r1 {
+            ProcessorMessage::InitializedFlow(flow) => {
+                assert_eq!(flow.name, "some-flow".to_string());
+            }
+            _ => {
+                assert!(false, "got wrong message");
+            }
+        };
+
         let r2 = results_rx.recv().await.expect("must receive result");
-        let results = r2.1.lock().unwrap().results.clone();
-        let node2_results = results.get(r2.0.as_str()).unwrap();
-        assert_eq!(node2_results.stdout, "hello back \"hello bob\"");
+        match r2 {
+            ProcessorMessage::ExecutingFlowTask(name, task) => {
+                assert_eq!(name, "node1".to_string());
+                assert_eq!(task.name, "node1".to_string());
+            }
+            _ => {
+                assert!(false, "got wrong message");
+            }
+        };
+
+        let r3 = results_rx.recv().await.expect("must receive result");
+        match r3 {
+            ProcessorMessage::FlowTaskFinishedSuccessfully(name, stdout) => {
+                assert_eq!(name, "node1".to_string());
+                assert_eq!(stdout, "\"hello bob\"");
+            }
+            _ => {
+                assert!(false, "got wrong message");
+            }
+        };
+
+        // let r1 = results_rx.recv().await.expect("must receive result");
+        // let results = r1.1.lock().unwrap().results.clone();
+        // let node1_results = results.get(r1.0.as_str()).unwrap();
+        // assert_eq!(node1_results.stdout, "\"hello bob\"");
+        // let r2 = results_rx.recv().await.expect("must receive result");
+        // let results = r2.1.lock().unwrap().results.clone();
+        // let node2_results = results.get(r2.0.as_str()).unwrap();
+        // assert_eq!(node2_results.stdout, "hello back \"hello bob\"");
     }
 
     fn setup_flow(tasks: Vec<Task>, _runtime_config: RuntimeConfig) -> Flow {

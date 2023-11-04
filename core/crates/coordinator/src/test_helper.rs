@@ -25,7 +25,7 @@ pub(crate) fn add_flow_file_into_directory(path: PathBuf, name: &str) {
 
     [nodes.engine]
     engine = "bash"
-    args = ["-c", "echo", "hello world"]
+    args = ["echo 'hello world'"]
 
     "#,
         name

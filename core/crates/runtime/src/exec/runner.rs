@@ -1,8 +1,6 @@
-use std::{
-    ffi::OsStr,
-    sync::{Arc, Mutex},
-};
+use std::{ffi::OsStr, sync::Arc};
 
+use tokio::sync::Mutex;
 use tracing::debug;
 
 use super::scope::Scope;

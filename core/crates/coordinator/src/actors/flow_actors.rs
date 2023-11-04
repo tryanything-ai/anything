@@ -1,9 +1,12 @@
 use anything_common::AnythingConfig;
-use anything_runtime::{ExecuteConfig, Runner};
+use anything_runtime::Runner;
 use anything_store::FileStore;
-use ractor::{async_trait, Actor, ActorRef};
+use ractor::{async_trait, cast, Actor, ActorRef};
 
-use crate::{processing::processor::Processor, CoordinatorActorResult};
+use crate::{
+    processing::processor::{Processor, ProcessorMessage},
+    CoordinatorActorResult,
+};
 
 use super::update_actor::UpdateActorMessage;
 
@@ -61,21 +64,89 @@ impl FlowActor {
         let mut processor = Processor::new(runner, flow);
         processor.runtime_runner.load_plugins()?;
 
-        let (results_tx, mut results_rx) = tokio::sync::mpsc::channel(1024);
+        let (results_tx, results_rx) = tokio::sync::mpsc::channel(1024);
 
         processor.run_graph(results_tx, max_parallelism).await?;
 
-        while let Some(msg) = results_rx.recv().await {
-            println!(
-                "Got a result: {:?}",
-                msg.1.lock().unwrap().get_result(msg.0.as_str())
-            );
-            // state.update_actor_ref.send_message(FlowMessage::StatusUpdate({
-            //     flow_name: "thing",
-            //     state_name: "node-2",
-            //     payload: msg.1.clone()
-            // }))
-        }
+        let update_actor_ref = state.update_actor_ref.clone();
+
+        // Wait a maximum of 15 seconds for results to come in
+        let _ = tokio::spawn(async move {
+            loop_with_timeout_or_message(
+                std::time::Duration::from_secs(15),
+                results_rx,
+                |msg: ProcessorMessage| {
+                    tracing::debug!("Got a result: {:#?}", msg);
+                    match msg {
+                        ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, task_result) => {
+                            tracing::debug!("Got a task result: {:#?}", task_result);
+                            cast!(
+                                update_actor_ref,
+                                UpdateActorMessage::FlowLifecycle(
+                                    ProcessorMessage::FlowTaskFinishedSuccessfully(
+                                        task_name,
+                                        task_result
+                                    )
+                                )
+                            )
+                            .unwrap();
+                            false
+                        }
+                        ProcessorMessage::FlowTaskFinishedWithError(
+                            task_name,
+                            status,
+                            flow_result,
+                        ) => {
+                            tracing::debug!("Got a flow result: {:#?}", flow_result);
+                            cast!(
+                                update_actor_ref,
+                                UpdateActorMessage::FlowLifecycle(
+                                    ProcessorMessage::FlowTaskFinishedWithError(
+                                        task_name,
+                                        status,
+                                        flow_result
+                                    )
+                                )
+                            )
+                            .unwrap();
+                            false
+                        }
+                        _ => true,
+                    }
+                },
+            )
+            .await
+            .unwrap();
+        });
+
         Ok(())
     }
+}
+
+async fn loop_with_timeout_or_message<M, F>(
+    duration: std::time::Duration,
+    mut rx: tokio::sync::mpsc::Receiver<M>,
+    mut callback: F,
+) -> Result<(), tokio::time::error::Elapsed>
+where
+    F: FnMut(M) -> bool,
+    M: Clone + Sync,
+{
+    tokio::time::timeout(duration, async {
+        loop {
+            tokio::select! {
+                _ = tokio::time::sleep(std::time::Duration::from_millis(500)) => {
+                    // just for heartbeats
+                }
+                Some(message) = rx.recv() => {
+                    if callback(message) {
+                        continue;
+                    } else {
+                        tracing::debug!("Exiting loop");
+                    }
+                }
+            }
+        }
+    })
+    .await
 }

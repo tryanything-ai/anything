@@ -1,9 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    future::Future,
-    ops::ControlFlow,
-    sync::{Arc, Mutex},
-};
+use std::{collections::BTreeMap, future::Future, ops::ControlFlow, sync::Arc};
 
 use anything_graph::Task;
 use anything_runtime::{EngineKind, PluginEngine, Runner, Scope};
@@ -13,7 +8,11 @@ use petgraph::{
     visit::{VisitMap, Visitable},
     Directed, Direction, Graph,
 };
-use tokio::{sync::mpsc, task::JoinSet, time::Instant};
+use tokio::{
+    sync::{mpsc, Mutex},
+    task::JoinSet,
+    time::Instant,
+};
 
 use crate::error::{CoordinatorError, CoordinatorResult};
 
@@ -166,7 +165,6 @@ pub async fn run_task(
         .expect("unable to derive execution config");
 
     let engine = task.run_options.engine.as_ref().unwrap();
-    println!("Engine in run_task: {:?}", engine);
     let plugin_name = if let EngineKind::PluginEngine(PluginEngine { engine, .. }) = engine {
         engine.clone()
     } else {

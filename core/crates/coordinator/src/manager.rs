@@ -17,9 +17,8 @@ use tokio::sync::{
 
 use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
-use crate::actors::update_actor::{UpdateActor, UpdateActorState};
+use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
 use crate::error::CoordinatorResult;
-use crate::processing::processor::Processor;
 use crate::CoordinatorError;
 
 #[derive(Debug, Clone)]
@@ -33,6 +32,7 @@ pub struct Repositories {
 pub struct ActorRefs {
     pub system_actor: ActorRef<SystemMessage>,
     pub flow_actor: ActorRef<FlowMessage>,
+    pub update_actor: ActorRef<UpdateActorMessage>,
 }
 
 #[derive(Debug, Clone)]
@@ -137,6 +137,7 @@ impl Manager {
             UpdateActor,
             UpdateActorState {
                 config: self.config.clone(),
+                latest_messages: Default::default(),
             },
         )
         .await
@@ -158,6 +159,7 @@ impl Manager {
         self.actor_refs = Some(ActorRefs {
             system_actor,
             flow_actor,
+            update_actor,
         });
 
         // Setup listeners and action-takers
@@ -411,7 +413,7 @@ mod tests {
     };
     use anything_graph::Flowfile;
     use anything_mq::new_client;
-    use anything_runtime::{EngineKind, PluginEngine};
+    use anything_runtime::{EngineKind, EngineOption, PluginEngine};
     use tokio::time::{sleep, timeout};
     const SLEEP_TIME: u64 = 600;
 
@@ -522,10 +524,16 @@ mod tests {
         let first_node = payload.flow.nodes.first().unwrap();
         let runtime = first_node.run_options.clone();
 
-        let mut deno_engine = PluginEngine::default();
-        deno_engine.engine = "bash".to_string();
-        deno_engine.args = Some(vec!["echo 'hello {{cheers}}'".to_string()]);
-        assert_eq!(runtime.engine, Some(EngineKind::PluginEngine(deno_engine)));
+        let mut system_plugin_engine = PluginEngine::default();
+        system_plugin_engine.engine = "system-shell".to_string();
+        system_plugin_engine.args = Some(vec!["echo 'hello {{cheers}}'".to_string()]);
+        system_plugin_engine.options = indexmap::indexmap! {
+            "shell".to_string() => EngineOption::from("bash".to_string())
+        };
+        assert_eq!(
+            runtime.engine,
+            Some(EngineKind::PluginEngine(system_plugin_engine))
+        );
 
         // po_sender.send(()).unwrap();
     }
@@ -588,8 +596,11 @@ mod tests {
             let flow_actor = manager.flow_actor().unwrap();
             // Send the execute flow message
             cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
-            // call!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
-            let _ = sleep(Duration::from_millis(SLEEP_TIME * 2)).await;
+            let update_actor_ref = manager.actor_refs.as_ref().unwrap().update_actor.clone();
+
+            // update_actor_re
+
+            let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
 
             // Get the flow to ensure it changed in the database
             let _found_flow = shutdown_tx.send(()).await.unwrap();

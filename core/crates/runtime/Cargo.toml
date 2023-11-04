@@ -11,7 +11,7 @@ async-trait = { workspace = true }
 derive_builder = { workspace = true }
 lazy_static = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
 
 indexmap = { version = "2.0.2", features = ["serde"] }

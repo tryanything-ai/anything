@@ -223,7 +223,7 @@ mod tests {
         name = "echo"
 
         [nodes.engine]
-        engine = "bash"
+        engine = "system-shell"
         args = ["echo", "hello world"]
 
         [[nodes]]
@@ -244,7 +244,7 @@ mod tests {
         assert_eq!(
             flow.nodes[0].run_options.engine,
             Some(EngineKind::Internal(SystemShell {
-                interpreter: "bash".to_string(),
+                interpreter: "sh".to_string(),
                 args: vec!["echo".to_string(), "hello world".to_string()],
             }))
         );
