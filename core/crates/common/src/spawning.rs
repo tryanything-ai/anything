@@ -77,3 +77,31 @@ pub async fn join_parallel<T: Send + 'static>(
         .map(Result::unwrap)
         .collect()
 }
+
+pub async fn loop_with_timeout_or_message<M, F>(
+    duration: std::time::Duration,
+    mut rx: tokio::sync::mpsc::Receiver<M>,
+    mut callback: F,
+) -> Result<(), tokio::time::error::Elapsed>
+where
+    F: FnMut(M) -> bool,
+    M: Clone + Sync,
+{
+    tokio::time::timeout(duration, async {
+        loop {
+            tokio::select! {
+                _ = tokio::time::sleep(std::time::Duration::from_millis(500)) => {
+                    // just for heartbeats
+                }
+                Some(message) = rx.recv() => {
+                    if callback(message) {
+                        continue;
+                    } else {
+                        tracing::debug!("Exiting loop");
+                    }
+                }
+            }
+        }
+    })
+    .await
+}

@@ -1,4 +1,4 @@
-use anything_common::AnythingConfig;
+use anything_common::{loop_with_timeout_or_message, AnythingConfig};
 use anything_runtime::Runner;
 use anything_store::FileStore;
 use ractor::{async_trait, cast, Actor, ActorRef};
@@ -77,6 +77,7 @@ impl FlowActor {
                 results_rx,
                 |msg: ProcessorMessage| {
                     tracing::debug!("Got a result: {:#?}", msg);
+                    // Do we want to keep other messages?
                     match msg {
                         ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, task_result) => {
                             tracing::debug!("Got a task result: {:#?}", task_result);
@@ -121,32 +122,4 @@ impl FlowActor {
 
         Ok(())
     }
-}
-
-async fn loop_with_timeout_or_message<M, F>(
-    duration: std::time::Duration,
-    mut rx: tokio::sync::mpsc::Receiver<M>,
-    mut callback: F,
-) -> Result<(), tokio::time::error::Elapsed>
-where
-    F: FnMut(M) -> bool,
-    M: Clone + Sync,
-{
-    tokio::time::timeout(duration, async {
-        loop {
-            tokio::select! {
-                _ = tokio::time::sleep(std::time::Duration::from_millis(500)) => {
-                    // just for heartbeats
-                }
-                Some(message) = rx.recv() => {
-                    if callback(message) {
-                        continue;
-                    } else {
-                        tracing::debug!("Exiting loop");
-                    }
-                }
-            }
-        }
-    })
-    .await
 }

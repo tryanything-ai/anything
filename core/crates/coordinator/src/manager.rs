@@ -409,11 +409,13 @@ mod tests {
 
     use crate::{
         events::{FlowPublisher, NewFlowPublisher, StringPublisher},
+        processing::processor::ProcessorMessage,
         test_helper::add_flow_directory,
     };
     use anything_graph::Flowfile;
     use anything_mq::new_client;
     use anything_runtime::{EngineKind, EngineOption, PluginEngine};
+    use ractor::call;
     use tokio::time::{sleep, timeout};
     const SLEEP_TIME: u64 = 600;
 
@@ -567,7 +569,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_can_trigger_flow_run() {
+    async fn test_can_trigger_simple_flow_run() {
         let config = AnythingConfig::default();
 
         // Channels for management
@@ -596,11 +598,100 @@ mod tests {
             let flow_actor = manager.flow_actor().unwrap();
             // Send the execute flow message
             cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
+            // Give the flow a few milliseconds to execute
+            let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
+
             let update_actor_ref = manager.actor_refs.as_ref().unwrap().update_actor.clone();
+
+            let res = call!(
+                update_actor_ref,
+                UpdateActorMessage::GetLatestProcessorMessages
+            )
+            .unwrap();
+
+            assert_eq!(res.len(), 1);
+            let msg = res.first().unwrap();
+            match msg {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "echo");
+                    assert_eq!(result, "hello world");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
 
             // update_actor_re
 
+            // Get the flow to ensure it changed in the database
+            let _found_flow = shutdown_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(5), server_task).await;
+        assert!(res.is_ok(), "server task did not quit");
+    }
+
+    #[tokio::test]
+    async fn test_can_trigger_flow_run() {
+        let config = AnythingConfig::default();
+
+        // Channels for management
+        let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
+        let (ready_tx, mut ready_rx) = mpsc::channel(1);
+
+        // Start off the manager
+        tokio::spawn(async move {
+            start(config, shutdown_rx, ready_tx).await.unwrap();
+        });
+
+        let manager = ready_rx.recv().await.unwrap();
+
+        // Add a simple flow
+        let file = get_fixtures_directory().join("simple.toml");
+        let test_flow = Flowfile::from_file(file).unwrap();
+        let flow: Flow = test_flow.into();
+        let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
+
+        // the actual test
+        let server_task = tokio::spawn(async move {
+            let flow_actor = manager.flow_actor().unwrap();
+            // Send the execute flow message
+            cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
+            // Give the flow a few milliseconds to execute
             let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
+
+            let update_actor_ref = manager.actor_refs.as_ref().unwrap().update_actor.clone();
+
+            let res = call!(
+                update_actor_ref,
+                UpdateActorMessage::GetLatestProcessorMessages
+            )
+            .unwrap();
+
+            assert_eq!(res.len(), 3);
+            let messages = res.iter().map(|m| m.clone()).collect::<Vec<_>>();
+            match messages.get(0).unwrap() {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "echo-cheer");
+                    assert_eq!(result, "hello Jingle Bells");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+            match messages.get(1).unwrap() {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "say-cheers");
+                    assert_eq!(result, "second Jingle Bells");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+
+            match messages.get(2).unwrap() {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "share");
+                    assert_eq!(result, "cheers Jingle Bells to all");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+
+            // update_actor_re
 
             // Get the flow to ensure it changed in the database
             let _found_flow = shutdown_tx.send(()).await.unwrap();

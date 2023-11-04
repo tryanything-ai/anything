@@ -2,7 +2,7 @@ use std::{num::NonZeroUsize, ops::ControlFlow, sync::Arc};
 
 use anything_common::tracing;
 use anything_graph::{Flow, NodeType, Task};
-use anything_runtime::{ExecutionResult, Scope};
+use anything_runtime::Scope;
 use indexmap::IndexMap;
 use tokio::sync::{mpsc::Sender, Mutex, Semaphore};
 
@@ -86,12 +86,6 @@ impl Processor {
                     None
                 };
 
-                /*
-
-                .map_err(|e| {
-                    CoordinatorError::ProcessorSendError(e.into())
-                })
-                 */
                 // TODO: handle async groups
                 if let NodeType::Task(task) = node {
                     let task_name = task.name.clone();
