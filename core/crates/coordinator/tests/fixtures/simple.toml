@@ -3,7 +3,7 @@ version = "0.1"
 description = "A simple flow that echos holiday cheer"
 
 # Global variables
-variables = { today = "date", cheers = "Jingle Bells" }
+variables = { today = "date" }
 [environment]
 NODE_ENV = "development"
 
@@ -11,7 +11,7 @@ NODE_ENV = "development"
 name = "echo-cheer"
 label = "Holiday cheers"
 depends_on = []
-variables = {}
+variables = { cheers = "Jingle Bells" }
 
 [nodes.engine]
 engine = "bash"
