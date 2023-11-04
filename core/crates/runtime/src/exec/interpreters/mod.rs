@@ -7,10 +7,10 @@ use std::{cell::RefCell, fmt::Display, rc::Rc, str::FromStr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    constants::POSSIBLE_SHELL_NAMES,
     core::config::ExecuteConfig,
     errors::{RuntimeError, RuntimeResult},
     plugins::manager::PluginManager,
+    EngineOption, POSSIBLE_SHELL_NAMES,
 };
 
 use self::{plugin::PluginEngine, system::SystemShell};
@@ -33,25 +33,7 @@ impl Default for EngineKind {
 
 impl From<String> for EngineKind {
     fn from(v: String) -> Self {
-        let mut parts = v.split(|c| c == ' ' || c == '\t');
-        let first_part = parts.next().unwrap_or_default();
-        if POSSIBLE_SHELL_NAMES.contains(&first_part) {
-            // We have an Internal interpreter
-            if let Some(shell) = SystemShell::get_from_string(&v) {
-                EngineKind::Internal(shell)
-            } else {
-                EngineKind::default()
-            }
-        } else if PluginManager::find_plugin_library(first_part).is_ok() {
-            // We have a Plugin interpreter
-            if let Some(interpreter) = PluginEngine::get_from_string(&v) {
-                EngineKind::PluginEngine(interpreter)
-            } else {
-                EngineKind::default()
-            }
-        } else {
-            EngineKind::default()
-        }
+        Self::from_str(&v).unwrap_or_default()
     }
 }
 
@@ -158,19 +140,82 @@ impl FromStr for EngineKind {
     type Err = RuntimeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if POSSIBLE_SHELL_NAMES.contains(&s.to_lowercase().as_str()) {
-            if let Some(shell) = SystemShell::get_from_string(s) {
-                Ok(Self::Internal(shell))
-            } else {
-                Err(RuntimeError::ParseError)
-            }
+        if &s.to_lowercase() == "system-shell" {
+            Ok(Self::default())
         } else {
             if let Some(interpreter) = PluginEngine::get_from_string(s) {
-                Ok(Self::PluginEngine(interpreter))
+                match interpreter.engine.as_str() {
+                    "system-shell" => {
+                        let mut cfg: ExecuteConfig = interpreter.try_into()?;
+                        cfg.plugin_name = "system-shell".to_string();
+                        Ok(Self::Internal(SystemShell::try_from(cfg)?))
+                    }
+                    possible_shell => {
+                        if POSSIBLE_SHELL_NAMES.contains(&possible_shell) {
+                            // If the interpreter is a shell, we need to set the runtime to system-shell
+                            // This is a little hacky, but it allows the user to set the specific shell
+                            // to execute in the system plugin
+                            let mut system_plugin = PluginEngine::get_from_string("system-shell")
+                                .ok_or(RuntimeError::InvalidInterpreter)?;
+                            let value = EngineOption::String(possible_shell.to_string());
+                            system_plugin.options.insert("shell".to_string(), value);
+                            Ok(Self::PluginEngine(system_plugin))
+                        } else if let Some(plugin) = PluginEngine::get_from_string(possible_shell) {
+                            Ok(Self::PluginEngine(plugin))
+                        } else {
+                            Err(RuntimeError::InvalidInterpreter)
+                        }
+                    }
+                }
             } else {
                 // Err(RuntimeError::ParseError)
                 Ok(Self::default())
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_deno_plugin_is_created_when_transforming_from_str() {
+        let engine = EngineKind::from_str("deno").unwrap();
+        assert_eq!(
+            engine,
+            EngineKind::PluginEngine(PluginEngine {
+                engine: "deno".to_string(),
+                args: Some(vec![]),
+                options: indexmap::indexmap! {}
+            })
+        );
+    }
+
+    #[test]
+    fn test_system_plugin_is_created_when_transforming_from_str_with_explicit_shell() {
+        let engine = EngineKind::from_str("bash").unwrap();
+        assert_eq!(
+            engine,
+            EngineKind::PluginEngine(PluginEngine {
+                engine: "system-shell".to_string(),
+                args: Some(vec![]),
+                options: indexmap::indexmap! {
+                    "shell".to_string() => EngineOption::String("bash".to_string())
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_system_shell_is_created_when_explicitly_system_shell() {
+        let engine = EngineKind::from_str("system-shell").unwrap();
+        assert_eq!(
+            engine,
+            EngineKind::Internal(SystemShell {
+                interpreter: "sh".to_string(),
+                args: vec!["-c".to_string()]
+            })
+        );
     }
 }

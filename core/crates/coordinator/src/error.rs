@@ -43,6 +43,9 @@ pub enum CoordinatorError {
 
     #[error("persistence error: {0}")]
     PersistenceError(PersistenceError),
+
+    #[error("actor error: {0}")]
+    ActorNotInitialized(String),
 }
 
 impl<M> From<postage::sink::SendError<M>> for CoordinatorError {

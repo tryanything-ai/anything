@@ -14,7 +14,7 @@ pub struct JsRuntime {
 
 impl Plugin for JsRuntime {
     fn name(&self) -> &'static str {
-        "js"
+        "deno"
     }
 
     fn on_load(&mut self, config: RuntimeConfig) {
@@ -128,7 +128,7 @@ impl ExecutionPlugin for JsRuntime {
 
         let mut runtime = match FunctionRuntime::new(rendered_template.as_str()) {
             Ok(runtime) => runtime,
-            Err(e) => return Err(Box::new(PluginError::AnythingError(e))),
+            Err(e) => return Err(Box::new(e.into())),
         };
 
         let params = serde_json::to_string(&scope.environment).unwrap();
@@ -141,7 +141,7 @@ impl ExecutionPlugin for JsRuntime {
                     status: 0,
                 })
             }
-            Err(e) => return Err(Box::new(PluginError::AnythingError(e))),
+            Err(e) => return Err(Box::new(e.into())),
         }
     }
 }
@@ -177,7 +177,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = runtime.execute(&Scope::default(), &exec_config);
+        let result = runtime.execute(&Scope::default(), &exec_config).unwrap();
         assert_eq!(result.stdout, "{\"success\":true}".to_string());
         assert_eq!(result.stderr, "");
         assert_eq!(result.status, 0);
@@ -198,7 +198,7 @@ mod tests {
             .unwrap();
 
         runtime.on_load(runtime_config);
-        let result = runtime.execute(&Scope::default(), &exec_config);
+        let result = runtime.execute(&Scope::default(), &exec_config).unwrap();
         assert_eq!(result.stdout, "{\"success\":true}".to_string());
         assert_eq!(result.stderr, "");
         assert_eq!(result.status, 0);
@@ -222,7 +222,7 @@ mod tests {
             .unwrap();
 
         runtime.on_load(runtime_config);
-        let result = runtime.execute(&Scope::default(), &exec_config);
+        let result = runtime.execute(&Scope::default(), &exec_config).unwrap();
         assert_eq!(result.stdout, "{\"success\":true}".to_string());
         assert_eq!(result.stderr, "");
         assert_eq!(result.status, 0);
@@ -241,7 +241,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = runtime.execute(&Scope::default(), &exec_config);
+        let result = runtime.execute(&Scope::default(), &exec_config).unwrap();
         assert_eq!(result.stdout, "\"js runtime stdout\"");
         assert_eq!(result.stderr, "");
         assert_eq!(result.status, 0);
@@ -262,7 +262,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = runtime.execute(&Scope::default(), &exec_config);
+        let result = runtime.execute(&Scope::default(), &exec_config).unwrap();
         assert_eq!(result.stdout, "\"js runtime stdout\"");
         assert_eq!(result.stderr, "");
         assert_eq!(result.status, 0);
@@ -287,7 +287,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = runtime.execute(&scope, &exec_config);
+        let result = runtime.execute(&scope, &exec_config).unwrap();
         assert_eq!(result.stdout, "\"js runtime stdout for bobby\"");
         assert_eq!(result.stderr, "");
         assert_eq!(result.status, 0);
@@ -308,10 +308,15 @@ mod tests {
             .unwrap();
 
         let result = runtime.execute(&Scope::default(), &exec_config);
-        assert_eq!(result.stdout, "");
-        assert!(result
-            .stderr
-            .contains("Uncaught SyntaxError: Unexpected token 'return'"));
-        assert_eq!(result.status, 1);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("execution error: Uncaught SyntaxError: Unexpected token 'return'"));
+        // assert_eq!(result.stdout, "");
+        // assert!(result
+        //     .stderr
+        //     .contains("Uncaught SyntaxError: Unexpected token 'return'"));
+        // assert_eq!(result.status, 1);
     }
 }

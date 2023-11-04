@@ -2,6 +2,7 @@ extern crate anything_runtime;
 
 use std::process::Command;
 
+use anything_common::tracing;
 use anything_runtime::prelude::*;
 
 pub const DEFAULT_SHELL: &str = "sh";
@@ -48,6 +49,9 @@ impl ExecutionPlugin for SystemShellPlugin {
             command.current_dir(value);
         }
 
+        // TODO: decide if we always want this or not
+        command.arg("-c");
+
         for (idx, arg) in config.args.clone().into_iter().enumerate() {
             let rendered_arg = match render_string(&format!("arg-{}", idx), &arg, &scope) {
                 Ok(value) => value,
@@ -60,6 +64,9 @@ impl ExecutionPlugin for SystemShellPlugin {
             };
             command.arg(rendered_arg);
         }
+
+        tracing::debug!("system shell config: {:#?}", config);
+        tracing::debug!("system-shell plugin command: {:?}", command);
 
         match command.output() {
             Ok(output) => {
@@ -102,10 +109,10 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = plugin.execute(&scope, &config);
+        let result = plugin.execute(&scope, &config).unwrap();
 
         assert_eq!(result.status, 0);
-        assert_eq!(result.stdout, "hello\n");
+        assert_eq!(result.stdout, "hello");
         assert_eq!(result.stderr, "");
     }
 
@@ -119,10 +126,10 @@ mod tests {
         let mut scope = Scope::default();
         let _ = scope.insert_binding("name", "bobby", None);
 
-        let result = plugin.execute(&scope, &config);
+        let result = plugin.execute(&scope, &config).unwrap();
 
         assert_eq!(result.status, 0);
-        assert_eq!(result.stdout, "bobby\n");
+        assert_eq!(result.stdout, "bobby");
         assert_eq!(result.stderr, "");
     }
 
@@ -135,10 +142,10 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = plugin.execute(&scope, &config);
+        let result = plugin.execute(&scope, &config).unwrap();
 
         assert_eq!(result.status, 127);
-        assert_eq!(result.stderr, "sh: echos: command not found\n");
+        assert_eq!(result.stderr, "sh: echos: command not found");
         assert_eq!(result.stdout, "");
     }
 }

@@ -178,14 +178,22 @@ impl Runner {
             .try_lock()
             .map_err(|_| RuntimeError::RuntimeError)?;
 
-        // TODO: Load plugins
-        unsafe {
-            plugin_registry
-                .load_plugin(name, path, config)
-                .map_err(|e| {
-                    debug!("Error loading plugin: {}", e);
-                    RuntimeError::RuntimeError
-                })?
+        match plugin_registry.get_plugin(name) {
+            Ok(_) => {
+                debug!("Plugin {} already loaded", name);
+                return Ok(());
+            }
+            Err(_) => {
+                debug!("Plugin {} not loaded", name);
+                unsafe {
+                    plugin_registry
+                        .load_plugin(name, path, config)
+                        .map_err(|e| {
+                            debug!("Error loading plugin: {}", e);
+                            RuntimeError::RuntimeError
+                        })?
+                }
+            }
         }
 
         debug!("Loaded all plugins");

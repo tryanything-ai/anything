@@ -105,9 +105,13 @@ impl From<Flowfile> for Flow {
         flow.description = value
             .description
             .unwrap_or_else(|| "no description".to_string());
-        flow.nodes = value.nodes;
         flow.variables = value.variables;
         flow.environment = value.environment;
+        flow.trigger = value.trigger;
+
+        for node in value.nodes {
+            flow.add_node(node).unwrap();
+        }
 
         flow
     }

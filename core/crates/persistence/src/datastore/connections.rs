@@ -18,7 +18,6 @@ pub async fn create_sqlite_pool_from_config_and_file_store(
         None => {
             let database_dir = file_store.create_directory(&["database"]).unwrap();
             // let database_dir = &anything_config.runtime_config().database_dir();
-            println!("database_idr: {:?}", database_dir);
             let db_file = database_dir.join("anything.db");
             tracing::debug!("Using database file: {:?}", db_file);
             SqliteConnectOptions::new()

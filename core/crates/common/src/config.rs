@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use anything_runtime::RuntimeConfig;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
@@ -11,9 +13,16 @@ pub struct DatabaseConfig {
 
 #[derive(Debug, Clone, Default, Builder, Serialize, Deserialize, PartialEq)]
 #[builder(setter(into, strip_option), default)]
+pub struct ExecutionConfig {
+    pub max_parallelism: Option<NonZeroUsize>,
+}
+
+#[derive(Debug, Clone, Default, Builder, Serialize, Deserialize, PartialEq)]
+#[builder(setter(into, strip_option), default)]
 pub struct AnythingConfig {
     runtime_config: RuntimeConfig,
     database: DatabaseConfig,
+    execution: ExecutionConfig,
 }
 
 impl AnythingConfig {
@@ -21,6 +30,7 @@ impl AnythingConfig {
         Self {
             runtime_config,
             database: DatabaseConfig::default(),
+            execution: ExecutionConfig::default(),
         }
     }
 
@@ -34,5 +44,9 @@ impl AnythingConfig {
 
     pub fn database_config(&self) -> &DatabaseConfig {
         &self.database
+    }
+
+    pub fn execution_config(&self) -> &ExecutionConfig {
+        &self.execution
     }
 }

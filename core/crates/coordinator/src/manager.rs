@@ -15,8 +15,11 @@ use tokio::sync::{
     Mutex,
 };
 
+use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
+use crate::actors::update_actor::{UpdateActor, UpdateActorState};
 use crate::error::CoordinatorResult;
+use crate::processing::processor::Processor;
 use crate::CoordinatorError;
 
 #[derive(Debug, Clone)]
@@ -27,12 +30,19 @@ pub struct Repositories {
 }
 
 #[derive(Debug, Clone)]
+pub struct ActorRefs {
+    pub system_actor: ActorRef<SystemMessage>,
+    pub flow_actor: ActorRef<FlowMessage>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Manager {
     pub file_store: FileStore,
     pub config: AnythingConfig,
-    pub executor: Option<Runner>,
+    pub runner: Runner,
     // pub shutdown_sender: Sender<()>,
     pub repositories: Option<Repositories>,
+    pub actor_refs: Option<ActorRefs>,
 }
 
 impl Default for Manager {
@@ -60,7 +70,7 @@ pub async fn start(
 impl Manager {
     pub fn new(config: AnythingConfig) -> Self {
         let mut runtime_config = config.runtime_config().clone();
-        let executor = Runner::new(runtime_config.clone());
+        let runner = Runner::new(runtime_config.clone());
 
         let root_dir = match runtime_config.base_dir {
             Some(v) => v.clone(),
@@ -78,9 +88,10 @@ impl Manager {
 
         Manager {
             file_store,
+            runner,
             config: config.clone(),
-            executor: Some(executor),
             repositories: None,
+            actor_refs: None,
         }
     }
 
@@ -110,8 +121,8 @@ impl Manager {
         });
 
         // startup the actors
-        let (actor, _handle) = Actor::spawn(
-            Some("system-actor".to_string()),
+        let (system_actor, _handle) = Actor::spawn(
+            None,
             SystemActor,
             SystemActorState {
                 file_store: self.file_store.clone(),
@@ -120,7 +131,39 @@ impl Manager {
         )
         .await
         .unwrap();
-        self.setup_file_handler(actor).await;
+
+        let (update_actor, _handle) = Actor::spawn(
+            None,
+            UpdateActor,
+            UpdateActorState {
+                config: self.config.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let (flow_actor, _handle) = Actor::spawn(
+            None,
+            FlowActor,
+            FlowActorState {
+                file_store: self.file_store.clone(),
+                runner: self.runner.clone(),
+                config: self.config.clone(),
+                update_actor_ref: update_actor.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        self.actor_refs = Some(ActorRefs {
+            system_actor,
+            flow_actor,
+        });
+
+        // Setup listeners and action-takers
+        self.setup_file_handler().await;
+
+        // Return with ready
         ready_tx.send(Arc::new(self.clone())).await.unwrap();
 
         // never quit
@@ -304,12 +347,35 @@ impl Manager {
         }
     }
 
+    pub fn system_actor(&self) -> CoordinatorResult<ActorRef<SystemMessage>> {
+        self.actor_refs
+            .as_ref()
+            .ok_or(CoordinatorError::ActorNotInitialized(String::from(
+                "system_actor",
+            )))
+            .map(|refs| refs.system_actor.clone())
+    }
+
+    /// The function `flow_actor` returns a reference to the flow actor.
+    ///
+    /// Example:
+    ///
+    /// manager.flow_actor().execute_flow(flow_name)
+    pub fn flow_actor(&self) -> CoordinatorResult<ActorRef<FlowMessage>> {
+        self.actor_refs
+            .as_ref()
+            .ok_or(CoordinatorError::ActorNotInitialized(String::from(
+                "flow_actor",
+            )))
+            .map(|refs| refs.flow_actor.clone())
+    }
+
     /*
     INTERNAL FUNCTIONS
      */
 
     // Internal
-    async fn setup_file_handler(&mut self, actor: ActorRef<SystemMessage>) {
+    async fn setup_file_handler(&mut self) {
         let (tx, mut rx) = tokio::sync::mpsc::channel(4096);
         let file_store = Arc::new(Mutex::new(self.file_store.clone()));
 
@@ -318,6 +384,8 @@ impl Manager {
             let mut fs = file_store.try_lock().expect("should be unlockable");
             fs.notify_changes(tx.clone()).await.unwrap();
         });
+
+        let actor = self.actor_refs.as_ref().unwrap().system_actor.clone();
 
         // Send changes to the coordinator
         let _t2 = tokio::spawn(async move {
@@ -455,7 +523,7 @@ mod tests {
         let runtime = first_node.run_options.clone();
 
         let mut deno_engine = PluginEngine::default();
-        deno_engine.engine = "system-shell".to_string();
+        deno_engine.engine = "bash".to_string();
         deno_engine.args = Some(vec!["echo 'hello {{cheers}}'".to_string()]);
         assert_eq!(runtime.engine, Some(EngineKind::PluginEngine(deno_engine)));
 
@@ -490,30 +558,46 @@ mod tests {
         assert!(res.is_ok(), "server task did not quit");
     }
 
-    // #[tokio::test]
-    // #[ignore]
-    // async fn test_process_flow_can_fetch_loaded_flow() {
-    //     let config = get_unique_config();
+    #[tokio::test]
+    async fn test_can_trigger_flow_run() {
+        let config = AnythingConfig::default();
 
-    //     let (stop_tx, stop_rx) = mpsc::channel(1);
-    //     let (ready_tx, mut ready_rx) = mpsc::channel(1);
+        // Channels for management
+        let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
+        let (ready_tx, mut ready_rx) = mpsc::channel(1);
 
-    //     let _listener_task = tokio::spawn(async move {
-    //         start(config.clone(), stop_rx, ready_tx).await.unwrap();
-    //     });
+        // Start off the manager
+        tokio::spawn(async move {
+            start(config, shutdown_rx, ready_tx).await.unwrap();
+        });
 
-    //     let manager = ready_rx.recv().await.unwrap();
-    //     let rpath = manager.file_store.store_path(&["flows"]);
+        let manager = ready_rx.recv().await.unwrap();
 
-    //     add_flow_directory(rpath.clone(), "some-simple-flow");
-    //     sleep(Duration::from_millis(SLEEP_TIME)).await;
-    //     let flow = manager.get_flow("some-simple-flow").await.unwrap();
-    //     assert_eq!(flow.name, "some-simple-flow");
+        // Add a simple flow
+        let rpath = manager.file_store.store_path(&["flows"]);
+        add_flow_directory(rpath.clone(), "some-simple-flow");
+        let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
 
-    //     manager.file_store.cleanup_base_dir().unwrap();
+        // the actual test
+        let server_task = tokio::spawn(async move {
+            let flow = manager
+                .get_flow("some-simple-flow".to_string())
+                .await
+                .unwrap();
 
-    //     stop_tx.send(()).await.unwrap();
-    // }
+            let flow_actor = manager.flow_actor().unwrap();
+            // Send the execute flow message
+            cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
+            // call!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
+            let _ = sleep(Duration::from_millis(SLEEP_TIME * 2)).await;
+
+            // Get the flow to ensure it changed in the database
+            let _found_flow = shutdown_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(5), server_task).await;
+        assert!(res.is_ok(), "server task did not quit");
+    }
 
     #[allow(unused)]
     fn get_fixtures_directory() -> PathBuf {

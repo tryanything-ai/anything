@@ -12,6 +12,7 @@ members = ["plugins/*"]
 
 [workspace.dependencies]
 anything-runtime = { version = "0.1.0", path = "../runtime" }
+anything-common = { path = "../common" }
 
 [profile.dev]
 opt-level = 0

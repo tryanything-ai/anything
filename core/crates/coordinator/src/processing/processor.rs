@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use anything_common::tracing;
 use anything_graph::{Flow, NodeType, Task};
 use anything_runtime::Scope;
 use indexmap::IndexMap;
@@ -40,7 +41,6 @@ impl Processor {
         max_parallelism: Option<NonZeroUsize>,
     ) -> CoordinatorResult<()> {
         // Attach flow details
-
         let semaphore = max_parallelism.map(|max| Arc::new(Semaphore::new(max.get())));
 
         let graph = self
@@ -84,12 +84,15 @@ impl Processor {
 
                     match res {
                         Ok(task_result) => {
+                            println!("Got task result: {:?}", task_result);
                             results_tx
                                 .send((task.name.clone(), task_result.clone()))
                                 .await
                                 .expect("must send result");
                         }
                         Err(e) => {
+                            tracing::error!("error: {:#?}", e);
+                            println!("Got error running: {:#?}", e);
                             return ControlFlow::Break::<(Arc<Task>, CoordinatorError)>((task, e));
                         }
                     }
@@ -116,6 +119,7 @@ impl Processor {
                 Sequence::Middle
             };
         }
+
         if empty_errors {
             Ok(())
         } else {

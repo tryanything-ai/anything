@@ -166,6 +166,7 @@ pub async fn run_task(
         .expect("unable to derive execution config");
 
     let engine = task.run_options.engine.as_ref().unwrap();
+    println!("Engine in run_task: {:?}", engine);
     let plugin_name = if let EngineKind::PluginEngine(PluginEngine { engine, .. }) = engine {
         engine.clone()
     } else {

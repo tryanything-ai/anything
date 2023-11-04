@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::hash::Hash;
 
+use anything_common::tracing;
 use anything_runtime::prelude::*;
 use anything_runtime::string_or_struct;
 use derive_builder::Builder;
@@ -112,6 +113,25 @@ impl Default for Task {
     }
 }
 
+impl Into<ExecuteConfig> for Task {
+    fn into(self) -> ExecuteConfig {
+        let execute_config: ExecuteConfig = match self
+            .run_options
+            .engine
+            .unwrap_or(EngineKind::default())
+            .try_into()
+        {
+            Ok(config) => config,
+            Err(e) => {
+                tracing::error!("error converting node to execute config: {}", e);
+                ExecuteConfig::default()
+            }
+        };
+
+        execute_config
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,6 +201,32 @@ mod tests {
         options = { bob = "barky" }
         "#;
         let node: Task = toml::from_str(raw_toml).unwrap();
+        assert_eq!(
+            node.run_options.engine.unwrap(),
+            EngineKind::PluginEngine(PluginEngine {
+                engine: "deno".to_string(),
+                args: Some(vec!["index.js".to_string()]),
+                options: indexmap::indexmap! {
+                    "bob".to_string() => EngineOption::from("barky".to_string())
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn test_loads_correctly_for_bash_task() {
+        let raw_toml = format!(
+            r#"
+        name = "echo"
+    
+        [engine]
+        engine = "system-shell"
+        args = ["echo", "hello world"]
+    
+        "#,
+        );
+        let node: Task = toml::from_str(&raw_toml).unwrap();
+        println!("node: {:#?}", node);
         assert_eq!(
             node.run_options.engine.unwrap(),
             EngineKind::PluginEngine(PluginEngine {
