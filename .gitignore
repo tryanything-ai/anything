@@ -23,6 +23,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+
 # local env files
 **/*.env
 **/*.env.local
@@ -35,5 +36,26 @@ yarn-error.log*
 
 # ui
 dist/
+
 core/target
 core/crate/*/target
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.next
+**/.env
+.sentryclirc
