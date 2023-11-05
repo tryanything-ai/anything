@@ -1,10 +1,23 @@
 import { invoke } from "@tauri-apps/api/tauri";
+import { Anything } from '../../../../core/crates/tauri-plugin-anything-tauri/webview-src/index'
 
 import { EventInput } from "./types";
 
+const anything = new Anything("anything");
+
 export const getFlows = async () => {
-  console.log("Invoking Get FLows");
-  return await invoke("get_flows");
+  return await anything.getFlows();
+};
+
+export const createFlow = async ({
+  flowName,
+  flowId,
+}: {
+  flowName: string;
+  flowId: string;
+}) => {
+  console.log(`Called createFlow with ${flowId}, ${flowName}`)
+  return await anything.createFlow(flowName, flowId);
 };
 
 export const getChatFlows = async () => {
@@ -45,15 +58,6 @@ export const getFlowNode = async ({
   return await invoke("get_flow_node", { flow_id, node_id });
 };
 
-export const createFlow = async ({
-  flow_name,
-  flow_id,
-}: {
-  flow_name: string;
-  flow_id: string;
-}) => {
-  return await invoke("create_flow", { flow_name, flow_id });
-};
 
 //TODO: probs bad need to pick this somewhere
 export const saveToml = async ({
