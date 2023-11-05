@@ -1,7 +1,7 @@
 syntax = "proto3";
 package events;
 
-service Events {
+service EventsService {
     // Send an event
     rpc TriggerEvent(TriggerEventRequest) returns (TriggerEventResponse);
 
@@ -15,24 +15,33 @@ service Events {
     // rpc SubscribeFlow(SubscribeFlowRequest) returns (stream SubscribeFlowResponse);
 }
 
+
 message Event {
-    string event_id = 1;
+    string id = 1;
     // Source of the event
-    string source_id = 2;
-    // Event payload
-    string payload = 3;
-    // Event name, like files/changed
-    string name = 4;
-    // repeated string tags = 4;
-    optional string metadata = 5;
+    oneof source {
+        string flow_id = 2;
+        string trigger_id = 3;
+    };
+    string context = 4;
+    string name = 5;
+    optional int64 started_at = 6;
+    optional int64 ended_at = 7;
+}
+
+message CreateEvent {
+    string event_name = 1;
+    string payload = 2;
+    optional string metadata = 3;
+    string trigger_id = 4;
 }
 
 message TriggerEventRequest {
-    Event event = 1;
+    CreateEvent event = 1;
 }
 message TriggerEventResponse {
     string status = 1;
-    string event_id = 2;
+    string trigger_id = 2;
 }
 
 message GetEventRequest {

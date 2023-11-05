@@ -4,11 +4,11 @@
 
 ### Drag it and drop it
 
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_dnd_sept_11.gif)
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_dnd_sept_11.gif)
 
 ### Make Anything happen
 
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/anything_sept_11.gif)
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_sept_11.gif)
 
 ### 🌟 Welcome to Anything - the future of local automation!
 
@@ -33,7 +33,7 @@ Anything will be the first tool you go to grab when your dreaming of putting AI 
 
 ### Where we're going
 
-![Agent Library](https://raw.githubusercontent.com/tryanything-ai/anything/main/docs/agent_library.png)
+![Agent Library](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/agent_library.png)
 
 ### 🤝 Contribute
 
@@ -47,23 +47,33 @@ Check out our [contributors guide](https://github.com/tryanything-ai/anything/tr
 
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
-cd tauri
-pnpm i
-pnpm start
+pnpm quick
 ```
+
+### 💻 Developing
+```bash
+pnpm dev
+```
+-> runs all shared packages in watch mode. 
+-> runs tauri && website && docs (soon)
+
+For a lighter weight experience just run dev on the app you are working on in /apps and remember to build or dev the packages it consumes if your working on them
+
+Repo structure based on turborepo tailwind template
+-> https://github.com/vercel/turbo/tree/main/examples/with-tailwind
 
 ### Flows are defined as TOML Files
 
 - All flows are just files
 - Inspired by NextJS routing a flow just lives at ~/Documents/Flows/{Flow Name} in your computer
 
-[Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/docs/examples)
+[Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/assets/examples)
 
 ### 🤖 Roadmap
 
 - [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
 - [x] Embeded Sqlite DB
-- [ ] Event System ( 90$ WIP )
+- [ ] Event System ( 90% WIP )
 - [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
 - [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models
 - [ ] WASM Nodes or

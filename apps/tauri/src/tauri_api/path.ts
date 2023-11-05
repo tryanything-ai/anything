@@ -1,0 +1,1 @@
+export { documentDir, downloadDir } from "@tauri-apps/api/path";

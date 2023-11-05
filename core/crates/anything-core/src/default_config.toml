@@ -1,6 +1,6 @@
 run_mode = "development"
 root_dir = "/tmp/anything"
-log = "warn,eventurous=info"
+log = "warn,anything=info"
 
 [database]
 uri = "sqlite"

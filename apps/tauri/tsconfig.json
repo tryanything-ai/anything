@@ -1,0 +1,14 @@
+{
+  "extends": "tsconfig/tauri.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "allowUnreachableCode": false, 
+    "strictNullChecks": false
+  },
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

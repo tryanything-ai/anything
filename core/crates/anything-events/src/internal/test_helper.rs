@@ -6,12 +6,15 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 
+use crate::models::flow::{CreateFlow, FlowId, FlowVersionId};
 use crate::models::system_handler;
-use crate::Server;
+use crate::models::trigger::CreateTrigger;
+use crate::repositories::flow_repo::{self, FlowRepoImpl};
+use crate::repositories::trigger_repo::TriggerRepoImpl;
 use crate::{
     config::AnythingEventsConfig,
     context::Context,
-    errors::{DatabaseError, EventsError, EventsResult},
+    errors::{EventsError, EventsResult},
     models::{
         event::{CreateEvent, Event, EventId, SourceId},
         tag::Tag,
@@ -19,6 +22,7 @@ use crate::{
     post_office::PostOffice,
     repositories::{self, event_repo::EventRepoImpl, Repositories},
 };
+use crate::{CreateFlowVersion, Flow, FlowVersion, Server, Trigger};
 use chrono::Utc;
 use fake::Fake;
 use postage::{
@@ -31,23 +35,28 @@ use std::{borrow::BorrowMut, collections::HashMap, panic, sync::Arc};
 
 pub fn get_test_config() -> AnythingEventsConfig {
     let mut config = AnythingEventsConfig::default();
-    config.database.uri = "sqlite::memory:".to_string();
+    config.database.uri = Some("sqlite::memory:".to_string());
+    config.server.port = 0;
+    config.run_mode = "test".to_string();
     config
 }
 
 pub async fn get_test_context() -> Context {
     let config = get_test_config();
-    let pool = get_test_pool().await.unwrap();
+    let pool = get_test_pool().await.expect("unable to get test pool");
     let event_repo = TestEventRepo::new_with_pool(&pool);
+    let flow_repo = TestFlowRepo::new_with_pool(&pool);
+    let trigger_repo = TestTriggerRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
+        flow_repo: flow_repo.flow_repo,
+        trigger_repo: trigger_repo.trigger_repo,
     });
-    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
-        system_handler,
+        post_office: Arc::new(PostOffice::open()),
     }
 }
 
@@ -55,15 +64,18 @@ pub async fn get_test_context_with_config(config: AnythingEventsConfig) -> Conte
     // let config = get_test_config();
     let pool = get_test_pool().await.unwrap();
     let event_repo = TestEventRepo::new_with_pool(&pool);
+    let flow_repo = TestFlowRepo::new_with_pool(&pool);
+    let trigger_repo = TestTriggerRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
+        flow_repo: flow_repo.flow_repo,
+        trigger_repo: trigger_repo.trigger_repo,
     });
-    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
-        system_handler,
+        post_office: Arc::new(PostOffice::open()),
     }
 }
 
@@ -71,15 +83,18 @@ pub async fn get_test_context_from_pool(pool: &SqlitePool) -> Context {
     let config = get_test_config();
     // let pool = Arc::new(get_test_pool().await.unwrap());
     let event_repo = TestEventRepo::new_with_pool(pool);
+    let flow_repo = TestFlowRepo::new_with_pool(&pool);
+    let trigger_repo = TestTriggerRepo::new_with_pool(&pool);
     let repositories = Arc::new(Repositories {
         event_repo: event_repo.event_repo,
+        flow_repo: flow_repo.flow_repo,
+        trigger_repo: trigger_repo.trigger_repo,
     });
-    let system_handler = Arc::new(system_handler::SystemHandler::new(config.clone()));
     Context {
         pool: Arc::new(pool.clone()),
         config,
         repositories,
-        system_handler,
+        post_office: Arc::new(PostOffice::open()),
     }
 }
 
@@ -88,14 +103,12 @@ pub async fn get_test_pool() -> EventsResult<Pool<sqlx::Sqlite>> {
         .max_connections(1)
         .connect("sqlite::memory:")
         .await
-        .map_err(|e| {
-            EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-        })?;
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await
-        .map_err(|e| EventsError::DatabaseError(DatabaseError::DBError(Box::new(e))))?;
+        .map_err(|e| EventsError::MigrationError(e))?;
 
     Ok(pool)
 }
@@ -109,25 +122,32 @@ pub async fn get_test_server() -> EventsResult<Arc<Server>> {
 pub async fn select_all_events(pool: &SqlitePool) -> EventsResult<Vec<Event>> {
     let query = sqlx::query_as::<_, Event>(r#"SELECT * FROM events"#);
 
-    let result = query.fetch_all(pool).await.map_err(|e| {
-        EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e)))
-    })?;
+    let result = query
+        .fetch_all(pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
 
     Ok(result)
 }
 
 pub async fn insert_new_event(pool: &SqlitePool, event: Event) -> EventsResult<i64> {
     let res = sqlx::query(
-        r#"INSERT INTO events (source_id, event_name, payload, metadata) VALUES (?, ?, ?, ?)"#,
+        r#"
+        INSERT INTO events (flow_id, trigger_id, name, context, started_at, ended_at)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            RETURNING id
+        "#,
     )
-    .bind(event.source_id)
-    .bind(event.event_name)
-    .bind(event.payload)
-    .bind(event.metadata)
+    .bind(event.flow_id)
+    .bind(event.trigger_id)
+    .bind(event.name)
+    .bind(event.context)
+    .bind(event.started_at)
+    .bind(event.ended_at)
     // .bind(event.tags)
     .execute(pool)
     .await
-    .map_err(|e| EventsError::DatabaseError(crate::errors::DatabaseError::DBError(Box::new(e))))?;
+    .map_err(|e| EventsError::DatabaseError(e))?;
 
     Ok(res.last_insert_rowid())
 }
@@ -160,19 +180,19 @@ pub async fn insert_dummy_data(pool: &SqlitePool) -> EventsResult<EventId> {
     //     .collect::<Vec<Tag>>();
 
     let fake_event = Event {
-        id: i64::default(),
-        event_id: uuid::Uuid::new_v4().to_string(),
-        source_id: String::default(),
-        event_name: fake::faker::name::en::Name().fake(),
+        id: uuid::Uuid::new_v4().to_string(),
+        flow_id: Some(uuid::Uuid::new_v4().to_string()),
+        trigger_id: Some(String::default()),
+        name: fake::faker::name::en::Name().fake(),
         // tags: TagList::default(),
-        payload: Value::default(),
-        metadata: Value::default(),
-        timestamp: Utc::now(),
+        context: Value::default(),
+        started_at: Some(Utc::now()),
+        ended_at: Some(Utc::now()),
     };
 
     let _res = insert_new_event(pool, fake_event.clone()).await?;
 
-    Ok(fake_event.event_id)
+    Ok(fake_event.id)
 }
 
 fn generate_dummy_hashmap() -> HashMap<String, String> {
@@ -184,6 +204,230 @@ fn generate_dummy_hashmap() -> HashMap<String, String> {
         payload.insert(key, value);
     }
     payload
+}
+
+#[derive(Debug)]
+pub struct TestFlowRepo {
+    pub pool: SqlitePool,
+    pub flow_repo: FlowRepoImpl,
+    pub post_office: PostOffice,
+}
+
+impl TestFlowRepo {
+    pub async fn new() -> Self {
+        let pool = get_test_pool().await.expect("unable to get test pool");
+        Self::new_with_pool(&pool)
+    }
+
+    pub fn new_with_pool(pool: &SqlitePool) -> Self {
+        let flow_repo = FlowRepoImpl::new(&pool);
+        Self {
+            pool: pool.clone(),
+            flow_repo,
+            post_office: PostOffice::open(),
+        }
+    }
+
+    pub async fn with_sender(&self) -> Sender<Flow> {
+        self.post_office.post_mail().await.unwrap()
+    }
+
+    pub async fn with_receiver(&self) -> Receiver<Flow> {
+        self.post_office.receive_mail().await.unwrap()
+    }
+
+    pub fn dummy_create_flow(&self) -> CreateFlow {
+        CreateFlow {
+            flow_name: fake::faker::name::en::Name().fake(),
+            version: Some("0.0.1".to_string()),
+            active: Some(false),
+        }
+    }
+
+    pub fn dummy_create_flow_version(&self, flow_id: String) -> CreateFlowVersion {
+        CreateFlowVersion {
+            flow_id,
+            flow_definition: "{}".to_string(),
+            published: Some(false),
+            version: Some("0.0.1".to_string()),
+            description: Some("test".to_string()),
+        }
+    }
+
+    pub async fn insert_create_flow(
+        &self,
+        create_flow: CreateFlow,
+    ) -> EventsResult<(FlowId, FlowVersionId)> {
+        let flow_id = uuid::Uuid::new_v4().to_string();
+        let version_id = uuid::Uuid::new_v4().to_string();
+        let row = sqlx::query(
+            r#"
+        INSERT INTO flows (flow_id, flow_name, active, latest_version_id, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+        RETURNING flow_id
+        "#,
+        )
+        .bind(flow_id.clone())
+        .bind(create_flow.flow_name)
+        .bind(create_flow.active)
+        .bind(version_id.clone())
+        .bind(Utc::now().timestamp())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        let flow_id = row.get(0);
+
+        Ok((flow_id, version_id))
+    }
+
+    pub async fn get_flow_by_id(&self, flow_id: String) -> EventsResult<Flow> {
+        let flow = sqlx::query_as::<_, Flow>("SELECT * FROM flows WHERE flow_id = ?1")
+            .bind(flow_id.clone())
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(flow)
+    }
+
+    pub async fn insert_create_flow_version(
+        &self,
+        flow_id: String,
+        version_id: String,
+        create_flow: CreateFlowVersion,
+    ) -> EventsResult<FlowVersionId> {
+        // Create flow version
+        let row = sqlx::query(
+            r#"
+        INSERT INTO flow_versions (version_id, flow_id, flow_version, description, flow_definition, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        RETURNING version_id
+            "#,
+        )
+        .bind(version_id.clone())
+        .bind(flow_id.clone())
+        .bind(create_flow.version)
+        .bind(create_flow.description)
+        .bind("{}")
+        .bind(Utc::now().timestamp())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            EventsError::DatabaseError(e)
+        })?;
+
+        Ok(row.get("version_id"))
+    }
+
+    pub async fn find_flow_by_id(&self, flow_id: String) -> EventsResult<Flow> {
+        let flow = sqlx::query_as::<_, Flow>(r#"SELECT * FROM flows WHERE flow_id = ?1"#)
+            .bind(flow_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| EventsError::DatabaseError(e));
+
+        flow
+    }
+
+    pub async fn get_flow_versions(&self, flow_id: String) -> EventsResult<Vec<FlowVersion>> {
+        let flow_versions = sqlx::query_as::<_, FlowVersion>(
+            r#"
+        SELECT * FROM flow_versions WHERE flow_id = ?1
+        "#,
+        )
+        .bind(flow_id.clone())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(flow_versions)
+    }
+}
+
+#[derive(Debug)]
+pub struct TestTriggerRepo {
+    pub pool: SqlitePool,
+    pub trigger_repo: TriggerRepoImpl,
+    pub post_office: PostOffice,
+}
+
+impl TestTriggerRepo {
+    pub async fn new() -> Self {
+        let pool = get_test_pool().await.expect("unable to get test pool");
+        Self::new_with_pool(&pool)
+    }
+
+    pub fn new_with_pool(pool: &SqlitePool) -> Self {
+        let trigger_repo = TriggerRepoImpl::new(&pool);
+        Self {
+            pool: pool.clone(),
+            trigger_repo,
+            post_office: PostOffice::open(),
+        }
+    }
+
+    pub async fn with_sender(&self) -> Sender<Trigger> {
+        self.post_office.post_mail().await.unwrap()
+    }
+
+    pub async fn with_receiver(&self) -> Receiver<Trigger> {
+        self.post_office.receive_mail().await.unwrap()
+    }
+
+    pub fn dummy_create_trigger(&self) -> CreateTrigger {
+        CreateTrigger {
+            event_name: fake::faker::name::en::Name().fake(),
+            payload: Value::default(),
+            metadata: None,
+            trigger_id: uuid::Uuid::new_v4().to_string(),
+        }
+    }
+
+    pub async fn insert_create_trigger(
+        &self,
+        create_trigger: CreateTrigger,
+    ) -> EventsResult<FlowVersionId> {
+        // Create flow version
+        let row = sqlx::query(
+            r#"
+        INSERT INTO triggers (trigger_id, event_name, payload, metadata, timestamp)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+        RETURNING trigger_id
+        "#,
+        )
+        .bind(uuid::Uuid::new_v4().to_string())
+        .bind(create_trigger.event_name)
+        .bind(create_trigger.payload)
+        .bind(create_trigger.metadata)
+        .bind(Utc::now())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+        Ok(row.get("trigger_id"))
+    }
+
+    pub async fn get_all_triggers(&self) -> EventsResult<Vec<Trigger>> {
+        let triggers = sqlx::query_as::<_, Trigger>(r#"SELECT * FROM triggers"#)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(triggers)
+    }
+
+    pub async fn select_trigger_by_id(&self, trigger_id: String) -> EventsResult<Trigger> {
+        let trigger = sqlx::query_as::<_, Trigger>(
+            r#"
+            SELECT * FROM triggers WHERE trigger_id = ?1
+        "#,
+        )
+        .bind(trigger_id.clone())
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EventsError::DatabaseError(e))?;
+
+        Ok(trigger)
+    }
 }
 
 #[derive(Debug)]
@@ -216,58 +460,53 @@ impl TestEventRepo {
         self.post_office.receive_mail().await.unwrap()
     }
 
-    // pub async fn new_from_context(context: Context) -> Self {
-    //     let pool = (&*context.pool).clone();
-    //     let event_repo = EventRepoImpl::new(&pool);
-    //     let context = get_test_context().await;
-    //     Self {
-    //         pool,
-    //         event_repo,
-    //         context,
-    //     }
-    // }
-
     pub fn dummy_create_event(&self) -> CreateEvent {
         CreateEvent {
-            event_id: uuid::Uuid::new_v4().to_string(),
-            source_id: uuid::Uuid::new_v4().to_string(),
-            event_name: fake::faker::name::en::Name().fake(),
-            payload: Value::default(),
-            metadata: Value::default(),
+            name: fake::faker::name::en::Name().fake(),
+            flow_id: Some(uuid::Uuid::new_v4().to_string()),
+            trigger_id: Some(uuid::Uuid::new_v4().to_string()),
+            context: Value::default(),
+            started_at: Some(Utc::now()),
+            ended_at: Some(Utc::now()),
         }
     }
 
-    pub async fn insert_dummy_event(&self) -> EventsResult<Event> {
-        let mut event = Event {
-            id: i64::default(),
-            event_id: uuid::Uuid::new_v4().to_string(),
-            event_name: fake::faker::name::en::Name().fake(),
-            source_id: String::default(),
-            payload: Value::default(),
-            metadata: Value::default(),
-            timestamp: Utc::now(),
+    pub async fn insert_dummy_event(&self, event: CreateEvent) -> EventsResult<Event> {
+        let event = Event {
+            id: uuid::Uuid::new_v4().to_string(),
+            name: event.name.clone(),
+            flow_id: event.flow_id.clone(),
+            trigger_id: event.trigger_id.clone(),
+            context: event.context.clone(),
+            started_at: event.started_at.clone(),
+            ended_at: event.ended_at.clone(),
         };
 
-        let res = sqlx::query(
-            r#"INSERT INTO events 
-            (event_id, source_id, event_name, payload, metadata)
-            VALUES (?1, ?2, ?3, ?4, ?5)
-            RETURNING id"#,
+        let mut cloned_event = event.clone();
+
+        let row = sqlx::query(
+            r#"
+            INSERT INTO events (id, flow_id, trigger_id, name, context, started_at, ended_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            RETURNING id
+            "#,
         )
-        .bind(&event.event_id)
-        .bind(&event.source_id)
-        .bind(&event.event_name)
-        .bind(&event.payload)
-        .bind(&event.metadata)
+        .bind(event.id)
+        .bind(event.flow_id)
+        .bind(event.trigger_id)
+        .bind(event.name)
+        .bind(event.context)
+        .bind(event.started_at)
+        .bind(event.ended_at)
         // .bind(event.tags)
         .fetch_one(&self.pool)
         .await
         .expect("unable to insert dummy data");
 
-        let id = res.get("id");
-        event.id = id;
+        let id = row.get("id");
+        cloned_event.id = id;
 
-        Ok(event)
+        Ok(cloned_event)
     }
 }
 
@@ -292,10 +531,11 @@ pub fn get_fixtures_dir() -> PathBuf {
     d
 }
 
-pub fn setup_test_directory() -> EventsResult<AnythingEventsConfig> {
+pub async fn setup_test_directory() -> EventsResult<Context> {
     let simple_fixture_dir = get_fixtures_dir().join("simple");
     let temp_dir = setup_temp_dir(simple_fixture_dir)?;
     let mut config = AnythingEventsConfig::default();
     config.root_dir = temp_dir.clone();
-    Ok(config)
+    let context = get_test_context_with_config(config.clone()).await;
+    Ok(context)
 }

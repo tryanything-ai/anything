@@ -1,0 +1,11 @@
+root_dir = "/tmp/anything"
+log = "warn,anything=info"
+json_log = false
+log_retention = "4h"
+
+[database]
+
+[server]
+port = 50234
+
+[tracing]
