@@ -61,39 +61,12 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   //TODO: more sophisticated way of determining new flow name
   const createNewFlow = async () => {
     try {
-      let flow_name = "Flow" + " " + (flows.length + 1);
-      console.log("new flow name", flow_name);
-      let flow_id = uuidv4();
+      let flowName = "Flow" + " " + (flows.length + 1);
+      console.log("new flow name", flowName);
+      let flowId = uuidv4();
 
-      await api.createFlow({ flow_name, flow_id });
-      //   // Basic TOML structure for the flow.toml file
-      //   const flowTomlContent = `
-      // [flow]
-      // name = "${flowName}"
-      // id =  "${flowId}"
-      // version = "0.0.1"
-      // author = "Your Name <your.email@example.com>"
-      // description = "Description of your flow"
-      // `;
-      //   // Basic TOML structure for the settings.toml file (modify as needed)
-      //   const settingsTomlContent = `
-      // [settings]
-      // some_key = "some_value"
-      // `;
-      //   if (appDocuments !== undefined) {
-      //     await api.fs.createDir(appDocuments + "/flows/" + flowName, {
-      //       recursive: true,
-      //     });
-      //     await api.fs.writeTextFile(
-      //       appDocuments + "/flows/" + flowName + "/flow.toml",
-      //       flowTomlContent
-      //     );
-      //     await api.fs.writeTextFile(
-      //       settingsTomlContent
-      //     );
-      //     // get local files for ui again
-      //     await getLocalFiles();
-      // }
+      await api.createFlow({ flowName, flowId });
+
     } catch (error) {
       console.error(error);
     } finally {
@@ -257,7 +230,7 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
   const getFlows = async () => {
     console.log("Getting FLows from Tauri API?");
     let res: any = await api.getFlows();
-    setFlows(res);
+    setFlows(res.flows);
 
     console.log("res from new rust stub", res);
   };

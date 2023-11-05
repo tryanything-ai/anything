@@ -37,6 +37,9 @@ yarn-error.log*
 # ui
 dist/
 
+core/target
+core/crate/*/target
+
 node_modules
 dist
 dist-ssr

@@ -37,12 +37,12 @@ const RightPanel = () => {
         >
           Settings
         </a>
-        {/* <a
+        <a
           className={clsx("tab", { "tab-active": tomlPanel })}
           onClick={() => closeAllPanelsOpenOne("toml")}
         >
           Editor
-        </a> */}
+        </a>
         {/* You can also control this one similarly */}
       </div>
       {debugPanel ? (
@@ -55,11 +55,11 @@ const RightPanel = () => {
         <SettingsPanel />
       ) : // </Allotment.Pane>
       null}
-      {/* {tomlPanel ? (
+      {tomlPanel ? (
             // <Allotment.Pane preferredSize={300} minSize={200}>
               <TomlPanel />
             // </Allotment.Pane>
-          ) : null} */}
+          ) : null}
       {nodeConfigPanel ? (
         // <Allotment.Pane preferredSize={700} minSize={200}>
         <NodeConfigPanel key={nodeId} />

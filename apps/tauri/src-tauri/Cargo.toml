@@ -2,7 +2,7 @@
 name = "anything"
 version = "0.0.0"
 description = "A local app to do anything"
-authors = ["Carl Lippert"]
+authors = ["Carl Lippert", "Ari Lerner"]
 license = ""
 repository = "https://github.com/tryanything-ai/anything"
 edition = "2021"
@@ -10,13 +10,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.4", features = [] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-anything-events = { path = "../../../core/crates/anything-events" }
-anything-core = { path = "../../../core/crates/anything-core" }
+anything-common = { path = "../../../core/crates/common" }
+anything-coordinator = { path = "../../../core/crates/coordinator" }
+anything-runtime = { path = "../../../core/crates/runtime" }
+anything-graph = { path = "../../../core/crates/graph" }
+tauri-plugin-anything-tauri = { path = "../../../core/crates/tauri-plugin-anything-tauri" }
 
-tauri = { version = "1.4", features = [
+tauri = { version = "1.5", features = [
     "fs-all",
     "os-all",
     "path-all",

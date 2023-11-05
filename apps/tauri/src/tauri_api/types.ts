@@ -1,6 +1,6 @@
 export type Rust_Flow = {
   id: string;
-  flow_name: string;
+  name: string;
   version: string;
   description: string;
   trigger: any;
@@ -10,9 +10,9 @@ export type Rust_Flow = {
 };
 
 export type EventInput = {
-  flow_id: string; //flow needs a computer friendly name that can be changed without changing processing
-  flow_name: string; //flow needs a user friendly name
-  flow_version: string; //flows will have versions so you can have confidence messing arround in future
+  id: string; //flow needs a computer friendly name that can be changed without changing processing
+  name: string; //flow needs a user friendly name
+  version: string; //flows will have versions so you can have confidence messing arround in future
   node_id: string; //represents exact_id inside a flow
   node_type: string; //represents front_end representation of node
   node_label: string; //what the user will see in the flow
