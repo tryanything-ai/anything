@@ -59,6 +59,7 @@ pub trait FlowRepo {
     ) -> PersistenceResult<FlowVersion>;
     async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId>;
     async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool>;
+    async fn reset(&self) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -404,6 +405,15 @@ impl FlowRepo for FlowRepoImpl {
 
         Ok(res)
     }
+
+    async fn reset(&self) -> PersistenceResult<()> {
+        let mut tx = self.get_transaction().await?;
+
+        let res = self.internal_reset(&mut tx).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
 }
 
 impl FlowRepoImpl {
@@ -709,6 +719,23 @@ impl FlowRepoImpl {
         let rows_affected = row.rows_affected();
 
         Ok(rows_affected == 1)
+    }
+
+    async fn internal_reset(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    ) -> PersistenceResult<()> {
+        sqlx::query("DELETE FROM flows")
+            .execute(&mut **tx)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        sqlx::query("DELETE FROM flow_versions")
+            .execute(&mut **tx)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(())
     }
 }
 

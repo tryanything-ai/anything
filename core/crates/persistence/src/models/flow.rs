@@ -2,6 +2,7 @@ use crate::{
     error::{PersistenceError, PersistenceResult},
     models::model_types::default_bool,
 };
+use anything_common::tracing;
 use anything_graph::Flowfile;
 use anything_store::FileStore;
 use chrono::{DateTime, Utc};
@@ -14,6 +15,7 @@ pub type FlowVersionId = String;
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct StoredFlow {
     pub flow_id: String,
+    #[serde(rename = "name")]
     pub flow_name: String,
     pub latest_version_id: FlowVersionId,
     pub active: bool,
@@ -119,19 +121,36 @@ impl StoredFlow {
         let flow_path = file_store
             .store_path(&["flows"])
             .join(self.flow_name.clone());
+
+        tracing::trace!("flow_path: {:?}", flow_path);
+
         let files_in_flow_dir = file_store
             .get_files_in_dir(&[&flow_path.as_os_str().to_str().unwrap()], &["toml"])
             .await
             .map_err(|e| PersistenceError::StoreError(e))?;
 
-        let flow_file = files_in_flow_dir
-            .iter()
-            .find(|f| f.file_name().unwrap().to_str().unwrap().starts_with("flow"));
+        let flow_file_path = files_in_flow_dir.iter().find(|f| {
+            tracing::debug!("{:?}", f.display());
+            f.file_name().unwrap().to_str().unwrap().starts_with("flow")
+        });
 
-        let flow_file = Flowfile::from_file(flow_file.unwrap().clone()).unwrap();
-        let flow = flow_file.into();
-
-        Ok(flow)
+        match flow_file_path {
+            Some(flow_file) => {
+                let flow_file = Flowfile::from_file(flow_file.to_path_buf()).expect(
+                    format!(
+                        "unable to create a Flowfile from file: {}",
+                        flow_file.display()
+                    )
+                    .as_str(),
+                );
+                let flow = flow_file.into();
+                Ok(flow)
+            }
+            None => Err(PersistenceError::FlowNotFound(format!(
+                "Flow not found in path: {:?}",
+                flow_path
+            ))),
+        }
     }
 }
 

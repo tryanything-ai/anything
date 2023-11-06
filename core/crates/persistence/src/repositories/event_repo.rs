@@ -17,6 +17,7 @@ pub trait EventRepo {
         since_date: chrono::DateTime<chrono::Utc>,
     ) -> PersistenceResult<EventList>;
     async fn find_flow_events(&self, flow_id: String) -> PersistenceResult<EventList>;
+    async fn reset(&self) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -114,6 +115,15 @@ impl EventRepo for EventRepoImpl {
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
         Ok(rows)
+    }
+
+    async fn reset(&self) -> PersistenceResult<()> {
+        let pool = self.datastore.get_pool();
+        sqlx::query("DELETE FROM events")
+            .execute(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+        Ok(())
     }
 }
 

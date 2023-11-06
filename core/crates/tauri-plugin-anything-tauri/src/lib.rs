@@ -15,7 +15,7 @@ pub use builder::{Anything, Builder as AnythingBuilder};
 
 #[derive(Default)]
 pub struct AnythingState {
-    inner: Mutex<Arc<AnythingManager>>,
+    inner: Arc<Mutex<AnythingManager>>,
     stop_tx: Option<tokio::sync::mpsc::Sender<()>>,
     anything_config: AnythingConfig,
 }

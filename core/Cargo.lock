@@ -380,6 +380,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tokio",
+ "toml 0.8.0",
  "tracing",
  "uuid",
 ]

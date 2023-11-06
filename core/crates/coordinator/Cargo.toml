@@ -32,3 +32,4 @@ once_cell = "1.18.0"
 uuid = { workspace = true, features = ["v4", "serde"] }
 ractor = "0.9.3"
 arraydeque = "0.5.1"
+toml = { workspace = true }

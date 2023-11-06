@@ -38,3 +38,4 @@ dist/
 core/target
 core/crate/*/target
 core/crates/plugins/artifacts/*
+.envrc
