@@ -13,6 +13,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anything-runtime = { workspace = true }
+anything-common = { workspace = true }
 
 [build-dependencies]
 datetime = { version = "0.5.2", default_features = false }

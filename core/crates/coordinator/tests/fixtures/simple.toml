@@ -14,7 +14,7 @@ depends_on = []
 variables = { cheers = "Jingle Bells" }
 
 [nodes.engine]
-engine = "system-shell"
+engine = "bash"
 args = ["echo 'hello {{cheers}}'"]
 
 [[nodes]]
@@ -22,11 +22,11 @@ name = "say-cheers"
 label = "say holiday cheer"
 depends_on = ["echo-cheer"]
 variables = { cheers = "Jingle Bells" }
-environment = { NODE_ENV = "development"}
+environment = { NODE_ENV = "development" }
 
 [nodes.engine]
-engine = "system-shell"
-args = ["say '{{cheers}}'"]
+engine = "bash"
+args = ["echo 'second {{cheers}}'"]
 
 
 [[nodes]]
@@ -35,5 +35,5 @@ label = "share with the world"
 depends_on = ["say-cheers"]
 
 [nodes.engine]
-engine = "system-shell"
+engine = "bash"
 args = ["echo 'cheers {{cheers}} to all'"]

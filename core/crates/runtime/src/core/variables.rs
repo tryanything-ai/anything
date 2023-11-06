@@ -14,9 +14,20 @@ pub struct Http {
     fetch: String,
 }
 
+impl Into<String> for Http {
+    fn into(self) -> String {
+        self.fetch
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct File {
     file: String,
+}
+impl Into<String> for File {
+    fn into(self) -> String {
+        self.file
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Default)]

@@ -23,6 +23,7 @@ anything-common = { path = "./crates/common" }
 anything-graph = { path = "./crates/graph" }
 anything-store = { path = "./crates/store" }
 anything-mq = { path = "./crates/mq" }
+anything-persistence = { path = "./crates/persistence" }
 anything-coordinator = { path = "./crates/coordinator" }
 
 actix-web = { version = "4" }

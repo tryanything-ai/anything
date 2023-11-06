@@ -11,6 +11,7 @@ NODE_ENV = "development"
 type = "empty"
 settings = { file = "/Users/auser/Desktop/watch-directory" }
 
+# Nodes
 [[nodes]]
 name = "echo-cheer"
 label = "Holiday cheers"
@@ -26,7 +27,7 @@ name = "say-cheers"
 label = "say holiday cheer"
 depends_on = ["echo-cheer"]
 variables = { cheers = "Jingle Bells" }
-environment = { NODE_ENV = "development"}
+environment = { NODE_ENV = "development" }
 
 [nodes.engine]
 engine = "system-shell"

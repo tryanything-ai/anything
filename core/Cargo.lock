@@ -336,11 +336,15 @@ name = "anything-common"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "anything-runtime",
+ "data-encoding",
+ "derive_builder",
  "futures",
  "indexmap 2.0.2",
  "opentelemetry",
  "opentelemetry-jaeger",
  "serde",
+ "sha2",
  "tempfile",
  "thiserror",
  "tokio",
@@ -359,14 +363,17 @@ dependencies = [
  "anything-common",
  "anything-graph",
  "anything-mq",
+ "anything-persistence",
  "anything-runtime",
  "anything-store",
+ "arraydeque",
  "dashmap",
  "derive_builder",
  "indexmap 2.0.2",
  "once_cell",
  "petgraph",
  "postage",
+ "ractor",
  "serde",
  "serde_cbor",
  "serde_json",
@@ -397,6 +404,7 @@ dependencies = [
  "tokio",
  "toml 0.8.0",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -418,6 +426,25 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "anything-persistence"
+version = "0.1.0"
+dependencies = [
+ "anything-common",
+ "anything-graph",
+ "anything-store",
+ "async-trait",
+ "chrono",
+ "derive_builder",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -458,6 +485,12 @@ dependencies = [
  "thiserror",
  "tokio",
 ]
+
+[[package]]
+name = "arraydeque"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d902e3d592a523def97af8f317b08ce16b7ab854c1985a0c671e6f15cebc236"
 
 [[package]]
 name = "arrayref"
@@ -1189,6 +1222,12 @@ dependencies = [
  "parking_lot_core",
  "serde",
 ]
+
+[[package]]
+name = "data-encoding"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2e66c9d817f1720209181c316d28635c050fa304f9c79e47a520882661b7308"
 
 [[package]]
 name = "der"
@@ -3058,22 +3097,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
-name = "persistence"
-version = "0.1.0"
-dependencies = [
- "anything-common",
- "anything-coordinator",
- "anything-graph",
- "async-trait",
- "chrono",
- "serde",
- "sqlx",
- "thiserror",
- "tokio",
- "uuid",
-]
-
-[[package]]
 name = "pest"
 version = "2.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3502,6 +3525,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "ractor"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4c76b29042a5b9819c04190895212b83b66f1f789b8e19270a4e7d18667eedc"
+dependencies = [
+ "async-trait",
+ "dashmap",
+ "futures",
+ "once_cell",
+ "rand 0.8.5",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -4129,6 +4167,7 @@ dependencies = [
  "atoi",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "crossbeam-queue",
  "dotenvy",
@@ -4209,6 +4248,7 @@ dependencies = [
  "bitflags 2.4.0",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "digest",
  "dotenvy",
@@ -4250,6 +4290,7 @@ dependencies = [
  "base64 0.21.4",
  "bitflags 2.4.0",
  "byteorder",
+ "chrono",
  "crc",
  "dotenvy",
  "etcetera",
@@ -4286,6 +4327,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d59dc83cf45d89c555a577694534fcd1b55c545a816c816ce51f20bbe56a4f3f"
 dependencies = [
  "atoi",
+ "chrono",
  "flume",
  "futures-channel",
  "futures-core",
@@ -4586,7 +4628,9 @@ dependencies = [
  "anything-common",
  "anything-coordinator",
  "anything-graph",
+ "anything-persistence",
  "anything-runtime",
+ "chrono",
  "serde",
  "tauri",
  "thiserror",
@@ -4853,6 +4897,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
+ "tracing",
  "windows-sys",
 ]
 

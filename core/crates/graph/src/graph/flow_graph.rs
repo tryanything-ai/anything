@@ -177,6 +177,8 @@ impl FlowGraph {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use anything_runtime::{
         EngineKind, EngineOption, PluginEngine, RawEnvironment, RawNode, RawVariables,
     };
@@ -195,6 +197,35 @@ mod tests {
     };
 
     use super::*;
+
+    #[test]
+    fn test_one_node_graph_builds_graph() {
+        let mut flow = build_flow("DemoFlow".to_string());
+        let mut node1 = build_task("node1".to_string(), "one.js".to_string());
+
+        let mut flow_graph = FlowGraph::default();
+        flow_graph.add_node(node1.clone());
+
+        let graph = flow_graph.into_graph();
+        assert!(graph.is_ok());
+        let graph = graph.unwrap();
+        assert_eq!(graph.node_count(), 1);
+    }
+
+    #[test]
+    fn test_flow_from_file_builds_graph_correctly() {
+        let fixture_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("resources");
+        let simple_flow = fixture_directory.join("simple.toml");
+        let mut flowfile = Flowfile::from_file(simple_flow).unwrap();
+        let flow = Flow::from(flowfile.clone());
+        let mut flow_graph = flow.into_graph();
+        assert!(flow_graph.is_ok());
+        let flow_graph = flow_graph.unwrap();
+
+        assert_eq!(flow_graph.node_count(), 3);
+    }
 
     #[test]
     fn test_compiled_tiny_graph_adds_nodes_correctly() {
@@ -357,10 +388,7 @@ mod tests {
         assert!(groups.is_ok());
         let groups = groups.unwrap();
         let graph = flow_graph.into_graph().unwrap();
-        println!(
-            "{:?}",
-            Dot::with_config(&graph, &[Config::EdgeNoLabel, Config::NodeIndexLabel])
-        );
+        // TODO: digraph goes here
     }
 }
 

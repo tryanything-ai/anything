@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::hash::Hash;
 
+use anything_common::tracing;
 use anything_runtime::prelude::*;
 use anything_runtime::string_or_struct;
 use derive_builder::Builder;
@@ -38,7 +39,7 @@ impl Hash for NodeGroup {
 impl NodeGroup {}
 
 fn default_version() -> String {
-    "0.0.1".to_string()
+    "v0.0.1".to_string()
 }
 
 #[derive(Debug, Clone, Deserialize, Default, PartialEq)]
@@ -109,6 +110,25 @@ impl Default for Task {
             depends_on: vec![],
             run_options: RawNode::default(),
         }
+    }
+}
+
+impl Into<ExecuteConfig> for Task {
+    fn into(self) -> ExecuteConfig {
+        let execute_config: ExecuteConfig = match self
+            .run_options
+            .engine
+            .unwrap_or(EngineKind::default())
+            .try_into()
+        {
+            Ok(config) => config,
+            Err(e) => {
+                tracing::error!("error converting node to execute config: {}", e);
+                ExecuteConfig::default()
+            }
+        };
+
+        execute_config
     }
 }
 
@@ -189,6 +209,28 @@ mod tests {
                 options: indexmap::indexmap! {
                     "bob".to_string() => EngineOption::from("barky".to_string())
                 },
+            })
+        );
+    }
+
+    #[test]
+    fn test_loads_correctly_for_bash_task() {
+        let raw_toml = format!(
+            r#"
+        name = "echo"
+    
+        [engine]
+        engine = "system-shell"
+        args = ["echo", "hello world"]
+    
+        "#,
+        );
+        let node: Task = toml::from_str(&raw_toml).unwrap();
+        assert_eq!(
+            node.run_options.engine.unwrap(),
+            EngineKind::Internal(SystemShell {
+                interpreter: "sh".to_string(),
+                args: vec!["echo".to_string(), "hello world".to_string()]
             })
         );
     }

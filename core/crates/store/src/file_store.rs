@@ -42,6 +42,36 @@ impl FileStore {
         Ok(())
     }
 
+    pub async fn get_files_in_dir(
+        &mut self,
+        dir_path: &[&str],
+        extensions: &[&str],
+    ) -> Result<Vec<PathBuf>> {
+        let path = self.store_path(dir_path);
+        let mut files = vec![];
+        let paths = std::fs::read_dir(path.clone())
+            .map_err(|err| StoreError::UnableToReadDirectory {
+                path: path.clone(),
+                err,
+            })
+            .expect("unable to read directory");
+
+        for path in paths {
+            let path = path.expect("unable to get path");
+            let file_path = path.path();
+            let extension = file_path.extension();
+            // Skip empty extensions
+            if extension.is_none() {
+                continue;
+            }
+            let extension = extension.unwrap();
+            if file_path.is_file() && extensions.contains(&extension.to_str().unwrap()) {
+                files.push(path.path());
+            }
+        }
+        Ok(files)
+    }
+
     pub fn create_directory(&self, dir_path: &[&str]) -> Result<PathBuf> {
         let path = self.store_path(dir_path);
         std::fs::create_dir_all(&path)
@@ -197,6 +227,31 @@ mod tests {
         sleep(Duration::from_millis(SLEEP_TIME)).await;
         let content = store.read_file(&["motd.txt"]).unwrap();
         assert_eq!(content, "Hello, world!".as_bytes());
+    }
+
+    #[tokio::test]
+    async fn test_can_list_all_files_in_directory_with_extension() {
+        let tmpdir = tempfile::tempdir().unwrap().path().to_path_buf();
+        let mut store = FileStore::create(&tmpdir.as_path(), &["skipper"]).unwrap();
+        assert!(store.base_dir.exists());
+
+        // Write a few files
+        store
+            .write_file(&["motd.txt"], "Hello, world!".as_bytes())
+            .unwrap();
+
+        store
+            .write_file(&["other.toml"], "name = \"bob\"".as_bytes())
+            .unwrap();
+
+        store
+            .write_file(&["flag.txt"], "Capture the flag".as_bytes())
+            .unwrap();
+
+        let files = store.get_files_in_dir(&[""], &["txt"]).await.unwrap();
+        assert_eq!(files.len(), 2);
+        assert!(files.contains(&store.store_path(&["motd.txt"])));
+        assert!(files.contains(&store.store_path(&["flag.txt"])));
     }
 
     #[tokio::test]

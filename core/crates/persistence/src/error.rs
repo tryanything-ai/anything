@@ -1,3 +1,4 @@
+use anything_store::errors::StoreError as FileStoreError;
 use sqlx::{migrate::MigrateError, sqlite::SqliteError};
 use thiserror::Error;
 
@@ -11,6 +12,9 @@ pub enum PersistenceError {
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
 
+    #[error("Flow not found: {0}")]
+    FlowNotFound(String),
+
     #[error("Invalid database")]
     InvalidDatabaseType,
 
@@ -19,10 +23,19 @@ pub enum PersistenceError {
 
     #[error("sqlx error: {0}")]
     SqlxError(SqliteError),
+
+    #[error("file store error: {0}")]
+    StoreError(FileStoreError),
 }
 
 impl From<SqliteError> for PersistenceError {
     fn from(e: SqliteError) -> Self {
         Self::SqlxError(e)
+    }
+}
+
+impl From<std::io::Error> for PersistenceError {
+    fn from(_value: std::io::Error) -> Self {
+        Self::RuntimeError
     }
 }

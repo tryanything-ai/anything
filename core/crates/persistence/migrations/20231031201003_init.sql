@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS flows (
     UNIQUE (flow_name)
 );
 CREATE TABLE IF NOT EXISTS flow_versions (
-    version_id TEXT PRIMARY KEY NOT NULL,
     flow_id TEXT NOT NULL,
     flow_version TEXT NOT NULL,
     description TEXT,

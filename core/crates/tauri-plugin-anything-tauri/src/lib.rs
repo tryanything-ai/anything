@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use anything_coordinator::{AnythingConfig, Manager as AnythingManager};
+use anything_common::AnythingConfig;
+use anything_coordinator::Manager as AnythingManager;
 use tauri::async_runtime::Mutex;
 
 mod anything;

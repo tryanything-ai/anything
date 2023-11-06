@@ -29,6 +29,7 @@ pub struct RawNode {
         alias = "runtime",
         deserialize_with = "option_string_or_struct"
     )]
+    #[serde(alias = "interpreter")]
     pub engine: Option<EngineKind>,
 }
 
@@ -107,6 +108,24 @@ mod tests {
     }
 
     #[test]
+    fn test_load_node_from_raw_str_with_for_internal_engine() {
+        let raw_toml = r#"
+        engine = "system-shell"
+        "#;
+
+        let node = RawNode::from_str(raw_toml);
+        assert!(node.is_ok());
+        let node = node.unwrap();
+        assert_eq!(
+            node.engine,
+            Some(EngineKind::Internal(SystemShell {
+                interpreter: "sh".to_string(),
+                args: vec!["-c".to_string()]
+            }))
+        );
+    }
+
+    #[test]
     fn test_load_node_from_raw_str_with_explicit_shell_interpreter() {
         let raw_toml = r#"
         engine = "bash"
@@ -117,9 +136,12 @@ mod tests {
         let node = node.unwrap();
         assert_eq!(
             node.engine,
-            Some(EngineKind::Internal(SystemShell {
-                interpreter: "bash".to_string(),
-                args: vec![],
+            Some(EngineKind::PluginEngine(PluginEngine {
+                engine: "system-shell".to_string(),
+                args: Some(vec![]),
+                options: indexmap::indexmap! {
+                    "shell".to_string() => crate::EngineOption::String("bash".to_string())
+                }
             }))
         );
     }
@@ -131,7 +153,7 @@ mod tests {
         name = "echo-cheer"
 
         [engine]
-        interpreter = "system-shell"
+        interpreter = "bash"
         "#;
 
         let node = RawNode::from_str(raw_toml);
@@ -142,7 +164,31 @@ mod tests {
             Some(EngineKind::PluginEngine(PluginEngine {
                 engine: "system-shell".to_string(),
                 args: None,
-                options: indexmap::indexmap! {}
+                options: indexmap::indexmap! {
+                    "shell".to_string() => crate::EngineOption::String("bash".to_string())
+                }
+            }))
+        );
+    }
+
+    #[test]
+    fn test_load_node_from_raw_str_with_plugin_system_shell_as_runtime() {
+        let raw_toml = r#"
+        id = 1
+        name = "echo-cheer"
+
+        [engine]
+        runtime = "system-shell"
+        "#;
+
+        let node = RawNode::from_str(raw_toml);
+        assert!(node.is_ok());
+        let node = node.unwrap();
+        assert_eq!(
+            node.engine,
+            Some(EngineKind::Internal(SystemShell {
+                interpreter: "sh".to_string(),
+                args: vec!["-c".to_string()]
             }))
         );
     }
