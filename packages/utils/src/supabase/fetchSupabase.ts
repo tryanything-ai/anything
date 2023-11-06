@@ -4,6 +4,7 @@ import * as SUPABASE from "./types/supabase.types";
 
 export * from "./types/supabase.types";
 import * as types from "./types/supabase.types";
+import slugify from "slugify";
 
 import { supabaseClient } from "./client";
 
@@ -158,5 +159,85 @@ export const uploadAvatar = async (
   } catch (e) {
     console.log(e);
     return e;
+  }
+};
+
+const saveTemplate = async (
+  flow_template_name: string,
+  flow_template_description: string,
+  flow_template_json: any,
+  publisher_id: string,
+  anything_flow_template_version: string
+) => {
+  try {
+    // Save Template
+    const { data, error } = await supabaseClient
+      .from("flow_templates")
+      .insert({
+        anonymous_publish: false,
+        flow_template_name,
+        flow_template_description,
+        slug: slugify(flow_template_name),
+        published: true,
+        publisher_id,
+      })
+      .select()
+      .single(); 
+
+
+    if (error) throw error;
+
+    if (!data) throw new Error("data is undefined");
+
+   let result =  await saveTepmlateVersion(
+      data.flow_template_id,
+      flow_template_name,
+      flow_template_json,
+      true,
+     "Initial Commit",
+      publisher_id,
+      anything_flow_template_version
+    );
+
+    if (!result) throw new Error("result is undefined"); 
+
+    return { data, result }; 
+
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const saveTepmlateVersion = async (
+  flow_template_id: string,
+  flow_template_version_name: string,
+  flow_template_json: any,
+  published: boolean,
+  commit_message: string,
+  publisher_id: string,
+  anything_flow_template_version: string
+) => {
+  try {
+    // Save Template Version
+    const { data, error } = await supabaseClient
+      .from("flow_template_versions")
+      .insert({
+        flow_template_id,
+        flow_template_json,
+        publisher_id,
+        anything_flow_template_version,
+        flow_template_version_name,
+        published,
+        recommended_version: true,
+        commit_message,
+      })
+      .single();
+
+    if (error) throw error;
+
+    if (!data) throw new Error("data is undefined");
+    return data;
+  } catch (e) {
+    console.log(e);
   }
 };

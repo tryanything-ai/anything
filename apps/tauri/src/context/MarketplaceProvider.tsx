@@ -119,6 +119,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     if (webFeaturesDisabled) return false;
 
     //Do supabase stuff.
+    
   };
 
   const updateTemplate = (template: any) => {

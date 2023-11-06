@@ -1,4 +1,4 @@
-import { createContext, ReactNode,useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 interface FLowNavigationContextInterface {
   nodePanel: boolean;
@@ -9,6 +9,8 @@ interface FLowNavigationContextInterface {
   setDebugPanel: (option: boolean) => void;
   settingsPanel: boolean;
   setSettingsPanel: (option: boolean) => void;
+  sharingPanel: boolean;
+  setSharingPanel: (option: boolean) => void;
   nodeConfigPanel: boolean;
   setNodeConfigPanel: (option: boolean, node_id: string) => void;
   nodeId: string;
@@ -25,6 +27,8 @@ export const FlowNavigationContext =
     setDebugPanel: () => {},
     settingsPanel: true,
     setSettingsPanel: () => {},
+    sharingPanel: true,
+    setSharingPanel: () => {},
     nodeConfigPanel: true,
     setNodeConfigPanel: () => {},
     nodeId: "",
@@ -43,6 +47,7 @@ export const FlowNavigationProvider = ({
   const [tomlPanel, setTomlPanel] = useState<boolean>(false);
   const [debugPanel, setDebugPanel] = useState<boolean>(true);
   const [settingsPanel, setSettingsPanel] = useState<boolean>(false);
+  const [sharingPanel, setSharingPanel] = useState<boolean>(false);
   const [nodeConfigPanel, setNodeConfigPanel] = useState<boolean>(false);
   const [nodeId, setNodeId] = useState<string>("");
 
@@ -57,6 +62,7 @@ export const FlowNavigationProvider = ({
     setDebugPanel(false);
     setSettingsPanel(false);
     setNodeConfigPanel(false);
+    setSharingPanel(false);
 
     switch (panelName) {
       case "node":
@@ -74,6 +80,9 @@ export const FlowNavigationProvider = ({
       case "settings":
         setSettingsPanel(true);
         break;
+      case "sharing":
+        setSharingPanel(true);
+        break;
       default:
         break;
     }
@@ -90,6 +99,8 @@ export const FlowNavigationProvider = ({
         setDebugPanel,
         settingsPanel,
         setSettingsPanel,
+        sharingPanel,
+        setSharingPanel,
         nodeConfigPanel,
         setNodeConfigPanel: _setNodeConfigPanel,
         nodeId,
