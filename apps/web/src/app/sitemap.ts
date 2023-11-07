@@ -1,12 +1,12 @@
 import { fetchTemplates, fetchProfiles } from "utils";
 import { MetadataRoute } from "next";
 
-let base_url = "https://" + process.env.NEXT_PUBLIC_VERCEL_URL;
+const base_url = "https://tryanything.xyz";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let routes: any = [];
+  const routes: any = [];
 
-  //TODO: works for more than 1000? 100? idk 
+  //TODO: works for more than 1000? 100? idk
   const templateResult = await fetchTemplates();
 
   if (templateResult) {
