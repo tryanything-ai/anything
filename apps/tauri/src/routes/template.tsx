@@ -33,7 +33,6 @@ const Template = () => {
       ? await fetchProfile(template.profiles.username)
       : undefined;
 
-    // let template = await fetchTemplate(author_username, template_name);
     console.log(template);
     setProfile(profile);
   };
@@ -46,8 +45,28 @@ const Template = () => {
     fetchTemplate();
   }, [slug]);
 
+  // let flow: Flow = flowJsonFromBigFlow(template);
+  let t = template as any;
+
   const Action = () => {
-    return <div className="btn btn-primary">Use Template</div>;
+    return (
+      <>
+        {profile ? (
+          <div
+            className="btn btn-primary"
+            data-ph-capture-attribute-flow-template-name={t.flow_template_name}
+            data-ph-capture-attribute-flow-template-slug={t.slug}
+            data-ph-capture-attribute-flow-template-id={t.flow_template_id}
+            data-ph-capture-attribute-flow-template-profile-username={
+              profile.username
+            }
+            data-ph-capture-attribute-flow-template-profile-id={profile.id}
+          >
+            Use Template
+          </div>
+        ) : null}
+      </>
+    );
   };
 
   return (

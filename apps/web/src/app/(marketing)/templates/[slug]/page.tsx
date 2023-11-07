@@ -12,7 +12,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 
-
 type Props = {
   params: { slug: string };
   // searchParams: { [key: string]: string | string[] | undefined };
@@ -79,15 +78,36 @@ export default async function Template({
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
-  function Action({ slug }): JSX.Element {
+  function Action(): JSX.Element {
     return (
       <div className="flex flex-col gap-3 md:flex-row">
-        <div className="btn btn-sm btn-primary md:btn-md">
+        <Link
+          className="btn btn-sm btn-primary md:btn-md"
+          data-ph-capture-attribute-flow-template-id={template.flow_template_id}
+          data-ph-capture-attribute-flow-template-name={
+            template.flow_template_name
+          }
+          data-ph-capture-attribute-flow-template-profile-id={profile?.id}
+          data-ph-capture-attribute-flow-template-profile-username={
+            profile?.username
+          }
+          data-ph-capture-attribute-flow-template-slug={template.slug}
+          href="/downloads"
+        >
           Download Anything
-        </div>
+        </Link>
         <a
           className="btn btn-sm btn-primary md:btn-md"
-          href={`anything://templates/${slug}`}
+          data-ph-capture-attribute-flow-template-id={template.flow_template_id}
+          data-ph-capture-attribute-flow-template-name={
+            template.flow_template_name
+          }
+          data-ph-capture-attribute-flow-template-profile-id={profile?.id}
+          data-ph-capture-attribute-flow-template-profile-username={
+            profile?.username
+          }
+          data-ph-capture-attribute-flow-template-slug={template.slug}
+          href={`anything://templates/${template.slug}`}
         >
           Open in App
         </a>
@@ -98,7 +118,7 @@ export default async function Template({
   return (
     <div className="mx-4 my-6 flex max-w-4xl flex-col md:mx-auto md:my-16">
       <TemplateView
-        ActionComponent={() => <Action slug={template.slug} />}
+        ActionComponent={Action}
         Avatar={Avatar}
         Link={Link}
         profile={profile}
