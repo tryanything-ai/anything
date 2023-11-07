@@ -334,25 +334,20 @@ impl Manager {
     /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
     pub async fn update_flow(
         &mut self,
-        flow_name: String,
+        flow_id: String,
         update_flow: UpdateFlow,
     ) -> CoordinatorResult<anything_graph::Flow> {
         let new_flow_name = update_flow.flow_name.clone();
-        let original_flow_name = flow_name.clone();
-        let mut original_flow = self
-            .flow_repo()?
-            .get_flow_by_name(flow_name.clone())
-            .await?;
+        let mut original_flow = self.flow_repo()?.get_flow_by_id(flow_id.clone()).await?;
+        let original_flow_name = original_flow.flow_name.clone();
 
         tracing::trace!("original_flow: {:#?}", original_flow);
 
-        self.flow_repo()?
-            .delete_flow(original_flow_name.clone())
-            .await?;
+        self.flow_repo()?.delete_flow(flow_id.clone()).await?;
 
         let stored_flow = self
             .flow_repo()?
-            .update_flow(flow_name.clone(), update_flow)
+            .update_flow(flow_id.clone(), update_flow)
             .await?;
 
         original_flow.flow_name = stored_flow.flow_name.clone();

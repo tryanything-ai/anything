@@ -85,7 +85,7 @@ pub struct UpdateFlowResponse {
 #[tauri::command]
 pub async fn update_flow(
     state: tauri::State<'_, AnythingState>,
-    flow_name: String,
+    flow_id: String,
     update_flow: UpdateFlow,
 ) -> FlowResult<UpdateFlowResponse> {
     match state.inner.try_lock() {
@@ -93,7 +93,7 @@ pub async fn update_flow(
             tracing::error!("Error getting lock on coordinator: {:?}", e);
             Err(Error::CoordinatorNotInitialized)
         }
-        Ok(ref mut inner) => match inner.update_flow(flow_name, update_flow).await {
+        Ok(ref mut inner) => match inner.update_flow(flow_id, update_flow).await {
             Ok(flow) => {
                 tracing::debug!("Created flow inside tauri plugin");
                 Ok(UpdateFlowResponse { flow: Some(flow) })

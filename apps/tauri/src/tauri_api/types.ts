@@ -1,5 +1,5 @@
 export type Rust_Flow = {
-  id: string;
+  flow_id: string;
   name: string;
   version: string;
   description: string;

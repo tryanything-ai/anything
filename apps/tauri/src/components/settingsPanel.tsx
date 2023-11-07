@@ -5,7 +5,6 @@ import { useNavigate,useParams } from "react-router-dom";
 import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import api from "../tauri_api/api";
-import { updateFlow } from "../tauri_api/flows";
 
 type Inputs = {
   flow_name: string;
@@ -34,6 +33,7 @@ const FlowSettingsPanel = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
+      console.log("data data => ", data)
       if (flow_name && data.flow_name != flow_name) {
         // api
         let updateFlow = {
