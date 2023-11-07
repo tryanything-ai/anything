@@ -1,7 +1,7 @@
 import { fetchTemplates, fetchProfiles } from "utils";
 import { MetadataRoute } from "next";
 
-const base_url = "https://tryanything.xyz";
+const base_url = process.env.NEXT_PUBLIC_HOSTED_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: any = [];
