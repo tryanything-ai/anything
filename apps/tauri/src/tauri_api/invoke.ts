@@ -3,7 +3,7 @@ import { Anything } from '../../../../core/crates/tauri-plugin-anything-tauri/we
 
 import { EventInput } from "./types";
 
-const anything = new Anything("anything");
+export const anything = new Anything("anything");
 
 export const getFlows = async () => {
   return await anything.getFlows();
@@ -11,13 +11,11 @@ export const getFlows = async () => {
 
 export const createFlow = async ({
   flowName,
-  flowId,
 }: {
   flowName: string;
-  flowId: string;
 }) => {
-  console.log(`Called createFlow with ${flowId}, ${flowName}`)
-  return await anything.createFlow(flowName, flowId);
+  console.log(`Called createFlow with ${flowName}`)
+  return await anything.createFlow(flowName);
 };
 
 export const getChatFlows = async () => {

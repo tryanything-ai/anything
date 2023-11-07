@@ -30,7 +30,8 @@ export class Anything {
     }
     
     async updateFlow<T>(flowName: string, updateFlow: UpdateFlow): Promise<T> {
-        return await invoke("plugin:anything|update_flow", {flowName})
+        console.log("updateFlow called ", flowName, updateFlow);
+        return await invoke("plugin:anything|update_flow", {flowName, updateFlow})
     }
 
     async executeFlow<T>(flowName: string): Promise<T> {

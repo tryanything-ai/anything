@@ -284,11 +284,7 @@ impl Manager {
 
         self.file_store
             .write_file(
-                &[
-                    "flows",
-                    new_dir_str,
-                    &format!("{}.toml", lowercased_flow_name),
-                ],
+                &["flows", new_dir_str, &format!("flow.toml")],
                 flow_str.as_bytes(),
             )
             .expect("unable to write basic flow string");
@@ -341,11 +337,39 @@ impl Manager {
         flow_name: String,
         update_flow: UpdateFlow,
     ) -> CoordinatorResult<anything_graph::Flow> {
+        let new_flow_name = update_flow.flow_name.clone();
+        let original_flow_name = flow_name.clone();
+        let mut original_flow = self
+            .flow_repo()?
+            .get_flow_by_name(flow_name.clone())
+            .await?;
+
+        tracing::trace!("original_flow: {:#?}", original_flow);
+
+        self.flow_repo()?
+            .delete_flow(original_flow_name.clone())
+            .await?;
+
         let stored_flow = self
             .flow_repo()?
             .update_flow(flow_name.clone(), update_flow)
             .await?;
+
+        original_flow.flow_name = stored_flow.flow_name.clone();
+        self.file_store
+            .rename_directory(&["flows", &original_flow_name], &["flows", &new_flow_name])
+            .expect("unable to rename flow directory");
+
+        let flow_str: String = toml::to_string(&stored_flow).expect("unable to convert to string");
+
+        self.file_store
+            .write_file(
+                &["flows", &new_flow_name, &format!("flow.toml")],
+                flow_str.as_bytes(),
+            )
+            .expect("unable to write basic flow string");
         let mut file_store = self.file_store.clone();
+
         let flow = stored_flow.get_flow(&mut file_store).await?;
         Ok(flow)
     }

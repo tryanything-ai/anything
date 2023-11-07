@@ -90,6 +90,17 @@ impl FileStore {
         })
     }
 
+    pub fn rename_directory(&self, from: &[&str], to: &[&str]) -> Result<()> {
+        let from = self.store_path(from);
+        let to = self.store_path(to);
+        std::fs::rename(&from, &to).map_err(|err| StoreError::UnableToRenameDirectory {
+            from: from.clone(),
+            to: to.clone(),
+            err,
+        })?;
+        Ok(())
+    }
+
     pub fn create_base_dir(&self) -> Result<()> {
         std::fs::create_dir_all(&self.base_dir).map_err(|err| StoreError::UnableToCreateDirectory {
             path: self.base_dir.clone(),
@@ -200,6 +211,26 @@ mod tests {
         assert!(store.base_dir.exists());
         store.cleanup_base_dir().unwrap();
         assert!(!store.base_dir.exists());
+    }
+
+    #[tokio::test]
+    async fn test_renaming_directory() {
+        let tempdir = tempfile::tempdir().unwrap().path().to_path_buf();
+        let store = FileStore::create(&tempdir.as_path(), &["skipper"]).unwrap();
+        store.create_directory(&["skip"]).unwrap();
+        assert!(store.base_dir.exists());
+        store
+            .write_file(&["motd.txt"], "Hello, world!".as_bytes())
+            .unwrap();
+        store
+            .write_file(&["flow.toml"], "name = \"dummy\"".as_bytes())
+            .unwrap();
+        assert!(store.file_exists(&["motd.txt"]));
+        sleep(Duration::from_millis(SLEEP_TIME)).await;
+        let content = store.read_file(&["motd.txt"]).unwrap();
+        assert_eq!(content, "Hello, world!".as_bytes());
+        store.rename_directory(&["skip"], &["jeebers"]).unwrap();
+        assert!(!store.file_exists(&["jeebers", "motd.txt"]));
     }
 
     #[tokio::test]

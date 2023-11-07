@@ -131,11 +131,11 @@ impl FlowRepo for FlowRepoImpl {
     async fn create_or_update_flow(&self, flow: StoredFlow) -> PersistenceResult<StoredFlow> {
         let mut tx = self.get_transaction().await?;
 
-        let flow_name = flow.flow_name.clone();
+        let flow_id = flow.flow_id.clone();
         let res = self
             .internal_save(
                 &mut tx,
-                flow_name.clone(),
+                flow_id.clone(),
                 flow.latest_version_id.clone(),
                 flow,
             )
@@ -668,10 +668,10 @@ impl FlowRepoImpl {
     async fn internal_find_existing_flow_by_name(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
-        flow_name: String,
+        flow_id: String,
     ) -> Option<StoredFlow> {
-        match sqlx::query_as::<_, StoredFlow>(&format!("{} WHERE f.flow_name = ?1", GET_FLOW_SQL))
-            .bind(flow_name)
+        match sqlx::query_as::<_, StoredFlow>(&format!("{} WHERE f.flow_id = ?1", GET_FLOW_SQL))
+            .bind(flow_id)
             .fetch_one(&mut **tx)
             .await
         {
@@ -778,12 +778,12 @@ mod tests {
         let flow_repo = FlowRepoImpl::new_with_datastore(datastore).unwrap();
 
         let stored_flow = test_helper.make_unique_stored_flow();
-        let flow_name = stored_flow.flow_name.clone();
+        let flow_id = stored_flow.flow_id.clone();
 
         let res = flow_repo.create_or_update_flow(stored_flow).await;
         assert!(res.is_ok());
         let saved_flow = res.unwrap();
-        let stored_flow = test_helper.get_flow_by_id(flow_name.clone()).await;
+        let stored_flow = test_helper.get_flow_by_id(flow_id.clone()).await;
         assert!(stored_flow.is_some());
         assert_eq!(stored_flow.unwrap().flow_name, saved_flow.flow_name);
     }
@@ -796,15 +796,15 @@ mod tests {
 
         // Create a new flow
         let stored_flow = test_helper.make_unique_stored_flow();
-        let flow_id = stored_flow.flow_id.clone();
         let flow_name = stored_flow.flow_name.clone();
         let res = flow_repo
             .create_flow(stored_flow.clone().into())
             .await
             .unwrap();
+        let flow_id = res.flow_id.clone();
 
         // confirm it already exists
-        let found_existing_flow = flow_repo.get_flow_by_id(flow_name.clone()).await.unwrap();
+        let found_existing_flow = flow_repo.get_flow_by_id(flow_id.clone()).await.unwrap();
         assert_eq!(res.flow_name, found_existing_flow.flow_name);
         assert!(!res.active);
 
@@ -818,7 +818,7 @@ mod tests {
         assert!(res.is_ok());
 
         let saved_flow = res.unwrap();
-        let stored_flow = test_helper.get_flow_by_id(flow_name.clone()).await;
+        let stored_flow = test_helper.get_flow_by_id(flow_id.clone()).await;
         assert!(stored_flow.is_some());
         let stored_flow = stored_flow.unwrap();
         assert_eq!(stored_flow.flow_name, saved_flow.flow_name);

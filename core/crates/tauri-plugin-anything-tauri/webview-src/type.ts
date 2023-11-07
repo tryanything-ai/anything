@@ -1,7 +1,7 @@
 import {z} from 'zod'
 
 export type UpdateFlow = {
-    flowName: string;
+    flow_name: string;
     active: boolean;
     version?: string;
 };
