@@ -7,18 +7,25 @@ import {
   Profile,
   updateProfile,
   uploadAvatar,
+  saveFlowTemplate,
 } from "utils";
 
 import { createContext, ReactNode, useContext } from "react";
 
 import { useSettingsContext } from "./SettingsProvider";
+import { useAuthenticationContext } from "./AuthenticaionProvider";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
   fetchTemplates: () => Promise<BigFlow>;
-  saveTemplate: (template: any) => void;
+  saveTemplate: (
+    flow_template_name: string,
+    flow_template_description: string,
+    flow_template_json: any
+  ) => Promise<BigFlow | undefined>;
   updateTemplate: (template: any) => void;
   fetchTemplateBySlug: (slug: string) => Promise<BigFlow | undefined>;
+  fetchTemplateById: (id: string) => Promise<BigFlow | undefined>;
   fetchProfile: (username: string) => Promise<Profile | undefined>;
   fetchProfileTemplates: (username: string) => Promise<BigFlow | undefined>;
   updateProfile: (
@@ -36,11 +43,12 @@ export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   searchTemplates: () => {},
   fetchTemplates: () => Promise.resolve([]),
   fetchTemplateBySlug: () => Promise.resolve(undefined),
+  fetchTemplateById: () => Promise.resolve(undefined),
   fetchProfile: () => Promise.resolve(undefined),
   fetchProfileTemplates: () => Promise.resolve(undefined),
   updateProfile: () => Promise.resolve(undefined),
   uploadAvatar: () => Promise.resolve(undefined),
-  saveTemplate: () => {},
+  saveTemplate: () => Promise.resolve(undefined),
   updateTemplate: () => {},
 });
 
@@ -48,10 +56,11 @@ export const useMarketplaceContext = () => useContext(MarketplaceContext);
 
 //We will break compatability of templates and will need to know what version of templates we are using.
 //was used to create a template to manage compatability and conversion
-const FLOW_TEMPLATES_VERSION = "0.0.1";
+export const ANYTHING_FLOW_TEMPLATE_VERSION = "0.0.0";
 
 export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const { webFeaturesDisabled } = useSettingsContext();
+  const { session } = useAuthenticationContext();
   //fetch Supabaes Flow Templates
   //expose Supabase Search for Flows, Actions, Triggers, Templates, etc
 
@@ -98,6 +107,15 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     else return templateResponse;
   };
 
+  const _fetchTemplateById = async (id: string) => {
+    if (webFeaturesDisabled) return undefined;
+
+    let templateResponse = await fetchTemplateBySlug(id);
+
+    if (!templateResponse) return undefined;
+    else return templateResponse;
+  }
+
   const _fetchProfile = async (username: string) => {
     if (webFeaturesDisabled) return undefined;
 
@@ -115,11 +133,22 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     else return templates;
   };
 
-  const saveTemplate = (template: any) => {
+  const saveTemplate = async (
+    flow_template_name: string,
+    flow_template_description: string,
+    flow_template_json: any
+  ) => {
     if (webFeaturesDisabled) return false;
+    let res = await saveFlowTemplate(
+      flow_template_name,
+      flow_template_description,
+      flow_template_json,
+      session.user.id,
+      ANYTHING_FLOW_TEMPLATE_VERSION
+    );
 
-    //Do supabase stuff.
-    
+    if (!res) return undefined;
+    else return res;
   };
 
   const updateTemplate = (template: any) => {
@@ -157,6 +186,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         saveTemplate,
         updateTemplate,
         fetchTemplateBySlug: _fetchTemplateBySlug,
+        fetchTemplateById: _fetchTemplateById,
         fetchProfile: _fetchProfile,
         fetchProfileTemplates: _fetchProfileTemplates,
         updateProfile: _updateProfile,

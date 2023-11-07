@@ -17,13 +17,17 @@ export const ProfileView = ({
   Avatar,
 }: ProfileViewProps) => {
   return (
-    <div className="mx-auto my-6 flex max-w-7xl flex-col md:my-16 md:flex-row">
+    <div className="flex max-w-7xl flex-col md:flex-row w-full">
       {/* Left Column */}
       <div className="h-full max-w-sm p-6">
         <div className="avatar">
           <div className="w-24 rounded-full">
             <Avatar
-              avatar_url={profile.avatar_url ? profile.avatar_url : "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png"}
+              avatar_url={
+                profile.avatar_url
+                  ? profile.avatar_url
+                  : "https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/public/mocks/botttsNeutral-1698715092376.png"
+              }
               profile_name={profile.full_name ? profile.full_name : ""}
               // width={100}
             />

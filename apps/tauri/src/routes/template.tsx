@@ -7,7 +7,6 @@ import { Avatar } from "../components/avatar";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
 import PageLayout from "../pageLayout";
 
-
 const Template = () => {
   const { slug } = useParams<{
     slug: string;
@@ -53,7 +52,7 @@ const Template = () => {
 
   return (
     <PageLayout>
-      <div className="flex flex-col md:mx-auto">
+      <div className="w-2/3 max-w-4xl mx-auto">
         {template ? (
           <TemplateView
             ActionComponent={Action}
