@@ -1,11 +1,10 @@
 import { FlowTemplate, Json } from "utils";
 import React from "react";
 import { VscArrowSmallRight } from "react-icons/vsc";
-
 import { AvatarAndUsername } from "./avatarAndUsername";
 import { BaseNodeIcon } from "./baseNodeIcons";
 
-export type TemplateCardProps = {
+export interface TemplateCardProps {
   // next?: boolean;
   slug: string;
   description: string;
@@ -101,3 +100,4 @@ const NodeArray = ({ flow }: { flow: FlowTemplate }) => {
     </div>
   );
 };
+   
