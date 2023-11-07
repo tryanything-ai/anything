@@ -10,6 +10,7 @@ import {
 import { supabaseClient, Profile } from "utils";
 import { useSettingsContext } from "./SettingsProvider";
 import { useNavigate } from "react-router-dom";
+import posthogClient from "posthog-js";
 
 interface AuthenticationContextInterface {
   // signInWithEmail: (email: string, password: string) => void;
@@ -120,12 +121,12 @@ export const AuthenticationProvider = ({
         .from("profiles")
         .select("*")
         .eq("id", user_id)
-        .single(); 
+        .single();
 
       if (error) throw error;
       if (profile) {
         setProfile(profile);
-        return profile; 
+        return profile;
       } else {
         return undefined;
       }
@@ -148,6 +149,7 @@ export const AuthenticationProvider = ({
   const signOut = async () => {
     // if (webFeaturesDisabled) return null;
     await supabaseClient.auth.signOut();
+    await posthogClient.reset();
     setSession(null);
     setProfile(null);
   };
@@ -159,13 +161,14 @@ export const AuthenticationProvider = ({
 
   useEffect(() => {
     //update profile if sesssion exists
-    fetchCurrentUserProfile(); 
+    fetchCurrentUserProfile();
   }, [session]);
 
   const getSession = async () => {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       console.log("session found in AuthenticationProvider", session);
       setSession(session);
+      posthogClient.identify(session?.user?.id);
     });
   };
 
@@ -180,6 +183,9 @@ export const AuthenticationProvider = ({
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange((event, session) => {
       //user has updated password ( most likely )
+      if (session?.user?.id) {
+        posthogClient.identify(session?.user?.id);
+      }
       if (event === "USER_UPDATED") {
         console.log("USER_UPDATED");
         navigate("/");
@@ -188,7 +194,7 @@ export const AuthenticationProvider = ({
         console.log("SIGNED_IN");
         navigate("/");
       }
-     
+
       console.log("event", JSON.stringify(event, null, 3));
       console.log(
         "session changed in AuthenticationProvider",

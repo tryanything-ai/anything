@@ -21,7 +21,6 @@ if (import.meta.env.mode === "production") {
   console.log("Initializing PostHog in production");
   posthogClient.init(VITE_PUBLIC_POSTHOG_KEY, {
     api_host: VITE_PUBLIC_POSTHOG_HOST,
-    
   });
 } 
 
