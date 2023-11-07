@@ -12,13 +12,13 @@ interface TemplateViewProps extends CommonProps {
   ActionComponent: ComponentType<any>;
 }
 
-export function TemplateView({
+export const TemplateView= ({
   template,
   profile,
   Link,
   Avatar,
   ActionComponent,
-}: TemplateViewProps) {
+}: TemplateViewProps) => {
   let flow = flowJsonFromBigFlow(template);
 
   return (

@@ -1,9 +1,17 @@
-import { SiteConfig } from "@/types";
+type SiteConfig = {
+  name: string;
+  description: string;
+  url: string;
+  ogImage: string;
+  links: {
+    twitter: string;
+    github: string;
+  };
+};
 
 export const siteConfig: SiteConfig = {
   name: "Anything AI",
-  description:
-    "The easiest way to automate your business",
+  description: "The easiest way to automate your business",
   url: `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`,
   ogImage: `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/og.jpg`,
   links: {
