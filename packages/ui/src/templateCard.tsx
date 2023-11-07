@@ -42,7 +42,10 @@ const TemplateCard = ({
     <Link href={"/templates/" + slug} to={"/templates/" + slug}>
       <div className="card card-compact bg-base-300 mx-1 max-w-md transform overflow-hidden shadow-xl transition-all duration-200 ease-in-out hover:scale-105 sm:w-96">
         <div className="card-body">
-          <h2 className="card-title text-ellipsis text-2xl">{flow_name}</h2>
+          <h2 className="card-title text-ellipsis text-2xl line-clamp-1">
+            {flow_name}
+          </h2>
+          
           {/* User */}
           {profile ? (
             <AvatarAndUsername
@@ -54,7 +57,7 @@ const TemplateCard = ({
             />
           ) : null}
 
-          <p className="mb-2 line-clamp-2 overflow-hidden overflow-ellipsis">
+          <p className="mt-1 line-clamp-2 overflow-hidden overflow-ellipsis h-12">
             {description}
           </p>
           <figure>
@@ -76,7 +79,7 @@ const NodeArray = ({ flow }: { flow: FlowTemplate }) => {
   const hiddenIconsCount = actions.length - visibleActions.length;
 
   return (
-    <div className="flex h-full flex-row gap-2 ">
+    <div className="flex h-full flex-row gap-2">
       <BaseNodeIcon icon={flow.trigger.icon} className="text-pink-500" />
       <div className="flex h-14 items-center justify-center font-bold">
         <VscArrowSmallRight className="w-6 text-3xl" />
