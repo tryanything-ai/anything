@@ -55,8 +55,9 @@ export default async function RootLayout({
 }) {
   return (
     <html
-      lang="en"
       className={`${inter.variable} ${dm_sans.variable}`}
+      data-theme="dark"
+      lang="en"
       suppressHydrationWarning
     >
       <head />
