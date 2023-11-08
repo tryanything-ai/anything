@@ -14,6 +14,7 @@ pub trait TriggerRepo {
     // TODO: Add types
     async fn create_trigger(&self, create_trigger: CreateTrigger) -> PersistenceResult<TriggerId>;
     async fn get_trigger_by_id(&self, trigger_id: TriggerId) -> PersistenceResult<StoredTrigger>;
+    async fn reset(&self) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -81,6 +82,17 @@ impl TriggerRepo for TriggerRepoImpl {
                 .map_err(|e| PersistenceError::DatabaseError(e))?;
 
         Ok(trigger)
+    }
+
+    async fn reset(&self) -> PersistenceResult<()> {
+        let pool = self.datastore.get_pool();
+
+        let _ = sqlx::query("DELETE FROM triggers")
+            .execute(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(())
     }
 }
 

@@ -12,5 +12,4 @@ pub(crate) mod test_helper;
 pub mod manager;
 // pub use config::{AnythingConfig, AnythingConfigBuilder};
 pub use error::*;
-pub use manager::*; 
 pub use manager::Manager;

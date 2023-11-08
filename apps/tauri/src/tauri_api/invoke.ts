@@ -1,23 +1,21 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { Anything } from '../../../../core/crates/tauri-plugin-anything-tauri/webview-src/index'
+import { Anything } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src/index";
 
 import { EventInput } from "./types";
 
-const anything = new Anything("anything");
+export const anything = new Anything("anything");
 
 export const getFlows = async () => {
-  return await anything.getFlows();
+  let res = await anything.getFlows();
+  console.log(`Got back from getFlows ${JSON.stringify(res)}`);
+  return res;
 };
 
-export const createFlow = async ({
-  flowName,
-  flowId,
-}: {
-  flowName: string;
-  flowId: string;
-}) => {
-  console.log(`Called createFlow with ${flowId}, ${flowName}`)
-  return await anything.createFlow(flowName, flowId);
+export const createFlow = async ({ flowName }: { flowName: string }) => {
+  console.log(`Called createFlow with ${flowName}`);
+  let res = await anything.createFlow(flowName);
+  console.log(`Got back from createFlow ${JSON.stringify(res)}`);
+  return res;
 };
 
 export const getChatFlows = async () => {
@@ -33,8 +31,8 @@ export const getFlowByName = async (flow_name: string) => {
 };
 
 export const getFlowVersions = async (flow_id: string) => {
-  return await invoke("get_flow_versions", {flow_id}); 
-}
+  return await invoke("get_flow_versions", { flow_id });
+};
 
 // export const getPublishedFlowVersion = async (flow_id: string) => {
 //   return await invoke("get_published_flow_version", { flow_id });
@@ -57,7 +55,6 @@ export const getFlowNode = async ({
 }) => {
   return await invoke("get_flow_node", { flow_id, node_id });
 };
-
 
 //TODO: probs bad need to pick this somewhere
 export const saveToml = async ({

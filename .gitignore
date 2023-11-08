@@ -60,3 +60,4 @@ dist-ssr
 .next
 **/.env
 .sentryclirc
+.envrc

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{anything::*, AnythingState};
 use anything_common::{setup_tracing, AnythingConfig};
-use anything_coordinator::{start, Manager as AnythingManager};
+use anything_coordinator::{manager::start, Manager as AnythingManager};
 use tauri::{
     plugin::{self, TauriPlugin},
     AppHandle, Manager, Runtime,
@@ -44,9 +44,9 @@ impl<R: Runtime> Builder<R> {
                 stop,
                 get_flows,
                 create_flow,
-                delete_flow,
                 update_flow,
-                // execute_flow,
+                create_flow_version,
+                execute_flow,
             ])
             .setup(move |app_handle| {
                 let (stop_tx, stop_rx) = tokio::sync::mpsc::channel(1);
@@ -64,11 +64,21 @@ impl<R: Runtime> Builder<R> {
 
                 let anything_config = self.anything_config.clone();
                 tauri::async_runtime::block_on(async move {
-                    let arc_manager = ready_rx.recv().await;
-                    let arc_manager = arc_manager.unwrap().clone();
-                    arc_manager.refresh_flows().await.unwrap();
+                    let arc_manager = match ready_rx.recv().await {
+                        Some(arc_manager) => arc_manager,
+                        None => {
+                            panic!("Failed to start anything");
+                        }
+                    };
+                    let inner = match Arc::try_unwrap(arc_manager) {
+                        Ok(inner) => Arc::new(Mutex::new(inner)),
+                        Err(_) => {
+                            panic!("Failed to start anything");
+                        }
+                    };
+                    // arc_manager.refresh_flows().await.unwrap();
                     let init_state = AnythingState {
-                        inner: Mutex::new(arc_manager.clone()),
+                        inner,
                         stop_tx: Some(stop_tx),
                         anything_config,
                     };

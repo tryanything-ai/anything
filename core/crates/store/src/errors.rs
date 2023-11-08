@@ -26,6 +26,11 @@ pub enum StoreError {
         path: std::path::PathBuf,
         err: std::io::Error,
     },
+    UnableToRenameDirectory {
+        from: std::path::PathBuf,
+        to: std::path::PathBuf,
+        err: std::io::Error,
+    },
     NotifierError(String),
     InternalError(String),
 }
@@ -48,6 +53,13 @@ impl std::fmt::Display for StoreError {
             StoreError::UnableToReadFile { path, err } => {
                 write!(f, "Unable to read file {}: {}", path.display(), err)
             }
+            StoreError::UnableToRenameDirectory { from, to, err } => write!(
+                f,
+                "Unable to rename directory {} to {}: {}",
+                from.display(),
+                to.display(),
+                err
+            ),
             StoreError::NotifierError(msg) => write!(f, "Notifier error: {}", msg),
             StoreError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }

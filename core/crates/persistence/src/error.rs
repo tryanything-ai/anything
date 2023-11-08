@@ -15,6 +15,9 @@ pub enum PersistenceError {
     #[error("Flow not found: {0}")]
     FlowNotFound(String),
 
+    #[error("Unable to read flow in directory")]
+    UnableToReadFlow,
+
     #[error("Invalid database")]
     InvalidDatabaseType,
 

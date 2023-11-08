@@ -65,9 +65,9 @@ export const LocalFileProvider = ({ children }: { children: ReactNode }) => {
       console.log("new flow name", flowName);
       let flowId = uuidv4();
 
-      await api.createFlow({ flowName, flowId });
-
+      await api.createFlow({ flowName });
     } catch (error) {
+      console.log("error creating new flow", error);
       console.error(error);
     } finally {
       getFlows();

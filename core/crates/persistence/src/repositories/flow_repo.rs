@@ -59,6 +59,7 @@ pub trait FlowRepo {
     ) -> PersistenceResult<FlowVersion>;
     async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId>;
     async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool>;
+    async fn reset(&self) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -108,16 +109,11 @@ impl FlowRepo for FlowRepoImpl {
     async fn create_flow(&self, create_flow: CreateFlow) -> PersistenceResult<StoredFlow> {
         let mut tx = self.get_transaction().await?;
 
-        let flow_name = create_flow.name.clone();
+        let flow_id = uuid::Uuid::new_v4().to_string();
         let flow_version = "v0.0.0".to_string();
 
         let saved_flow = self
-            .internal_save(
-                &mut tx,
-                flow_name.clone(),
-                flow_version.clone(),
-                create_flow.into(),
-            )
+            .internal_save(&mut tx, flow_id, flow_version.clone(), create_flow.into())
             .await?;
 
         tx.commit()
@@ -130,11 +126,11 @@ impl FlowRepo for FlowRepoImpl {
     async fn create_or_update_flow(&self, flow: StoredFlow) -> PersistenceResult<StoredFlow> {
         let mut tx = self.get_transaction().await?;
 
-        let flow_name = flow.flow_name.clone();
+        let flow_id = flow.flow_id.clone();
         let res = self
             .internal_save(
                 &mut tx,
-                flow_name.clone(),
+                flow_id.clone(),
                 flow.latest_version_id.clone(),
                 flow,
             )
@@ -160,7 +156,7 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let res = match self
-            .internal_find_existing_flow_by_name(&mut tx, flow_id.clone())
+            .internal_find_existing_flow_by_id(&mut tx, flow_id.clone())
             .await
         {
             Some(existing_flow) => Ok(existing_flow),
@@ -190,6 +186,8 @@ impl FlowRepo for FlowRepoImpl {
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
 
+        tracing::trace!("Found flows: {:#?}", flows);
+
         Ok(flows)
     }
 
@@ -207,7 +205,7 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let res = self
-            .internal_find_existing_flow_by_name(&mut tx, name.clone())
+            .internal_find_existing_flow_by_id(&mut tx, name.clone())
             .await;
 
         tx.commit()
@@ -375,18 +373,18 @@ impl FlowRepo for FlowRepoImpl {
         Ok(res)
     }
 
-    async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId> {
+    async fn delete_flow(&self, flow_id: String) -> PersistenceResult<FlowId> {
         let mut tx = self.get_transaction().await?;
 
         let res = match self
-            .internal_find_existing_flow_by_name(&mut tx, name.clone())
+            .internal_find_existing_flow_by_id(&mut tx, flow_id.clone())
             .await
         {
             Some(stored_flow) => {
                 self.internal_delete_flow_by_id(&mut tx, stored_flow.flow_id)
                     .await
             }
-            None => Err(PersistenceError::FlowNotFound(name)),
+            None => Err(PersistenceError::FlowNotFound(flow_id)),
         };
 
         tx.commit().await?;
@@ -404,6 +402,15 @@ impl FlowRepo for FlowRepoImpl {
 
         Ok(res)
     }
+
+    async fn reset(&self) -> PersistenceResult<()> {
+        let mut tx = self.get_transaction().await?;
+
+        let res = self.internal_reset(&mut tx).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
 }
 
 impl FlowRepoImpl {
@@ -419,7 +426,7 @@ impl FlowRepoImpl {
         flow: StoredFlow,
     ) -> PersistenceResult<StoredFlow> {
         match self
-            .internal_find_existing_flow_by_name(tx, flow_id.clone())
+            .internal_find_existing_flow_by_id(tx, flow_id.clone())
             .await
         {
             Some(mut existing_flow) => {
@@ -643,25 +650,27 @@ impl FlowRepoImpl {
         flow_id: String,
     ) -> Option<StoredFlow> {
         match sqlx::query_as::<_, StoredFlow>(&format!("{} WHERE f.flow_id = ?1", GET_FLOW_SQL))
-            .bind(flow_id)
+            .bind(flow_id.clone())
             .fetch_one(&mut **tx)
             .await
         {
             Ok(existing_flow) => Some(existing_flow),
             Err(e) => {
-                tracing::debug!("Error finding existing flow by id: {:?}", e);
+                tracing::debug!("Error finding existing flow by id {:?}: {:?}", flow_id, e);
                 None
             }
         }
     }
 
+    #[inline]
+    #[allow(unused)]
     async fn internal_find_existing_flow_by_name(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
-        flow_name: String,
+        flow_id: String,
     ) -> Option<StoredFlow> {
         match sqlx::query_as::<_, StoredFlow>(&format!("{} WHERE f.flow_name = ?1", GET_FLOW_SQL))
-            .bind(flow_name)
+            .bind(flow_id)
             .fetch_one(&mut **tx)
             .await
         {
@@ -710,6 +719,23 @@ impl FlowRepoImpl {
 
         Ok(rows_affected == 1)
     }
+
+    async fn internal_reset(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    ) -> PersistenceResult<()> {
+        sqlx::query("DELETE FROM flows")
+            .execute(&mut **tx)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        sqlx::query("DELETE FROM flow_versions")
+            .execute(&mut **tx)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -751,12 +777,12 @@ mod tests {
         let flow_repo = FlowRepoImpl::new_with_datastore(datastore).unwrap();
 
         let stored_flow = test_helper.make_unique_stored_flow();
-        let flow_name = stored_flow.flow_name.clone();
+        let flow_id = stored_flow.flow_id.clone();
 
         let res = flow_repo.create_or_update_flow(stored_flow).await;
         assert!(res.is_ok());
         let saved_flow = res.unwrap();
-        let stored_flow = test_helper.get_flow_by_id(flow_name.clone()).await;
+        let stored_flow = test_helper.get_flow_by_id(flow_id.clone()).await;
         assert!(stored_flow.is_some());
         assert_eq!(stored_flow.unwrap().flow_name, saved_flow.flow_name);
     }
@@ -769,15 +795,15 @@ mod tests {
 
         // Create a new flow
         let stored_flow = test_helper.make_unique_stored_flow();
-        let flow_id = stored_flow.flow_id.clone();
         let flow_name = stored_flow.flow_name.clone();
         let res = flow_repo
             .create_flow(stored_flow.clone().into())
             .await
             .unwrap();
+        let flow_id = res.flow_id.clone();
 
         // confirm it already exists
-        let found_existing_flow = flow_repo.get_flow_by_id(flow_name.clone()).await.unwrap();
+        let found_existing_flow = flow_repo.get_flow_by_id(flow_id.clone()).await.unwrap();
         assert_eq!(res.flow_name, found_existing_flow.flow_name);
         assert!(!res.active);
 
@@ -791,7 +817,7 @@ mod tests {
         assert!(res.is_ok());
 
         let saved_flow = res.unwrap();
-        let stored_flow = test_helper.get_flow_by_id(flow_name.clone()).await;
+        let stored_flow = test_helper.get_flow_by_id(flow_id.clone()).await;
         assert!(stored_flow.is_some());
         let stored_flow = stored_flow.unwrap();
         assert_eq!(stored_flow.flow_name, saved_flow.flow_name);

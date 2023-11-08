@@ -4,6 +4,7 @@ import { useNavigate,useParams } from "react-router-dom";
 
 import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
+import api from "../tauri_api/api";
 
 type Inputs = {
   flow_name: string;
@@ -32,8 +33,17 @@ const FlowSettingsPanel = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
+      console.log("data data => ", data)
       if (flow_name && data.flow_name != flow_name) {
-        await updateFlowFrontmatter(flow_name, { name: data.flow_name });
+        // api
+        let updateFlow = {
+          flow_name: data.flow_name,
+          active: false,
+          version: "0.0.0"
+        };
+        let resp = await api.flows.updateFlow(flow_name, updateFlow);
+        console.log("resp", resp);
+        // await updateFlowFrontmatter(flow_name, { name: data.flow_name });
         navigate(`/flows/${data.flow_name}`);
       }
     } catch (error) {
