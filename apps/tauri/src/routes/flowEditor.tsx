@@ -11,13 +11,10 @@ import NodePanel from "../components/nodePanel";
 import ManualNode from "../components/nodes/manualNode";
 import SuperNode from "../components/nodes/superNode";
 import RightPanel from "../components/RightPanel";
-import {
-  FlowNavigationProvider,
-  useFlowNavigationContext,
-} from "../context/FlowNavigationProvider";
-import { FlowProvider, useFlowContext } from "../context/FlowProvider";
+import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
+import { useFlowContext } from "../context/FlowProvider";
 
-function Flows() {
+export default function Flows() {
   const {
     nodes,
     edges,
@@ -83,15 +80,5 @@ function Flows() {
         </Allotment>
       </div>
     </div>
-  );
-}
-
-export default function FlowEditor() {
-  return (
-    <FlowProvider>
-      <FlowNavigationProvider>
-        <Flows />
-      </FlowNavigationProvider>
-    </FlowProvider>
   );
 }

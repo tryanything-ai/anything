@@ -13,6 +13,9 @@ import { SettingsProvider } from "../context/SettingsProvider";
 import { SqlProvider } from "../context/SqlProvider";
 import { TauriProvider } from "../context/TauriProvider";
 import { DeeplinkProvider } from "../context/DeeplinkProvider";
+import { SoftwareUpdateProvider } from "./SoftwareUpdateProvider";
+import { FlowProvider } from "./FlowProvider";
+import { FlowNavigationProvider } from "./FlowNavigationProvider";
 
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
@@ -22,28 +25,36 @@ if (import.meta.env.mode === "production") {
   posthogClient.init(VITE_PUBLIC_POSTHOG_KEY, {
     api_host: VITE_PUBLIC_POSTHOG_HOST,
   });
-} 
+}
 
 const Context = ({ children }: { children: ReactNode }) => {
   return (
     <DeeplinkProvider>
-      <SettingsProvider>
-        <AuthenticationProvider>
-          <MarketplaceProvider>
-            <NotificationsProvider>
-              <PostHogProvider client={posthogClient}>
-                <TauriProvider>
-                  <LocalFileProvider>
-                    <ModelProvider>
-                      <SqlProvider>{children}</SqlProvider>
-                    </ModelProvider>
-                  </LocalFileProvider>
-                </TauriProvider>
-              </PostHogProvider>
-            </NotificationsProvider>
-          </MarketplaceProvider>
-        </AuthenticationProvider>
-      </SettingsProvider>
+      <SoftwareUpdateProvider>
+        <SettingsProvider>
+          <AuthenticationProvider>
+            <MarketplaceProvider>
+              <NotificationsProvider>
+                <PostHogProvider client={posthogClient}>
+                  <TauriProvider>
+                    <LocalFileProvider>
+                      <ModelProvider>
+                        <SqlProvider>
+                          <FlowProvider>
+                            <FlowNavigationProvider>
+                              {children}
+                            </FlowNavigationProvider>
+                          </FlowProvider>
+                        </SqlProvider>
+                      </ModelProvider>
+                    </LocalFileProvider>
+                  </TauriProvider>
+                </PostHogProvider>
+              </NotificationsProvider>
+            </MarketplaceProvider>
+          </AuthenticationProvider>
+        </SettingsProvider>
+      </SoftwareUpdateProvider>
     </DeeplinkProvider>
   );
 };
