@@ -38,7 +38,7 @@ export default async function Profile({
   }
 
   return (
-    <div className="mx-auto my-6 flex max-w-7xl flex-col md:my-16 md:flex-row">
+    <div className="mx-auto my-6 flex flex-col md:my-16 md:flex-row">
       {/* Left Column */}
       <div className="h-full max-w-sm p-6">
         <div className="avatar">
@@ -59,12 +59,14 @@ export default async function Profile({
       {/* Right Column */}
       <div className="flex flex-col p-2 md:pl-5">
         <div className="pb-4 pl-2 text-2xl">Templates</div>
-        <TemplateGrid
-          LinkComponent={Link}
-          AvatarComponent={Avatar}
-          templates={templates}
-          profile={false}
-        />
+        <div className="items-center">
+          <TemplateGrid
+            LinkComponent={Link}
+            AvatarComponent={Avatar}
+            templates={templates}
+            profile={false}
+          />
+        </div>
       </div>
     </div>
   );

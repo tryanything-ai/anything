@@ -4,9 +4,12 @@ export {
   fetchProfiles,
   fetchProfileTemplates,
   fetchTemplateBySlug,
+  fetchTemplateById,
   fetchTemplates,
   updateProfile, 
   uploadAvatar, 
+  saveFlowTemplate,
+  saveFlowTemplateVersion
 } from "./supabase/fetchSupabase";
 export { supabaseClient } from "./supabase/client";
 export {

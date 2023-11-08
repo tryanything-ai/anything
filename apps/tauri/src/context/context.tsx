@@ -22,10 +22,7 @@ if (import.meta.env.mode === "production") {
   posthogClient.init(VITE_PUBLIC_POSTHOG_KEY, {
     api_host: VITE_PUBLIC_POSTHOG_HOST,
   });
-} else {
-  // console.log("Initializing PostHog in development");
-  // console.log("import.meta.env", import.meta.env);
-}
+} 
 
 const Context = ({ children }: { children: ReactNode }) => {
   return (

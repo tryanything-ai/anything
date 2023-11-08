@@ -5,12 +5,14 @@ import DebugPanel from "./debugPanel";
 import NodeConfigPanel from "./nodeConfigPanel";
 import SettingsPanel from "./settingsPanel";
 import TomlPanel from "./tomlPanel";
+import SharingPanel from "./sharingPanel";
 
 const RightPanel = () => {
   const {
     debugPanel,
     settingsPanel,
     tomlPanel,
+    sharingPanel,
     nodeConfigPanel,
     closeAllPanelsOpenOne,
     nodeId,
@@ -38,6 +40,12 @@ const RightPanel = () => {
           Settings
         </a>
         <a
+          className={clsx("tab", { "tab-active": sharingPanel })}
+          onClick={() => closeAllPanelsOpenOne("sharing")}
+        >
+          Sharing
+        </a>
+        <a
           className={clsx("tab", { "tab-active": tomlPanel })}
           onClick={() => closeAllPanelsOpenOne("toml")}
         >
@@ -45,26 +53,11 @@ const RightPanel = () => {
         </a>
         {/* You can also control this one similarly */}
       </div>
-      {debugPanel ? (
-        // <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
-        <DebugPanel />
-      ) : // </Allotment.Pane>
-      null}
-      {settingsPanel ? (
-        // <Allotment.Pane preferredSize={300} maxSize={600} minSize={200}>
-        <SettingsPanel />
-      ) : // </Allotment.Pane>
-      null}
-      {tomlPanel ? (
-            // <Allotment.Pane preferredSize={300} minSize={200}>
-              <TomlPanel />
-            // </Allotment.Pane>
-          ) : null}
-      {nodeConfigPanel ? (
-        // <Allotment.Pane preferredSize={700} minSize={200}>
-        <NodeConfigPanel key={nodeId} />
-      ) : // </Allotment.Pane>
-      null}
+      {debugPanel ? <DebugPanel /> : null}
+      {settingsPanel ? <SettingsPanel /> : null}
+      {tomlPanel ? <TomlPanel /> : null}
+      {sharingPanel ? <SharingPanel /> : null}
+      {nodeConfigPanel ? <NodeConfigPanel key={nodeId} /> : null}
     </div>
   );
 };

@@ -1,9 +1,11 @@
 // @ts-ignore
 import { PostgrestBuilder } from "@supabase/postgrest-js";
+//above line needs to stay or all the types freak out in consuming packages and apps
 import * as SUPABASE from "./types/supabase.types";
 
 export * from "./types/supabase.types";
 import * as types from "./types/supabase.types";
+import slugify from "slugify";
 
 import { supabaseClient } from "./client";
 
@@ -34,6 +36,23 @@ export const fetchTemplateBySlug = async (
   try {
     const { data, error }: SUPABASE.DbResult<typeof templatesQuery> =
       await templatesQuery.eq("slug", slug);
+
+    // console.log("data in fetchTemplateBySlug", JSON.stringify(data, null, 3));
+    if (error || !data) throw error;
+
+    return data;
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
+};
+
+export const fetchTemplateById = async (
+  id: string
+): Promise<BigFlow | undefined> => {
+  try {
+    const { data, error }: SUPABASE.DbResult<typeof templatesQuery> =
+      await templatesQuery.eq("flow_template_id", id);
 
     // console.log("data in fetchTemplateBySlug", JSON.stringify(data, null, 3));
     if (error || !data) throw error;
@@ -158,5 +177,119 @@ export const uploadAvatar = async (
   } catch (e) {
     console.log(e);
     return e;
+  }
+};
+
+const manageSlugUpdate = async (slug: string): Promise<string> => {
+  let newSlug = slug;
+  let slugExists = true;
+  let count = 0;
+
+  while (slugExists) {
+    const { data: slug_data, error: slug_error } = await supabaseClient
+      .from("flow_templates")
+      .select("slug")
+      .eq("slug", newSlug);
+    count++;
+
+    if (slug_error) throw slug_error;
+    if (count > 10) throw new Error("Too many slug conflicts");
+
+    if (slug_data && slug_data.length > 0) {
+      console.log("Making New Slug");
+      newSlug = slug + "-" + count;
+    } else {
+      slugExists = false;
+    }
+  }
+
+  return newSlug;
+};
+
+export const saveFlowTemplate = async (
+  flow_template_name: string,
+  flow_template_description: string,
+  flow_template_json: any,
+  publisher_id: string,
+  anything_flow_template_version: string
+) => {
+  try {
+    // make new slug if we have conflicts
+    let slug = await manageSlugUpdate(slugify(flow_template_name, {lower: true}));
+
+    // Save Template
+    const { data, error } = await supabaseClient
+      .from("flow_templates")
+      .insert({
+        anonymous_publish: false,
+        flow_template_name,
+        flow_template_description,
+        slug,
+        public_template: true,
+        publisher_id,
+      })
+      .select()
+      .single();
+
+    console.log("data", data);
+    if (error) throw error;
+
+    if (!data) throw new Error("data is undefined");
+
+    let result = await saveFlowTemplateVersion(
+      data.flow_template_id,
+      flow_template_name,
+      flow_template_json,
+      true,
+      "0.0.1",
+      "Initial Commit",
+      publisher_id,
+      anything_flow_template_version
+    );
+
+    if (!result) throw new Error("result is undefined");
+
+    console.log("result", result);
+    //for some consistency on front end.
+    return fetchTemplateById(data.flow_template_id);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const saveFlowTemplateVersion = async (
+  flow_template_id: string,
+  flow_template_version_name: string,
+  flow_template_json: any,
+  public_template: boolean,
+  flow_template_version: string, 
+  commit_message: string,
+  publisher_id: string,
+  anything_flow_template_version: string
+) => {
+  try {
+    // Save Template Version
+    const { data, error } = await supabaseClient
+      .from("flow_template_versions")
+      .insert({
+        flow_template_id,
+        flow_template_json,
+        publisher_id,
+        anything_flow_template_version,
+        flow_template_version_name,
+        flow_template_version,
+        public_template,
+        recommended_version: true,
+        commit_message,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (!data) throw new Error("data is undefined");
+    return data;
+  } catch (e) {
+    console.log(e);
   }
 };

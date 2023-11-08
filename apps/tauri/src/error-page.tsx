@@ -7,17 +7,27 @@ export default function ErrorPage() {
 
   return (
     <PageLayout>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <img src="/404.svg" alt="Error 404" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "70vh",
+        }}
+      >
+        <img
+          src="/404.svg"
+          alt="Error 404"
+          style={{ maxWidth: "100%", maxHeight: "100%" }}
+        />
       </div>
-      <p>
-        Go{" "}
+      <p className="flex flex-col justify-center items-center pt-5">
         <Link className="btn btn-primary" to="/">
-          home
+          Go Home
         </Link>
-      </p>
-      <p>
-        <i>{error.statusText || error.message}</i>
+        <p className="pt-10">
+          <i>{error.statusText || error.message}</i>
+        </p>
       </p>
     </PageLayout>
   );

@@ -29,12 +29,14 @@ export interface Database {
           {
             foreignKeyName: "flow_template_tags_flow_template_id_fkey"
             columns: ["flow_template_id"]
+            isOneToOne: false
             referencedRelation: "flow_templates"
             referencedColumns: ["flow_template_id"]
           },
           {
             foreignKeyName: "flow_template_tags_tag_id_fkey"
             columns: ["tag_id"]
+            isOneToOne: false
             referencedRelation: "tags"
             referencedColumns: ["id"]
           }
@@ -50,7 +52,7 @@ export interface Database {
           flow_template_version: string
           flow_template_version_id: string
           flow_template_version_name: string
-          published: boolean
+          public_template: boolean
           publisher_id: string
           recommended_version: boolean
         }
@@ -63,7 +65,7 @@ export interface Database {
           flow_template_version?: string
           flow_template_version_id?: string
           flow_template_version_name: string
-          published?: boolean
+          public_template?: boolean
           publisher_id: string
           recommended_version?: boolean
         }
@@ -76,7 +78,7 @@ export interface Database {
           flow_template_version?: string
           flow_template_version_id?: string
           flow_template_version_name?: string
-          published?: boolean
+          public_template?: boolean
           publisher_id?: string
           recommended_version?: boolean
         }
@@ -84,12 +86,14 @@ export interface Database {
           {
             foreignKeyName: "flow_template_versions_flow_template_id_fkey"
             columns: ["flow_template_id"]
+            isOneToOne: false
             referencedRelation: "flow_templates"
             referencedColumns: ["flow_template_id"]
           },
           {
             foreignKeyName: "flow_template_versions_publisher_id_fkey"
             columns: ["publisher_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           }
@@ -102,7 +106,7 @@ export interface Database {
           flow_template_description: string | null
           flow_template_id: string
           flow_template_name: string
-          published: boolean
+          public_template: boolean
           publisher_id: string
           slug: string
         }
@@ -112,7 +116,7 @@ export interface Database {
           flow_template_description?: string | null
           flow_template_id?: string
           flow_template_name: string
-          published: boolean
+          public_template: boolean
           publisher_id: string
           slug: string
         }
@@ -122,7 +126,7 @@ export interface Database {
           flow_template_description?: string | null
           flow_template_id?: string
           flow_template_name?: string
-          published?: boolean
+          public_template?: boolean
           publisher_id?: string
           slug?: string
         }
@@ -130,6 +134,7 @@ export interface Database {
           {
             foreignKeyName: "flow_templates_publisher_id_fkey"
             columns: ["publisher_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           }
@@ -191,6 +196,7 @@ export interface Database {
           {
             foreignKeyName: "profiles_id_fkey"
             columns: ["id"]
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           }
