@@ -222,10 +222,13 @@ impl Manager {
     pub async fn get_flow(&self, name: String) -> CoordinatorResult<anything_graph::Flow> {
         let flow_repo = self.flow_repo()?;
         let mut file_store = self.file_store.clone();
+        tracing::trace!("Get flow by name called in the manager: {:?}", name.clone());
+        // Look for stored flow in database
         let flow = flow_repo.get_flow_by_name(name).await.map_err(|e| {
             tracing::error!("error when getting flow: {:#?}", e);
             CoordinatorError::PersistenceError(e)
         })?;
+        // Get the flow from disk
         let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
             tracing::error!("error when getting flow: {:#?}", e);
             CoordinatorError::PersistenceError(e)
@@ -271,6 +274,7 @@ impl Manager {
         // let flow: Flow = flow.clone().get_flow(&mut self.file_store).await.unwrap();
         // let flowfile: Flowfile = flow.clone().into();
         let toml_repr = toml::to_string(&flow).expect("unable to convert StoredFlow into a string");
+        tracing::debug!("Saving flow toml representation: {:#?}", toml_repr);
         let flowfile =
             Flowfile::from_string(toml_repr).expect("unable to create flow file for a new flow");
         let flow_str: String = flowfile.clone().into();
@@ -337,13 +341,14 @@ impl Manager {
         flow_id: String,
         update_flow: UpdateFlow,
     ) -> CoordinatorResult<anything_graph::Flow> {
+        tracing::trace!("Update flow with {flow_id} and {:#?}", update_flow);
         let new_flow_name = update_flow.flow_name.clone();
         let mut original_flow = self.flow_repo()?.get_flow_by_id(flow_id.clone()).await?;
         let original_flow_name = original_flow.flow_name.clone();
 
         tracing::trace!("original_flow: {:#?}", original_flow);
 
-        self.flow_repo()?.delete_flow(flow_id.clone()).await?;
+        // self.flow_repo()?.delete_flow(flow_id.clone()).await?;
 
         let stored_flow = self
             .flow_repo()?

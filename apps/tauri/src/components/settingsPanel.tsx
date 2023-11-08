@@ -5,6 +5,7 @@ import { useNavigate,useParams } from "react-router-dom";
 import { useFlowContext } from "../context/FlowProvider";
 import { useLocalFileContext } from "../context/LocalFileProvider";
 import api from "../tauri_api/api";
+import { getFlows } from "../tauri_api/invoke";
 
 type Inputs = {
   flow_name: string;
@@ -13,8 +14,9 @@ type Inputs = {
 const FlowSettingsPanel = () => {
   const [loading, setLoading] = useState(false);
   const { deleteFlow } = useLocalFileContext();
-  const { updateFlowFrontmatter } = useFlowContext();
+  const { updateFlowFrontmatter, flowFrontmatter } = useFlowContext();
   const { flow_name } = useParams();
+
   const navigate = useNavigate();
   const {
     register,
@@ -33,7 +35,7 @@ const FlowSettingsPanel = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
-      console.log("data data => ", data)
+      console.log("data data => ", flowFrontmatter, data)
       if (flow_name && data.flow_name != flow_name) {
         // api
         let updateFlow = {
@@ -41,8 +43,11 @@ const FlowSettingsPanel = () => {
           active: false,
           version: "0.0.0"
         };
-        let resp = await api.flows.updateFlow(flow_name, updateFlow);
-        console.log("resp", resp);
+        let resp = await api.flows.updateFlow(flowFrontmatter.flow_id, updateFlow);
+        await updateFlowFrontmatter(flow_name, resp);
+        const new_flows = await getFlows();
+        console.log("new flows after update", new_flows)
+        // console.log("resp", resp);
         // await updateFlowFrontmatter(flow_name, { name: data.flow_name });
         navigate(`/flows/${data.flow_name}`);
       }

@@ -26,6 +26,28 @@ pub async fn get_flows(state: tauri::State<'_, AnythingState>) -> FlowResult<Get
 }
 
 #[derive(Serialize)]
+pub struct GetFlowResponse {
+    flow: Option<Flow>,
+}
+
+#[tauri::command]
+pub async fn get_flow_by_name(
+    state: tauri::State<'_, AnythingState>,
+    flow_name: String,
+) -> FlowResult<GetFlowResponse> {
+    match state.inner.try_lock() {
+        Err(_e) => Err(Error::CoordinatorNotInitialized),
+        Ok(ref manager) => match manager.get_flow(flow_name).await {
+            Ok(flows) => Ok(GetFlowResponse { flow: Some(flows) }),
+            Err(e) => {
+                tracing::error!("Error getting flows: {:?}", e);
+                Ok(GetFlowResponse { flow: None })
+            }
+        },
+    }
+}
+
+#[derive(Serialize)]
 pub struct CreateFlowResponse {
     flow: Option<Flow>,
 }
@@ -44,7 +66,7 @@ pub async fn create_flow(
         }
         Ok(ref mut inner) => match inner.create_flow(flow_name).await {
             Ok(flow) => {
-                tracing::debug!("Created flow inside tauri plugin");
+                tracing::debug!("Created flow inside tauri plugin successfully: {:#?}", flow);
                 Ok(CreateFlowResponse { flow: Some(flow) })
             }
             Err(e) => {

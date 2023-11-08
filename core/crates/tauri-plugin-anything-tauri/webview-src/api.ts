@@ -21,6 +21,12 @@ export class Anything {
         })
     }
 
+    async getFlowByName<T>(flowName: string): Promise<T> {
+        return await invoke("plugin:anything|get_flow_by_name", {
+            flowName
+        })
+    }
+
     async createFlow<T>(flowName: string): Promise<T> {
         return await invoke("plugin:anything|create_flow", {flowName})
     }
