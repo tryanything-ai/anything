@@ -34,29 +34,23 @@ const FlowSettingsPanel = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
-      console.log("data data => ", flowFrontmatter, data, flow_name);
-      if (
-        flow_name &&
-        data.flow_name != flow_name &&
-        flowFrontmatter &&
-        flowFrontmatter.flowId
-      ) {
-        // api
+      if (flow_name && flowFrontmatter) {
+   
         let UpdateFlowArgs = {
           flow_name: data.flow_name,
-          active: flowFrontmatter.active,
+          active: true, //TODO: make a toggle
           version: flowFrontmatter.version,
         };
 
-        console.log("UpdateFlowArgs::SettingsPanel", UpdateFlowArgs);
-        let res = await updateFlow(flowFrontmatter.flowId, UpdateFlowArgs);
+        console.log("Updating Flow In Settings Panel with Args", UpdateFlowArgs);
+        let res = await updateFlow(flowFrontmatter.flow_id, UpdateFlowArgs);
         console.log("res from rename flow in settings panel", res);
         navigate(`/flows/${data.flow_name}`);
       } else {
         console.log("Data problem in settings panel");
       }
     } catch (error) {
-      console.log(error);
+      console.log("error in settings panel", error);
     } finally {
       console.log(data);
       setLoading(false);

@@ -110,11 +110,12 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateFlow = async (flowId: string, args: UpdateFlowArgs) => {
-    try {
+    // try {
+    //   console.log("Flow id in FlowsProivder", flowId);
       return await api.flows.updateFlow(flowId, args);
-    } catch (error) {
-      console.error("Error renaming flow" + error);
-    }
+    // } catch (error) {
+    //   console.error("Error renaming flow in Flows Provider" + error);
+    // }
   };
   //get local files to show in UI when files change
   //read the exact toml file that is being editedf
@@ -144,12 +145,10 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loading]);
 
-  //RUST_MIGRATION
   const getFlows = async () => {
     console.log("Getting FLows from Tauri API?");
     let res: any = await api.flows.getFlows();
     setFlows(res.flows);
-    console.log("res from new rust stub", res);
   };
 
   useEffect(() => {

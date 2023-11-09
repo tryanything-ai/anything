@@ -27,7 +27,6 @@ const NodePanel = () => {
   }, []);
 
   const setResults = (results: Node[]) => {
-    console.log("results", results);
     setTriggerNodeResults(
       results.filter((node): node is Trigger => node.trigger)
     );
@@ -43,7 +42,6 @@ const NodePanel = () => {
           data={allNodes}
           searchKey={["node_label"]}
           onResultsChange={(results) => {
-            console.log("results", results);
             setResults(results);
           }}
         />

@@ -15,8 +15,8 @@ export const createFlow = async (flowName: string) => {
   return res;
 };
 
-export async function updateFlow(flowId: string, updateFlow: UpdateFlowArgs) {
-  return await anything.updateFlow(flowId, updateFlow);
+export async function updateFlow(flowId: string, args: UpdateFlowArgs) {
+  return await anything.updateFlow(flowId, args);
 }
 
 export async function deleteFlow(flowId: string) {

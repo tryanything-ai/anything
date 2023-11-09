@@ -68,6 +68,7 @@ interface FlowContextInterface {
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
+  toml: "",
   nodes: [],
   edges: [],
   flowFrontmatter: undefined,
@@ -78,7 +79,6 @@ export const FlowContext = createContext<FlowContextInterface>({
   onConnect: () => {},
   onDragOver: () => {},
   onDrop: () => {},
-  toml: "",
   addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},

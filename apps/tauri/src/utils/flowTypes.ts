@@ -1,14 +1,14 @@
 import { HandleProps, Edge, NodeProps } from "reactflow";
 
-//Top level metadata about a flow 
+//Top level metadata about a flow
 //like you might see in a package explorer like NPM
 export type FlowFrontMatter = {
   active: boolean; //processign state ( all on or all off kinda like pause and start )
   name: string;
-  flowId: string;
+  flow_id: string;
   version: string;
   username?: string;
-  userId?: string;
+  user_id?: string;
   description?: string;
 };
 
@@ -19,7 +19,7 @@ export interface Flow extends FlowFrontMatter {
   trigger: Trigger; //Triggering
   actions: Action[]; //Processing
   edges: Edge[]; //Needed for BFS traversal and flow rendering
-};
+}
 
 //Node Configuration needed to display and run a Node
 interface BaseNode {
@@ -70,8 +70,9 @@ interface Variable {
 
 export type AnythingNodeProps = NodeProps<Node>;
 
+//TODO: refactor this to be more like the above
 export type EventInput = {
-  flowId: string; //flow needs a computer friendly name that can be changed without changing processing
+  flow_id: string; //flow needs a computer friendly name that can be changed without changing processing
   flowName: string; //flow needs a user friendly name
   version: string; //flows will have versions so you can have confidence messing arround in future
   nodeId: string; //represents exact_id inside a flow
@@ -89,11 +90,12 @@ export type EventInput = {
 // Mocks for testing etc
 export const MockNewFlows: Flow[] = [
   {
+    active: true,
     name: "Mock Flow",
     username: "Mock Author",
-    userId: "1",
+    user_id: "1",
     environment: "dev",
-    flowId: "1",
+    flow_id: "1",
     version: "0.1",
     description:
       "This is a mock flow with approximately 3 lines of text that needs to be concatted for the user. Actually its closer to two lines",
@@ -147,11 +149,12 @@ export const MockNewFlows: Flow[] = [
     edges: [],
   },
   {
+    active: true,
     name: "Mock Flow",
     username: "Mock Author",
-    userId: "1",
+    user_id: "1",
     environment: "dev",
-    flowId: "1",
+    flow_id: "1",
     version: "0.1",
     description:
       "This is a mock flow with approximately 3 lines of text that needs to be concatted for the user. Actually its closer to two lines",

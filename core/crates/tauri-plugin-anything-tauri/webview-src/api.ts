@@ -40,9 +40,9 @@ export class Anything {
     });
   }
 
-  async updateFlow<T>(flowId: string, updateFlow: UpdateFlowArgs): Promise<T> {
-    console.log("updateFlow called ", flowId, updateFlow);
-    return await invoke("plugin:anything|update_flow", { flowId, updateFlow });
+  async updateFlow<T>(flowId: string, args: UpdateFlowArgs): Promise<T> {
+    console.log("updateFlow called ", flowId, args);
+    return await invoke("plugin:anything|update_flow", { flowId, args });
   }
 
   async executeFlow<T>(flowName: string): Promise<T> {
