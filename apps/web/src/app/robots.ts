@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
-let base_url = "https://" + process.env.NEXT_PUBLIC_VERCEL_URL; 
- 
+
+const base_url = process.env.NEXT_PUBLIC_HOSTED_URL;
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -8,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/private/',
     },
-    sitemap: base_url + '/sitemap.xml',
+    sitemap: `${base_url}/sitemap.xml`,
   }
 }

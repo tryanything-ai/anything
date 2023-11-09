@@ -10,11 +10,9 @@ import {
 import { supabaseClient, Profile } from "utils";
 import { useSettingsContext } from "./SettingsProvider";
 import { useNavigate } from "react-router-dom";
+import posthogClient from "posthog-js";
 
 interface AuthenticationContextInterface {
-  // signInWithEmail: (email: string, password: string) => void;
-  // signUpWithEmail: (email: string, password: string) => void;
-  // exchangeAccessTokenForSession: (access_token: string) => void;
   getSession: () => void;
   createSession: (
     access_token: string,
@@ -28,10 +26,7 @@ interface AuthenticationContextInterface {
 
 export const AuthenticationContext =
   createContext<AuthenticationContextInterface>({
-    // signInWithEmail: () => {},
-    // signUpWithEmail: () => {},
     createSession: () => null,
-    // exchangeAccessTokenForSession: () => {},
     getSession: () => {},
     signOut: () => {},
     fetchProfile: () => {},
@@ -71,48 +66,6 @@ export const AuthenticationProvider = ({
     return data.session;
   };
 
-  // const signUpWithEmail = async (email: string, password: string) => {
-  //   if (webFeaturesDisabled) return null;
-  //   if (!email || !password) return console.log("no email or password");
-  //   const { data, error } = await supabaseClient.auth.signUp({
-  //     email,
-  //     password,
-  //     options: {
-  //       //TODO: deeplink?
-  //       emailRedirectTo: `${location.origin}/auth/callback`,
-  //     },
-  //   });
-
-  //   if (error) {
-  //     console.log(error);
-  //     return;
-  //   }
-
-  //   console.log("Signup data", JSON.stringify(data, null, 3));
-
-  //   if (data && data.user) {
-  //     //hydrate profile
-  //     await fetchProfile(data.user.id);
-  //   }
-  // };
-
-  // const signInWithEmail = async (email: string, password: string) => {
-  //   if (webFeaturesDisabled) return null;
-  //   if (!email || !password) return console.log("no email or password");
-  //   const { data, error } = await supabaseClient.auth.signInWithPassword({
-  //     email,
-  //     password,
-  //   });
-
-  //   if (error) {
-  //     console.log(error);
-  //     return;
-  //   }
-  //   console.log("Login data", JSON.stringify(data, null, 3));
-  //   //hydrate profile
-  //   await fetchProfile(data.user.id);
-  // };
-
   const fetchProfileFromUserId = async (user_id: string) => {
     if (webFeaturesDisabled) return null;
     try {
@@ -120,12 +73,12 @@ export const AuthenticationProvider = ({
         .from("profiles")
         .select("*")
         .eq("id", user_id)
-        .single(); 
+        .single();
 
       if (error) throw error;
       if (profile) {
         setProfile(profile);
-        return profile; 
+        return profile;
       } else {
         return undefined;
       }
@@ -148,24 +101,23 @@ export const AuthenticationProvider = ({
   const signOut = async () => {
     // if (webFeaturesDisabled) return null;
     await supabaseClient.auth.signOut();
+    posthogClient.reset();
     setSession(null);
     setProfile(null);
   };
 
-  // const exchangeAccessTokenForSession = async (code: string) => {
-  //   let res = await supabaseClient.auth.exchangeCodeForSession(code);
-  //   console.log("exchangeCodeForSession", JSON.stringify(res, null, 3));
-  // };
-
   useEffect(() => {
     //update profile if sesssion exists
-    fetchCurrentUserProfile(); 
+    fetchCurrentUserProfile();
   }, [session]);
 
   const getSession = async () => {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       console.log("session found in AuthenticationProvider", session);
       setSession(session);
+      posthogClient.identify(session?.user?.id, {
+        email: session?.user?.email,
+      });
     });
   };
 
@@ -180,6 +132,11 @@ export const AuthenticationProvider = ({
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange((event, session) => {
       //user has updated password ( most likely )
+      if (session?.user?.id) {
+        posthogClient.identify(session?.user?.id, {
+          email: session?.user?.email,
+        });
+      }
       if (event === "USER_UPDATED") {
         console.log("USER_UPDATED");
         navigate("/");
@@ -188,15 +145,13 @@ export const AuthenticationProvider = ({
         console.log("SIGNED_IN");
         navigate("/");
       }
-     
+
       console.log("event", JSON.stringify(event, null, 3));
       console.log(
         "session changed in AuthenticationProvider",
         JSON.stringify(session, null, 3)
       );
       setSession(session);
-      // fetchProfileFromUserId(session?.user?.id);
-      // fethc
     });
 
     return () => {
@@ -208,12 +163,9 @@ export const AuthenticationProvider = ({
   return (
     <AuthenticationContext.Provider
       value={{
-        // signInWithEmail,
-        // signUpWithEmail,
         signOut,
         profile,
         fetchProfile: fetchCurrentUserProfile,
-        // exchangeAccessTokenForSession,
         session,
         getSession,
         createSession: createSessionFromUrl,

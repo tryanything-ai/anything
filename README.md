@@ -2,6 +2,8 @@
 
 ✨ Think Zapier, but on your Mac, completely focused on AI!
 
+## Don't hire your next employee. Build them!
+
 ### Drag it and drop it
 
 ![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_dnd_sept_11.gif)
@@ -12,7 +14,7 @@
 
 ### 🌟 Welcome to Anything - the future of local automation!
 
-Looking for a tool that blends the simplicity of Zapier, the flexibility of AI, and the power of a code editor?
+Looking for a tool that blends the simplicity of Zapier, the power of AI and the the ability to be self hosted?
 
 Look no further.
 
@@ -29,6 +31,7 @@ Anything will be the first tool you go to grab when your dreaming of putting AI 
 
 - React: For our intuitive and seamless UI.
 - Rust: Ensuring robust and lightning-fast operations.
+- Deno: Lets you use custom JS, TS, Wasm etc. 
 - Tauri: Local apps that aren't a whole chrome browser.
 
 ### Where we're going
@@ -73,12 +76,13 @@ Repo structure based on turborepo tailwind template
 
 - [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
 - [x] Embeded Sqlite DB
-- [ ] Event System ( 90% WIP )
+- [x] WASM Interpreter via [Deno](https://github.com/denoland/deno)
+- [x] Event System
+- [x] Allow Custom Rust Plugins for Powerful Extensions
+- [x] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/)
 - [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
 - [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models
-- [ ] WASM Nodes or
-- [ ] Python Interpreter or
-- [ ] Javascript Runtime w/ [Deno](https://github.com/denoland/deno)
+- [ ] Python Interpreter via Starlark
 - [ ] Integration with popular local apps and services
 
 Share your ideas!

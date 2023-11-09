@@ -2,11 +2,10 @@ import "./globals.css";
 import "ui/styles.css";
 
 import type { Metadata } from "next";
-import { ReactNode, Suspense } from "react";
+import { ReactNode, Suspense, JSX } from "react";
 import { siteConfig } from "../config/site";
 import { dm_sans, inter } from "../lib/fonts";
 import { PHProvider, PostHogPageview } from "./providers";
-// import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: {
@@ -52,25 +51,21 @@ export default async function RootLayout({
   children,
 }: {
   children: ReactNode;
-}) {
+}): Promise<JSX.Element> {
   return (
     <html
-      lang="en"
       className={`${inter.variable} ${dm_sans.variable}`}
+      data-theme="dark"
+      lang="en"
       suppressHydrationWarning
     >
       <head />
-      {/* Body */}
       <Suspense>
         <PostHogPageview />
       </Suspense>
       <PHProvider>
         <body className=" text-slate-12 font-sans">{children}</body>
       </PHProvider>
-      {/* <body className="font-sans text-slate-12">
-        {children}
-        <Toaster />
-      </body> */}
     </html>
   );
 }

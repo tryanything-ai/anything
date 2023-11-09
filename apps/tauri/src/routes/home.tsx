@@ -26,7 +26,7 @@ export default function Home() {
                   as={Link}
                   key={flow.name}
                   to={`flows/${flow.name}`}
-                  className="w-96"
+                  className="w-full"
                 >
                   <h2 className="card-title">{flow.name}</h2>
                 </BaseCard>

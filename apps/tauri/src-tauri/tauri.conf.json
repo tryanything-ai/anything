@@ -46,8 +46,8 @@
         "identifier": "xyz.anything.dev",
         "longDescription": "",
         "macOS": {
-          "entitlements": null,
-          "exceptionDomain": "",
+          "entitlements": "macOs/entitlements.plist",
+          "exceptionDomain": "tryanything.xyz",
           "frameworks": [],
           "providerShortName": null,
           "signingIdentity": null

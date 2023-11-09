@@ -4,6 +4,9 @@ import defaultTheme from "tailwindcss/defaultTheme";
 const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   // https://github.com/vercel/turbo/tree/main/examples/with-tailwind
+  daisyui: {
+    themes: ["dark"],
+  },
   theme: {
     fontSize: {
       "2xs": ["0.75rem", { lineHeight: "1.25rem" }],

@@ -116,6 +116,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     FlowFrontMatter | undefined
   >();
   const [toml, setToml] = useState<string>("");
+  // State for managing current processing for manual triggers and ebugging
   const [currentProcessingStatus, setCurrentProcessingStatus] = useState<
     ProcessingStatus | undefined
   >();

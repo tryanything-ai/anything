@@ -12,6 +12,7 @@ import FlowName from "../components/flowName";
 import NodePanel from "../components/nodePanel";
 import SuperNode from "../components/nodes/superNode";
 import RightPanel from "../components/RightPanel";
+import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { useFlowContext } from "../context/FlowProvider";
 
 export default function Flows() {

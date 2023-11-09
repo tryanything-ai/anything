@@ -13,6 +13,7 @@ import { SettingsProvider } from "../context/SettingsProvider";
 import { SqlProvider } from "../context/SqlProvider";
 import { TauriProvider } from "../context/TauriProvider";
 import { DeeplinkProvider } from "../context/DeeplinkProvider";
+import { SoftwareUpdateProvider } from "./SoftwareUpdateProvider";
 import { FlowProvider } from "./FlowProvider";
 import { FlowNavigationProvider } from "./FlowNavigationProvider";
 
@@ -29,29 +30,31 @@ if (import.meta.env.mode === "production") {
 const Context = ({ children }: { children: ReactNode }) => {
   return (
     <DeeplinkProvider>
-      <SettingsProvider>
-        <AuthenticationProvider>
-          <MarketplaceProvider>
-            <NotificationsProvider>
-              <PostHogProvider client={posthogClient}>
-                <TauriProvider>
-                  <FlowsProvider>
-                    <ModelProvider>
-                      <SqlProvider>
-                        <FlowProvider>
-                          <FlowNavigationProvider>
-                            {children}
-                          </FlowNavigationProvider>
-                        </FlowProvider>
-                      </SqlProvider>
-                    </ModelProvider>
-                  </FlowsProvider>
-                </TauriProvider>
-              </PostHogProvider>
-            </NotificationsProvider>
-          </MarketplaceProvider>
-        </AuthenticationProvider>
-      </SettingsProvider>
+      <SoftwareUpdateProvider>
+        <SettingsProvider>
+          <AuthenticationProvider>
+            <MarketplaceProvider>
+              <NotificationsProvider>
+                <PostHogProvider client={posthogClient}>
+                  <TauriProvider>
+                    <FlowsProvider>
+                      <ModelProvider>
+                        <SqlProvider>
+                          <FlowProvider>
+                            <FlowNavigationProvider>
+                              {children}
+                            </FlowNavigationProvider>
+                          </FlowProvider>
+                        </SqlProvider>
+                      </ModelProvider>
+                    </FlowsProvider>
+                  </TauriProvider>
+                </PostHogProvider>
+              </NotificationsProvider>
+            </MarketplaceProvider>
+          </AuthenticationProvider>
+        </SettingsProvider>
+      </SoftwareUpdateProvider>
     </DeeplinkProvider>
   );
 };

@@ -111,8 +111,8 @@ importers:
         specifier: ^0.40.0
         version: 0.40.0
       posthog-js:
-        specifier: ^1.81.1
-        version: 1.85.2
+        specifier: ^1.88.1
+        version: 1.88.1
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -238,11 +238,11 @@ importers:
         specifier: ^8.9.2
         version: 8.9.2
       posthog-js:
-        specifier: ^1.85.2
-        version: 1.85.2
+        specifier: ^1.88.1
+        version: 1.88.1
       posthog-node:
-        specifier: ^3.1.2
-        version: 3.1.2
+        specifier: ^3.1.3
+        version: 3.1.3
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -377,6 +377,9 @@ importers:
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
+      slugify:
+        specifier: ^1.6.6
+        version: 1.6.6
       typescript:
         specifier: latest
         version: 5.2.2
@@ -2726,11 +2729,12 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /axios@0.27.2:
-    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
+  /axios@1.6.0:
+    resolution: {integrity: sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==}
     dependencies:
       follow-redirects: 1.15.3
       form-data: 4.0.0
+      proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
     dev: false
@@ -5435,17 +5439,17 @@ packages:
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
-  /posthog-js@1.85.2:
-    resolution: {integrity: sha512-xKteAKQhhNhOPWHUEso7Ajm7Qk+lJnDH4JVJ+r4kti62sXtVTSmayhDZoPgiCmQ3w1YtvL13wojb1IbpCpxScw==}
+  /posthog-js@1.88.1:
+    resolution: {integrity: sha512-+8kFFU5KIcFSm8zB3tX8l0GSPyq/OtMtdrS9dYpMJk6nsEwXvOjkwFEpSrYzL5eGEpTPdbM65M52HvMqqsjpXw==}
     dependencies:
       fflate: 0.4.8
     dev: false
 
-  /posthog-node@3.1.2:
-    resolution: {integrity: sha512-atPGYjiK+QvtseKKsrUxMrzN84sIVs9jTa7nx5hl999gJly1S3J5r0DApwZ69NKfJkVIeLTCJyT0kyS+7WqDSw==}
+  /posthog-node@3.1.3:
+    resolution: {integrity: sha512-UaOOoWEUYTcaaDe1w0fgHW/sXvFr3RO0l7yI7RUDzkZNZCfwXNO9r3pc14d1EtNppF/SHBrV5hNiZZATpf/vUw==}
     engines: {node: '>=15.0.0'}
     dependencies:
-      axios: 0.27.2
+      axios: 1.6.0
       rusha: 0.8.14
     transitivePeerDependencies:
       - debug
