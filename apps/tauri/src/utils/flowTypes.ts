@@ -1,4 +1,4 @@
-import { HandleProps, NodeProps, Edge } from "./nodeUtils";
+import { HandleProps, Edge, NodeProps } from "reactflow";
 
 //Top level metadata about a flow 
 //like you might see in a package explorer like NPM

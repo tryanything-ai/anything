@@ -1,4 +1,4 @@
-import { parse, stringify } from "iarna-toml-esm";
+import { parse } from "iarna-toml-esm";
 import {
   createContext,
   ReactNode,
@@ -106,7 +106,7 @@ type GetFlowResponse = {
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
-  const { renameFlow } = useFlowsContext();
+  const { updateFlow } = useFlowsContext();
   const { flow_name } = useParams();
   const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -230,7 +230,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       // if we are updating name in TOML we also need to update the folder name
       if (keysToUpdate.name) {
-        await renameFlow(flow_name, keysToUpdate.name);
+        await updateFlow(flow_name, keysToUpdate.name);
       }
       let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
       setFlowFrontmatter(flow_frontmatter);
@@ -337,43 +337,37 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  useEffect(() => {
-    if (!flow_name) return;
-
-    fetchFlow();
-  }, [flow_name]);
-
   //Debounced write state to toml used for when we draggin things around.
-  useEffect(() => {
-    // Clear any existing timers
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
+  // useEffect(() => {
+  //   // Clear any existing timers
+  //   if (timerRef.current) {
+  //     clearTimeout(timerRef.current);
+  //   }
 
-    // Set a new timer to write to TOML file
-    timerRef.current = setTimeout(async () => {
-      if (!initialTomlLoaded || loadingToml) return;
+  //   // Set a new timer to write to TOML file
+  //   timerRef.current = setTimeout(async () => {
+  //     if (!initialTomlLoaded || loadingToml) return;
 
-      let newToml = stringify({
-        flow: flowFrontmatter as FlowFrontMatter,
-        nodes: nodes as any,
-        edges: edges as any,
-      });
-      console.log("writing to toml");
-      // console.log(newToml);
-      //don't write if nothing has changed in react state
-      if (newToml === toml) return;
-      setToml(newToml);
-      await writeToml(newToml);
-    }, 200);
+  //     let newToml = stringify({
+  //       flow: flowFrontmatter as FlowFrontMatter,
+  //       nodes: nodes as any,
+  //       edges: edges as any,
+  //     });
+  //     console.log("writing to toml");
+  //     // console.log(newToml);
+  //     //don't write if nothing has changed in react state
+  //     if (newToml === toml) return;
+  //     setToml(newToml);
+  //     await writeToml(newToml);
+  //   }, 200);
 
-    // Clean up
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [nodes, edges, flowFrontmatter]);
+  //   // Clean up
+  //   return () => {
+  //     if (timerRef.current) {
+  //       clearTimeout(timerRef.current);
+  //     }
+  //   };
+  // }, [nodes, edges, flowFrontmatter]);
 
   //Watch TOML file for changes
   // useEffect(() => {
@@ -410,6 +404,13 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       unlisten2.then((unlisten) => unlisten());
     };
   }, [currentProcessingSessionId]);
+
+  //Hydrate all flow data on navigation
+  //User params fetches url params from React-Router-Dom
+  useEffect(() => {
+    if (!flow_name) return;
+    fetchFlow();
+  }, [flow_name]);
 
   return (
     <FlowContext.Provider

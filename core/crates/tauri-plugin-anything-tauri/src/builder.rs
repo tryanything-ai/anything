@@ -45,7 +45,7 @@ impl<R: Runtime> Builder<R> {
                 get_flows,
                 get_flow_by_name,
                 create_flow,
-                rename_flow,
+                update_flow,
                 create_flow_version,
                 execute_flow,
             ])

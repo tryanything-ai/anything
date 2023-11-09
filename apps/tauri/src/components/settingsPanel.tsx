@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useFlowContext } from "../context/FlowProvider";
 import { useFlowsContext } from "../context/FlowsProvider";
-import api from "../tauri_api/api";
 
 type Inputs = {
   flow_name: string;
@@ -12,8 +11,9 @@ type Inputs = {
 
 const FlowSettingsPanel = () => {
   const [loading, setLoading] = useState(false);
-  const { deleteFlow } = useFlowsContext();
+  const { deleteFlow, updateFlow } = useFlowsContext();
   const { updateFlowFrontmatter, flowFrontmatter } = useFlowContext();
+
   const { flow_name } = useParams();
 
   const navigate = useNavigate();
@@ -34,24 +34,26 @@ const FlowSettingsPanel = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
-      console.log("data data => ", flowFrontmatter, data);
-      if (flow_name && data.flow_name != flow_name) {
+      console.log("data data => ", flowFrontmatter, data, flow_name);
+      if (
+        flow_name &&
+        data.flow_name != flow_name &&
+        flowFrontmatter &&
+        flowFrontmatter.flowId
+      ) {
         // api
-        let updateFlow = {
+        let UpdateFlowArgs = {
           flow_name: data.flow_name,
           active: flowFrontmatter.active,
           version: flowFrontmatter.version,
         };
-        let resp = await api.flows.updateFlow(
-          flowFrontmatter.flowId,
-          updateFlow
-        );
-        await updateFlowFrontmatter(flow_name, resp);
-        const new_flows = await api.flows.getFlows();
-        console.log("new flows after update", new_flows);
-        // console.log("resp", resp);
-        // await updateFlowFrontmatter(flow_name, { name: data.flow_name });
+
+        console.log("UpdateFlowArgs::SettingsPanel", UpdateFlowArgs);
+        let res = await updateFlow(flowFrontmatter.flowId, UpdateFlowArgs);
+        console.log("res from rename flow in settings panel", res);
         navigate(`/flows/${data.flow_name}`);
+      } else {
+        console.log("Data problem in settings panel");
       }
     } catch (error) {
       console.log(error);

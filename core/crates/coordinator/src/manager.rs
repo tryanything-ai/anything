@@ -3,7 +3,7 @@ use anything_graph::{Flow, Flowfile};
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion,
-    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, RenameFlowArgs,
+    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs,
 };
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
@@ -278,7 +278,7 @@ impl Manager {
         let flowfile =
             Flowfile::from_string(toml_repr).expect("unable to create flow file for a new flow");
         let flow_str: String = flowfile.clone().into();
-        
+
         //TODO: why lowercase? folders are normal uppercase
         let lowercased_flow_name = flow_name.to_lowercase();
         let new_dir_str = new_directory
@@ -337,10 +337,10 @@ impl Manager {
     /// Returns:
     ///
     /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
-    pub async fn rename_flow(
+    pub async fn update_flow(
         &mut self,
         flow_id: String,
-        args: RenameFlowArgs,
+        args: UpdateFlowArgs,
     ) -> CoordinatorResult<anything_graph::Flow> {
         tracing::trace!("Update flow with {flow_id} and {:#?}", args);
         let new_flow_name = args.flow_name.clone();
@@ -351,10 +351,7 @@ impl Manager {
 
         // self.flow_repo()?.delete_flow(flow_id.clone()).await?;
 
-        let stored_flow = self
-            .flow_repo()?
-            .rename_flow(flow_id.clone(), args)
-            .await?;
+        let stored_flow = self.flow_repo()?.update_flow(flow_id.clone(), args).await?;
 
         original_flow.flow_name = stored_flow.flow_name.clone();
         self.file_store

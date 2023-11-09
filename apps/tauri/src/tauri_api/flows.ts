@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { RenameFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
+import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 import { anything } from "./anything";
 
 export const getFlows = async () => {
@@ -15,13 +15,8 @@ export const createFlow = async (flowName: string) => {
   return res;
 };
 
-export async function renameFlow(flowId: string, updateFlow: RenameFlowArgs) {
-  return await anything.renameFlow(flowId, updateFlow);
-}
-
-export async function updateFlow(flowId: string, updateFlow: RenameFlowArgs) {
-  return true; 
-  // return await anything.updateFlow(flowId, updateFlow);
+export async function updateFlow(flowId: string, updateFlow: UpdateFlowArgs) {
+  return await anything.updateFlow(flowId, updateFlow);
 }
 
 export async function deleteFlow(flowId: string) {
@@ -42,7 +37,7 @@ export const getFlowVersions = async (flowId: string) => {
 };
 
 export const readToml = async (flow_id: string) => {
-  return ""; 
+  return "";
   //TODO:
   // return await anything.readToml(flowId);
   // return await invoke("read_toml", { flow_id });
@@ -55,13 +50,17 @@ export const writeToml = async (flowId: string, toml: string) => {
 };
 
 export const readNodeConfig = async (flowId: string, nodeId: string) => {
-  return true; 
-  //TODO: 
-  // return await anything.readNodeConfig(flowId, nodeId);
-}
-
-export const writeNodeConfig = async (flowId: string, nodeId: string, config: string) => {
   return true;
-  //TODO: 
- // return await anything.wrtieNodeConfig(flowId, nodeId, config);
-}
+  //TODO:
+  // return await anything.readNodeConfig(flowId, nodeId);
+};
+
+export const writeNodeConfig = async (
+  flowId: string,
+  nodeId: string,
+  config: string
+) => {
+  return true;
+  //TODO:
+  // return await anything.wrtieNodeConfig(flowId, nodeId, config);
+};

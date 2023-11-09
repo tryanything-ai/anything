@@ -90,9 +90,9 @@ impl Into<CreateFlow> for StoredFlow {
     }
 }
 
-impl Into<RenameFlowArgs> for StoredFlow {
-    fn into(self) -> RenameFlowArgs {
-        RenameFlowArgs {
+impl Into<UpdateFlowArgs> for StoredFlow {
+    fn into(self) -> UpdateFlowArgs {
+        UpdateFlowArgs {
             flow_name: self.flow_name,
             active: self.active,
             version: Some(self.latest_version_id),
@@ -230,13 +230,13 @@ impl Into<CreateFlowVersion> for CreateFlow {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct RenameFlowArgs {
+pub struct UpdateFlowArgs {
     pub flow_name: String,
     pub active: bool,
     pub version: Option<String>,
 }
 
-impl RenameFlowArgs {
+impl UpdateFlowArgs {
     pub fn new(flow_name: String) -> Self {
         Self {
             flow_name,
@@ -246,7 +246,7 @@ impl RenameFlowArgs {
     }
 }
 
-impl From<anything_graph::Flow> for RenameFlowArgs {
+impl From<anything_graph::Flow> for UpdateFlowArgs {
     fn from(value: anything_graph::Flow) -> Self {
         Self {
             flow_name: value.name,

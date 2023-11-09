@@ -8,13 +8,14 @@ import {
 
 import api from "../tauri_api/api";
 import { useTauriContext } from "./TauriProvider";
-import { Flow, Node } from "../utils/flowTypes";
+import { Flow } from "../utils/flowTypes";
+import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 
 interface FlowsContextInterface {
   flows: Flow[];
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
-  renameFlow: (flowName: string, newFlowName: string) => void;
+  updateFlow: (flowId: string, args: UpdateFlowArgs) => void;
   readNodeConfig: (nodeId: string, flow_name: string) => void;
   writeNodeConfig: (nodeId: string, flowName: string, data: any) => void;
 }
@@ -23,7 +24,7 @@ export const FlowsContext = createContext<FlowsContextInterface>({
   flows: [],
   createNewFlow: () => {},
   deleteFlow: () => {},
-  renameFlow: () => {},
+  updateFlow: () => {},
   readNodeConfig: () => {},
   writeNodeConfig: () => {},
 });
@@ -88,7 +89,7 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
   const readNodeConfig = async (
     nodeId: string,
     flowName: string
-  ): Promise<Node> => {
+  ): Promise<boolean> => {
     try {
       return await api.flows.readNodeConfig(nodeId, flowName);
     } catch (error) {
@@ -100,7 +101,7 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     nodeId: string,
     flowName: string,
     data: any
-  ): Promise<Node> => {
+  ): Promise<boolean> => {
     try {
       return api.flows.writeNodeConfig(nodeId, flowName, data);
     } catch (error) {
@@ -108,9 +109,9 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const renameFlow = async (flowId: string, newFlowName: string) => {
+  const updateFlow = async (flowId: string, args: UpdateFlowArgs) => {
     try {
-      await api.flows.renameFlow(flowId, newFlowName);
+      return await api.flows.updateFlow(flowId, args);
     } catch (error) {
       console.error("Error renaming flow" + error);
     }
@@ -148,7 +149,6 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     console.log("Getting FLows from Tauri API?");
     let res: any = await api.flows.getFlows();
     setFlows(res.flows);
-
     console.log("res from new rust stub", res);
   };
 
@@ -162,7 +162,7 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
         flows,
         createNewFlow,
         deleteFlow,
-        renameFlow,
+        updateFlow,
         readNodeConfig,
         writeNodeConfig,
       }}

@@ -7,7 +7,7 @@ use sqlx::Row;
 use crate::datastore::{Datastore, DatastoreTrait, RepoImpl};
 use crate::error::{PersistenceError, PersistenceResult};
 use crate::models::flow::{
-    CreateFlow, CreateFlowVersion, FlowId, FlowVersion, FlowVersionId, StoredFlow, RenameFlowArgs,
+    CreateFlow, CreateFlowVersion, FlowId, FlowVersion, FlowVersionId, StoredFlow, UpdateFlowArgs,
     UpdateFlowVersion,
 };
 
@@ -46,10 +46,10 @@ pub trait FlowRepo {
         flow_id: FlowId,
         flow_version: FlowVersionId,
     ) -> PersistenceResult<FlowVersion>;
-    async fn rename_flow(
+    async fn update_flow(
         &self,
         flow_id: FlowId,
-        update_flow: RenameFlowArgs,
+        update_flow: UpdateFlowArgs,
     ) -> PersistenceResult<StoredFlow>;
     async fn update_flow_version(
         &self,
@@ -333,10 +333,10 @@ impl FlowRepo for FlowRepoImpl {
     /// Returns:
     ///
     /// The function `update_flow` returns a `PersistenceResult<StoredFlow>`.
-    async fn rename_flow(
+    async fn update_flow(
         &self,
         flow_id: FlowId,
-        args: RenameFlowArgs,
+        args: UpdateFlowArgs,
     ) -> PersistenceResult<StoredFlow> {
         let mut tx = self.get_transaction().await?;
 
@@ -431,7 +431,7 @@ impl FlowRepoImpl {
         {
             Some(mut existing_flow) => {
                 existing_flow.latest_version_id = flow_version.clone();
-                let update_flow: RenameFlowArgs = flow.clone().into();
+                let update_flow: UpdateFlowArgs = flow.clone().into();
                 self.internal_rename_existing_flow(tx, flow_id, update_flow)
                     .await
             }
@@ -489,7 +489,7 @@ impl FlowRepoImpl {
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
-        args: RenameFlowArgs,
+        args: UpdateFlowArgs,
     ) -> PersistenceResult<StoredFlow> {
         let flow = sqlx::query_as::<_, StoredFlow>(
             r#"
@@ -981,7 +981,7 @@ mod tests {
         let res = flow_repo.create_flow(create_flow.clone()).await;
         assert!(res.is_ok());
 
-        let update_flow = RenameFlowArgs {
+        let update_flow = UpdateFlowArgs {
             flow_name: "test2".to_string(),
             active: false,
             version: None,
