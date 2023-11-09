@@ -23,7 +23,7 @@ import {
   OnNodesChange,
   ReactFlowInstance,
 } from "reactflow";
-import { FlowFrontMatter } from "../utils/newNodes";
+import { FlowFrontMatter } from "../utils/flowTypes";
 
 import api from "../tauri_api/api";
 import { useFlowsContext } from "./FlowsProvider";

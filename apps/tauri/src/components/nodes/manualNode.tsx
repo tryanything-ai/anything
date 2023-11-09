@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { useFlowContext } from "../../context/FlowProvider";
 import { useSqlContext } from "../../context/SqlProvider";
 import { AnythingNodeProps } from "../../utils/nodeUtils";
-import { EventInput} from "../../utils/newNodes"
+import { EventInput } from "../../utils/flowTypes";
 import BaseNode from "./baseNode";
 
 export default function ManualNode({ id, data }: AnythingNodeProps) {

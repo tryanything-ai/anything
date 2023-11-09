@@ -8,7 +8,7 @@ import {
 
 import api from "../tauri_api/api";
 import { useTauriContext } from "./TauriProvider";
-import { Flow, Node } from "../utils/newNodes";
+import { Flow, Node } from "../utils/flowTypes";
 
 interface FlowsContextInterface {
   flows: Flow[];

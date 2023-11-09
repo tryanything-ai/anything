@@ -1,7 +1,6 @@
 import { Node } from "./nodeUtils";
 import { HandleProps, Position } from "reactflow";
-import * as rawIcons from './rawIcons'; 
-
+import * as rawIcons from "./rawIcons";
 
 const BaseHandles: HandleProps[] = [
   {
@@ -145,7 +144,7 @@ export const NODES: Node[] = [
     nodePresentationData: {
       node_label: "Python Action",
       alt: "Python Action",
-      icon: rawIcons.VscCode, 
+      icon: rawIcons.VscCode,
       handles: BaseHandles,
     },
     nodeProcessData: {
@@ -176,7 +175,7 @@ export const NODES: Node[] = [
     },
     nodePresentationData: {
       node_label: "Send Chat Action",
-      icon: rawIcons.VscSend, 
+      icon: rawIcons.VscSend,
       alt: "Send Chat Action",
       handles: BaseHandles,
     },

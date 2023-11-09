@@ -2,7 +2,7 @@ import { HandleProps, NodeProps, Edge } from "./nodeUtils";
 
 // Typescript version of Flow TOML
 export type Flow = {
-  flowId?: string;
+  flowId: string;
   name: string;
   username?: string;
   userId?: string;
@@ -56,7 +56,7 @@ interface NodePresentation {
 
 export interface Action extends Node {
   trigger: false;
-  action_type: string;
+  engine: string;
   depends_on: string[]; //node_name for parallelization
 }
 
@@ -118,7 +118,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
       {
@@ -129,7 +129,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
       {
@@ -140,7 +140,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
     ],
@@ -175,7 +175,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
       {
@@ -186,7 +186,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
       {
@@ -197,7 +197,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
       {
@@ -208,7 +208,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
       {
@@ -219,7 +219,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        action_type: "Mock Action Type",
+        engine: "Mock Action Type",
         depends_on: [],
       },
     ],
