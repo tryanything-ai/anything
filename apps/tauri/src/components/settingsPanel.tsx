@@ -5,7 +5,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useFlowContext } from "../context/FlowProvider";
 import { useFlowsContext } from "../context/FlowsProvider";
 import api from "../tauri_api/api";
-// import { getFlows } from "../tauri_api/invoke";
 
 type Inputs = {
   flow_name: string;
@@ -44,7 +43,7 @@ const FlowSettingsPanel = () => {
           version: "0.0.0",
         };
         let resp = await api.flows.updateFlow(
-          flowFrontmatter.flow_id,
+          flowFrontmatter.flowId,
           updateFlow
         );
         await updateFlowFrontmatter(flow_name, resp);

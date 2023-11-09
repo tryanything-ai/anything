@@ -28,7 +28,7 @@ export default function BaseNode({
     if (
       currentProcessingStatus &&
       currentProcessingStatus?.node_id === id &&
-      currentProcessingStatus?.flow_id === flowFrontmatter?.id
+      currentProcessingStatus?.flow_id === flowFrontmatter?.flowId
     ) {
       setProcessing(true);
     } else {

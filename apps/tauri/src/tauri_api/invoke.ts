@@ -1,14 +1,10 @@
 import { invoke } from "@tauri-apps/api/tauri";
 
-import { EventInput } from "./types";
-
-import { anything } from "./anything";
-
+import { EventInput } from "../utils/newNodes";;
 
 export const getChatFlows = async () => {
   return await invoke("get_chat_flows");
 };
-
 
 // export const getPublishedFlowVersion = async (flow_id: string) => {
 //   return await invoke("get_published_flow_version", { flow_id });

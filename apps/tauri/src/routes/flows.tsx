@@ -19,13 +19,13 @@ export default function Flows() {
         {flows.map((flow) => {
           return (
             <Link
-              key={flow.name}
-              to={`${flow.name}`}
+              key={flow.flowName}
+              to={`${flow.flowName}`}
               className="card w-full bg-base-300 shadow-xl my-2"
             >
               <div className="card-body flex-row justify-between">
                 <div className="w-1/4">
-                  <div className="text-2xl">{flow.name}</div>
+                  <div className="text-2xl">{flow.flowName}</div>
                 </div>
                 <div className="flex text-lg">Stats</div>
                 <div className="flex text-lg">Live</div>

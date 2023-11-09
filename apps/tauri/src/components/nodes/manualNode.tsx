@@ -2,11 +2,10 @@ import { BaseNodeIcon } from "ui";
 import clsx from "clsx";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-
 import { useFlowContext } from "../../context/FlowProvider";
 import { useSqlContext } from "../../context/SqlProvider";
-import { EventInput } from "../../tauri_api/types";
 import { AnythingNodeProps } from "../../utils/nodeUtils";
+import { EventInput} from "../../utils/newNodes"
 import BaseNode from "./baseNode";
 
 export default function ManualNode({ id, data }: AnythingNodeProps) {
@@ -20,18 +19,18 @@ export default function ManualNode({ id, data }: AnythingNodeProps) {
     if (flowFrontmatter === undefined) return;
     setLoading(true);
     let event: EventInput = {
-      flow_id: flowFrontmatter.id,
-      flow_name: flow_name,
-      flow_version: "0.0.1",
-      node_id: id,
-      node_type: "manualNode", //node type for reactFlow
-      node_label: "Manual Trigger", //For display in UI
-      worker_name: "manual_trigger", //for accessing node results by name in props
+      flowId: flowFrontmatter.flowId,
+      flowName: flow_name,
+      version: "0.0.1",
+      nodeId: id,
+      nodeType: "manualNode", //node type for reactFlow
+      nodeLabel: "Manual Trigger", //For display in UI
+      workerName: "manual_trigger", //for accessing node results by name in props
       stage: "dev",
-      worker_type: "start", //for backend processing
-      event_status: "PENDING", //EVENT STATUS
-      session_status: "PENDING", //SESSION STATUS
-      created_at: new Date().toISOString(),
+      workerType: "start", //for backend processing
+      eventStatus: "PENDING", //EVENT STATUS
+      sessionStatus: "PENDING", //SESSION STATUS
+      createdAt: new Date().toISOString(),
       data: "",
     };
 

@@ -53,3 +53,15 @@ export const writeToml = async (flowId: string, toml: string) => {
   //TODO:
   // return await anything.writeTomle(flowId, toml);
 };
+
+export const readNodeConfig = async (flowId: string, nodeId: string) => {
+  return true; 
+  //TODO: 
+  // return await anything.readNodeConfig(flowId, nodeId);
+}
+
+export const writeNodeConfig = async (flowId: string, nodeId: string, config: string) => {
+  return true;
+  //TODO: 
+ // return await anything.wrtieNodeConfig(flowId, nodeId, config);
+}

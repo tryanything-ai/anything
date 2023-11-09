@@ -23,6 +23,7 @@ import {
   OnNodesChange,
   ReactFlowInstance,
 } from "reactflow";
+import { FlowFrontMatter } from "../utils/newNodes";
 
 import api from "../tauri_api/api";
 import { useFlowsContext } from "./FlowsProvider";
@@ -48,15 +49,6 @@ function findNextNodeId(nodes: any): string {
 
   return nextId;
 }
-
-type FlowFrontMatter = {
-  // TODO: flow_name
-  name: string;
-  flow_id: string;
-  version: string;
-  author: string;
-  description: string;
-};
 
 interface FlowContextInterface {
   nodes: Node[];
@@ -114,7 +106,7 @@ type GetFlowResponse = {
 };
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
-  const { renameFlowFiles } = useFlowsContext();
+  const { renameFlow } = useFlowsContext();
   const { flow_name } = useParams();
   const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -238,7 +230,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       // if we are updating name in TOML we also need to update the folder name
       if (keysToUpdate.name) {
-        await renameFlowFiles(flow_name, keysToUpdate.name);
+        await renameFlow(flow_name, keysToUpdate.name);
       }
       let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
       setFlowFrontmatter(flow_frontmatter);
@@ -247,17 +239,12 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const writeToml = async (toml: string, explicit_flow_name?: string) => {
-    // if (!flow_name) {
-    //   throw new Error("appDocuments or flow_name is undefined");
-    // }
-    // console.log("writing toml in FlowProvider");
-    // let name = explicit_flow_name ? explicit_flow_name : flow_name;
-    // await api.saveToml({ toml, flow_id: name });
-    // return await api.fs.writeTextFile(
-    //   appDocuments + "/flows/" + name + "/flow.toml",
-    //   toml
-    // );
+  const writeToml = async (flow_id: string, toml: string) => {
+    try {
+      await api.flows.writeToml(flow_id, toml);
+    } catch (error) {
+      console.log("error saving toml", error);
+    }
   };
 
   const readToml = async () => {
@@ -323,7 +310,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("Fetch Flow By Name", flow_name);
       if (!flow_name) return;
-      let { flow } = await api.getFlowByName<GetFlowResponse>(flow_name);
+      let { flow } = await api.flows.getFlowByName<GetFlowResponse>(flow_name);
       console.log(
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)

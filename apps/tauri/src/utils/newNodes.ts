@@ -7,12 +7,22 @@ export type Flow = {
   username?: string;
   userId?: string;
   version: string;
-  description: string;
+  description?: string;
   variables: Variable[]; //Global variables
   environment: string; //Stub for future
   trigger: Trigger; //Triggering
   actions: Action[]; //Processing
   edges: Edge[]; //Needed for BFS traversal and flow rendering
+};
+
+//TODO: maybe deprecate or merge with flow in some way
+export type FlowFrontMatter = {
+  flowName: string;
+  flowId?: string;
+  version: string;
+  username: string;
+  userId?: string;
+  description?: string;
 };
 
 // General Representation of a Node
@@ -60,6 +70,22 @@ interface Variable {
 }
 
 export type AnythingNodeProps = NodeProps<Action | Trigger>;
+
+export type EventInput = {
+  flowId: string; //flow needs a computer friendly name that can be changed without changing processing
+  flowName: string; //flow needs a user friendly name
+  version: string; //flows will have versions so you can have confidence messing arround in future
+  nodeId: string; //represents exact_id inside a flow
+  nodeType: string; //represents front_end representation of node
+  nodeLabel: string; //what the user will see in the flow
+  workerType: string; //worker type === "start" or "javascript interpreter" or "rest" etc
+  workerName: string; //what the user will use to reference the node in props for args. needs to be snake_case
+  stage: string;
+  eventStatus: string;
+  sessionStatus: string;
+  createdAt: string;
+  data: any;
+};
 
 // Mocks for testing etc
 export const MockNewFlows: Flow[] = [
