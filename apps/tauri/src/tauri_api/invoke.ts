@@ -1,9 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { Anything } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src/index";
 
 import { EventInput } from "./types";
 
-export const anything = new Anything("anything");
+import { anything } from "./anything";
 
 export const getFlows = async () => {
   let res = await anything.getFlows();
@@ -26,8 +25,8 @@ export const getFlow = async (flow_id: string) => {
   return await invoke("get_flow", { flow_id });
 };
 
-export const getFlowByName = async (flow_name: string) => {
-  return await invoke("get_flow_by_name", { flowName: flow_name });
+export const getFlowByName = async <T>(flow_name: string): Promise<T> => {
+  return await anything.getFlowByName(flow_name)
 };
 
 export const getFlowVersions = async (flow_id: string) => {

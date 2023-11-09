@@ -50,8 +50,9 @@ function findNextNodeId(nodes: any): string {
 }
 
 type FlowFrontMatter = {
+  // TODO: flow_name
   name: string;
-  id: string;
+  flow_id: string;
   version: string;
   author: string;
   description: string;
@@ -107,6 +108,10 @@ type SessionComplete = {
   flow_id: string;
   session_id: string;
 };
+
+type GetFlowResponse = {
+  flow: FlowFrontMatter
+}
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { renameFlowFiles } = useLocalFileContext();
@@ -232,9 +237,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     try {
       //if we are updating name in TOML we also need to update the folder name
-      if (keysToUpdate.name) {
-        await renameFlowFiles(flow_name, keysToUpdate.name);
-      }
+      // if (keysToUpdate.name) {
+      //   await renameFlowFiles(flow_name, keysToUpdate.name);
+      // }
       let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
       //TODO: check if name change causes race condition
       setFlowFrontmatter(flow_frontmatter);
@@ -319,11 +324,13 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("Fetch Flow By Name", flow_name);
       if (!flow_name) return;
-      let flow: any = await api.getFlowByName(flow_name);
+      let {flow} = await api.getFlowByName<GetFlowResponse>(flow_name);
       console.log(
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)
       );
+
+      setFlowFrontmatter(flow);
 
       // let flow_versions = await api.getFlowVersions(flow.flow_id);
 

@@ -14,7 +14,6 @@ pub type FlowVersionId = String;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct StoredFlow {
-    #[serde(rename = "id")]
     pub flow_id: String,
     #[serde(rename = "name")]
     pub flow_name: String,

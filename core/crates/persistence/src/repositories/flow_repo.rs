@@ -205,7 +205,7 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let res = self
-            .internal_find_existing_flow_by_id(&mut tx, name.clone())
+            .internal_find_existing_flow_by_name(&mut tx, name.clone())
             .await;
 
         tx.commit()
@@ -453,11 +453,12 @@ impl FlowRepoImpl {
         create_flow: CreateFlow,
     ) -> PersistenceResult<StoredFlow> {
         let create_flow_clone = create_flow.clone();
+        let flow_name: String = create_flow_clone.name.clone();
         let row = sqlx::query(
             r#"
             INSERT INTO flows (flow_id, flow_name, active, latest_version_id, updated_at)
             VALUES (?1, ?2, ?3, ?4, ?5)
-            RETURNING flow_name
+            RETURNING flow_id
             "#,
         )
         .bind(flow_id.clone())
@@ -469,7 +470,9 @@ impl FlowRepoImpl {
         .await
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
-        let flow_name: String = row.get("flow_name");
+        tracing::debug!("Inserted new flow, now saving flow version");
+
+        let flow_id: String = row.get("flow_id");
 
         let save_flow_version: CreateFlowVersion = create_flow.into();
 
