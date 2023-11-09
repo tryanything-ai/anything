@@ -278,7 +278,8 @@ impl Manager {
         let flowfile =
             Flowfile::from_string(toml_repr).expect("unable to create flow file for a new flow");
         let flow_str: String = flowfile.clone().into();
-
+        
+        //TODO: why lowercase? folders are normal uppercase
         let lowercased_flow_name = flow_name.to_lowercase();
         let new_dir_str = new_directory
             .to_str()

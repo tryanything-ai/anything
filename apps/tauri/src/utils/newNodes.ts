@@ -3,7 +3,7 @@ import { HandleProps, NodeProps, Edge } from "./nodeUtils";
 // Typescript version of Flow TOML
 export type Flow = {
   flowId?: string;
-  flowName: string;
+  name: string;
   username?: string;
   userId?: string;
   version: string;
@@ -90,7 +90,7 @@ export type EventInput = {
 // Mocks for testing etc
 export const MockNewFlows: Flow[] = [
   {
-    flowName: "Mock Flow",
+    name: "Mock Flow",
     username: "Mock Author",
     userId: "1",
     environment: "dev",
@@ -147,7 +147,7 @@ export const MockNewFlows: Flow[] = [
     edges: [],
   },
   {
-    flowName: "Mock Flow",
+    name: "Mock Flow",
     username: "Mock Author",
     userId: "1",
     environment: "dev",

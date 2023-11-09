@@ -35,9 +35,12 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
   const [flows, setFlows] = useState<Flow[]>([]);
 
   //BUG: there is a bug where when you add new flows the names colide because we write files as names.
+  //To reproduce. Create 2 flows. they will be called "Flow 1 and Flow 2"
+  //Delete Flow 1. Now Create a new Flow and it will try to create "Flow 2" again and fail.
   //TODO: more sophisticated way of determining new flow name
   const createNewFlow = async (): Promise<any> => {
     try {
+      //TODO Move to DB to fix collision problem
       let flowName = "Flow" + " " + (flows.length + 1);
       console.log("Creating new Flow in LocalFileProvider");
       await api.flows.createFlow(flowName);
