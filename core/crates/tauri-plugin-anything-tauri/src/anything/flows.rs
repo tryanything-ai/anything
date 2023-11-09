@@ -1,7 +1,7 @@
 use crate::{error::FlowResult, AnythingState, Error};
 use anything_common::tracing;
 use anything_graph::Flow;
-use anything_persistence::{CreateFlowVersion, FlowVersion, UpdateFlow};
+use anything_persistence::{CreateFlowVersion, FlowVersion, RenameFlowArgs};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -100,29 +100,29 @@ pub async fn create_flow(
 // }
 
 #[derive(Serialize)]
-pub struct UpdateFlowResponse {
+pub struct RenameFlowResponse {
     flow: Option<Flow>,
 }
 
 #[tauri::command]
-pub async fn update_flow(
+pub async fn rename_flow(
     state: tauri::State<'_, AnythingState>,
     flow_id: String,
-    update_flow: UpdateFlow,
-) -> FlowResult<UpdateFlowResponse> {
+    args: RenameFlowArgs,
+) -> FlowResult<RenameFlowResponse> {
     match state.inner.try_lock() {
         Err(e) => {
             tracing::error!("Error getting lock on coordinator: {:?}", e);
             Err(Error::CoordinatorNotInitialized)
         }
-        Ok(ref mut inner) => match inner.update_flow(flow_id, update_flow).await {
+        Ok(ref mut inner) => match inner.rename_flow(flow_id, args).await {
             Ok(flow) => {
                 tracing::debug!("Created flow inside tauri plugin");
-                Ok(UpdateFlowResponse { flow: Some(flow) })
-            }
+                Ok(RenameFlowResponse { flow: Some(flow) })
+            } 
             Err(e) => {
                 eprintln!("Error getting flows after creating flow: {:?}", e);
-                Ok(UpdateFlowResponse { flow: None })
+                Ok(RenameFlowResponse { flow: None })
             }
         },
     }

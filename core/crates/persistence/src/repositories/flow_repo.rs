@@ -7,7 +7,7 @@ use sqlx::Row;
 use crate::datastore::{Datastore, DatastoreTrait, RepoImpl};
 use crate::error::{PersistenceError, PersistenceResult};
 use crate::models::flow::{
-    CreateFlow, CreateFlowVersion, FlowId, FlowVersion, FlowVersionId, StoredFlow, UpdateFlow,
+    CreateFlow, CreateFlowVersion, FlowId, FlowVersion, FlowVersionId, StoredFlow, RenameFlowArgs,
     UpdateFlowVersion,
 };
 
@@ -46,10 +46,10 @@ pub trait FlowRepo {
         flow_id: FlowId,
         flow_version: FlowVersionId,
     ) -> PersistenceResult<FlowVersion>;
-    async fn update_flow(
+    async fn rename_flow(
         &self,
         flow_id: FlowId,
-        update_flow: UpdateFlow,
+        update_flow: RenameFlowArgs,
     ) -> PersistenceResult<StoredFlow>;
     async fn update_flow_version(
         &self,
@@ -333,15 +333,15 @@ impl FlowRepo for FlowRepoImpl {
     /// Returns:
     ///
     /// The function `update_flow` returns a `PersistenceResult<StoredFlow>`.
-    async fn update_flow(
+    async fn rename_flow(
         &self,
         flow_id: FlowId,
-        update_flow: UpdateFlow,
+        args: RenameFlowArgs,
     ) -> PersistenceResult<StoredFlow> {
         let mut tx = self.get_transaction().await?;
 
         let res = self
-            .internal_update_existing_flow(&mut tx, flow_id, update_flow)
+            .internal_rename_existing_flow(&mut tx, flow_id, args)
             .await;
 
         tx.commit()
@@ -431,8 +431,8 @@ impl FlowRepoImpl {
         {
             Some(mut existing_flow) => {
                 existing_flow.latest_version_id = flow_version.clone();
-                let update_flow: UpdateFlow = flow.clone().into();
-                self.internal_update_existing_flow(tx, flow_id, update_flow)
+                let update_flow: RenameFlowArgs = flow.clone().into();
+                self.internal_rename_existing_flow(tx, flow_id, update_flow)
                     .await
             }
             None => {
@@ -485,11 +485,11 @@ impl FlowRepoImpl {
         }
     }
 
-    async fn internal_update_existing_flow(
+    async fn internal_rename_existing_flow(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: String,
-        update_flow: UpdateFlow,
+        args: RenameFlowArgs,
     ) -> PersistenceResult<StoredFlow> {
         let flow = sqlx::query_as::<_, StoredFlow>(
             r#"
@@ -497,9 +497,9 @@ impl FlowRepoImpl {
             RETURNING *
             "#,
         )
-        .bind(update_flow.flow_name)
+        .bind(args.flow_name)
         .bind(Utc::now().timestamp())
-        .bind(update_flow.active)
+        .bind(args.active)
         .bind(flow_id.clone())
         .fetch_one(&mut **tx)
         .await
@@ -981,7 +981,7 @@ mod tests {
         let res = flow_repo.create_flow(create_flow.clone()).await;
         assert!(res.is_ok());
 
-        let update_flow = UpdateFlow {
+        let update_flow = RenameFlowArgs {
             flow_name: "test2".to_string(),
             active: false,
             version: None,

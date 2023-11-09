@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-export type UpdateFlow = {
+export type RenameFlowArgs = {
     flow_name: string;
     active: boolean;
     version?: string;

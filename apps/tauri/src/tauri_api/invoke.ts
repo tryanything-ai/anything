@@ -4,34 +4,11 @@ import { EventInput } from "./types";
 
 import { anything } from "./anything";
 
-export const getFlows = async () => {
-  let res = await anything.getFlows();
-  console.log(`Got back from getFlows ${JSON.stringify(res)}`);
-  return res;
-};
-
-export const createFlow = async ({ flowName }: { flowName: string }) => {
-  console.log(`Called createFlow with ${flowName}`);
-  let res = await anything.createFlow(flowName);
-  console.log(`Got back from createFlow ${JSON.stringify(res)}`);
-  return res;
-};
 
 export const getChatFlows = async () => {
   return await invoke("get_chat_flows");
 };
 
-export const getFlow = async (flow_id: string) => {
-  return await invoke("get_flow", { flow_id });
-};
-
-export const getFlowByName = async <T>(flow_name: string): Promise<T> => {
-  return await anything.getFlowByName(flow_name)
-};
-
-export const getFlowVersions = async (flow_id: string) => {
-  return await invoke("get_flow_versions", { flow_id });
-};
 
 // export const getPublishedFlowVersion = async (flow_id: string) => {
 //   return await invoke("get_published_flow_version", { flow_id });

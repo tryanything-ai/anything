@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import BaseCard from "../components/baseCard";
-import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useFlowsContext } from "../context/FlowsProvider";
 import PageLayout from "../pageLayout";
 import { PageHeader } from "../components/wholePageHeader";
 
 export default function Home() {
-  const { flows, createNewFlow } = useLocalFileContext();
+  const { flows, createNewFlow } = useFlowsContext();
   const navigate = useNavigate();
 
   return (

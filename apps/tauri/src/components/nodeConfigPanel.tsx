@@ -3,11 +3,11 @@ import { Controller, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
-import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useFlowsContext } from "../context/FlowsProvider";
 
 const NodeConfigPanel = () => {
   const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();
-  const { readNodeConfig, writeNodeConfig } = useLocalFileContext();
+  const { readNodeConfig, writeNodeConfig } = useFlowsContext();
 
   const { flow_name } = useParams();
   const [data, setData] = useState<any>({});

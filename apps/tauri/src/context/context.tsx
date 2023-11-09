@@ -5,7 +5,7 @@ import { PostHogProvider } from "posthog-js/react";
 
 // Contexts
 import { AuthenticationProvider } from "../context/AuthenticaionProvider";
-import { LocalFileProvider } from "../context/LocalFileProvider";
+import { FlowsProvider } from "./FlowsProvider";
 import { MarketplaceProvider } from "../context/MarketplaceProvider";
 import { ModelProvider } from "../context/ModelsProvider";
 import { NotificationsProvider } from "../context/NotificationProvider";
@@ -22,9 +22,6 @@ if (import.meta.env.mode === "production") {
   posthogClient.init(VITE_PUBLIC_POSTHOG_KEY, {
     api_host: VITE_PUBLIC_POSTHOG_HOST,
   });
-} else {
-  // console.log("Initializing PostHog in development");
-  // console.log("import.meta.env", import.meta.env);
 }
 
 const Context = ({ children }: { children: ReactNode }) => {
@@ -36,11 +33,11 @@ const Context = ({ children }: { children: ReactNode }) => {
             <NotificationsProvider>
               <PostHogProvider client={posthogClient}>
                 <TauriProvider>
-                  <LocalFileProvider>
+                  <FlowsProvider>
                     <ModelProvider>
                       <SqlProvider>{children}</SqlProvider>
                     </ModelProvider>
-                  </LocalFileProvider>
+                  </FlowsProvider>
                 </TauriProvider>
               </PostHogProvider>
             </NotificationsProvider>

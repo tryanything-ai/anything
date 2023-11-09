@@ -25,7 +25,7 @@ import {
 } from "reactflow";
 
 import api from "../tauri_api/api";
-import { useLocalFileContext } from "./LocalFileProvider";
+import { useFlowsContext } from "./FlowsProvider";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -110,11 +110,11 @@ type SessionComplete = {
 };
 
 type GetFlowResponse = {
-  flow: FlowFrontMatter
-}
+  flow: FlowFrontMatter;
+};
 
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
-  const { renameFlowFiles } = useLocalFileContext();
+  const { renameFlowFiles } = useFlowsContext();
   const { flow_name } = useParams();
   const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
   const [loadingToml, setLoadingToml] = useState<boolean>(false);
@@ -236,12 +236,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     keysToUpdate: any
   ) => {
     try {
-      //if we are updating name in TOML we also need to update the folder name
-      // if (keysToUpdate.name) {
-      //   await renameFlowFiles(flow_name, keysToUpdate.name);
-      // }
+      // if we are updating name in TOML we also need to update the folder name
+      if (keysToUpdate.name) {
+        await renameFlowFiles(flow_name, keysToUpdate.name);
+      }
       let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
-      //TODO: check if name change causes race condition
       setFlowFrontmatter(flow_frontmatter);
     } catch (error) {
       console.log("error updating flow frontmatter", error);
@@ -324,7 +323,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("Fetch Flow By Name", flow_name);
       if (!flow_name) return;
-      let {flow} = await api.getFlowByName<GetFlowResponse>(flow_name);
+      let { flow } = await api.getFlowByName<GetFlowResponse>(flow_name);
       console.log(
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)

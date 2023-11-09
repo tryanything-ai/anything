@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { SubmitHandler,useForm } from "react-hook-form";
-import { useNavigate,useParams } from "react-router-dom";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { useFlowContext } from "../context/FlowProvider";
-import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useFlowsContext } from "../context/FlowsProvider";
 import api from "../tauri_api/api";
-import { getFlows } from "../tauri_api/invoke";
+// import { getFlows } from "../tauri_api/invoke";
 
 type Inputs = {
   flow_name: string;
@@ -13,7 +13,7 @@ type Inputs = {
 
 const FlowSettingsPanel = () => {
   const [loading, setLoading] = useState(false);
-  const { deleteFlow } = useLocalFileContext();
+  const { deleteFlow } = useFlowsContext();
   const { updateFlowFrontmatter, flowFrontmatter } = useFlowContext();
   const { flow_name } = useParams();
 
@@ -35,18 +35,21 @@ const FlowSettingsPanel = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
       setLoading(true);
-      console.log("data data => ", flowFrontmatter, data)
+      console.log("data data => ", flowFrontmatter, data);
       if (flow_name && data.flow_name != flow_name) {
         // api
         let updateFlow = {
           flow_name: data.flow_name,
           active: false,
-          version: "0.0.0"
+          version: "0.0.0",
         };
-        let resp = await api.flows.updateFlow(flowFrontmatter.flow_id, updateFlow);
+        let resp = await api.flows.updateFlow(
+          flowFrontmatter.flow_id,
+          updateFlow
+        );
         await updateFlowFrontmatter(flow_name, resp);
-        const new_flows = await getFlows();
-        console.log("new flows after update", new_flows)
+        const new_flows = await api.flows.getFlows();
+        console.log("new flows after update", new_flows);
         // console.log("resp", resp);
         // await updateFlowFrontmatter(flow_name, { name: data.flow_name });
         navigate(`/flows/${data.flow_name}`);

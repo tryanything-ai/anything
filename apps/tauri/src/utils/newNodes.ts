@@ -2,10 +2,10 @@ import { HandleProps, NodeProps, Edge } from "./nodeUtils";
 
 // Typescript version of Flow TOML
 export type Flow = {
-  flow_name: string;
-  flow_id?: string;
-  author_username?: string;
-  author_id?: string;
+  flowId?: string;
+  flowName: string;
+  username?: string;
+  userId?: string;
   version: string;
   description: string;
   variables: Variable[]; //Global variables
@@ -64,11 +64,11 @@ export type AnythingNodeProps = NodeProps<Action | Trigger>;
 // Mocks for testing etc
 export const MockNewFlows: Flow[] = [
   {
-    flow_name: "Mock Flow",
-    author_username: "Mock Author",
-    author_id: "1",
+    flowName: "Mock Flow",
+    username: "Mock Author",
+    userId: "1",
     environment: "dev",
-    flow_id: "1",
+    flowId: "1",
     version: "0.1",
     description:
       "This is a mock flow with approximately 3 lines of text that needs to be concatted for the user. Actually its closer to two lines",
@@ -121,11 +121,11 @@ export const MockNewFlows: Flow[] = [
     edges: [],
   },
   {
-    flow_name: "Mock Flow",
-    author_username: "Mock Author",
-    author_id: "1",
+    flowName: "Mock Flow",
+    username: "Mock Author",
+    userId: "1",
     environment: "dev",
-    flow_id: "1",
+    flowId: "1",
     version: "0.1",
     description:
       "This is a mock flow with approximately 3 lines of text that needs to be concatted for the user. Actually its closer to two lines",

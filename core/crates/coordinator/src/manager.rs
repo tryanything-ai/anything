@@ -3,7 +3,7 @@ use anything_graph::{Flow, Flowfile};
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion,
-    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlow,
+    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, RenameFlowArgs,
 };
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
@@ -336,13 +336,13 @@ impl Manager {
     /// Returns:
     ///
     /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
-    pub async fn update_flow(
+    pub async fn rename_flow(
         &mut self,
         flow_id: String,
-        update_flow: UpdateFlow,
+        args: RenameFlowArgs,
     ) -> CoordinatorResult<anything_graph::Flow> {
-        tracing::trace!("Update flow with {flow_id} and {:#?}", update_flow);
-        let new_flow_name = update_flow.flow_name.clone();
+        tracing::trace!("Update flow with {flow_id} and {:#?}", args);
+        let new_flow_name = args.flow_name.clone();
         let mut original_flow = self.flow_repo()?.get_flow_by_id(flow_id.clone()).await?;
         let original_flow_name = original_flow.flow_name.clone();
 
@@ -352,7 +352,7 @@ impl Manager {
 
         let stored_flow = self
             .flow_repo()?
-            .update_flow(flow_id.clone(), update_flow)
+            .rename_flow(flow_id.clone(), args)
             .await?;
 
         original_flow.flow_name = stored_flow.flow_name.clone();
