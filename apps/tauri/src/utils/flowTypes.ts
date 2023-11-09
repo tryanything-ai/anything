@@ -8,7 +8,7 @@ export type Flow = {
   userId?: string;
   version: string;
   description?: string;
-  variables: Variable[]; //Global variables
+  variables?: Variable[]; //Global variables
   environment: string; //Stub for future
   trigger: Trigger; //Triggering
   actions: Action[]; //Processing
@@ -35,7 +35,7 @@ export interface Node {
   variables: Variable[]; //Local variables
   config: Variable;
   presentation?: NodePresentation;
-  handles: HandleProps[];
+  handles?: HandleProps[];
 }
 
 // Presentation data only needed for react flow but we need all of it

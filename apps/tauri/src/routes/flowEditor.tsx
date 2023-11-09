@@ -35,7 +35,7 @@ function Flows() {
 
   const nodeTypes = useMemo(
     () => ({
-      manualNode: ManualNode,
+      // manualNode: ManualNode,
       superNode: SuperNode,
     }),
     []

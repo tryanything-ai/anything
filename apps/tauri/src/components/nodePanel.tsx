@@ -2,14 +2,14 @@ import { BaseNodeIcon } from "ui";
 import { useEffect, useMemo, useState } from "react";
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 
-import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
-import { Node } from "../utils/nodeUtils";
+import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators2";
+import { Node, Action, Trigger } from "../utils/flowTypes";
 import BaseSearch from "./baseSearch";
 
 const NodePanel = () => {
-  const [allNodes, setAllNodes] = useState<Node[]>([]);
-  const [triggerNodeResults, setTriggerNodeResults] = useState<Node[]>([]);
-  const [actionNodeResults, setActionNodeResults] = useState<Node[]>([]);
+  const [allNodes, setAllNodes] = useState<(Action | Trigger)[]>([]);
+  const [triggerNodeResults, setTriggerNodeResults] = useState<Trigger[]>([]);
+  const [actionNodeResults, setActionNodeResults] = useState<Action[]>([]);
   const [showActions, setShowActions] = useState(true);
   const [showTriggers, setShowTriggers] = useState(true);
 
@@ -26,13 +26,13 @@ const NodePanel = () => {
     setTriggerNodeResults(trigger_nodes);
   }, []);
 
-  const setResults = (results: Node[]) => {
+  const setResults = (results: (Action | Trigger)[]) => {
     console.log("results", results);
     setTriggerNodeResults(
-      results.filter((node) => node.nodeProcessData.trigger)
+      results.filter((node): node is Trigger => node.trigger)
     );
     setActionNodeResults(
-      results.filter((node) => !node.nodeProcessData.trigger)
+      results.filter((node): node is Action => !node.trigger)
     );
   };
 
@@ -41,7 +41,7 @@ const NodePanel = () => {
       <div className="py-4">
         <BaseSearch
           data={allNodes}
-          searchKey={["nodePresentationData.node_label"]}
+          searchKey={["node_label"]}
           onResultsChange={(results) => {
             console.log("results", results);
             setResults(results);
@@ -61,8 +61,8 @@ const NodePanel = () => {
           showTriggers ? "max-h-auto" : "max-h-0"
         }`}
       >
-        {triggerNodeResults.map((node: Node) => (
-          <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+        {triggerNodeResults.map((node: Trigger) => (
+          <NodeDnD node={node} key={node.node_label} />
         ))}
       </div>
       <h1
@@ -77,39 +77,36 @@ const NodePanel = () => {
           showActions ? "max-h-auto" : "max-h-0"
         }`}
       >
-        {actionNodeResults.map((node: Node) => (
-          <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+        {actionNodeResults.map((node: Action) => (
+          <NodeDnD node={node} key={node.node_label} />
         ))}
       </div>
     </div>
   );
 };
 
-const NodeDnD = ({ node }: { node: Node }) => {
+const NodeDnD = ({ node }: { node: Action | Trigger }) => {
   const onDragStart = (event: any) => {
-    let nodeType;
+    // let nodeType;
 
-    if (!node.nodePresentationData.nodeType) {
-      nodeType = "superNode";
-    } else {
-      nodeType = node.nodePresentationData.nodeType;
-    }
+    // if ('trigger' in node && node.trigger !== true) {
+    //   nodeType = "superNode";
+    // } else {
+    //   nodeType = node.nodePresentationData.nodeType;
+    // }
 
-    console.log("drag started", nodeType);
+    // console.log("drag started", nodeType);
 
-    event.dataTransfer.setData("nodeType", nodeType);
-    event.dataTransfer.setData(
-      "nodeProcessData",
-      JSON.stringify(node.nodeProcessData)
-    );
-    event.dataTransfer.setData(
-      "nodeConfigurationData",
-      JSON.stringify(node.nodeConfigurationData)
-    );
-    event.dataTransfer.setData(
-      "nodePresentationData",
-      JSON.stringify(node.nodePresentationData)
-    );
+    // event.dataTransfer.setData("nodeType", nodeType);
+    event.dataTransfer.setData("nodeData", JSON.stringify(node));
+    // event.dataTransfer.setData(
+    //   "nodeConfigurationData",
+    //   JSON.stringify(node.nodeConfigurationData)
+    // );
+    // event.dataTransfer.setData(
+    //   "nodePresentationData",
+    //   JSON.stringify(node.nodePresentationData)
+    // );
     event.dataTransfer.effectAllowed = "move";
   };
 
@@ -120,14 +117,14 @@ const NodeDnD = ({ node }: { node: Node }) => {
       draggable
     >
       <BaseNodeIcon
-        icon={node.nodePresentationData.icon}
+        icon={node.icon}
         // className={`h-9 w-9 bg-opacity-80 ${
         //   node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
         //   }`}
         className={`h-9 w-9 bg-opacity-80 text-white`}
       />
       <h1 className="truncate overflow-ellipsis pl-2 text-lg">
-        {node.nodePresentationData.node_label}
+        {node.node_label}
       </h1>
     </div>
   );
