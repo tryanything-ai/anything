@@ -24,9 +24,11 @@ import {
   ReactFlowInstance,
 } from "reactflow";
 import { FlowFrontMatter } from "../utils/flowTypes";
+import { ProcessingStatus, SessionComplete } from "../utils/eventTypes";
 
 import api from "../tauri_api/api";
 import { useFlowsContext } from "./FlowsProvider";
+import { Node as FlowNode } from "../utils/flowTypes"; 
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -86,25 +88,6 @@ export const FlowContext = createContext<FlowContextInterface>({
 
 export const useFlowContext = () => useContext(FlowContext);
 
-type ProcessingStatus = {
-  message: string;
-  event_id: string;
-  node_id: string;
-  flow_id: string;
-  session_id: string;
-};
-
-type SessionComplete = {
-  event_id: string;
-  node_id: string;
-  flow_id: string;
-  session_id: string;
-};
-
-type GetFlowResponse = {
-  flow: FlowFrontMatter;
-};
-
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { updateFlow } = useFlowsContext();
   const { flow_name } = useParams();
@@ -131,14 +114,13 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const addNode = (
-    type: string,
     position: { x: number; y: number },
     specialData?: any
   ) => {
     const nextId = findNextNodeId(nodes);
     const newNode: Node = {
       id: nextId,
-      type,
+      type: "superNode",
       position,
       data: { ...specialData },
     };
@@ -178,36 +160,13 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       event.preventDefault();
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       if (event.dataTransfer === null) return;
-      const nodeType = event.dataTransfer.getData("nodeType");
-      const nodeProcessData = JSON.parse(
-        event.dataTransfer.getData("nodeProcessData")
-      );
-      const nodeConfigurationData = JSON.parse(
-        event.dataTransfer.getData("nodeConfigurationData")
-      );
-      const nodePresentationData = JSON.parse(
-        event.dataTransfer.getData("nodePresentationData")
-      );
 
-      if (typeof nodeType === "undefined" || !nodeType) {
-        return;
-      }
-      if (typeof nodeProcessData === "undefined" || !nodeProcessData) {
-        return;
-      }
-      if (
-        typeof nodeConfigurationData === "undefined" ||
-        !nodeConfigurationData
-      ) {
-        return;
-      }
-      if (
-        typeof nodePresentationData === "undefined" ||
-        !nodePresentationData
-      ) {
-        return;
-      }
+      const nodeData: FlowNode = JSON.parse(event.dataTransfer.getData("nodeData"));
 
+      if (typeof nodeData === "undefined" || !nodeData) {
+        return;
+      }
+  
       if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
 
       let position = reactFlowInstance.project({
@@ -215,11 +174,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      addNode(nodeType, position, {
-        ...nodeProcessData,
-        ...nodeConfigurationData,
-        ...nodePresentationData,
-      });
+      addNode(position, nodeData);
     },
     [addNode]
   );

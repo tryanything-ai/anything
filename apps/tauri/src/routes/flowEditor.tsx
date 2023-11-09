@@ -15,7 +15,10 @@ import RightPanel from "../components/RightPanel";
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { useFlowContext } from "../context/FlowProvider";
 
-export default function Flows() {
+import { FlowProvider } from "../context/FlowProvider";
+import { FlowNavigationProvider } from "../context/FlowNavigationProvider";
+
+function Flows() {
   const {
     nodes,
     edges,
@@ -76,5 +79,15 @@ export default function Flows() {
         </Allotment>
       </div>
     </div>
+  );
+}
+
+export default function FlowEditor() {
+  return (
+    <FlowProvider>
+      <FlowNavigationProvider>
+        <Flows />
+      </FlowNavigationProvider>
+    </FlowProvider>
   );
 }

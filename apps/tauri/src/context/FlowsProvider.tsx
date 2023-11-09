@@ -85,7 +85,6 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  //TODO: RUST_MIGRATION
   const readNodeConfig = async (
     nodeId: string,
     flowName: string
@@ -117,33 +116,6 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     //Return without waiting
     return res;
   };
-  //get local files to show in UI when files change
-  //read the exact toml file that is being editedf
-  //TODO: make this less brute force
-  useEffect(() => {
-    // Your watch function
-    if (!loading) {
-      // let stopWatching = () => {};
-      // console.log("Watching ", appDocuments, " for changes");
-      // const watchThisFile = async () => {
-      //   stopWatching = await api.watch.watchImmediate(
-      //     appDocuments,
-      //     (event) => {
-      //       console.log("File changed: ", JSON.stringify(event, null, 3));
-      //       // console.log("toml file changed, sniffed in file watcher");
-      //       // readToml(); //TODO: do this in a less chatty way
-      //       getLocalFiles();
-      //     }
-      //     // { recursive: true }
-      //   );
-      // };
-      // watchThisFile();
-      // // Cleanup function
-      // return () => {
-      //   stopWatching(); // Call the stopWatching function to kill the watch
-      // };
-    }
-  }, [loading]);
 
   const getFlows = async () => {
     console.log("Getting Flows from Tauri API?");
@@ -152,6 +124,7 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     setFlows(res.flows);
   };
 
+  //Hydrate flows on launch
   useEffect(() => {
     getFlows();
   }, []);

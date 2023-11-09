@@ -99,7 +99,6 @@ const NodeConfigPanel = () => {
             } else {
               return null;
             }
-            // Extend this to handle other types as needed
           })}
 
           <button className="mt-2 btn btn-primary" type="submit">
