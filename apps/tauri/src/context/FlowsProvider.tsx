@@ -110,12 +110,12 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateFlow = async (flowId: string, args: UpdateFlowArgs) => {
-    // try {
-    //   console.log("Flow id in FlowsProivder", flowId);
-      return await api.flows.updateFlow(flowId, args);
-    // } catch (error) {
-    //   console.error("Error renaming flow in Flows Provider" + error);
-    // }
+    //Update Flow
+    let res = await api.flows.updateFlow(flowId, args);
+    //Rehydrate Global State
+    getFlows();
+    //Return without waiting
+    return res;
   };
   //get local files to show in UI when files change
   //read the exact toml file that is being editedf
