@@ -43,7 +43,8 @@ const NODES: (Action | Trigger)[] = [
     config: {
       pattern: "*/5 * * * *", //every 5 minutes
     },
-    trigger_type: "",
+    trigger_type: "cron",
+    mockData: {},
   },
   {
     trigger: false,
@@ -58,7 +59,6 @@ const NODES: (Action | Trigger)[] = [
     },
     engine: "javascript",
     depends_on: [],
-    // worker_name: "js_action",
   },
   {
     trigger: true,
@@ -70,6 +70,7 @@ const NODES: (Action | Trigger)[] = [
     variables: [],
     config: {},
     trigger_type: "manual",
+    mockData: {},
   },
   {
     trigger: false,
@@ -147,6 +148,7 @@ const NODES: (Action | Trigger)[] = [
       message: "",
     },
     trigger_type: "chat",
+    mockData: {},
   },
   {
     trigger: false,
@@ -193,7 +195,7 @@ const NODES: (Action | Trigger)[] = [
   },
 ];
 
-export const getTriggerNodes = (): (Trigger)[] => {
+export const getTriggerNodes = (): Trigger[] => {
   return NODES.filter((node): node is Trigger => node.trigger === true);
 };
 
@@ -201,6 +203,6 @@ export const getTriggerNodes = (): (Trigger)[] => {
  * Function to get nodes where trigger is false
  * @returns {Node[]} Array of nodes where trigger is false
  */
-export const getActionNodes = (): (Action)[] => {
+export const getActionNodes = (): Action[] => {
   return NODES.filter((node): node is Action => node.trigger === false);
 };

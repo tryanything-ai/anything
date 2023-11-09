@@ -1,9 +1,9 @@
 import { BaseNodeIcon } from "ui";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators2";
-import { Node, Action, Trigger } from "../utils/flowTypes";
+import { Action, Trigger } from "../utils/flowTypes";
 import BaseSearch from "./baseSearch";
 
 const NodePanel = () => {

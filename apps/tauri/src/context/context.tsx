@@ -13,6 +13,8 @@ import { SettingsProvider } from "../context/SettingsProvider";
 import { SqlProvider } from "../context/SqlProvider";
 import { TauriProvider } from "../context/TauriProvider";
 import { DeeplinkProvider } from "../context/DeeplinkProvider";
+import { FlowProvider } from "./FlowProvider";
+import { FlowNavigationProvider } from "./FlowNavigationProvider";
 
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
@@ -35,7 +37,13 @@ const Context = ({ children }: { children: ReactNode }) => {
                 <TauriProvider>
                   <FlowsProvider>
                     <ModelProvider>
-                      <SqlProvider>{children}</SqlProvider>
+                      <SqlProvider>
+                        <FlowProvider>
+                          <FlowNavigationProvider>
+                            {children}
+                          </FlowNavigationProvider>
+                        </FlowProvider>
+                      </SqlProvider>
                     </ModelProvider>
                   </FlowsProvider>
                 </TauriProvider>

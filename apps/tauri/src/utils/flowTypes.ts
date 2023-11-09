@@ -63,6 +63,7 @@ export interface Action extends Node {
 export interface Trigger extends Node {
   trigger: true;
   trigger_type: string;
+  mockData: any; //we need the user to be able to press "play" and imitate a real trigger
 }
 
 interface Variable {
@@ -108,6 +109,7 @@ export const MockNewFlows: Flow[] = [
       config: {},
       handles: [],
       trigger_type: "Mock Trigger Type",
+      mockData: {},
     },
     actions: [
       {
@@ -165,6 +167,7 @@ export const MockNewFlows: Flow[] = [
       config: {},
       handles: [],
       trigger_type: "Mock Trigger Type",
+      mockData: {},
     },
     actions: [
       {

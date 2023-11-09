@@ -8,7 +8,6 @@ import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 
 import FlowName from "../components/flowName";
 import NodePanel from "../components/nodePanel";
-import ManualNode from "../components/nodes/manualNode";
 import SuperNode from "../components/nodes/superNode";
 import RightPanel from "../components/RightPanel";
 import {
@@ -17,7 +16,7 @@ import {
 } from "../context/FlowNavigationProvider";
 import { FlowProvider, useFlowContext } from "../context/FlowProvider";
 
-function Flows() {
+export default function Flows() {
   const {
     nodes,
     edges,
@@ -30,12 +29,10 @@ function Flows() {
     currentProcessingStatus,
   } = useFlowContext();
 
-  const { nodePanel, nodeConfigPanel, nodeId } = useFlowNavigationContext();
   const reactFlowWrapper = useRef(null);
 
   const nodeTypes = useMemo(
     () => ({
-      // manualNode: ManualNode,
       superNode: SuperNode,
     }),
     []
@@ -56,14 +53,12 @@ function Flows() {
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}
-                // defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onDragOver={onDragOver}
                 onInit={setReactFlowInstance}
                 onDrop={(e) => onDrop(e, reactFlowWrapper)}
                 onConnect={onConnect}
-                // fitView
               >
                 <FlowName />
                 <Controls style={{ background: "darkgray" }} />
@@ -83,15 +78,5 @@ function Flows() {
         </Allotment>
       </div>
     </div>
-  );
-}
-
-export default function FlowEditor() {
-  return (
-    <FlowProvider>
-      <FlowNavigationProvider>
-        <Flows />
-      </FlowNavigationProvider>
-    </FlowProvider>
   );
 }
