@@ -146,8 +146,9 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
   }, [loading]);
 
   const getFlows = async () => {
-    console.log("Getting FLows from Tauri API?");
+    console.log("Getting Flows from Tauri API?");
     let res: any = await api.flows.getFlows();
+    console.log("Got New Flows", res);
     setFlows(res.flows);
   };
 

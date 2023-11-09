@@ -71,6 +71,7 @@ interface Variable {
 export type AnythingNodeProps = NodeProps<Node>;
 
 //TODO: refactor this to be more like the above
+//This event type will be deprecated to follow new standards soon
 export type EventInput = {
   flow_id: string; //flow needs a computer friendly name that can be changed without changing processing
   flowName: string; //flow needs a user friendly name

@@ -2,7 +2,7 @@ import { BaseNodeIcon } from "ui";
 import { useEffect, useState } from "react";
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 
-import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators2";
+import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
 import { Node, Action, Trigger } from "../utils/flowTypes";
 import BaseSearch from "./baseSearch";
 

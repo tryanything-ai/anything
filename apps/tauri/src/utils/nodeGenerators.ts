@@ -1,4 +1,4 @@
-import { Node } from "./nodeUtils";
+import { Node, Trigger, Action } from "./flowTypes";
 import { HandleProps, Position } from "reactflow";
 import * as rawIcons from "./rawIcons";
 
@@ -31,279 +31,178 @@ const EndHandles: HandleProps[] = [
   },
 ];
 
-export const NODES: Node[] = [
+const NODES: Node[] = [
   {
-    nodeConfigurationData: {
-      pattern: "",
+    trigger: true,
+    node_name: "Cron Trigger",
+    node_label: "Cron Trigger",
+    icon: rawIcons.VscWatch,
+    description: "Fire at a given time",
+    handles: StartHandles,
+    variables: [],
+    config: {
+      pattern: "*/5 * * * *", //every 5 minutes
     },
-    nodePresentationData: {
-      node_label: "Cron Trigger",
-      alt: "Cron Trigger",
-      icon: rawIcons.VscWatch,
-      handles: StartHandles,
-    },
-    nodeProcessData: {
-      worker_type: "start",
-      worker_name: "cron",
-      trigger: true,
-    },
+    trigger_type: "cron",
+    mockData: {},
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "JS Action",
+    node_label: "JS Action",
+    icon: rawIcons.VscCode,
+    description: "JS Logo",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       code: "",
     },
-    nodePresentationData: {
-      node_label: "JS Action",
-      icon: rawIcons.VscCode,
-      alt: "JS Logo",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "javascript",
-      worker_name: "js_action",
-      trigger: false,
-    },
+    engine: "javascript",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {},
-    nodePresentationData: {
-      nodeType: "manualNode",
-      node_label: "Manual Trigger",
-      alt: "Manual Trigger",
-      icon: rawIcons.VscPerson,
-      handles: StartHandles,
-    },
-    nodeProcessData: {
-      worker_type: "start",
-      worker_name: "manual_trigger",
-      trigger: true,
-    },
+    trigger: true,
+    node_name: "Manual Trigger",
+    node_label: "Manual Trigger",
+    icon: rawIcons.VscPerson,
+    description: "Manual Trigger",
+    handles: StartHandles,
+    variables: [],
+    config: {},
+    trigger_type: "manual",
+    mockData: {},
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "Local Model Action",
+    node_label: "Local Model Action",
+    icon: rawIcons.Llama,
+    description: "Local Model Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       filename: "",
       prompt: "",
-      variables: [],
     },
-    nodePresentationData: {
-      node_label: " Local Model Action",
-      alt: "Local Model Action",
-      icon: rawIcons.Llama,
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "local_model",
-      worker_name: "local_model",
-      trigger: false,
-    },
+    engine: "local_model",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "OpenAI Action",
+    node_label: "OpenAI Action",
+    icon: rawIcons.OpenAi,
+    description: "OpenAI Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       url: "https://api.openai.com/v1/chat/completions",
       method: "POST",
       headers:
         '{"Authorization":"Bearer OPEN_AI_API_KEY", "Content-Type":"application/json"}',
       body: '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Act like Hermione Granger and be pithy. She just tried a spell and it mostly worked."}], "temperature": 0.7 }',
     },
-    nodePresentationData: {
-      node_label: "OpenAI Action",
-      alt: "OpenAI Action",
-      icon: rawIcons.OpenAi,
-      // icon: "https://qcuguzlfpjtyiloqtysz.supabase.co/storage/v1/object/public/random/openai-logomark.svg",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "openai_action",
-      trigger: false,
-    },
+    engine: "rest",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "Rest API Action",
+    node_label: "Rest API Action",
+    icon: rawIcons.VscRadioTower,
+    description: "Rest API Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       url: "",
       method: "",
       headers: "",
       body: "",
     },
-    nodePresentationData: {
-      node_label: "Rest API Action",
-      alt: "Rest API Action",
-      icon: rawIcons.VscRadioTower,
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "rest",
-      worker_name: "rest_action",
-      trigger: false,
-    },
+    engine: "rest",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "Python Action",
+    node_label: "Python Action",
+    icon: rawIcons.VscCode,
+    description: "Python Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       code: "",
     },
-    nodePresentationData: {
-      node_label: "Python Action",
-      alt: "Python Action",
-      icon: rawIcons.VscCode,
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "python",
-      worker_name: "python_action",
-      trigger: false,
-    },
+    engine: "python",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {
+    trigger: true,
+    node_name: "App Chat Trigger",
+    node_label: "App Chat Trigger",
+    icon: rawIcons.VscMail,
+    description: "App Chat Trigger",
+    handles: StartHandles,
+    variables: [],
+    config: {
       message: "",
     },
-    nodePresentationData: {
-      node_label: "App Chat Trigger",
-      alt: "App Chat Trigger",
-      icon: rawIcons.VscMail,
-      handles: StartHandles,
-    },
-    nodeProcessData: {
-      worker_type: "start",
-      worker_name: "app_chat_trigger",
-      trigger: true,
-    },
+    trigger_type: "chat",
+    mockData: {},
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "Send Chat Action",
+    node_label: "Send Chat Action",
+    icon: rawIcons.VscSend,
+    description: "Send Chat Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       pattern: "",
     },
-    nodePresentationData: {
-      node_label: "Send Chat Action",
-      icon: rawIcons.VscSend,
-      alt: "Send Chat Action",
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "app_chat",
-      worker_name: "send_chat_action",
-      trigger: false,
-    },
+    engine: "app_chat",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "Terminal Action",
+    node_label: "Terminal Action",
+    icon: rawIcons.VscTerminal,
+    description: "Terminal Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       command: "",
     },
-    nodePresentationData: {
-      node_label: "Terminal Action",
-      alt: "Terminal Action",
-      icon: rawIcons.VscTerminal,
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "terminal",
-      worker_name: "terminal_action",
-      trigger: false,
-    },
+    engine: "terminal",
+    depends_on: [],
   },
   {
-    nodeConfigurationData: {
+    trigger: false,
+    node_name: "Vector Action",
+    node_label: "Vector Action",
+    icon: rawIcons.VscReferences,
+    description: "Vector Action",
+    handles: BaseHandles,
+    variables: [],
+    config: {
       db: "",
-      params: [],
+      params: "",
     },
-    nodePresentationData: {
-      node_label: "Vector Action",
-      alt: "Vector Action",
-      icon: rawIcons.VscReferences,
-      handles: BaseHandles,
-    },
-    nodeProcessData: {
-      worker_type: "vector",
-      worker_name: "vector_action",
-      trigger: false,
-    },
+    engine: "vector",
+    depends_on: [],
   },
-  // {
-  //   nodeConfigurationData: {
-  //     url: "https://api.salesforce.com/",
-  //     method: "",
-  //     headers: "",
-  //     body: "",
-  //   },
-  //   nodePresentationData: {
-  //     node_label: "Salesforce Action",
-  //     alt: "Salesforce Action",
-  //     icon: "https://www.vectorlogo.zone/logos/salesforce/salesforce-icon.svg",
-  //     handles: BaseHandles,
-  //   },
-  //   nodeProcessData: {
-  //     worker_type: "rest",
-  //     worker_name: "salesforce_action",
-  //     trigger: false,
-  //   },
-  // },
-  // {
-  //   nodeConfigurationData: {
-  //     url: "https://api.slack.com/",
-  //     method: "",
-  //     headers: "",
-  //     body: "",
-  //   },
-  //   nodePresentationData: {
-  //     node_label: "Slack Action",
-  //     alt: "Slack Action",
-  //     icon: "https://www.vectorlogo.zone/logos/slack/slack-icon.svg",
-  //     handles: BaseHandles,
-  //   },
-  //   nodeProcessData: {
-  //     worker_type: "rest",
-  //     worker_name: "slack_action",
-  //     trigger: false,
-  //   },
-  // },
-  // {
-  //   nodeConfigurationData: {
-  //     url: "https://api.twitter.com/",
-  //     method: "",
-  //     headers: "",
-  //     body: "",
-  //   },
-  //   nodePresentationData: {
-  //     node_label: "Twitter Action",
-  //     alt: "Twitter Action",
-  //     icon: "https://www.vectorlogo.zone/logos/twitter/twitter-icon.svg",
-  //     handles: BaseHandles,
-  //   },
-  //   nodeProcessData: {
-  //     worker_type: "rest",
-  //     worker_name: "twitter_action",
-  //     trigger: false,
-  //   },
-  // },
-  // {
-  //   nodeConfigurationData: {
-  //     url: "https://api.github.com/",
-  //     method: "",
-  //     headers: "",
-  //     body: "",
-  //   },
-  //   nodePresentationData: {
-  //     node_label: "GitHub Action",
-  //     alt: "GitHub Action",
-  //     icon: "https://www.vectorlogo.zone/logos/github/github-icon.svg",
-  //     handles: BaseHandles,
-  //   },
-  //   nodeProcessData: {
-  //     worker_type: "rest",
-  //     worker_name: "github_action",
-  //     trigger: false,
-  //   },
-  // },
 ];
 
-export const getTriggerNodes = (): Node[] => {
-  return NODES.filter((node) => node.nodeProcessData.trigger === true);
+export const getTriggerNodes = (): Trigger[] => {
+  return NODES.filter((node): node is Trigger => node.trigger === true);
 };
 
 /**
  * Function to get nodes where trigger is false
  * @returns {Node[]} Array of nodes where trigger is false
  */
-export const getActionNodes = (): Node[] => {
-  return NODES.filter((node) => node.nodeProcessData.trigger === false);
+export const getActionNodes = (): Action[] => {
+  return NODES.filter((node): node is Action => node.trigger === false);
 };
