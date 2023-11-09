@@ -31,7 +31,7 @@ const EndHandles: HandleProps[] = [
   },
 ];
 
-const NODES: (Action | Trigger)[] = [
+const NODES: Node[] = [
   {
     trigger: true,
     node_name: "Cron Trigger",

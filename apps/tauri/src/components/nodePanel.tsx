@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators2";
-import { Action, Trigger } from "../utils/flowTypes";
+import { Node, Action, Trigger } from "../utils/flowTypes";
 import BaseSearch from "./baseSearch";
 
 const NodePanel = () => {
-  const [allNodes, setAllNodes] = useState<(Action | Trigger)[]>([]);
+  const [allNodes, setAllNodes] = useState<Node[]>([]);
   const [triggerNodeResults, setTriggerNodeResults] = useState<Trigger[]>([]);
   const [actionNodeResults, setActionNodeResults] = useState<Action[]>([]);
   const [showActions, setShowActions] = useState(true);
@@ -26,7 +26,7 @@ const NodePanel = () => {
     setTriggerNodeResults(trigger_nodes);
   }, []);
 
-  const setResults = (results: (Action | Trigger)[]) => {
+  const setResults = (results: Node[]) => {
     console.log("results", results);
     setTriggerNodeResults(
       results.filter((node): node is Trigger => node.trigger)
@@ -85,7 +85,7 @@ const NodePanel = () => {
   );
 };
 
-const NodeDnD = ({ node }: { node: Action | Trigger }) => {
+const NodeDnD = ({ node }: { node: Node }) => {
   const onDragStart = (event: any) => {
     // let nodeType;
 

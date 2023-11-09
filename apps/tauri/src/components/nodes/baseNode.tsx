@@ -1,12 +1,12 @@
 import { BaseNodeIcon } from "ui";
 import clsx from "clsx";
 import { ReactNode, useEffect, useState } from "react";
-import { VscClose, VscEllipsis, VscGear } from "react-icons/vsc";
+import { VscClose, VscGear } from "react-icons/vsc";
 import { Handle, HandleProps } from "reactflow";
 
 import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { useFlowContext } from "../../context/FlowProvider";
-import { NodeData } from "../../utils/nodeUtils";
+import { Node } from "../../utils/flowTypes";
 
 export default function BaseNode({
   children,
@@ -16,7 +16,7 @@ export default function BaseNode({
 }: {
   children: ReactNode;
   id: string;
-  data: NodeData;
+  data: Node;
   hideIcon?: boolean;
 }) {
   const { currentProcessingStatus, flowFrontmatter } = useFlowContext();

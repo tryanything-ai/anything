@@ -39,8 +39,8 @@ const FlowSettingsPanel = () => {
         // api
         let updateFlow = {
           flow_name: data.flow_name,
-          active: false,
-          version: "0.0.0",
+          active: flowFrontmatter.active,
+          version: flowFrontmatter.version,
         };
         let resp = await api.flows.updateFlow(
           flowFrontmatter.flowId,
@@ -69,6 +69,9 @@ const FlowSettingsPanel = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col flex-grow gap-5"
       >
+        <label className="label">
+          <span className="label-text">Flow Name</span>
+        </label>
         <input
           type="text"
           placeholder="Type here"

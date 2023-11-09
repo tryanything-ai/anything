@@ -1,13 +1,19 @@
 import { HandleProps, NodeProps, Edge } from "./nodeUtils";
 
-// Typescript version of Flow TOML
-export type Flow = {
-  flowId: string;
+//Top level metadata about a flow 
+//like you might see in a package explorer like NPM
+export type FlowFrontMatter = {
+  active: boolean; //processign state ( all on or all off kinda like pause and start )
   name: string;
+  flowId: string;
+  version: string;
   username?: string;
   userId?: string;
-  version: string;
   description?: string;
+};
+
+//Configuration needed to display and run a Flow
+export interface Flow extends FlowFrontMatter {
   variables?: Variable[]; //Global variables
   environment: string; //Stub for future
   trigger: Trigger; //Triggering
@@ -15,18 +21,8 @@ export type Flow = {
   edges: Edge[]; //Needed for BFS traversal and flow rendering
 };
 
-//TODO: maybe deprecate or merge with flow in some way
-export type FlowFrontMatter = {
-  flowName: string;
-  flowId?: string;
-  version: string;
-  username: string;
-  userId?: string;
-  description?: string;
-};
-
-// General Representation of a Node
-export interface Node {
+//Node Configuration needed to display and run a Node
+interface BaseNode {
   trigger: boolean;
   node_name: string; //will use as nodeID
   icon: string;
@@ -54,23 +50,25 @@ interface NodePresentation {
   };
 }
 
-export interface Action extends Node {
+export interface Action extends BaseNode {
   trigger: false;
   engine: string;
   depends_on: string[]; //node_name for parallelization
 }
 
-export interface Trigger extends Node {
+export interface Trigger extends BaseNode {
   trigger: true;
   trigger_type: string;
   mockData: any; //we need the user to be able to press "play" and imitate a real trigger
 }
 
+export type Node = Action | Trigger;
+
 interface Variable {
   [key: string]: string; // Using an index signature since the keys can vary.
 }
 
-export type AnythingNodeProps = NodeProps<Action | Trigger>;
+export type AnythingNodeProps = NodeProps<Node>;
 
 export type EventInput = {
   flowId: string; //flow needs a computer friendly name that can be changed without changing processing
