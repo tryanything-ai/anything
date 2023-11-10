@@ -19,12 +19,12 @@
 }
 
 .start-button {
-  width: 3rem; /* Adjust as needed */
+  width: 3rem; 
   transition: width 0.3s ease;
 }
 
 .start-button:hover {
-  width: 7rem; /* or any desired width */
+  width: 7rem;
 }
 
 .start-text {

@@ -1,15 +1,18 @@
 import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns";
-import React, { useEffect,useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactJson from "react-json-view";
 import { useParams } from "react-router-dom";
 
 import { useFlowContext } from "../context/FlowProvider";
 import { useSqlContext } from "../context/SqlProvider";
+import { getFlow } from "../tauri_api/flows";
+import { VscInfo } from "react-icons/vsc";
 
 const DebugPanel = () => {
   const { getSessionEvents } = useSqlContext();
   const { flow_name } = useParams<{ flow_name: string }>();
+  const { getTrigger } = useFlowContext();
   const [eventIds, setEventIds] = useState<string[]>([]);
   const { currentProcessingStatus } = useFlowContext();
 
@@ -43,6 +46,10 @@ const DebugPanel = () => {
     }
   };
 
+  const runManualTrigger = async () => {
+    //TODO: rust api call to run manual trigger
+  };
+
   useEffect(() => {
     if (currentProcessingStatus) {
       hydrate();
@@ -54,7 +61,33 @@ const DebugPanel = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-full p-4 overflow-y-auto hide-scrollbar">
+    <div className="flex flex-col gap-4 h-full p-4 overflow-y-auto hide-scrollbar">
+      <button
+        className="btn btn-primary hover:btn-success"
+        onClick={runManualTrigger}
+      >
+        Start Flow
+      </button>
+      {/* MockData for Manual Trigger */}
+      <div>
+        <div className="flex flex-row gap-1">
+          Test Data
+          <div
+            className="tooltip tooltip-right"
+            data-tip="Test data is the shape of the future real data from your trigger. It is used for testing."
+          >
+            <VscInfo />
+          </div>
+        </div>
+
+        <ReactJson
+          style={{ borderRadius: "10px", padding: "10px" }}
+          enableClipboard={false}
+          theme={"tube"}
+          src={{ derp: true }}
+        />
+      </div>
+      {/* Event Processiong State */}
       {eventIds.length > 0 ? (
         <div className="text-2xl font-bold">Processing Tasks</div>
       ) : (
@@ -150,7 +183,7 @@ const ResultComponent = ({ result }: any) => {
         console.log("parsedJson", parsedJson);
         content = (
           <ReactJson
-            style={{ borderRadius: "5px", padding: "5px" }}
+            style={{ borderRadius: "10px", padding: "10px" }}
             enableClipboard={false}
             theme={"tube"}
             src={parsedJson}

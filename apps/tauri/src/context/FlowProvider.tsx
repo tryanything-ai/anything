@@ -23,12 +23,12 @@ import {
   OnNodesChange,
   ReactFlowInstance,
 } from "reactflow";
-import { FlowFrontMatter } from "../utils/flowTypes";
+import { FlowFrontMatter, Trigger } from "../utils/flowTypes";
 import { ProcessingStatus, SessionComplete } from "../utils/eventTypes";
 
 import api from "../tauri_api/api";
 import { useFlowsContext } from "./FlowsProvider";
-import { Node as FlowNode } from "../utils/flowTypes"; 
+import { Node as FlowNode } from "../utils/flowTypes";
 
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
@@ -62,9 +62,10 @@ interface FlowContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
+  getTrigger: () => Trigger | undefined;
   onDragOver: (event: any) => void;
   onDrop: (event: any, reactFlowWrapper: any) => void;
-  addNode: (type: string, specialData?: any) => void;
+  addNode: (position: { x: number; y: number }, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
 }
@@ -84,6 +85,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   addNode: () => {},
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
+  getTrigger: () => undefined,
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -113,11 +115,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     useState<ReactFlowInstance | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const addNode = (
-    position: { x: number; y: number },
-    specialData?: any
-  ) => {
+  const addNode = (position: { x: number; y: number }, specialData?: any) => {
     const nextId = findNextNodeId(nodes);
+
     const newNode: Node = {
       id: nextId,
       type: "superNode",
@@ -161,12 +161,14 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       if (event.dataTransfer === null) return;
 
-      const nodeData: FlowNode = JSON.parse(event.dataTransfer.getData("nodeData"));
+      const nodeData: FlowNode = JSON.parse(
+        event.dataTransfer.getData("nodeData")
+      );
 
       if (typeof nodeData === "undefined" || !nodeData) {
         return;
       }
-  
+
       if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
 
       let position = reactFlowInstance.project({
@@ -266,7 +268,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("Fetch Flow By Name", flow_name);
       if (!flow_name) return;
-      let { flow } = await api.flows.getFlowByName<GetFlowResponse>(flow_name);
+      let { flow } = await api.flows.getFlowByName<any>(flow_name);
       console.log(
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)
@@ -291,6 +293,12 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
+  };
+
+  const getTrigger = () => {
+    if (!nodes) return undefined;
+    let triggerNode = nodes.find((node) => node.data.trigger === true);
+    return triggerNode.data;
   };
 
   //Debounced write state to toml used for when we draggin things around.
@@ -348,16 +356,16 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   //Watch event processing for fun ui updates
   useEffect(() => {
-    let unlisten = api.subscribeToEvent("event_processing", (event: any) => {
+    let unlistenFromEventProcessing = api.subscribeToEvent("event_processing", (event: any) => {
       setCurrentProcessingStatus(event);
     });
-    let unlisten2 = api.subscribeToEvent("session_complete", (event: any) => {
+    let unlistenSessionComplete = api.subscribeToEvent("session_complete", (event: any) => {
       setSessionComplete(event);
     });
 
     return () => {
-      unlisten.then((unlisten) => unlisten());
-      unlisten2.then((unlisten) => unlisten());
+      unlistenFromEventProcessing.then((unlisten) => unlisten());
+      unlistenSessionComplete.then((unlisten) => unlisten());
     };
   }, [currentProcessingSessionId]);
 
@@ -383,6 +391,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         onDrop,
         toml,
         addNode,
+        getTrigger,
         setReactFlowInstance,
         updateFlowFrontmatter,
       }}

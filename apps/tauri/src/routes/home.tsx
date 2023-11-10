@@ -28,7 +28,7 @@ export default function Home() {
                   to={`flows/${flow.name}`}
                   className="w-full"
                 >
-                  <h2 className="card-title">{flow.name}</h2>
+                  <h2 className="card-title line-clamp-1">{flow.name}</h2>
                 </BaseCard>
               );
             })}

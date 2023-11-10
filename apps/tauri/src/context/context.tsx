@@ -15,7 +15,6 @@ import { TauriProvider } from "../context/TauriProvider";
 import { DeeplinkProvider } from "../context/DeeplinkProvider";
 import { SoftwareUpdateProvider } from "./SoftwareUpdateProvider";
 
-
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
@@ -38,13 +37,7 @@ const Context = ({ children }: { children: ReactNode }) => {
                   <TauriProvider>
                     <FlowsProvider>
                       <ModelProvider>
-                        <SqlProvider>
-                          {/* <FlowProvider>
-                            <FlowNavigationProvider> */}
-                              {children}
-                            {/* </FlowNavigationProvider>
-                          </FlowProvider> */}
-                        </SqlProvider>
+                        <SqlProvider>{children}</SqlProvider>
                       </ModelProvider>
                     </FlowsProvider>
                   </TauriProvider>
