@@ -8,7 +8,7 @@ import {
 
 import api from "../tauri_api/api";
 import { useTauriContext } from "./TauriProvider";
-import { Flow } from "../utils/flowTypes";
+import { Flow, Node } from "../utils/flowTypes";
 import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 
 interface FlowsContextInterface {
@@ -16,8 +16,8 @@ interface FlowsContextInterface {
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
   updateFlow: (flowId: string, args: UpdateFlowArgs) => void;
-  readNodeConfig: (nodeId: string, flow_name: string) => void;
-  writeNodeConfig: (nodeId: string, flowName: string, data: any) => void;
+  readNodeConfig: (flow_id: string, nodeId: string) => Promise<Node | undefined>;
+  writeNodeConfig: (flow_id: string, nodeId: string, data: any) =>  Promise<Node | undefined>;
 }
 
 export const FlowsContext = createContext<FlowsContextInterface>({
@@ -25,8 +25,8 @@ export const FlowsContext = createContext<FlowsContextInterface>({
   createNewFlow: () => {},
   deleteFlow: () => {},
   updateFlow: () => {},
-  readNodeConfig: () => {},
-  writeNodeConfig: () => {},
+  readNodeConfig: () => undefined, 
+  writeNodeConfig: () => undefined,
 });
 
 export const useFlowsContext = () => useContext(FlowsContext);
@@ -64,31 +64,11 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const readToml = async (flowName: string): Promise<string> => {
-    try {
-      return await api.flows.readToml(flowName);
-    } catch (error) {
-      console.log("error reading toml in FlowProvider", error);
-    }
-  };
-
-  const writeToml = async (
-    flowName: string,
-    toml: string
-  ): Promise<boolean> => {
-    try {
-      return await api.flows.writeToml(flowName, toml);
-    } catch (error) {
-      console.log("error writing toml in FlowProvider", error);
-    } finally {
-      getFlows();
-    }
-  };
 
   const readNodeConfig = async (
+    flowName: string,
     nodeId: string,
-    flowName: string
-  ): Promise<boolean> => {
+  ): Promise<Node | undefined> => {
     try {
       return await api.flows.readNodeConfig(nodeId, flowName);
     } catch (error) {
@@ -97,12 +77,12 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const writeNodeConfig = async (
+    flowId: string,
     nodeId: string,
-    flowName: string,
     data: any
-  ): Promise<boolean> => {
+  ): Promise<Node | undefined> => {
     try {
-      return api.flows.writeNodeConfig(nodeId, flowName, data);
+      return api.flows.writeNodeConfig(flowId, nodeId, data);
     } catch (error) {
       console.log("error writing node config in FlowProvider", error);
     }

@@ -21,7 +21,6 @@
     "clsx": "^1.2.1",
     "date-fns": "^2.30.0",
     "fuse.js": "^6.6.2",
-    "iarna-toml-esm": "^3.0.5",
     "match-sorter": "^6.3.1",
     "monaco-editor": "^0.40.0",
     "posthog-js": "^1.88.1",

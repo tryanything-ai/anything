@@ -1,4 +1,3 @@
-import { parse } from "iarna-toml-esm";
 import {
   createContext,
   ReactNode,
@@ -23,6 +22,7 @@ import {
   OnNodesChange,
   ReactFlowInstance,
 } from "reactflow";
+
 import { FlowFrontMatter, Trigger } from "../utils/flowTypes";
 import { ProcessingStatus, SessionComplete } from "../utils/eventTypes";
 
@@ -197,73 +197,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const writeToml = async (flow_id: string, toml: string) => {
-    try {
-      await api.flows.writeToml(flow_id, toml);
-    } catch (error) {
-      console.log("error saving toml", error);
-    }
-  };
-
-  const readToml = async () => {
-    try {
-      //TODO:
-      //RUST_MIGRATION
-      // if (!flow_name) {
-      //   throw new Error("appDocuments or flow_name is undefined");
-      // }
-      // console.log("reading toml in FlowProvider");
-      // return await api.fs.readTextFile(
-      //   appDocuments + "/flows/" + flow_name + "/flow.toml"
-      // );
-
-      return "";
-    } catch (error) {
-      console.log("error reading toml in FlowProvider", error);
-      return "";
-    }
-  };
-
-  //we have heard there is new toml
-  const updateStateFromToml = async () => {
-    try {
-      let new_toml = await readToml();
-      if (!new_toml) throw new Error("new_toml is undefined");
-      //don't update if nothing has changed in toml file
-      if (new_toml === toml) return;
-      setToml(new_toml);
-      let parsedToml = parse(new_toml);
-
-      if (!parsedToml.nodes) {
-        parsedToml.nodes = [];
-      }
-      setNodes(parsedToml.nodes as any);
-      if (!parsedToml.edges) {
-        parsedToml.edges = [];
-      }
-
-      setNodes(parsedToml.nodes as any);
-      setEdges(parsedToml.edges as any);
-      setFlowFrontmatter(parsedToml.flow as FlowFrontMatter);
-    } catch (error) {
-      console.log("error loading toml in FlowProvider", error);
-    }
-  };
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (flow_name && !initialTomlLoaded && !loadingToml) {
-  //       console.log("hydrating initial TOML");
-  //       setLoadingToml(true);
-  //       await updateStateFromToml();
-  //       setInitialTomlLoaded(true);
-  //       setLoadingToml(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [flow_name, initialTomlLoaded]);
-
   const fetchFlow = async () => {
     try {
       console.log("Fetch Flow By Name", flow_name);
@@ -276,20 +209,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
       setFlowFrontmatter(flow);
 
-      // let flow_versions = await api.getFlowVersions(flow.flow_id);
-
-      // console.log(
-      //   "Flow versions response",
-      //   JSON.stringify(flow_versions, null, 3)
-      // );
-
-      let flow_versions = [
-        {
-          id: "a3893cf7-4683-40cd-9b42-b3de6e32e7e0",
-          version: "0.0.1",
-          description: "",
-        },
-      ];
+      //TODO: get current version, maybe all versions
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
@@ -301,6 +221,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     return triggerNode.data;
   };
 
+  //TODO: Syncronize flow state with backend
   //Debounced write state to toml used for when we draggin things around.
   // useEffect(() => {
   //   // Clear any existing timers
@@ -333,35 +254,21 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //   };
   // }, [nodes, edges, flowFrontmatter]);
 
-  //Watch TOML file for changes
-  // useEffect(() => {
-  //   if (!initialTomlLoaded) return;
-  //   let stopWatching = () => {};
-  //   let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
-
-  //   console.log(`Watching ${path} for changes`);
-
-  //   const watchThisFile = async () => {
-  //     stopWatching = await api.watch.watchImmediate(path, (event) => {
-  //       console.log("TOML file changed");
-  //       updateStateFromToml();
-  //     });
-  //   };
-
-  //   watchThisFile();
-  //   return () => {
-  //     stopWatching();
-  //   };
-  // }, [initialTomlLoaded]);
 
   //Watch event processing for fun ui updates
   useEffect(() => {
-    let unlistenFromEventProcessing = api.subscribeToEvent("event_processing", (event: any) => {
-      setCurrentProcessingStatus(event);
-    });
-    let unlistenSessionComplete = api.subscribeToEvent("session_complete", (event: any) => {
-      setSessionComplete(event);
-    });
+    let unlistenFromEventProcessing = api.subscribeToEvent(
+      "event_processing",
+      (event: any) => {
+        setCurrentProcessingStatus(event);
+      }
+    );
+    let unlistenSessionComplete = api.subscribeToEvent(
+      "session_complete",
+      (event: any) => {
+        setSessionComplete(event);
+      }
+    );
 
     return () => {
       unlistenFromEventProcessing.then((unlisten) => unlisten());

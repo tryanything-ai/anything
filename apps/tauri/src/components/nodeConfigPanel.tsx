@@ -4,33 +4,16 @@ import { useParams } from "react-router-dom";
 
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { useFlowsContext } from "../context/FlowsProvider";
+import { useFlowContext } from "../context/FlowProvider";
 
 const NodeConfigPanel = () => {
   const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();
   const { readNodeConfig, writeNodeConfig } = useFlowsContext();
+  const {
+    flowFrontmatter: { flow_id },
+  } = useFlowContext();
 
-  const { flow_name } = useParams();
-  const [data, setData] = useState<any>({});
-
-  const hydrate = async () => {
-    try {
-      if (!flow_name) return;
-      if (!nodeId) return;
-      const data: any = await readNodeConfig(nodeId, flow_name);
-
-      Object.keys(data.data).forEach((key) => {
-        setValue(key, data.data[key]);
-      });
-
-      setData(data.data);
-    } catch (error) {
-      console.log("error", error);
-    }
-  };
-
-  useEffect(() => {
-    hydrate();
-  }, []);
+  const [data, setData] = useState<Node | undefined>();
 
   const {
     register,
@@ -40,13 +23,40 @@ const NodeConfigPanel = () => {
     formState: { errors },
   } = useForm();
 
+  const hydrate = async () => {
+    try {
+      if (!flow_id) return;
+      if (!nodeId) return;
+
+      //Get Node Configuration
+      const res: any = await readNodeConfig(flow_id, nodeId);
+
+      console.log("res in nodeConfig", res);
+
+      if (res === undefined) return;
+      //set keys on form
+      Object.keys(res).forEach((key) => {
+        setValue(key, res[key]);
+      });
+
+      //set all data for display
+      setData(res);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  useEffect(() => {
+    hydrate();
+  }, []);
+
   const onSubmit = (data: any) => {
-    if (!flow_name) return;
+    if (!flow_id) return;
     if (!nodeId) return;
     console.log("Hit Node Config Submit");
     console.log(data);
 
-    writeNodeConfig(nodeId, flow_name, data);
+    writeNodeConfig(flow_id, nodeId, data);
     setNodeConfigPanel(false, "");
   };
 
@@ -58,49 +68,51 @@ const NodeConfigPanel = () => {
           className="flex flex-col gap-4 p-4"
           onSubmit={handleSubmit(onSubmit)}
         >
-          {Object.keys(data).map((key, index) => {
-            const value = data[key];
+          {data
+            ? Object.keys(data).map((key, index) => {
+                const value = data[key];
 
-            if (typeof value === "string" || typeof value === "number") {
-              return (
-                <div key={key}>
-                  <div className="mb-1">{key}:</div>
-                  <input
-                    type="text"
-                    className="input input-bordered input-md w-full"
-                    defaultValue={value}
-                    {...register(key)}
-                  />
-                  {errors[key] && (
-                    <span>{JSON.stringify(errors[key]?.message)}</span>
-                  )}
-                </div>
-              );
-            } else if (typeof value === "boolean") {
-              return (
-                <Controller
-                  key={index}
-                  name={key}
-                  control={control}
-                  defaultValue={value}
-                  render={({ field }) => (
-                    <label>
-                      {key}:
+                if (typeof value === "string" || typeof value === "number") {
+                  return (
+                    <div key={key}>
+                      <div className="mb-1">{key}:</div>
                       <input
-                        className="toggle toggle-success"
-                        type="checkbox"
-                        {...field}
-                        checked={field.value}
+                        type="text"
+                        className="input input-bordered input-md w-full"
+                        defaultValue={value}
+                        {...register(key)}
                       />
-                    </label>
-                  )}
-                />
-              );
-            } else {
-              return null;
-            }
-          })}
-
+                      {errors[key] && (
+                        <span>{JSON.stringify(errors[key]?.message)}</span>
+                      )}
+                    </div>
+                  );
+                } else if (typeof value === "boolean") {
+                  return (
+                    <Controller
+                      key={index}
+                      name={key}
+                      control={control}
+                      defaultValue={value}
+                      render={({ field }) => (
+                        <label>
+                          {key}:
+                          <input
+                            className="toggle toggle-success"
+                            type="checkbox"
+                            {...field}
+                            checked={field.value}
+                          />
+                        </label>
+                      )}
+                    />
+                  );
+                } else {
+                  return null;
+                }
+              })
+            : null}
+          {/* //TODO other data types */}
           <button className="mt-2 btn btn-primary" type="submit">
             Save
           </button>

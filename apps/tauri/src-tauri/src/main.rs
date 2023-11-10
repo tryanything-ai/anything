@@ -1,6 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-mod core_messages;
+
 // use anything_events::config as anything_events_config;
 use std::env;
 use anything_common::AnythingConfigBuilder;

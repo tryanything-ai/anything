@@ -36,31 +36,35 @@ export const getFlowVersions = async (flowId: string) => {
   return await invoke("get_flow_versions", { flowId });
 };
 
-export const readToml = async (flow_id: string) => {
-  return "";
-  //TODO:
-  // return await anything.readToml(flowId);
-  // return await invoke("read_toml", { flow_id });
-};
+// export const readToml = async (flow_id: string) => {
+//   return "";
+//   //TODO: debracated for now
+//   // return await anything.readToml(flowId);
+//   // return await invoke("read_toml", { flow_id });
+// };
 
-export const writeToml = async (flowId: string, toml: string) => {
-  return true;
-  //TODO:
-  // return await anything.writeTomle(flowId, toml);
-};
+// export const writeToml = async (flowId: string, toml: string) => {
+//   return true;
+//   //TODO: debrected for now
+//   // return await anything.writeTomle(flowId, toml);
+// };
 
+//This function is for reading all the data about a node such as "prompts", "headers", "vairables"
+//etc whatever is important for each engine. Will want to conform to "node" type
 export const readNodeConfig = async (flowId: string, nodeId: string) => {
-  return true;
+  return undefined; 
   //TODO:
   // return await anything.readNodeConfig(flowId, nodeId);
 };
 
+//This function is for changing all the data about a node such as "prompts", "headers", "vairables"
+//etc whatever is important for each engine. Will want to conform to "node" type
 export const writeNodeConfig = async (
   flowId: string,
   nodeId: string,
   config: string
 ) => {
-  return true;
+  return undefined; 
   //TODO:
   // return await anything.wrtieNodeConfig(flowId, nodeId, config);
 };
