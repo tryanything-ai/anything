@@ -69,8 +69,8 @@ const FlowSharingPanel = () => {
   };
 
   const _fetchTemplateById = async () => {
-    if (flowFrontmatter.id) {
-      let res = fetchTemplateById(flowFrontmatter.id);
+    if (flowFrontmatter.flow_id) {
+      let res = fetchTemplateById(flowFrontmatter.flow_id);
       console.log(res);
     }
   };
@@ -83,7 +83,7 @@ const FlowSharingPanel = () => {
 
   return (
     <RequireAuth>
-      <div className="flex flex-col h-full gap-5 px-4">
+      <div className="flex flex-col h-full gap-5 p-4">
         <h1 className="text-2xl font-bold">Flow Sharing</h1>
         {/* View Published */}
         {publishedFlow ? (

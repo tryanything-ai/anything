@@ -60,7 +60,6 @@ const FlowSettingsPanel = () => {
   return (
     <div className="flex flex-col h-full gap-5 p-4">
       <h1 className="text-2xl font-bold">Flow Settings</h1>
-
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col flex-grow gap-5"

@@ -45,17 +45,17 @@ const RightPanel = () => {
         >
           Sharing
         </a>
-        <a
+        {/* <a
           className={clsx("tab", { "tab-active": tomlPanel })}
           onClick={() => closeAllPanelsOpenOne("toml")}
         >
           Editor
-        </a>
+        </a> */}
         {/* You can also control this one similarly */}
       </div>
       {debugPanel ? <DebugPanel /> : null}
       {settingsPanel ? <SettingsPanel /> : null}
-      {tomlPanel ? <TomlPanel /> : null}
+      {/* {tomlPanel ? <TomlPanel /> : null} */}
       {sharingPanel ? <SharingPanel /> : null}
       {nodeConfigPanel ? <NodeConfigPanel key={nodeId} /> : null}
     </div>
