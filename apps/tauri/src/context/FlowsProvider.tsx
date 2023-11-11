@@ -16,8 +16,15 @@ interface FlowsContextInterface {
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
   updateFlow: (flowId: string, args: UpdateFlowArgs) => void;
-  readNodeConfig: (flow_id: string, nodeId: string) => Promise<Node | undefined>;
-  writeNodeConfig: (flow_id: string, nodeId: string, data: any) =>  Promise<Node | undefined>;
+  readNodeConfig: (
+    flow_id: string,
+    nodeId: string
+  ) => Promise<Node | undefined>;
+  writeNodeConfig: (
+    flow_id: string,
+    nodeId: string,
+    data: any
+  ) => Promise<Node | undefined>;
 }
 
 export const FlowsContext = createContext<FlowsContextInterface>({
@@ -25,7 +32,7 @@ export const FlowsContext = createContext<FlowsContextInterface>({
   createNewFlow: () => {},
   deleteFlow: () => {},
   updateFlow: () => {},
-  readNodeConfig: () => undefined, 
+  readNodeConfig: () => undefined,
   writeNodeConfig: () => undefined,
 });
 
@@ -64,10 +71,10 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-
+  //TODO: deprecate and move to flowProvider.
   const readNodeConfig = async (
     flowName: string,
-    nodeId: string,
+    nodeId: string
   ): Promise<Node | undefined> => {
     try {
       return await api.flows.readNodeConfig(nodeId, flowName);

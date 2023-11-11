@@ -10,12 +10,12 @@ export type FlowFrontMatter = {
   username?: string;
   user_id?: string;
   description?: string;
+  variables?: Variable[]; //Global variables
+  environment: string; //Stub for future
 };
 
 //Configuration needed to display and run a Flow
 export interface Flow extends FlowFrontMatter {
-  variables?: Variable[]; //Global variables
-  environment: string; //Stub for future
   trigger: Trigger; //Triggering
   actions: Action[]; //Processing
   edges: Edge[]; //Needed for BFS traversal and flow rendering

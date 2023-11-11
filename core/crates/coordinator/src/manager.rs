@@ -3,7 +3,7 @@ use anything_graph::{Flow, Flowfile};
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion,
-    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs,
+    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs, UpdateFlowVersion,
 };
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
@@ -382,6 +382,19 @@ impl Manager {
             .create_flow_version(flow_id, flow_version)
             .await?;
         Ok(stored_flow_version)
+    }
+
+    pub async fn update_flow_version(
+        &mut self,
+        flow_id: String,
+        flow_version_id: String,
+        update_flow: UpdateFlowVersion
+    ) -> CoordinatorResult<FlowVersion> {
+        let db_flow_version = self
+            .flow_repo()?
+            .update_flow_version(flow_id, flow_version_id, update_flow)
+            .await?;
+        Ok(db_flow_version)
     }
 
     pub async fn execute_flow(&self, flow_name: String) -> CoordinatorResult<()> {

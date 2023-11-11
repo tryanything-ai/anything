@@ -45,6 +45,24 @@ export class Anything {
     return await invoke("plugin:anything|update_flow", { flowId, args });
   }
 
+  async updateFlowVersion<T>(
+    flowId: string,
+    flowVersionId: string,
+    update_flow: any
+  ): Promise<T> {
+    console.log(
+      "updateFlowVersion called in tauri plugin api ",
+      flowId,
+      flowVersionId,
+      update_flow
+    );
+    return await invoke("plugin:anything|update_flow_version", {
+      flowId,
+      flowVersionId,
+      update_flow,
+    });
+  }
+
   async executeFlow<T>(flowName: string): Promise<T> {
     return await invoke("plugin:anything|execute_flow", { flowName });
   }

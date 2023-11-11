@@ -1,7 +1,7 @@
 use crate::{error::FlowResult, AnythingState, Error};
 use anything_common::tracing;
 use anything_graph::Flow;
-use anything_persistence::{CreateFlowVersion, FlowVersion, UpdateFlowArgs};
+use anything_persistence::{CreateFlowVersion, FlowVersion, UpdateFlowArgs, UpdateFlowVersion};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -154,6 +154,39 @@ pub async fn create_flow_version(
             Err(e) => {
                 eprintln!("Error getting flows after creating flow: {:?}", e);
                 Ok(CreateFlowVersionResponse { flow_version: None })
+            }
+        },
+    }
+}
+
+#[derive(Serialize)]
+pub struct UpdateFlowVersionResponse {
+    flow_version: Option<FlowVersion>,
+}
+
+
+#[tauri::command]
+pub async fn update_flow_version(
+    state: tauri::State<'_, AnythingState>,
+    flow_id: String,
+    flow_version_id: String,
+    update_flow: UpdateFlowVersion,
+) -> FlowResult<UpdateFlowVersionResponse> {
+    match state.inner.try_lock() {
+        Err(e) => {
+            tracing::error!("Error getting lock on coordinator: {:?}", e);
+            Err(Error::CoordinatorNotInitialized)
+        }
+        Ok(ref mut inner) => match inner.update_flow_version(flow_id, flow_version_id, update_flow).await {
+            Ok(flow) => {
+                tracing::debug!("Updated flow version inside tauri plugin");
+                Ok(UpdateFlowVersionResponse {
+                    flow_version: Some(flow),
+                })
+            }
+            Err(e) => { 
+                eprintln!("Error getting flows after creating flow: {:?}", e);
+                Ok(UpdateFlowVersionResponse { flow_version: None })
             }
         },
     }

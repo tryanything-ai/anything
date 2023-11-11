@@ -23,7 +23,7 @@ import {
   ReactFlowInstance,
 } from "reactflow";
 
-import { FlowFrontMatter, Trigger } from "../utils/flowTypes";
+import { Action, Flow, FlowFrontMatter, Trigger } from "../utils/flowTypes";
 import { ProcessingStatus, SessionComplete } from "../utils/eventTypes";
 
 import api from "../tauri_api/api";
@@ -93,10 +93,10 @@ export const useFlowContext = () => useContext(FlowContext);
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { updateFlow } = useFlowsContext();
   const { flow_name } = useParams();
-  const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
-  const [loadingToml, setLoadingToml] = useState<boolean>(false);
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const [hydrated, setHydrated] = useState<boolean>(false);
+  const [firstLook, setFirstLook] = useState<boolean>(true);
+  const [nodes, setNodes] = useState<Node[] | undefined>();
+  const [edges, setEdges] = useState<Edge[] | undefined>();
   const [flowFrontmatter, setFlowFrontmatter] = useState<
     FlowFrontMatter | undefined
   >();
@@ -197,7 +197,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const fetchFlow = async () => {
+  const hydrateFlow = async () => {
     try {
       console.log("Fetch Flow By Name", flow_name);
       if (!flow_name) return;
@@ -208,7 +208,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       );
 
       setFlowFrontmatter(flow);
+      //TODO: add flows and edges for real from flow version
+      setNodes([]);
+      setEdges([]);
 
+      setHydrated(true);
       //TODO: get current version, maybe all versions
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
@@ -221,39 +225,97 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     return triggerNode.data;
   };
 
-  //TODO: Syncronize flow state with backend
-  //Debounced write state to toml used for when we draggin things around.
-  // useEffect(() => {
-  //   // Clear any existing timers
-  //   if (timerRef.current) {
-  //     clearTimeout(timerRef.current);
+  //TODO: integrate here vs in flwos
+  //   const readNodeConfig = async (
+  //   flowName: string,
+  //   nodeId: string,
+  // ): Promise<Node | undefined> => {
+  //   try {
+  //     return await api.flows.readNodeConfig(nodeId, flowName);
+  //   } catch (error) {
+  //     console.log("error reading node config in FlowProvider", error);
   //   }
+  // };
 
-  //   // Set a new timer to write to TOML file
-  //   timerRef.current = setTimeout(async () => {
-  //     if (!initialTomlLoaded || loadingToml) return;
+  // const writeNodeConfig = async (
+  //   flowId: string,
+  //   nodeId: string,
+  //   data: any
+  // ): Promise<Node | undefined> => {
+  //   try {
+  //     return api.flows.writeNodeConfig(flowId, nodeId, data);
+  //   } catch (error) {
+  //     console.log("error writing node config in FlowProvider", error);
+  //   }
+  // };
 
-  //     let newToml = stringify({
-  //       flow: flowFrontmatter as FlowFrontMatter,
-  //       nodes: nodes as any,
-  //       edges: edges as any,
-  //     });
-  //     console.log("writing to toml");
-  //     // console.log(newToml);
-  //     //don't write if nothing has changed in react state
-  //     if (newToml === toml) return;
-  //     setToml(newToml);
-  //     await writeToml(newToml);
-  //   }, 200);
+  const synchronise = async () => {
+    try {
+      let trigger;
+      let actions = [];
 
-  //   // Clean up
-  //   return () => {
-  //     if (timerRef.current) {
-  //       clearTimeout(timerRef.current);
-  //     }
-  //   };
-  // }, [nodes, edges, flowFrontmatter]);
+      nodes.forEach((node) => {
+        if (node.data.trigger === true) {
+          trigger = { ...node.data, presentation: node.position } as Trigger;
+        } else {
+          actions.push({ ...node.data, presentation: node.position } as Action);
+        }
+      });
 
+      let newFlow: Flow = {
+        ...(flowFrontmatter as FlowFrontMatter),
+        trigger,
+        actions,
+        edges: edges as Edge[],
+      };
+
+      console.log("New Flow Definition", newFlow);
+
+      let res = await api.flows.updateFlowVersion(
+        flowFrontmatter.flow_id,
+        newFlow
+      );
+
+      console.log("res in updateFlowVersion", res);
+
+      // console.log("writing to toml");
+      // console.log(newToml);
+      //don't write if nothing has changed in react state
+      // if (newToml === toml) return;
+      // setToml(newToml);
+      // await writeToml(newToml);
+      //TODO: updateFlow in Rust
+    } catch (error) {
+      console.log("error in synchronise", error);
+    }
+  };
+
+  //Synchronise
+  useEffect(() => {
+    //Ugly but works to prevent write on load
+    if (!hydrated) return;
+    if (!nodes || !edges || !flowFrontmatter) return;
+    if (firstLook) {
+      setFirstLook(false);
+      return;
+    }
+    // Clear any existing timers
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // Set a new timer to write to TOML file
+    timerRef.current = setTimeout(async () => {
+      synchronise();
+    }, 200);
+
+    // Clean up
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [nodes, edges, flowFrontmatter]);
 
   //Watch event processing for fun ui updates
   useEffect(() => {
@@ -280,7 +342,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   //User params fetches url params from React-Router-Dom
   useEffect(() => {
     if (!flow_name) return;
-    fetchFlow();
+    hydrateFlow();
   }, [flow_name]);
 
   return (

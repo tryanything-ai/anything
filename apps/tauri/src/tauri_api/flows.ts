@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 import { anything } from "./anything";
+import { Flow } from "../utils/flowTypes";
 
 export const getFlows = async () => {
   let res = await anything.getFlows();
@@ -17,6 +18,18 @@ export const createFlow = async (flowName: string) => {
 
 export async function updateFlow(flowId: string, args: UpdateFlowArgs) {
   return await anything.updateFlow(flowId, args);
+}
+
+export async function updateFlowVersion(flowId: string, flow: Flow) {
+  console.log(
+    `updateFlowVersion called with ${flowId} and ${JSON.stringify(flow)}`
+  );
+  return await anything.updateFlowVersion(flowId, flow.version, {
+    version: flow.version,
+    flow_definition: JSON.stringify(flow),
+    published: false,
+    description: flow.description,
+  });
 }
 
 export async function deleteFlow(flowId: string) {
@@ -49,10 +62,11 @@ export const getFlowVersions = async (flowId: string) => {
 //   // return await anything.writeTomle(flowId, toml);
 // };
 
+//TODO: Deprecate and hande in front end
 //This function is for reading all the data about a node such as "prompts", "headers", "vairables"
 //etc whatever is important for each engine. Will want to conform to "node" type
 export const readNodeConfig = async (flowId: string, nodeId: string) => {
-  return undefined; 
+  return undefined;
   //TODO:
   // return await anything.readNodeConfig(flowId, nodeId);
 };
@@ -64,7 +78,7 @@ export const writeNodeConfig = async (
   nodeId: string,
   config: string
 ) => {
-  return undefined; 
+  return undefined;
   //TODO:
   // return await anything.wrtieNodeConfig(flowId, nodeId, config);
 };

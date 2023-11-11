@@ -354,8 +354,8 @@ impl FlowRepo for FlowRepoImpl {
     async fn update_flow_version(
         &self,
         flow_id: FlowId,
-        flow_version: FlowVersionId,
-        update_flow_version: UpdateFlowVersion,
+        flow_version_id: FlowVersionId,
+        update_flow: UpdateFlowVersion,
     ) -> PersistenceResult<FlowVersion> {
         let mut tx = self.get_transaction().await?;
 
@@ -363,8 +363,8 @@ impl FlowRepo for FlowRepoImpl {
             .internal_update_existing_flow_version(
                 &mut tx,
                 flow_id,
-                flow_version,
-                update_flow_version,
+                flow_version_id,
+                update_flow,
             )
             .await?;
 
@@ -406,7 +406,7 @@ impl FlowRepo for FlowRepoImpl {
     async fn reset(&self) -> PersistenceResult<()> {
         let mut tx = self.get_transaction().await?;
 
-        let res = self.internal_reset(&mut tx).await?;
+        let _res = self.internal_reset(&mut tx).await?;
         tx.commit().await?;
 
         Ok(())
@@ -572,7 +572,7 @@ impl FlowRepoImpl {
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         flow_id: FlowId,
-        flow_version: FlowVersionId,
+        flow_version_id: FlowVersionId,
         update_flow_version: UpdateFlowVersion,
     ) -> PersistenceResult<FlowVersion> {
         let current_flow_version = sqlx::query_as::<_, FlowVersion>(
@@ -581,7 +581,7 @@ impl FlowRepoImpl {
             "#,
         )
         .bind(flow_id.clone())
-        .bind(flow_version.clone())
+        .bind(flow_version_id.clone())
         .fetch_one(&mut **tx)
         .await
         .map_err(|e| PersistenceError::DatabaseError(e))?;
@@ -616,7 +616,7 @@ impl FlowRepoImpl {
         .bind(published)
         .bind(checksum)
         .bind(definition)
-        .bind(flow_version.clone())
+        .bind(flow_version_id.clone())
         .bind(flow_id.clone())
         .fetch_one(&mut **tx)
         .await
