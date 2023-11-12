@@ -221,7 +221,7 @@ impl Into<CreateFlowVersion> for CreateFlow {
     fn into(self) -> CreateFlowVersion {
         CreateFlowVersion {
             flow_id: self.name.clone(),
-            version: Some("v0.0.0".to_string()),
+            version: Some("0.0.0".to_string()),
             flow_definition: serde_json::json!("{}"),
             published: Some(false),
             description: None,

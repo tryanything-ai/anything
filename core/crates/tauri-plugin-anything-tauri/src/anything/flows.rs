@@ -102,7 +102,7 @@ pub async fn create_flow(
 #[derive(Serialize)]
 pub struct UpdateFlowResponse {
     flow: Option<Flow>,
-} 
+}
 
 #[tauri::command]
 pub async fn update_flow(
@@ -164,7 +164,6 @@ pub struct UpdateFlowVersionResponse {
     flow_version: Option<FlowVersion>,
 }
 
-
 #[tauri::command]
 pub async fn update_flow_version(
     state: tauri::State<'_, AnythingState>,
@@ -177,15 +176,18 @@ pub async fn update_flow_version(
             tracing::error!("Error getting lock on coordinator: {:?}", e);
             Err(Error::CoordinatorNotInitialized)
         }
-        Ok(ref mut inner) => match inner.update_flow_version(flow_id, flow_version_id, update_flow).await {
+        Ok(ref mut inner) => match inner
+            .update_flow_version(flow_id, flow_version_id, update_flow)
+            .await
+        {
             Ok(flow) => {
                 tracing::debug!("Updated flow version inside tauri plugin");
                 Ok(UpdateFlowVersionResponse {
                     flow_version: Some(flow),
                 })
             }
-            Err(e) => { 
-                eprintln!("Error getting flows after creating flow: {:?}", e);
+            Err(e) => {
+                eprintln!("Error getting flows after updating flow version: {:?}", e);
                 Ok(UpdateFlowVersionResponse { flow_version: None })
             }
         },

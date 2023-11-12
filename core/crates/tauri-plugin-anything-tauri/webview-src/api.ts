@@ -48,18 +48,18 @@ export class Anything {
   async updateFlowVersion<T>(
     flowId: string,
     flowVersionId: string,
-    update_flow: any
+    updateFlow: any
   ): Promise<T> {
     console.log(
       "updateFlowVersion called in tauri plugin api ",
       flowId,
       flowVersionId,
-      update_flow
+      updateFlow
     );
     return await invoke("plugin:anything|update_flow_version", {
       flowId,
       flowVersionId,
-      update_flow,
+      updateFlow,
     });
   }
 
