@@ -43,6 +43,7 @@ impl FromRow<'_, SqliteRow> for StoredFlow {
             let flow_def = row.get::<'_, String, &str>("fv_flow_definition");
             let flow_version = FlowVersion {
                 flow_id: flow_id.clone(),
+                flow_version_id: row.get::<'_, String, &str>("fv_flow_version_id"),
                 flow_version: row.get::<'_, String, &str>("fv_flow_version"),
                 description: row.get::<'_, Option<String>, &str>("fv_description"),
                 flow_definition: serde_json::from_str(&flow_def).unwrap(),
@@ -165,6 +166,7 @@ pub struct CreateFlow {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct FlowVersion {
     pub flow_id: FlowId,
+    pub flow_version_id: String,
     pub flow_version: String,
     pub description: Option<String>,
     pub flow_definition: serde_json::Value,
@@ -177,6 +179,7 @@ impl FromRow<'_, SqliteRow> for FlowVersion {
     fn from_row(row: &'_ SqliteRow) -> Result<Self, sqlx::Error> {
         let flow_id = row.get::<'_, String, &str>("flow_id");
         let flow_version = row.get::<'_, String, &str>("flow_version");
+        let flow_version_id = row.get::<'_, String, &str>("flow_version_id");
 
         let flow_definition = row.get::<'_, String, &str>("flow_definition");
         let description = row.get::<'_, Option<String>, &str>("description");
@@ -186,6 +189,7 @@ impl FromRow<'_, SqliteRow> for FlowVersion {
 
         Ok(FlowVersion {
             flow_id,
+            flow_version_id,
             flow_version,
             flow_definition: serde_json::from_str(&flow_definition).unwrap(),
             description,

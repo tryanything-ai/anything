@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS flows (
 );
 CREATE TABLE IF NOT EXISTS flow_versions (
     flow_id TEXT NOT NULL,
+    flow_version_id TEXT NOT NULL,
     flow_version TEXT NOT NULL,
     description TEXT,
     checksum TEXT,

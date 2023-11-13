@@ -18,6 +18,7 @@ SELECT  f.flow_id,
         f.active, 
         f.updated_at,
         fv.flow_version AS fv_flow_version,
+        fv.flow_version_id AS fv_flow_version_id,
         fv.description AS fv_description,
         fv.flow_version AS fv_version,
         fv.checksum AS fv_checksum,
@@ -543,15 +544,19 @@ impl FlowRepoImpl {
             create_flow_version.description.unwrap_or_default()
         );
         let checksum = hash_string_sha256(input.as_str())?;
+
+        let flow_version_id = uuid::Uuid::new_v4().to_string();
+
         // Create flow version
         let row = sqlx::query(
             r#"
-        INSERT INTO flow_versions (flow_id, flow_version, description, checksum, flow_definition, updated_at)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        INSERT INTO flow_versions (flow_id, flow_version_id, flow_version, description, checksum, flow_definition, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, $7)
         RETURNING flow_version
             "#,
         )
         .bind(flow_id.clone())
+        .bind(flow_version_id)
         .bind(create_flow_clone.version)
         .bind(create_flow_clone.description)
         .bind(checksum)
