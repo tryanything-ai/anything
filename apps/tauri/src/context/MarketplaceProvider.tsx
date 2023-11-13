@@ -19,6 +19,8 @@ interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
   fetchTemplates: () => Promise<BigFlow>;
   saveTemplate: (
+    flow_id: string,
+    flow_template_id: string,
     flow_template_name: string,
     flow_template_description: string,
     flow_template_json: any
@@ -114,7 +116,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
     if (!templateResponse) return undefined;
     else return templateResponse;
-  }
+  };
 
   const _fetchProfile = async (username: string) => {
     if (webFeaturesDisabled) return undefined;
@@ -134,12 +136,16 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const saveTemplate = async (
+    flow_template_id: string, 
+    flow_template_version_id: string,
     flow_template_name: string,
     flow_template_description: string,
     flow_template_json: any
   ) => {
     if (webFeaturesDisabled) return false;
     let res = await saveFlowTemplate(
+      flow_template_id, 
+      flow_template_version_id, 
       flow_template_name,
       flow_template_description,
       flow_template_json,

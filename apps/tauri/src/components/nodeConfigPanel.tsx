@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
 
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { useFlowContext } from "../context/FlowProvider";

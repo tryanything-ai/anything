@@ -30,6 +30,7 @@ import api from "../tauri_api/api";
 import { useFlowsContext } from "./FlowsProvider";
 import { Node as FlowNode } from "../utils/flowTypes";
 
+//TODO: use slugify style to give names based on node type "node_label_1" etc
 function findNextNodeId(nodes: any): string {
   // Return 1 if there are no nodes
   if (!nodes) {
@@ -71,6 +72,7 @@ interface FlowContextInterface {
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
   readNodeConfig: (nodeId: string) => Promise<FlowNode | undefined>;
   writeNodeConfig: (nodeId: string, data: any) => Promise<FlowNode | undefined>;
+  getFlowDefinitionsFromReactFlowState: () => Flow;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -92,6 +94,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   getTrigger: () => undefined,
   readNodeConfig: () => undefined,
   writeNodeConfig: () => undefined,
+  getFlowDefinitionsFromReactFlowState: () => undefined,
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -214,7 +217,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         JSON.stringify(flow, null, 3)
       );
 
-      //TODO: these are shaped wrong
+      //TODO: these are shaped wrong not shaped as flows but can still pick up ids etc
       setFlowVersions(flow.versions);
 
       let newDef = flow.versions[0].flow_definition as Flow;
@@ -252,15 +255,18 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       setNodes(_nodes);
 
       let fm = flow;
-      delete fm.versions;
-      //TODO: gross fix thow we do this
+
+      //TODO: not great. a bit hacky. fix when doing Flow Version Mangement
       fm.version = flow.latest_version_id;
+      fm.flow_version_id = flow.versions[0].flow_version_id;
+
+      delete fm.versions;
+
       console.log("FrontMatter saved", JSON.stringify(fm, null, 3));
       setFlowFrontmatter(fm);
-
-      //TODO: maybe last edited to pull in the version they where looking at last?
+      
       setHydrated(true);
-      //TODO: get current version, maybe all versions
+
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
@@ -305,40 +311,45 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       console.log("error writing node config in FlowProvider", error);
     }
   };
+  const getFlowDefinitionsFromReactFlowState = (): Flow => {
+    let trigger;
+    let actions = [];
+
+    //Loop through all nodes
+    nodes.forEach((node) => {
+      let freshNode = {
+        ...node.data,
+        presentation: {
+          position: node.position,
+          width: node.width,
+          height: node.height,
+          positionAboslute: node.positionAbsolute,
+        },
+      };
+
+      if (node.data.trigger === true) {
+        trigger = freshNode as Trigger;
+      } else {
+        actions.push(freshNode as Action);
+      }
+    });
+
+    //create shape needed for backend
+    let newFlow: Flow = {
+      ...(flowFrontmatter as FlowFrontMatter),
+      trigger,
+      actions,
+      edges: edges as Edge[],
+    };
+
+    console.log("New Flow Definition", newFlow);
+
+    return newFlow;
+  };
 
   const synchronise = async () => {
     try {
-      let trigger;
-      let actions = [];
-
-      //Loop through all nodes
-      nodes.forEach((node) => {
-        let freshNode = {
-          ...node.data,
-          presentation: {
-            position: node.position,
-            width: node.width,
-            height: node.height,
-            positionAboslute: node.positionAbsolute,
-          },
-        };
-
-        if (node.data.trigger === true) {
-          trigger = freshNode as Trigger;
-        } else {
-          actions.push(freshNode as Action);
-        }
-      });
-
-      //create shape needed for backend
-      let newFlow: Flow = {
-        ...(flowFrontmatter as FlowFrontMatter),
-        trigger,
-        actions,
-        edges: edges as Edge[],
-      };
-
-      console.log("New Flow Definition", newFlow);
+      let newFlow = getFlowDefinitionsFromReactFlowState();
 
       //send
       let res = await api.flows.updateFlowVersion(
@@ -427,6 +438,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         updateFlowFrontmatter,
         readNodeConfig,
         writeNodeConfig,
+        getFlowDefinitionsFromReactFlowState,
       }}
     >
       {children}

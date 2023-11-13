@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useFlowContext } from "../context/FlowProvider";
 import RequireAuth from "./RequireAuth";
@@ -20,7 +20,8 @@ const FlowSharingPanel = () => {
   // does a template and a version already exist.
   // const [publishedTemplate, pub] = useState(false);
   // const { session } = useAuthenticationContext();
-  const { flowFrontmatter } = useFlowContext();
+  const { flowFrontmatter, getFlowDefinitionsFromReactFlowState } =
+    useFlowContext();
   const { saveTemplate, fetchTemplateById } = useMarketplaceContext();
   const { flow_name } = useParams();
   const navigate = useNavigate();
@@ -47,14 +48,17 @@ const FlowSharingPanel = () => {
     try {
       setSaving(true);
 
+      let flowDefinition = getFlowDefinitionsFromReactFlowState();
       //TODO: validate inputs
       //TODO: show errors
       if (flow_name && data.description) {
         console.log("Saving");
         let res = await saveTemplate(
+          flowFrontmatter.flow_id,
+          flowFrontmatter.flow_version_id,
           flow_name,
           data.description,
-          MockNewFlows[0]
+          flowDefinition
         );
         if (res) {
           setPublishedFlow(res);
@@ -86,9 +90,11 @@ const FlowSharingPanel = () => {
       <div className="flex flex-col h-full gap-5 p-4">
         <h1 className="text-2xl font-bold">Flow Sharing</h1>
         {/* View Published */}
-        {publishedFlow ? (
-          <div className="btn btn-link text-sm">View Published Template</div>
-        ) : null}
+        {/* {publishedFlow ? (
+          <Link className="btn btn-link text-sm"  target="_blank" to={`${import.meta.env.VITE_PUBLIC_HOSTED_URL}/${slugify(flow_name)}`}
+          rel="noopener noreferrer">View Published Template</Link>
+          <div>View Online</div>
+        ) : null} */}
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <div>Template Name:</div>
           <div>{flow_name}</div>

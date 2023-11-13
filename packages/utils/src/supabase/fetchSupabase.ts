@@ -207,6 +207,8 @@ const manageSlugUpdate = async (slug: string): Promise<string> => {
 };
 
 export const saveFlowTemplate = async (
+  flow_template_id: string,
+  flow_template_version_id: string,
   flow_template_name: string,
   flow_template_description: string,
   flow_template_json: any,
@@ -214,14 +216,23 @@ export const saveFlowTemplate = async (
   anything_flow_template_version: string
 ) => {
   try {
-    // make new slug if we have conflicts
-    let slug = await manageSlugUpdate(slugify(flow_template_name, {lower: true}));
-
+    //validate client side id's sent for consistancy.
+    if (!flow_template_id || !flow_template_version_id)
+      throw new Error(
+        "flow_template_id or flow_template_version_id is undefined"
+      );
+    
+     // make new slug if we have conflicts
+     let slug = await manageSlugUpdate(
+      slugify(flow_template_name, { lower: true })
+     );
+    
     // Save Template
     const { data, error } = await supabaseClient
       .from("flow_templates")
       .insert({
         anonymous_publish: false,
+        flow_template_id,
         flow_template_name,
         flow_template_description,
         slug,
@@ -238,6 +249,7 @@ export const saveFlowTemplate = async (
 
     let result = await saveFlowTemplateVersion(
       data.flow_template_id,
+      flow_template_version_id,
       flow_template_name,
       flow_template_json,
       true,
@@ -259,10 +271,11 @@ export const saveFlowTemplate = async (
 
 export const saveFlowTemplateVersion = async (
   flow_template_id: string,
+  flow_template_version_id: string,
   flow_template_version_name: string,
   flow_template_json: any,
   public_template: boolean,
-  flow_template_version: string, 
+  flow_template_version: string,
   commit_message: string,
   publisher_id: string,
   anything_flow_template_version: string
@@ -273,6 +286,7 @@ export const saveFlowTemplateVersion = async (
       .from("flow_template_versions")
       .insert({
         flow_template_id,
+        flow_template_version_id,
         flow_template_json,
         publisher_id,
         anything_flow_template_version,
