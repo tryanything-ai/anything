@@ -3,15 +3,11 @@ import { Controller, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
-import { useFlowsContext } from "../context/FlowsProvider";
 import { useFlowContext } from "../context/FlowProvider";
 
-const NodeConfigPanel = () => {
+const NodeConfigPanel = () => { 
   const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();
-  const { readNodeConfig, writeNodeConfig } = useFlowsContext();
-  const {
-    flowFrontmatter: { flow_id },
-  } = useFlowContext();
+  const { readNodeConfig, writeNodeConfig } = useFlowContext();
 
   const [data, setData] = useState<Node | undefined>();
 
@@ -25,11 +21,11 @@ const NodeConfigPanel = () => {
 
   const hydrate = async () => {
     try {
-      if (!flow_id) return;
+   
       if (!nodeId) return;
 
       //Get Node Configuration
-      const res: any = await readNodeConfig(flow_id, nodeId);
+      const res: any = await readNodeConfig(nodeId);
 
       console.log("res in nodeConfig", res);
 
@@ -51,12 +47,11 @@ const NodeConfigPanel = () => {
   }, []);
 
   const onSubmit = (data: any) => {
-    if (!flow_id) return;
     if (!nodeId) return;
     console.log("Hit Node Config Submit");
     console.log(data);
 
-    writeNodeConfig(flow_id, nodeId, data);
+    writeNodeConfig(nodeId, data);
     setNodeConfigPanel(false, "");
   };
 

@@ -69,6 +69,8 @@ interface FlowContextInterface {
   addNode: (position: { x: number; y: number }, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
+  readNodeConfig: (nodeId: string) => Promise<FlowNode | undefined>;
+  writeNodeConfig: (nodeId: string, data: any) => Promise<FlowNode | undefined>;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
@@ -88,6 +90,8 @@ export const FlowContext = createContext<FlowContextInterface>({
   setReactFlowInstance: () => {},
   updateFlowFrontmatter: () => {},
   getTrigger: () => undefined,
+  readNodeConfig: () => undefined,
+  writeNodeConfig: () => undefined,
 });
 
 export const useFlowContext = () => useContext(FlowContext);
@@ -218,13 +222,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       let _actions: Action[] = newDef.actions || [];
       let _trigger: Trigger | undefined = newDef.trigger || undefined;
 
-      // const newNode: Node = {
-      //   id: nextId,
-      //   type: "superNode",
-      //   position,
-      //   data: { ...specialData },
-      // };
-
       //convert to what react flow needs
       let _nodes: Node[] = _actions.map((action) => {
         return {
@@ -276,28 +273,29 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   };
 
   //TODO: integrate here vs in flwos
-  //   const readNodeConfig = async (
-  //   flowName: string,
-  //   nodeId: string,
-  // ): Promise<Node | undefined> => {
-  //   try {
-  //     return await api.flows.readNodeConfig(nodeId, flowName);
-  //   } catch (error) {
-  //     console.log("error reading node config in FlowProvider", error);
-  //   }
-  // };
+  const readNodeConfig = async (
+    nodeId: string
+  ): Promise<FlowNode | undefined> => {
+    try {
+      let reactFlowNode = nodes.find((node) => node.id === nodeId);
+      return reactFlowNode?.data;
+    } catch (error) {
+      console.log("error reading node config in FlowProvider", error);
+    }
+  };
 
-  // const writeNodeConfig = async (
-  //   flowId: string,
-  //   nodeId: string,
-  //   data: any
-  // ): Promise<Node | undefined> => {
-  //   try {
-  //     return api.flows.writeNodeConfig(flowId, nodeId, data);
-  //   } catch (error) {
-  //     console.log("error writing node config in FlowProvider", error);
-  //   }
-  // };
+  const writeNodeConfig = async (
+    nodeId: string,
+    data: any
+  ): Promise<FlowNode | undefined> => {
+    try {
+      //TODO: actually update state.
+      let reactFlowNode = nodes.find((node) => node.id === nodeId);
+      return reactFlowNode?.data;
+    } catch (error) {
+      console.log("error writing node config in FlowProvider", error);
+    }
+  };
 
   const synchronise = async () => {
     try {
@@ -420,6 +418,8 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         getTrigger,
         setReactFlowInstance,
         updateFlowFrontmatter,
+        readNodeConfig,
+        writeNodeConfig,
       }}
     >
       {children}

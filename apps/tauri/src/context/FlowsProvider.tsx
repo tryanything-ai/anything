@@ -7,8 +7,7 @@ import {
 } from "react";
 
 import api from "../tauri_api/api";
-import { useTauriContext } from "./TauriProvider";
-import { Flow, Node } from "../utils/flowTypes";
+import { Flow } from "../utils/flowTypes";
 import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 
 interface FlowsContextInterface {
@@ -16,15 +15,6 @@ interface FlowsContextInterface {
   createNewFlow: () => void;
   deleteFlow: (flowName: string) => void;
   updateFlow: (flowId: string, args: UpdateFlowArgs) => void;
-  readNodeConfig: (
-    flow_id: string,
-    nodeId: string
-  ) => Promise<Node | undefined>;
-  writeNodeConfig: (
-    flow_id: string,
-    nodeId: string,
-    data: any
-  ) => Promise<Node | undefined>;
 }
 
 export const FlowsContext = createContext<FlowsContextInterface>({
@@ -32,14 +22,12 @@ export const FlowsContext = createContext<FlowsContextInterface>({
   createNewFlow: () => {},
   deleteFlow: () => {},
   updateFlow: () => {},
-  readNodeConfig: () => undefined,
-  writeNodeConfig: () => undefined,
 });
 
 export const useFlowsContext = () => useContext(FlowsContext);
 
 export const FlowsProvider = ({ children }: { children: ReactNode }) => {
-  const { loading } = useTauriContext();
+
   const [flows, setFlows] = useState<Flow[]>([]);
 
   //BUG: there is a bug where when you add new flows the names colide because we write files as names.
@@ -71,30 +59,6 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  //TODO: deprecate and move to flowProvider.
-  const readNodeConfig = async (
-    flowName: string,
-    nodeId: string
-  ): Promise<Node | undefined> => {
-    try {
-      return await api.flows.readNodeConfig(nodeId, flowName);
-    } catch (error) {
-      console.log("error reading node config in FlowProvider", error);
-    }
-  };
-
-  const writeNodeConfig = async (
-    flowId: string,
-    nodeId: string,
-    data: any
-  ): Promise<Node | undefined> => {
-    try {
-      return api.flows.writeNodeConfig(flowId, nodeId, data);
-    } catch (error) {
-      console.log("error writing node config in FlowProvider", error);
-    }
-  };
-
   const updateFlow = async (flowId: string, args: UpdateFlowArgs) => {
     //Update Flow
     let res = await api.flows.updateFlow(flowId, args);
@@ -123,8 +87,6 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
         createNewFlow,
         deleteFlow,
         updateFlow,
-        readNodeConfig,
-        writeNodeConfig,
       }}
     >
       {children}

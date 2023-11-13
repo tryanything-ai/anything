@@ -62,23 +62,3 @@ export const getFlowVersions = async (flowId: string) => {
 //   // return await anything.writeTomle(flowId, toml);
 // };
 
-//TODO: Deprecate and hande in front end
-//This function is for reading all the data about a node such as "prompts", "headers", "vairables"
-//etc whatever is important for each engine. Will want to conform to "node" type
-export const readNodeConfig = async (flowId: string, nodeId: string) => {
-  return undefined;
-  //TODO:
-  // return await anything.readNodeConfig(flowId, nodeId);
-};
-
-//This function is for changing all the data about a node such as "prompts", "headers", "vairables"
-//etc whatever is important for each engine. Will want to conform to "node" type
-export const writeNodeConfig = async (
-  flowId: string,
-  nodeId: string,
-  config: string
-) => {
-  return undefined;
-  //TODO:
-  // return await anything.wrtieNodeConfig(flowId, nodeId, config);
-};
