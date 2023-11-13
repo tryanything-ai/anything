@@ -71,10 +71,10 @@ const DebugPanel = () => {
       {/* MockData for Manual Trigger */}
       <div>
         <div className="flex flex-row gap-1">
-          Test Data
+          Test Inputs
           <div
             className="tooltip tooltip-right"
-            data-tip="Test data is the shape of the future real data from your trigger. It is used for testing."
+            data-tip="Test inputs is the shape of the future real inputs from your trigger. It is used for testing."
           >
             <VscInfo />
           </div>

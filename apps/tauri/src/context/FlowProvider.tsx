@@ -55,6 +55,7 @@ function findNextNodeId(nodes: any): string {
 interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
+  flowVersions: Flow[];
   flowFrontmatter: FlowFrontMatter | undefined;
   currentProcessingStatus: ProcessingStatus | undefined;
   currentProcessingSessionId: string | undefined;
@@ -74,6 +75,7 @@ export const FlowContext = createContext<FlowContextInterface>({
   toml: "",
   nodes: [],
   edges: [],
+  flowVersions: [],
   flowFrontmatter: undefined,
   currentProcessingStatus: undefined,
   currentProcessingSessionId: undefined,
@@ -97,6 +99,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const [firstLook, setFirstLook] = useState<boolean>(true);
   const [nodes, setNodes] = useState<Node[] | undefined>();
   const [edges, setEdges] = useState<Edge[] | undefined>();
+  const [flowVersions, setFlowVersions] = useState<Flow[] | undefined>();
   const [flowFrontmatter, setFlowFrontmatter] = useState<
     FlowFrontMatter | undefined
   >();
@@ -206,12 +209,21 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)
       );
+      //save versions
+      setFlowVersions(flow.versions);
 
-      setFlowFrontmatter(flow);
       //TODO: add flows and edges for real from flow version
       setNodes([]);
       setEdges([]);
 
+      let fm = flow;
+      delete fm.versions;
+      //TODO: gross fix thow we do this
+      fm.version = flow.latest_version_id;
+      console.log("FrontMatter saved", JSON.stringify(fm, null, 3));
+      setFlowFrontmatter(fm);
+
+      //TODO: maybe last edited to pull in the version they where looking at last?
       setHydrated(true);
       //TODO: get current version, maybe all versions
     } catch (e) {
@@ -350,6 +362,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       value={{
         nodes,
         edges,
+        flowVersions,
         flowFrontmatter,
         currentProcessingStatus,
         currentProcessingSessionId,
