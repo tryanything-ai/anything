@@ -18,8 +18,8 @@ const FlowSharingPanel = () => {
   const [saving, setSaving] = useState(false);
   const [publishedFlow, setPublishedFlow] = useState<BigFlow>(null);
   // does a template and a version already exist.
-  // const [publishedTemplate, pub] = useState(false);
-  // const { session } = useAuthenticationContext();
+  // const [publishedTemplate, setPublishedTemplate] = useState(false);
+
   const { flowFrontmatter, getFlowDefinitionsFromReactFlowState } =
     useFlowContext();
   const { saveTemplate, fetchTemplateById } = useMarketplaceContext();
@@ -37,11 +37,7 @@ const FlowSharingPanel = () => {
     formState: { errors, isDirty, touchedFields },
   } = useForm<Inputs>();
 
-  //TODO: create flow
-  //TODO: create flow version
   //TODO: publish new flow_version if flow exist
-  //TODO: force user login / signup and/or username creation if new
-  //TODO: check if flow name is unique
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     // const _saveTemplate = async () => {
@@ -74,27 +70,33 @@ const FlowSharingPanel = () => {
 
   const _fetchTemplateById = async () => {
     if (flowFrontmatter.flow_id) {
-      let res = fetchTemplateById(flowFrontmatter.flow_id);
-      console.log(res);
+      console.log("Fetching Template by ID:", flowFrontmatter.flow_id);
+      let res = await fetchTemplateById(flowFrontmatter.flow_id);
+      if (res && res[0]) {
+        let template = res[0];
+        // console.log("Template:", template);
+        console.log("Fetched Template by ID Response:", res);
+        setPublishedFlow(res);
+      }
     }
   };
 
   //TODO:we shoudl update flowFrontmatter when we update description so we might need to change this
   useEffect(() => {
-    //TODO: check if already "published"
     _fetchTemplateById();
-  }, [flowFrontmatter]);
+  }, []);
 
   return (
     <RequireAuth>
       <div className="flex flex-col h-full gap-5 p-4">
         <h1 className="text-2xl font-bold">Flow Sharing</h1>
         {/* View Published */}
-        {/* {publishedFlow ? (
-          <Link className="btn btn-link text-sm"  target="_blank" to={`${import.meta.env.VITE_PUBLIC_HOSTED_URL}/${slugify(flow_name)}`}
-          rel="noopener noreferrer">View Published Template</Link>
-          <div>View Online</div>
-        ) : null} */}
+        {publishedFlow ? (
+          // <Link className="btn btn-link text-sm"  target="_blank" to={`${import.meta.env.VITE_PUBLIC_HOSTED_URL}/${slugify(flow_name)}`}
+          // rel="noopener noreferrer">View Published Template</Link>
+          // <div>View Online</div>
+          <div> Flow Already Published </div>
+        ) : null}
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <div>Template Name:</div>
           <div>{flow_name}</div>
@@ -132,7 +134,9 @@ const FlowSharingPanel = () => {
             // </p>
           )}
           <div>URL Preview:</div>
-          <div>{`tryanything.xyz/templates/${slugify(flow_name)}`}</div>
+          <div>{`tryanything.xyz/templates/${slugify(flow_name, {
+            lower: true,
+          })}`}</div>
           {saving ? (
             "Publishing..."
           ) : (

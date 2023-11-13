@@ -576,9 +576,9 @@ impl FlowRepoImpl {
         update_flow_version: UpdateFlowVersion,
     ) -> PersistenceResult<FlowVersion> {
 
-        println!("Flow ID: {:?}", flow_id);
-        println!("Flow Version ID: {:?}", flow_version_id);
-        println!("Update Flow Version: {:?}", update_flow_version);
+        // println!("Flow ID: {:?}", flow_id);
+        // println!("Flow Version ID: {:?}", flow_version_id);
+        // println!("Update Flow Version: {:?}", update_flow_version);
 
         let current_flow_version = sqlx::query_as::<_, FlowVersion>(
             r#"
@@ -591,7 +591,7 @@ impl FlowRepoImpl {
         .await
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
-        println!("Response from SQLx query: {:?}", current_flow_version);
+        // println!("Response from SQLx query: {:?}", current_flow_version);
 
         let definition = match update_flow_version.flow_definition {
             Some(d) => d,

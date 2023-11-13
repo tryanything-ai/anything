@@ -8,6 +8,7 @@ import {
   updateProfile,
   uploadAvatar,
   saveFlowTemplate,
+  fetchTemplateById,
 } from "utils";
 
 import { createContext, ReactNode, useContext } from "react";
@@ -19,8 +20,8 @@ interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
   fetchTemplates: () => Promise<BigFlow>;
   saveTemplate: (
-    flow_id: string,
     flow_template_id: string,
+    flow_template_version_id: string,
     flow_template_name: string,
     flow_template_description: string,
     flow_template_json: any
@@ -112,7 +113,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const _fetchTemplateById = async (id: string) => {
     if (webFeaturesDisabled) return undefined;
 
-    let templateResponse = await fetchTemplateBySlug(id);
+    let templateResponse = await fetchTemplateById(id);
 
     if (!templateResponse) return undefined;
     else return templateResponse;
@@ -136,16 +137,16 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const saveTemplate = async (
-    flow_template_id: string, 
+    flow_template_id: string,
     flow_template_version_id: string,
     flow_template_name: string,
     flow_template_description: string,
     flow_template_json: any
-  ) => {
-    if (webFeaturesDisabled) return false;
+  ): Promise<BigFlow | undefined> => {
+    if (webFeaturesDisabled) return undefined;
     let res = await saveFlowTemplate(
-      flow_template_id, 
-      flow_template_version_id, 
+      flow_template_id,
+      flow_template_version_id,
       flow_template_name,
       flow_template_description,
       flow_template_json,

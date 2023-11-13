@@ -232,7 +232,7 @@ impl Manager {
             tracing::error!("error when getting flow: {:#?}", e);
             CoordinatorError::PersistenceError(e)
         })?;
-        tracing::info!("db_flow: {:#?}", flow);
+        // tracing::info!("db_flow: {:#?}", flow);
         // Get the flow from disk
         // let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
         //     tracing::error!("error when getting flow: {:#?}", e);
@@ -264,11 +264,11 @@ impl Manager {
             version: None,
         };
 
-        tracing::debug!("Creating flow: {:#?}", create_flow);
+        // tracing::debug!("Creating flow: {:#?}", create_flow);
 
         let flow = self.flow_repo()?.create_flow(create_flow).await?;
 
-        tracing::debug!("Created flow in the repo: {:#?}", flow);
+        // tracing::debug!("Created flow in the repo: {:#?}", flow);
 
         let new_directory = self
             .file_store
