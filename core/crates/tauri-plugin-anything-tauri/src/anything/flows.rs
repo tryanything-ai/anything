@@ -1,6 +1,7 @@
 use crate::{error::FlowResult, AnythingState, Error};
 use anything_common::tracing;
 use anything_graph::Flow;
+use anything_persistence::StoredFlow;
 use anything_persistence::{CreateFlowVersion, FlowVersion, UpdateFlowArgs, UpdateFlowVersion};
 use serde::Serialize;
 
@@ -27,7 +28,7 @@ pub async fn get_flows(state: tauri::State<'_, AnythingState>) -> FlowResult<Get
 
 #[derive(Serialize)]
 pub struct GetFlowResponse {
-    flow: Option<Flow>,
+    flow: Option<StoredFlow>,
 }
 
 #[tauri::command]

@@ -211,7 +211,7 @@ pub(crate) fn add_flow_file_into_directory(path: PathBuf, name: &str) {
     let toml = format!(
         r#"
     name = "{}"
-    version = "v0.0.1"
+    version = "0.0.1"
     description = "test flow"
 
     [[nodes]]

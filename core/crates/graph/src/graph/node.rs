@@ -39,7 +39,7 @@ impl Hash for NodeGroup {
 impl NodeGroup {}
 
 fn default_version() -> String {
-    "v0.0.1".to_string()
+    "0.0.1".to_string()
 }
 
 #[derive(Debug, Clone, Deserialize, Default, PartialEq)]

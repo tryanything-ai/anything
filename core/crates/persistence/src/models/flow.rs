@@ -209,7 +209,7 @@ impl Default for CreateFlowVersion {
     fn default() -> Self {
         Self {
             flow_id: "".to_string(),
-            version: Some("0.0.1".to_string()),
+            version: Some("0.0.0".to_string()),
             flow_definition: serde_json::json!("{}"),
             published: Some(false),
             description: None,
@@ -272,12 +272,12 @@ mod tests {
     fn test_conversion_from_graph_flow_into_stored_flow() {
         let flow = anything_graph::FlowBuilder::default()
             .name("some-flow".to_string())
-            .version("v0.1.1".to_string())
+            .version("0.1.1".to_string())
             .build()
             .unwrap();
 
         let stored_flow: StoredFlow = flow.into();
         assert_eq!(stored_flow.flow_name, "some-flow".to_string());
-        assert_eq!(stored_flow.latest_version_id, "v0.1.1".to_string());
+        assert_eq!(stored_flow.latest_version_id, "0.1.1".to_string());
     }
 }

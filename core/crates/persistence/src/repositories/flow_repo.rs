@@ -902,7 +902,7 @@ mod tests {
         assert!(res.is_ok());
 
         let create_flow_version = test_helper
-            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 1))
+            .make_flow_version(flow_name.clone(), format!("0.0.{}", 1))
             .await;
         let res = flow_repo
             .create_flow_version(flow_name.clone(), create_flow_version.clone())
@@ -922,7 +922,7 @@ mod tests {
         assert!(res.is_ok());
 
         let create_flow_version = test_helper
-            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 1))
+            .make_flow_version(flow_name.clone(), format!("0.0.{}", 1))
             .await;
         let flow_version = flow_repo
             .create_flow_version(flow_name.clone(), create_flow_version.clone())
@@ -931,7 +931,7 @@ mod tests {
 
         let flow_version = flow_version.unwrap();
         assert_eq!(flow_version.flow_id, flow_name);
-        assert_eq!(flow_version.flow_version, "v0.0.1");
+        assert_eq!(flow_version.flow_version, "0.0.1");
 
         let flow_version = flow_repo
             .get_flow_version_by_id(flow_name.clone(), "0.0.0".to_string())
@@ -957,7 +957,7 @@ mod tests {
         let mut created_flow_flow_version = vec![];
         for i in 1..5 {
             let create_flow_version = test_helper
-                .make_flow_version(flow_name.clone(), format!("v0.0.{}", i))
+                .make_flow_version(flow_name.clone(), format!("0.0.{}", i))
                 .await;
             let res = flow_repo
                 .create_flow_version(flow_name.clone(), create_flow_version.clone())
@@ -1011,7 +1011,7 @@ mod tests {
 
         // Create a new flow version (not the default, altough that would work as well)
         let create_flow_version = test_helper
-            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 1))
+            .make_flow_version(flow_name.clone(), format!("0.0.{}", 1))
             .await;
         let res = flow_repo
             .create_flow_version(flow_name.clone(), create_flow_version.clone())
@@ -1020,7 +1020,7 @@ mod tests {
 
         // BEFORE UPDATE
         let flow_version = flow_repo
-            .get_flow_version_by_id(flow_name.clone(), "v0.0.1".to_string())
+            .get_flow_version_by_id(flow_name.clone(), "0.0.1".to_string())
             .await;
         assert!(flow_version.is_ok());
         let original_flow_version = flow_version.unwrap();
@@ -1035,7 +1035,7 @@ mod tests {
         };
 
         let res = flow_repo
-            .update_flow_version(flow_name.clone(), "v0.0.1".to_string(), update_flow_version)
+            .update_flow_version(flow_name.clone(), "0.0.1".to_string(), update_flow_version)
             .await;
         assert!(res.is_ok());
         let new_flow_version = res.unwrap();
@@ -1080,7 +1080,7 @@ mod tests {
         let flow = stored_flow.get_flow(&mut file_store).await.unwrap();
 
         assert_eq!(flow.name, "test".to_string());
-        assert_eq!(flow.version, "v0.0.1".to_string());
+        assert_eq!(flow.version, "0.0.1".to_string());
         assert_eq!(flow.description, "test flow".to_string());
     }
 
@@ -1128,7 +1128,7 @@ mod tests {
 
         // Create first version
         let create_flow_version = test_helper
-            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 1))
+            .make_flow_version(flow_name.clone(), format!("0.0.{}", 1))
             .await;
         let res = flow_repo
             .create_flow_version(flow_name.clone(), create_flow_version.clone())
@@ -1137,7 +1137,7 @@ mod tests {
 
         // Create a second version
         let create_flow_version = test_helper
-            .make_flow_version(flow_name.clone(), format!("v0.0.{}", 2))
+            .make_flow_version(flow_name.clone(), format!("0.0.{}", 2))
             .await;
         let res = flow_repo
             .create_flow_version(flow_name.clone(), create_flow_version.clone())
@@ -1154,7 +1154,7 @@ mod tests {
 
         // Delete the first version
         let res = flow_repo
-            .delete_flow_version("v0.0.1".to_string())
+            .delete_flow_version("0.0.1".to_string())
             .await
             .unwrap();
         assert!(res);
