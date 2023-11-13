@@ -16,7 +16,6 @@ import { useFlowContext } from "../context/FlowProvider";
 
 import { FlowProvider } from "../context/FlowProvider";
 import { FlowNavigationProvider } from "../context/FlowNavigationProvider";
-import StartButton from "../components/startButton";
 
 function Flows() {
   const {

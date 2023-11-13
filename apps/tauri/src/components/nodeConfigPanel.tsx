@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { useFlowNavigationContext } from "../context/FlowNavigationProvider";
 import { useFlowContext } from "../context/FlowProvider";
 
-const NodeConfigPanel = () => { 
+const NodeConfigPanel = () => {
   const { nodeId, setNodeConfigPanel } = useFlowNavigationContext();
   const { readNodeConfig, writeNodeConfig } = useFlowContext();
 
@@ -21,7 +21,6 @@ const NodeConfigPanel = () => {
 
   const hydrate = async () => {
     try {
-   
       if (!nodeId) return;
 
       //Get Node Configuration
@@ -52,7 +51,7 @@ const NodeConfigPanel = () => {
     console.log(data);
 
     writeNodeConfig(nodeId, data);
-    setNodeConfigPanel(false, "");
+    //TODO: share success?
   };
 
   return (

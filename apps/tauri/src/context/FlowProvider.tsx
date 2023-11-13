@@ -289,6 +289,15 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     data: any
   ): Promise<FlowNode | undefined> => {
     try {
+      let updatedNodes = nodes.map((node) => {
+        // console.log("node in writeNodeConfig", node);
+        if (node.id === nodeId) {
+          return { ...node, data };
+        } else {
+          return node;
+        }
+      });
+      setNodes(updatedNodes);
       //TODO: actually update state.
       let reactFlowNode = nodes.find((node) => node.id === nodeId);
       return reactFlowNode?.data;
@@ -310,8 +319,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
             position: node.position,
             width: node.width,
             height: node.height,
-            // selected: node.selected, //this is like intermediate state. maybe leave out.will it work?
-            // dragging: node.dragging,
             positionAboslute: node.positionAbsolute,
           },
         };
