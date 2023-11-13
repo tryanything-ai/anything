@@ -97,9 +97,9 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const { flow_name } = useParams();
   const [hydrated, setHydrated] = useState<boolean>(false);
   const [firstLook, setFirstLook] = useState<boolean>(true);
-  const [nodes, setNodes] = useState<Node[] | undefined>();
-  const [edges, setEdges] = useState<Edge[] | undefined>();
-  const [flowVersions, setFlowVersions] = useState<Flow[] | undefined>();
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [flowVersions, setFlowVersions] = useState<Flow[]>([]);
   const [flowFrontmatter, setFlowFrontmatter] = useState<
     FlowFrontMatter | undefined
   >();
@@ -120,7 +120,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const addNode = (position: { x: number; y: number }, specialData?: any) => {
     const nextId = findNextNodeId(nodes);
-
+    console.log("special data", specialData);
     const newNode: Node = {
       id: nextId,
       type: "superNode",
@@ -209,12 +209,50 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         "FLow Result in flow provider",
         JSON.stringify(flow, null, 3)
       );
-      //save versions
+
+      //TODO: these are shaped wrong
       setFlowVersions(flow.versions);
 
-      //TODO: add flows and edges for real from flow version
-      setNodes([]);
-      setEdges([]);
+      let newDef = flow.versions[0].flow_definition as Flow;
+      //Pull out actions and trigger
+      let _actions: Action[] = newDef.actions || [];
+      let _trigger: Trigger | undefined = newDef.trigger || undefined;
+
+      // const newNode: Node = {
+      //   id: nextId,
+      //   type: "superNode",
+      //   position,
+      //   data: { ...specialData },
+      // };
+
+      //convert to what react flow needs
+      let _nodes: Node[] = _actions.map((action) => {
+        return {
+          ...action.presentation,
+          data: action,
+          id: action.node_name,
+          type: "superNode",
+        };
+      });
+
+      //Json might have no trigger
+      if (_trigger) {
+        _nodes.push({
+          ..._trigger.presentation,
+          data: _trigger,
+          id: _trigger.node_name,
+          type: "superNode",
+        });
+      }
+
+      let _edges = newDef.edges || [];
+
+      console.log("_nodes: ", _nodes);
+      console.log("_edges: ", _edges);
+      console.log("Presentation nodes: ", _nodes);
+
+      setEdges(_edges);
+      setNodes(_nodes);
 
       let fm = flow;
       delete fm.versions;
@@ -266,14 +304,28 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       let trigger;
       let actions = [];
 
+      //Loop through all nodes
       nodes.forEach((node) => {
+        let freshNode = {
+          ...node.data,
+          presentation: {
+            position: node.position,
+            width: node.width,
+            height: node.height,
+            // selected: node.selected, //this is like intermediate state. maybe leave out.will it work?
+            // dragging: node.dragging,
+            positionAboslute: node.positionAbsolute,
+          },
+        };
+
         if (node.data.trigger === true) {
-          trigger = { ...node.data, presentation: node.position } as Trigger;
+          trigger = freshNode as Trigger;
         } else {
-          actions.push({ ...node.data, presentation: node.position } as Action);
+          actions.push(freshNode as Action);
         }
       });
 
+      //create shape needed for backend
       let newFlow: Flow = {
         ...(flowFrontmatter as FlowFrontMatter),
         trigger,
@@ -283,20 +335,13 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
       console.log("New Flow Definition", newFlow);
 
+      //send
       let res = await api.flows.updateFlowVersion(
         flowFrontmatter.flow_id,
         newFlow
       );
 
       console.log("res in updateFlowVersion", res);
-
-      // console.log("writing to toml");
-      // console.log(newToml);
-      //don't write if nothing has changed in react state
-      // if (newToml === toml) return;
-      // setToml(newToml);
-      // await writeToml(newToml);
-      //TODO: updateFlow in Rust
     } catch (error) {
       console.log("error in synchronise", error);
     }
@@ -306,7 +351,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     //Ugly but works to prevent write on load
     if (!hydrated) return;
-    if (!nodes || !edges || !flowFrontmatter) return;
     if (firstLook) {
       setFirstLook(false);
       return;
