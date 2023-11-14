@@ -13,6 +13,7 @@ import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 interface FlowsContextInterface {
   flows: any[];
   createNewFlow: () => void;
+  getFlows: () => void;
   deleteFlow: (flowName: string) => void;
   updateFlow: (flowId: string, args: UpdateFlowArgs) => void;
   stopExecution: () => void;
@@ -20,7 +21,8 @@ interface FlowsContextInterface {
 
 export const FlowsContext = createContext<FlowsContextInterface>({
   flows: [],
-  createNewFlow: () => {},
+  createNewFlow: () => { },
+  getFlows: () => { },
   deleteFlow: () => {},
   updateFlow: () => {},
   stopExecution: () => {},
@@ -93,6 +95,7 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     <FlowsContext.Provider
       value={{
         flows,
+        getFlows, 
         createNewFlow,
         deleteFlow,
         updateFlow,

@@ -4,11 +4,16 @@ import BaseCard from "../components/baseCard";
 import { useFlowsContext } from "../context/FlowsProvider";
 import PageLayout from "../pageLayout";
 import { PageHeader } from "../components/wholePageHeader";
+import { useEffect } from "react";
 
 export default function Home() {
-  const { flows, createNewFlow } = useFlowsContext();
+  const { flows, createNewFlow, getFlows } = useFlowsContext();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    getFlows(); 
+  }, []); 
+  
   return (
     <PageLayout>
       {/* FLows */}

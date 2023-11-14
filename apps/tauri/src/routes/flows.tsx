@@ -3,11 +3,16 @@ import { Link } from "react-router-dom";
 import { useFlowsContext } from "../context/FlowsProvider";
 import PageLayout from "../pageLayout";
 import { HeaderButton, PageHeader } from "../components/wholePageHeader";
+import { useEffect } from "react";
 
 export default function Flows() {
   //TODO: need a way to fetch if flows are stopped etc
-  const { createNewFlow, flows, stopExecution, updateFlow } = useFlowsContext();
+  const { createNewFlow, flows, stopExecution, updateFlow, getFlows } =
+    useFlowsContext();
 
+  useEffect(() => {
+    getFlows();
+  }, []);
   return (
     <PageLayout>
       <PageHeader
