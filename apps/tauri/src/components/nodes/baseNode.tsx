@@ -45,7 +45,7 @@ export default function BaseNode({
         }
       )}
     >
-      {data.handles.map((handle: HandleProps) => {
+      {data.handles ? data.handles.map((handle: HandleProps) => {
         return (
           <Handle
             key={handle.id}
@@ -54,7 +54,7 @@ export default function BaseNode({
             id={handle.id}
           />
         );
-      })}
+      }): null}
       {processing ? (
         <div className=" absolute right-0 top-0 z-10 flex h-10 w-10 -translate-y-1/2 translate-x-1/2 transform items-center justify-center overflow-hidden rounded-full bg-white p-0.5 shadow">
           <span className="loading loading-spinner text-accent"></span>
