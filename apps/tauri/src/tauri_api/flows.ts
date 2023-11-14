@@ -33,8 +33,7 @@ export async function updateFlowVersion(flowId: string, flow: Flow) {
 }
 
 export async function deleteFlow(flowId: string) {
-  return true; //TODO:
-  // return await anything.deleteFlow(flowId);
+  return await anything.deleteFlow(flowId);
 }
 
 export const getFlow = async (flowId: string) => {

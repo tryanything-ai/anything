@@ -49,10 +49,10 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteFlow = async (flowName: string): Promise<any> => {
+  const deleteFlow = async (flowId: string): Promise<any> => {
     //TODO: deal with situation where there are flow events in the db
     try {
-      await api.flows.deleteFlow(flowName);
+      await api.flows.deleteFlow(flowId);
     } catch (error) {
       console.error(error);
     } finally {

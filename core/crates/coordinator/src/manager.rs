@@ -238,7 +238,7 @@ impl Manager {
         //     tracing::error!("error when getting flow: {:#?}", e);
         //     CoordinatorError::PersistenceError(e)
         // })?;
-        tracing::info!("file_flow: {:#?}", flow);
+        // tracing::info!("file_flow: {:#?}", flow);
         Ok(flow.into())
     }
 
@@ -322,13 +322,13 @@ impl Manager {
     /// Returns:
     ///
     /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
-    pub async fn delete_flow(&self, flow_name: String) -> CoordinatorResult<String> {
-        let flow_name = self.flow_repo()?.delete_flow(flow_name.clone()).await?;
+    pub async fn delete_flow(&self, flow_id: String) -> CoordinatorResult<String> {
+        let flow_name = self.flow_repo()?.delete_flow(flow_id).await?;
 
-        let _ = self
-            .file_store
-            .delete_directory(&["flows", &flow_name])
-            .unwrap();
+        // let _ = self
+        //     .file_store
+        //     .delete_directory(&["flows", &flow_name])
+        //     .unwrap();
 
         Ok(flow_name)
     }

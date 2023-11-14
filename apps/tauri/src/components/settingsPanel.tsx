@@ -25,8 +25,8 @@ const FlowSettingsPanel = () => {
   } = useForm<Inputs>();
 
   const _deleteFlow = async () => {
-    if (flow_name) {
-      await deleteFlow(flow_name);
+    if (flowFrontmatter) {
+      await deleteFlow(flowFrontmatter.flow_id);
       navigate("/");
     }
   };

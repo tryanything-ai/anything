@@ -78,27 +78,27 @@ pub async fn create_flow(
     }
 }
 
-// #[derive(Serialize)]
-// pub struct DeleteFlowResponse {
-//     flow: Option<Flow>,
-// }
+#[derive(Serialize)]
+pub struct DeleteFlowResponse {
+    flow: Option<String>,
+}
 
-// #[tauri::command]
-// pub async fn delete_flow(
-//     state: tauri::State<'_, AnythingState>,
-//     flow_name: String,
-// ) -> FlowResult<DeleteFlowResponse> {
-//     match state.inner.try_lock() {
-//         Err(_e) => Err(Error::CoordinatorNotInitialized),
-//         Ok(ref inner) => match inner.delete_flow(flow_name).await {
-//             Ok(flow) => Ok(DeleteFlowResponse { flow: Some(flow) }),
-//             Err(e) => {
-//                 eprintln!("Error getting flows: {:?}", e);
-//                 Ok(DeleteFlowResponse { flow: None })
-//             }
-//         },
-//     }
-// }
+#[tauri::command]
+pub async fn delete_flow(
+    state: tauri::State<'_, AnythingState>,
+    flow_id: String,
+) -> FlowResult<DeleteFlowResponse> {
+    match state.inner.try_lock() {
+        Err(_e) => Err(Error::CoordinatorNotInitialized),
+        Ok(ref inner) => match inner.delete_flow(flow_id).await {
+            Ok(flow) => Ok(DeleteFlowResponse { flow: Some(flow) }),
+            Err(e) => {
+                eprintln!("Error getting flows: {:?}", e);
+                Ok(DeleteFlowResponse { flow: None })
+            }
+        },
+    }
+}
 
 #[derive(Serialize)]
 pub struct UpdateFlowResponse {
