@@ -6,7 +6,7 @@ import { useFlowContext } from "../context/FlowProvider";
 import RequireAuth from "./RequireAuth";
 import slugify from "slugify";
 
-import { BigFlow, MockNewFlows } from "utils";
+import { BigFlow } from "utils";
 import { useMarketplaceContext } from "../context/MarketplaceProvider";
 
 type Inputs = {
@@ -73,8 +73,6 @@ const FlowSharingPanel = () => {
       console.log("Fetching Template by ID:", flowFrontmatter.flow_id);
       let res = await fetchTemplateById(flowFrontmatter.flow_id);
       if (res && res[0]) {
-        let template = res[0];
-        // console.log("Template:", template);
         console.log("Fetched Template by ID Response:", res);
         setPublishedFlow(res);
       }

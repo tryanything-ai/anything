@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
-import { anything } from "./anything";
+import { anything } from "./anythingInit";
 import { Flow } from "../utils/flowTypes";
 
 export const getFlows = async () => {
@@ -49,6 +49,9 @@ export const getFlowVersions = async (flowId: string) => {
   return await invoke("get_flow_versions", { flowId });
 };
 
+export const executeFlow = async (flowId: string, flowVersionId: string) => {
+  return await anything.executeFlow(flowId, flowVersionId);
+}
 // export const readToml = async (flow_id: string) => {
 //   return "";
 //   //TODO: debracated for now
@@ -61,4 +64,3 @@ export const getFlowVersions = async (flowId: string) => {
 //   //TODO: debrected for now
 //   // return await anything.writeTomle(flowId, toml);
 // };
-

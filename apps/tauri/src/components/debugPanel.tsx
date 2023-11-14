@@ -8,11 +8,12 @@ import { useFlowContext } from "../context/FlowProvider";
 import { useSqlContext } from "../context/SqlProvider";
 import { getFlow } from "../tauri_api/flows";
 import { VscInfo } from "react-icons/vsc";
+import api from "../tauri_api/api";
 
 const DebugPanel = () => {
   const { getSessionEvents } = useSqlContext();
   const { flow_name } = useParams<{ flow_name: string }>();
-  const { getTrigger } = useFlowContext();
+  const { getTrigger, flowFrontmatter } = useFlowContext();
   const [eventIds, setEventIds] = useState<string[]>([]);
   const { currentProcessingStatus } = useFlowContext();
 
@@ -46,8 +47,16 @@ const DebugPanel = () => {
     }
   };
 
-  const runManualTrigger = async () => {
-    //TODO: rust api call to run manual trigger
+  const start = async () => {
+    try {
+      let res = await api.flows.executeFlow(
+        flowFrontmatter.flow_id,
+        flowFrontmatter.flow_version_id
+      );
+      console.log("res from execute flow", res);
+    } catch (error) {
+      console.log("error executingFlow from DebugPanel", error);
+    }
   };
 
   useEffect(() => {
@@ -62,10 +71,7 @@ const DebugPanel = () => {
 
   return (
     <div className="flex flex-col gap-4 h-full p-4 overflow-y-auto hide-scrollbar">
-      <button
-        className="btn btn-primary hover:btn-success"
-        onClick={runManualTrigger}
-      >
+      <button className="btn btn-primary hover:btn-success" onClick={start}>
         Start Flow
       </button>
       {/* MockData for Manual Trigger */}

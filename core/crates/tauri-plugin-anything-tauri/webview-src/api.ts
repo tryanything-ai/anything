@@ -63,7 +63,7 @@ export class Anything {
     });
   }
 
-  async executeFlow<T>(flowName: string): Promise<T> {
-    return await invoke("plugin:anything|execute_flow", { flowName });
+  async executeFlow<T>(flowId: string, flowVersionId: string): Promise<T> {
+    return await invoke("plugin:anything|execute_flow", { flowId, flowVersionId });
   }
 }
