@@ -173,8 +173,20 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         event.dataTransfer.getData("nodeData")
       );
 
+      console.log("Dropped nodeData", nodeData);
+
       if (typeof nodeData === "undefined" || !nodeData) {
         return;
+      }
+
+      // only allow one trigger at a time
+      if (nodeData.trigger) {
+        console.log("Its a triggger")
+        const triggerNodeExists = nodes.some((node) => node.data.trigger);
+        if (triggerNodeExists) {
+          console.error("Only one trigger node is allowed at a time.");
+          return;
+        }
       }
 
       if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
