@@ -1,5 +1,5 @@
 import { HandleProps, Edge, NodeProps } from "reactflow";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 //Top level metadata about a flow
 //like you might see in a package explorer like NPM
@@ -40,14 +40,6 @@ interface BaseNode {
 // Presentation data only needed for react flow but we need all of it
 interface NodePresentation {
   position: {
-    x: number;
-    y: number;
-  };
-  width: number;
-  height: number;
-  selected: boolean;
-  dragging: boolean;
-  positionAbsolute: {
     x: number;
     y: number;
   };

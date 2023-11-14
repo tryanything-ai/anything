@@ -215,6 +215,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       setFlowVersions(flow.versions);
 
       let newDef = flow.versions[0].flow_definition as Flow;
+
       //Pull out actions and trigger
       let _actions: Action[] = newDef.actions || [];
       let _trigger: Trigger | undefined = newDef.trigger || undefined;
@@ -314,9 +315,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         ...node.data,
         presentation: {
           position: node.position,
-          width: node.width,
-          height: node.height,
-          positionAboslute: node.positionAbsolute,
         },
       };
 
@@ -330,8 +328,8 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     //create shape needed for backend
     let newFlow: Flow = {
       ...(flowFrontmatter as FlowFrontMatter),
-      trigger,
-      actions,
+      trigger: trigger as Trigger,
+      actions: actions as Action[],
       edges: edges as Edge[],
     };
 
@@ -373,7 +371,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     // Set a new timer to write to TOML file
     timerRef.current = setTimeout(async () => {
       synchronise();
-    }, 200);
+    }, 100);
 
     // Clean up
     return () => {
