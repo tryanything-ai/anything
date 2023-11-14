@@ -12,7 +12,7 @@ type Inputs = {
 const FlowSettingsPanel = () => {
   const [loading, setLoading] = useState(false);
   const { deleteFlow, updateFlow } = useFlowsContext();
-  const { updateFlowFrontmatter, flowFrontmatter } = useFlowContext();
+  const { flowFrontmatter } = useFlowContext();
 
   const { flow_name } = useParams();
 
@@ -35,14 +35,16 @@ const FlowSettingsPanel = () => {
     try {
       setLoading(true);
       if (flow_name && flowFrontmatter) {
-   
         let UpdateFlowArgs = {
           flow_name: data.flow_name,
-          active: true, //TODO: make a toggle
+          active: flowFrontmatter.active,
           version: flowFrontmatter.version,
         };
 
-        console.log("Updating Flow In Settings Panel with Args", UpdateFlowArgs);
+        console.log(
+          "Updating Flow In Settings Panel with Args",
+          UpdateFlowArgs
+        );
         let res = await updateFlow(flowFrontmatter.flow_id, UpdateFlowArgs);
         console.log("res from rename flow in settings panel", res);
         navigate(`/flows/${data.flow_name}`);

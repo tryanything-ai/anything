@@ -190,22 +190,22 @@ impl Manager {
     ///
     /// The function `get_flows` returns a `CoordinatorResult` containing a `Vec` of
     /// `anything_graph::Flow` objects.
-    pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_graph::Flow>> {
+    pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_persistence::StoredFlow>> {
         let flow_repo = self.flow_repo()?;
-        let mut file_store = self.file_store.clone();
+        // let mut file_store = self.file_store.clone();
         let flows = flow_repo.get_flows().await.map_err(|e| {
             tracing::error!("error when getting flows: {:#?}", e);
             CoordinatorError::PersistenceError(e)
         })?;
-        let mut graph_flows: Vec<anything_graph::Flow> = vec![];
-        for flow in flows.iter() {
-            let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
-                tracing::error!("error when getting flow for flow {:#?}: {:#?}", flow, e);
-                CoordinatorError::PersistenceError(e)
-            })?;
-            graph_flows.push(flow.into());
-        }
-        Ok(graph_flows)
+        // let mut graph_flows: Vec<anything_graph::Flow> = vec![];
+        // for flow in flows.iter() {
+        //     let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
+        //         tracing::error!("error when getting flow for flow {:#?}: {:#?}", flow, e);
+        //         CoordinatorError::PersistenceError(e)
+        //     })?;
+        //     graph_flows.push(flow.into());
+        // }
+        Ok(flows)
     }
 
     /// The function `get_flow` retrieves a flow by name and returns it as a result, or returns an error
@@ -347,35 +347,35 @@ impl Manager {
         &mut self,
         flow_id: String,
         args: UpdateFlowArgs,
-    ) -> CoordinatorResult<anything_graph::Flow> {
+    ) -> CoordinatorResult<anything_persistence::StoredFlow> {
         tracing::trace!("Update flow with {flow_id} and {:#?}", args);
-        let new_flow_name = args.flow_name.clone();
-        let mut original_flow = self.flow_repo()?.get_flow_by_id(flow_id.clone()).await?;
-        let original_flow_name = original_flow.flow_name.clone();
+        // let new_flow_name = args.flow_name.clone();
+        // let mut original_flow = self.flow_repo()?.get_flow_by_id(flow_id.clone()).await?;
+        // let original_flow_name = original_flow.flow_name.clone();
 
-        tracing::trace!("original_flow: {:#?}", original_flow);
+        // tracing::trace!("original_flow: {:#?}", original_flow);
 
         // self.flow_repo()?.delete_flow(flow_id.clone()).await?;
 
         let stored_flow = self.flow_repo()?.update_flow(flow_id.clone(), args).await?;
 
-        original_flow.flow_name = stored_flow.flow_name.clone();
-        self.file_store
-            .rename_directory(&["flows", &original_flow_name], &["flows", &new_flow_name])
-            .expect("unable to rename flow directory");
+        // original_flow.flow_name = stored_flow.flow_name.clone();
+        // self.file_store
+        //     .rename_directory(&["flows", &original_flow_name], &["flows", &new_flow_name])
+        //     .expect("unable to rename flow directory");
 
-        let flow_str: String = toml::to_string(&stored_flow).expect("unable to convert to string");
+        // let flow_str: String = toml::to_string(&stored_flow).expect("unable to convert to string");
 
-        self.file_store
-            .write_file(
-                &["flows", &new_flow_name, &format!("flow.toml")],
-                flow_str.as_bytes(),
-            )
-            .expect("unable to write basic flow string");
-        let mut file_store = self.file_store.clone();
+        // self.file_store
+        //     .write_file(
+        //         &["flows", &new_flow_name, &format!("flow.toml")],
+        //         flow_str.as_bytes(),
+        //     )
+        //     .expect("unable to write basic flow string");
+        // let mut file_store = self.file_store.clone();
 
-        let flow = stored_flow.get_flow(&mut file_store).await?;
-        Ok(flow)
+        // let flow = stored_flow.get_flow(&mut file_store).await?;
+        Ok(stored_flow)
     }
 
     pub async fn create_flow_version(
@@ -403,9 +403,9 @@ impl Manager {
         Ok(db_flow_version)
     }
 
-    pub async fn execute_flow(&self, flow_name: String) -> CoordinatorResult<()> {
-        let flow = self.get_flow(flow_name).await?;
-        let flow_actor = self.flow_actor().unwrap();
+    pub async fn execute_flow(&self, flow_id: String, flow_version_id: String) -> CoordinatorResult<()> {
+        let flow = self.flow_repo()?.get_flow_version_by_id(flow_id, flow_version_id).await?;
+        let flow_actor = self.flow_actor().unwrap(); 
         // Send the execute flow message
         //TODO: re implement. got mad when i started fucking around with how we fetch and retrieve flows from db
         // cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();

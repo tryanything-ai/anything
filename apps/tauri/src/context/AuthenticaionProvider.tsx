@@ -113,7 +113,7 @@ export const AuthenticationProvider = ({
 
   const getSession = async () => {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      console.log("session found in AuthenticationProvider", session);
+      // console.log("session found in AuthenticationProvider", session);
       setSession(session);
       posthogClient.identify(session?.user?.id, {
         email: session?.user?.email,
@@ -146,16 +146,16 @@ export const AuthenticationProvider = ({
         navigate("/");
       }
 
-      console.log("event", JSON.stringify(event, null, 3));
-      console.log(
-        "session changed in AuthenticationProvider",
-        JSON.stringify(session, null, 3)
-      );
+      // console.log("event", JSON.stringify(event, null, 3));
+      // console.log(
+      //   "session changed in AuthenticationProvider",
+      //   JSON.stringify(session, null, 3)
+      // );
       setSession(session);
     });
 
     return () => {
-      console.log("unsubing from auth changes");
+      // console.log("unsubing from auth changes");
       subscription.unsubscribe();
     };
   }, []);

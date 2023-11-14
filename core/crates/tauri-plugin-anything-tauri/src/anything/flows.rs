@@ -7,7 +7,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct GetFlowsResponse {
-    flows: Option<Vec<Flow>>,
+    flows: Option<Vec<StoredFlow>>,
 }
 
 #[tauri::command]
@@ -102,7 +102,7 @@ pub async fn create_flow(
 
 #[derive(Serialize)]
 pub struct UpdateFlowResponse {
-    flow: Option<Flow>,
+    flow: Option<StoredFlow>,
 }
 
 #[tauri::command]
@@ -201,14 +201,15 @@ pub struct ExecuteFlowResponse {}
 #[tauri::command]
 pub async fn execute_flow(
     state: tauri::State<'_, AnythingState>,
-    flow_name: String,
+    flow_id: String,
+    flow_version_id: String
 ) -> FlowResult<ExecuteFlowResponse> {
     match state.inner.try_lock() {
         Err(e) => {
             tracing::error!("Error getting lock on coordinator: {:?}", e);
             Err(Error::CoordinatorNotInitialized)
         }
-        Ok(ref mut inner) => match inner.execute_flow(flow_name).await {
+        Ok(ref mut inner) => match inner.execute_flow(flow_id, flow_version_id).await {
             Ok(_flow) => {
                 tracing::debug!("Executed flow flow inside tauri plugin");
                 Ok(ExecuteFlowResponse {})

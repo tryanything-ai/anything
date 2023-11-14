@@ -2,10 +2,10 @@ import { invoke } from "@tauri-apps/api";
 import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 import { anything } from "./anythingInit";
 import { Flow } from "../utils/flowTypes";
+export type { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
 
 export const getFlows = async () => {
   let res = await anything.getFlows();
-  console.log(`Got back from getFlows ${JSON.stringify(res)}`);
   return res;
 };
 
@@ -51,7 +51,11 @@ export const getFlowVersions = async (flowId: string) => {
 
 export const executeFlow = async (flowId: string, flowVersionId: string) => {
   return await anything.executeFlow(flowId, flowVersionId);
-}
+};
+
+export const stopExecution = async () => {
+  return await anything.stop();
+};
 // export const readToml = async (flow_id: string) => {
 //   return "";
 //   //TODO: debracated for now

@@ -69,7 +69,6 @@ interface FlowContextInterface {
   onDrop: (event: any, reactFlowWrapper: any) => void;
   addNode: (position: { x: number; y: number }, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
-  updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
   readNodeConfig: (nodeId: string) => Promise<FlowNode | undefined>;
   writeNodeConfig: (nodeId: string, data: any) => Promise<FlowNode | undefined>;
   getFlowDefinitionsFromReactFlowState: () => Flow;
@@ -90,7 +89,6 @@ export const FlowContext = createContext<FlowContextInterface>({
   onDrop: () => {},
   addNode: () => {},
   setReactFlowInstance: () => {},
-  updateFlowFrontmatter: () => {},
   getTrigger: () => undefined,
   readNodeConfig: () => undefined,
   writeNodeConfig: () => undefined,
@@ -191,22 +189,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     [addNode]
   );
 
-  const updateFlowFrontmatter = async (
-    flow_name: string,
-    keysToUpdate: any
-  ) => {
-    try {
-      // if we are updating name in TOML we also need to update the folder name
-      if (keysToUpdate.name) {
-        await updateFlow(flow_name, keysToUpdate.name);
-      }
-      let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
-      setFlowFrontmatter(flow_frontmatter);
-    } catch (error) {
-      console.log("error updating flow frontmatter", error);
-    }
-  };
-
   const hydrateFlow = async () => {
     try {
       console.log("Fetch Flow By Name", flow_name);
@@ -264,9 +246,8 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
       console.log("FrontMatter saved", JSON.stringify(fm, null, 3));
       setFlowFrontmatter(fm);
-      
-      setHydrated(true);
 
+      setHydrated(true);
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
@@ -435,7 +416,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         addNode,
         getTrigger,
         setReactFlowInstance,
-        updateFlowFrontmatter,
         readNodeConfig,
         writeNodeConfig,
         getFlowDefinitionsFromReactFlowState,
