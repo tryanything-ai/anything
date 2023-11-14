@@ -21,9 +21,7 @@ export async function updateFlow(flowId: string, args: UpdateFlowArgs) {
 }
 
 export async function updateFlowVersion(flowId: string, flow: Flow) {
-  console.log(
-    `updateFlowVersion called with ${flowId} and ${JSON.stringify(flow)}`
-  );
+  console.log(`updateFlowVersion called for flow_id: ${flowId}}`, flow);
   return await anything.updateFlowVersion(flowId, flow.version, {
     version: flow.version,
     flow_definition: JSON.stringify(flow),

@@ -181,7 +181,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
       // only allow one trigger at a time
       if (nodeData.trigger) {
-        console.log("Its a triggger")
+        console.log("Its a triggger");
         const triggerNodeExists = nodes.some((node) => node.data.trigger);
         if (triggerNodeExists) {
           console.error("Only one trigger node is allowed at a time.");
@@ -320,7 +320,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         },
       };
 
-      if (node.data.trigger === true) {
+      if (node.data.trigger) {
         trigger = freshNode as Trigger;
       } else {
         actions.push(freshNode as Action);
@@ -342,6 +342,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const synchronise = async () => {
     try {
+      console.log("Synchronising Flow in FlowProivders.tsx");
       let newFlow = getFlowDefinitionsFromReactFlowState();
 
       //send

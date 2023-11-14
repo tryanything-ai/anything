@@ -254,7 +254,7 @@ export const saveFlowTemplate = async (
       flow_template_name,
       flow_template_json,
       true,
-      "0.0.0",
+      "0.0.1",
       "Initial Commit",
       publisher_id,
       anything_flow_template_version

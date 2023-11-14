@@ -50,7 +50,7 @@ pub async fn get_flow_by_name(
 
 #[derive(Serialize)]
 pub struct CreateFlowResponse {
-    flow: Option<Flow>,
+    flow: Option<StoredFlow>,
 }
 
 #[tauri::command]

@@ -101,7 +101,7 @@ impl From<Flowfile> for Flow {
         let mut flow = Flow::default();
         flow.flow_id = value.flow_id;
         flow.name = value.name;
-        flow.version = value.version.unwrap_or_else(|| "0.0.0".to_string());
+        flow.version = value.version.unwrap_or_else(|| "0.0.1".to_string());
         flow.description = value
             .description
             .unwrap_or_else(|| "no description".to_string());
@@ -202,7 +202,7 @@ mod tests {
             flow_str,
             r#"flow_id = ""
 name = "DemoFlow"
-version = "0.1"
+version = "0.0.1"
 description = ""
 nodes = []
 

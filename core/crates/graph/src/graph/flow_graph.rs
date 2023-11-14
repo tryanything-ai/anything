@@ -400,7 +400,7 @@ pub fn build_flow(node_name: String) -> crate::Flow {
 
     FlowBuilder::default()
         .name(node_name)
-        .version("0.1".to_string())
+        .version("0.0.1".to_string())
         .build()
         .unwrap()
 }

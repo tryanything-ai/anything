@@ -256,7 +256,7 @@ impl Manager {
     pub async fn create_flow(
         &mut self,
         flow_name: String,
-    ) -> CoordinatorResult<anything_graph::Flow> {
+    ) -> CoordinatorResult<anything_persistence::StoredFlow> {
         // Create flow model
         let create_flow = CreateFlow {
             name: flow_name.clone(),
@@ -270,45 +270,45 @@ impl Manager {
 
         // tracing::debug!("Created flow in the repo: {:#?}", flow);
 
-        let new_directory = self
-            .file_store
-            .create_directory(&["flows", &flow.flow_name])
-            .expect("unable to create flow directory");
+        // let new_directory = self
+        //     .file_store
+        //     .create_directory(&["flows", &flow.flow_name])
+        //     .expect("unable to create flow directory");
 
-        tracing::debug!("Created flow directory: {:#?}", new_directory);
+        // tracing::debug!("Created flow directory: {:#?}", new_directory);
 
         // let flow: Flow = flow.clone().get_flow(&mut self.file_store).await.unwrap();
         // let flowfile: Flowfile = flow.clone().into();
-        let toml_repr = toml::to_string(&flow).expect("unable to convert StoredFlow into a string");
-        tracing::debug!("Saving flow toml representation: {:#?}", toml_repr);
-        let flowfile =
-            Flowfile::from_string(toml_repr).expect("unable to create flow file for a new flow");
-        let flow_str: String = flowfile.clone().into();
+        // let toml_repr = toml::to_string(&flow).expect("unable to convert StoredFlow into a string");
+        // tracing::debug!("Saving flow toml representation: {:#?}", toml_repr);
+        // let flowfile =
+        //     Flowfile::from_string(toml_repr).expect("unable to create flow file for a new flow");
+        // let flow_str: String = flowfile.clone().into();
 
         //TODO: why lowercase? folders are normal uppercase
-        let lowercased_flow_name = flow_name.to_lowercase();
-        let new_dir_str = new_directory
-            .to_str()
-            .expect("unable to create new directory string");
+        // let lowercased_flow_name = flow_name.to_lowercase();
+        // let new_dir_str = new_directory
+        //     .to_str()
+        //     .expect("unable to create new directory string");
 
-        tracing::debug!("new_dir_str: {:#?}", new_dir_str);
+        // tracing::debug!("new_dir_str: {:#?}", new_dir_str);
 
-        self.file_store
-            .write_file(
-                &["flows", new_dir_str, &format!("flow.toml")],
-                flow_str.as_bytes(),
-            )
-            .expect("unable to write basic flow string");
+        // self.file_store
+        //     .write_file(
+        //         &["flows", new_dir_str, &format!("flow.toml")],
+        //         flow_str.as_bytes(),
+        //     )
+        //     .expect("unable to write basic flow string");
 
-        tracing::debug!(
-            "wrote flow file at {:#?}",
-            &[
-                "flows",
-                new_dir_str,
-                &format!("{}.toml", lowercased_flow_name),
-            ]
-        );
-        let flow: Flow = flowfile.into();
+        // tracing::debug!(
+        //     "wrote flow file at {:#?}",
+        //     &[
+        //         "flows",
+        //         new_dir_str,
+        //         &format!("{}.toml", lowercased_flow_name),
+        //     ]
+        // );
+        // let flow: Flow = flowfile.into();
         Ok(flow)
     }
 
@@ -531,7 +531,7 @@ mod tests {
 
         let toml = r#"
         name = "SimpleFlow"
-        version = "0.1"
+        version = "0.0.1"
         description = "A simple flow that echos holiday cheer"
 
         [[nodes]]

@@ -59,7 +59,7 @@ export const useMarketplaceContext = () => useContext(MarketplaceContext);
 
 //We will break compatability of templates and will need to know what version of templates we are using.
 //was used to create a template to manage compatability and conversion
-export const ANYTHING_FLOW_TEMPLATE_VERSION = "0.0.0";
+export const ANYTHING_FLOW_TEMPLATE_VERSION = "0.0.1";
 
 export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const { webFeaturesDisabled } = useSettingsContext();

@@ -111,7 +111,7 @@ impl FlowRepo for FlowRepoImpl {
         let mut tx = self.get_transaction().await?;
 
         let flow_id = uuid::Uuid::new_v4().to_string();
-        let flow_version = "0.0.0".to_string();
+        let flow_version = "0.0.1".to_string();
 
         let saved_flow = self
             .internal_save(&mut tx, flow_id, flow_version.clone(), create_flow.into())
@@ -940,12 +940,12 @@ mod tests {
         assert_eq!(flow_version.flow_version, "0.0.1");
 
         let flow_version = flow_repo
-            .get_flow_version_by_id(flow_name.clone(), "0.0.0".to_string())
+            .get_flow_version_by_id(flow_name.clone(), "0.0.1".to_string())
             .await;
         assert!(flow_version.is_ok());
         let flow_version = flow_version.unwrap();
         assert_eq!(flow_version.flow_id, flow_name);
-        assert_eq!(flow_version.flow_version, "0.0.0");
+        assert_eq!(flow_version.flow_version, "0.0.1");
     }
 
     #[tokio::test]
