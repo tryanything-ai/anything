@@ -45,7 +45,8 @@ export default function Flows() {
                   className="flex justify-center items-center gap-2 text-lg"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {flow.active ? "Live" : "Paused"}
+                  <div className="w-16">{flow.active ? "Live" : "Paused"}</div>
+
                   <input
                     className="toggle toggle-success"
                     type="checkbox"
