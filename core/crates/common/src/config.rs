@@ -10,7 +10,7 @@ pub struct DatabaseConfig {
     pub uri: Option<String>,
     pub max_connections: Option<u32>,
 }
-
+ 
 #[derive(Debug, Clone, Default, Builder, Serialize, Deserialize, PartialEq)]
 #[builder(setter(into, strip_option), default)]
 pub struct ExecutionConfig {

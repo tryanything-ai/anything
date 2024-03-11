@@ -8,7 +8,7 @@ import {
 
 import api from "../tauri_api/api";
 import { Flow } from "../utils/flowTypes";
-import { UpdateFlowArgs } from "tauri-plugin-anything-tauri/webview-src";
+import { UpdateFlowArgs } from "../../../../old-core/crates/tauri-plugin-anything-tauri/webview-src";
 
 interface FlowsContextInterface {
   flows: any[];
@@ -23,9 +23,9 @@ export const FlowsContext = createContext<FlowsContextInterface>({
   flows: [],
   createNewFlow: () => { },
   getFlows: () => { },
-  deleteFlow: () => {},
-  updateFlow: () => {},
-  stopExecution: () => {},
+  deleteFlow: () => { },
+  updateFlow: () => { },
+  stopExecution: () => { },
 });
 
 export const useFlowsContext = () => useContext(FlowsContext);
@@ -95,7 +95,7 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     <FlowsContext.Provider
       value={{
         flows,
-        getFlows, 
+        getFlows,
         createNewFlow,
         deleteFlow,
         updateFlow,
