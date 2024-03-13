@@ -82,13 +82,13 @@ export const FlowContext = createContext<FlowContextInterface>({
   flowFrontmatter: undefined,
   currentProcessingStatus: undefined,
   currentProcessingSessionId: undefined,
-  onNodesChange: () => {},
-  onEdgesChange: () => {},
-  onConnect: () => {},
-  onDragOver: () => {},
-  onDrop: () => {},
-  addNode: () => {},
-  setReactFlowInstance: () => {},
+  onNodesChange: () => { },
+  onEdgesChange: () => { },
+  onConnect: () => { },
+  onDragOver: () => { },
+  onDrop: () => { },
+  addNode: () => { },
+  setReactFlowInstance: () => { },
   getTrigger: () => undefined,
   readNodeConfig: () => undefined,
   writeNodeConfig: () => undefined,
@@ -349,6 +349,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         newFlow
       );
 
+      console.log("Flow Synchronized");
       console.log("res in updateFlowVersion", res);
     } catch (error) {
       console.log("error in synchronise", error);
@@ -368,7 +369,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(timerRef.current);
     }
 
-    // Set a new timer to write to TOML file
+    // Set a new timer to write to flow to backend
     timerRef.current = setTimeout(async () => {
       synchronise();
     }, 100);

@@ -42,13 +42,13 @@ interface NodePresentation {
   position: {
     x: number;
     y: number;
-  };
+  }
 }
 
 export interface Action extends BaseNode {
   trigger: false;
   engine: string;
-  depends_on: string[]; //node_name for parallelization
+  depends_on: string[]; //node_name for parallelization ( maybe )
 }
 
 export interface Trigger extends BaseNode {

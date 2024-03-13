@@ -10,7 +10,17 @@ const NodeConfigPanel = () => {
 
   const [data, setData] = useState<Node | undefined>();
 
-  const skipKeys = ["trigger", "handles", "presentation", "depends_on"];
+  const skipKeys = ["trigger", "handles", "presentation", "depends_on", "mock_data", "variables"];
+  // const skipKeys = []
+
+  function snakeToCapitalized(input: string): string {
+    return input
+      .split('_') // Split the string by underscores
+      .map((word) =>
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() // Capitalize the first letter of each word
+      )
+      .join(' '); // Join the words with a space
+  }
 
   const {
     register,
@@ -119,51 +129,51 @@ const NodeConfigPanel = () => {
           >
             {data
               ? Object.keys(data).map((key, index) => {
-                  const value = data[key];
-                  // If its an object go one level deeper
-                  if (typeof value === "object" && value !== null) {
-                    // Skip certain keys we don't want visible
-                    if (!skipKeys.includes(key)) {
-                      return (
-                        <div key={key + "top"}>
-                          <div>
-                            <div className="mb-1 text-xl text-white ">
-                              {key}:
-                            </div>
+                const value = data[key];
+                // If its an object go one level deeper
+                if (typeof value === "object" && value !== null) {
+                  // Skip certain keys we don't want visible
+                  if (!skipKeys.includes(key)) {
+                    return (
+                      <div key={key + "top"}>
+                        <div>
+                          <div className="mb-1 text-xl text-white ">
+                            {snakeToCapitalized(key)}:
                           </div>
-
-                          {Object.keys(value).map((nestedKey, nestedIndex) => {
-                            const nestedValue = value[nestedKey];
-                            console.log("Input to InputComponent: ", {
-                              nestedValue,
-                              nestedKey,
-                              nestedIndex,
-                            });
-                            return (
-                              <InputComponent
-                                key={nestedKey + "nested"}
-                                objectKey={nestedKey}
-                                value={nestedValue}
-                                index={nestedIndex}
-                              />
-                            );
-                          })}
                         </div>
-                      );
-                    }
-                  } else {
-                    // Skip keys we don't want to show
-                    if (!skipKeys.includes(key)) {
-                      return (
-                        <InputComponent
-                          objectKey={key}
-                          value={value}
-                          index={index}
-                        />
-                      );
-                    }
+
+                        {Object.keys(value).map((nestedKey, nestedIndex) => {
+                          const nestedValue = value[nestedKey];
+                          console.log("Input to InputComponent: ", {
+                            nestedValue,
+                            nestedKey,
+                            nestedIndex,
+                          });
+                          return (
+                            <InputComponent
+                              key={nestedKey + "nested"}
+                              objectKey={nestedKey}
+                              value={nestedValue}
+                              index={nestedIndex}
+                            />
+                          );
+                        })}
+                      </div>
+                    );
                   }
-                })
+                } else {
+                  // Skip keys we don't want to show
+                  if (!skipKeys.includes(key)) {
+                    return (
+                      <InputComponent
+                        objectKey={key}
+                        value={value}
+                        index={index}
+                      />
+                    );
+                  }
+                }
+              })
               : null}
             <button className="mt-2 btn btn-primary" type="submit">
               Save

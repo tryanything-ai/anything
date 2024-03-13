@@ -7,6 +7,7 @@ use tauri::{
     plugin::{self, TauriPlugin},
     AppHandle, Manager, Runtime,
 };
+
 use tokio::sync::Mutex;
 
 pub struct Builder<R: Runtime> {

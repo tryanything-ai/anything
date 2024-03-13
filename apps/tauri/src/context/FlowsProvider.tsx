@@ -8,7 +8,7 @@ import {
 
 import api from "../tauri_api/api";
 import { Flow } from "../utils/flowTypes";
-import { UpdateFlowArgs } from "../../../../old-core/crates/tauri-plugin-anything-tauri/webview-src";
+import { UpdateFlowArgs } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src";
 
 interface FlowsContextInterface {
   flows: any[];
@@ -78,9 +78,9 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     setFlows(res.flows);
   };
 
-  const setActive = async (flow_id: string, args: UpdateFlowArgs) => {
-    await api.flows.updateFlow(flow_id, args);
-  };
+  // const setActive = async (flow_id: string, args: UpdateFlowArgs) => {
+  //   await api.flows.updateFlow(flow_id, args);
+  // };
 
   const stopExecution = async () => {
     await api.flows.stopExecution();

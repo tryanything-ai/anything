@@ -1,5 +1,5 @@
 use anything_common::AnythingConfig;
-use anything_graph::{Flow, Flowfile};
+// use anything_graph::{Flow, Flowfile};
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion,
@@ -403,9 +403,16 @@ impl Manager {
         Ok(db_flow_version)
     }
 
-    pub async fn execute_flow(&self, flow_id: String, flow_version_id: String) -> CoordinatorResult<()> {
-        let flow = self.flow_repo()?.get_flow_version_by_id(flow_id, flow_version_id).await?;
-        let flow_actor = self.flow_actor().unwrap(); 
+    pub async fn execute_flow(
+        &self,
+        flow_id: String,
+        flow_version_id: String,
+    ) -> CoordinatorResult<()> {
+        let flow = self
+            .flow_repo()?
+            .get_flow_version_by_id(flow_id, flow_version_id)
+            .await?;
+        let flow_actor = self.flow_actor().unwrap();
         // Send the execute flow message
         //TODO: re implement. got mad when i started fucking around with how we fetch and retrieve flows from db
         // cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();

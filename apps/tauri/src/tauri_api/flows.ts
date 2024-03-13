@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api";
-import { UpdateFlowArgs } from "../../../../old-core/crates/tauri-plugin-anything-tauri/webview-src";
+import { UpdateFlowArgs } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src";
 import { anything } from "./anythingInit";
 import { Flow } from "../utils/flowTypes";
-export type { UpdateFlowArgs } from "../../../../old-core/crates/tauri-plugin-anything-tauri/webview-src";
+export type { UpdateFlowArgs } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src";
 
 export const getFlows = async () => {
   let res = await anything.getFlows();

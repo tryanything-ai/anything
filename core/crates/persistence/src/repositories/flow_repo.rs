@@ -108,15 +108,19 @@ impl FlowRepo for FlowRepoImpl {
     ///
     /// a `PersistenceResult<StoredFlow>`.
     async fn create_flow(&self, create_flow: CreateFlow) -> PersistenceResult<StoredFlow> {
+        //Get db transaction
         let mut tx = self.get_transaction().await?;
 
+        //create default Flow
         let flow_id = uuid::Uuid::new_v4().to_string();
         let flow_version = "0.0.1".to_string();
 
+        //Save Flow in SqlLite
         let saved_flow = self
             .internal_save(&mut tx, flow_id, flow_version.clone(), create_flow.into())
             .await?;
 
+        //Commit transaction
         tx.commit()
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
@@ -575,7 +579,6 @@ impl FlowRepoImpl {
         flow_version_id: FlowVersionId,
         update_flow_version: UpdateFlowVersion,
     ) -> PersistenceResult<FlowVersion> {
-
         // println!("Flow ID: {:?}", flow_id);
         // println!("Flow Version ID: {:?}", flow_version_id);
         // println!("Update Flow Version: {:?}", update_flow_version);
@@ -689,7 +692,7 @@ impl FlowRepoImpl {
         }
     }
 
-    //TODO: deelte flow versions also. 
+    //TODO: deelte flow versions also.
     async fn internal_delete_flow_by_id(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
