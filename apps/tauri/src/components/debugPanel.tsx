@@ -6,18 +6,20 @@ import { useParams } from "react-router-dom";
 
 import { useFlowContext } from "../context/FlowProvider";
 import { useSqlContext } from "../context/SqlProvider";
-import { getFlow } from "../tauri_api/flows";
 import { VscInfo } from "react-icons/vsc";
 import api from "../tauri_api/api";
+import { Trigger } from "../utils/flowTypes";
 
 const DebugPanel = () => {
   const { getSessionEvents } = useSqlContext();
   const { flow_name } = useParams<{ flow_name: string }>();
-  const { getTrigger, flowFrontmatter } = useFlowContext();
+  const { flowFrontmatter, getTrigger } = useFlowContext();
   const [eventIds, setEventIds] = useState<string[]>([]);
   const { currentProcessingStatus } = useFlowContext();
 
-  const hydrate = async () => {
+  const [trigger, setTrigger] = useState<Trigger>(null);
+
+  const hydrateEvents = async () => {
     try {
       console.log("Hydrating debug panel");
       console.log("flow_name", flow_name);
@@ -47,6 +49,16 @@ const DebugPanel = () => {
     }
   };
 
+  const hydrateMockData = () => {
+    try {
+      const trigger = getTrigger();
+      console.log("found trigger", trigger);
+      setTrigger(trigger);
+    } catch (error) {
+      console.log("error", error);
+    }
+  }
+
   const start = async () => {
     try {
       let res = await api.flows.executeFlow(
@@ -61,13 +73,18 @@ const DebugPanel = () => {
 
   useEffect(() => {
     if (currentProcessingStatus) {
-      hydrate();
+      hydrateEvents();
     }
   }, [currentProcessingStatus]);
 
   useEffect(() => {
-    hydrate();
+    hydrateEvents();
   }, []);
+
+  useEffect(() => {
+    hydrateMockData();
+  }, [])
+
 
   return (
     <div className="flex flex-col gap-4 h-full p-4 overflow-y-auto hide-scrollbar">
@@ -90,7 +107,7 @@ const DebugPanel = () => {
           style={{ borderRadius: "10px", padding: "10px" }}
           enableClipboard={false}
           theme={"tube"}
-          src={{ derp: true }}
+          src={trigger ? trigger.mockData : {}}
         />
       </div>
       {/* Event Processiong State */}

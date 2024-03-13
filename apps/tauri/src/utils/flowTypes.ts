@@ -54,6 +54,7 @@ export interface Action extends BaseNode {
 export interface Trigger extends BaseNode {
   trigger: true;
   trigger_type: string;
+  //Mock Data should be shaped like Config. Zod to confirm?
   mockData: any; //we need the user to be able to press "play" and imitate a real trigger
 }
 

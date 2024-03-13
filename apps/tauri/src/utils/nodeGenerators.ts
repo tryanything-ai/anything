@@ -44,7 +44,9 @@ const NODES: Node[] = [
       pattern: "*/5 * * * *", //every 5 minutes
     },
     trigger_type: "cron",
-    mockData: {},
+    mockData: {
+      pattern: "*/5 * * * *"
+    },
   },
   {
     trigger: false,
@@ -70,7 +72,9 @@ const NODES: Node[] = [
     variables: [],
     config: {},
     trigger_type: "manual",
-    mockData: {},
+    mockData: {
+      click: true
+    },
   },
   {
     trigger: false,
@@ -148,7 +152,9 @@ const NODES: Node[] = [
       message: "",
     },
     trigger_type: "chat",
-    mockData: {},
+    mockData: {
+      message: "Hello, World!"
+    },
   },
   {
     trigger: false,
