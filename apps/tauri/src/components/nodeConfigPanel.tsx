@@ -12,6 +12,8 @@ const NodeConfigPanel = () => {
 
   const skipKeys = ["trigger", "handles", "presentation", "depends_on", "mockData", "variables"];
 
+  const nonEditableSubKeys = ["node_name"];
+
   function snakeToCapitalized(input: string): string {
     return input
       .split('_') // Split the string by underscores
@@ -72,6 +74,7 @@ const NodeConfigPanel = () => {
           <div className="mb-1">{objectKey}:</div>
           <input
             type="text"
+            disabled={nonEditableSubKeys.includes(objectKey)}
             className="input input-bordered input-md w-full"
             defaultValue={value}
             {...register(objectKey)}
@@ -87,6 +90,7 @@ const NodeConfigPanel = () => {
           key={index}
           name={objectKey}
           control={control}
+          disabled={nonEditableSubKeys.includes(objectKey)}
           defaultValue={value}
           render={({ field }) => (
             <label>

@@ -137,7 +137,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       id: conflictFreeId,
       type: "superNode",
       position,
-      data: { ...specialData },
+      data: { ...specialData, node_name: conflictFreeId },
     };
 
     setNodes((nodes) => {
