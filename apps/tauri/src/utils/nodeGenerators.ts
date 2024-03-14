@@ -34,7 +34,7 @@ const EndHandles: HandleProps[] = [
 const NODES: Node[] = [
   {
     trigger: true,
-    node_name: "Cron Trigger",
+    node_name: "cron_trigger",
     node_label: "Cron Trigger",
     icon: rawIcons.VscWatch,
     description: "Fire at a given time",
@@ -50,7 +50,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "JS Action",
+    node_name: "js_action",
     node_label: "JS Action",
     icon: rawIcons.VscCode,
     description: "JS Logo",
@@ -64,7 +64,7 @@ const NODES: Node[] = [
   },
   {
     trigger: true,
-    node_name: "Manual Trigger",
+    node_name: "manual_trigger",
     node_label: "Manual Trigger",
     icon: rawIcons.VscPerson,
     description: "Manual Trigger",
@@ -78,7 +78,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "Local Model Action",
+    node_name: "local_model_action",
     node_label: "Local Model Action",
     icon: rawIcons.Llama,
     description: "Local Model Action",
@@ -93,7 +93,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "OpenAI Action",
+    node_name: "openai_action",
     node_label: "OpenAI Action",
     icon: rawIcons.OpenAi,
     description: "OpenAI Action",
@@ -111,7 +111,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "Rest API Action",
+    node_name: "rest_api_action",
     node_label: "Rest API Action",
     icon: rawIcons.VscRadioTower,
     description: "Rest API Action",
@@ -128,7 +128,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "Python Action",
+    node_name: "python_action",
     node_label: "Python Action",
     icon: rawIcons.VscCode,
     description: "Python Action",
@@ -142,7 +142,7 @@ const NODES: Node[] = [
   },
   {
     trigger: true,
-    node_name: "App Chat Trigger",
+    node_name: "app_chat_trigger",
     node_label: "App Chat Trigger",
     icon: rawIcons.VscMail,
     description: "App Chat Trigger",
@@ -158,7 +158,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "Send Chat Action",
+    node_name: "send_chat_action",
     node_label: "Send Chat Action",
     icon: rawIcons.VscSend,
     description: "Send Chat Action",
@@ -172,7 +172,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "Terminal Action",
+    node_name: "terminal_action",
     node_label: "Terminal Action",
     icon: rawIcons.VscTerminal,
     description: "Terminal Action",
@@ -186,7 +186,7 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "Vector Action",
+    node_name: "vector_action",
     node_label: "Vector Action",
     icon: rawIcons.VscReferences,
     description: "Vector Action",

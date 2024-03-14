@@ -11,7 +11,6 @@ const NodeConfigPanel = () => {
   const [data, setData] = useState<Node | undefined>();
 
   const skipKeys = ["trigger", "handles", "presentation", "depends_on", "mockData", "variables"];
-  // const skipKeys = []
 
   function snakeToCapitalized(input: string): string {
     return input

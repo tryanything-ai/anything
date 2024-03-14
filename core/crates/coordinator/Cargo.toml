@@ -10,6 +10,7 @@ anything-graph = { workspace = true }
 anything-runtime = { workspace = true }
 anything-store = { workspace = true }
 anything-mq = { workspace = true }
+anything-carl = { workspace = true }
 anything-common = { workspace = true }
 anything-persistence = { workspace = true }
 

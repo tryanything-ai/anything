@@ -21,6 +21,7 @@ exclude = ["crates/plugins", "crates/plugins/*"]
 anything-runtime = { path = "./crates/runtime" }
 anything-common = { path = "./crates/common" }
 anything-graph = { path = "./crates/graph" }
+anything-carl = { path = "./crates/carl" }
 anything-store = { path = "./crates/store" }
 anything-mq = { path = "./crates/mq" }
 anything-persistence = { path = "./crates/persistence" }

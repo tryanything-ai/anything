@@ -30,27 +30,26 @@ import api from "../tauri_api/api";
 import { useFlowsContext } from "./FlowsProvider";
 import { Node as FlowNode } from "../utils/flowTypes";
 
-//TODO: use slugify style to give names based on node type "node_label_1" etc
-function findNextNodeId(nodes: any): string {
-  // Return 1 if there are no nodes
-  if (!nodes) {
-    console.log("no nodes in FindNextNodeId, returning id 1");
-    return "1";
+function findConflictFreeId(nodes: Node[], planned_node_name: string): string {
+  const nodesWithSubstring = nodes.filter((node: Node) => node.id.startsWith(planned_node_name));
+  let suffix = nodesWithSubstring.length;
+  if (suffix === 0) {
+    return planned_node_name;
+  } else {
+    let highestSuffixedNode = 0;
+    nodesWithSubstring.forEach((node: Node) => {
+      const lastChar = node.id.slice(-1);
+      const lastCharIsInt = !isNaN(parseInt(lastChar));
+      if (lastCharIsInt) {
+        let suffix = parseInt(lastChar);
+        if (suffix > highestSuffixedNode) {
+          highestSuffixedNode = suffix;
+        }
+      }
+    });
+
+    return `${planned_node_name}_${highestSuffixedNode + 1}`;
   }
-  // Initialize the maxId to 0
-  let maxId = 0;
-
-  // Loop through the nodes and find the maximum numeric ID value
-  nodes.forEach((node: any) => {
-    const numericId = parseInt(node.id, 10);
-    if (!isNaN(numericId) && numericId > maxId) {
-      maxId = numericId;
-    }
-  });
-  // Increment the maxId to get the next ID for the new node
-  const nextId = (maxId + 1).toString();
-
-  return nextId;
 }
 
 interface FlowContextInterface {
@@ -124,10 +123,18 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const addNode = (position: { x: number; y: number }, specialData?: any) => {
-    const nextId = findNextNodeId(nodes);
+    let planned_node_name;
+
+    //set node_name
+    if (specialData) {
+      planned_node_name = specialData.node_name;
+    }
+
+    const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
+    console.log("conflictFreeId", conflictFreeId);
     console.log("special data", specialData);
     const newNode: Node = {
-      id: nextId,
+      id: conflictFreeId,
       type: "superNode",
       position,
       data: { ...specialData },

@@ -312,7 +312,7 @@ impl FlowRepo for FlowRepoImpl {
 
         let flow_version = sqlx::query_as::<_, FlowVersion>(
             r#"
-        SELECT * FROM flow_versions WHERE flow_id = ?1 AND flow_version = ?2
+        SELECT * FROM flow_versions WHERE flow_id = ?1 AND flow_version_id = ?2
             "#,
         )
         .bind(flow_id.clone())

@@ -154,6 +154,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "anything-carl"
+version = "0.1.0"
+dependencies = [
+ "anything-persistence",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "anything-common"
 version = "0.1.0"
 dependencies = [
@@ -182,6 +192,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "anymap",
+ "anything-carl",
  "anything-common",
  "anything-graph",
  "anything-mq",
