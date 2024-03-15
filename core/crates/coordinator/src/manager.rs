@@ -4,7 +4,7 @@ use anything_carl;
 
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
-    create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion,
+    create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion, EventRepo,
     EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs,
     UpdateFlowVersion,
 };
@@ -73,14 +73,17 @@ pub async fn start(
 impl Manager {
     pub fn new(config: AnythingConfig) -> Self {
         let mut runtime_config = config.runtime_config().clone();
+        //manages plugins and deno stuff i think
         let runner = Runner::new(runtime_config.clone());
 
+        //Make a dir if we don't have one
         let root_dir = match runtime_config.base_dir {
             Some(v) => v.clone(),
             None => tempfile::tempdir().unwrap().path().to_path_buf(),
         };
         runtime_config.base_dir = Some(root_dir.clone());
 
+        //Deal with local file system
         let file_store = FileStore::create(root_dir.as_path(), &["anything"]).unwrap();
 
         // Create all the base directories required
@@ -103,13 +106,14 @@ impl Manager {
         mut shutdown_rx: mpsc::Receiver<()>,
         ready_tx: mpsc::Sender<Arc<Self>>,
     ) -> CoordinatorResult<()> {
-        // Setup persistence
+        // Setup sqlite db
         let datastore = create_sqlite_datastore_from_config_and_file_store(
             self.config.clone(),
             self.file_store.clone(),
         )
         .await
         .unwrap();
+
         let flow_repo = FlowRepoImpl::new_with_datastore(datastore.clone())
             .expect("unable to create flow repo");
         let event_repo = EventRepoImpl::new_with_datastore(datastore.clone())
@@ -419,13 +423,21 @@ impl Manager {
             .get_flow_version_by_id(flow_id, flow_version_id)
             .await?;
 
+        //old ari messages
         // println!("flow: {:#?}", flow);
         // let flow_actor = self.flow_actor().unwrap();
         // Send the execute flow message
         //TODO: re implement. got mad when i started fucking around with how we fetch and retrieve flows from db
         // cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
         // Give the flow a few milliseconds to execute
-        anything_carl::flow::create_execution_plan(flow);
+        let worklist = anything_carl::flow::create_execution_plan(flow);
+
+        println!("worklist in manager: {:?}", worklist);
+
+        for event in worklist {
+            self.event_repo()?.save_event(event).await?;
+        }
+
         Ok(())
     }
 

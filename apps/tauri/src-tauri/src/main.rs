@@ -8,12 +8,12 @@ use anything_runtime::RuntimeConfigBuilder;
 use tauri::Manager;
 extern crate dotenv;
 
-
 //https://github.com/FabianLars/tauri-plugin-deep-link/blob/main/example/main.rs
 use tauri_plugin_deep_link; 
 use tauri_plugin_anything_tauri;
 
 fn main() {
+    //Load .env
     match dotenv::dotenv() {
         Ok(_) => println!("Successfully loaded .env"),
         Err(error) => {
@@ -27,6 +27,7 @@ fn main() {
     //Sentry
     let dsn = env::var("SENTRY_DSN").unwrap_or_default();
 
+    // Initialize sentry
     let client = sentry_tauri::sentry::init((
         dsn,
         sentry_tauri::sentry::ClientOptions {
@@ -37,6 +38,7 @@ fn main() {
 
     let _guard = sentry_tauri::minidump::init(&client);
 
+    //create local dir
     let base_dir = dirs::home_dir().unwrap().join(".anything");
     let runtime_config = RuntimeConfigBuilder::default()
     .base_dir(base_dir).build().unwrap();

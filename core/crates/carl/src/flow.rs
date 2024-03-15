@@ -1,27 +1,45 @@
-use anything_persistence::FlowVersion;
+use anything_persistence::{CreateEvent, FlowVersion};
 use serde_json::Value as JsonValue;
 use std::collections::VecDeque;
+use uuid::Uuid;
 
-pub fn create_execution_plan(_flow_version: FlowVersion) {
+pub fn create_execution_plan(flow_version: FlowVersion) -> Vec<CreateEvent> {
     // Your code here
-    // todo!("Implement create_execution_plan")
     println!("create_execution_plan");
 
-    let flow_definition = _flow_version.flow_definition.clone();
+    let flow_definition = flow_version.flow_definition.clone();
     let json_data = serde_json::from_value(flow_definition).unwrap();
 
     // println!("json_data: {:?}", json_data);
-
-    let result = bfs_traversal(&json_data);
-    println!("result from bfs: {:?}", result);
-    // return result;
-
     //traverse graph
-    //create events for each node
-    //write events to sqlite
-    //Hint to executer that we have new stuff to do
-    //  ( executer decides on its one what to do, scheduleing priority etc)
-    //return true
+    let result = bfs_traversal(&json_data);
+    // println!("work list from bfs: {:?}", result);
+
+    let trigger_session_id = Uuid::new_v4().to_string();
+    let flow_session_id = Uuid::new_v4().to_string();
+    let mut events = Vec::new();
+    for _result in &result {
+        //TODO: maybe make pass through ID from client to make pinging easier in debug
+        let event = CreateEvent {
+            event_id: Uuid::new_v4().to_string(),
+            name: "event_name".to_string(),
+            flow_id: Some("flow_id".to_string()),
+            trigger_id: Some("trigger_id".to_string()),
+            context: None,
+            started_at: None,
+            ended_at: None,
+            flow_version_id: Some(flow_version.flow_version_id.clone()),
+            flow_version_name: Some(flow_version.flow_version.clone()),
+            trigger_session_id: Some(trigger_session_id.clone()),
+            flow_session_id: Some(flow_session_id.clone()),
+            created_at: Some(chrono::Utc::now()),
+            debug_result: None,
+            result: None,
+        };
+        events.push(event);
+    }
+    // println!("events going to manager: {:?}", events);
+    return events;
 }
 
 fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
@@ -43,26 +61,8 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
         }
     }
 
-    // Print the graph
-    println!("Graph: {:?}", graph);
-
     // Use a BFS queue
     let mut queue = VecDeque::new();
-
-    // Find and enqueue the node with "data.worker_type" = "start"
-    // if let Some(nodes) = json_data.get("nodes") {
-    //     for node in nodes.as_array().unwrap() {
-    //         if let Some(data) = node.get("data") {
-    //             if data
-    //                 .get("worker_type")
-    //                 .map_or(false, |w| w.as_str().unwrap_or("") == "start")
-    //             {
-    //                 queue.push_back(node.clone());
-    //                 break; // Since there should be only one start node based on the context
-    //             }
-    //         }
-    //     }
-    // }
 
     //put the trigger as the first node in the queue
     let trigger = if let Some(trigger) = json_data.get("trigger") {
@@ -71,17 +71,16 @@ fn bfs_traversal(json_data: &JsonValue) -> Vec<JsonValue> {
         panic!("Trigger not found in json_data");
     };
 
-    // let trigger = json_data.get("trigger").unwrap();
     queue.push_back(trigger.clone());
 
     // BFS traversal
     while !queue.is_empty() {
         let current = queue.pop_front().unwrap();
-        println!("current: {:?}", current);
+        // println!("current: {:?}", current);
 
         // Add current node to the work list
         work_list.push(current.clone());
-        println!("work_list: {:?}", work_list);
+        // println!("work_list: {:?}", work_list);
 
         // Enqueue neighbors
         if let Some(neighbors) = graph.get(current.get("node_name").unwrap().as_str().unwrap()) {

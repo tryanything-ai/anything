@@ -7,14 +7,20 @@ CREATE TABLE IF NOT EXISTS triggers (
     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
 );
 CREATE TABLE IF NOT EXISTS events (
-    id TEXT NOT NULL PRIMARY KEY,
-    -- Not going to have both
-    flow_id TEXT,
-    trigger_id TEXT,
-    name TEXT NOT NULL,
-    context json NOT NULL,
-    started_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
-    ended_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
+    event_id TEXT NOT NULL PRIMARY KEY,
+    flow_id TEXT NOT NULL, -- the flow that was running UUID ( root flow name and stuff)
+    flow_version_id TEXT NOT NULL, -- the version of the flow that was running UUID
+    flow_version_name TEXT, -- the name of the flow version that was running example 0.0.1
+    trigger_id TEXT NOT NULL, -- the trigger that caused the event
+    trigger_session_id TEXT NOT NULL, -- anything that is triggered by a single trigger including nested flow runs
+    flow_session_id TEXT NOT NULL, -- a single instance of a flow running
+    name TEXT, --UNSURE WHY WE HAVE THIS. TODO: remove?
+    context json, -- the bundle of args used for the action to process
+    created_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP), --stats for action run time
+    started_at timestamp with time zone, --stats for action run time
+    ended_at timestamp with time zone, --stats for action run time
+    debug_result json, -- debug info, a place where we can store extra data if we want like intermediate steps in the flow
+    result json -- the result of the action
 );
 CREATE TABLE IF NOT EXISTS flows (
     flow_id TEXT PRIMARY KEY NOT NULL,

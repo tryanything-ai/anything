@@ -55,24 +55,30 @@ impl EventRepo for EventRepoImpl {
         let pool = self.datastore.get_pool();
         let row = sqlx::query(
             r#"
-            INSERT INTO events (id, flow_id, trigger_id, name, context, started_at, ended_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
-            RETURNING id
+            INSERT INTO events (event_id, flow_id, flow_version_id, flow_version_name, trigger_id, trigger_session_id, flow_session_id, name, context, created_at, started_at, ended_at, debug_result, result)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+            RETURNING event_id
             "#,
         )
-        .bind(uuid::Uuid::new_v4().to_string())
+        .bind(event.event_id)
         .bind(event.flow_id)
+        .bind(event.flow_version_id)
+        .bind(event.flow_version_name)
         .bind(event.trigger_id)
+        .bind(event.trigger_session_id)
+        .bind(event.flow_session_id)
         .bind(event.name)
         .bind(event.context)
+        .bind(event.created_at)
         .bind(event.started_at)
         .bind(event.ended_at)
-        // .bind(Utc::now())
+        .bind(event.debug_result)
+        .bind(event.result)
         .fetch_one(pool)
         .await
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
-        let id = row.get("id");
+        let id = row.get("event_id");
 
         Ok(id)
     }

@@ -158,9 +158,11 @@ name = "anything-carl"
 version = "0.1.0"
 dependencies = [
  "anything-persistence",
+ "chrono",
  "serde",
  "serde_json",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]
