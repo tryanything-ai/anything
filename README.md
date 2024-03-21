@@ -1,10 +1,8 @@
 # 🚀 Anything [Alpha Pre Release]
 
-✨ Think Zapier, but on your Mac, completely focused on AI!
+✨ Have AI do work for you!
 
 ## Don't hire your next employee. Build them!
-
-### Drag it and drop it
 
 ![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_dnd_sept_11.gif)
 
@@ -29,10 +27,9 @@ Anything will be the first tool you go to grab when your dreaming of putting AI 
 
 ### 🛠 Technologies Used
 
-- React: For our intuitive and seamless UI.
 - Rust: Ensuring robust and lightning-fast operations.
 - Deno: Lets you use custom JS, TS, Wasm etc. 
-- Tauri: Local apps that aren't a whole chrome browser.
+- Tauri: Local apps written in Rust.
 
 ### Where we're going
 
@@ -67,25 +64,32 @@ Repo structure based on turborepo tailwind template
 
 ### Flows are defined as TOML Files
 
-- All flows are just files
+- All flows are just files that can live in Version Control
 - Inspired by NextJS routing a flow just lives at ~/Documents/Flows/{Flow Name} in your computer
 
 [Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/assets/examples)
 
 ### 🤖 Roadmap
 
-- [x] [Monaco](https://github.com/suren-atoyan/monaco-react) Editor ( same as vscode )
+##### Core [ Free ]
 - [x] Embeded Sqlite DB
-- [x] WASM Interpreter via [Deno](https://github.com/denoland/deno)
+- [X] WYSIWYG Editor
 - [x] Event System
-- [x] Allow Custom Rust Plugins for Powerful Extensions
-- [x] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/)
-- [ ] Sqlite Vectors - [TinyVector](https://github.com/m1guelpf/tinyvector) in Rust
-- [ ] [Rustformers](https://github.com/rustformers/llm) for local AI models
-- [ ] Python Interpreter via Starlark
-- [ ] Integration with popular local apps and services
+- [ ] Flow Version Control
+- [ ] Custom Extensions ( Like in VSCode )
+- [ ] Sqlite Vectors 
+- [ ] WASM Interpreter
+- [ ] Python Interpreter
+- [ ] Local AI Models
+- [ ] Developer Documentation
 
-Share your ideas!
+##### Ecosystem [ Free ]
+- [x] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/)
+- [ ] Action Marketplace
+- [ ] Extensions Marketplace
+
+##### Business [ Paid ]
+- [ ] Integration with popular apps and services
 
 ### 💌 Feedback
 

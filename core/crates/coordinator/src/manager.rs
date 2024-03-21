@@ -8,6 +8,7 @@ use anything_persistence::{
     EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs,
     UpdateFlowVersion,
 };
+
 use anything_runtime::{Runner, RuntimeConfig};
 use anything_store::FileStore;
 use ractor::{cast, Actor, ActorRef};
@@ -21,6 +22,7 @@ use tokio::sync::{
 use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
 use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
+use crate::actors::work_queue_actor::{WorkQueueActor, WorkQueueActorMessage, WorkQueueActorState};
 use crate::error::CoordinatorResult;
 use crate::CoordinatorError;
 
@@ -36,6 +38,7 @@ pub struct ActorRefs {
     pub system_actor: ActorRef<SystemMessage>,
     pub flow_actor: ActorRef<FlowMessage>,
     pub update_actor: ActorRef<UpdateActorMessage>,
+    pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
 }
 
 #[derive(Debug, Clone)]
@@ -127,7 +130,7 @@ impl Manager {
             trigger_repo: trigger_repo.clone(),
         });
 
-        // startup the actors
+        // startup System Actor in charge of watching files changes for flows to syncronize
         let (system_actor, _handle) = Actor::spawn(
             None,
             SystemActor,
@@ -139,6 +142,7 @@ impl Manager {
         .await
         .unwrap();
 
+        //Honestly unsure what this actor does right now
         let (update_actor, _handle) = Actor::spawn(
             None,
             UpdateActor,
@@ -163,10 +167,22 @@ impl Manager {
         .await
         .unwrap();
 
+        //Start carls work queue actor
+        let (work_queue_actor, _handle) = Actor::spawn(
+            None,
+            WorkQueueActor,
+            WorkQueueActorState {
+                event_repo: event_repo.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
         self.actor_refs = Some(ActorRefs {
             system_actor,
             flow_actor,
             update_actor,
+            work_queue_actor,
         });
 
         // Setup listeners and action-takers
@@ -434,8 +450,33 @@ impl Manager {
 
         println!("worklist in manager: {:?}", worklist);
 
+        //create all the events in the database
         for event in worklist {
             self.event_repo()?.save_event(event).await?;
+        }
+
+        //start execution
+        // Check if the actor_refs and work_queue_actor are available
+        if let Some(ref actor_refs) = self.actor_refs {
+            // Send the StartWorkQueue message to the work_queue_actor
+            let result = actor_refs
+                .work_queue_actor
+                .send_message(WorkQueueActorMessage::StartWorkQueue);
+            match result {
+                Ok(_) => {
+                    // Handle success case
+                    println!("Message Sent to Work Queue Actor")
+                }
+                Err(e) => {
+                    // Handle error case
+                    println!("Error sending StartWorkQueue message: {:?}", e);
+                }
+            }
+
+        } else {
+            return Err(CoordinatorError::ActorNotInitialized(String::from(
+                "work_queue_actor",
+            )));
         }
 
         Ok(())
@@ -487,7 +528,7 @@ impl Manager {
 
     /*
     INTERNAL FUNCTIONS
-     */
+    */
 
     // Internal
     async fn setup_file_handler(&mut self) {
@@ -558,21 +599,21 @@ mod tests {
         // let file = get_fixtures_directory().join("simple.toml");
 
         let toml = r#"
-        name = "SimpleFlow"
-        version = "0.0.1"
-        description = "A simple flow that echos holiday cheer"
+            name = "SimpleFlow"
+            version = "0.0.1"
+            description = "A simple flow that echos holiday cheer"
 
-        [[nodes]]
-        name = "echo-cheer"
-        label = "Holiday cheers"
-        depends_on = []
-        variables = { cheers = "Jingle Bells" }
+            [[nodes]]
+            name = "echo-cheer"
+            label = "Holiday cheers"
+            depends_on = []
+            variables = { cheers = "Jingle Bells" }
 
-        [nodes.engine]
-        interpreter = "deno"
-        args = ["export default function() { return 'hello {{cheers}}' }"]
+            [nodes.engine]
+            interpreter = "deno"
+            args = ["export default function() { return 'hello {{cheers}}' }"]
 
-        "#
+            "#
         .to_string();
         let test_flow = Flowfile::from_string(toml);
         let test_flow = test_flow.unwrap();

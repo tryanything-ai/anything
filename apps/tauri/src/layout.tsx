@@ -22,8 +22,8 @@ export default function Layout() {
           <NavLink link="/templates" icon={VscGlobe} />
           <NavLink link="/flows" icon={VscRepoForked} />
           {/* TODO bring back when we have them */}
-          {/* <NavLink link="/vectors" icon={VscReferences} />
-          <NavLink link="/tables" icon={VscTable} /> */}
+          {/* <NavLink link="/vectors" icon={VscReferences} /> */}
+          {/* <NavLink link="/tables" icon={VscTable} /> */}
           <div className="flex-grow" />
           <NavLink link="/settings" icon={VscSettingsGear} />
         </div>
