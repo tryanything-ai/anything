@@ -18,19 +18,50 @@ pub fn create_execution_plan(flow_version: FlowVersion) -> Vec<CreateEvent> {
     let trigger_session_id = Uuid::new_v4().to_string();
     let flow_session_id = Uuid::new_v4().to_string();
     let mut events = Vec::new();
-    for _result in &result {
+
+    //grab trigger
+    let trigger = if let Some(trigger) = json_data.get("trigger") {
+        trigger.clone()
+    } else {
+        panic!("Trigger not found in json_data");
+    };
+
+    for result in &result {
+        let is_trigger = events.len() == 0;
         //TODO: maybe make pass through ID from client to make pinging easier in debug
         let event = CreateEvent {
             event_id: Uuid::new_v4().to_string(),
-            name: "event_name".to_string(),
-            flow_id: Some("flow_id".to_string()),
-            trigger_id: Some("trigger_id".to_string()),
+            event_status: "WAITING".to_string(),
+            trigger_id: Some(
+                trigger
+                    .get("node_name")
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_string(),
+            ),
+            is_trigger,
+            engine_id: if is_trigger {
+                "trigger".to_string()
+            } else {
+                result.get("engine").unwrap().as_str().unwrap().to_string()
+            },
+            stage: "DEV".to_string(),
+            node_id: result
+                .get("node_name")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
             context: None,
             started_at: None,
             ended_at: None,
+            flow_id: Some(flow_version.flow_id.clone()),
             flow_version_id: Some(flow_version.flow_version_id.clone()),
             flow_version_name: Some(flow_version.flow_version.clone()),
+            flow_session_status: "WAITING".to_string(),
             trigger_session_id: Some(trigger_session_id.clone()),
+            trigger_session_status: "WAITING".to_string(),
             flow_session_id: Some(flow_session_id.clone()),
             created_at: Some(chrono::Utc::now()),
             debug_result: None,

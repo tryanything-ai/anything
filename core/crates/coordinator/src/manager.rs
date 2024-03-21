@@ -172,6 +172,8 @@ impl Manager {
             None,
             WorkQueueActor,
             WorkQueueActorState {
+                processing: false,
+                current_event_id: None,
                 event_repo: event_repo.clone(),
             },
         )
@@ -472,7 +474,6 @@ impl Manager {
                     println!("Error sending StartWorkQueue message: {:?}", e);
                 }
             }
-
         } else {
             return Err(CoordinatorError::ActorNotInitialized(String::from(
                 "work_queue_actor",

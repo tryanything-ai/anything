@@ -9,7 +9,9 @@ pub enum WorkQueueActorMessage {
 }
 
 pub struct WorkQueueActorState {
+    pub processing: bool,
     pub event_repo: EventRepoImpl,
+    pub current_event_id: Option<String>,
 }
 
 pub struct WorkQueueActor;
@@ -32,20 +34,37 @@ impl Actor for WorkQueueActor {
         &self,
         _myself: ActorRef<Self::Msg>,
         message: Self::Msg,
-        _state: &mut Self::State,
+        state: &mut Self::State,
     ) -> Result<(), ActorProcessingErr> {
         match message {
             WorkQueueActorMessage::StartWorkQueue => {
-                // Implementation for starting the work queue goes here
-                tracing::debug!("Hinting To Start Work Queue");
-                println!("println: Hinting To Start Work Queue");
+                if !state.processing {
+                    state.processing = true;
+                    // Implementation for starting the work queue goes here
+                    tracing::debug!("Hinting To Start Work Queue");
+                    println!("println: Hinting To Start Work Queue");
+                } else {
+                    tracing::debug!("Already processing work");
+                    println!("println: Already processing work");
+                }
             }
             WorkQueueActorMessage::WorkCompleted(work_id) => {
                 // Implementation for handling work completion goes here
                 tracing::debug!("Work Complete? {} ", work_id);
                 println!("println: Work Complete? {}", work_id);
+                state.processing = false; // Reset the processing flag after work completion
             }
         }
+        Ok(())
+    }
+}
+
+impl WorkQueueActor {
+    async fn get_started(
+        &self,
+        flow: anything_graph::Flow,
+        state: &<WorkQueueActor as Actor>::State,
+    ) -> Result<(), ActorProcessingErr> {
         Ok(())
     }
 }

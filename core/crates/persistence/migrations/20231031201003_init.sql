@@ -6,15 +6,22 @@ CREATE TABLE IF NOT EXISTS triggers (
     metadata json,
     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
 );
+
 CREATE TABLE IF NOT EXISTS events (
     event_id TEXT NOT NULL PRIMARY KEY,
+    event_status TEXT NOT NULL,
     flow_id TEXT NOT NULL, -- the flow that was running UUID ( root flow name and stuff)
     flow_version_id TEXT NOT NULL, -- the version of the flow that was running UUID
     flow_version_name TEXT, -- the name of the flow version that was running example 0.0.1
     trigger_id TEXT NOT NULL, -- the trigger that caused the event
     trigger_session_id TEXT NOT NULL, -- anything that is triggered by a single trigger including nested flow runs
+    trigger_session_status TEXT NOT NULL, -- the status of the trigger session
     flow_session_id TEXT NOT NULL, -- a single instance of a flow running
-    name TEXT, --UNSURE WHY WE HAVE THIS. TODO: remove?
+    flow_session_status TEXT NOT NULL, -- the status of the flow session
+    node_id TEXT NOT NULL, -- the node that defined this event
+    is_trigger BOOLEAN NOT NULL DEFAULT FALSE, -- if this event is a trigger event
+    engine_id TEXT NOT NULL, -- the engine that processed this event
+    stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
     context json, -- the bundle of args used for the action to process
     created_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP), --stats for action run time
     started_at timestamp with time zone, --stats for action run time
