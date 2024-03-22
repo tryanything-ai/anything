@@ -91,7 +91,7 @@ impl Manager {
 
         // Create all the base directories required
         file_store.create_base_dir().unwrap();
-        for dir in &["flows", "database"] {
+        for dir in &["flows", "database", "nodes"] {
             file_store.create_directory(&[dir]).unwrap();
         }
 

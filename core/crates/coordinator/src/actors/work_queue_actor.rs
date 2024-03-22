@@ -70,18 +70,21 @@ impl WorkQueueActor {
         myself: ActorRef<WorkQueueActorMessage>, // Add the myself parameter
     ) -> Result<(), ActorProcessingErr> {
         println!("Processing Next Event");
-        //Query DB for an event that is pending and old
+
+        //Query DB for an event that is pending and old ( or whatver we think should be done next)
         let event = state.event_repo.get_oldest_waiting_event().await?;
 
         println!("Event found to PROCESS yes? {:?}", event);
         if let Some(event) = event {
+            //// Update Database Processing State
             state
                 .event_repo
                 .mark_event_as_processing(event.event_id.clone())
                 .await?;
 
             println!("Event found to PROCESS {} ", event.event_id);
-            // //Mark event as Processing
+
+            //TODO: Bundle Context fro Transaction
             //TODO: SEND event to Engine for Processing
             //engine will send event that its done to work queue actor we will mock that here for now
             let _ =
@@ -113,4 +116,12 @@ impl WorkQueueActor {
 
         Ok(())
     }
+
+    // async fn bundle_context_for_transaction(
+    //     &self,
+    //     event_id: String,
+    //     state: &mut <WorkQueueActor as Actor>::State,
+    // ) -> Result<(), ActorProcessingErr> {
+    //     Ok(())
+    // }
 }
