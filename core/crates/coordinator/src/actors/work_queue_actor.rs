@@ -1,4 +1,4 @@
-use anything_persistence::EventRepoImpl;
+use anything_persistence::{EventRepo, EventRepoImpl};
 use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
 
 // Messages for Work Queue Actor
@@ -12,6 +12,8 @@ pub struct WorkQueueActorState {
     pub processing: bool,
     pub event_repo: EventRepoImpl,
     pub current_event_id: Option<String>,
+    pub current_session_id: Option<String>,
+    pub current_trigger_session_id: Option<String>,
 }
 
 pub struct WorkQueueActor;
@@ -32,7 +34,7 @@ impl Actor for WorkQueueActor {
 
     async fn handle(
         &self,
-        _myself: ActorRef<Self::Msg>,
+        myself: ActorRef<Self::Msg>,
         message: Self::Msg,
         state: &mut Self::State,
     ) -> Result<(), ActorProcessingErr> {
@@ -43,16 +45,18 @@ impl Actor for WorkQueueActor {
                     // Implementation for starting the work queue goes here
                     tracing::debug!("Hinting To Start Work Queue");
                     println!("println: Hinting To Start Work Queue");
+                    self.process_next(state, myself).await?;
                 } else {
                     tracing::debug!("Already processing work");
                     println!("println: Already processing work");
                 }
             }
-            WorkQueueActorMessage::WorkCompleted(work_id) => {
+            WorkQueueActorMessage::WorkCompleted(event_id) => {
                 // Implementation for handling work completion goes here
-                tracing::debug!("Work Complete? {} ", work_id);
-                println!("println: Work Complete? {}", work_id);
-                state.processing = false; // Reset the processing flag after work completion
+                tracing::debug!("Work Complete? {} ", event_id);
+                println!("println: Work Complete? {}", event_id);
+                // state.processing = false; // Reset the processing flag after work completion
+                self.event_processed(event_id, state, myself).await?;
             }
         }
         Ok(())
@@ -60,11 +64,53 @@ impl Actor for WorkQueueActor {
 }
 
 impl WorkQueueActor {
-    async fn get_started(
+    pub async fn process_next(
         &self,
-        flow: anything_graph::Flow,
-        state: &<WorkQueueActor as Actor>::State,
+        state: &mut <WorkQueueActor as Actor>::State,
+        myself: ActorRef<WorkQueueActorMessage>, // Add the myself parameter
     ) -> Result<(), ActorProcessingErr> {
+        println!("Processing Next Event");
+        //Query DB for an event that is pending and old
+        let event = state.event_repo.get_oldest_waiting_event().await?;
+
+        println!("Event found to PROCESS yes? {:?}", event);
+        if let Some(event) = event {
+            state
+                .event_repo
+                .mark_event_as_processing(event.event_id.clone())
+                .await?;
+
+            println!("Event found to PROCESS {} ", event.event_id);
+            // //Mark event as Processing
+            //TODO: SEND event to Engine for Processing
+            //engine will send event that its done to work queue actor we will mock that here for now
+            let _ =
+                myself.send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));
+        //update state for curernt_event_id etc
+        //
+        } else {
+            //we beleive we are done processing all events
+            state.processing = false;
+            // Handle the case when event is None
+            println!("println: No event found to mark as PROCESSING");
+        }
+
+        Ok(())
+    }
+
+    pub async fn event_processed(
+        &self,
+        event_id: String,
+        state: &mut <WorkQueueActor as Actor>::State,
+        myself: ActorRef<WorkQueueActorMessage>, // Add the myself parameter
+    ) -> Result<(), ActorProcessingErr> {
+        println!("Event Processed");
+        //Update db on event completion //TODO: need to write result here and debug result and anything else like that
+        let _event = state.event_repo.mark_event_as_complete(event_id).await?;
+        //Let work queue know to start next event
+        // let _ = myself.send_message(WorkQueueActorMessage::StartWorkQueue);
+        self.process_next(state, myself).await?;
+
         Ok(())
     }
 }

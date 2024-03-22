@@ -174,6 +174,8 @@ impl Manager {
             WorkQueueActorState {
                 processing: false,
                 current_event_id: None,
+                current_session_id: None,
+                current_trigger_session_id: None,
                 event_repo: event_repo.clone(),
             },
         )

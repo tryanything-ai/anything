@@ -18,6 +18,9 @@ pub trait EventRepo {
     ) -> PersistenceResult<EventList>;
     async fn find_flow_events(&self, flow_id: String) -> PersistenceResult<EventList>;
     async fn reset(&self) -> PersistenceResult<()>;
+    async fn get_oldest_waiting_event(&self) -> PersistenceResult<Option<StoreEvent>>;
+    async fn mark_event_as_processing(&self, event_id: String) -> PersistenceResult<()>;
+    async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -114,6 +117,48 @@ impl EventRepo for EventRepoImpl {
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
         Ok(rows)
+    }
+
+    async fn get_oldest_waiting_event(&self) -> PersistenceResult<Option<StoreEvent>> {
+        println!("get_oldest_waiting_event");
+        let pool = self.datastore.get_pool();
+        let event = sqlx::query_as::<_, StoreEvent>(
+            "SELECT * from events WHERE event_status = 'WAITING' ORDER BY created_at ASC LIMIT 1",
+        )
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(event)
+    }
+
+    async fn mark_event_as_processing(&self, event_id: String) -> PersistenceResult<()> {
+        println!("mark_event_as_processing");
+        let pool = self.datastore.get_pool();
+        let result = sqlx::query(
+            "UPDATE events SET event_status = 'PROCESSING', flow_session_status = 'PROCESSING', trigger_session_status = 'PROCESSING' WHERE event_id = ?1",
+        )
+        .bind(event_id)
+        .execute(pool)
+        .await;
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                println!("Error occurred in mark_event_as_processing: {:?}", e);
+                Err(PersistenceError::DatabaseError(e))
+            }
+        }
+    }
+
+    async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()> {
+        let pool = self.datastore.get_pool();
+        sqlx::query("UPDATE events SET event_status = 'COMPLETE' WHERE event_id = ?1")
+            .bind(event_id)
+            .execute(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+        Ok(())
     }
 
     async fn find_flow_events(&self, flow_id: String) -> PersistenceResult<EventList> {
