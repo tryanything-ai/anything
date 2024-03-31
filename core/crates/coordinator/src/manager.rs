@@ -8,8 +8,8 @@ use anything_persistence::{
     EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs,
     UpdateFlowVersion,
 };
-
-use anything_runtime::{Runner, RuntimeConfig};
+// use anything_runtime::{Runner, RuntimeConfig};
+use anything_runtime::{PluginManager, Runner, RuntimeConfig};
 use anything_store::FileStore;
 use ractor::{cast, Actor, ActorRef};
 use std::{env::temp_dir, sync::Arc};
@@ -19,7 +19,7 @@ use tokio::sync::{
     Mutex,
 };
 
-use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
+// use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
 use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
 use crate::actors::work_queue_actor::{WorkQueueActor, WorkQueueActorMessage, WorkQueueActorState};
@@ -36,7 +36,7 @@ pub struct Repositories {
 #[derive(Debug, Clone)]
 pub struct ActorRefs {
     pub system_actor: ActorRef<SystemMessage>,
-    pub flow_actor: ActorRef<FlowMessage>,
+    // pub flow_actor: ActorRef<FlowMessage>,
     pub update_actor: ActorRef<UpdateActorMessage>,
     pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
 }
@@ -91,7 +91,7 @@ impl Manager {
 
         // Create all the base directories required
         file_store.create_base_dir().unwrap();
-        for dir in &["flows", "database", "nodes"] {
+        for dir in &["flows", "database", "actions"] {
             file_store.create_directory(&[dir]).unwrap();
         }
 
@@ -154,18 +154,18 @@ impl Manager {
         .await
         .unwrap();
 
-        let (flow_actor, _handle) = Actor::spawn(
-            None,
-            FlowActor,
-            FlowActorState {
-                file_store: self.file_store.clone(),
-                runner: self.runner.clone(),
-                config: self.config.clone(),
-                update_actor_ref: update_actor.clone(),
-            },
-        )
-        .await
-        .unwrap();
+        // let (flow_actor, _handle) = Actor::spawn(
+        //     None,
+        //     FlowActor,
+        //     FlowActorState {
+        //         file_store: self.file_store.clone(),
+        //         runner: self.runner.clone(),
+        //         config: self.config.clone(),
+        //         update_actor_ref: update_actor.clone(),
+        //     },
+        // )
+        // .await
+        // .unwrap();
 
         //Start carls work queue actor
         let (work_queue_actor, _handle) = Actor::spawn(
@@ -173,10 +173,14 @@ impl Manager {
             WorkQueueActor,
             WorkQueueActorState {
                 processing: false,
-                current_event_id: None,
-                current_session_id: None,
-                current_trigger_session_id: None,
+                // current_event_id: None,
+                // current_session_id: None,
+                // current_trigger_session_id: None,
                 event_repo: event_repo.clone(),
+                plugin_manager: PluginManager::new(self.config.runtime_config()),
+                // plugin_manager: PluginManager::new(),
+                // runtimeConfig: self.config.runtime_config().clone(),
+                // runner: self.runner.clone(),
             },
         )
         .await
@@ -184,7 +188,7 @@ impl Manager {
 
         self.actor_refs = Some(ActorRefs {
             system_actor,
-            flow_actor,
+            // flow_actor,
             update_actor,
             work_queue_actor,
         });
@@ -195,7 +199,7 @@ impl Manager {
         // Return with ready
         ready_tx.send(Arc::new(self.clone())).await.unwrap();
 
-        // never quit
+        // never quit -> this i think talks to tauri runtime. we signal ready to tauri with the read_rx
         loop {
             // Never quit
             tokio::select! {
@@ -520,14 +524,14 @@ impl Manager {
     /// Example:
     ///
     /// manager.flow_actor().execute_flow(flow_name)
-    pub fn flow_actor(&self) -> CoordinatorResult<ActorRef<FlowMessage>> {
-        self.actor_refs
-            .as_ref()
-            .ok_or(CoordinatorError::ActorNotInitialized(String::from(
-                "flow_actor",
-            )))
-            .map(|refs| refs.flow_actor.clone())
-    }
+    // pub fn flow_actor(&self) -> CoordinatorResult<ActorRef<FlowMessage>> {
+    //     self.actor_refs
+    //         .as_ref()
+    //         .ok_or(CoordinatorError::ActorNotInitialized(String::from(
+    //             "flow_actor",
+    //         )))
+    //         .map(|refs| refs.flow_actor.clone())
+    // }
 
     /*
     INTERNAL FUNCTIONS

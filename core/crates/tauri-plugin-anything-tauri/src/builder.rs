@@ -107,7 +107,7 @@ impl<R: Runtime> Anything<R> {
     }
 
     pub async fn start(&self) -> Arc<AnythingManager> {
-        let (stop_tx, stop_rx) = tokio::sync::mpsc::channel(1);
+        let (_stop_tx, stop_rx) = tokio::sync::mpsc::channel(1);
         let (ready_tx, mut ready_rx) = tokio::sync::mpsc::channel(1);
 
         let ready_tx_clone = ready_tx.clone();

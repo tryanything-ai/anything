@@ -1,4 +1,7 @@
 use anything_persistence::{EventRepo, EventRepoImpl};
+use anything_runtime::PluginManager;
+// use anything_runtime::Runner;
+
 use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
 
 // Messages for Work Queue Actor
@@ -11,9 +14,11 @@ pub enum WorkQueueActorMessage {
 pub struct WorkQueueActorState {
     pub processing: bool,
     pub event_repo: EventRepoImpl,
-    pub current_event_id: Option<String>,
-    pub current_session_id: Option<String>,
-    pub current_trigger_session_id: Option<String>,
+    // pub runner: Runner,
+    pub plugin_manager: PluginManager,
+    // pub current_event_id: Option<String>,
+    // pub current_session_id: Option<String>,
+    // pub current_trigger_session_id: Option<String>,
 }
 
 pub struct WorkQueueActor;
@@ -86,6 +91,8 @@ impl WorkQueueActor {
 
             //TODO: Bundle Context fro Transaction
             //TODO: SEND event to Engine for Processing
+            //TODO: use runner to run the event
+            // state.runner.execute(stage_name, execution_config)
             //engine will send event that its done to work queue actor we will mock that here for now
             let _ =
                 myself.send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));

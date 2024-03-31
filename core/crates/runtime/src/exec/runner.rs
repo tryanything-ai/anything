@@ -1,6 +1,6 @@
 use std::{ffi::OsStr, sync::Arc};
 
-use tokio::sync::Mutex;
+use tokio::{runtime::Runtime, sync::Mutex};
 use tracing::debug;
 
 use super::scope::Scope;
@@ -36,7 +36,10 @@ impl Runner {
             name: "anything-runtime".to_string(),
             ..Default::default()
         }));
-        let plugin_manager = Arc::new(Mutex::new(PluginManager::new()));
+
+        // println!("Created new runner {:?}", global_scope);
+
+        let plugin_manager = Arc::new(Mutex::new(PluginManager::new(&config)));
 
         Self {
             global_scope,
@@ -183,18 +186,19 @@ impl Runner {
             }
             Err(_) => {
                 debug!("Plugin {} not loaded", name);
-                unsafe {
-                    plugin_registry
-                        .load_plugin(name, path, config)
-                        .map_err(|e| {
-                            debug!("Error loading plugin: {}", e);
-                            RuntimeError::RuntimeError
-                        })?
-                }
+                // unsafe {
+                //     plugin_registry
+                //         .load_plugin(name, path, config)
+                //         .map_err(|e| {
+                //             debug!("Error loading plugin: {}", e);
+                //             RuntimeError::RuntimeError
+                //         })?
+                // }
             }
         }
 
         debug!("Loaded all plugins");
+        println!("Loaded all plugins");
 
         Ok(())
     }

@@ -290,6 +290,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "derive_builder",
+ "dirs 3.0.2",
  "indexmap 2.0.2",
  "lazy_static",
  "libloading",
@@ -1254,6 +1255,15 @@ dependencies = [
  "const-oid",
  "crypto-common",
  "subtle",
+]
+
+[[package]]
+name = "dirs"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30baa043103c9d0c2a57cf537cc2f35623889dc0d405e6c3cccfadbc81c71309"
+dependencies = [
+ "dirs-sys 0.3.7",
 ]
 
 [[package]]
