@@ -345,10 +345,12 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     return newFlow;
   };
 
-  const synchronise = async () => {
+  const synchronize = async () => {
     try {
       console.log("Synchronising Flow in FlowProivders.tsx");
       let newFlow = getFlowDefinitionsFromReactFlowState();
+
+      console.log("newFlow in synchronize", newFlow);
 
       //send
       let res = await api.flows.updateFlowVersion(
@@ -378,7 +380,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
     // Set a new timer to write to flow to backend
     timerRef.current = setTimeout(async () => {
-      synchronise();
+      synchronize();
     }, 100);
 
     // Clean up

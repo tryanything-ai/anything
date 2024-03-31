@@ -1,5 +1,5 @@
 use anything_persistence::{EventRepo, EventRepoImpl};
-use anything_runtime::PluginManager;
+use anything_runtime::{ExecuteConfig, ExecuteConfigBuilder, PluginManager, Scope};
 // use anything_runtime::Runner;
 
 use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
@@ -91,11 +91,33 @@ impl WorkQueueActor {
 
             //TODO: Bundle Context fro Transaction
             //TODO: SEND event to Engine for Processing
-            //TODO: use runner to run the event
-            // state.runner.execute(stage_name, execution_config)
-            //engine will send event that its done to work queue actor we will mock that here for now
-            let _ =
-                myself.send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));
+
+            //we don't do this with triggers
+            if event.engine_id == "trigger" {
+                println!("Not running action. Event is a trigger.");
+                let _ = myself
+                    .send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));
+            } else {
+                let engine = state.plugin_manager.get_plugin(&event.engine_id).unwrap();
+
+                let config = ExecuteConfigBuilder::default()
+                    .plugin_name(event.engine_id.clone())
+                    .runtime("bash")
+                    .args(vec!["say \"Hello, I'm Anything\"".to_string()])
+                    // .options(indexmap::indexmap! { "option1".into() => PluginOption::new(), "option2".into() => PluginOption::new() })
+                    .build()
+                    .unwrap();
+
+                let result = engine.execute(&Scope::default(), &config);
+
+                println!("Engine Result: {:?}", result);
+
+                let _ = myself
+                    .send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));
+                //TODO: use runner to run the event
+                // state.runner.execute(stage_name, execution_config)
+                //engine will send event that its done to work queue actor we will mock that here for now
+            }
         //update state for curernt_event_id etc
         //
         } else {

@@ -14,3 +14,4 @@ pub use constants::*;
 pub use exec::Runner;
 pub use plugins::PluginManager;
 pub use prelude::*;
+pub use Scope;

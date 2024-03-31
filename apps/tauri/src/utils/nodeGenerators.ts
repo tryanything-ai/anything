@@ -172,16 +172,16 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "terminal_action",
-    node_label: "Terminal Action",
+    node_name: "cli_action",
+    node_label: "CLI Action",
     icon: rawIcons.VscTerminal,
-    description: "Terminal Action",
+    description: "CLI Action",
     handles: BaseHandles,
     variables: [],
     config: {
       command: "",
     },
-    engine: "terminal",
+    engine: "system-shell",
     depends_on: [],
   },
   {
