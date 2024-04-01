@@ -58,8 +58,8 @@ impl EventRepo for EventRepoImpl {
         let pool = self.datastore.get_pool();
         let row = sqlx::query(
             r#"
-            INSERT INTO events (event_id, event_status, flow_id, flow_version_id, flow_version_name, trigger_id, trigger_session_id, trigger_session_status, flow_session_id, flow_session_status, node_id, is_trigger, engine_id, stage, context, created_at, started_at, ended_at, debug_result, result)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)
+            INSERT INTO events (event_id, event_status, flow_id, flow_version_id, flow_version_name, trigger_id, trigger_session_id, trigger_session_status, flow_session_id, flow_session_status, node_id, is_trigger, engine_id, stage, config, context, created_at, started_at, ended_at, debug_result, result)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)
             RETURNING event_id
             "#,
         )
@@ -77,6 +77,7 @@ impl EventRepo for EventRepoImpl {
         .bind(event.is_trigger)
         .bind(event.engine_id)
         .bind(event.stage)
+        .bind(event.config)
         .bind(event.context)
         .bind(event.created_at)
         .bind(event.started_at)

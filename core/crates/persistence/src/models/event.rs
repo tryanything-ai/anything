@@ -9,11 +9,6 @@ use super::flow::FlowId;
 pub type EventId = String;
 pub type EventList = Vec<StoreEvent>;
 
-/// Event object that is stored in the database
-///
-/// # Keys
-/// - `id` u64
-/// - `event_name` String
 #[derive(FromRow, Debug, Serialize, Deserialize, Clone, Builder)]
 pub struct StoreEvent {
     pub event_id: String,
@@ -30,6 +25,7 @@ pub struct StoreEvent {
     pub is_trigger: bool,
     pub engine_id: String,
     pub stage: String,
+    pub config: Option<Value>,
     pub context: Option<Value>,
     pub created_at: Option<DateTime<Utc>>,
     pub started_at: Option<DateTime<Utc>>,
@@ -54,6 +50,7 @@ pub struct CreateEvent {
     pub is_trigger: bool,
     pub engine_id: String,
     pub stage: String,
+    pub config: Option<Value>,
     pub context: Option<Value>,
     pub created_at: Option<DateTime<Utc>>,
     pub started_at: Option<DateTime<Utc>>,

@@ -47,6 +47,7 @@ pub fn create_execution_plan(flow_version: FlowVersion) -> Vec<CreateEvent> {
                 result.get("engine").unwrap().as_str().unwrap().to_string()
             },
             stage: "DEV".to_string(),
+            config: Some(result.get("config").unwrap().clone()),
             node_id: result
                 .get("node_name")
                 .unwrap()

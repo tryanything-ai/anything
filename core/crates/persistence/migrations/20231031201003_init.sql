@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS events (
     is_trigger BOOLEAN NOT NULL DEFAULT FALSE, -- if this event is a trigger event
     engine_id TEXT NOT NULL, -- the engine that processed this event
     stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
+    config json NOT NULL, -- the config used to run the flow
     context json, -- the bundle of args used for the action to process
     created_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP), --stats for action run time
     started_at timestamp with time zone, --stats for action run time

@@ -116,7 +116,7 @@ const NodeConfigPanel = () => {
 
   const onSubmit = (data: any) => {
     if (!nodeId) return;
-    console.log("Hit Node Config Submit");
+    console.log("Submitting Node Config:");
     console.log(data);
     writeNodeConfig(nodeId, data);
   };
@@ -155,7 +155,7 @@ const NodeConfigPanel = () => {
                           return (
                             <InputComponent
                               key={nestedKey + "nested"}
-                              objectKey={nestedKey}
+                              objectKey={`${key}.${nestedKey}`}
                               value={nestedValue}
                               index={nestedIndex}
                             />
