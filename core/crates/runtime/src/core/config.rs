@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use serde_json::Value;
+
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +18,7 @@ pub struct ExecuteConfig {
     pub runtime: String,
     pub args: Vec<String>,
     pub options: indexmap::IndexMap<String, PluginOption>,
+    pub context: Value,
 }
 
 impl Default for ExecuteConfig {
@@ -25,6 +28,7 @@ impl Default for ExecuteConfig {
             runtime: "bash".to_string(),
             args: vec!["-c".to_string()],
             options: indexmap::IndexMap::new(),
+            context: Value::Null,
         }
     }
 }
@@ -39,6 +43,7 @@ impl TryFrom<EngineKind> for ExecuteConfig {
                 runtime: internal_shell.to_string(),
                 args: vec!["-c".to_string()],
                 options: indexmap::IndexMap::new(),
+                context: Value::Null,
             }),
             EngineKind::PluginEngine(plugin_interpreter) => {
                 let mut cfg = ExecuteConfig::default();

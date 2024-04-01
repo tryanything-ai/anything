@@ -115,6 +115,7 @@ impl TryFrom<&PluginEngine> for ExecuteConfig {
                 .into_iter()
                 .map(|(k, v)| (k.clone(), v.into()))
                 .collect(),
+            context: Default::default(),
         })
     }
 }

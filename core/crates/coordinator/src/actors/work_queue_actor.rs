@@ -100,13 +100,32 @@ impl WorkQueueActor {
             } else {
                 let engine = state.plugin_manager.get_plugin(&event.engine_id).unwrap();
 
+                let config = event.config.expect("Config not found in event");
+
+                let command_str = config
+                    .get("command")
+                    .expect("Command not found in event config")
+                    .to_string(); // Create a String
+
+                let command = command_str.trim_matches('\"').to_string(); // Remove the quotes from the string
+                println!("Command: {:?}", command);
+
                 let config = ExecuteConfigBuilder::default()
                     .plugin_name(event.engine_id.clone())
                     .runtime("bash")
-                    .args(vec!["say \"Hello, I'm Anything\"".to_string()])
+                    .args(vec![command])
+                    .context(config)
                     // .options(indexmap::indexmap! { "option1".into() => PluginOption::new(), "option2".into() => PluginOption::new() })
                     .build()
                     .unwrap();
+
+                // let config = ExecuteConfigBuilder::default()
+                //     .plugin_name(event.engine_id.clone())
+                //     .runtime("bash")
+                //     .args(vec!["say \"Hello, I'm Anything\"".to_string()])
+                //     // .options(indexmap::indexmap! { "option1".into() => PluginOption::new(), "option2".into() => PluginOption::new() })
+                //     .build()
+                //     .unwrap();
 
                 let result = engine.execute(&Scope::default(), &config);
 
