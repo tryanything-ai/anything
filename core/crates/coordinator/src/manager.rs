@@ -95,6 +95,15 @@ impl Manager {
             file_store.create_directory(&[dir]).unwrap();
         }
 
+        // Create files if they don't exist
+        let file_paths = vec![vec![".env"]];
+        let file_content = b"";
+        for file_path in file_paths {
+            if !file_store.file_exists(&file_path) {
+                file_store.write_file(&file_path, file_content).unwrap();
+            }
+        }
+
         Manager {
             file_store,
             runner,

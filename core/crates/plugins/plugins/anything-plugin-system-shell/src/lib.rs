@@ -35,6 +35,7 @@ impl ExecutionPlugin for SystemShellPlugin {
         scope: &Scope,
         config: &ExecuteConfig,
     ) -> Result<ExecutionResult, Box<PluginError>> {
+        
         let shell = match config.options.get("shell") {
             Some(PluginOption::String(shell)) => (*shell).clone(),
             _ => DEFAULT_SHELL.to_string(),
@@ -82,26 +83,6 @@ impl ExecutionPlugin for SystemShellPlugin {
 
         command.arg(cli_command.clone());
 
-        // let cli_command = match config.context.get("command") {
-        //     Some(value) => value.to_string(),
-        //     None => {
-        //         return Err(Box::new(PluginError::Custom(
-        //             "unable to find cli command in context".to_string(),
-        //         )))
-        //     }
-        // };
-
-        // command.arg(cli_command.clone());
-        // command.arg(command);
-
-        // for arg in &config.config {
-        //     println!("Arg: {:?}", arg);
-        //     command.arg(arg);
-        // }
-        // for arg in &config.args {
-        //     println!("Arg: {:?}", arg);
-        //     command.arg(arg);
-        // }
 
         tracing::debug!("system shell config: {:#?}", config);
         println!("system-shell plugin command: {:?}", cli_command.clone());
