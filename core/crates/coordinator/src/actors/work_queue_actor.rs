@@ -1,6 +1,13 @@
-use anything_persistence::{EventRepo, EventRepoImpl};
-use anything_runtime::{ExecuteConfig, ExecuteConfigBuilder, PluginManager, Scope};
-// use anything_runtime::Runner;
+use anything_common::AnythingConfig;
+use anything_persistence::{EventRepo, EventRepoImpl, StoreEvent};
+use anything_runtime::{ExecuteConfigBuilder, PluginManager, Scope};
+use anything_store::FileStore;
+use serde_json::Value;
+use std::collections::HashMap;
+
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+use tera::{Context, Tera};
 
 use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
 
@@ -14,11 +21,9 @@ pub enum WorkQueueActorMessage {
 pub struct WorkQueueActorState {
     pub processing: bool,
     pub event_repo: EventRepoImpl,
-    // pub runner: Runner,
     pub plugin_manager: PluginManager,
-    // pub current_event_id: Option<String>,
-    // pub current_session_id: Option<String>,
-    // pub current_trigger_session_id: Option<String>,
+    pub file_store: FileStore,
+    pub anything_config: AnythingConfig,
 }
 
 pub struct WorkQueueActor;
@@ -89,53 +94,36 @@ impl WorkQueueActor {
 
             println!("Event found to PROCESS {} ", event.event_id);
 
+            let event_id = event.event_id.clone();
+            let engine_id = event.engine_id.clone();
             //TODO: Bundle Context fro Transaction
-            //TODO: SEND event to Engine for Processing
+            let bundled_context = self
+                .create_bundled_context(event, &state.anything_config.clone(), state)
+                .await;
+            //TODO: store the bundled context on the event object for later debugging
 
             //we don't do this with triggers
-            if event.engine_id == "trigger" {
+            if engine_id == "trigger" {
                 println!("Not running action. Event is a trigger.");
-                let _ = myself
-                    .send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));
+                let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id));
             } else {
-                let engine = state.plugin_manager.get_plugin(&event.engine_id).unwrap();
+                let engine = state.plugin_manager.get_plugin(&engine_id).unwrap();
 
-                let config = event.config.expect("Config not found in event");
-
-                let command_str = config
-                    .get("command")
-                    .expect("Command not found in event config")
-                    .to_string(); // Create a String
-
-                let command = command_str.trim_matches('\"').to_string(); // Remove the quotes from the string
-                println!("Command: {:?}", command);
+                // let _config = event.config.expect("Config not found in event");
 
                 let config = ExecuteConfigBuilder::default()
-                    .plugin_name(event.engine_id.clone())
+                    .plugin_name(engine_id)
                     .runtime("bash")
-                    .args(vec![command])
-                    .context(config)
-                    // .options(indexmap::indexmap! { "option1".into() => PluginOption::new(), "option2".into() => PluginOption::new() })
+                    .context(bundled_context)
                     .build()
                     .unwrap();
 
-                // let config = ExecuteConfigBuilder::default()
-                //     .plugin_name(event.engine_id.clone())
-                //     .runtime("bash")
-                //     .args(vec!["say \"Hello, I'm Anything\"".to_string()])
-                //     // .options(indexmap::indexmap! { "option1".into() => PluginOption::new(), "option2".into() => PluginOption::new() })
-                //     .build()
-                //     .unwrap();
-
                 let result = engine.execute(&Scope::default(), &config);
 
+                //TODO: a mountain of error handling and passing that into the db
                 println!("Engine Result: {:?}", result);
 
-                let _ = myself
-                    .send_message(WorkQueueActorMessage::WorkCompleted(event.event_id.clone()));
-                //TODO: use runner to run the event
-                // state.runner.execute(stage_name, execution_config)
-                //engine will send event that its done to work queue actor we will mock that here for now
+                let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id));
             }
         //update state for curernt_event_id etc
         //
@@ -161,15 +149,101 @@ impl WorkQueueActor {
         //Let work queue know to start next event
         // let _ = myself.send_message(WorkQueueActorMessage::StartWorkQueue);
         self.process_next(state, myself).await?;
-
         Ok(())
     }
 
-    // async fn bundle_context_for_transaction(
-    //     &self,
-    //     event_id: String,
-    //     state: &mut <WorkQueueActor as Actor>::State,
-    // ) -> Result<(), ActorProcessingErr> {
-    //     Ok(())
-    // }
+    async fn create_bundled_context(
+        &self,
+        event: StoreEvent,
+        config: &AnythingConfig,
+        state: &mut <WorkQueueActor as Actor>::State,
+    ) -> Value {
+        let mut context = Context::new();
+        //fetch .env data
+        let env_vars = self.read_env_file(config).expect("Failed to read env file");
+        //place in tera context
+
+        // Create your context and insert the `env` map.
+        // let mut context = Context::new();
+        context.insert("env", &env_vars);
+
+        // for (key, value) in env_vars {
+        //     context.insert(&format!("env.{}", key), &value);
+        // }
+        // Add environment variables to the context
+        let events = state
+            .event_repo
+            .get_completed_events_for_session(event.flow_session_id.unwrap_or_default())
+            .await;
+
+        println!("Completed Session Events query result: {:?}", events);
+
+        //add results to context by node_id
+        if let Ok(events) = events {
+            for event in events {
+                if let Some(result) = event.result {
+                    context.insert(event.node_id, &result);
+                }
+            }
+        }
+
+        let mut tera = Tera::default();
+
+        if let Some(config) = &event.config {
+            let config_str = config.to_string();
+            println!("Config string before tera rendering: {}", config_str);
+            tera.add_raw_template("config", &config_str).unwrap();
+        } else {
+            println!("Event config is None");
+            //TODO: this should be an error
+        }
+
+        // Render the template with your context
+        let rendered_config = tera
+            .render("config", &context)
+            .expect("Failed to render config");
+
+        println!("Rendered config: {}", rendered_config);
+
+        // Convert the rendered config to a Value
+        let config_value: Value =
+            serde_json::from_str(&rendered_config).expect("Failed to convert config to Value");
+
+        config_value
+    }
+
+    fn read_env_file(&self, config: &AnythingConfig) -> io::Result<HashMap<String, String>> {
+        let runtime_config = config.runtime_config().clone();
+        // let root_dir = runtime_config.base_dir;
+
+        let root_dir = runtime_config.base_dir.expect("Base directory is not set");
+
+        println!("Root directory: {}", root_dir.display());
+        let env_path = root_dir.join(".store").join("anything").join(".env");
+        println!("Env file path: {}", env_path.display());
+        let env_path_str = env_path
+            .to_str()
+            .expect("Failed to convert PathBuf to &str");
+
+        let file = File::open(env_path_str)?;
+
+        let env_file_reader = BufReader::new(file);
+        let mut env_vars = HashMap::new();
+
+        for line in env_file_reader.lines() {
+            let line = line?;
+            // Ignore empty lines and comments
+            if line.trim().is_empty() || line.starts_with('#') {
+                continue;
+            }
+            // Parse key-value pairs
+            if let Some((key, value)) = line.split_once('=') {
+                println!("ENV Key: {}", key.trim());
+                println!("ENV Value: {}", value.trim());
+                env_vars.insert(key.trim().to_string(), value.trim().to_string());
+            }
+        }
+
+        Ok(env_vars)
+    }
 }

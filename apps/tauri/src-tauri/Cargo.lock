@@ -213,6 +213,7 @@ dependencies = [
  "serde_cbor",
  "serde_json",
  "tempfile",
+ "tera",
  "thiserror",
  "tokio",
  "toml 0.8.5",

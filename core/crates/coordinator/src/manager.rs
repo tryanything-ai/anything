@@ -220,6 +220,8 @@ database/
                 // current_trigger_session_id: None,
                 event_repo: event_repo.clone(),
                 plugin_manager: PluginManager::new(self.config.runtime_config()),
+                file_store: self.file_store.clone(),
+                anything_config: self.config.clone(),
                 // plugin_manager: PluginManager::new(),
                 // runtimeConfig: self.config.runtime_config().clone(),
                 // runner: self.runner.clone(),

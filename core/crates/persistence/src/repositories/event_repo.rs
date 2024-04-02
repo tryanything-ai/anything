@@ -21,6 +21,7 @@ pub trait EventRepo {
     async fn get_oldest_waiting_event(&self) -> PersistenceResult<Option<StoreEvent>>;
     async fn mark_event_as_processing(&self, event_id: String) -> PersistenceResult<()>;
     async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()>;
+    async fn get_completed_events_for_session(&self, session_id: String) -> PersistenceResult<EventList>;
 }
 
 #[derive(Clone)]
@@ -160,6 +161,19 @@ impl EventRepo for EventRepoImpl {
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
         Ok(())
+    }
+
+    async fn get_completed_events_for_session(&self, session_id: String) -> PersistenceResult<EventList> {
+        let pool = self.datastore.get_pool();
+        let rows = sqlx::query_as::<_, StoreEvent>(
+            "SELECT * from events WHERE session_id = ?1 AND event_status = 'COMPLETE' ORDER BY created_at ASC",
+        )
+        .bind(session_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(rows)
     }
 
     async fn find_flow_events(&self, flow_id: String) -> PersistenceResult<EventList> {
