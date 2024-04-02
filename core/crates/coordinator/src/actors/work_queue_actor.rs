@@ -96,11 +96,17 @@ impl WorkQueueActor {
 
             let event_id = event.event_id.clone();
             let engine_id = event.engine_id.clone();
-            //TODO: Bundle Context fro Transaction
+
+            //BUndle .env and results from previous actions in the context
             let bundled_context = self
                 .create_bundled_context(event, &state.anything_config.clone(), state)
                 .await;
-            //TODO: store the bundled context on the event object for later debugging
+
+            //store the context on the event object
+            state
+                .event_repo
+                .store_event_context(event_id.clone(), bundled_context.clone())
+                .await?;
 
             //we don't do this with triggers
             if engine_id == "trigger" {
@@ -108,8 +114,6 @@ impl WorkQueueActor {
                 let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id));
             } else {
                 let engine = state.plugin_manager.get_plugin(&engine_id).unwrap();
-
-                // let _config = event.config.expect("Config not found in event");
 
                 let config = ExecuteConfigBuilder::default()
                     .plugin_name(engine_id)
@@ -119,6 +123,7 @@ impl WorkQueueActor {
                     .unwrap();
 
                 let result = engine.execute(&Scope::default(), &config);
+                //TODO: store the result in the db or the error
 
                 //TODO: a mountain of error handling and passing that into the db
                 println!("Engine Result: {:?}", result);

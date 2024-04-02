@@ -22,6 +22,7 @@ pub trait EventRepo {
     async fn mark_event_as_processing(&self, event_id: String) -> PersistenceResult<()>;
     async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()>;
     async fn get_completed_events_for_session(&self, session_id: String) -> PersistenceResult<EventList>;
+    async fn store_event_context(&self, event_id: String, context: serde_json::Value) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -148,6 +149,26 @@ impl EventRepo for EventRepoImpl {
             Ok(_) => Ok(()),
             Err(e) => {
                 println!("Error occurred in mark_event_as_processing: {:?}", e);
+                Err(PersistenceError::DatabaseError(e))
+            }
+        }
+    }
+
+    async fn store_event_context(&self, event_id: String, context: serde_json::Value) -> PersistenceResult<()> {
+        println!("store_event_context");
+        let pool = self.datastore.get_pool();
+        let result = sqlx::query(
+            "UPDATE events SET context = ?2 WHERE event_id = ?1",
+        )
+        .bind(event_id)
+        .bind(context)
+        .execute(pool)
+        .await;
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                println!("Error occurred in store_event_context: {:?}", e);
                 Err(PersistenceError::DatabaseError(e))
             }
         }
