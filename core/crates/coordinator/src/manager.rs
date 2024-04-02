@@ -1,6 +1,7 @@
 use anything_common::AnythingConfig;
 // use anything_graph::{Flow, Flowfile};
 use anything_carl;
+use std::process::Command;
 
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
@@ -102,6 +103,38 @@ impl Manager {
             if !file_store.file_exists(&file_path) {
                 file_store.write_file(&file_path, file_content).unwrap();
             }
+        }
+
+        // Initialize git repository if it doesn't exist
+        let git_dir = root_dir.join(".store").join("anything").join(".git");
+        if !git_dir.exists() {
+            let output = Command::new("git")
+                .arg("init")
+                .current_dir(&git_dir.parent().unwrap())
+                .output()
+                .expect("Failed to execute git init");
+
+            //make a .gitignore file
+            let gitignore_content = r#"
+# Ignore all .env files
+.env
+
+# Ignore databases
+database/
+"#;
+
+            file_store
+                .write_file(&[".gitignore"], gitignore_content.as_bytes())
+                .unwrap();
+
+            if !output.status.success() {
+                eprintln!(
+                    "git init failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+        } else {
+            println!("Git repository already exists");
         }
 
         Manager {
