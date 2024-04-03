@@ -124,9 +124,19 @@ impl WorkQueueActor {
 
                 let result = engine.execute(&Scope::default(), &config);
                 //TODO: store the result in the db or the error
+                match result {
+                    Ok(execution_result) => {
+                        state
+                            .event_repo
+                            .store_execution_result(event_id.clone(), execution_result.result)
+                            .await?;
+                    }
+                    Err(e) => {
+                        println!("Error occurred while executing the engine: {:?}", e);
+                    }
+                }
 
                 //TODO: a mountain of error handling and passing that into the db
-                println!("Engine Result: {:?}", result);
 
                 let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id));
             }

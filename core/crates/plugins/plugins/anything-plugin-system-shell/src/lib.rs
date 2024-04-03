@@ -35,7 +35,6 @@ impl ExecutionPlugin for SystemShellPlugin {
         scope: &Scope,
         config: &ExecuteConfig,
     ) -> Result<ExecutionResult, Box<PluginError>> {
-        
         let shell = match config.options.get("shell") {
             Some(PluginOption::String(shell)) => (*shell).clone(),
             _ => DEFAULT_SHELL.to_string(),
@@ -50,6 +49,7 @@ impl ExecutionPlugin for SystemShellPlugin {
             command.env(k, v);
         }
 
+        //Make the CLI execute in the folder of the flow
         if let Some(value) = &self.config.current_dir {
             command.current_dir(value);
         }
@@ -83,21 +83,33 @@ impl ExecutionPlugin for SystemShellPlugin {
 
         command.arg(cli_command.clone());
 
-
         tracing::debug!("system shell config: {:#?}", config);
         println!("system-shell plugin command: {:?}", cli_command.clone());
 
         match command.output() {
+            // let output = command.output()?;
+            // println!("CLI Plugin Output: {:?}", output);
             Ok(output) => {
+                println!("CLI Output: {:?}", output);
                 let stdout =
                     strip_newline_suffix(String::from_utf8_lossy(&output.stdout).to_string());
                 let stderr =
                     strip_newline_suffix(String::from_utf8_lossy(&output.stderr).to_string());
 
+                let result = serde_json::json!({
+                    "stdout": stdout.clone(),
+                    "stderr": stderr.clone()
+                });
+
+                //TODO: actually return stuff. Like what happens if we are calling curl?
+                //Do we pipe? Do we return the result?
+                // let result = serde_json::Value::Object(serde_json::Map::new())
+
                 Ok(ExecutionResult {
                     stdout,
                     stderr,
                     status: output.status.code().unwrap_or(0),
+                    result,
                 })
             }
             Err(error) => Err(Box::new(PluginError::RuntimeError(error))),

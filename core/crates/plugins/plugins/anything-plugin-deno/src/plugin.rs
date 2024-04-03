@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use anything_runtime::prelude::*;
-
 use crate::function_runtime::FunctionRuntime;
+use anything_runtime::prelude::*;
+use serde_json::Value;
 
 static PATH_OPTION_KEY: &'static str = "directory";
 static CODE_KEY: &'static str = "code";
@@ -139,6 +139,7 @@ impl ExecutionPlugin for JsRuntime {
                     stdout: strip_newline_suffix(result),
                     stderr: "".to_string(),
                     status: 0,
+                    result: serde_json::Value::Object(serde_json::Map::new()),
                 })
             }
             Err(e) => return Err(Box::new(e.into())),

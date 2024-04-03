@@ -23,6 +23,7 @@ pub trait EventRepo {
     async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()>;
     async fn get_completed_events_for_session(&self, session_id: String) -> PersistenceResult<EventList>;
     async fn store_event_context(&self, event_id: String, context: serde_json::Value) -> PersistenceResult<()>;
+    async fn store_execution_result(&self, event_id: String, result: serde_json::Value) -> PersistenceResult<()>;
 }
 
 #[derive(Clone)]
@@ -178,6 +179,17 @@ impl EventRepo for EventRepoImpl {
         let pool = self.datastore.get_pool();
         sqlx::query("UPDATE events SET event_status = 'COMPLETE' WHERE event_id = ?1")
             .bind(event_id)
+            .execute(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+        Ok(())
+    }
+
+    async fn store_execution_result(&self, event_id: String, result: serde_json::Value) -> PersistenceResult<()> {
+        let pool = self.datastore.get_pool();
+        sqlx::query("UPDATE events SET result = ?2 WHERE event_id = ?1")
+            .bind(event_id)
+            .bind(result)
             .execute(pool)
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
