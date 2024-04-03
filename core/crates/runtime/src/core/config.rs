@@ -43,7 +43,7 @@ impl TryFrom<EngineKind> for ExecuteConfig {
                 runtime: internal_shell.to_string(),
                 args: vec!["-c".to_string()],
                 options: indexmap::IndexMap::new(),
-                context: Value::Null,
+                context: Value::Null
             }),
             EngineKind::PluginEngine(plugin_interpreter) => {
                 let mut cfg = ExecuteConfig::default();

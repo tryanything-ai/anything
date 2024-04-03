@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import React, { useEffect, useState } from "react";
 import ReactJson from "react-json-view";
 import { useParams } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import { useFlowContext } from "../context/FlowProvider";
 import { useSqlContext } from "../context/SqlProvider";
@@ -61,9 +62,13 @@ const DebugPanel = () => {
 
   const start = async () => {
     try {
+      let session_id = uuidv4();
+      console.log("session_id from debug panel", session_id);
       let res = await api.flows.executeFlow(
         flowFrontmatter.flow_id,
-        flowFrontmatter.flow_version_id
+        flowFrontmatter.flow_version_id,
+        session_id, //session_id
+        "DEBUG" //stage
       );
       console.log("res from execute flow", res);
     } catch (error) {

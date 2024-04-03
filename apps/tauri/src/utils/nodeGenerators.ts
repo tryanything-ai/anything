@@ -180,7 +180,8 @@ const NODES: Node[] = [
     variables: [],
     config: {
       command: "",
-    },
+      run_folder: "",
+    }, 
     engine: "system-shell",
     depends_on: [],
   },

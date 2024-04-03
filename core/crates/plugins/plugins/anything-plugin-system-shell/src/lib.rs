@@ -41,13 +41,13 @@ impl ExecutionPlugin for SystemShellPlugin {
         };
 
         let mut command = Command::new(&shell);
-        command
-            .export_environment(&scope.environment)
-            .expect("unable to export environment");
+        // command
+        //     .export_environment(&scope.environment)
+        //     .expect("unable to export environment");
 
-        for (k, v) in &scope.environment {
-            command.env(k, v);
-        }
+        // for (k, v) in &scope.environment {
+        //     command.env(k, v);
+        // }
 
         //Make the CLI execute in the folder of the flow
         if let Some(value) = &self.config.current_dir {
@@ -56,21 +56,6 @@ impl ExecutionPlugin for SystemShellPlugin {
 
         // TODO: decide if we always want this or not
         command.arg("-c");
-
-        //FIXME: this is like context building which should be done outside the plugin in the main system
-        //TODO: make context bunding work in CORE
-        // for (idx, arg) in config.args.clone().into_iter().enumerate() {
-        //     let rendered_arg = match render_string(&format!("arg-{}", idx), &arg, &scope) {
-        //         Ok(value) => value,
-        //         Err(error) => {
-        //             eprintln!("unable to render arg: {}", error);
-        //             return Err(Box::new(
-        //                 std::io::Error::new(std::io::ErrorKind::Other, error).into(),
-        //             ));
-        //         }
-        //     };
-        //     command.arg(rendered_arg);
-        // }
 
         let cli_command = match config.context.get("command") {
             Some(serde_json::Value::String(value)) => value.clone(),

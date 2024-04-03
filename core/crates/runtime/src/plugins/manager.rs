@@ -1,7 +1,6 @@
 use std::{any::Any, ffi::OsStr, path::PathBuf};
 
 use libloading::{Library, Symbol};
-// use tokio::runtime::Runtime;
 use tracing::debug;
 
 use super::built_in::BUILT_IN_PLUGINS;
@@ -21,6 +20,11 @@ pub trait Plugin: Any + Send + Sync {
 
     /// Opportunity to clean up
     fn on_unload(&self) {}
+
+    //TODO: register config object
+    //TODO: register config info//required?
+    //TODO: register config defaults 
+    //TODO: register config validation function
 }
 pub trait ExecutionPlugin: Plugin {
     fn execute(

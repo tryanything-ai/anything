@@ -33,6 +33,9 @@ interface BaseNode {
   description?: string;
   variables: Variable[]; //Local variables
   config: Variable;
+  //TODO: config_info: => same shape but documents what each config key does
+  //TODO: config_defaults: => same shape but sets sensible defaults for each config key
+  //Maybe we do this on the rust plugin side and "assemble" them in the frontend or the backend assembles them somehow
   presentation?: NodePresentation;
   handles?: HandleProps[];
 }

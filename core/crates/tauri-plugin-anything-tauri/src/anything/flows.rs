@@ -45,7 +45,7 @@ pub async fn get_flow_by_name(
                 Ok(GetFlowResponse { flow: None })
             }
         },
-    } 
+    }
 }
 
 #[derive(Serialize)]
@@ -202,14 +202,16 @@ pub struct ExecuteFlowResponse {}
 pub async fn execute_flow(
     state: tauri::State<'_, AnythingState>,
     flow_id: String,
-    flow_version_id: String
+    flow_version_id: String,
+    session_id: Option<String>,
+    stage: Option<String>,
 ) -> FlowResult<ExecuteFlowResponse> {
     match state.inner.try_lock() {
         Err(e) => {
             tracing::error!("Error getting lock on coordinator: {:?}", e);
             Err(Error::CoordinatorNotInitialized)
         }
-        Ok(ref mut inner) => match inner.execute_flow(flow_id, flow_version_id).await {
+        Ok(ref mut inner) => match inner.execute_flow(flow_id, flow_version_id, session_id, stage).await {
             Ok(_flow) => {
                 tracing::debug!("Executed flow flow inside tauri plugin");
                 Ok(ExecuteFlowResponse {})

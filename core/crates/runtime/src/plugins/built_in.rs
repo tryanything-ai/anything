@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 lazy_static! {
-    static ref LOCAL_PATH_DIRECTORY: PathBuf = {
+    static ref LOCAL_PATH_DIRECTORY: PathBuf = {    
         //gets /Users/uesrname/anything/apps/tauri/src-tauri/Cargo.toml
         crate::utils::project_utils::workspace_dir()
             .join("crates")
@@ -27,6 +27,7 @@ lazy_static! {
 
         path
     };
+
     pub static ref BUILT_IN_PLUGINS: HashMap<&'static str, PathBuf> = {
         HashMap::from([
             (

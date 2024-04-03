@@ -46,8 +46,8 @@ export const getFlowVersions = async (flowId: string) => {
   return await invoke("get_flow_versions", { flowId });
 };
 
-export const executeFlow = async (flowId: string, flowVersionId: string) => {
-  return await anything.executeFlow(flowId, flowVersionId);
+export const executeFlow = async (flowId: string, flowVersionId: string, sessionId?: string, stage?: string) => {
+  return await anything.executeFlow(flowId, flowVersionId, sessionId, stage);
 };
 
 export const stopExecution = async () => {

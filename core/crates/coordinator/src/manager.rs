@@ -92,7 +92,7 @@ impl Manager {
 
         // Create all the base directories required
         file_store.create_base_dir().unwrap();
-        for dir in &["flows", "database", "actions"] {
+        for dir in &["flows", "database", "actions", "assets"] {
             file_store.create_directory(&[dir]).unwrap();
         }
 
@@ -481,6 +481,8 @@ database/
         &self,
         flow_id: String,
         flow_version_id: String,
+        session_id: Option<String>,
+        stage: Option<String>,
     ) -> CoordinatorResult<()> {
         println!("Execute flow called in the manager");
         println!("flow_id: {}", flow_id);
@@ -491,14 +493,8 @@ database/
             .get_flow_version_by_id(flow_id, flow_version_id)
             .await?;
 
-        //old ari messages
-        // println!("flow: {:#?}", flow);
-        // let flow_actor = self.flow_actor().unwrap();
-        // Send the execute flow message
-        //TODO: re implement. got mad when i started fucking around with how we fetch and retrieve flows from db
-        // cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
-        // Give the flow a few milliseconds to execute
-        let worklist = anything_carl::flow::create_execution_plan(flow);
+        //BFS over the flow to get the execution plan
+        let worklist = anything_carl::flow::create_execution_plan(flow, session_id, stage);
 
         println!("worklist in manager: {:?}", worklist);
 

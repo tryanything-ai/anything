@@ -229,7 +229,11 @@ impl WorkQueueActor {
 
     fn read_env_file(&self, config: &AnythingConfig) -> io::Result<HashMap<String, String>> {
         let runtime_config = config.runtime_config().clone();
-        // let root_dir = runtime_config.base_dir;
+        
+        //TODO: give access to "ASSET_FOLDER"
+        //FLOW_FOLDER
+        //FLOW_SESSION_ID
+        //TRIGGER_SESSION_ID
 
         let root_dir = runtime_config.base_dir.expect("Base directory is not set");
 

@@ -1,7 +1,8 @@
-import { createContext, ReactNode,useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 import api from "../tauri_api/api";
-import { EventInput } from "../tauri_api/types";
+// import { EventInput } from "../tauri_api/types";
+import { EventInput } from "../utils/flowTypes";
 
 interface SqlContextInterface {
   tables: any[];
@@ -13,10 +14,10 @@ interface SqlContextInterface {
 
 export const SqlContext = createContext<SqlContextInterface>({
   tables: [],
-  addEvent: () => {},
-  getTableData: () => {},
-  getSessionEvents: () => {},
-  getEvent: () => {},
+  addEvent: () => { },
+  getTableData: () => { },
+  getSessionEvents: () => { },
+  getEvent: () => { },
 });
 
 export const useSqlContext = () => useContext(SqlContext);

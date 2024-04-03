@@ -3,7 +3,11 @@ use serde_json::Value as JsonValue;
 use std::collections::VecDeque;
 use uuid::Uuid;
 
-pub fn create_execution_plan(flow_version: FlowVersion) -> Vec<CreateEvent> {
+pub fn create_execution_plan(
+    flow_version: FlowVersion,
+    session_id: Option<String>,
+    stage: Option<String>,
+) -> Vec<CreateEvent> {
     // Your code here
     println!("create_execution_plan");
 
@@ -14,9 +18,23 @@ pub fn create_execution_plan(flow_version: FlowVersion) -> Vec<CreateEvent> {
     //traverse graph
     let result = bfs_traversal(&json_data);
     // println!("work list from bfs: {:?}", result);
-
+    
     let trigger_session_id = Uuid::new_v4().to_string();
-    let flow_session_id = Uuid::new_v4().to_string();
+
+    //create flow session id if one was not passed
+    let flow_session_id = if session_id.is_none() {
+        Uuid::new_v4().to_string()
+    } else {
+        session_id.unwrap()
+    };
+
+    //create a stage if one is not provied
+    let stage = if stage.is_none() {
+        "DEV".to_string()
+    } else {
+        stage.unwrap()
+    };
+
     let mut events = Vec::new();
 
     //grab trigger
@@ -46,7 +64,7 @@ pub fn create_execution_plan(flow_version: FlowVersion) -> Vec<CreateEvent> {
             } else {
                 result.get("engine").unwrap().as_str().unwrap().to_string()
             },
-            stage: "DEV".to_string(),
+            stage: stage.clone(),
             config: Some(result.get("config").unwrap().clone()),
             node_id: result
                 .get("node_name")
