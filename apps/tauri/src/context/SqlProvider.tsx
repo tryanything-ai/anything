@@ -27,7 +27,7 @@ export const SqlProvider = ({ children }: { children: ReactNode }) => {
 
   const addEvent = async (event: EventInput) => {
     try {
-      await api.createEvent({ ...event });
+      // await api.createEvent({ ...event });
       //MIGRATE_TO_RUST
       // await api.db.execute(
       //   "INSERT INTO events (event_id, session_id, node_id, node_type, node_label, flow_id, flow_name, flow_version, stage, worker_type, worker_name, event_status, session_status, event_context, created_at, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",

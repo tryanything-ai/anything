@@ -45,7 +45,7 @@ fn main() {
     .base_dir(base_dir).build().unwrap();
     let anything_config = AnythingConfigBuilder::default().runtime_config(runtime_config).build().unwrap();
     tauri::Builder::default()
-        .plugin(tauri_plugin_fs_watch::init())
+        // .plugin(tauri_plugin_fs_watch::init())
         .plugin(sentry_tauri::plugin())
         .plugin(tauri_plugin_anything_tauri::AnythingBuilder::default().config(anything_config).build())
         .setup(|app| {

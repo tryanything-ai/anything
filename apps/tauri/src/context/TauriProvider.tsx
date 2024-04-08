@@ -3,11 +3,13 @@ import React, { ReactNode,useContext, useEffect, useState } from "react";
 import tauriConfJson from "../../src-tauri/tauri.conf.json";
 import api from '../tauri_api/api';
 
-declare global {
-  interface Window {
-    __TAURI__?: any;
-  }
-}
+// declare global {
+//   interface Window {
+//     __TAURI__?: any;
+//   }
+// }
+
+(window as any).__TAURI__ = window.__TAURI__;
 
 export const APP_NAME = tauriConfJson.package.productName;
 export const RUNNING_IN_TAURI = window.__TAURI__ !== undefined;

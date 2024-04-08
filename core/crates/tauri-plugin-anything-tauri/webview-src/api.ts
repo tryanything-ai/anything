@@ -1,7 +1,7 @@
 import { CreateFlowVersion } from "./type";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
-import { UpdateFlowArgs } from "type";
+import { UpdateFlowArgs } from "./type";
 
 export class Anything {
   path: string;
