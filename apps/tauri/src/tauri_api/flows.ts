@@ -46,7 +46,7 @@ export const getFlowVersions = async (flowId: string) => {
   return await invoke("get_flow_versions", { flowId });
 };
 
-export const executeFlow = async (flowId: string, flowVersionId: string, sessionId?: string, stage?: string) => {
+export const executeFlow = async (flowId: string, flowVersionId: string, sessionId?: string, stage?: string): Promise<string> => {
   // console.log(`executeFlow called with flowId in tauri_api: ${flowId}, flowVersionId: ${flowVersionId}, sessionId: ${sessionId}, stage: ${stage}`);
   return await anything.executeFlow(flowId, flowVersionId, sessionId, stage);
 };

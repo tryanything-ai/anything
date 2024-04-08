@@ -20,6 +20,8 @@ use tokio::sync::{
     Mutex,
 };
 
+use uuid::Uuid;
+
 // use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
 // use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
@@ -524,7 +526,7 @@ database/
         flow_version_id: String,
         session_id: Option<String>,
         stage: Option<String>,
-    ) -> CoordinatorResult<()> {
+    ) -> CoordinatorResult<String> {
         println!("Execute flow called in the manager");
         println!("flow_id: {}", flow_id);
         println!("flow_version_id: {}", flow_version_id);
@@ -534,8 +536,16 @@ database/
             .get_flow_version_by_id(flow_id, flow_version_id)
             .await?;
 
+        //create flow session id if one was not passed
+        let flow_session_id = if session_id.is_none() {
+            Uuid::new_v4().to_string()
+        } else {
+            session_id.unwrap()
+        };
+
         //BFS over the flow to get the execution plan
-        let worklist = anything_carl::flow::create_execution_plan(flow, session_id, stage);
+        let worklist =
+            anything_carl::flow::create_execution_plan(flow, flow_session_id.clone(), stage);
 
         println!("worklist in manager: {:?}", worklist);
 
@@ -567,7 +577,7 @@ database/
             )));
         }
 
-        Ok(())
+        Ok(flow_session_id.clone())
     }
 
     pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {

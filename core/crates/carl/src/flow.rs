@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 pub fn create_execution_plan(
     flow_version: FlowVersion,
-    session_id: Option<String>,
+    session_id: String,
     stage: Option<String>,
 ) -> Vec<CreateEvent> {
     // Your code here
@@ -21,12 +21,7 @@ pub fn create_execution_plan(
     
     let trigger_session_id = Uuid::new_v4().to_string();
 
-    //create flow session id if one was not passed
-    let flow_session_id = if session_id.is_none() {
-        Uuid::new_v4().to_string()
-    } else {
-        session_id.unwrap()
-    };
+   
 
     //create a stage if one is not provied
     let stage = if stage.is_none() {
@@ -81,7 +76,7 @@ pub fn create_execution_plan(
             flow_session_status: "WAITING".to_string(),
             trigger_session_id: Some(trigger_session_id.clone()),
             trigger_session_status: "WAITING".to_string(),
-            flow_session_id: Some(flow_session_id.clone()),
+            flow_session_id: Some(session_id.clone()),
             created_at: Some(chrono::Utc::now()),
             debug_result: None,
             result: None,

@@ -60,46 +60,50 @@ const Debugger = () => {
 
 
   return (
-    <div className="flex flex-col gap-4 h-full p-4 overflow-y-auto hide-scrollbar">
-      <SessionButton status={session_status} />
+    <div className="flex flex-col gap-4 h-full p-4 overflow-y-auto hide-scrollbar max-h-screen">
+      <div className="mb-20 flex flex-col">
+        <SessionButton status={session_status} />
 
-      {/* MockData for Manual Trigger */}
-      <div>
-        <div className="flex flex-row gap-1">
-          Test Inputs
-          <div
-            className="tooltip tooltip-right"
-            data-tip="Test inputs is the shape of the future real inputs from your trigger. It is used for testing."
-          >
-            <VscInfo />
+        {/* MockData for Manual Trigger */}
+        <div>
+          <div className="flex flex-row gap-1">
+            Test Inputs
+            <div
+              className="tooltip tooltip-right"
+              data-tip="Test inputs is the shape of the future real inputs from your trigger. It is used for testing."
+            >
+              <VscInfo />
+            </div>
           </div>
-        </div>
 
-        <ReactJson
-          style={{ borderRadius: "10px", padding: "10px" }}
-          enableClipboard={false}
-          theme={"tube"}
-          src={trigger ? trigger.mockData : {}}
-        />
-      </div>
-      {/* Event Processiong State */}
-      {debugging ? (
-        <div className="text-2xl font-bold">Processing Tasks</div>
-      ) : (
-        <>
+          <ReactJson
+            style={{ borderRadius: "10px", padding: "10px" }}
+            enableClipboard={false}
+            theme={"tube"}
+            src={trigger ? trigger.mockData : {}}
+          />
+        </div>
+        {/* Event Processiong State */}
+        {debugging ? (
+          <>
+            <div className="text-2xl font-bold">Processing Tasks</div>
+            <ul>
+              {events.map((event) => (
+                <DebugCard key={event.event_id} event={event} />
+              ))}
+            </ul>
+          </>
+        ) : (
+
           <div className="flex-1">
             <div>
               <h1 className="text-2xl font-bold">No Tasks</h1>
               <p className="">Tasks will appear here when your flow runs</p>
             </div>
           </div>
-          <ul>
-            {events.map((event) => (
-              <DebugCard key={event.event_id} event={event} />
-            ))}
-          </ul>
-        </>
-      )}
+
+        )}
+      </div>
     </div>
   );
 };
@@ -142,6 +146,7 @@ const DebugCard = React.memo(({ event }: { event: any }) => {
           <ResultComponent result={event.result} />
         </div>
       )}
+
     </div>
   );
 });
