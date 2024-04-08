@@ -7,11 +7,7 @@ import { PostHogProvider } from "posthog-js/react";
 import { AuthenticationProvider } from "../context/AuthenticaionProvider";
 import { FlowsProvider } from "./FlowsProvider";
 import { MarketplaceProvider } from "../context/MarketplaceProvider";
-import { ModelProvider } from "../context/ModelsProvider";
-import { NotificationsProvider } from "../context/NotificationProvider";
 import { SettingsProvider } from "../context/SettingsProvider";
-import { SqlProvider } from "../context/SqlProvider";
-import { TauriProvider } from "../context/TauriProvider";
 import { DeeplinkProvider } from "../context/DeeplinkProvider";
 import { SoftwareUpdateProvider } from "./SoftwareUpdateProvider";
 
@@ -32,17 +28,11 @@ const Context = ({ children }: { children: ReactNode }) => {
         <SettingsProvider>
           <AuthenticationProvider>
             <MarketplaceProvider>
-              <NotificationsProvider>
-                <PostHogProvider client={posthogClient}>
-                  <TauriProvider>
-                    <FlowsProvider>
-                      <ModelProvider>
-                        <SqlProvider>{children}</SqlProvider>
-                      </ModelProvider>
-                    </FlowsProvider>
-                  </TauriProvider>
-                </PostHogProvider>
-              </NotificationsProvider>
+              <PostHogProvider client={posthogClient}>
+                <FlowsProvider>
+                  {children}
+                </FlowsProvider>
+              </PostHogProvider>
             </MarketplaceProvider>
           </AuthenticationProvider>
         </SettingsProvider>
