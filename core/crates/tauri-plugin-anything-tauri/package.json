@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^1.0.0",
+    "tauri": "link:@tauri-apps/api/tauri",
     "tslib": "^2.1.0"
   },
   "keywords": [],

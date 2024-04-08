@@ -2,7 +2,17 @@ use anything_common::AnythingConfig;
 use arraydeque::ArrayDeque;
 use ractor::{async_trait, Actor, ActorRef, RpcReplyPort};
 
-use crate::{processing::processor::ProcessorMessage, CoordinatorActorResult};
+// use crate::{processing::processor::ProcessorMessage, CoordinatorActorResult};
+
+
+use ractor::ActorProcessingErr;
+// use thiserror::Error;
+
+// use crate::processing::processor::ProcessorMessage;
+
+// pub type CoordinatorResult<T> = Result<T, CoordinatorError>;
+pub type CoordinatorActorResult<T> = Result<T, ActorProcessingErr>;
+
 
 #[derive(Debug)]
 pub enum UpdateActorMessage {

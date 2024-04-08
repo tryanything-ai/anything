@@ -210,11 +210,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const hydrateFlow = async () => {
     try {
-      console.log("Fetch Flow By Name", flow_name);
+      console.log("Fetch Flow By Name: ", flow_name);
       if (!flow_name) return;
       let { flow } = await api.flows.getFlowByName<any>(flow_name);
       console.log(
-        "FLow Result in flow provider",
+        "Flow Result in flow provider",
         JSON.stringify(flow, null, 3)
       );
 
@@ -347,6 +347,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
 
   const synchronize = async () => {
     try {
+      //TODO: hash to comapre and only run if dif?
       console.log("Synchronising Flow in FlowProivders.tsx");
       let newFlow = getFlowDefinitionsFromReactFlowState();
 
@@ -392,25 +393,26 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
   }, [nodes, edges, flowFrontmatter]);
 
   //Watch event processing for fun ui updates
-  useEffect(() => {
-    let unlistenFromEventProcessing = api.subscribeToEvent(
-      "event_processing",
-      (event: any) => {
-        setCurrentProcessingStatus(event);
-      }
-    );
-    let unlistenSessionComplete = api.subscribeToEvent(
-      "session_complete",
-      (event: any) => {
-        setSessionComplete(event);
-      }
-    );
+  // useEffect(() => {
+  //   let unlistenFromEventProcessing = api.subscribeToEvent(
+  //     "event_processing",
+  //     (event: any) => {
+  //       setCurrentProcessingStatus(event);
+  //     }
+  //   );
+    
+  //   let unlistenSessionComplete = api.subscribeToEvent(
+  //     "session_complete",
+  //     (event: any) => {
+  //       setSessionComplete(event);
+  //     }
+  //   );
 
-    return () => {
-      unlistenFromEventProcessing.then((unlisten) => unlisten());
-      unlistenSessionComplete.then((unlisten) => unlisten());
-    };
-  }, [currentProcessingSessionId]);
+  //   return () => {
+  //     unlistenFromEventProcessing.then((unlisten) => unlisten());
+  //     unlistenSessionComplete.then((unlisten) => unlisten());
+  //   };
+  // }, [currentProcessingSessionId]);
 
   //Hydrate all flow data on navigation
   //User params fetches url params from React-Router-Dom

@@ -1,8 +1,10 @@
 use crate::{error::FlowResult, AnythingState, Error};
-use anything_common::tracing;
+use anything_common::tracing::{self, Event};
 use anything_graph::Flow;
-use anything_persistence::StoredFlow;
-use anything_persistence::{CreateFlowVersion, FlowVersion, UpdateFlowArgs, UpdateFlowVersion};
+use anything_persistence::{
+    CreateFlowVersion, FlowVersion, StoreEvent, UpdateFlowArgs, UpdateFlowVersion,
+};
+use anything_persistence::{EventList, StoredFlow};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -211,7 +213,10 @@ pub async fn execute_flow(
             tracing::error!("Error getting lock on coordinator: {:?}", e);
             Err(Error::CoordinatorNotInitialized)
         }
-        Ok(ref mut inner) => match inner.execute_flow(flow_id, flow_version_id, session_id, stage).await {
+        Ok(ref mut inner) => match inner
+            .execute_flow(flow_id, flow_version_id, session_id, stage)
+            .await
+        {
             Ok(_flow) => {
                 tracing::debug!("Executed flow flow inside tauri plugin");
                 Ok(ExecuteFlowResponse {})
@@ -219,6 +224,52 @@ pub async fn execute_flow(
             Err(e) => {
                 eprintln!("Error getting flows after executing flow: {:?}", e);
                 Ok(ExecuteFlowResponse {})
+            }
+        },
+    }
+}
+
+#[derive(Serialize)]
+pub struct GetEventsResponse {
+    events: Option<EventList>,
+}
+
+#[tauri::command]
+pub async fn fetch_session_events(
+    state: tauri::State<'_, AnythingState>,
+    session_id: String,
+) -> FlowResult<GetEventsResponse> {
+    match state.inner.try_lock() {
+        Err(_e) => Err(Error::CoordinatorNotInitialized),
+        Ok(ref manager) => match manager.fetch_session_events(session_id).await {
+            Ok(events) => Ok(GetEventsResponse {
+                events: Some(events),
+            }),
+            Err(e) => {
+                tracing::error!("Error getting flows: {:?}", e);
+                Ok(GetEventsResponse { events: None })
+            }
+        },
+    }
+}
+
+#[derive(Serialize)]
+pub struct GetEventResponse {
+    event: Option<StoreEvent>,
+}
+
+#[tauri::command]
+pub async fn get_event(
+    state: tauri::State<'_, AnythingState>,
+    event_id: String,
+) -> FlowResult<GetEventResponse> {
+    match state.inner.try_lock() {
+        Err(_e) => Err(Error::CoordinatorNotInitialized),
+        Ok(ref manager) => match manager.get_event(event_id).await {
+            Ok(event) => Ok(GetEventResponse { event: Some(event) }),
+            Err(e) => {
+                tracing::error!("Error getting event: {:?}", e);
+                Ok(GetEventResponse { event: None })
             }
         },
     }

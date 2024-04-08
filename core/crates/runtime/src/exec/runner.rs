@@ -26,7 +26,7 @@ use crate::{
 /// settings for the `Runner` struct.
 pub struct Runner {
     pub global_scope: Arc<Mutex<Scope>>,
-    pub plugin_manager: Arc<Mutex<PluginManager>>,
+    // pub plugin_manager: Arc<Mutex<PluginManager>>,
     pub config: RuntimeConfig,
 }
 
@@ -39,11 +39,11 @@ impl Runner {
 
         // println!("Created new runner {:?}", global_scope);
 
-        let plugin_manager = Arc::new(Mutex::new(PluginManager::new(&config)));
+        // let plugin_manager = Arc::new(Mutex::new(PluginManager::new(&config)));
 
         Self {
             global_scope,
-            plugin_manager,
+            // plugin_manager,
             config,
         }
     }
@@ -100,24 +100,26 @@ impl Runner {
     ) -> RuntimeResult<Arc<Mutex<Scope>>> {
         // Load the plugin we're using to execute by name
         let plugin_name = execution_config.plugin_name.clone();
-        let pm = self
-            .plugin_manager
-            .try_lock()
-            .map_err(|_| RuntimeError::RuntimeError)?;
+        // let pm = self
+        //     .plugin_manager
+        //     .try_lock()
+        //     .map_err(|_| RuntimeError::RuntimeError)?;
 
-        let plugin = pm.get_plugin(&plugin_name)?;
+        // let plugin = pm.get_plugin(&plugin_name)?;
 
         let mut scope = child_scope(Arc::clone(&self.global_scope), &stage_name);
 
-        match plugin.execute(&scope, &execution_config) {
-            Ok(res) => {
-                scope.insert_result(stage_name, res.clone())?;
-                self.global_scope = Arc::new(Mutex::new(scope));
+        // match plugin.execute(&scope, &execution_config) {
+        //     Ok(res) => {
+        //         scope.insert_result(stage_name, res.clone())?;
+        //         self.global_scope = Arc::new(Mutex::new(scope));
 
-                Ok(self.global_scope.clone())
-            }
-            Err(e) => Err(RuntimeError::PluginError(*e)),
-        }
+        //         Ok(self.global_scope.clone())
+        //     }
+        //     Err(e) => Err(RuntimeError::PluginError(*e)),
+        // }
+
+        scope
     }
 
     /// The function `get_scope` returns a clone of the global scope if it can be locked, otherwise it

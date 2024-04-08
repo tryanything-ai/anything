@@ -10,7 +10,7 @@ use anything_persistence::{
     UpdateFlowVersion,
 };
 // use anything_runtime::{Runner, RuntimeConfig};
-use anything_runtime::{PluginManager, Runner, RuntimeConfig};
+use anything_runtime::{PluginManager, RuntimeConfig};
 use anything_store::FileStore;
 use ractor::{cast, Actor, ActorRef};
 use std::{env::temp_dir, sync::Arc};
@@ -22,7 +22,7 @@ use tokio::sync::{
 
 // use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
-use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
+// use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
 use crate::actors::work_queue_actor::{WorkQueueActor, WorkQueueActorMessage, WorkQueueActorState};
 use crate::error::CoordinatorResult;
 use crate::CoordinatorError;
@@ -38,7 +38,7 @@ pub struct Repositories {
 pub struct ActorRefs {
     pub system_actor: ActorRef<SystemMessage>,
     // pub flow_actor: ActorRef<FlowMessage>,
-    pub update_actor: ActorRef<UpdateActorMessage>,
+    // pub update_actor: ActorRef<UpdateActorMessage>,
     pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
 }
 
@@ -46,7 +46,7 @@ pub struct ActorRefs {
 pub struct Manager {
     pub file_store: FileStore,
     pub config: AnythingConfig,
-    pub runner: Runner,
+    // pub runner: Runner,
     // pub shutdown_sender: Sender<()>,
     pub repositories: Option<Repositories>,
     pub actor_refs: Option<ActorRefs>,
@@ -78,7 +78,7 @@ impl Manager {
     pub fn new(config: AnythingConfig) -> Self {
         let mut runtime_config = config.runtime_config().clone();
         //manages plugins and deno stuff i think
-        let runner = Runner::new(runtime_config.clone());
+        // let runner = Runner::new(runtime_config.clone());
 
         //Make a dir if we don't have one
         let root_dir = match runtime_config.base_dir {
@@ -139,7 +139,7 @@ database/
 
         Manager {
             file_store,
-            runner,
+            // runner,
             config: config.clone(),
             repositories: None,
             actor_refs: None,
@@ -185,16 +185,16 @@ database/
         .unwrap();
 
         //Honestly unsure what this actor does right now
-        let (update_actor, _handle) = Actor::spawn(
-            None,
-            UpdateActor,
-            UpdateActorState {
-                config: self.config.clone(),
-                latest_messages: Default::default(),
-            },
-        )
-        .await
-        .unwrap();
+        // let (update_actor, _handle) = Actor::spawn(
+        //     None,
+        //     UpdateActor,
+        //     UpdateActorState {
+        //         config: self.config.clone(),
+        //         latest_messages: Default::default(),
+        //     },
+        // )
+        // .await
+        // .unwrap();
 
         // let (flow_actor, _handle) = Actor::spawn(
         //     None,
@@ -233,7 +233,7 @@ database/
         self.actor_refs = Some(ActorRefs {
             system_actor,
             // flow_actor,
-            update_actor,
+            // update_actor,
             work_queue_actor,
         });
 
@@ -314,6 +314,47 @@ database/
         // })?;
         // tracing::info!("file_flow: {:#?}", flow);
         Ok(flow.into())
+    }
+
+    pub async fn fetch_session_events(
+        &self,
+        session_id: String,
+    ) -> CoordinatorResult<anything_persistence::EventList> {
+        let event_repo = self.event_repo()?;
+        // let mut file_store = self.file_store.clone();
+        tracing::trace!(
+            "Get events by session_id called in the manager: {:?}",
+            session_id.clone()
+        );
+        // Look for stored flow in database
+        let events = event_repo
+            .get_events_for_session(session_id)
+            .await
+            .map_err(|e| {
+                tracing::error!("error when getting events for session: {:#?}", e);
+                CoordinatorError::PersistenceError(e)
+            })?;
+
+        Ok(events)
+    }
+
+    pub async fn get_event(
+        &self,
+        event_id: String,
+    ) -> CoordinatorResult<anything_persistence::StoreEvent> {
+        let event_repo = self.event_repo()?;
+
+        tracing::trace!(
+            "Get event by event_id called in the manager: {:?}",
+            event_id.clone()
+        );
+        // Look for stored flow in database
+        let event = event_repo.find_by_id(event_id).await.map_err(|e| {
+            tracing::error!("error when getting event by id: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+
+        Ok(event)
     }
 
     /// The function `create_flow` creates a new flow, saves it to a file, and returns the created flow.

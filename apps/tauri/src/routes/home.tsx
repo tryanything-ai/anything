@@ -8,7 +8,6 @@ import { useEffect } from "react";
 
 export default function Home() {
   const { flows, createNewFlow, getFlows } = useFlowsContext();
-  const navigate = useNavigate();
 
   useEffect(() => {
     getFlows(); 
@@ -41,14 +40,14 @@ export default function Home() {
         </div>
 
         {/* Tables */}
-        <div className="flex flex-col w-1/3 pl-10">
+        {/* <div className="flex flex-col w-1/3 pl-10">
           <PageHeader
             title="Templates"
             callback={() => navigate("/templates")}
             buttonLabel="Explore"
           />
           <ul></ul>
-        </div>
+        </div> */}
       </div>
     </PageLayout>
   );

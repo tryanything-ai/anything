@@ -50,6 +50,15 @@ export const executeFlow = async (flowId: string, flowVersionId: string, session
   return await anything.executeFlow(flowId, flowVersionId, sessionId, stage);
 };
 
+export const fetchSessionEvents = async (sessionId: string) => {
+  return await anything.fetchSessionEvents(sessionId);
+};
+
+export const getEvent = async (eventId: string) => {
+  return await anything.getEvent(eventId);
+}
+
+
 export const stopExecution = async () => {
   return await anything.stop();
 };

@@ -23,8 +23,10 @@ pub trait Plugin: Any + Send + Sync {
 
     //TODO: register config object
     //TODO: register config info//required?
-    //TODO: register config defaults 
+    //TODO: register config defaults
     //TODO: register config validation function
+    //TODO: register a system config object? like how vscode lets you configure extensions
+    //TODO: How do we make it so a heavy model can be downloaded and used by the plugin?
 }
 pub trait ExecutionPlugin: Plugin {
     fn execute(
@@ -170,8 +172,8 @@ impl PluginManager {
 
         self.loaded_libraries.push(lib);
 
-        debug!("Loaded plugin: {}", name);
-        println!("Loaded plugin: {}", name);
+        // debug!("Loaded plugin: {}", name);
+        // println!("Loaded plugin: {}", name);
 
         let lib = self.loaded_libraries.last().unwrap();
         let constructor: Symbol<PluginCreate> = lib.get(b"_plugin_create")?;

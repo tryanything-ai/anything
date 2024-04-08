@@ -66,15 +66,16 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
     //Update Flow
     let res = await api.flows.updateFlow(flowId, args);
     //Rehydrate Global State
+    console.log("Calling getFlows in updateFlow");
     getFlows();
     //Return without waiting
     return res;
   };
 
   const getFlows = async () => {
-    console.log("Getting Flows from Tauri API?");
+    console.log("Getting Flows from Tauri API");
     let res: any = await api.flows.getFlows();
-    console.log("Got New Flows", res);
+    console.log("getFlows:", res);
     setFlows(res.flows);
   };
 

@@ -13,6 +13,7 @@ use tauri_plugin_deep_link;
 use tauri_plugin_anything_tauri;
 
 fn main() {
+    println!("Running Main!");
     //Load .env
     match dotenv::dotenv() {
         Ok(_) => println!("Successfully loaded .env"),

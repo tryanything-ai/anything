@@ -3,7 +3,7 @@ use anything_runtime::RuntimeError;
 use ractor::ActorProcessingErr;
 use thiserror::Error;
 
-use crate::processing::processor::ProcessorMessage;
+// use crate::processing::processor::ProcessorMessage;
 
 pub type CoordinatorResult<T> = Result<T, CoordinatorError>;
 pub type CoordinatorActorResult<T> = Result<T, ActorProcessingErr>;
@@ -49,9 +49,8 @@ pub enum CoordinatorError {
     #[error("actor error: {0}")]
     ActorNotInitialized(String),
 
-    #[error("processor send error {0}")]
-    ProcessorSendError(tokio::sync::mpsc::error::SendError<ProcessorMessage>),
-
+    // #[error("processor send error {0}")]
+    // ProcessorSendError(tokio::sync::mpsc::error::SendError<ProcessorMessage>),
     #[error("processor execution error: {0}")]
     ProcessorExecutionError(String),
 }
@@ -80,8 +79,8 @@ impl From<PersistenceError> for CoordinatorError {
     }
 }
 
-impl From<tokio::sync::mpsc::error::SendError<ProcessorMessage>> for CoordinatorError {
-    fn from(e: tokio::sync::mpsc::error::SendError<ProcessorMessage>) -> Self {
-        CoordinatorError::ProcessorSendError(e)
-    }
-}
+// impl From<tokio::sync::mpsc::error::SendError<ProcessorMessage>> for CoordinatorError {
+//     fn from(e: tokio::sync::mpsc::error::SendError<ProcessorMessage>) -> Self {
+//         CoordinatorError::ProcessorSendError(e)
+//     }
+// }

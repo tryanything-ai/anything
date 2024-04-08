@@ -70,4 +70,16 @@ export class Anything {
   async executeFlow<T>(flowId: string, flowVersionId: string, sessionId?: string, stage?: string): Promise<T> {
     return await invoke("plugin:anything|execute_flow", { flowId, flowVersionId, sessionId, stage });
   }
+
+  async fetchSessionEvents<T>(sessionId: string): Promise<T> {
+    return await invoke("plugin:anything|fetch_session_events", {
+      sessionId
+    });
+  }
+
+  async getEvent<T>(eventId: string): Promise<T> {
+    return await invoke("plugin:anything|get_event", {
+      eventId
+    });
+  }
 }

@@ -13,7 +13,7 @@ export type FlowFrontMatter = {
   user_id?: string; //for sharing online or in organization
   description?: string;
   variables?: Variable[]; //Global variables
-  environment: string; //Stub for future
+  environment?: string; //Stub for future
 };
 
 //Configuration needed to display and run a Flow

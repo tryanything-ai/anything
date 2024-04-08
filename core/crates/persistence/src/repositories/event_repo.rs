@@ -21,9 +21,21 @@ pub trait EventRepo {
     async fn get_oldest_waiting_event(&self) -> PersistenceResult<Option<StoreEvent>>;
     async fn mark_event_as_processing(&self, event_id: String) -> PersistenceResult<()>;
     async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()>;
-    async fn get_completed_events_for_session(&self, session_id: String) -> PersistenceResult<EventList>;
-    async fn store_event_context(&self, event_id: String, context: serde_json::Value) -> PersistenceResult<()>;
-    async fn store_execution_result(&self, event_id: String, result: serde_json::Value) -> PersistenceResult<()>;
+    async fn get_completed_events_for_session(
+        &self,
+        session_id: String,
+    ) -> PersistenceResult<EventList>;
+    async fn store_event_context(
+        &self,
+        event_id: String,
+        context: serde_json::Value,
+    ) -> PersistenceResult<()>;
+    async fn store_execution_result(
+        &self,
+        event_id: String,
+        result: serde_json::Value,
+    ) -> PersistenceResult<()>;
+    async fn get_events_for_session(&self, session_id: String) -> PersistenceResult<EventList>;
 }
 
 #[derive(Clone)]
@@ -155,16 +167,18 @@ impl EventRepo for EventRepoImpl {
         }
     }
 
-    async fn store_event_context(&self, event_id: String, context: serde_json::Value) -> PersistenceResult<()> {
+    async fn store_event_context(
+        &self,
+        event_id: String,
+        context: serde_json::Value,
+    ) -> PersistenceResult<()> {
         println!("store_event_context");
         let pool = self.datastore.get_pool();
-        let result = sqlx::query(
-            "UPDATE events SET context = ?2 WHERE event_id = ?1",
-        )
-        .bind(event_id)
-        .bind(context)
-        .execute(pool)
-        .await;
+        let result = sqlx::query("UPDATE events SET context = ?2 WHERE event_id = ?1")
+            .bind(event_id)
+            .bind(context)
+            .execute(pool)
+            .await;
 
         match result {
             Ok(_) => Ok(()),
@@ -185,7 +199,11 @@ impl EventRepo for EventRepoImpl {
         Ok(())
     }
 
-    async fn store_execution_result(&self, event_id: String, result: serde_json::Value) -> PersistenceResult<()> {
+    async fn store_execution_result(
+        &self,
+        event_id: String,
+        result: serde_json::Value,
+    ) -> PersistenceResult<()> {
         let pool = self.datastore.get_pool();
         sqlx::query("UPDATE events SET result = ?2 WHERE event_id = ?1")
             .bind(event_id)
@@ -196,10 +214,26 @@ impl EventRepo for EventRepoImpl {
         Ok(())
     }
 
-    async fn get_completed_events_for_session(&self, session_id: String) -> PersistenceResult<EventList> {
+    async fn get_completed_events_for_session(
+        &self,
+        session_id: String,
+    ) -> PersistenceResult<EventList> {
         let pool = self.datastore.get_pool();
         let rows = sqlx::query_as::<_, StoreEvent>(
-            "SELECT * from events WHERE session_id = ?1 AND event_status = 'COMPLETE' ORDER BY created_at ASC",
+            "SELECT * from events WHERE flow_session_id = ?1 AND event_status = 'COMPLETE' ORDER BY created_at ASC",
+        )
+        .bind(session_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        Ok(rows)
+    }
+
+    async fn get_events_for_session(&self, session_id: String) -> PersistenceResult<EventList> {
+        let pool = self.datastore.get_pool();
+        let rows = sqlx::query_as::<_, StoreEvent>(
+            "SELECT * from events WHERE flow_session_id = ?1 ORDER BY created_at ASC",
         )
         .bind(session_id)
         .fetch_all(pool)

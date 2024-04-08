@@ -2,7 +2,7 @@
 name = "anything"
 version = "0.0.0"
 description = "A local app to do anything"
-authors = ["Carl Lippert", "Ari Lerner"]
+authors = ["Carl Lippert"]
 license = ""
 repository = "https://github.com/tryanything-ai/anything"
 edition = "2021"
