@@ -30,10 +30,10 @@ const DebugPanel = () => {
         return;
       }
 
-      // if (!session_id) {
-      //   console.log("No session id");
-      //   return;
-      // }
+      if (!session_id) {
+        console.log("No session id");
+        return;
+      }
 
       console.log("fetching session events: ", session_id);
       //TODO: figure out how to pass types through this barrier
