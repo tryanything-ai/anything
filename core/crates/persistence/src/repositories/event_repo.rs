@@ -110,7 +110,7 @@ impl EventRepo for EventRepoImpl {
 
     async fn find_by_id(&self, event_id: EventId) -> PersistenceResult<StoreEvent> {
         let pool = self.datastore.get_pool();
-        let row = sqlx::query_as::<_, StoreEvent>("SELECT * from events WHERE id = ?1")
+        let row = sqlx::query_as::<_, StoreEvent>("SELECT * from events WHERE event_id = ?1")
             .bind(event_id)
             .fetch_one(pool)
             .await

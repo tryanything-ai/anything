@@ -9,7 +9,6 @@ use tauri::{
 };
 
 use tokio::sync::Mutex;
-
 pub struct Builder<R: Runtime> {
     app: Option<AppHandle<R>>,
     anything_config: AnythingConfig,

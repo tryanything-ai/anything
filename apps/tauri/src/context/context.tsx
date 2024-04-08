@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-
 import posthogClient from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 
