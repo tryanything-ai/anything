@@ -204,7 +204,6 @@ mod tests {
 
         [[nodes]]
         name = "echo2"
-        depends_on = ["echo"]
 
         "#;
         let flow = Flowfile::from_str(toml).unwrap();
@@ -228,7 +227,6 @@ mod tests {
 
         [[nodes]]
         name = "echo2"
-        depends_on = ["echo"]
 
         [nodes.engine]
         engine = "deno"

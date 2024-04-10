@@ -50,18 +50,30 @@ const NODES: Node[] = [
   },
   {
     trigger: false,
-    node_name: "js_action",
+    node_name: "deno_action",
     node_label: "JS Action",
-    icon: rawIcons.VscCode,
-    description: "JS Logo",
+    icon: rawIcons.Deno,
+    description: "Deno Logo",
     handles: BaseHandles,
     variables: [],
     config: {
       code: "",
     },
-    engine: "javascript",
-    depends_on: [],
+    engine: "deno"
   },
+  // {
+  //   trigger: false,
+  //   node_name: "js_action",
+  //   node_label: "JS Action",
+  //   icon: rawIcons.VscCode,
+  //   description: "JS Logo",
+  //   handles: BaseHandles,
+  //   variables: [],
+  //   config: {
+  //     code: "",
+  //   },
+  //   engine: "javascript",
+  // },
   {
     trigger: true,
     node_name: "manual_trigger",
@@ -89,7 +101,6 @@ const NODES: Node[] = [
       prompt: "",
     },
     engine: "local_model",
-    depends_on: [],
   },
   {
     trigger: false,
@@ -107,7 +118,6 @@ const NODES: Node[] = [
       body: '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Act like Hermione Granger and be pithy. She just tried a spell and it mostly worked."}], "temperature": 0.7 }',
     },
     engine: "rest",
-    depends_on: [],
   },
   {
     trigger: false,
@@ -124,7 +134,6 @@ const NODES: Node[] = [
       body: "",
     },
     engine: "rest",
-    depends_on: [],
   },
   {
     trigger: false,
@@ -138,7 +147,6 @@ const NODES: Node[] = [
       code: "",
     },
     engine: "python",
-    depends_on: [],
   },
   {
     trigger: true,
@@ -168,7 +176,6 @@ const NODES: Node[] = [
       pattern: "",
     },
     engine: "app_chat",
-    depends_on: [],
   },
   {
     trigger: false,
@@ -181,9 +188,8 @@ const NODES: Node[] = [
     config: {
       command: "",
       run_folder: "",
-    }, 
+    },
     engine: "system-shell",
-    depends_on: [],
   },
   {
     trigger: false,
@@ -198,7 +204,6 @@ const NODES: Node[] = [
       params: "",
     },
     engine: "vector",
-    depends_on: [],
   },
 ];
 

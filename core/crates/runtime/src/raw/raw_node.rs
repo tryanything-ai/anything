@@ -22,8 +22,6 @@ pub struct RawNode {
     #[serde(default)]
     pub environment: RawEnvironment<String>,
 
-    // #[serde(default, alias = "dependencies")]
-    // pub depends_on: Vec<String>,
     #[serde(
         default,
         alias = "runtime",

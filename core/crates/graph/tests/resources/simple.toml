@@ -15,7 +15,6 @@ settings = { file = "/Users/auser/Desktop/watch-directory" }
 [[nodes]]
 name = "echo-cheer"
 label = "Holiday cheers"
-depends_on = []
 variables = { cheers = "Jingle Bells" }
 
 [nodes.engine]
@@ -25,7 +24,6 @@ args = ["echo 'hello {{cheers}}'"]
 [[nodes]]
 name = "say-cheers"
 label = "say holiday cheer"
-depends_on = ["echo-cheer"]
 variables = { cheers = "Jingle Bells" }
 environment = { NODE_ENV = "development" }
 
@@ -37,7 +35,6 @@ args = ["say '{{cheers}}'"]
 [[nodes]]
 name = "share"
 label = "share with the world"
-depends_on = ["say-cheers"]
 
 [nodes.engine]
 engine = "system-shell"

@@ -77,6 +77,7 @@ const Debugger = () => {
             style={{ borderRadius: "10px", padding: "10px" }}
             enableClipboard={false}
             theme={"tube"}
+            name={false}
             src={trigger ? trigger.mockData : {}}
           />
         </div>
@@ -162,13 +163,14 @@ const ResultComponent = ({ result }: any) => {
             style={{ borderRadius: "10px", padding: "10px" }}
             enableClipboard={false}
             theme={"tube"}
+            name={false}
             src={parsedJson}
           />
         );
       } catch (e) {
         content = result;
       }
-      break;  
+      break;
     case "number":
       content = result.toString();
       break;
@@ -176,9 +178,12 @@ const ResultComponent = ({ result }: any) => {
       if (result !== null) {
         console.log("result in result ", result);
         content = (
-          <ReactJson enableClipboard={false}
+          <ReactJson
+            enableClipboard={false}
+            name={false}
             style={{ borderRadius: "10px", padding: "10px" }}
-            theme={"tube"} src={result}
+            theme={"tube"}
+            src={result}
           />
         );
       } else {

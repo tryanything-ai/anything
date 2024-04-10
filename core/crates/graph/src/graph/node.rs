@@ -91,8 +91,8 @@ pub struct Task {
     #[serde(default)]
     pub label: Option<String>,
 
-    #[serde(default, alias = "dependencies")]
-    pub depends_on: Vec<String>,
+    // #[serde(default, alias = "dependencies")]
+    // pub depends_on: Vec<String>,
 
     #[serde(default, flatten, deserialize_with = "string_or_struct")]
     pub run_options: RawNode,
@@ -107,7 +107,6 @@ impl Default for Task {
             version: default_version(),
             name: "bob-david".to_string(),
             description: None,
-            depends_on: vec![],
             run_options: RawNode::default(),
         }
     }
@@ -143,7 +142,6 @@ mod tests {
         name = "echo-cheer"
         label = "echo-cheer"
         description = "Send holiday cheer"
-        depends_on = ["echo-hello"]
 
         [runtime]
         interpreter = "deno"
@@ -167,7 +165,6 @@ mod tests {
         name = "echo-cheer"
         label = "echo-cheer"
         description = "Send holiday cheer"
-        depends_on = ["echo-hello"]
 
         [engine]
         engine = "deno"
@@ -193,7 +190,6 @@ mod tests {
         name = "echo-cheer"
         label = "echo-cheer"
         description = "Send holiday cheer"
-        depends_on = ["echo-hello"]
 
         [engine]
         engine = "deno"

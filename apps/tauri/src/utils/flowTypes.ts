@@ -51,7 +51,6 @@ interface NodePresentation {
 export interface Action extends BaseNode {
   trigger: false;
   engine: string;
-  depends_on: string[]; //node_name for parallelization ( maybe )
 }
 
 export interface Trigger extends BaseNode {
@@ -122,7 +121,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
       {
         trigger: false,
@@ -133,7 +131,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
       {
         trigger: false,
@@ -144,7 +141,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
     ],
     edges: [],
@@ -182,7 +178,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
       {
         trigger: false,
@@ -193,7 +188,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
       {
         trigger: false,
@@ -204,7 +198,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
       {
         trigger: false,
@@ -215,7 +208,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
       {
         trigger: false,
@@ -226,7 +218,6 @@ export const MockNewFlows: Flow[] = [
         config: {},
         handles: [],
         engine: "Mock Action Type",
-        depends_on: [],
       },
     ],
     edges: [],
