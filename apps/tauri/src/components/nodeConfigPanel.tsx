@@ -72,12 +72,12 @@ const NodeConfigPanel = () => {
       return (
         <div key={objectKey + "internal"}>
           <div className="mb-1">{objectKey}:</div>
-          <input
-            type="text"
+          <textarea
             disabled={nonEditableSubKeys.includes(objectKey)}
-            className="input input-bordered input-md w-full"
+            className="textarea textarea-bordered textarea-md w-full"
             defaultValue={value}
             {...register(objectKey)}
+            rows={Math.ceil(String(value).length / 40)} //make the size of text
           />
           {errors[objectKey] && (
             <span>{JSON.stringify(errors[objectKey]?.message)}</span>

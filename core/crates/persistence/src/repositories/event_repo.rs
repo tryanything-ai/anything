@@ -243,6 +243,9 @@ impl EventRepo for EventRepoImpl {
         .await
         .map_err(|e| PersistenceError::DatabaseError(e))?;
 
+        for row in &rows {
+            println!("Completed Events for session: {:?}", row);
+        }
         Ok(rows)
     }
 

@@ -5,6 +5,8 @@ use std::process::Command;
 use anything_common::tracing;
 use anything_runtime::prelude::*;
 
+use serde_json::Value;
+
 pub const DEFAULT_SHELL: &str = "sh";
 pub const DEFAULT_SHELL_ARGS: &[&str] = &["-c"];
 
@@ -41,13 +43,6 @@ impl ExecutionPlugin for SystemShellPlugin {
         };
 
         let mut command = Command::new(&shell);
-        // command
-        //     .export_environment(&scope.environment)
-        //     .expect("unable to export environment");
-
-        // for (k, v) in &scope.environment {
-        //     command.env(k, v);
-        // }
 
         //Make the CLI execute in the folder of the flow
         if let Some(value) = &self.config.current_dir {
@@ -72,32 +67,25 @@ impl ExecutionPlugin for SystemShellPlugin {
         println!("system-shell plugin command: {:?}", cli_command.clone());
 
         match command.output() {
-            // let output = command.output()?;
-            // println!("CLI Plugin Output: {:?}", output);
             Ok(output) => {
-                println!("CLI Output: {:?}", output);
-                let stdout =
-                    strip_newline_suffix(String::from_utf8_lossy(&output.stdout).to_string());
+                let stdout_raw = String::from_utf8_lossy(&output.stdout).to_string();
+                let stdout_clean = strip_newline_suffix(stdout_raw);
+
+                // Attempt to parse stdout as JSON. If this fails, use stdout as is.
+                let stdout_json: Value = serde_json::from_str(&stdout_clean)
+                    .unwrap_or_else(|_| serde_json::json!({ "output": stdout_clean }));
+
                 let stderr =
                     strip_newline_suffix(String::from_utf8_lossy(&output.stderr).to_string());
 
-                let result = serde_json::json!({
-                    "stdout": stdout.clone(),
-                    "stderr": stderr.clone()
-                });
-
-                //TODO: actually return stuff. Like what happens if we are calling curl?
-                //Do we pipe? Do we return the result?
-                // let result = serde_json::Value::Object(serde_json::Map::new())
-
                 Ok(ExecutionResult {
-                    stdout,
+                    stdout: stdout_clean, // Keep this as the cleaned-up string representation
                     stderr,
-                    status: output.status.code().unwrap_or(0),
-                    result,
+                    status: output.status.code().unwrap_or_default(),
+                    result: stdout_json,
                 })
             }
-            Err(error) => Err(Box::new(PluginError::RuntimeError(error))),
+            Err(error) => Err(Box::new(error.into())),
         }
     }
 }
