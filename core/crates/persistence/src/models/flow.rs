@@ -53,7 +53,7 @@ impl FromRow<'_, SqliteRow> for StoredFlow {
             };
             versions.push(flow_version);
         }
-        
+
         // let flow = anything_coordinator::Manager::default().get_flow(&flow_name).unwrap();
 
         Ok(Self {

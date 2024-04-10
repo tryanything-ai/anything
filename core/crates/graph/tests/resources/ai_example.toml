@@ -1,9 +1,0 @@
-name = "AI Flow"
-version = "0.0.1"
-description = "A flow to generate art"
-
-[trigger]
-name = "Webhook"
-
-[trigger.settings]
-url = "/email/trigger"

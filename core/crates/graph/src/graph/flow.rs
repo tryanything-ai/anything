@@ -1,11 +1,10 @@
 use anything_runtime::{RawEnvironment, RawVariables};
 use derive_builder::Builder;
-use petgraph::prelude::DiGraph;
 use serde::{Deserialize, Serialize};
 
 use crate::{core::keyable::Keyable, error::GraphResult, NodeType};
 
-use super::{flow_graph::FlowGraph, flowfile::Flowfile, node::Task, trigger::Trigger};
+use super::{flowfile::Flowfile, trigger::Trigger};
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize, Serialize, Builder)]
@@ -26,10 +25,9 @@ pub struct Flow {
 
     #[serde(default)]
     pub trigger: Trigger,
-
-    #[serde(skip)]
-    pub graph: FlowGraph,
-    pub nodes: Vec<Task>,
+    // #[serde(skip)]
+    // pub graph: FlowGraph,
+    // pub nodes: Vec<Task>,
 }
 
 impl Default for Flow {
@@ -42,8 +40,8 @@ impl Default for Flow {
             variables: RawVariables::default(),
             environment: RawEnvironment::default(),
             trigger: Trigger::default(),
-            graph: FlowGraph::default(),
-            nodes: Vec::new(),
+            // graph: FlowGraph::default(),
+            // nodes: Vec::new(),
         }
     }
 }
@@ -56,10 +54,10 @@ impl Keyable for Flow {
 
 #[allow(unused)]
 impl Flow {
-    pub fn add_node(&mut self, node: Task) -> GraphResult<()> {
-        self.graph.add_node(node);
-        Ok(())
-    }
+    // pub fn add_node(&mut self, node: Task) -> GraphResult<()> {
+    //     self.graph.add_node(node);
+    //     Ok(())
+    // }
 
     // TODO: write tests
     pub fn add_global_variable(&mut self, input: &str, value: String) -> GraphResult<()> {
@@ -73,27 +71,27 @@ impl Flow {
         Ok(())
     }
 
-    pub fn get_nodes(&self) -> Vec<Task> {
-        self.graph
-            .nodes
-            .iter()
-            .map(|(_id, n)| (*n).clone())
-            .collect::<Vec<Task>>()
-    }
+    // pub fn get_nodes(&self) -> Vec<Task> {
+    //     self.graph
+    //         .nodes
+    //         .iter()
+    //         .map(|(_id, n)| (*n).clone())
+    //         .collect::<Vec<Task>>()
+    // }
 
-    pub fn get_flowgraph(&self) -> FlowGraph {
-        let mut graph = FlowGraph::new();
+    // pub fn get_flowgraph(&self) -> FlowGraph {
+    //     let mut graph = FlowGraph::new();
 
-        for node in self.get_nodes() {
-            graph.add_node(node);
-        }
+    //     for node in self.get_nodes() {
+    //         graph.add_node(node);
+    //     }
 
-        graph
-    }
+    //     graph
+    // }
 
-    pub fn into_graph(&self) -> GraphResult<DiGraph<NodeType, usize>> {
-        self.get_flowgraph().into_graph()
-    }
+    // pub fn into_graph(&self) -> GraphResult<DiGraph<NodeType, usize>> {
+    //     self.get_flowgraph().into_graph()
+    // }
 }
 
 impl From<Flowfile> for Flow {
@@ -109,9 +107,9 @@ impl From<Flowfile> for Flow {
         flow.environment = value.environment;
         flow.trigger = value.trigger;
 
-        for node in value.nodes {
-            flow.add_node(node).unwrap();
-        }
+        // for node in value.nodes {
+        //     flow.add_node(node).unwrap();
+        // }
 
         flow
     }
@@ -129,7 +127,7 @@ impl Into<Flowfile> for Flow {
         flowfile.name = self.name;
         flowfile.version = Some(self.version);
         flowfile.description = Some(self.description);
-        flowfile.nodes = self.nodes;
+        // flowfile.nodes = self.nodes;
         flowfile.variables = self.variables;
         flowfile.environment = self.environment;
 
