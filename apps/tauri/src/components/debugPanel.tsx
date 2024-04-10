@@ -10,9 +10,8 @@ import { DebuggingProvider, SessionStatus, useDebuggingContext } from "../contex
 
 const Debugger = () => {
 
-  const { flowFrontmatter, getTrigger } = useFlowContext();
+  const { getTrigger } = useFlowContext();
   const { startDebuggingSession, debugging, events, session_status } = useDebuggingContext();
-  const { currentProcessingStatus } = useFlowContext();
 
   const [trigger, setTrigger] = useState<Trigger>(null);
 
@@ -39,20 +38,12 @@ const Debugger = () => {
       switch (status) {
         case SessionStatus.WAITING:
           return (< button className="btn btn-primary hover:btn-success" disabled onClick={startDebuggingSession} >
-            Waiting..
+            Waiting...
           </button >);
         case SessionStatus.PROCESSING:
           return (< button className="btn btn-primary hover:btn-success" disabled onClick={startDebuggingSession} >
-            Processing..
+            Processing...
           </button >);
-        // case SessionStatus.ERROR:
-        //   return (< button className="btn btn-primary hover:btn-success" onClick={startDebuggingSession} >
-        //     Start Flow
-        //   </button >);
-        // case SessionStatus.COMPLETE:
-        //   return (< button className="btn btn-primary hover:btn-success" onClick={startDebuggingSession} >
-        //     Start Flow
-        //   </button >);
         default:
           return (
             < button className="btn btn-primary hover:btn-success" onClick={startDebuggingSession} >
@@ -61,7 +52,6 @@ const Debugger = () => {
           );
       }
     };
-
     return <>{renderButton()}</>;
   };
 
@@ -116,7 +106,6 @@ const Debugger = () => {
 };
 
 const DebugCard = React.memo(({ event }: { event: any }) => {
-
   return (
     <div
       key={event.event_id}
@@ -142,15 +131,17 @@ const DebugCard = React.memo(({ event }: { event: any }) => {
         </div>
       )} */}
       {event.context && (
-        <div className="">
+        <div>
           <div className="text-md">Generated Context: </div>
-          <ResultComponent result={event.context} />
+          <ResultComponent
+            result={event.context} />
         </div>
       )}
       {event.result && (
         <div className="">
           <div className="text-md">Results: </div>
-          <ResultComponent result={event.result} />
+          <ResultComponent
+            result={event.result} />
         </div>
       )}
 
@@ -177,7 +168,7 @@ const ResultComponent = ({ result }: any) => {
       } catch (e) {
         content = result;
       }
-      break;
+      break;  
     case "number":
       content = result.toString();
       break;
@@ -185,7 +176,10 @@ const ResultComponent = ({ result }: any) => {
       if (result !== null) {
         console.log("result in result ", result);
         content = (
-          <ReactJson enableClipboard={false} theme={"tube"} src={result} />
+          <ReactJson enableClipboard={false}
+            style={{ borderRadius: "10px", padding: "10px" }}
+            theme={"tube"} src={result}
+          />
         );
       } else {
         content = "null";

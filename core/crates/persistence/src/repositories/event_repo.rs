@@ -192,10 +192,26 @@ impl EventRepo for EventRepoImpl {
     async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()> {
         let pool = self.datastore.get_pool();
         sqlx::query("UPDATE events SET event_status = 'COMPLETE' WHERE event_id = ?1")
-            .bind(event_id)
+            .bind(event_id.clone())
             .execute(pool)
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        // Check if all events for session_id are complete and mark flow_session_status as COMPLETE if so
+        let all_events_complete = sqlx::query("SELECT COUNT(*) FROM events WHERE flow_session_id = (SELECT flow_session_id FROM events WHERE event_id = ?1) AND event_status <> 'COMPLETE'")
+            .bind(event_id.clone())
+            .fetch_one(pool)
+            .await?
+            .get::<i64, _>(0) == 0;
+
+        if all_events_complete {
+            sqlx::query("UPDATE events SET flow_session_status = 'COMPLETE', trigger_session_status = 'COMPLETE' WHERE flow_session_id = (SELECT flow_session_id FROM events WHERE event_id = ?1)")
+                .bind(event_id.clone())
+                .execute(pool)
+                .await
+                .map_err(|e| PersistenceError::DatabaseError(e))?;
+        }
+
         Ok(())
     }
 

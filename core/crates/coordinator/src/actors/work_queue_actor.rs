@@ -197,6 +197,7 @@ impl WorkQueueActor {
         if let Ok(events) = events {
             for event in events {
                 if let Some(result) = event.result {
+                    println!("Adding result to context from {}: {}",event.node_id, result);
                     context.insert(event.node_id, &result);
                 }
             }
