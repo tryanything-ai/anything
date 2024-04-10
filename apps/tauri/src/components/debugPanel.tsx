@@ -26,7 +26,6 @@ const Debugger = () => {
     }
   }
 
-
   useEffect(() => {
     hydrateMockData();
   }, [])
@@ -39,16 +38,24 @@ const Debugger = () => {
     const renderButton = () => {
       switch (status) {
         case SessionStatus.WAITING:
-          return <button>Start Session</button>;
+          return (< button className="btn btn-primary hover:btn-success" disabled onClick={startDebuggingSession} >
+            Waiting..
+          </button >);
         case SessionStatus.PROCESSING:
-          return <button disabled>Processing...</button>;
-        case SessionStatus.ERROR:
-          return <button className="error">Error - Retry</button>;
-        case SessionStatus.COMPLETE:
-          return <button className="complete">Session Complete</button>;
+          return (< button className="btn btn-primary hover:btn-success" disabled onClick={startDebuggingSession} >
+            Processing..
+          </button >);
+        // case SessionStatus.ERROR:
+        //   return (< button className="btn btn-primary hover:btn-success" onClick={startDebuggingSession} >
+        //     Start Flow
+        //   </button >);
+        // case SessionStatus.COMPLETE:
+        //   return (< button className="btn btn-primary hover:btn-success" onClick={startDebuggingSession} >
+        //     Start Flow
+        //   </button >);
         default:
           return (
-            < button className="btn btn-primary hover:btn-success" disabled={debugging} onClick={startDebuggingSession} >
+            < button className="btn btn-primary hover:btn-success" onClick={startDebuggingSession} >
               Start Flow
             </button >
           );
@@ -61,7 +68,7 @@ const Debugger = () => {
 
   return (
     <div className="flex flex-col gap-4 h-full p-4 overflow-y-auto hide-scrollbar max-h-screen">
-      <div className="mb-20 flex flex-col">
+      <div className="mb-20 flex flex-col gap-4 p-4">
         <SessionButton status={session_status} />
 
         {/* MockData for Manual Trigger */}
@@ -128,12 +135,12 @@ const DebugCard = React.memo(({ event }: { event: any }) => {
           </div>
         ) : null}
       </div>
-      {event.config && (
+      {/* {event.config && (
         <div className="">
           <div className="text-md">Action Config: </div>
           <ResultComponent result={event.config} />
         </div>
-      )}
+      )} */}
       {event.context && (
         <div className="">
           <div className="text-md">Generated Context: </div>
@@ -176,7 +183,7 @@ const ResultComponent = ({ result }: any) => {
       break;
     case "object":
       if (result !== null) {
-        console.log("result in object switch", result);
+        console.log("result in result ", result);
         content = (
           <ReactJson enableClipboard={false} theme={"tube"} src={result} />
         );
