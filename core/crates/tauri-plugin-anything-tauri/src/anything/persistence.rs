@@ -113,32 +113,32 @@ pub async fn find_flow_events(
     }
 }
 
-#[derive(Serialize)]
-pub struct CreateTriggerResponse {
-    trigger_id: Option<String>,
-}
+// #[derive(Serialize)]
+// pub struct CreateTriggerResponse {
+//     trigger_id: Option<String>,
+// }
 
-#[tauri::command]
-pub async fn save_trigger(
-    state: tauri::State<'_, AnythingState>,
-    create_trigger: CreateTrigger,
-) -> EventResult<CreateTriggerResponse> {
-    match state.inner.try_lock() {
-        Err(_e) => Err(Error::RuntimeError),
-        Ok(ref inner) => {
-            let event_repo = inner.trigger_repo().unwrap();
-            match event_repo.create_trigger(create_trigger).await {
-                Ok(trigger) => Ok(CreateTriggerResponse {
-                    trigger_id: Some(trigger),
-                }),
-                Err(e) => {
-                    eprintln!("Error saving trigger: {:?}", e);
-                    Ok(CreateTriggerResponse { trigger_id: None })
-                }
-            }
-        }
-    }
-}
+// #[tauri::command]
+// pub async fn save_trigger(
+//     state: tauri::State<'_, AnythingState>,
+//     create_trigger: CreateTrigger,
+// ) -> EventResult<CreateTriggerResponse> {
+//     match state.inner.try_lock() {
+//         Err(_e) => Err(Error::RuntimeError),
+//         Ok(ref inner) => {
+//             let event_repo = inner.trigger_repo().unwrap();
+//             match event_repo.create_trigger(create_trigger).await {
+//                 Ok(trigger) => Ok(CreateTriggerResponse {
+//                     trigger_id: Some(trigger),
+//                 }),
+//                 Err(e) => {
+//                     eprintln!("Error saving trigger: {:?}", e);
+//                     Ok(CreateTriggerResponse { trigger_id: None })
+//                 }
+//             }
+//         }
+//     }
+// }
 
 #[derive(Serialize)]
 pub struct GetTriggerByIdResponse {

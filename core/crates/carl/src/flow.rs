@@ -21,8 +21,6 @@ pub fn create_execution_plan(
     
     let trigger_session_id = Uuid::new_v4().to_string();
 
-   
-
     //create a stage if one is not provied
     let stage = if stage.is_none() {
         "DEV".to_string()

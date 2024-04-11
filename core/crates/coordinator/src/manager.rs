@@ -1,12 +1,11 @@
-use anything_common::AnythingConfig;
 use anything_carl;
+use anything_common::AnythingConfig;
 use std::process::Command;
 
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion, EventRepo,
-    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, TriggerRepoImpl, UpdateFlowArgs,
-    UpdateFlowVersion,
+    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, UpdateFlowArgs, UpdateFlowVersion,
 };
 use anything_runtime::{PluginManager, RuntimeConfig};
 use anything_store::FileStore;
@@ -31,7 +30,7 @@ use crate::CoordinatorError;
 pub struct Repositories {
     pub flow_repo: anything_persistence::FlowRepoImpl,
     pub event_repo: anything_persistence::EventRepoImpl,
-    pub trigger_repo: anything_persistence::TriggerRepoImpl,
+    // pub trigger_repo: anything_persistence::TriggerRepoImpl,
 }
 
 #[derive(Debug, Clone)]
@@ -163,13 +162,13 @@ database/
             .expect("unable to create flow repo");
         let event_repo = EventRepoImpl::new_with_datastore(datastore.clone())
             .expect("unable to create event repo");
-        let trigger_repo = TriggerRepoImpl::new_with_datastore(datastore.clone())
-            .expect("unable to create trigger repo");
+        // let trigger_repo = TriggerRepoImpl::new_with_datastore(datastore.clone())
+        //     .expect("unable to create trigger repo");
 
         self.repositories = Some(Repositories {
             flow_repo: flow_repo.clone(),
             event_repo: event_repo.clone(),
-            trigger_repo: trigger_repo.clone(),
+            // trigger_repo: trigger_repo.clone(),
         });
 
         // startup System Actor in charge of watching files changes for flows to syncronize
@@ -258,12 +257,12 @@ database/
         Ok(())
     }
 
-    /// The function `get_flows` returns a result containing a vector of `anything_graph::Flow` objects.
+    /// The function `get_flows` returns a result containing a vector of `anything_persistence::StoredFlow` objects.
     ///
     /// Returns:
     ///
     /// The function `get_flows` returns a `CoordinatorResult` containing a `Vec` of
-    /// `anything_graph::Flow` objects.
+    /// `anything_persistence::StoredFlow` objects.
     pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_persistence::StoredFlow>> {
         let flow_repo = self.flow_repo()?;
         // let mut file_store = self.file_store.clone();
@@ -292,7 +291,7 @@ database/
     /// Returns:    
     ///
     /// The function `get_flow` returns a `CoordinatorResult` which can either be an `Ok` variant
-    /// containing a `anything_graph::Flow` or an `Err` variant containing a
+    /// containing a `anything_persistence::StoredFlow` or an `Err` variant containing a
     /// `CoordinatorError::FlowNotFound` with the name of the flow as a string.
     pub async fn get_flow(
         &self,
@@ -367,7 +366,7 @@ database/
     ///
     /// Returns:
     ///
-    /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
+    /// a `CoordinatorResult` containing a `anything_persistence::StoredFlow` object.
     pub async fn create_flow(
         &mut self,
         flow_name: String,
@@ -457,7 +456,7 @@ database/
     ///
     /// Returns:
     ///
-    /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
+    /// a `CoordinatorResult` containing a value of type `anything_persistence::StoredFlow`.
     pub async fn update_flow(
         &mut self,
         flow_id: String,
@@ -592,12 +591,12 @@ database/
         }
     }
 
-    pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
-        match &self.repositories {
-            Some(repositories) => Ok(repositories.trigger_repo.clone()),
-            None => Err(CoordinatorError::RepoNotInitialized),
-        }
-    }
+    // pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
+    //     match &self.repositories {
+    //         Some(repositories) => Ok(repositories.trigger_repo.clone()),
+    //         None => Err(CoordinatorError::RepoNotInitialized),
+    //     }
+    // }
 
     pub fn system_actor(&self) -> CoordinatorResult<ActorRef<SystemMessage>> {
         self.actor_refs

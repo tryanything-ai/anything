@@ -18,9 +18,7 @@ pub struct SystemActorState {
     pub flow_repo: FlowRepoImpl,
 }
 
-
 //Actor that watches flow files and updates state in system when they change
-
 #[async_trait]
 impl Actor for SystemActor {
     type Msg = SystemMessage;

@@ -159,18 +159,18 @@ impl TestTriggerHelper {
         Self { datastore }
     }
 
-    pub async fn get_trigger_by_id(&self, trigger_id: String) -> StoredTrigger {
-        let pool = self.datastore.get_pool();
-        let trigger =
-            sqlx::query_as::<_, StoredTrigger>(r#"SELECT * from triggers WHERE trigger_id = ?1"#)
-                .bind(&trigger_id)
-                .fetch_one(pool)
-                .await
-                .map_err(|e| PersistenceError::DatabaseError(e))
-                .unwrap();
+    // pub async fn get_trigger_by_id(&self, trigger_id: String) -> StoredTrigger {
+    //     let pool = self.datastore.get_pool();
+    //     let trigger =
+    //         sqlx::query_as::<_, StoredTrigger>(r#"SELECT * from triggers WHERE trigger_id = ?1"#)
+    //             .bind(&trigger_id)
+    //             .fetch_one(pool)
+    //             .await
+    //             .map_err(|e| PersistenceError::DatabaseError(e))
+    //             .unwrap();
 
-        trigger
-    }
+    //     trigger
+    // }
 }
 
 pub struct TestEventHelper {

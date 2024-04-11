@@ -1,12 +1,3 @@
-CREATE TABLE IF NOT EXISTS triggers (
-    trigger_id TEXT NOT NULL PRIMARY KEY,
-    -- /file/created/<file-path> or /whatsapp/message/<message-id>
-    event_name TEXT NOT NULL,
-    payload json NOT NULL,
-    metadata json,
-    timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
-);
-
 CREATE TABLE IF NOT EXISTS events (
     event_id TEXT NOT NULL PRIMARY KEY,
     event_status TEXT NOT NULL,
@@ -30,6 +21,7 @@ CREATE TABLE IF NOT EXISTS events (
     debug_result json, -- debug info, a place where we can store extra data if we want like intermediate steps in the flow
     result json -- the result of the action
 );
+
 CREATE TABLE IF NOT EXISTS flows (
     flow_id TEXT PRIMARY KEY NOT NULL,
     flow_name TEXT NOT NULL,
@@ -49,6 +41,17 @@ CREATE TABLE IF NOT EXISTS flow_versions (
     flow_definition json NOT NULL,
     UNIQUE (flow_id, flow_version)
 );
+
+-- CREATE TABLE IF NOT EXISTS triggers (
+--     trigger_id TEXT NOT NULL PRIMARY KEY,
+--     -- /file/created/<file-path> or /whatsapp/message/<message-id>
+--     event_name TEXT NOT NULL,
+--     payload json NOT NULL,
+--     metadata json,
+--     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
+-- );
+
+
 -- CREATE TABLE IF NOT EXISTS nodes (
 --     node_id TEXT PRIMARY KEY NOT NULL,
 --     flow_id TEXT NOT NULL,
