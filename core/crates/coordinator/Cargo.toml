@@ -35,3 +35,5 @@ ractor = "0.9.3"
 arraydeque = "0.5.1"
 toml = { workspace = true }
 tera = "1.19.1"
+chrono = { workspace = true }
+cron = "0.12.1"

@@ -21,6 +21,7 @@ use uuid::Uuid;
 
 // use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
 use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
+use crate::actors::trigger_actor::{TriggerActor, TriggerActorState, TriggerMessage};
 // use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
 use crate::actors::work_queue_actor::{WorkQueueActor, WorkQueueActorMessage, WorkQueueActorState};
 use crate::error::CoordinatorResult;
@@ -39,6 +40,7 @@ pub struct ActorRefs {
     // pub flow_actor: ActorRef<FlowMessage>,
     // pub update_actor: ActorRef<UpdateActorMessage>,
     pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
+    pub trigger_actor: ActorRef<TriggerMessage>,
 }
 
 #[derive(Debug, Clone)]
@@ -158,17 +160,16 @@ database/
         .await
         .unwrap();
 
+        //Stores The Flows in SQLite
         let flow_repo = FlowRepoImpl::new_with_datastore(datastore.clone())
             .expect("unable to create flow repo");
+        //Stores The Events in SQLite
         let event_repo = EventRepoImpl::new_with_datastore(datastore.clone())
             .expect("unable to create event repo");
-        // let trigger_repo = TriggerRepoImpl::new_with_datastore(datastore.clone())
-        //     .expect("unable to create trigger repo");
 
         self.repositories = Some(Repositories {
             flow_repo: flow_repo.clone(),
             event_repo: event_repo.clone(),
-            // trigger_repo: trigger_repo.clone(),
         });
 
         // startup System Actor in charge of watching files changes for flows to syncronize
@@ -183,47 +184,27 @@ database/
         .await
         .unwrap();
 
-        //Honestly unsure what this actor does right now
-        // let (update_actor, _handle) = Actor::spawn(
-        //     None,
-        //     UpdateActor,
-        //     UpdateActorState {
-        //         config: self.config.clone(),
-        //         latest_messages: Default::default(),
-        //     },
-        // )
-        // .await
-        // .unwrap();
-
-        // let (flow_actor, _handle) = Actor::spawn(
-        //     None,
-        //     FlowActor,
-        //     FlowActorState {
-        //         file_store: self.file_store.clone(),
-        //         runner: self.runner.clone(),
-        //         config: self.config.clone(),
-        //         update_actor_ref: update_actor.clone(),
-        //     },
-        // )
-        // .await
-        // .unwrap();
-
         //Start carls work queue actor
         let (work_queue_actor, _handle) = Actor::spawn(
             None,
             WorkQueueActor,
             WorkQueueActorState {
                 processing: false,
-                // current_event_id: None,
-                // current_session_id: None,
-                // current_trigger_session_id: None,
                 event_repo: event_repo.clone(),
                 plugin_manager: PluginManager::new(self.config.runtime_config()),
                 file_store: self.file_store.clone(),
                 anything_config: self.config.clone(),
-                // plugin_manager: PluginManager::new(),
-                // runtimeConfig: self.config.runtime_config().clone(),
-                // runner: self.runner.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let (trigger_actor, _handle) = Actor::spawn(
+            None,
+            TriggerActor,
+            TriggerActorState {
+                flow_repo: flow_repo.clone(),
+                triggers: Arc::new(std::sync::Mutex::new(vec![])),
             },
         )
         .await
@@ -231,9 +212,8 @@ database/
 
         self.actor_refs = Some(ActorRefs {
             system_actor,
-            // flow_actor,
-            // update_actor,
             work_queue_actor,
+            trigger_actor,
         });
 
         // Setup listeners and action-takers
@@ -520,7 +500,7 @@ database/
     pub async fn execute_flow(
         &self,
         flow_id: String,
-        flow_version_id: String,
+        flow_version_id: String, //TODO: add trigger_id and context
         session_id: Option<String>,
         stage: Option<String>,
     ) -> CoordinatorResult<String> {
@@ -568,6 +548,8 @@ database/
                     println!("Error sending StartWorkQueue message: {:?}", e);
                 }
             }
+
+            //TODO: send message to update triggers ( ACTUALLLY do this in the CRUD functions for triggers)
         } else {
             return Err(CoordinatorError::ActorNotInitialized(String::from(
                 "work_queue_actor",
@@ -591,13 +573,6 @@ database/
         }
     }
 
-    // pub fn trigger_repo(&self) -> CoordinatorResult<TriggerRepoImpl> {
-    //     match &self.repositories {
-    //         Some(repositories) => Ok(repositories.trigger_repo.clone()),
-    //         None => Err(CoordinatorError::RepoNotInitialized),
-    //     }
-    // }
-
     pub fn system_actor(&self) -> CoordinatorResult<ActorRef<SystemMessage>> {
         self.actor_refs
             .as_ref()
@@ -606,20 +581,6 @@ database/
             )))
             .map(|refs| refs.system_actor.clone())
     }
-
-    /// The function `flow_actor` returns a reference to the flow actor.
-    ///
-    /// Example:
-    ///
-    /// manager.flow_actor().execute_flow(flow_name)
-    // pub fn flow_actor(&self) -> CoordinatorResult<ActorRef<FlowMessage>> {
-    //     self.actor_refs
-    //         .as_ref()
-    //         .ok_or(CoordinatorError::ActorNotInitialized(String::from(
-    //             "flow_actor",
-    //         )))
-    //         .map(|refs| refs.flow_actor.clone())
-    // }
 
     /*
     INTERNAL FUNCTIONS

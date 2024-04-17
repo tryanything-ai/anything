@@ -61,6 +61,7 @@ pub trait FlowRepo {
     async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId>;
     async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool>;
     async fn reset(&self) -> PersistenceResult<()>;
+    async fn get_flow_triggers(&self) -> PersistenceResult<Vec<(FlowVersionId, FlowId, String)>>;
 }
 
 #[derive(Clone)]
@@ -410,6 +411,27 @@ impl FlowRepo for FlowRepoImpl {
         tx.commit().await?;
 
         Ok(())
+    }
+
+    async fn get_flow_triggers(&self) -> PersistenceResult<Vec<(FlowVersionId, FlowId, String)>> {
+        let pool = self.datastore.get_pool();
+
+        let query = r#"
+        SELECT 
+            fv.flow_version_id,
+            fv.flow_id,
+            JSON_EXTRACT(fv.flow_definition, '$.trigger') AS trigger
+        FROM flow_versions fv
+        "#;
+
+        let result = sqlx::query_as::<_, (FlowVersionId, FlowId, String)>(query)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        println!("Result for get flow triggers: {:?}", result);
+
+        Ok(result)
     }
 }
 
