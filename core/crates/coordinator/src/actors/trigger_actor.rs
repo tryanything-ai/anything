@@ -1,6 +1,7 @@
 use anything_persistence::{FlowRepo, FlowRepoImpl};
 use chrono::{DateTime, Utc};
-use cron::Schedule;
+use cron::Schedule; //will need to parse cron syntax
+use serde_json::Value;
 use std::str::FromStr;
 use std::time::Duration;
 // use anything_store::{types::ChangeMessage, FileStore};
@@ -19,16 +20,17 @@ pub enum TriggerMessage {
 pub struct TriggerActor;
 pub struct TriggerActorState {
     pub flow_repo: FlowRepoImpl,
-    // pub triggers: Vec<Trigger>,
     pub triggers: Arc<Mutex<Vec<Trigger>>>,
 }
 
-// Define a Trigger structure if it doesn't exist yet
 #[derive(Debug, Clone)]
 pub struct Trigger {
-    pub cron_expression: String, // Store the cron job expression
-    pub task_identifier: String, // Some identifier for the task related to the trigger
-    pub last_fired: Option<DateTime<Utc>>,
+    pub trigger_id: String,                //type of trigger essentially
+    pub flow_id: String,                   //flow id
+    pub flow_version_id: String,           // Some identifier for the task related to the trigger
+    pub config: Value,                     // Store the trigger configuration
+    pub last_fired: Option<DateTime<Utc>>, //data so we know when it was last fired
+    pub next_fire: Option<DateTime<Utc>>,  //data so we know when it will fire next
 }
 
 //Actor that watches flow files and updates state in system when they change
@@ -58,17 +60,8 @@ impl Actor for TriggerActor {
                 tracing::debug!("Hydrating Triggers from FlowVersions Table");
                 // Load and rehydrate triggers
                 let myself_clone = myself.clone();
-                // let myself_clone_2 = myself.clone();
                 self.hydrate_triggers(myself_clone, message, state).await?;
-                // self.hydrate_triggers().await;
-                // Start cron checker after triggers are hydrated
-                // myself.send_message(TriggerMessage::CheckCron).await;
-
-                //this is angry
-                // tokio::spawn(async move {
-                //     self.start_cron_checker(myself_clone_2, state).await;
-                // });
-            } // Future handling for other trigger types could be added here
+            }
         }
         Ok(())
     }
@@ -81,48 +74,57 @@ impl TriggerActor {
         _message: <TriggerActor as Actor>::Msg,
         state: &mut <TriggerActor as Actor>::State,
     ) -> CoordinatorResult<()> {
-        let _triggers = state.flow_repo.get_flow_triggers().await.map_err(|e| {
+        let trigger_data = state.flow_repo.get_flow_triggers().await.map_err(|e| {
             tracing::error!("Failed to retrieve triggers: {:#?}", e);
             CoordinatorError::PersistenceError(e)
         })?;
 
+        println!("triggger_data in trigger_actor: {:#?}", trigger_data);
+
         //TODO: add triggers to vector
-        
+        for trigger_info in trigger_data {
+            //destructure trigger_info into what is usefull for us.
+            let parsed_argument: serde_json::Value = serde_json::from_str(&trigger_info.2)
+                .map_err(|e| {
+                    tracing::error!("Failed to parse trigger argument: {:#?}", e);
+                    CoordinatorError::ParsingError(e.to_string())
+                })?;
+
+            // println!("Parsed Argument: {:?}", parsed_argument);
+
+            let prospect_new_trigger = Trigger {
+                trigger_id: parsed_argument["node_name"]
+                    .to_string()
+                    .trim_matches('"')
+                    .to_string(),
+                flow_id: trigger_info.1,
+                flow_version_id: trigger_info.0,
+                config: serde_json::Value::from(parsed_argument["config"].clone()),
+                last_fired: None,
+                next_fire: None,
+            };
+
+            // println!("Prospect Trigger: {:?}", prospect_new_trigger);
+
+            if state
+                .triggers
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|trigger| trigger.flow_version_id == prospect_new_trigger.flow_version_id)
+            {
+                //trigger already exists. leave it in state or else it messes up our maintenance of "lastTriggered"
+                continue;
+            }
+
+            //add new trigger to state
+            state.triggers.lock().unwrap().push(prospect_new_trigger);
+        }
 
         self.start_cron_checker(state).await;
         Ok(())
     }
 
-    // pub async fn start_cron_checker(&self, state: &mut <TriggerActor as Actor>::State) {
-    //     let triggers = state.triggers.clone();
-    //     // this gets mad find a better solution
-    //     // let state_clone = (*state).clone();
-    //     tokio::task::spawn_blocking(async move {
-    //         loop {
-    //             let now = Utc::now();
-    //             let triggers = triggers.lock().unwrap();
-    //             for trigger in triggers.iter() {
-    //                 // Your updated trigger logic here
-    //             }
-    //             sleep(Duration::from_secs(60)).await; // Check every minute
-    //         }
-    //     });
-    // }
-
-    // pub async fn start_cron_checker(&self, state: &mut <TriggerActor as Actor>::State) {
-    //     let triggers = state.triggers.clone();
-    //     tokio::spawn(async move {
-    //         loop {
-    //             let now = Utc::now();
-    //             let triggers = triggers.lock().unwrap();
-    //             for trigger in triggers.iter() {
-    //                 // Your updated trigger logic here
-    //             }
-    //             drop(triggers); // Release the lock before the sleep
-    //             sleep(Duration::from_secs(60)).await; // Check every minute
-    //         }
-    //     });
-    // }
     pub async fn start_cron_checker(&self, state: &mut <TriggerActor as Actor>::State) {
         let triggers = state.triggers.clone();
         tokio::task::spawn_blocking(move || {
@@ -130,13 +132,97 @@ impl TriggerActor {
             runtime.block_on(async {
                 loop {
                     let now = Utc::now();
-                    let triggers = triggers.lock().unwrap();
+                    let mut triggers = triggers.lock().unwrap();
                     println!("Cron every minute hit!");
-                    for trigger in triggers.iter() {
+
+                    for trigger in triggers.iter_mut() {
                         // Your updated trigger logic here
+                        println!("Checking triggers every minute: {:?}", trigger);
+
+                        // for trigger in triggers.iter_mut() {
+                        if trigger.trigger_id == "cron_trigger" {
+                            println!("Handling cron trigger {:?}", trigger);
+                            match Schedule::from_str(&trigger.config["pattern"].as_str().unwrap()) {
+                                Ok(schedule) => {
+                                    let next = schedule.upcoming(Utc).next().unwrap();
+                                    if let Some(next_fire) = trigger.next_fire {
+                                        if now >= next_fire
+                                            && (trigger.last_fired.is_none()
+                                                || trigger.last_fired.unwrap() < next_fire)
+                                        {
+                                            println!(
+                                                "Firing trigger for: {:?}",
+                                                trigger.flow_version_id
+                                            );
+                                            trigger.last_fired = Some(now);
+                                            // Here you would call the function or send a message to fire the actual trigger
+                                        }
+                                    }
+                                    trigger.next_fire = Some(next); // Update the next fire time
+                                    println!("Scheduled next fire time: {:?}", next);
+                                }
+                                Err(e) => {
+                                    println!(
+                                        "Invalid cron expression for trigger {}: {:?}",
+                                        trigger.flow_version_id, e
+                                    );
+                                    // Handle invalid cron expressions, e.g., log error, send alert, etc.
+                                }
+                            }
+                            // let cron_expression =
+                            //     trigger.config["pattern"].as_str().unwrap().to_string();
+
+                            // println!("Cron expression: {:?}", cron_expression);
+                            // let schedule = Schedule::from_str(&cron_expression).unwrap();
+                            // let next = schedule.upcoming(Utc).next().unwrap();
+
+                            // // Check if it's time to fire the event
+                            // if let Some(next_fire) = trigger.next_fire {
+                            //     if now >= next_fire
+                            //         && (trigger.last_fired.is_none()
+                            //             || trigger.last_fired.unwrap() < next_fire)
+                            //     {
+                            //         // Fire the event here
+                            //         println!("Firing trigger for: {:?}", trigger.flow_version_id);
+
+                            //         trigger.last_fired = Some(now);
+                            //         // Here you would call the function or send a message to fire the actual trigger
+                            //         // Example: fire_trigger(trigger.flow_version_id);
+                            //     } else {
+                            //         println!("Not time to fire yet");
+                            //     }
+                            // }
+                            // //Carl moved this to after so we wherent updating next_fire before evaluating it
+                            // // Update the next fire time for future checks
+                            // trigger.next_fire = Some(next);
+                            // println!("Scheduled next fire time: {:?}", next);
+                        } else {
+                            println!("Doing nothing. we only handle cron triggers for now.")
+                        }
+                        // }
+                        //if trigger_id is cron_trigger
+                        // if trigger.trigger_id == "cron_trigger" {
+                        //     if let Some(next_fire) = trigger.next_fire {
+                        //         if next_fire < now {
+                        //             //we have passed next_fire ( so it meaans we are up to one minute or loop interval behind when it should have fired)
+                        //             //TODO: check when last_fired was and determine if we took care of it in the last loop. If we did not, then we should fire it now.
+                        //         }
+                        //     }
+
+                        //     let cron_expression = trigger.config["cron_expression"]
+                        //         .to_string()
+                        //         .trim_matches('"')
+                        //         .to_string();
+                        //     let schedule = Schedule::from_str(&cron_expression).unwrap();
+                        //     let next = schedule.upcoming(Utc).next().unwrap();
+                        //     trigger.next_fire = Some(next);
+                        //     println!("Next cron time: {:?}", next);
+                        // } else {
+                        //     println("Doing nothing. we only handle cron triggers for now.")
+                        // }
                     }
                     drop(triggers); // Release the lock before the sleep
-                    tokio::time::sleep(Duration::from_secs(60)).await; // Check every minute
+                    sleep(Duration::from_secs(20)).await; // Check every minute
                 }
             });
         });

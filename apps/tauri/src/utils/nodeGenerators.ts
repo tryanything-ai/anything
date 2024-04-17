@@ -41,11 +41,11 @@ const NODES: Node[] = [
     handles: StartHandles,
     variables: [],
     config: {
-      pattern: "*/5 * * * *", //every 5 minutes
+      pattern: "0 */5 * * * *", //every 5 minutes
     },
     trigger_type: "cron",
     mockData: {
-      pattern: "*/5 * * * *"
+      pattern: "0 */5 * * * *"
     },
   },
   {

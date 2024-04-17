@@ -53,6 +53,9 @@ pub enum CoordinatorError {
     // ProcessorSendError(tokio::sync::mpsc::error::SendError<ProcessorMessage>),
     #[error("processor execution error: {0}")]
     ProcessorExecutionError(String),
+
+    #[error("processor error: {0}")]
+    ParsingError(String),
 }
 
 impl<M> From<postage::sink::SendError<M>> for CoordinatorError {
