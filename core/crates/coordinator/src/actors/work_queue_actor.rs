@@ -1,9 +1,12 @@
 use anything_common::AnythingConfig;
-use anything_persistence::{EventRepo, EventRepoImpl, StoreEvent};
+use anything_persistence::{EventRepo, EventRepoImpl, FlowRepoImpl, StoreEvent};
 use anything_runtime::{ExecuteConfigBuilder, PluginManager, Scope};
 use anything_store::FileStore;
 use serde_json::Value;
 use std::collections::HashMap;
+use uuid::Uuid;
+
+use anything_persistence::FlowRepo;
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -11,16 +14,25 @@ use tera::{Context, Tera};
 
 use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
 
+use crate::CoordinatorResult;
+
 // Messages for Work Queue Actor
 #[derive(Debug, Clone)]
 pub enum WorkQueueActorMessage {
     StartWorkQueue,
     WorkCompleted(String),
+    ExecuteFlow {
+        flow_id: String,
+        flow_version_id: String,
+        session_id: Option<String>,
+        stage: Option<String>,
+    },
 }
 
 pub struct WorkQueueActorState {
     pub processing: bool,
     pub event_repo: EventRepoImpl,
+    pub flow_repo: FlowRepoImpl,
     pub plugin_manager: PluginManager,
     pub file_store: FileStore,
     pub anything_config: AnythingConfig,
@@ -60,6 +72,25 @@ impl Actor for WorkQueueActor {
                     tracing::debug!("Already processing work");
                     println!("println: Already processing work");
                 }
+            }
+            WorkQueueActorMessage::ExecuteFlow {
+                flow_id,
+                flow_version_id,
+                session_id,
+                stage,
+            } => {
+                // Implementation for executing a flow goes here
+                self.execute_flow(
+                    state,
+                    myself,
+                    flow_id.clone(),
+                    flow_version_id.clone(),
+                    session_id,
+                    stage,
+                )
+                .await?;
+                tracing::debug!("Execute Flow: {} {}", flow_id, flow_version_id);
+                println!("println: Execute Flow: {} {}", flow_id, flow_version_id);
             }
             WorkQueueActorMessage::WorkCompleted(event_id) => {
                 // Implementation for handling work completion goes here
@@ -197,7 +228,10 @@ impl WorkQueueActor {
         if let Ok(events) = events {
             for event in events {
                 if let Some(result) = event.result {
-                    println!("Adding result to context from {}: {}",event.node_id, result);
+                    println!(
+                        "Adding result to context from {}: {}",
+                        event.node_id, result
+                    );
                     context.insert(event.node_id, &result);
                 }
             }
@@ -230,7 +264,7 @@ impl WorkQueueActor {
 
     fn read_env_file(&self, config: &AnythingConfig) -> io::Result<HashMap<String, String>> {
         let runtime_config = config.runtime_config().clone();
-        
+
         //TODO: give access to "ASSET_FOLDER"
         //FLOW_FOLDER
         //FLOW_SESSION_ID
@@ -265,5 +299,46 @@ impl WorkQueueActor {
         }
 
         Ok(env_vars)
+    }
+
+    pub async fn execute_flow(
+        &self,
+        state: &mut <WorkQueueActor as Actor>::State,
+        myself: ActorRef<WorkQueueActorMessage>,
+        flow_id: String,
+        flow_version_id: String, //TODO: add trigger_id and context
+        session_id: Option<String>,
+        stage: Option<String>,
+    ) -> CoordinatorResult<String> {
+        println!("flow_id: {}", flow_id);
+        println!("flow_version_id: {}", flow_version_id);
+
+        let flow = state
+            .flow_repo
+            .get_flow_version_by_id(flow_id, flow_version_id)
+            .await?;
+
+        //create flow session id if one was not passed
+        let flow_session_id = if session_id.is_none() {
+            Uuid::new_v4().to_string()
+        } else {
+            session_id.unwrap()
+        };
+
+        //BFS over the flow to get the execution plan
+        let worklist =
+            anything_carl::flow::create_execution_plan(flow, flow_session_id.clone(), stage);
+
+        println!("worklist in manager: {:?}", worklist);
+
+        //create all the events in the database
+        for event in worklist {
+            state.event_repo.save_event(event).await?;
+        }
+
+        //TODO: send start message to self
+        let _ = myself.send_message(WorkQueueActorMessage::StartWorkQueue);
+
+        Ok(flow_session_id.clone())
     }
 }

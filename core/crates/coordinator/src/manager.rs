@@ -191,6 +191,7 @@ database/
             WorkQueueActorState {
                 processing: false,
                 event_repo: event_repo.clone(),
+                flow_repo: flow_repo.clone(),
                 plugin_manager: PluginManager::new(self.config.runtime_config()),
                 file_store: self.file_store.clone(),
                 anything_config: self.config.clone(),
@@ -205,6 +206,9 @@ database/
             TriggerActorState {
                 flow_repo: flow_repo.clone(),
                 triggers: Arc::new(std::sync::Mutex::new(vec![])),
+                // config: self.config.clone(),
+                work_queue_actor: work_queue_actor.clone(), // execute_flow: self.execute_flow.clone(),
+                                                            // execute_flow: self.exec
             },
         )
         .await
@@ -212,7 +216,7 @@ database/
 
         self.actor_refs = Some(ActorRefs {
             system_actor,
-            work_queue_actor,
+            work_queue_actor: work_queue_actor.clone(),
             trigger_actor,
         });
 
@@ -508,12 +512,12 @@ database/
         println!("flow_id: {}", flow_id);
         println!("flow_version_id: {}", flow_version_id);
 
-        let flow = self
-            .flow_repo()?
-            .get_flow_version_by_id(flow_id, flow_version_id)
-            .await?;
+        // let flow = self
+        //     .flow_repo()?
+        //     .get_flow_version_by_id(flow_id, flow_version_id)
+        //     .await?;
 
-        //create flow session id if one was not passed
+        // //create flow session id if one was not passed
         let flow_session_id = if session_id.is_none() {
             Uuid::new_v4().to_string()
         } else {
@@ -521,23 +525,29 @@ database/
         };
 
         //BFS over the flow to get the execution plan
-        let worklist =
-            anything_carl::flow::create_execution_plan(flow, flow_session_id.clone(), stage);
+        // let worklist =
+        //     anything_carl::flow::create_execution_plan(flow, flow_session_id.clone(), stage);
 
-        println!("worklist in manager: {:?}", worklist);
+        // println!("worklist in manager: {:?}", worklist);
 
-        //create all the events in the database
-        for event in worklist {
-            self.event_repo()?.save_event(event).await?;
-        }
+        // //create all the events in the database
+        // for event in worklist {
+        //     self.event_repo()?.save_event(event).await?;
+        // }
 
         //start execution
         // Check if the actor_refs and work_queue_actor are available
         if let Some(ref actor_refs) = self.actor_refs {
             // Send the StartWorkQueue message to the work_queue_actor
-            let result = actor_refs
-                .work_queue_actor
-                .send_message(WorkQueueActorMessage::StartWorkQueue);
+            let result =
+                actor_refs
+                    .work_queue_actor
+                    .send_message(WorkQueueActorMessage::ExecuteFlow {
+                        flow_id: flow_id,
+                        flow_version_id: flow_version_id,
+                        session_id: Some(flow_session_id.clone()),
+                        stage: stage,
+                    });
             match result {
                 Ok(_) => {
                     // Handle success case

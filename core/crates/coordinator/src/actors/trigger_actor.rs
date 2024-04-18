@@ -12,6 +12,9 @@ use tokio::time::sleep;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use super::work_queue_actor::WorkQueueActor;
+use super::work_queue_actor::WorkQueueActorMessage;
+
 #[derive(Debug, Clone)]
 pub enum TriggerMessage {
     HydrateTriggers,
@@ -21,6 +24,8 @@ pub struct TriggerActor;
 pub struct TriggerActorState {
     pub flow_repo: FlowRepoImpl,
     pub triggers: Arc<Mutex<Vec<Trigger>>>,
+    // pub config: AnythingConfig,
+    pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
 }
 
 #[derive(Debug, Clone)]
@@ -127,6 +132,8 @@ impl TriggerActor {
 
     pub async fn start_cron_checker(&self, state: &mut <TriggerActor as Actor>::State) {
         let triggers = state.triggers.clone();
+        let work_queue_actor = state.work_queue_actor.clone(); // Clone the actor reference
+
         tokio::task::spawn_blocking(move || {
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async {
@@ -154,8 +161,81 @@ impl TriggerActor {
                                                 "Firing trigger for: {:?}",
                                                 trigger.flow_version_id
                                             );
-                                            trigger.last_fired = Some(now);
-                                            // Here you would call the function or send a message to fire the actual trigger
+
+                                            // Asynchronously send a message to the WorkQueueActor
+                                            let actor_ref = work_queue_actor.clone();
+                                            let flow_id = trigger.flow_id.clone();
+                                            let flow_version_id = trigger.flow_version_id.clone();
+
+                                            tokio::spawn(async move {
+                                                actor_ref
+                                                    .send_message(
+                                                        WorkQueueActorMessage::ExecuteFlow {
+                                                            flow_id,
+                                                            flow_version_id,
+                                                            session_id: None,
+                                                            stage: None,
+                                                        },
+                                                    )
+                                                    .expect("Failed to send ExecuteFlow message");
+                                            });
+
+                                            // let work_queue_actor = state.work_queue_actor.clone();
+                                            // let flow_id = trigger.flow_id.clone();
+                                            // let flow_version_id = trigger.flow_version_id.clone();
+
+                                            // Here we just call send_message without await
+                                            // let send_result = work_queue_actor.send_message(
+                                            //     WorkQueueActorMessage::ExecuteFlow {
+                                            //         flow_id,
+                                            //         flow_version_id,
+                                            //         session_id: None,
+                                            //         stage: None,
+                                            //     },
+                                            // );
+
+                                            // match send_result {
+                                            //     Ok(_) => println!("Message sent successfully"),
+                                            //     Err(e) => {
+                                            //         println!("Failed to send message: {:?}", e)
+                                            //     }
+                                            // }
+                                            // let send_result = work_queue_actor.send_message(
+                                            //     WorkQueueActorMessage::ExecuteFlow {
+                                            //         flow_id: trigger.flow_id.clone(),
+                                            //         flow_version_id: trigger
+                                            //             .flow_version_id
+                                            //             .clone(),
+                                            //         session_id: None,
+                                            //         stage: None,
+                                            //     },
+                                            // );
+
+                                            // match send_result {
+                                            //     Ok(_) => println!("Message sent successfully"),
+                                            //     Err(e) => {
+                                            //         println!("Failed to send message: {:?}", e)
+                                            //     }
+                                            // }
+                                            // }
+
+                                            // tokio::spawn(async move {
+                                            //     work_queue_actor.send_message(WorkQueueActorMessage::ExecuteFlow {
+                                            //         flow_id,
+                                            //         flow_version_id,
+                                            //         session_id: None,
+                                            //         stage: None,
+                                            //     }).await.expect("Failed to send ExecuteFlow message");
+                                            // });
+                                            //TODO: fire event
+                                            // state
+                                            //     .work_queue_actor
+                                            //     .send_message(WorkQueueActorMessage::ExecuteFlow {
+                                            //         flow_id: trigger.flow_id.clone(),
+                                            //         flow_version_id: trigger.flow_version_id.clone(),
+                                            //         session_id: None,
+                                            //         stage: None,
+                                            //     });
                                         }
                                     }
                                     trigger.next_fire = Some(next); // Update the next fire time
@@ -169,57 +249,9 @@ impl TriggerActor {
                                     // Handle invalid cron expressions, e.g., log error, send alert, etc.
                                 }
                             }
-                            // let cron_expression =
-                            //     trigger.config["pattern"].as_str().unwrap().to_string();
-
-                            // println!("Cron expression: {:?}", cron_expression);
-                            // let schedule = Schedule::from_str(&cron_expression).unwrap();
-                            // let next = schedule.upcoming(Utc).next().unwrap();
-
-                            // // Check if it's time to fire the event
-                            // if let Some(next_fire) = trigger.next_fire {
-                            //     if now >= next_fire
-                            //         && (trigger.last_fired.is_none()
-                            //             || trigger.last_fired.unwrap() < next_fire)
-                            //     {
-                            //         // Fire the event here
-                            //         println!("Firing trigger for: {:?}", trigger.flow_version_id);
-
-                            //         trigger.last_fired = Some(now);
-                            //         // Here you would call the function or send a message to fire the actual trigger
-                            //         // Example: fire_trigger(trigger.flow_version_id);
-                            //     } else {
-                            //         println!("Not time to fire yet");
-                            //     }
-                            // }
-                            // //Carl moved this to after so we wherent updating next_fire before evaluating it
-                            // // Update the next fire time for future checks
-                            // trigger.next_fire = Some(next);
-                            // println!("Scheduled next fire time: {:?}", next);
                         } else {
                             println!("Doing nothing. we only handle cron triggers for now.")
                         }
-                        // }
-                        //if trigger_id is cron_trigger
-                        // if trigger.trigger_id == "cron_trigger" {
-                        //     if let Some(next_fire) = trigger.next_fire {
-                        //         if next_fire < now {
-                        //             //we have passed next_fire ( so it meaans we are up to one minute or loop interval behind when it should have fired)
-                        //             //TODO: check when last_fired was and determine if we took care of it in the last loop. If we did not, then we should fire it now.
-                        //         }
-                        //     }
-
-                        //     let cron_expression = trigger.config["cron_expression"]
-                        //         .to_string()
-                        //         .trim_matches('"')
-                        //         .to_string();
-                        //     let schedule = Schedule::from_str(&cron_expression).unwrap();
-                        //     let next = schedule.upcoming(Utc).next().unwrap();
-                        //     trigger.next_fire = Some(next);
-                        //     println!("Next cron time: {:?}", next);
-                        // } else {
-                        //     println("Doing nothing. we only handle cron triggers for now.")
-                        // }
                     }
                     drop(triggers); // Release the lock before the sleep
                     sleep(Duration::from_secs(20)).await; // Check every minute
