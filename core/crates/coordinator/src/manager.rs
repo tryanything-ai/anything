@@ -1,4 +1,3 @@
-use anything_carl;
 use anything_common::AnythingConfig;
 use std::process::Command;
 
@@ -504,7 +503,7 @@ database/
     pub async fn execute_flow(
         &self,
         flow_id: String,
-        flow_version_id: String, //TODO: add trigger_id and context
+        flow_version_id: String, 
         session_id: Option<String>,
         stage: Option<String>,
     ) -> CoordinatorResult<String> {
@@ -512,10 +511,6 @@ database/
         println!("flow_id: {}", flow_id);
         println!("flow_version_id: {}", flow_version_id);
 
-        // let flow = self
-        //     .flow_repo()?
-        //     .get_flow_version_by_id(flow_id, flow_version_id)
-        //     .await?;
 
         // //create flow session id if one was not passed
         let flow_session_id = if session_id.is_none() {
@@ -523,17 +518,6 @@ database/
         } else {
             session_id.unwrap()
         };
-
-        //BFS over the flow to get the execution plan
-        // let worklist =
-        //     anything_carl::flow::create_execution_plan(flow, flow_session_id.clone(), stage);
-
-        // println!("worklist in manager: {:?}", worklist);
-
-        // //create all the events in the database
-        // for event in worklist {
-        //     self.event_repo()?.save_event(event).await?;
-        // }
 
         //start execution
         // Check if the actor_refs and work_queue_actor are available

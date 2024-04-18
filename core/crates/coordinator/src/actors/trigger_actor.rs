@@ -179,63 +179,6 @@ impl TriggerActor {
                                                     )
                                                     .expect("Failed to send ExecuteFlow message");
                                             });
-
-                                            // let work_queue_actor = state.work_queue_actor.clone();
-                                            // let flow_id = trigger.flow_id.clone();
-                                            // let flow_version_id = trigger.flow_version_id.clone();
-
-                                            // Here we just call send_message without await
-                                            // let send_result = work_queue_actor.send_message(
-                                            //     WorkQueueActorMessage::ExecuteFlow {
-                                            //         flow_id,
-                                            //         flow_version_id,
-                                            //         session_id: None,
-                                            //         stage: None,
-                                            //     },
-                                            // );
-
-                                            // match send_result {
-                                            //     Ok(_) => println!("Message sent successfully"),
-                                            //     Err(e) => {
-                                            //         println!("Failed to send message: {:?}", e)
-                                            //     }
-                                            // }
-                                            // let send_result = work_queue_actor.send_message(
-                                            //     WorkQueueActorMessage::ExecuteFlow {
-                                            //         flow_id: trigger.flow_id.clone(),
-                                            //         flow_version_id: trigger
-                                            //             .flow_version_id
-                                            //             .clone(),
-                                            //         session_id: None,
-                                            //         stage: None,
-                                            //     },
-                                            // );
-
-                                            // match send_result {
-                                            //     Ok(_) => println!("Message sent successfully"),
-                                            //     Err(e) => {
-                                            //         println!("Failed to send message: {:?}", e)
-                                            //     }
-                                            // }
-                                            // }
-
-                                            // tokio::spawn(async move {
-                                            //     work_queue_actor.send_message(WorkQueueActorMessage::ExecuteFlow {
-                                            //         flow_id,
-                                            //         flow_version_id,
-                                            //         session_id: None,
-                                            //         stage: None,
-                                            //     }).await.expect("Failed to send ExecuteFlow message");
-                                            // });
-                                            //TODO: fire event
-                                            // state
-                                            //     .work_queue_actor
-                                            //     .send_message(WorkQueueActorMessage::ExecuteFlow {
-                                            //         flow_id: trigger.flow_id.clone(),
-                                            //         flow_version_id: trigger.flow_version_id.clone(),
-                                            //         session_id: None,
-                                            //         stage: None,
-                                            //     });
                                         }
                                     }
                                     trigger.next_fire = Some(next); // Update the next fire time
