@@ -503,14 +503,13 @@ database/
     pub async fn execute_flow(
         &self,
         flow_id: String,
-        flow_version_id: String, 
+        flow_version_id: String,
         session_id: Option<String>,
         stage: Option<String>,
     ) -> CoordinatorResult<String> {
         println!("Execute flow called in the manager");
         println!("flow_id: {}", flow_id);
         println!("flow_version_id: {}", flow_version_id);
-
 
         // //create flow session id if one was not passed
         let flow_session_id = if session_id.is_none() {

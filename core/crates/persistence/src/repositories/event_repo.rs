@@ -35,6 +35,11 @@ pub trait EventRepo {
         event_id: String,
         result: serde_json::Value,
     ) -> PersistenceResult<()>;
+    async fn store_execution_error_result_and_cancel_remaining(
+        &self,
+        event_id: String,
+        result: serde_json::Value,
+    ) -> PersistenceResult<()>;
     async fn get_events_for_session(&self, session_id: String) -> PersistenceResult<EventList>;
 }
 
@@ -227,6 +232,37 @@ impl EventRepo for EventRepoImpl {
             .execute(pool)
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;
+        Ok(())
+    }
+
+    async fn store_execution_error_result_and_cancel_remaining(
+        &self,
+        event_id: String,
+        result: serde_json::Value,
+    ) -> PersistenceResult<()> {
+        let pool = self.datastore.get_pool();
+        sqlx::query("UPDATE events SET event_status = 'ERROR', result = ?2 WHERE event_id = ?1")
+            .bind(event_id.clone())
+            .bind(result)
+            .execute(pool)
+            .await
+            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        //Cancel all other events in the session that are not completed
+        sqlx::query("UPDATE events SET event_status = 'CANCELLED' WHERE event_status = 'WAITING' AND flow_session_id = (SELECT flow_session_id FROM events WHERE event_id = ?1)")
+        // sqlx::query("UPDATE events SET flow_session_status = 'ERROR', trigger_session_status = 'ERROR' WHERE flow_session_id = (SELECT flow_session_id FROM events WHERE event_id = ?1)")
+        .bind(event_id.clone())
+        .execute(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        //so this is an error. so we also want to mark the session as errored, the trigger session ans error, and the event as error
+        sqlx::query("UPDATE events SET flow_session_status = 'ERROR', trigger_session_status = 'ERROR' WHERE flow_session_id = (SELECT flow_session_id FROM events WHERE event_id = ?1)")
+        .bind(event_id.clone())
+        .execute(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
+
         Ok(())
     }
 

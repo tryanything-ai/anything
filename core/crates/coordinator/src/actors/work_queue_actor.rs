@@ -129,50 +129,77 @@ impl WorkQueueActor {
             let engine_id = event.engine_id.clone();
 
             //BUndle .env and results from previous actions in the context
-            let bundled_context = self
+            match self
                 .create_bundled_context(event, &state.anything_config.clone(), state)
-                .await;
+                .await
+            {
+                Ok(bundled_context) => {
+                    state
+                        .event_repo
+                        .store_event_context(event_id.clone(), bundled_context.clone())
+                        .await?;
 
-            //store the context on the event object
-            state
-                .event_repo
-                .store_event_context(event_id.clone(), bundled_context.clone())
-                .await?;
+                    if engine_id != "trigger" {
+                        let engine = state.plugin_manager.get_plugin(&engine_id).unwrap();
 
-            //we don't do this with triggers
-            if engine_id == "trigger" {
-                println!("Not running action. Event is a trigger.");
-                let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id));
-            } else {
-                let engine = state.plugin_manager.get_plugin(&engine_id).unwrap();
+                        let config = ExecuteConfigBuilder::default()
+                            .plugin_name(engine_id)
+                            .runtime("bash")
+                            .context(bundled_context)
+                            .build()
+                            .unwrap();
 
-                let config = ExecuteConfigBuilder::default()
-                    .plugin_name(engine_id)
-                    .runtime("bash")
-                    .context(bundled_context)
-                    .build()
-                    .unwrap();
+                        let result = engine.execute(&Scope::default(), &config);
+                        match result {
+                            Ok(execution_result) => {
+                                //Save Result to DB
+                                state
+                                    .event_repo
+                                    .store_execution_result(
+                                        event_id.clone(),
+                                        execution_result.result,
+                                    )
+                                    .await?;
 
-                let result = engine.execute(&Scope::default(), &config);
-                //TODO: store the result in the db or the error
-                match result {
-                    Ok(execution_result) => {
-                        state
+                                //Mark as complete
+                                let _event = state
+                                    .event_repo
+                                    .mark_event_as_complete(event_id.clone())
+                                    .await?;
+                            }
+                            Err(e) => {
+                                println!("Error occurred while executing the engine: {:?}", e);
+                                state
+                                    .event_repo
+                                    .store_execution_error_result_and_cancel_remaining(
+                                        event_id.clone(),
+                                        serde_json::json!({ "error": e.to_string() }),
+                                    )
+                                    .await?;
+                            }
+                        }
+                    } else {
+                        //marking trigger as complete
+                        let _event = state
                             .event_repo
-                            .store_execution_result(event_id.clone(), execution_result.result)
+                            .mark_event_as_complete(event_id.clone())
                             .await?;
-                    }
-                    Err(e) => {
-                        println!("Error occurred while executing the engine: {:?}", e);
+                        println!("Not running action. Event is a trigger.");
                     }
                 }
-
-                //TODO: a mountain of error handling and passing that into the db
-
-                let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id));
+                Err(e) => {
+                    println!("Failed to create bundled context: {:?}", e);
+                    state
+                        .event_repo
+                        .store_execution_error_result_and_cancel_remaining(
+                            event_id.clone(),
+                            serde_json::json!({ "error": e.to_string() }),
+                        )
+                        .await?;
+                }
             }
-        //update state for curernt_event_id etc
-        //
+
+            let _ = myself.send_message(WorkQueueActorMessage::WorkCompleted(event_id.clone()));
         } else {
             //we beleive we are done processing all events
             state.processing = false;
@@ -185,15 +212,11 @@ impl WorkQueueActor {
 
     pub async fn event_processed(
         &self,
-        event_id: String,
+        _event_id: String,
         state: &mut <WorkQueueActor as Actor>::State,
         myself: ActorRef<WorkQueueActorMessage>, // Add the myself parameter
     ) -> Result<(), ActorProcessingErr> {
         println!("Event Processed");
-        //Update db on event completion //TODO: need to write result here and debug result and anything else like that
-        let _event = state.event_repo.mark_event_as_complete(event_id).await?;
-        //Let work queue know to start next event
-        // let _ = myself.send_message(WorkQueueActorMessage::StartWorkQueue);
         self.process_next(state, myself).await?;
         Ok(())
     }
@@ -203,63 +226,61 @@ impl WorkQueueActor {
         event: StoreEvent,
         config: &AnythingConfig,
         state: &mut <WorkQueueActor as Actor>::State,
-    ) -> Value {
+    ) -> Result<Value, anyhow::Error> {
         let mut context = Context::new();
-        //fetch .env data
-        let env_vars = self.read_env_file(config).expect("Failed to read env file");
-        //place in tera context
+
+        // Fetch .env data with error handling
+        let env_vars = self.read_env_file(config).map_err(|e| {
+            println!("Failed to read env file: {}", e);
+            e
+        })?;
 
         // Create your context and insert the `env` map.
-        // let mut context = Context::new();
         context.insert("env", &env_vars);
 
-        // for (key, value) in env_vars {
-        //     context.insert(&format!("env.{}", key), &value);
-        // }
-        // Add environment variables to the context
+        // Retrieve events from state
         let events = state
             .event_repo
             .get_completed_events_for_session(event.flow_session_id.unwrap_or_default())
-            .await;
+            .await
+            .map_err(|e| {
+                println!("Error fetching completed session events: {}", e);
+                e
+            })?;
 
         println!("Completed Session Events query result: {:?}", events);
 
-        //add results to context by node_id
-        if let Ok(events) = events {
-            for event in events {
-                if let Some(result) = event.result {
-                    println!(
-                        "Adding result to context from {}: {}",
-                        event.node_id, result
-                    );
-                    context.insert(event.node_id, &result);
-                }
+        // Add results to context by node_id
+        for event in events {
+            if let Some(result) = event.result {
+                context.insert(event.node_id, &result);
             }
         }
 
+        // Prepare the Tera template engine
         let mut tera = Tera::default();
-
         if let Some(config) = &event.config {
             let config_str = config.to_string();
-            println!("Config string before tera rendering: {}", config_str);
-            tera.add_raw_template("config", &config_str).unwrap();
+            tera.add_raw_template("config", &config_str).map_err(|e| {
+                println!("Failed to add raw template to Tera: {}", e);
+                e
+            })?;
         } else {
-            println!("Event config is None");
-            //TODO: this should be an error
+            return Err(anyhow::anyhow!("Event config is None"));
         }
 
-        // Render the template with your context
-        let rendered_config = tera
-            .render("config", &context)
-            .expect("Failed to render config");
+        // Render the Tera template with context
+        let rendered_config = tera.render("config", &context).map_err(|e| {
+            println!("Failed to render config with Tera: {}", e);
+            e
+        })?;
 
         println!("Rendered config: {}", rendered_config);
 
-        // Convert the rendered config to a Value
-        let config_value: Value =
-            serde_json::from_str(&rendered_config).expect("Failed to convert config to Value");
-
-        config_value
+        serde_json::from_str::<Value>(&rendered_config).map_err(|e| {
+            println!("Failed to convert rendered config to Value: {}", e);
+            anyhow::Error::new(e) // Explicitly convert the serde_json error to anyhow::Error
+        })
     }
 
     fn read_env_file(&self, config: &AnythingConfig) -> io::Result<HashMap<String, String>> {
