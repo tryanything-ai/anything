@@ -4,7 +4,7 @@ use cron::Schedule; //will need to parse cron syntax
 use serde_json::Value;
 use std::str::FromStr;
 use std::time::Duration;
-// use anything_store::{types::ChangeMessage, FileStore};
+
 use crate::{CoordinatorActorResult, CoordinatorError, CoordinatorResult};
 use ractor::{async_trait, Actor, ActorProcessingErr, ActorRef};
 use tokio::time::sleep;
@@ -12,7 +12,6 @@ use tokio::time::sleep;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use super::work_queue_actor::WorkQueueActor;
 use super::work_queue_actor::WorkQueueActorMessage;
 
 #[derive(Debug, Clone)]
@@ -78,53 +77,81 @@ impl TriggerActor {
         _message: <TriggerActor as Actor>::Msg,
         state: &mut <TriggerActor as Actor>::State,
     ) -> CoordinatorResult<()> {
+        println!("Hydrating Triggers");
+
         let trigger_data = state.flow_repo.get_flow_triggers().await.map_err(|e| {
             tracing::error!("Failed to retrieve triggers: {:#?}", e);
             CoordinatorError::PersistenceError(e)
         })?;
 
-        println!("triggger_data in trigger_actor: {:#?}", trigger_data);
+        // println!("triggger_data in trigger_actor: {:#?}", trigger_data);
 
-        //TODO: add triggers to vector
-        for trigger_info in trigger_data {
-            //destructure trigger_info into what is usefull for us.
-            let parsed_argument: serde_json::Value = serde_json::from_str(&trigger_info.2)
-                .map_err(|e| {
-                    tracing::error!("Failed to parse trigger argument: {:#?}", e);
-                    CoordinatorError::ParsingError(e.to_string())
-                })?;
+        //creates scoep for existing trigger mutex
+        {
+            let mut existing_triggers = state.triggers.lock().unwrap();
+            let mut updated_triggers = Vec::new();
 
-            // println!("Parsed Argument: {:?}", parsed_argument);
-
-            let prospect_new_trigger = Trigger {
-                trigger_id: parsed_argument["node_name"]
-                    .to_string()
-                    .trim_matches('"')
-                    .to_string(),
-                flow_id: trigger_info.1,
-                flow_version_id: trigger_info.0,
-                config: serde_json::Value::from(parsed_argument["config"].clone()),
-                last_fired: None,
-                next_fire: None,
-            };
-
-            // println!("Prospect Trigger: {:?}", prospect_new_trigger);
-
-            if state
-                .triggers
-                .lock()
-                .unwrap()
-                .iter()
-                .any(|trigger| trigger.flow_version_id == prospect_new_trigger.flow_version_id)
-            {
-                //trigger already exists. leave it in state or else it messes up our maintenance of "lastTriggered"
-                continue;
+            //Remove triggers that are no longer present in the trigger_data and update triggers that are present
+            for existing_trigger in &*existing_triggers {
+                if let Some(trigger_info) = trigger_data.iter().find(|&trigger_info| {
+                    // let parsed_argument =
+                    //     serde_json::from_str::<serde_json::Value>(&trigger_info.2).ok();
+                    // parsed_argument.map_or(false, |parsed_argument| {
+                    let flow_id = trigger_info.1.clone();
+                    let flow_version_id = trigger_info.0.clone();
+                    flow_id == existing_trigger.flow_id
+                        && flow_version_id == existing_trigger.flow_version_id
+                    // })
+                }) {
+                    let parsed_argument =
+                        serde_json::from_str::<serde_json::Value>(&trigger_info.2)
+                            .expect("Valid JSON expected");
+                    let updated_trigger = Trigger {
+                        trigger_id: existing_trigger.trigger_id.clone(), // retain the existing trigger_id
+                        flow_id: existing_trigger.flow_id.clone(),
+                        flow_version_id: existing_trigger.flow_version_id.clone(),
+                        config: serde_json::Value::from(parsed_argument["config"].clone()), // update config
+                        last_fired: existing_trigger.last_fired,
+                        next_fire: existing_trigger.next_fire,
+                    };
+                    updated_triggers.push(updated_trigger);
+                }
             }
 
-            //add new trigger to state
-            state.triggers.lock().unwrap().push(prospect_new_trigger);
-        }
+            // Replace old triggers with the updated list
+            *existing_triggers = updated_triggers;
 
+            // Add new triggers
+            // Now, handle adding new triggers that do not exist already
+            for trigger_info in trigger_data {
+                let parsed_argument = serde_json::from_str::<serde_json::Value>(&trigger_info.2)
+                    .map_err(|e| {
+                        tracing::error!("Failed to parse trigger argument: {:#?}", e);
+                        CoordinatorError::ParsingError(e.to_string())
+                    })?;
+
+                let new_trigger = Trigger {
+                    trigger_id: parsed_argument["node_name"]
+                        .to_string()
+                        .trim_matches('"')
+                        .to_string(),
+                    flow_id: trigger_info.1.clone(),
+                    flow_version_id: trigger_info.0.clone(),
+                    config: serde_json::Value::from(parsed_argument["config"].clone()),
+                    last_fired: None,
+                    next_fire: None,
+                };
+
+                let trigger_exists = existing_triggers.iter().any(|t| {
+                    t.flow_id == new_trigger.flow_id
+                        && t.flow_version_id == new_trigger.flow_version_id
+                });
+                if !trigger_exists {
+                    existing_triggers.push(new_trigger);
+                }
+            }
+        }
+        //end of scope for existing trigger mutex
         self.start_cron_checker(state).await;
         Ok(())
     }
