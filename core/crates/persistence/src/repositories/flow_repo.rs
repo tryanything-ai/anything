@@ -60,6 +60,7 @@ pub trait FlowRepo {
     ) -> PersistenceResult<FlowVersion>;
     async fn delete_flow(&self, name: String) -> PersistenceResult<FlowId>;
     async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool>;
+    async fn delete_flow_versions_for_flow_id(&self, flow_id: FlowId) -> PersistenceResult<()>;
     async fn reset(&self) -> PersistenceResult<()>;
     async fn get_flow_triggers(&self) -> PersistenceResult<Vec<(FlowVersionId, FlowId, String)>>;
 }
@@ -391,6 +392,23 @@ impl FlowRepo for FlowRepoImpl {
         tx.commit().await?;
 
         res
+    }
+
+    async fn delete_flow_versions_for_flow_id(&self, flow_id: FlowId) -> PersistenceResult<()> {
+        let mut tx = self.get_transaction().await?;
+
+        let flow_versions = self.get_flow_versions(flow_id.clone()).await?;
+
+        println!("Deleting flow_versions for flow_id: {:?}", flow_versions);
+        for flow_version in flow_versions {
+            let _res = self
+                .internal_delete_flow_version_by_id(&mut tx, flow_version.flow_version_id)
+                .await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
     }
 
     async fn delete_flow_version(&self, version_id: FlowVersionId) -> PersistenceResult<bool> {
@@ -739,14 +757,14 @@ impl FlowRepoImpl {
     async fn internal_delete_flow_version_by_id(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
-        version_id: FlowVersionId,
+        flow_version_id: FlowVersionId,
     ) -> PersistenceResult<bool> {
         let row = sqlx::query(
             r#"
-            DELETE FROM flow_versions WHERE flow_version = ?1
+            DELETE FROM flow_versions WHERE flow_version_id = ?1
             "#,
         )
-        .bind(version_id)
+        .bind(flow_version_id)
         .execute(&mut **tx)
         .await
         .map_err(|e| PersistenceError::DatabaseError(e))?;

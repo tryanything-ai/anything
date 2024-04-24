@@ -24,7 +24,6 @@ pub struct TriggerActor;
 pub struct TriggerActorState {
     pub flow_repo: FlowRepoImpl,
     pub triggers: Arc<Mutex<Vec<Trigger>>>,
-    // pub config: AnythingConfig,
     pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
 }
 

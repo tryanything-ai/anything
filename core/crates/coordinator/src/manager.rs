@@ -420,12 +420,22 @@ database/
     ///
     /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
     pub async fn delete_flow(&self, flow_id: String) -> CoordinatorResult<String> {
-        let flow_name = self.flow_repo()?.delete_flow(flow_id).await?;
+        let flow_name = self.flow_repo()?.delete_flow(flow_id.clone()).await?;
 
         // let _ = self
         //     .file_store
         //     .delete_directory(&["flows", &flow_name])
         //     .unwrap();
+
+        //delete flow_versions
+        let _ = self
+            .flow_repo()?
+            .delete_flow_versions_for_flow_id(flow_id.clone())
+            .await?;
+
+        //TODO: Hydrate triggers
+        let trigger_actor = self.actor_refs.as_ref().unwrap().trigger_actor.clone();
+        cast!(trigger_actor, TriggerMessage::HydrateTriggers).unwrap();
 
         Ok(flow_name)
     }
@@ -472,6 +482,10 @@ database/
         // let mut file_store = self.file_store.clone();
 
         // let flow = stored_flow.get_flow(&mut file_store).await?;
+
+        let trigger_actor = self.actor_refs.as_ref().unwrap().trigger_actor.clone();
+        cast!(trigger_actor, TriggerMessage::HydrateTriggers).unwrap();
+
         Ok(stored_flow)
     }
 
@@ -497,6 +511,10 @@ database/
             .flow_repo()?
             .update_flow_version(flow_id, flow_version_id, update_flow)
             .await?;
+
+        let trigger_actor = self.actor_refs.as_ref().unwrap().trigger_actor.clone();
+        cast!(trigger_actor, TriggerMessage::HydrateTriggers).unwrap();
+
         Ok(db_flow_version)
     }
 
