@@ -28,6 +28,7 @@ pub trait Plugin: Any + Send + Sync {
     //TODO: register a system config object? like how vscode lets you configure extensions
     //TODO: How do we make it so a heavy model can be downloaded and used by the plugin?
 }
+
 pub trait ExecutionPlugin: Plugin {
     fn execute(
         &self,

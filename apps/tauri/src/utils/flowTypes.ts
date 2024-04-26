@@ -50,7 +50,7 @@ interface NodePresentation {
 
 export interface Action extends BaseNode {
   trigger: false;
-  engine: string;
+  extension_id: string;
 }
 
 export interface Trigger extends BaseNode {
@@ -120,7 +120,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
       {
         trigger: false,
@@ -130,7 +130,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
       {
         trigger: false,
@@ -140,7 +140,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
     ],
     edges: [],
@@ -177,7 +177,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
       {
         trigger: false,
@@ -187,7 +187,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
       {
         trigger: false,
@@ -197,7 +197,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
       {
         trigger: false,
@@ -207,7 +207,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
       {
         trigger: false,
@@ -217,7 +217,7 @@ export const MockNewFlows: Flow[] = [
         variables: [],
         config: {},
         handles: [],
-        engine: "Mock Action Type",
+        extension_id: "Mock Action Type",
       },
     ],
     edges: [],

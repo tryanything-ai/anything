@@ -18,7 +18,7 @@ pub fn create_execution_plan(
     //traverse graph
     let result = bfs_traversal(&json_data);
     // println!("work list from bfs: {:?}", result);
-    
+
     let trigger_session_id = Uuid::new_v4().to_string();
 
     //create a stage if one is not provied
@@ -52,10 +52,15 @@ pub fn create_execution_plan(
                     .to_string(),
             ),
             is_trigger,
-            engine_id: if is_trigger {
+            extension_id: if is_trigger {
                 "trigger".to_string()
             } else {
-                result.get("engine").unwrap().as_str().unwrap().to_string()
+                result
+                    .get("extension_id")
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_string()
             },
             stage: stage.clone(),
             config: Some(result.get("config").unwrap().clone()),

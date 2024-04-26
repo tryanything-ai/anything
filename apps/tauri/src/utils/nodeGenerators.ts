@@ -59,7 +59,7 @@ const NODES: Node[] = [
     config: {
       code: "",
     },
-    engine: "deno"
+    extension_id: "deno"
   },
   // {
   //   trigger: false,
@@ -72,7 +72,7 @@ const NODES: Node[] = [
   //   config: {
   //     code: "",
   //   },
-  //   engine: "javascript",
+  //   extension_id: "javascript",
   // },
   {
     trigger: true,
@@ -100,7 +100,7 @@ const NODES: Node[] = [
       filename: "",
       prompt: "",
     },
-    engine: "local_model",
+    extension_id: "local_model",
   },
   {
     trigger: false,
@@ -117,7 +117,7 @@ const NODES: Node[] = [
         '{"Authorization":"Bearer OPEN_AI_API_KEY", "Content-Type":"application/json"}',
       body: '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Act like Hermione Granger and be pithy. She just tried a spell and it mostly worked."}], "temperature": 0.7 }',
     },
-    engine: "rest",
+    extension_id: "rest",
   },
   {
     trigger: false,
@@ -133,7 +133,7 @@ const NODES: Node[] = [
       headers: "",
       body: "",
     },
-    engine: "rest",
+    extension_id: "rest",
   },
   {
     trigger: false,
@@ -146,7 +146,7 @@ const NODES: Node[] = [
     config: {
       code: "",
     },
-    engine: "python",
+    extension_id: "python",
   },
   {
     trigger: true,
@@ -175,7 +175,7 @@ const NODES: Node[] = [
     config: {
       pattern: "",
     },
-    engine: "app_chat",
+    extension_id: "app_chat",
   },
   {
     trigger: false,
@@ -189,7 +189,7 @@ const NODES: Node[] = [
       command: "",
       run_folder: "",
     },
-    engine: "system-shell",
+    extension_id: "system-shell",
   },
   {
     trigger: false,
@@ -203,7 +203,7 @@ const NODES: Node[] = [
       db: "",
       params: "",
     },
-    engine: "vector",
+    extension_id: "vector",
   },
 ];
 

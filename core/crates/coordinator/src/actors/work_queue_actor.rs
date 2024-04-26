@@ -126,7 +126,7 @@ impl WorkQueueActor {
             println!("Event found to PROCESS {} ", event.event_id);
 
             let event_id = event.event_id.clone();
-            let engine_id = event.engine_id.clone();
+            let extension_id = event.extension_id.clone();
 
             //BUndle .env and results from previous actions in the context
             match self
@@ -139,17 +139,17 @@ impl WorkQueueActor {
                         .store_event_context(event_id.clone(), bundled_context.clone())
                         .await?;
 
-                    if engine_id != "trigger" {
-                        let engine = state.plugin_manager.get_plugin(&engine_id).unwrap();
+                    if extension_id != "trigger" {
+                        let extension = state.plugin_manager.get_plugin(&extension_id).unwrap();
 
                         let config = ExecuteConfigBuilder::default()
-                            .plugin_name(engine_id)
+                            .plugin_name(extension_id)
                             .runtime("bash")
                             .context(bundled_context)
                             .build()
                             .unwrap();
 
-                        let result = engine.execute(&Scope::default(), &config);
+                        let result = extension.execute(&Scope::default(), &config);
                         match result {
                             Ok(execution_result) => {
                                 //Save Result to DB
