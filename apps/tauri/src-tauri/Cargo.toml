@@ -17,7 +17,7 @@ anything-common = { path = "../../../core/crates/common" }
 anything-coordinator = { path = "../../../core/crates/coordinator" }
 anything-runtime = { path = "../../../core/crates/runtime" }
 anything-graph = { path = "../../../core/crates/graph" }
-tauri-plugin-anything-tauri = { path = "../../../core/crates/tauri-plugin-anything-tauri" }
+tauri-plugin-anything = { path = "../../../core/crates/tauri-plugin-anything" }
 
 tauri = { version = "1.5", features = [
     "fs-all",

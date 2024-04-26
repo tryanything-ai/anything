@@ -10,7 +10,7 @@ extern crate dotenv;
 
 //https://github.com/FabianLars/tauri-plugin-deep-link/blob/main/example/main.rs
 use tauri_plugin_deep_link; 
-use tauri_plugin_anything_tauri;
+use tauri_plugin_anything;
 
 fn main() {
     println!("Running Main!");
@@ -47,7 +47,7 @@ fn main() {
     tauri::Builder::default()
         // .plugin(tauri_plugin_fs_watch::init())
         .plugin(sentry_tauri::plugin())
-        .plugin(tauri_plugin_anything_tauri::AnythingBuilder::default().config(anything_config).build())
+        .plugin(tauri_plugin_anything::AnythingBuilder::default().config(anything_config).build())
         .setup(|app| {
             //DEEPLINK
             // If you need macOS support this must be called in .setup() !

@@ -138,7 +138,7 @@ dependencies = [
  "sqlx",
  "tauri",
  "tauri-build",
- "tauri-plugin-anything-tauri",
+ "tauri-plugin-anything",
  "tauri-plugin-deep-link",
  "tauri-plugin-sql",
  "thiserror",
@@ -5627,7 +5627,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-anything-tauri"
+name = "tauri-plugin-anything"
 version = "0.0.0"
 dependencies = [
  "anyhow",

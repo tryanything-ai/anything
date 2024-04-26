@@ -1,7 +1,23 @@
-import { CreateFlowVersion } from "./type";
-import { invoke } from "@tauri-apps/api/tauri";
-// import { listen, UnlistenFn } from "@tauri-apps/api/event";
-import { UpdateFlowArgs } from "./type";
+import { invoke } from '@tauri-apps/api/tauri'
+
+// export async function execute() {
+//   await invoke('plugin:anything|execute')
+// }
+
+export type UpdateFlowArgs = {
+  flow_name: string;
+  active: boolean;
+  version?: string;
+};
+
+export type CreateFlowVersion = {
+  flowId: string;
+  flowVersion: string;
+  description?: string;
+  flowDefinition: any;
+  published: boolean;
+};
+
 
 export class Anything {
   path: string;
@@ -11,7 +27,7 @@ export class Anything {
   }
 
   async stop() {
-    return await invoke("plugin:anything-tauri|stop", {});
+    return await invoke("plugin:anything|stop", {});
   }
 
   async getFlows<T>(): Promise<T> {
@@ -41,7 +57,6 @@ export class Anything {
   }
 
   async updateFlow<T>(flowId: string, args: UpdateFlowArgs): Promise<T> {
-    console.log("updateFlow called ", flowId, args);
     return await invoke("plugin:anything|update_flow", { flowId, args });
   }
 
@@ -54,12 +69,6 @@ export class Anything {
     flowVersionId: string,
     updateFlow: any
   ): Promise<T> {
-    console.log(
-      "updateFlowVersion called in tauri plugin api ",
-      flowId,
-      flowVersionId,
-      updateFlow
-    );
     return await invoke("plugin:anything|update_flow_version", {
       flowId,
       flowVersionId,

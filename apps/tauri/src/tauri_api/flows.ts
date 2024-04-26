@@ -1,9 +1,12 @@
 import { invoke } from "@tauri-apps/api";
-import { UpdateFlowArgs } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src";
 import { anything } from "./anythingInit";
 import { Flow } from "../utils/flowTypes";
-export type { UpdateFlowArgs } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src";
 
+export type UpdateFlowArgs = {
+  flow_name: string;
+  active: boolean;
+  version?: string;
+};
 export const getFlows = async () => {
   let res = await anything.getFlows();
   return res;

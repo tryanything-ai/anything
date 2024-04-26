@@ -8,7 +8,12 @@ import {
 
 import api from "../tauri_api/api";
 import { Flow } from "../utils/flowTypes";
-import { UpdateFlowArgs } from "../../../../core/crates/tauri-plugin-anything-tauri/webview-src";
+
+export type UpdateFlowArgs = {
+  flow_name: string;
+  active: boolean;
+  version?: string;
+};
 
 interface FlowsContextInterface {
   flows: any[];
