@@ -12,7 +12,7 @@ pub struct JsRuntime {
     config: RuntimeConfig,
 }
 
-impl Plugin for JsRuntime {
+impl Extension for JsRuntime {
     fn name(&self) -> &'static str {
         "deno"
     }
@@ -25,22 +25,23 @@ impl Plugin for JsRuntime {
         // println!("js runtime unloaded");
     }
 
-    fn register_action(&self) -> Value {
-        let config = serde_json::json!({
-            "trigger": "false",
-            "node_name": "deno",
-            "node_label": "CLI Action",
-            "icon": "icon_placeholder",
-            "description": "This plugin does XYZ",
-            "variables": ["var1", "var2"],
-            "config": {
-                "command": "your_command",
-                "run_folder": "path/to/folder"
-            },
-            "extension_id": "deno",
-        });
-        println!("Config being returned: {:?}", config);
-        config
+    fn register_action(&self) -> &'static str {
+        "{deno_action: true}"
+        // let config = serde_json::json!({
+        //     "trigger": "false",
+        //     "node_name": "deno",
+        //     "node_label": "CLI Action",
+        //     "icon": "icon_placeholder",
+        //     "description": "This plugin does XYZ",
+        //     "variables": ["var1", "var2"],
+        //     "config": {
+        //         "command": "your_command",
+        //         "run_folder": "path/to/folder"
+        //     },
+        //     "extension_id": "deno",
+        // });
+        // println!("Config being returned: {:?}", config);
+        // config
     }
 }
 

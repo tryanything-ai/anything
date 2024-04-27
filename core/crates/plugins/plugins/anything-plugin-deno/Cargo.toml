@@ -3,7 +3,7 @@ name = "anything-plugin-deno"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
+[lib]   
 name = "anything_plugin_deno"
 path = "src/lib.rs"
 

@@ -14,7 +14,7 @@ use crate::{
     Scope,
 };
 
-pub trait Plugin: Any + Send + Sync {
+pub trait Extension: Any + Send + Sync {
     /// Plugin name
     fn name(&self) -> &'static str;
 
@@ -24,7 +24,7 @@ pub trait Plugin: Any + Send + Sync {
     /// Opportunity to clean up
     fn on_unload(&self) {}
 
-    fn register_action(&self) -> Value;
+    fn register_action(&self) -> &'static str;
 
     //TODO: register config object
     //TODO: register config info//required?
@@ -34,7 +34,7 @@ pub trait Plugin: Any + Send + Sync {
     //TODO: How do we make it so a heavy model can be downloaded and used by the plugin?
 }
 
-pub trait ExecutionPlugin: Plugin {
+pub trait ExecutionPlugin: Extension {
     fn execute(
         &self,
         scope: &Scope,
@@ -221,6 +221,7 @@ impl PluginManager {
 
         let lib = self.loaded_libraries.last().unwrap();
         let constructor: Symbol<PluginCreate> = lib.get(b"_plugin_create")?;
+        // let func: libloading::Symbol<unsafe extern fn() -> u32> = lib.get(b"my_func")?;
         let boxed_raw = constructor();
 
         let mut plugin = Box::from_raw(boxed_raw);
@@ -229,19 +230,26 @@ impl PluginManager {
 
         let plugin_action = plugin.register_action();
         debug!("Plugin config: {:?}", plugin_action);
+
+        //parse the plugin_action to JSON value
+        // let json_data = serde_json::from_str(&plugin_action)?;
         //this is really the base folder
-        // let plugin_folder = self.action_folder.join("actions");
-        // let config_folder = plugin_folder.join(plugin.name());
-        // debug!("Plugin folder: {:?}", plugin_folder);
-        // // Create the plugin folder if it doesn't exist
-        // fs::create_dir_all(&plugin_folder)?;
-        // debug!("Made plugin folder: {:?}", config_folder);
-        // // Create the actions folder if it doesn't exist
-        // fs::create_dir_all(&config_folder)?;
-        // debug!("Made Config folder: {:?}", config_folder);
+        let plugin_folder = self.action_folder.join("actions");
+        let config_folder = plugin_folder.join(plugin.name());
+        debug!("Plugin folder: {:?}", plugin_folder);
+        // Create the plugin folder if it doesn't exist
+        fs::create_dir_all(&plugin_folder)?;
+        debug!("Made plugin folder: {:?}", config_folder);
+        // Create the actions folder if it doesn't exist
+        fs::create_dir_all(&config_folder)?;
+        debug!("Made Config folder: {:?}", config_folder);
 
         // Write the JSON file inside the actions folder
-        // let config_path = config_folder.join("config.json");
+        let config_path = config_folder.join("config.json");
+
+        //write the json to file
+        // let nice_json_data = serde_json::to_string_pretty(&json_data)?;
+        fs::write(config_path, plugin_action)?;
 
         // println!("Config path created: {:?}", config_path);
 
