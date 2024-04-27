@@ -1,3 +1,4 @@
+use chrono::{DateTime, TimeZone, Utc};
 use sqlx::Row;
 use std::fmt::Debug;
 
@@ -156,10 +157,15 @@ impl EventRepo for EventRepoImpl {
     async fn mark_event_as_processing(&self, event_id: String) -> PersistenceResult<()> {
         println!("mark_event_as_processing");
         let pool = self.datastore.get_pool();
+
+        // Generate the current UTC datetime as a string
+        let current_time =  Utc::now().format("%Y-%m-%dT%H:%M:%S%.6f+00:00").to_string();
+
         let result = sqlx::query(
-            "UPDATE events SET event_status = 'PROCESSING', flow_session_status = 'PROCESSING', trigger_session_status = 'PROCESSING' WHERE event_id = ?1",
+            "UPDATE events SET event_status = 'PROCESSING', flow_session_status = 'PROCESSING', trigger_session_status = 'PROCESSING',  started_at = ?2  WHERE event_id = ?1",
         )
         .bind(event_id)
+        .bind(&current_time)  // Bind the current_time to placeholder ?2
         .execute(pool)
         .await;
 
@@ -196,11 +202,18 @@ impl EventRepo for EventRepoImpl {
 
     async fn mark_event_as_complete(&self, event_id: String) -> PersistenceResult<()> {
         let pool = self.datastore.get_pool();
-        sqlx::query("UPDATE events SET event_status = 'COMPLETE' WHERE event_id = ?1")
-            .bind(event_id.clone())
-            .execute(pool)
-            .await
-            .map_err(|e| PersistenceError::DatabaseError(e))?;
+
+        // Generate the current UTC datetime as a string
+        let current_time = Utc::now().format("%Y-%m-%dT%H:%M:%S%.6f+00:00").to_string(); 
+
+        sqlx::query(
+            "UPDATE events SET event_status = 'COMPLETE',  ended_at = ?2  WHERE event_id = ?1",
+        )
+        .bind(event_id.clone())
+        .bind(&current_time) // Bind the current_time to placeholder ?2
+        .execute(pool)
+        .await
+        .map_err(|e| PersistenceError::DatabaseError(e))?;
 
         // Check if all events for session_id are complete and mark flow_session_status as COMPLETE if so
         let all_events_complete = sqlx::query("SELECT COUNT(*) FROM events WHERE flow_session_id = (SELECT flow_session_id FROM events WHERE event_id = ?1) AND event_status <> 'COMPLETE'")
@@ -241,9 +254,13 @@ impl EventRepo for EventRepoImpl {
         result: serde_json::Value,
     ) -> PersistenceResult<()> {
         let pool = self.datastore.get_pool();
-        sqlx::query("UPDATE events SET event_status = 'ERROR', result = ?2 WHERE event_id = ?1")
+         // Generate the current UTC datetime as a string
+         let current_time =  Utc::now().format("%Y-%m-%dT%H:%M:%S%.6f+00:00").to_string();
+
+        sqlx::query("UPDATE events SET event_status = 'ERROR', result = ?2,  ended_at = ?3  WHERE event_id = ?1")
             .bind(event_id.clone())
             .bind(result)
+            .bind(&current_time) // Bind the current_time to placeholder ?3
             .execute(pool)
             .await
             .map_err(|e| PersistenceError::DatabaseError(e))?;

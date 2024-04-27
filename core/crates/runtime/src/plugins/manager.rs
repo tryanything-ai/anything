@@ -1,7 +1,10 @@
+use serde_json::Value;
 use std::{any::Any, ffi::OsStr, path::PathBuf};
 
 use libloading::{Library, Symbol};
 use tracing::debug;
+
+use std::fs;
 
 use super::built_in::BUILT_IN_PLUGINS;
 use crate::{
@@ -20,6 +23,8 @@ pub trait Plugin: Any + Send + Sync {
 
     /// Opportunity to clean up
     fn on_unload(&self) {}
+
+    fn register_action(&self) -> Value;
 
     //TODO: register config object
     //TODO: register config info//required?
@@ -54,6 +59,7 @@ macro_rules! declare_plugin {
 pub struct PluginManager {
     plugins: Vec<(String, Box<dyn ExecutionPlugin>)>,
     loaded_libraries: Vec<Library>,
+    action_folder: PathBuf,
 }
 
 impl std::fmt::Debug for PluginManager {
@@ -64,15 +70,52 @@ impl std::fmt::Debug for PluginManager {
 
 impl PluginManager {
     // pub fn new() -> Self {
-    pub fn new(runtime: &RuntimeConfig) -> Self {
+    pub fn new(runtime: &RuntimeConfig, action_folder: PathBuf) -> Self {
         // println!("Creating new PluginManager");
         // Self::default()
         let mut manager = Self::default();
+        manager.action_folder = action_folder;
         manager.load_plugins(runtime).unwrap_or_else(|e| {
             eprintln!("Error loading plugins: {}", e);
         });
+
+        // let _ = manager.hydrate_plugin_actions();
         manager
     }
+
+    // pub fn hydrate_plugin_actions(&mut self) -> PluginResult<()> {
+    //     // for plugin in &self.plugins {
+    //     //     // Your code to loop through the plugins goes here
+    //     //     // For example:
+    //     //     plugin.register_action();
+    //     // }
+
+    //     for (_, plugin) in &self.plugins {
+    //         // plugin.register_action();
+
+    //         let plugin_config = plugin.register_action();
+    //         debug!("Plugin config: {:?}", plugin_config);
+    //         //this is really the base folder
+    //         let plugin_folder = self.action_folder.join("actions");
+    //         let config_folder = plugin_folder.join(plugin.name());
+    //         debug!("Plugin folder: {:?}", plugin_folder);
+    //         // Create the plugin folder if it doesn't exist
+    //         fs::create_dir_all(&plugin_folder)?;
+    //         debug!("Made plugin folder: {:?}", config_folder);
+    //         // Create the actions folder if it doesn't exist
+    //         fs::create_dir_all(&config_folder)?;
+    //         debug!("Made Config folder: {:?}", config_folder);
+
+    //         // Write the JSON file inside the actions folder
+    //         let config_path = config_folder.join("config.json");
+
+    //         println!("Config path created: {:?}", config_path);
+    //     }
+
+    //     debug!("Hydrated plugin actions");
+    //     // fs::write(config_path, serde_json::to_string_pretty(&plugin_config)?)?;
+    //     Ok(())
+    // }
 
     /// The `load_plugins` method in the `Runner` struct is responsible for loading all plugins
     /// specified in the runtime configuration. It iterates over the built-in plugins and calls the
@@ -182,6 +225,26 @@ impl PluginManager {
 
         let mut plugin = Box::from_raw(boxed_raw);
 
+        debug!("Loaded plugin: {}", name);
+
+        let plugin_action = plugin.register_action();
+        debug!("Plugin config: {:?}", plugin_action);
+        //this is really the base folder
+        // let plugin_folder = self.action_folder.join("actions");
+        // let config_folder = plugin_folder.join(plugin.name());
+        // debug!("Plugin folder: {:?}", plugin_folder);
+        // // Create the plugin folder if it doesn't exist
+        // fs::create_dir_all(&plugin_folder)?;
+        // debug!("Made plugin folder: {:?}", config_folder);
+        // // Create the actions folder if it doesn't exist
+        // fs::create_dir_all(&config_folder)?;
+        // debug!("Made Config folder: {:?}", config_folder);
+
+        // Write the JSON file inside the actions folder
+        // let config_path = config_folder.join("config.json");
+
+        // println!("Config path created: {:?}", config_path);
+
         debug!(
             "Loaded plugin `{}` as `{}` from {:?}",
             plugin.name(),
@@ -190,6 +253,7 @@ impl PluginManager {
         );
 
         plugin.on_load(config.clone());
+
         self.plugins.push((name.to_string(), plugin));
         Ok(())
     }

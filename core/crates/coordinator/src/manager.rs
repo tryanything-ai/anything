@@ -92,7 +92,7 @@ impl Manager {
 
         // Create all the base directories required
         file_store.create_base_dir().unwrap();
-        for dir in &["flows", "database", "actions", "assets"] {
+        for dir in &["flows", "actions", "extensions", "database", "assets"] {
             file_store.create_directory(&[dir]).unwrap();
         }
 
@@ -191,7 +191,10 @@ database/
                 processing: false,
                 event_repo: event_repo.clone(),
                 flow_repo: flow_repo.clone(),
-                plugin_manager: PluginManager::new(self.config.runtime_config()),
+                plugin_manager: PluginManager::new(
+                    self.config.runtime_config(),
+                    self.file_store.base_dir.clone(),
+                ),
                 file_store: self.file_store.clone(),
                 anything_config: self.config.clone(),
             },

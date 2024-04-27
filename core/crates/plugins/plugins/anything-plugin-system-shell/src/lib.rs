@@ -27,6 +27,24 @@ impl Plugin for SystemShellPlugin {
     fn on_unload(&self) {
         // Nothing to do here
     }
+
+    fn register_action(&self) -> Value {
+        let config = serde_json::json!({
+            "trigger": "false",
+            "node_name": "cli_action",
+            "node_label": "CLI Action",
+            "icon": "icon_placeholder",
+            "description": "This plugin does XYZ",
+            "variables": ["var1", "var2"],
+            "config": {
+                "command": "your_command",
+                "run_folder": "path/to/folder"
+            },
+            "extension_id": "system-shell",
+        });
+        println!("Config being returned: {:?}", config);
+        config
+    }
 }
 
 impl SystemShellPlugin {}

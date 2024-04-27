@@ -41,24 +41,3 @@ CREATE TABLE IF NOT EXISTS flow_versions (
     flow_definition json NOT NULL,
     UNIQUE (flow_id, flow_version)
 );
-
--- CREATE TABLE IF NOT EXISTS triggers (
---     trigger_id TEXT NOT NULL PRIMARY KEY,
---     -- /file/created/<file-path> or /whatsapp/message/<message-id>
---     event_name TEXT NOT NULL,
---     payload json NOT NULL,
---     metadata json,
---     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP)
--- );
-
-
--- CREATE TABLE IF NOT EXISTS nodes (
---     node_id TEXT PRIMARY KEY NOT NULL,
---     flow_id TEXT NOT NULL,
---     node_type TEXT NOT NULL,
---     node_name TEXT NOT NULL,
---     node_description TEXT NOT NULL,
---     node_config json NOT NULL,
---     node_definition json NOT NULL,
---     UNIQUE (flow_id, node_name) };
--- );

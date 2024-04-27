@@ -149,6 +149,7 @@ impl WorkQueueActor {
                             .build()
                             .unwrap();
 
+                        // extension.register_action();
                         let result = extension.execute(&Scope::default(), &config);
                         match result {
                             Ok(execution_result) => {
