@@ -307,3 +307,25 @@ pub async fn get_actions(state: tauri::State<'_, AnythingState>) -> FlowResult<G
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct SaveActionResponse {}
+
+#[tauri::command]
+pub async fn save_action(
+    state: tauri::State<'_, AnythingState>,
+    action: Value,
+    action_name: String,
+) -> FlowResult<SaveActionResponse> {
+    // Acquire the lock asynchronously.
+    let manager = state.inner.lock().await;
+
+    // Proceed with saving the action.
+    match manager.save_action(action, action_name).await {
+        Ok(_action) => Ok(SaveActionResponse {}),
+        Err(e) => {
+            tracing::error!("Error saving action: {:?}", e);
+            Ok(SaveActionResponse {})
+        }
+    }
+}

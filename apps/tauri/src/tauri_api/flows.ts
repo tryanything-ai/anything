@@ -67,6 +67,12 @@ export const getActions = async () => {
   return res.actions;
 }
 
+export const saveAction = async (action: Action) => {
+  let actionName = action.node_label;
+  console.log("saveAction Label in flows.ts: ", actionName)
+  return await anything.saveAction(action, actionName);
+}
+
 export const stopExecution = async () => {
   return await anything.stop();
 };

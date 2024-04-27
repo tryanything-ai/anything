@@ -389,6 +389,32 @@ database/
         Ok(actions)
     }
 
+    pub async fn save_action(
+        &self,
+        action: serde_json::Value,
+        action_name: String,
+    ) -> CoordinatorResult<()> {
+        let base_dir = self.file_store.base_dir.clone();
+        let action_dir = base_dir.join("actions");
+
+        // Create the actions directory if it doesn't exist
+        if !action_dir.exists() {
+            tokio::fs::create_dir(&action_dir).await?;
+        }
+        //TODO: protect from overwriting with name collisions
+        let action_path = action_dir.join(action_name);
+
+        // Create the action directory
+        tokio::fs::create_dir(&action_path).await?;
+
+        // Write the action configuration to config.json
+        let config_path = action_path.join("config.json");
+        let config_json = serde_json::to_string_pretty(&action)?;
+        tokio::fs::write(config_path, config_json).await?;
+
+        Ok(())
+    }
+
     // pub async fn get_actions(&self) -> CoordinatorResult<Vec<serde_json::Value>> {
     //     // let file_store = self.file_store.clone();
 

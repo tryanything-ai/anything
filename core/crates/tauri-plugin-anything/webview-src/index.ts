@@ -95,4 +95,8 @@ export class Anything {
   async getActions<T>(): Promise<T> {
     return await invoke("plugin:anything|get_actions", {});
   }
+
+  async saveAction<T>(action: any, actionName: String): Promise<T> {
+    return await invoke("plugin:anything|save_action", { action, actionName });
+  }
 }

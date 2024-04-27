@@ -174,22 +174,22 @@ const NODES: Node[] = [
     },
     extension_id: "python",
   },
-  {
-    trigger: true,
-    node_name: "app_chat_trigger",
-    node_label: "App Chat Trigger",
-    icon: rawIcons.VscMail,
-    description: "App Chat Trigger",
-    handles: StartHandles,
-    variables: [],
-    config: {
-      message: "",
-    },
-    trigger_type: "chat",
-    mockData: {
-      message: "Hello, World!"
-    },
-  },
+  // {
+  //   trigger: true,
+  //   node_name: "app_chat_trigger",
+  //   node_label: "App Chat Trigger",
+  //   icon: rawIcons.VscMail,
+  //   description: "App Chat Trigger",
+  //   handles: StartHandles,
+  //   variables: [],
+  //   config: {
+  //     message: "",
+  //   },
+  //   trigger_type: "chat",
+  //   mockData: {
+  //     message: "Hello, World!"
+  //   },
+  // },
   {
     trigger: false,
     node_name: "send_chat_action",
