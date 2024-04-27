@@ -1,6 +1,4 @@
 use anything_common::AnythingConfig;
-use std::process::Command;
-
 use anything_persistence::datastore::RepoImpl;
 use anything_persistence::{
     create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion, EventRepo,
@@ -9,6 +7,9 @@ use anything_persistence::{
 use anything_runtime::{PluginManager, RuntimeConfig};
 use anything_store::FileStore;
 use ractor::{cast, Actor, ActorRef};
+
+use serde_json::Value;
+use std::process::Command;
 use std::{env::temp_dir, sync::Arc};
 
 use tokio::sync::{
@@ -341,6 +342,69 @@ database/
 
         Ok(event)
     }
+
+    pub async fn get_actions(&self) -> CoordinatorResult<Vec<serde_json::Value>> {
+        let base_dir = self.file_store.base_dir.clone();
+
+        let action_dir = base_dir.join("actions");
+        tracing::trace!("Get actions called in the manager");
+
+        // Vector to hold the parsed JSON values
+        let mut actions = Vec::new();
+
+        // Read the directory asynchronously
+        let mut entries = tokio::fs::read_dir(action_dir).await?;
+
+        // Iterate over each entry in the actions directory
+        while let Some(entry) = entries.next_entry().await? {
+            let path = entry.path();
+
+            // Check if the entry is a directory and contains config.json
+            if path.is_dir() {
+                let config_path = path.join("config.json");
+
+                // Check if config.json exists
+                if config_path.exists() {
+                    match tokio::fs::read_to_string(config_path).await {
+                        Ok(contents) => match serde_json::from_str::<Value>(&contents) {
+                            Ok(json) => actions.push(json),
+                            Err(e) => {
+                                // error!("Failed to parse JSON from {:?}: {}", path, e);
+                                tracing::error!("Failed to parse JSON from {:?}: {}", path, e);
+                                //this error is angry
+                                CoordinatorError::SerdeError(e);
+                                continue;
+                            }
+                        },
+                        Err(e) => {
+                            tracing::error!("Failed to read config.json in {:?}: {}", path, e);
+                            CoordinatorError::IoError(e);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(actions)
+    }
+
+    // pub async fn get_actions(&self) -> CoordinatorResult<Vec<serde_json::Value>> {
+    //     // let file_store = self.file_store.clone();
+
+    //     let base_dir = self.file_store.base_dir.clone();
+
+    //     let action_dir = base_dir.join("actions");
+    //     tracing::trace!("Get actions called in the manager");
+
+    //     // Look for stored flow in database
+    //     // let actions = event_repo.get_actions().await.map_err(|e| {
+    //     //     tracing::error!("error when getting actions: {:#?}", e);
+    //     //     CoordinatorError::PersistenceError(e)
+    //     // })?;
+
+    //     Ok(actions)
+    // }
 
     /// The function `create_flow` creates a new flow, saves it to a file, and returns the created flow.
     ///

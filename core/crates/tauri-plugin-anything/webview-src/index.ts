@@ -91,4 +91,8 @@ export class Anything {
       eventId
     });
   }
+
+  async getActions<T>(): Promise<T> {
+    return await invoke("plugin:anything|get_actions", {});
+  }
 }

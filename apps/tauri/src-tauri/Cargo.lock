@@ -5638,6 +5638,7 @@ dependencies = [
  "anything-runtime",
  "chrono",
  "serde",
+ "serde_json",
  "tauri",
  "thiserror",
  "tokio",

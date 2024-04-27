@@ -1,7 +1,6 @@
 use anything_store::errors::StoreError as FileStoreError;
 use sqlx::{migrate::MigrateError, sqlite::SqliteError};
 use thiserror::Error;
-
 pub type PersistenceResult<T> = Result<T, PersistenceError>;
 
 #[derive(Error, Debug)]

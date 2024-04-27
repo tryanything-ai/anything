@@ -51,7 +51,8 @@ impl<R: Runtime> Builder<R> {
                 create_flow_version,
                 execute_flow,
                 fetch_session_events,
-                get_event
+                get_event,
+                get_actions
             ])
             .setup(move |app_handle| {
                 let (stop_tx, stop_rx) = tokio::sync::mpsc::channel(1);

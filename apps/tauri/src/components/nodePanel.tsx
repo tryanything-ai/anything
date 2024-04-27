@@ -5,6 +5,7 @@ import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
 import { Node, Action, Trigger } from "../utils/flowTypes";
 import BaseSearch from "./baseSearch";
+import api from "../tauri_api/api";
 
 const NodePanel = () => {
   const [allNodes, setAllNodes] = useState<Node[]>([]);
@@ -13,9 +14,10 @@ const NodePanel = () => {
   const [showActions, setShowActions] = useState(true);
   const [showTriggers, setShowTriggers] = useState(true);
 
-  useEffect(() => {
+  const hydrate = async () => {
     console.log("Initial hydrate");
-    let action_nodes = getActionNodes();
+    let action_nodes = await api.flows.getActions();
+    console.log("action_nodes from rust files", action_nodes);
     let trigger_nodes = getTriggerNodes();
 
     // populate original data to maintain for search
@@ -24,6 +26,9 @@ const NodePanel = () => {
     //popoulate results as all data to begin
     setActionNodeResults(action_nodes);
     setTriggerNodeResults(trigger_nodes);
+  }
+  useEffect(() => {
+    hydrate();
   }, []);
 
   const setResults = (results: Node[]) => {
@@ -55,9 +60,8 @@ const NodePanel = () => {
         {showTriggers ? <VscChevronDown /> : <VscChevronUp />}
       </h1>
       <div
-        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${
-          showTriggers ? "max-h-auto" : "max-h-0"
-        }`}
+        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${showTriggers ? "max-h-auto" : "max-h-0"
+          }`}
       >
         {triggerNodeResults.map((node: Trigger) => (
           <NodeDnD node={node} key={node.node_label} />
@@ -71,9 +75,8 @@ const NodePanel = () => {
         {showActions ? <VscChevronDown /> : <VscChevronUp />}
       </h1>
       <div
-        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${
-          showActions ? "max-h-auto" : "max-h-0"
-        }`}
+        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${showActions ? "max-h-auto" : "max-h-0"
+          }`}
       >
         {actionNodeResults.map((node: Action) => (
           <NodeDnD node={node} key={node.node_label} />

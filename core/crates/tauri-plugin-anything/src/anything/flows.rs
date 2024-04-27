@@ -1,6 +1,8 @@
 use crate::{error::FlowResult, AnythingState};
 use anything_common::tracing::{self};
 
+use serde_json::Value;
+
 use anything_persistence::{
     CreateFlowVersion, FlowVersion, StoreEvent, UpdateFlowArgs, UpdateFlowVersion,
 };
@@ -280,6 +282,28 @@ pub async fn get_event(
             tracing::error!("Error getting event: {:?}", e);
             // Similar consideration here regarding error handling and what should be returned.
             Ok(GetEventResponse { event: None })
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct GetActionsResponse {
+    actions: Option<Vec<Value>>,
+}
+
+#[tauri::command]
+pub async fn get_actions(state: tauri::State<'_, AnythingState>) -> FlowResult<GetActionsResponse> {
+    // Acquire the lock asynchronously.
+    let manager = state.inner.lock().await;
+
+    // Proceed with fetching actions.
+    match manager.get_actions().await {
+        Ok(actions) => Ok(GetActionsResponse {
+            actions: Some(actions),
+        }),
+        Err(e) => {
+            tracing::error!("Error getting actions: {:?}", e);
+            Ok(GetActionsResponse { actions: None })
         }
     }
 }

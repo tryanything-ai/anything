@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { anything } from "./anythingInit";
-import { Flow } from "../utils/flowTypes";
+import { Action, Flow } from "../utils/flowTypes";
 
 export type UpdateFlowArgs = {
   flow_name: string;
@@ -60,6 +60,11 @@ export const fetchSessionEvents = async (sessionId: string) => {
 
 export const getEvent = async (eventId: string) => {
   return await anything.getEvent(eventId);
+}
+
+export const getActions = async () => {
+  let res = await anything.getActions<{ actions: Action[] }>();
+  return res.actions;
 }
 
 

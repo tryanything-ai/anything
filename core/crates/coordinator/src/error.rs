@@ -1,8 +1,8 @@
 use anything_persistence::error::PersistenceError;
 use anything_runtime::RuntimeError;
 use ractor::ActorProcessingErr;
+use serde_json::Error;
 use thiserror::Error;
-
 // use crate::processing::processor::ProcessorMessage;
 
 pub type CoordinatorResult<T> = Result<T, CoordinatorError>;
@@ -56,6 +56,9 @@ pub enum CoordinatorError {
 
     #[error("processor error: {0}")]
     ParsingError(String),
+
+    #[error("serde error: {0}")]
+    SerdeError(#[from] Error),
 }
 
 impl<M> From<postage::sink::SendError<M>> for CoordinatorError {
