@@ -19,6 +19,7 @@ const NodePanel = () => {
     let action_nodes = await api.flows.getActions();
     console.log("action_nodes from rust files", action_nodes);
     let trigger_nodes = getTriggerNodes();
+    console.log("trigger_nodes from js generator", trigger_nodes);
 
     // populate original data to maintain for search
     setAllNodes([...action_nodes, ...trigger_nodes]);

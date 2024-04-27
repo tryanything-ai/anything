@@ -67,7 +67,6 @@ export const getActions = async () => {
   return res.actions;
 }
 
-
 export const stopExecution = async () => {
   return await anything.stop();
 };
