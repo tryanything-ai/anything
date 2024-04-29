@@ -28,27 +28,6 @@ lazy_static! {
         path
     };
 
-    // pub static ref ACTION_DIRECTORY: PathBuf = {
-    //     let current_file_path = Path::new(file!());
-    //     //crates/plugins/artifacts
-    //     let path = current_file_path
-    //     .parent()
-    //     .unwrap()
-    //     .parent()
-    //     .unwrap()
-    //     .parent()
-    //     .unwrap()
-    //     .parent()
-    //     .unwrap()
-    //     .parent()
-    //     .unwrap()
-    //     .parent()
-    //     .unwrap()
-    //     // .join("plugins")
-    //     // .join("artifacts");
-
-    //     path
-    // };
 
     pub static ref BUILT_IN_PLUGINS: HashMap<&'static str, PathBuf> = {
         HashMap::from([
@@ -59,6 +38,10 @@ lazy_static! {
             (
                 "system-shell",
                 PLUGINS_DIRECTORY.join(format!("libanything_plugin_system_shell.dylib")),
+            ),
+            (
+                "http",
+                PLUGINS_DIRECTORY.join(format!("libanything_plugin_http.dylib")),
             ),
         ])
     };
