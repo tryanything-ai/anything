@@ -7,9 +7,10 @@
   "main": "webview-dist/index.js",
   "types": "webview-dist/index.d.ts",
   "scripts": {
-    "build": "yarn install && yarn build && rollup -c ./webview-src/rollup.config.js",
-    "prepublishOnly": "yarn build",
-    "pretest": "yarn build"
+    "beforeBuild": "pnpm install",
+    "build": "rollup -c ./webview-src/rollup.config.js",
+    "prepublishOnly": "pnpm build",
+    "pretest": "pnpm build"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "13.3.0",

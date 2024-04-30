@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "scripts": {
     "beforeDev": "vite",
-    "beforeBuild": "tsc && vite build",
+    "beforeBuild": "pnpm build-tauri-anything-plugin && tsc && vite build",
+    "build-tauri-anything-plugin": "cd ../../core/crates/tauri-plugin-anything && pnpm beforeBuild && cd -",
     "build": "tauri build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
