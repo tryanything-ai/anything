@@ -34,6 +34,9 @@ jobs:
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
+      - name: install PNPM
+        run: npm i -g pnpm
+        
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -51,8 +54,6 @@ jobs:
         with:
           workspaces: './apps/tauri/src-tauri -> ./apps/tauri/target'
 
-      - name: install PNPM
-        run: npm i -g pnpm
 
       - name: install all dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
