@@ -2,7 +2,7 @@ extern crate anything_runtime;
 use anyhow::{anyhow, Error};
 use anything_common::tracing;
 use anything_runtime::prelude::*;
-use serde_json::json;
+use serde_json::{json, Error as SerdeError, Value};
 use std::collections::HashMap;
 use ureq;
 
@@ -47,7 +47,7 @@ impl Extension for HttpClientPlugin {
             "config": {
                 "method": "GET",
                 "url": "",
-                "headers": {},
+                "headers": "",
                 "body": ""
             },
             "extension_id": "http"
@@ -77,16 +77,54 @@ impl ExecutionPlugin for HttpClientPlugin {
             .as_str()
             .unwrap()
             .to_string();
-        let headers: HashMap<String, String> = config
+        // let headers: HashMap<String, String> = config
+        //     .context
+        //     .get("headers")
+        //     .unwrap_or(&json!({}))
+        //     .as_object()
+        //     .unwrap()
+        //     .iter()
+        //     .map(|(k, v)| (k.to_string(), v.as_str().unwrap().to_string()))
+        //     .collect();
+
+        // Create a default JSON Value to use if headers are not specified
+        // let default_headers = json!({});
+        // let headers_blob = config
+        //     .context
+        //     .get("headers")
+        //     .unwrap_or(&default_headers)
+        //     .as_str()
+        //     .unwrap();
+
+        // let headers: HashMap<String, String> = match serde_json::from_str(headers_blob) {
+        //     Ok(h) => h,
+        //     Err(e) => return Err(Box::new(PluginError::AnythingError(Error::new(e)))),
+        // };
+
+        // let body = config
+        //     .context
+        //     .get("body")
+        //     .unwrap_or(&json!(""))
+        //     .as_str()
+        //     .unwrap()
+        //     .to_string();
+
+        // Clean headers
+        let default_headers = json!({});
+        let headers_blob = config
             .context
             .get("headers")
-            .unwrap_or(&json!({}))
-            .as_object()
+            .unwrap_or(&default_headers)
+            .as_str()
             .unwrap()
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.as_str().unwrap().to_string()))
-            .collect();
-        let body = config
+            .to_string();
+
+        let cleaned_headers_blob = clean_json(&headers_blob).unwrap_or_else(|_| "{}".to_string());
+        let headers: HashMap<String, String> =
+            serde_json::from_str(&cleaned_headers_blob).unwrap_or_else(|_| HashMap::new());
+
+        // Clean body
+        let body_blob = config
             .context
             .get("body")
             .unwrap_or(&json!(""))
@@ -94,17 +132,48 @@ impl ExecutionPlugin for HttpClientPlugin {
             .unwrap()
             .to_string();
 
-        let request = ureq::request(&method, &url);
+        let cleaned_body = clean_json(&body_blob).unwrap_or_else(|_| "".to_string());
+
+        // let request = ureq::request(&method, &url);
+
+        // Initialize the request as mutable
+        let mut request = ureq::request(&method, &url);
 
         for (key, value) in &headers {
+            println!("Setting header: {} = {}", key, value);
             request.clone().set(key, value);
         }
+        // Properly setting headers
+        for (key, value) in &headers {
+            println!("Setting header: {} = {}", key, value);
+            request = request.set(key, value); // Update the request object directly
+        }
 
-        let response = if body.is_empty() {
+        let response = if cleaned_body.is_empty() {
             request.call()
         } else {
-            request.send_string(&body)
+            println!("Request from ureq: {:?}", request);
+            request.send_string(&cleaned_body)
         };
+
+        // // Correctly set headers on the mutable request
+        // for (key, value) in &headers {
+        //     println!("Setting header: {} = {}", key, value);
+        //     request = request.set(key, value);
+        // }
+
+        // let response = if body.is_empty() {
+        //     request.call()
+        // } else {
+        //     println!("Request from ureq: {:?}", request);
+        //     request.send_string(&body)
+        // };
+
+        // let response = if body.is_empty() {
+        //     request.call()
+        // } else {
+        //     request.send_string(&body)
+        // };
 
         match response {
             Ok(success) => {
@@ -116,6 +185,10 @@ impl ExecutionPlugin for HttpClientPlugin {
                     .collect();
                 let body = success.into_string().unwrap_or_default();
 
+                // Attempt to parse stdout as JSON. If this fails, use stdout as is.
+                let body_json: Value = serde_json::from_str(&body)
+                    .unwrap_or_else(|_| serde_json::json!({ "output": body }));
+
                 Ok(ExecutionResult {
                     stdout: body.clone(),
                     stderr: "".to_string(),
@@ -123,107 +196,18 @@ impl ExecutionPlugin for HttpClientPlugin {
                     result: json!({
                         "status": status,
                         "headers": headers,
-                        "body": body
+                        "body": body_json
                     }),
                 })
             }
             Err(e) => Err(Box::new(PluginError::AnythingError(Error::new(e)))),
         }
     }
-    // fn execute(
-    //     &self,
-    //     _scope: &Scope,
-    //     config: &ExecuteConfig,
-    // ) -> Result<ExecutionResult, Box<PluginError>> {
-    //     let method = config
-    //         .context
-    //         .get("method")
-    //         .unwrap_or(&json!("GET"))
-    //         .as_str()
-    //         .unwrap()
-    //         .to_uppercase();
-    //     let url = config
-    //         .context
-    //         .get("url")
-    //         .unwrap_or(&json!(""))
-    //         .as_str()
-    //         .unwrap()
-    //         .to_string();
-    //     let headers: HashMap<String, String> = config
-    //         .context
-    //         .get("headers")
-    //         .unwrap_or(&json!({}))
-    //         .as_object()
-    //         .unwrap()
-    //         .iter()
-    //         .map(|(k, v)| (k.to_string(), v.as_str().unwrap().to_string()))
-    //         .collect();
-    //     let body = config
-    //         .context
-    //         .get("body")
-    //         .unwrap_or(&json!(""))
-    //         .as_str()
-    //         .unwrap()
-    //         .to_string();
+}
 
-    //     let client = Client::new();
-
-    //     let future = async {
-    //         let mut request = match method.as_str() {
-    //             "GET" => client.get(&url),
-    //             "POST" => client.post(&url),
-    //             "PUT" => client.put(&url),
-    //             "DELETE" => client.delete(&url),
-    //             _ => {
-    //                 return Err(PluginError::Custom(
-    //                     "Invalid HTTP method".to_string(),
-    //                 ))
-    //             }
-    //         };
-
-    //         for (key, value) in headers {
-    //             request = request.header(key, value);
-    //         }
-
-    //         let response = if body.is_empty() {
-    //             request.send().await.map_err(|err| PluginError::AnythingError(Error::new(err)))?
-    //         } else {
-    //             request
-    //                 .body(body)
-    //                 .send()
-    //                 .await
-    //                 .map_err(|err| PluginError::AnythingError(Error::new(err)))?
-    //         };
-
-    //         let status = response.status().as_u16();
-    //         let headers: HashMap<String, String> = response
-    //             .headers()
-    //             .iter()
-    //             .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
-    //             .collect();
-    //         let body = response
-    //             .text()
-    //             .await
-    //             .map_err(|err| PluginError::AnythingError(Error::new(err)))?;
-
-    //         Ok(ExecutionResult {
-    //             stdout: body.clone(),
-    //             stderr: "".to_string(),
-    //             status: status as i32,
-    //             result: json!({
-    //                 "status": status,
-    //                 "headers": headers,
-    //                 "body": body
-    //             }),
-    //         })
-
-    //     };
-
-    //     match futures::executor::block_on(future) {
-    //         Ok(result) => Ok(result),
-    //         Err(err) => Err(Box::new(err)),
-    //     }
-    // }
+/// Cleans a JSON string by removing unnecessary escaped characters and formatting it properly.
+fn clean_json(json_string: &str) -> Result<String, SerdeError> {
+    serde_json::from_str(json_string).and_then(|value: Value| serde_json::to_string_pretty(&value))
 }
 
 declare_plugin!(HttpClientPlugin, HttpClientPlugin::default);

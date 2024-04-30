@@ -276,6 +276,8 @@ impl WorkQueueActor {
             e
         })?;
 
+        //TODO: help prevent SHITTY JSON causing problems in either direction.
+        //TODO: see HTTP plugin having problems. We need to form an opinion somewhere in the stack
         println!("Rendered config: {}", rendered_config);
 
         serde_json::from_str::<Value>(&rendered_config).map_err(|e| {
