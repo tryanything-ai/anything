@@ -51,7 +51,10 @@ jobs:
         with:
           workspaces: './apps/tauri/src-tauri -> ./apps/tauri/target'
 
-      - name: install frontend dependencies
+      - name: install PNPM
+        run: npm i -g pnpm
+
+      - name: install all dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: pnpm install # change this to npm or pnpm depending on which one you use.
 
