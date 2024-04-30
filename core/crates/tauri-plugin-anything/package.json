@@ -1,13 +1,13 @@
 {
   "name": "tauri-plugin-anything-api",
   "version": "0.0.0",
-  "author": "You",
+  "author": "Carl Lippert",
   "description": "",
   "browser": "webview-dist/index.js",
   "main": "webview-dist/index.js",
   "types": "webview-dist/index.d.ts",
   "scripts": {
-    "build": "rollup -c ./webview-src/rollup.config.js",
+    "build": "yarn install && yarn build && rollup -c ./webview-src/rollup.config.js",
     "prepublishOnly": "yarn build",
     "pretest": "yarn build"
   },
