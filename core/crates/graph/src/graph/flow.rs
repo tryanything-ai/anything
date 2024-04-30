@@ -2,7 +2,7 @@ use anything_runtime::{RawEnvironment, RawVariables};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
-use crate::{core::keyable::Keyable, error::GraphResult, NodeType};
+use crate::{core::keyable::Keyable, error::GraphResult};
 
 use super::{flowfile::Flowfile, trigger::Trigger};
 

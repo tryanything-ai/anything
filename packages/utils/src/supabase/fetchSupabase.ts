@@ -214,7 +214,7 @@ export const saveFlowTemplate = async (
   flow_template_description: string,
   flow_template_json: any,
   publisher_id: string,
-  anything_flow_template_version: string
+  anything_flow_version: string
 ) => {
   try {
     //validate client side id's sent for consistancy.
@@ -257,7 +257,7 @@ export const saveFlowTemplate = async (
       "0.0.1",
       "Initial Commit",
       publisher_id,
-      anything_flow_template_version
+      anything_flow_version
     );
 
     if (!result) throw new Error("result is undefined");
@@ -279,7 +279,7 @@ export const saveFlowTemplateVersion = async (
   flow_template_version: string,
   commit_message: string,
   publisher_id: string,
-  anything_flow_template_version: string
+  anything_flow_version: string
 ) => {
   try {
     // Save Template Version
@@ -290,7 +290,7 @@ export const saveFlowTemplateVersion = async (
         flow_template_version_id,
         flow_template_json,
         publisher_id,
-        anything_flow_template_version,
+        anything_flow_version,
         flow_template_version_name,
         flow_template_version,
         public_template,

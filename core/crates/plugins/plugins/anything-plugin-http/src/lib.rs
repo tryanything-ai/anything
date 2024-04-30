@@ -63,120 +63,59 @@ impl ExecutionPlugin for HttpClientPlugin {
         _scope: &Scope,
         config: &ExecuteConfig,
     ) -> Result<ExecutionResult, Box<PluginError>> {
+        // Safely retrieve 'method' or default to "GET"
         let method = config
             .context
             .get("method")
-            .unwrap_or(&json!("GET"))
-            .as_str()
-            .unwrap()
+            .and_then(|v| v.as_str())
+            .unwrap_or("GET")
             .to_uppercase();
+
+        // Safely retrieve 'url' or default to an empty string
         let url = config
             .context
             .get("url")
-            .unwrap_or(&json!(""))
-            .as_str()
-            .unwrap()
-            .to_string();
-        // let headers: HashMap<String, String> = config
-        //     .context
-        //     .get("headers")
-        //     .unwrap_or(&json!({}))
-        //     .as_object()
-        //     .unwrap()
-        //     .iter()
-        //     .map(|(k, v)| (k.to_string(), v.as_str().unwrap().to_string()))
-        //     .collect();
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
 
-        // Create a default JSON Value to use if headers are not specified
-        // let default_headers = json!({});
-        // let headers_blob = config
-        //     .context
-        //     .get("headers")
-        //     .unwrap_or(&default_headers)
-        //     .as_str()
-        //     .unwrap();
+        // Initialize the request as mutable
+        let mut request = ureq::request(&method, url);
 
-        // let headers: HashMap<String, String> = match serde_json::from_str(headers_blob) {
-        //     Ok(h) => h,
-        //     Err(e) => return Err(Box::new(PluginError::AnythingError(Error::new(e)))),
-        // };
-
-        // let body = config
-        //     .context
-        //     .get("body")
-        //     .unwrap_or(&json!(""))
-        //     .as_str()
-        //     .unwrap()
-        //     .to_string();
-
-        // Clean headers
-        let default_headers = json!({});
+        // Safely retrieve and clean 'headers'
         let headers_blob = config
             .context
             .get("headers")
-            .unwrap_or(&default_headers)
-            .as_str()
-            .unwrap()
-            .to_string();
-
-        let cleaned_headers_blob = clean_json(&headers_blob).unwrap_or_else(|_| "{}".to_string());
+            .and_then(|v| v.as_str())
+            .unwrap_or("{}");
+        let cleaned_headers_blob = clean_json(headers_blob).unwrap_or_else(|_| "{}".to_string());
         let headers: HashMap<String, String> =
-            serde_json::from_str(&cleaned_headers_blob).unwrap_or_else(|_| HashMap::new());
+            serde_json::from_str(&cleaned_headers_blob).unwrap_or_default();
 
-        // Clean body
+        // Set headers on the request
+        for (key, value) in &headers {
+            println!("Setting header: {} = {}", key, value);
+            request = request.set(key, value);
+        }
+
+        // Safely retrieve and clean 'body'
         let body_blob = config
             .context
             .get("body")
-            .unwrap_or(&json!(""))
-            .as_str()
-            .unwrap()
-            .to_string();
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let cleaned_body = clean_json(body_blob).unwrap_or_else(|_| "".to_string());
 
-        let cleaned_body = clean_json(&body_blob).unwrap_or_else(|_| "".to_string());
-
-        // let request = ureq::request(&method, &url);
-
-        // Initialize the request as mutable
-        let mut request = ureq::request(&method, &url);
-
-        for (key, value) in &headers {
-            println!("Setting header: {} = {}", key, value);
-            request.clone().set(key, value);
-        }
-        // Properly setting headers
-        for (key, value) in &headers {
-            println!("Setting header: {} = {}", key, value);
-            request = request.set(key, value); // Update the request object directly
-        }
-
+        // Handle the request based on 'body' content
         let response = if cleaned_body.is_empty() {
             request.call()
         } else {
-            println!("Request from ureq: {:?}", request);
             request.send_string(&cleaned_body)
         };
 
-        // // Correctly set headers on the mutable request
-        // for (key, value) in &headers {
-        //     println!("Setting header: {} = {}", key, value);
-        //     request = request.set(key, value);
-        // }
-
-        // let response = if body.is_empty() {
-        //     request.call()
-        // } else {
-        //     println!("Request from ureq: {:?}", request);
-        //     request.send_string(&body)
-        // };
-
-        // let response = if body.is_empty() {
-        //     request.call()
-        // } else {
-        //     request.send_string(&body)
-        // };
-
         match response {
             Ok(success) => {
+                println!("Success in http response: {:?}", success);
+                // println!("Success in http response: {:?}", response.clone());
                 let status = success.status();
                 let headers: HashMap<String, String> = success
                     .headers_names()

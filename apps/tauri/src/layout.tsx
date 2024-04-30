@@ -19,8 +19,8 @@ export default function Layout() {
       >
         <div className="w-14 flex flex-col gap-3 pt-3 pb-2 border-r border-slate-6 flex-shrink-0">
           <NavLink link="/" icon={VscHome} />
-          <NavLink link="/templates" icon={VscGlobe} />
-          <NavLink link="/flows" icon={VscRepoForked} />
+          {/* <NavLink link="/templates" icon={VscGlobe} /> */}
+          {/* <NavLink link="/flows" icon={VscRepoForked} /> */}
           {/* TODO bring back when we have them */}
           {/* <NavLink link="/vectors" icon={VscReferences} /> */}
           {/* <NavLink link="/tables" icon={VscTable} /> */}

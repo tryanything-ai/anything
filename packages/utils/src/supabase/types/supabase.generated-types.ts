@@ -44,7 +44,7 @@ export interface Database {
       }
       flow_template_versions: {
         Row: {
-          anything_flow_template_version: string
+          anything_flow_version: string
           commit_message: string | null
           created_at: string
           flow_template_id: string
@@ -57,7 +57,7 @@ export interface Database {
           recommended_version: boolean
         }
         Insert: {
-          anything_flow_template_version: string
+          anything_flow_version: string
           commit_message?: string | null
           created_at?: string
           flow_template_id: string
@@ -70,7 +70,7 @@ export interface Database {
           recommended_version?: boolean
         }
         Update: {
-          anything_flow_template_version?: string
+          anything_flow_version?: string
           commit_message?: string | null
           created_at?: string
           flow_template_id?: string

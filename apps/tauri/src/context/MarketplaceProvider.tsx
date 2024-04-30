@@ -15,6 +15,7 @@ import { createContext, ReactNode, useContext } from "react";
 
 import { useSettingsContext } from "./SettingsProvider";
 import { useAuthenticationContext } from "./AuthenticaionProvider";
+import { ANYTHING_FLOW_VERSION } from "../../anything_version_system";
 
 interface MarketplaceContextInterface {
   searchTemplates: (searchTerm: string) => void;
@@ -43,7 +44,7 @@ interface MarketplaceContextInterface {
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextInterface>({
-  searchTemplates: () => {},
+  searchTemplates: () => { },
   fetchTemplates: () => Promise.resolve([]),
   fetchTemplateBySlug: () => Promise.resolve(undefined),
   fetchTemplateById: () => Promise.resolve(undefined),
@@ -52,14 +53,10 @@ export const MarketplaceContext = createContext<MarketplaceContextInterface>({
   updateProfile: () => Promise.resolve(undefined),
   uploadAvatar: () => Promise.resolve(undefined),
   saveTemplate: () => Promise.resolve(undefined),
-  updateTemplate: () => {},
+  updateTemplate: () => { },
 });
 
 export const useMarketplaceContext = () => useContext(MarketplaceContext);
-
-//We will break compatability of templates and will need to know what version of templates we are using.
-//was used to create a template to manage compatability and conversion
-export const ANYTHING_FLOW_TEMPLATE_VERSION = "0.0.1";
 
 export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const { webFeaturesDisabled } = useSettingsContext();
@@ -151,7 +148,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       flow_template_description,
       flow_template_json,
       session.user.id,
-      ANYTHING_FLOW_TEMPLATE_VERSION
+      ANYTHING_FLOW_VERSION
     );
 
     if (!res) return undefined;
