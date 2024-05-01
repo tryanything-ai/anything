@@ -36,6 +36,10 @@ jobs:
 
       - name: install PNPM v8.6.10
         run: npm i -g pnpm@8.6.10
+      
+        # Tauri plugin does not want to build without a global cli. This was an easier fix. 
+      - name: install tauri cli 
+        run: pnpm i -g @tauri-apps/cli
         
       - name: setup node
         uses: actions/setup-node@v4
