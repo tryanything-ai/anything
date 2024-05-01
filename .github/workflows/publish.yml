@@ -59,8 +59,8 @@ jobs:
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: pnpm install # change this to npm or pnpm depending on which one you use.
 
-      - name: build tauri from top level with turborepo
-        run: pnpm tauri-build
+      # - name: build tauri from top level with turborepo
+      #   run: pnpm tauri-build
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -72,4 +72,5 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
+          tauriScript: "pnpm tauri-build"
           args: ${{ matrix.settings.args }}
