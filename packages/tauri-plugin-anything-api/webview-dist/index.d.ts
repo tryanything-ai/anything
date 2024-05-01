@@ -24,4 +24,6 @@ export declare class Anything {
     executeFlow<T>(flowId: string, flowVersionId: string, sessionId?: string, stage?: string): Promise<T>;
     fetchSessionEvents<T>(sessionId: string): Promise<T>;
     getEvent<T>(eventId: string): Promise<T>;
+    getActions<T>(): Promise<T>;
+    saveAction<T>(action: any, actionName: String): Promise<T>;
 }

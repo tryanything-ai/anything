@@ -1,9 +1,5 @@
 import { invoke } from '@tauri-apps/api/tauri'
 
-// export async function execute() {
-//   await invoke('plugin:anything|execute')
-// }
-
 export type UpdateFlowArgs = {
   flow_name: string;
   active: boolean;
@@ -17,7 +13,6 @@ export type CreateFlowVersion = {
   flowDefinition: any;
   published: boolean;
 };
-
 
 export class Anything {
   path: string;

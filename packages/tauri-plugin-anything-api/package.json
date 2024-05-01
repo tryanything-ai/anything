@@ -8,6 +8,7 @@
   "types": "webview-dist/index.d.ts",
   "scripts": {
     "beforeBuild": "pnpm install",
+    "beforeDev": "pnpm install",
     "build": "rollup -c ./webview-src/rollup.config.js",
     "prepublishOnly": "pnpm build",
     "pretest": "pnpm build"
@@ -20,7 +21,7 @@
     "typescript": "4.7.3"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.0.0",
+    "@tauri-apps/api": "^1.4.0",
     "tslib": "^2.1.0"
   }
 }

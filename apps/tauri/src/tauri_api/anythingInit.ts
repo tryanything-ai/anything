@@ -1,3 +1,3 @@
-import { Anything } from "../../../../core/crates/tauri-plugin-anything/webview-src";
+import { Anything } from "tauri-plugin-anything-api/webview-src";
 
 export const anything = new Anything("anything");

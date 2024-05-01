@@ -61,6 +61,43 @@ export const generateStaticParams = async (): Promise<BigFlow> => {
   return templates;
 };
 
+const Action = ({ template, profile }: any): JSX.Element => {
+  return (
+    <div className="flex flex-col gap-3 md:flex-row">
+      <Link
+        className="btn btn-sm btn-primary md:btn-md"
+        data-ph-capture-attribute-flow-template-id={template.flow_template_id}
+        data-ph-capture-attribute-flow-template-name={
+          template.flow_template_name
+        }
+        data-ph-capture-attribute-flow-template-profile-id={profile?.id}
+        data-ph-capture-attribute-flow-template-profile-username={
+          profile?.username
+        }
+        data-ph-capture-attribute-flow-template-slug={template.slug}
+        href="/downloads"
+      >
+        Download Anything
+      </Link>
+      <a
+        className="btn btn-sm btn-primary md:btn-md"
+        data-ph-capture-attribute-flow-template-id={template.flow_template_id}
+        data-ph-capture-attribute-flow-template-name={
+          template.flow_template_name
+        }
+        data-ph-capture-attribute-flow-template-profile-id={profile?.id}
+        data-ph-capture-attribute-flow-template-profile-username={
+          profile?.username
+        }
+        data-ph-capture-attribute-flow-template-slug={template.slug}
+        href={`anything://templates/${template.slug}`}
+      >
+        Open in App
+      </a>
+    </div>
+  );
+}
+
 export default async function Template({
   params,
 }: Props): Promise<JSX.Element> {
@@ -77,43 +114,6 @@ export default async function Template({
   const profile: Profile | undefined = template?.profiles?.username
     ? await fetchProfile(template.profiles.username)
     : undefined;
-
-  function Action(): JSX.Element {
-    return (
-      <div className="flex flex-col gap-3 md:flex-row">
-        <Link
-          className="btn btn-sm btn-primary md:btn-md"
-          data-ph-capture-attribute-flow-template-id={template.flow_template_id}
-          data-ph-capture-attribute-flow-template-name={
-            template.flow_template_name
-          }
-          data-ph-capture-attribute-flow-template-profile-id={profile?.id}
-          data-ph-capture-attribute-flow-template-profile-username={
-            profile?.username
-          }
-          data-ph-capture-attribute-flow-template-slug={template.slug}
-          href="/downloads"
-        >
-          Download Anything
-        </Link>
-        <a
-          className="btn btn-sm btn-primary md:btn-md"
-          data-ph-capture-attribute-flow-template-id={template.flow_template_id}
-          data-ph-capture-attribute-flow-template-name={
-            template.flow_template_name
-          }
-          data-ph-capture-attribute-flow-template-profile-id={profile?.id}
-          data-ph-capture-attribute-flow-template-profile-username={
-            profile?.username
-          }
-          data-ph-capture-attribute-flow-template-slug={template.slug}
-          href={`anything://templates/${template.slug}`}
-        >
-          Open in App
-        </a>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-4 my-6 flex max-w-4xl flex-col md:mx-auto md:my-16">

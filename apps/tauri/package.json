@@ -4,8 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "beforeDev": "vite",
-    "beforeBuild": "pnpm build-tauri-anything-plugin && tsc && vite build",
-    "build-tauri-anything-plugin": "cd ../../core/crates/tauri-plugin-anything && pnpm beforeBuild && cd -",
+    "beforeBuild": "tsc && vite build",
     "build": "tauri build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -34,7 +33,7 @@
     "reactflow": "^11.7.4",
     "slugify": "^1.6.6",
     "sort-by": "^1.2.0",
-    "tauri-plugin-anything": "../../core/crates/tauri-plugin-anything",
+    "tauri-plugin-anything-api": "workspace:*",
     "ui": "workspace:*",
     "utils": "workspace:*",
     "uuid": "^9.0.0"
