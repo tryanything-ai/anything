@@ -25,7 +25,7 @@ export default function Layout() {
           {/* <NavLink link="/vectors" icon={VscReferences} /> */}
           {/* <NavLink link="/tables" icon={VscTable} /> */}
           <div className="flex-grow" />
-          <NavLink link="/settings" icon={VscSettingsGear} />
+          {/* <NavLink link="/settings" icon={VscSettingsGear} /> */}
         </div>
         <div className="w-full h-full">
           <Outlet />

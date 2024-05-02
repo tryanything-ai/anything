@@ -39,12 +39,12 @@ const RightPanel = () => {
         >
           Settings
         </a>
-        <a
+        {/* <a
           className={clsx("tab", { "tab-active": sharingPanel })}
           onClick={() => closeAllPanelsOpenOne("sharing")}
         >
           Sharing
-        </a>
+        </a> */}
         {/* <a
           className={clsx("tab", { "tab-active": tomlPanel })}
           onClick={() => closeAllPanelsOpenOne("toml")}
