@@ -1,6 +1,6 @@
-import { BigFlow, flowJsonFromBigFlow } from "utils";
-import { ComponentType, JSX } from "react";
-
+import type { BigFlow} from "utils";
+import { flowJsonFromBigFlow } from "utils";
+import type { ComponentType, JSX } from "react";
 import TemplateCard from "./templateCard";
 
 export const TemplateGrid = ({
@@ -19,8 +19,8 @@ export const TemplateGrid = ({
 }) => {
   return (
     <div className="3xl:grid-cols-4 mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-      {templates.map((template: any, index: number) => {
-        let flow_json = flowJsonFromBigFlow(template);
+      {templates.map((template: any) => {
+        const flowJson = flowJsonFromBigFlow(template);
 
         return (
           <TemplateCard
@@ -31,18 +31,18 @@ export const TemplateGrid = ({
               })
             }
             Link={LinkComponent}
-            key={index}
-            profile={profile}
-            username={template?.profiles?.username || ""}
-            profile_name={template?.profiles?.full_name || ""}
             description={
               template.flow_template_description
                 ? template.flow_template_description
                 : ""
             }
-            flow_template_json={flow_json}
+            flowName={template.flow_template_name}
+            flowTemplateJson={flowJson}
+            key={template.flow_template_id}
+            profile={profile}
+            profileName={template?.profiles?.full_name || ""}
             slug={template.slug}
-            flow_name={template.flow_template_name}
+            username={template?.profiles?.username || ""}
           />
         );
       })}

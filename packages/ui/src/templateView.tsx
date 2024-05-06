@@ -44,7 +44,7 @@ export const TemplateView= ({
         {/* Right */}
         {/* <div> */}
         {/* //TODO: deeplink or no */}
-        <ActionComponent />
+        <ActionComponent profile={profile} template={template} />
         {/* <button>
              <Deeplink href="anything://templateid">Open in App </Deeplink> 
             <a href={`anything://templates/${template.slug}`}>Open in App</a>

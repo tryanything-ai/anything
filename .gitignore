@@ -39,6 +39,7 @@ dist/
 
 core/target
 core/crate/*/target
+core/crates/plugins/artifacts/*
 
 node_modules
 dist
@@ -59,5 +60,6 @@ dist-ssr
 .next
 **/.env
 .sentryclirc
+.envrc
 
 **/tsconfig.tsbuildinfo

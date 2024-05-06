@@ -1,12 +1,12 @@
 import { BaseNodeIcon } from "ui";
 import clsx from "clsx";
 import { ReactNode, useEffect, useState } from "react";
-import { VscClose, VscEllipsis, VscGear } from "react-icons/vsc";
+import { VscClose, VscGear } from "react-icons/vsc";
 import { Handle, HandleProps } from "reactflow";
 
 import { useFlowNavigationContext } from "../../context/FlowNavigationProvider";
 import { useFlowContext } from "../../context/FlowProvider";
-import { NodeData } from "../../utils/nodeUtils";
+import { Node } from "../../utils/flowTypes";
 
 export default function BaseNode({
   children,
@@ -16,7 +16,7 @@ export default function BaseNode({
 }: {
   children: ReactNode;
   id: string;
-  data: NodeData;
+  data: Node;
   hideIcon?: boolean;
 }) {
   const { currentProcessingStatus, flowFrontmatter } = useFlowContext();
@@ -28,7 +28,7 @@ export default function BaseNode({
     if (
       currentProcessingStatus &&
       currentProcessingStatus?.node_id === id &&
-      currentProcessingStatus?.flow_id === flowFrontmatter?.id
+      currentProcessingStatus?.flow_id === flowFrontmatter?.flow_id
     ) {
       setProcessing(true);
     } else {
@@ -45,7 +45,7 @@ export default function BaseNode({
         }
       )}
     >
-      {data.handles.map((handle: HandleProps) => {
+      {data.handles ? data.handles.map((handle: HandleProps) => {
         return (
           <Handle
             key={handle.id}
@@ -54,7 +54,7 @@ export default function BaseNode({
             id={handle.id}
           />
         );
-      })}
+      }): null}
       {processing ? (
         <div className=" absolute right-0 top-0 z-10 flex h-10 w-10 -translate-y-1/2 translate-x-1/2 transform items-center justify-center overflow-hidden rounded-full bg-white p-0.5 shadow">
           <span className="loading loading-spinner text-accent"></span>

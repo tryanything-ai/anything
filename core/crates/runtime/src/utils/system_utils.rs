@@ -1,6 +1,6 @@
 use std::{
     io::Write,
-    os::unix::prelude::PermissionsExt,
+    // os::unix::prelude::PermissionsExt, //Dropped to get microsoft build too work in tauri github action
     path::{Path, PathBuf},
 };
 
@@ -16,6 +16,6 @@ pub(crate) fn create_script_file(code: &str) -> RuntimeResult<(PathBuf, tempfile
 
 pub(crate) fn set_execute_permission(path: &Path) -> RuntimeResult<()> {
     let mut permissions = std::fs::metadata(path)?.permissions();
-    permissions.set_mode(permissions.mode() | 0o111);
+    // permissions.set_mode(permissions.mode() | 0o111);
     std::fs::set_permissions(path, permissions).map_err(RuntimeError::IoError)
 }

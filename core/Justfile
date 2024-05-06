@@ -22,26 +22,35 @@ install-recommended: install-required
     pre-commit --version || pip install pre-commit
     pre-commit install || echo "failed to install git hooks!" 1>&2
 
+# Build plugins
+build-plugins:
+    cd crates/plugins && just build-all
 
 # Test all crates
-test: test-graph test-mq test-runtime test-plugins test-store
+test: test-graph test-mq test-runtime test-plugins test-store test-coordinator test-persistence
 
 # Test graph crate
 test-graph:
-    cd crates/graph && cargo test -- --nocapture --color=always
+    cd crates/graph && cargo nextest run
 
 # Test mq crate
 test-mq:
-    cd crates/mq && cargo test -- --nocapture --color=always
+    cd crates/mq && cargo nextest run
 
 # Test runtime crate
 test-runtime:
-    cd crates/runtime && cargo test -- --nocapture --color=always
+    cd crates/runtime && cargo nextest run
 
 # Test plugins crate
 test-plugins:
-    cd crates/plugins && cargo test -- --nocapture --color=always
+    cd crates/plugins && cargo nextest run
 
 # Test store crate
 test-store:
-    cd crates/store && cargo test -- --nocapture --color=always
+    cd crates/store && cargo nextest run
+
+test-coordinator:
+    cd crates/coordinator && cargo nextest run
+
+test-persistence:
+    cd crates/persistence && cargo nextest run

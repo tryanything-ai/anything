@@ -1,54 +1,56 @@
-use anything_common::spawn_or_crash;
-use anything_graph::Flowfile;
-use anything_mq::new_client;
-use anything_runtime::{Runner, RuntimeConfig};
+use anything_common::AnythingConfig;
+use anything_persistence::datastore::RepoImpl;
+use anything_persistence::{
+    create_sqlite_datastore_from_config_and_file_store, CreateFlow, CreateFlowVersion, EventRepo,
+    EventRepoImpl, FlowRepo, FlowRepoImpl, FlowVersion, UpdateFlowArgs, UpdateFlowVersion,
+};
+use anything_runtime::{PluginManager, RuntimeConfig};
 use anything_store::FileStore;
+use ractor::{cast, Actor, ActorRef};
+
+use serde_json::Value;
+use std::process::Command;
 use std::{env::temp_dir, sync::Arc};
 
 use tokio::sync::{
-    mpsc::{self, Sender},
+    mpsc::{self},
     Mutex,
 };
 
-use crate::{
-    config::AnythingConfig,
-    error::CoordinatorResult,
-    events::StoreChangesPublisher,
-    handlers,
-    models::{Models, MODELS},
-};
+use uuid::Uuid;
 
-pub async fn start(
-    config: AnythingConfig,
-    shutdown_rx: mpsc::Receiver<()>,
-    ready_tx: mpsc::Sender<Arc<Manager>>,
-) -> CoordinatorResult<()> {
-    let mut runtime_config = config.runtime_config().clone();
-    let root_dir = match runtime_config.base_dir {
-        Some(v) => v,
-        None => temp_dir(),
-    };
-    runtime_config.base_dir = Some(root_dir);
-    let mut cfg = config.clone();
-    cfg.update_runtime_config(runtime_config);
+// use crate::actors::flow_actors::{FlowActor, FlowActorState, FlowMessage};
+use crate::actors::system_actors::{SystemActor, SystemActorState, SystemMessage};
+use crate::actors::trigger_actor::{TriggerActor, TriggerActorState, TriggerMessage};
+// use crate::actors::update_actor::{UpdateActor, UpdateActorMessage, UpdateActorState};
+use crate::actors::work_queue_actor::{WorkQueueActor, WorkQueueActorMessage, WorkQueueActorState};
+use crate::error::CoordinatorResult;
+use crate::CoordinatorError;
 
-    let manager = Manager::new(cfg);
+#[derive(Debug, Clone)]
+pub struct Repositories {
+    pub flow_repo: anything_persistence::FlowRepoImpl,
+    pub event_repo: anything_persistence::EventRepoImpl,
+    // pub trigger_repo: anything_persistence::TriggerRepoImpl,
+}
 
-    // Setup global models
-    Models::setup(manager.file_store.clone()).await?;
-
-    let arc = Arc::new(manager);
-    arc.start(shutdown_rx, ready_tx).await?;
-
-    Ok(())
+#[derive(Debug, Clone)]
+pub struct ActorRefs {
+    pub system_actor: ActorRef<SystemMessage>,
+    // pub flow_actor: ActorRef<FlowMessage>,
+    // pub update_actor: ActorRef<UpdateActorMessage>,
+    pub work_queue_actor: ActorRef<WorkQueueActorMessage>,
+    pub trigger_actor: ActorRef<TriggerMessage>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Manager {
     pub file_store: FileStore,
     pub config: AnythingConfig,
-    pub executor: Option<Runner>,
-    pub shutdown_sender: Sender<()>,
+    // pub runner: Runner,
+    // pub shutdown_sender: Sender<()>,
+    pub repositories: Option<Repositories>,
+    pub actor_refs: Option<ActorRefs>,
 }
 
 impl Default for Manager {
@@ -61,63 +63,173 @@ impl Default for Manager {
     }
 }
 
+pub async fn start(
+    config: AnythingConfig,
+    shutdown_rx: mpsc::Receiver<()>,
+    ready_tx: mpsc::Sender<Arc<Manager>>,
+) -> CoordinatorResult<()> {
+    let mut manager = Manager::new(config);
+
+    manager.start(shutdown_rx, ready_tx).await?;
+    Ok(())
+}
+
+// TODO: Move to use repositories instead of models
 impl Manager {
     pub fn new(config: AnythingConfig) -> Self {
-        let runtime_config = config.runtime_config().clone();
-        let executor = Runner::new(runtime_config.clone());
+        let mut runtime_config = config.runtime_config().clone();
+        //manages plugins and deno stuff i think
+        // let runner = Runner::new(runtime_config.clone());
 
+        //Make a dir if we don't have one
         let root_dir = match runtime_config.base_dir {
             Some(v) => v.clone(),
             None => tempfile::tempdir().unwrap().path().to_path_buf(),
         };
-        let (shutdown_sender, _) = tokio::sync::mpsc::channel(4096);
+        runtime_config.base_dir = Some(root_dir.clone());
 
+        //Deal with local file system
         let file_store = FileStore::create(root_dir.as_path(), &["anything"]).unwrap();
 
         // Create all the base directories required
         file_store.create_base_dir().unwrap();
-        file_store.create_directory(&["flows"]).unwrap();
-        file_store.create_directory(&["db"]).unwrap();
+        for dir in &["flows", "actions", "extensions", "database", "assets"] {
+            file_store.create_directory(&[dir]).unwrap();
+        }
+
+        // Create files if they don't exist
+        let file_paths = vec![vec![".env"]];
+        let file_content = b"";
+        for file_path in file_paths {
+            if !file_store.file_exists(&file_path) {
+                file_store.write_file(&file_path, file_content).unwrap();
+            }
+        }
+
+        // Initialize git repository if it doesn't exist
+        let git_dir = root_dir.join(".store").join("anything").join(".git");
+        if !git_dir.exists() {
+            let output = Command::new("git")
+                .arg("init")
+                .current_dir(&git_dir.parent().unwrap())
+                .output()
+                .expect("Failed to execute git init");
+
+            //make a .gitignore file
+            let gitignore_content = r#"
+# Ignore all .env files
+.env
+
+# Ignore databases
+database/
+"#;
+
+            file_store
+                .write_file(&[".gitignore"], gitignore_content.as_bytes())
+                .unwrap();
+
+            if !output.status.success() {
+                eprintln!(
+                    "git init failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+        } else {
+            println!("Git repository already exists");
+        }
 
         Manager {
             file_store,
+            // runner,
             config: config.clone(),
-            executor: Some(executor),
-            shutdown_sender,
-            // post_office: PostOffice::open(),
+            repositories: None,
+            actor_refs: None,
         }
     }
 
     pub async fn start(
-        self: Arc<Self>,
+        &mut self,
         mut shutdown_rx: mpsc::Receiver<()>,
-        ready_tx: mpsc::Sender<Arc<Manager>>,
+        ready_tx: mpsc::Sender<Arc<Self>>,
     ) -> CoordinatorResult<()> {
-        spawn_or_crash(
-            "internal_events",
-            self.clone(),
-            handlers::system_handler::process_system_events,
-        );
+        // Setup sqlite db
+        let datastore = create_sqlite_datastore_from_config_and_file_store(
+            self.config.clone(),
+            self.file_store.clone(),
+        )
+        .await
+        .unwrap();
 
-        spawn_or_crash(
-            "flow_events",
-            self.clone(),
-            handlers::flow_handler::process_flows,
-        );
+        //Stores The Flows in SQLite
+        let flow_repo = FlowRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create flow repo");
+        //Stores The Events in SQLite
+        let event_repo = EventRepoImpl::new_with_datastore(datastore.clone())
+            .expect("unable to create event repo");
 
-        spawn_or_crash(
-            "store_events",
-            self.clone(),
-            handlers::store_handler::process_store_events,
-        );
+        self.repositories = Some(Repositories {
+            flow_repo: flow_repo.clone(),
+            event_repo: event_repo.clone(),
+        });
 
-        let arc_self = self.clone();
+        // startup System Actor in charge of watching files changes for flows to syncronize
+        let (system_actor, _handle) = Actor::spawn(
+            None,
+            SystemActor,
+            SystemActorState {
+                file_store: self.file_store.clone(),
+                flow_repo: flow_repo.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        //Start carls work queue actor
+        let (work_queue_actor, _handle) = Actor::spawn(
+            None,
+            WorkQueueActor,
+            WorkQueueActorState {
+                processing: false,
+                event_repo: event_repo.clone(),
+                flow_repo: flow_repo.clone(),
+                plugin_manager: PluginManager::new(
+                    self.config.runtime_config(),
+                    self.file_store.base_dir.clone(),
+                ),
+                file_store: self.file_store.clone(),
+                anything_config: self.config.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let (trigger_actor, _handle) = Actor::spawn(
+            None,
+            TriggerActor,
+            TriggerActorState {
+                flow_repo: flow_repo.clone(),
+                triggers: Arc::new(std::sync::Mutex::new(vec![])),
+                // config: self.config.clone(),
+                work_queue_actor: work_queue_actor.clone(), // execute_flow: self.execute_flow.clone(),
+                                                            // execute_flow: self.exec
+            },
+        )
+        .await
+        .unwrap();
+
+        self.actor_refs = Some(ActorRefs {
+            system_actor,
+            work_queue_actor: work_queue_actor.clone(),
+            trigger_actor,
+        });
+
+        // Setup listeners and action-takers
         self.setup_file_handler().await;
 
-        // Notify changes for filestore
-        ready_tx.send(arc_self).await.unwrap();
+        // Return with ready
+        ready_tx.send(Arc::new(self.clone())).await.unwrap();
 
-        // never quit
+        // never quit -> this i think talks to tauri runtime. we signal ready to tauri with the read_rx
         loop {
             // Never quit
             tokio::select! {
@@ -132,20 +244,27 @@ impl Manager {
         Ok(())
     }
 
-    pub async fn refresh_flows(&self) -> CoordinatorResult<()> {
-        let mut models = MODELS.get().unwrap().lock().await;
-        models.reload_flows().await;
-        Ok(())
-    }
-
-    /// The function `get_flows` returns a result containing a vector of `anything_graph::Flow` objects.
+    /// The function `get_flows` returns a result containing a vector of `anything_persistence::StoredFlow` objects.
     ///
     /// Returns:
     ///
     /// The function `get_flows` returns a `CoordinatorResult` containing a `Vec` of
-    /// `anything_graph::Flow` objects.
-    pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_graph::Flow>> {
-        let flows = MODELS.get().unwrap().lock().await.get_flows();
+    /// `anything_persistence::StoredFlow` objects.
+    pub async fn get_flows(&self) -> CoordinatorResult<Vec<anything_persistence::StoredFlow>> {
+        let flow_repo = self.flow_repo()?;
+        // let mut file_store = self.file_store.clone();
+        let flows = flow_repo.get_flows().await.map_err(|e| {
+            tracing::error!("error when getting flows: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+        // let mut graph_flows: Vec<anything_graph::Flow> = vec![];
+        // for flow in flows.iter() {
+        //     let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
+        //         tracing::error!("error when getting flow for flow {:#?}: {:#?}", flow, e);
+        //         CoordinatorError::PersistenceError(e)
+        //     })?;
+        //     graph_flows.push(flow.into());
+        // }
         Ok(flows)
     }
 
@@ -156,20 +275,162 @@ impl Manager {
     ///
     /// * `name`: A string representing the name of the flow to retrieve.
     ///
-    /// Returns:
+    /// Returns:    
     ///
     /// The function `get_flow` returns a `CoordinatorResult` which can either be an `Ok` variant
-    /// containing a `anything_graph::Flow` or an `Err` variant containing a
+    /// containing a `anything_persistence::StoredFlow` or an `Err` variant containing a
     /// `CoordinatorError::FlowNotFound` with the name of the flow as a string.
-    pub async fn get_flow(&self, name: &str) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS.get().unwrap().lock().await.get_flow(name);
-        match flow {
-            Some(flow) => Ok(flow),
-            None => Err(crate::error::CoordinatorError::FlowNotFound(
-                name.to_string(),
-            )),
-        }
+    pub async fn get_flow(
+        &self,
+        name: String,
+    ) -> CoordinatorResult<anything_persistence::StoredFlow> {
+        let flow_repo = self.flow_repo()?;
+        // let mut file_store = self.file_store.clone();
+        tracing::trace!("Get flow by name called in the manager: {:?}", name.clone());
+        // Look for stored flow in database
+        let flow = flow_repo.get_flow_by_name(name).await.map_err(|e| {
+            tracing::error!("error when getting flow: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+        // tracing::info!("db_flow: {:#?}", flow);
+        // Get the flow from disk
+        // let flow = flow.get_flow(&mut file_store).await.map_err(|e| {
+        //     tracing::error!("error when getting flow: {:#?}", e);
+        //     CoordinatorError::PersistenceError(e)
+        // })?;
+        // tracing::info!("file_flow: {:#?}", flow);
+        Ok(flow.into())
     }
+
+    pub async fn fetch_session_events(
+        &self,
+        session_id: String,
+    ) -> CoordinatorResult<anything_persistence::EventList> {
+        let event_repo = self.event_repo()?;
+        // let mut file_store = self.file_store.clone();
+        tracing::trace!(
+            "Get events by session_id called in the manager: {:?}",
+            session_id.clone()
+        );
+        // Look for stored flow in database
+        let events = event_repo
+            .get_events_for_session(session_id)
+            .await
+            .map_err(|e| {
+                tracing::error!("error when getting events for session: {:#?}", e);
+                CoordinatorError::PersistenceError(e)
+            })?;
+
+        Ok(events)
+    }
+
+    pub async fn get_event(
+        &self,
+        event_id: String,
+    ) -> CoordinatorResult<anything_persistence::StoreEvent> {
+        let event_repo = self.event_repo()?;
+
+        tracing::trace!(
+            "Get event by event_id called in the manager: {:?}",
+            event_id.clone()
+        );
+        // Look for stored flow in database
+        let event = event_repo.find_by_id(event_id).await.map_err(|e| {
+            tracing::error!("error when getting event by id: {:#?}", e);
+            CoordinatorError::PersistenceError(e)
+        })?;
+
+        Ok(event)
+    }
+
+    pub async fn get_actions(&self) -> CoordinatorResult<Vec<serde_json::Value>> {
+        let base_dir = self.file_store.base_dir.clone();
+
+        let action_dir = base_dir.join("actions");
+        tracing::trace!("Get actions called in the manager");
+
+        // Vector to hold the parsed JSON values
+        let mut actions = Vec::new();
+
+        // Read the directory asynchronously
+        let mut entries = tokio::fs::read_dir(action_dir).await?;
+
+        // Iterate over each entry in the actions directory
+        while let Some(entry) = entries.next_entry().await? {
+            let path = entry.path();
+
+            // Check if the entry is a directory and contains config.json
+            if path.is_dir() {
+                let config_path = path.join("config.json");
+
+                // Check if config.json exists
+                if config_path.exists() {
+                    match tokio::fs::read_to_string(config_path).await {
+                        Ok(contents) => match serde_json::from_str::<Value>(&contents) {
+                            Ok(json) => actions.push(json),
+                            Err(e) => {
+                                // error!("Failed to parse JSON from {:?}: {}", path, e);
+                                tracing::error!("Failed to parse JSON from {:?}: {}", path, e);
+                                //this error is angry
+                                CoordinatorError::SerdeError(e);
+                                continue;
+                            }
+                        },
+                        Err(e) => {
+                            tracing::error!("Failed to read config.json in {:?}: {}", path, e);
+                            CoordinatorError::IoError(e);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(actions)
+    }
+
+    pub async fn save_action(
+        &self,
+        action: serde_json::Value,
+        action_name: String,
+    ) -> CoordinatorResult<()> {
+        let base_dir = self.file_store.base_dir.clone();
+        let action_dir = base_dir.join("actions");
+
+        // Create the actions directory if it doesn't exist
+        if !action_dir.exists() {
+            tokio::fs::create_dir(&action_dir).await?;
+        }
+        //TODO: protect from overwriting with name collisions
+        let action_path = action_dir.join(action_name);
+
+        // Create the action directory
+        tokio::fs::create_dir(&action_path).await?;
+
+        // Write the action configuration to config.json
+        let config_path = action_path.join("config.json");
+        let config_json = serde_json::to_string_pretty(&action)?;
+        tokio::fs::write(config_path, config_json).await?;
+
+        Ok(())
+    }
+
+    // pub async fn get_actions(&self) -> CoordinatorResult<Vec<serde_json::Value>> {
+    //     // let file_store = self.file_store.clone();
+
+    //     let base_dir = self.file_store.base_dir.clone();
+
+    //     let action_dir = base_dir.join("actions");
+    //     tracing::trace!("Get actions called in the manager");
+
+    //     // Look for stored flow in database
+    //     // let actions = event_repo.get_actions().await.map_err(|e| {
+    //     //     tracing::error!("error when getting actions: {:#?}", e);
+    //     //     CoordinatorError::PersistenceError(e)
+    //     // })?;
+
+    //     Ok(actions)
+    // }
 
     /// The function `create_flow` creates a new flow, saves it to a file, and returns the created flow.
     ///
@@ -181,43 +442,63 @@ impl Manager {
     ///
     /// Returns:
     ///
-    /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
+    /// a `CoordinatorResult` containing a `anything_persistence::StoredFlow` object.
     pub async fn create_flow(
-        &self,
+        &mut self,
         flow_name: String,
-        flow_id: String,
-    ) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS
-            .get()
-            .unwrap()
-            .lock()
-            .await
-            .create_flow(flow_name, flow_id)?;
+    ) -> CoordinatorResult<anything_persistence::StoredFlow> {
+        // Create flow model
+        let create_flow = CreateFlow {
+            name: flow_name.clone(),
+            active: false,
+            version: None,
+        };
 
-        let new_directory = self
-            .file_store
-            .create_directory(&["flows", &flow.name])
-            .unwrap();
+        // tracing::debug!("Creating flow: {:#?}", create_flow);
 
-        let flowfile: Flowfile = flow.clone().into();
-        let flow_str: String = flowfile.into();
+        let flow = self.flow_repo()?.create_flow(create_flow).await?;
 
-        self.file_store
-            .write_file(
-                &[
-                    "flows",
-                    new_directory
-                        .as_os_str()
-                        .to_os_string()
-                        .as_os_str()
-                        .to_str()
-                        .unwrap(),
-                    &format!("{}.toml", flow.name),
-                ],
-                flow_str.as_bytes(),
-            )
-            .unwrap();
+        // tracing::debug!("Created flow in the repo: {:#?}", flow);
 
+        // let new_directory = self
+        //     .file_store
+        //     .create_directory(&["flows", &flow.flow_name])
+        //     .expect("unable to create flow directory");
+
+        // tracing::debug!("Created flow directory: {:#?}", new_directory);
+
+        // let flow: Flow = flow.clone().get_flow(&mut self.file_store).await.unwrap();
+        // let flowfile: Flowfile = flow.clone().into();
+        // let toml_repr = toml::to_string(&flow).expect("unable to convert StoredFlow into a string");
+        // tracing::debug!("Saving flow toml representation: {:#?}", toml_repr);
+        // let flowfile =
+        //     Flowfile::from_string(toml_repr).expect("unable to create flow file for a new flow");
+        // let flow_str: String = flowfile.clone().into();
+
+        //TODO: why lowercase? folders are normal uppercase
+        // let lowercased_flow_name = flow_name.to_lowercase();
+        // let new_dir_str = new_directory
+        //     .to_str()
+        //     .expect("unable to create new directory string");
+
+        // tracing::debug!("new_dir_str: {:#?}", new_dir_str);
+
+        // self.file_store
+        //     .write_file(
+        //         &["flows", new_dir_str, &format!("flow.toml")],
+        //         flow_str.as_bytes(),
+        //     )
+        //     .expect("unable to write basic flow string");
+
+        // tracing::debug!(
+        //     "wrote flow file at {:#?}",
+        //     &[
+        //         "flows",
+        //         new_dir_str,
+        //         &format!("{}.toml", lowercased_flow_name),
+        //     ]
+        // );
+        // let flow: Flow = flowfile.into();
         Ok(flow)
     }
 
@@ -231,21 +512,25 @@ impl Manager {
     /// Returns:
     ///
     /// a `CoordinatorResult` containing a `anything_graph::Flow` object.
-    pub async fn delete_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS
-            .get()
-            .unwrap()
-            .lock()
-            .await
-            .delete_flow(flow_name)
-            .unwrap();
+    pub async fn delete_flow(&self, flow_id: String) -> CoordinatorResult<String> {
+        let flow_name = self.flow_repo()?.delete_flow(flow_id.clone()).await?;
 
+        // let _ = self
+        //     .file_store
+        //     .delete_directory(&["flows", &flow_name])
+        //     .unwrap();
+
+        //delete flow_versions
         let _ = self
-            .file_store
-            .delete_directory(&["flows", &flow.name])
-            .unwrap();
+            .flow_repo()?
+            .delete_flow_versions_for_flow_id(flow_id.clone())
+            .await?;
 
-        Ok(flow)
+        //TODO: Hydrate triggers
+        let trigger_actor = self.actor_refs.as_ref().unwrap().trigger_actor.clone();
+        cast!(trigger_actor, TriggerMessage::HydrateTriggers).unwrap();
+
+        Ok(flow_name)
     }
 
     /// The function `update_flow` updates a flow with the given name and returns the updated flow.
@@ -257,29 +542,158 @@ impl Manager {
     ///
     /// Returns:
     ///
-    /// a `CoordinatorResult` containing a value of type `anything_graph::Flow`.
-    pub async fn update_flow(&self, flow_name: String) -> CoordinatorResult<anything_graph::Flow> {
-        let flow = MODELS
-            .get()
-            .unwrap()
-            .lock()
-            .await
-            .update_flow(&flow_name)
-            .unwrap();
+    /// a `CoordinatorResult` containing a value of type `anything_persistence::StoredFlow`.
+    pub async fn update_flow(
+        &mut self,
+        flow_id: String,
+        args: UpdateFlowArgs,
+    ) -> CoordinatorResult<anything_persistence::StoredFlow> {
+        tracing::trace!("Update flow with {flow_id} and {:#?}", args);
+        // let new_flow_name = args.flow_name.clone();
+        // let mut original_flow = self.flow_repo()?.get_flow_by_id(flow_id.clone()).await?;
+        // let original_flow_name = original_flow.flow_name.clone();
 
-        Ok(flow)
+        // tracing::trace!("original_flow: {:#?}", original_flow);
+
+        // self.flow_repo()?.delete_flow(flow_id.clone()).await?;
+
+        let stored_flow = self.flow_repo()?.update_flow(flow_id.clone(), args).await?;
+
+        // original_flow.flow_name = stored_flow.flow_name.clone();
+        // self.file_store
+        //     .rename_directory(&["flows", &original_flow_name], &["flows", &new_flow_name])
+        //     .expect("unable to rename flow directory");
+
+        // let flow_str: String = toml::to_string(&stored_flow).expect("unable to convert to string");
+
+        // self.file_store
+        //     .write_file(
+        //         &["flows", &new_flow_name, &format!("flow.toml")],
+        //         flow_str.as_bytes(),
+        //     )
+        //     .expect("unable to write basic flow string");
+        // let mut file_store = self.file_store.clone();
+
+        // let flow = stored_flow.get_flow(&mut file_store).await?;
+
+        let trigger_actor = self.actor_refs.as_ref().unwrap().trigger_actor.clone();
+        cast!(trigger_actor, TriggerMessage::HydrateTriggers).unwrap();
+
+        Ok(stored_flow)
+    }
+
+    pub async fn create_flow_version(
+        &mut self,
+        flow_id: String,
+        flow_version: CreateFlowVersion,
+    ) -> CoordinatorResult<FlowVersion> {
+        let stored_flow_version = self
+            .flow_repo()?
+            .create_flow_version(flow_id, flow_version)
+            .await?;
+        Ok(stored_flow_version)
+    }
+
+    pub async fn update_flow_version(
+        &mut self,
+        flow_id: String,
+        flow_version_id: String,
+        update_flow: UpdateFlowVersion,
+    ) -> CoordinatorResult<FlowVersion> {
+        let db_flow_version = self
+            .flow_repo()?
+            .update_flow_version(flow_id, flow_version_id, update_flow)
+            .await?;
+
+        let trigger_actor = self.actor_refs.as_ref().unwrap().trigger_actor.clone();
+        cast!(trigger_actor, TriggerMessage::HydrateTriggers).unwrap();
+
+        Ok(db_flow_version)
+    }
+
+    pub async fn execute_flow(
+        &self,
+        flow_id: String,
+        flow_version_id: String,
+        session_id: Option<String>,
+        stage: Option<String>,
+    ) -> CoordinatorResult<String> {
+        println!("Execute flow called in the manager");
+        println!("flow_id: {}", flow_id);
+        println!("flow_version_id: {}", flow_version_id);
+
+        // //create flow session id if one was not passed
+        let flow_session_id = if session_id.is_none() {
+            Uuid::new_v4().to_string()
+        } else {
+            session_id.unwrap()
+        };
+
+        //start execution
+        // Check if the actor_refs and work_queue_actor are available
+        if let Some(ref actor_refs) = self.actor_refs {
+            // Send the StartWorkQueue message to the work_queue_actor
+            let result =
+                actor_refs
+                    .work_queue_actor
+                    .send_message(WorkQueueActorMessage::ExecuteFlow {
+                        flow_id: flow_id,
+                        flow_version_id: flow_version_id,
+                        session_id: Some(flow_session_id.clone()),
+                        stage: stage,
+                    });
+            match result {
+                Ok(_) => {
+                    // Handle success case
+                    println!("Message Sent to Work Queue Actor")
+                }
+                Err(e) => {
+                    // Handle error case
+                    println!("Error sending StartWorkQueue message: {:?}", e);
+                }
+            }
+
+            //TODO: send message to update triggers ( ACTUALLLY do this in the CRUD functions for triggers)
+        } else {
+            return Err(CoordinatorError::ActorNotInitialized(String::from(
+                "work_queue_actor",
+            )));
+        }
+
+        Ok(flow_session_id.clone())
+    }
+
+    pub fn flow_repo(&self) -> CoordinatorResult<FlowRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.flow_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
+
+    pub fn event_repo(&self) -> CoordinatorResult<EventRepoImpl> {
+        match &self.repositories {
+            Some(repositories) => Ok(repositories.event_repo.clone()),
+            None => Err(CoordinatorError::RepoNotInitialized),
+        }
+    }
+
+    pub fn system_actor(&self) -> CoordinatorResult<ActorRef<SystemMessage>> {
+        self.actor_refs
+            .as_ref()
+            .ok_or(CoordinatorError::ActorNotInitialized(String::from(
+                "system_actor",
+            )))
+            .map(|refs| refs.system_actor.clone())
     }
 
     /*
     INTERNAL FUNCTIONS
-     */
+    */
 
     // Internal
-    async fn setup_file_handler(self: Arc<Self>) {
+    async fn setup_file_handler(&mut self) {
         let (tx, mut rx) = tokio::sync::mpsc::channel(4096);
         let file_store = Arc::new(Mutex::new(self.file_store.clone()));
-
-        let client = new_client::<StoreChangesPublisher>().await.unwrap();
 
         // Listen for changes on the file system
         let _t1 = tokio::spawn(async move {
@@ -287,16 +701,12 @@ impl Manager {
             fs.notify_changes(tx.clone()).await.unwrap();
         });
 
+        let actor = self.actor_refs.as_ref().unwrap().system_actor.clone();
+
         // Send changes to the coordinator
         let _t2 = tokio::spawn(async move {
             while let Some(msg) = rx.recv().await {
-                let _ = client
-                    .publish(
-                        "file-system-change",
-                        StoreChangesPublisher::ChangeMessage(msg),
-                    )
-                    .await;
-                // let _ = sender.send(StoreChangesPublisher::ChangeMessage(msg)).await;
+                cast!(actor.clone(), SystemMessage::StoreChanged(msg)).unwrap();
             }
         });
     }
@@ -312,12 +722,14 @@ mod tests {
     use std::{path::PathBuf, time::Duration};
 
     use crate::{
-        events::{FlowPublisher, InternalEventsPublisher, NewFlowPublisher, StringPublisher},
+        events::{FlowPublisher, NewFlowPublisher, StringPublisher},
+        processing::processor::ProcessorMessage,
         test_helper::add_flow_directory,
     };
     use anything_graph::Flowfile;
     use anything_mq::new_client;
-    use anything_runtime::{EngineKind, PluginEngine};
+    use anything_runtime::{EngineKind, EngineOption, PluginEngine};
+    use ractor::call;
     use tokio::time::{sleep, timeout};
     const SLEEP_TIME: u64 = 600;
 
@@ -347,21 +759,21 @@ mod tests {
         // let file = get_fixtures_directory().join("simple.toml");
 
         let toml = r#"
-        name = "SimpleFlow"
-        version = "0.1"
-        description = "A simple flow that echos holiday cheer"
+            name = "SimpleFlow"
+            version = "0.0.1"
+            description = "A simple flow that echos holiday cheer"
 
-        [[nodes]]
-        name = "echo-cheer"
-        label = "Holiday cheers"
-        depends_on = []
-        variables = { cheers = "Jingle Bells" }
+            [[nodes]]
+            name = "echo-cheer"
+            label = "Holiday cheers"
+            depends_on = []
+            variables = { cheers = "Jingle Bells" }
 
-        [nodes.engine]
-        interpreter = "deno"
-        args = ["export default function() { return 'hello {{cheers}}' }"]
+            [nodes.engine]
+            interpreter = "deno"
+            args = ["export default function() { return 'hello {{cheers}}' }"]
 
-        "#
+            "#
         .to_string();
         let test_flow = Flowfile::from_string(toml);
         let test_flow = test_flow.unwrap();
@@ -428,149 +840,179 @@ mod tests {
         let first_node = payload.flow.nodes.first().unwrap();
         let runtime = first_node.run_options.clone();
 
-        let mut deno_engine = PluginEngine::default();
-        deno_engine.engine = "system-shell".to_string();
-        deno_engine.args = Some(vec!["echo 'hello {{cheers}}'".to_string()]);
-        assert_eq!(runtime.engine, Some(EngineKind::PluginEngine(deno_engine)));
+        let mut system_plugin_engine = PluginEngine::default();
+        system_plugin_engine.engine = "system-shell".to_string();
+        system_plugin_engine.args = Some(vec!["echo 'hello {{cheers}}'".to_string()]);
+        system_plugin_engine.options = indexmap::indexmap! {
+            "shell".to_string() => EngineOption::from("bash".to_string())
+        };
+        assert_eq!(
+            runtime.engine,
+            Some(EngineKind::PluginEngine(system_plugin_engine))
+        );
 
         // po_sender.send(()).unwrap();
     }
 
     #[tokio::test]
     async fn test_subscribe_to_store_changes() {
-        let manager = Manager::default();
         let config = AnythingConfig::default();
-        let (stop_tx, stop_rx) = mpsc::channel(1);
 
+        let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
         let (ready_tx, mut ready_rx) = mpsc::channel(1);
 
         tokio::spawn(async move {
-            let _res = start(config.clone(), stop_rx, ready_tx).await.unwrap();
+            start(config, shutdown_rx, ready_tx).await.unwrap();
         });
 
-        let store = manager.file_store.clone();
+        let manager = ready_rx.recv().await.unwrap();
+        // let store = manager.file_store.clone();
+
+        let rpath = manager.file_store.store_path(&["flows"]);
+
         let server_task = tokio::spawn(async move {
-            let _v = ready_rx.recv().await;
-            sleep(Duration::from_millis(100)).await;
-            let res = store.write_file(&["just_a_test.txt"], "test".as_bytes());
-            let _ = sleep(Duration::from_millis(100));
-            assert!(res.is_ok());
-            stop_tx.send(()).await.unwrap();
+            add_flow_directory(rpath.clone(), "some-simple-flow");
+            // let res = store.write_file(&["just_a_test.txt"], "test".as_bytes());
+            let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
+            // Get the flow to ensure it changed in the database
+            let _found_flow = shutdown_tx.send(()).await.unwrap();
         });
 
-        let res = timeout(Duration::from_secs(1), server_task).await;
+        let res = timeout(Duration::from_secs(5), server_task).await;
         assert!(res.is_ok(), "server task did not quit");
     }
 
     #[tokio::test]
-    async fn test_started_manager_receives_system_events() {
-        let _manager = Manager::default();
+    async fn test_can_trigger_simple_flow_run() {
         let config = AnythingConfig::default();
-        let (stop_tx, stop_rx) = mpsc::channel(1);
-        let (ready_tx, _ready_rx) = mpsc::channel(1);
 
-        let client = new_client().await.unwrap();
-
-        tokio::spawn(async move {
-            start(config.clone(), stop_rx, ready_tx).await.unwrap();
-        });
-
-        let server_task = tokio::spawn(async move {
-            client
-                .publish("ping", InternalEventsPublisher::Ping)
-                .await
-                .unwrap();
-            sleep(Duration::from_millis(600)).await;
-            stop_tx.send(()).await.unwrap();
-        });
-
-        let res = timeout(Duration::from_secs(10), server_task).await;
-        assert!(res.is_ok(), "Server task did not quit");
-    }
-
-    #[tokio::test]
-    async fn test_started_manager_receives_system_events_and_shutsdown_the_system() {
-        let _manager = Manager::default();
-        let config = AnythingConfig::default();
-        let (stop_tx, stop_rx) = mpsc::channel(1);
-        let (ready_tx, _ready_rx) = mpsc::channel(1);
-
-        let client = new_client().await.unwrap();
-
-        tokio::spawn(async move {
-            start(config.clone(), stop_rx, ready_tx).await.unwrap();
-        });
-
-        let server_task = tokio::spawn(async move {
-            client
-                .publish("stop", InternalEventsPublisher::Shutdown)
-                .await
-                .unwrap();
-            stop_tx.send(()).await.unwrap();
-        });
-
-        let res = timeout(Duration::from_secs(10), server_task).await;
-        assert!(res.is_ok(), "Server task did not quit");
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_process_flow_store_change() {
-        let config = get_unique_config();
-
-        let (stop_tx, stop_rx) = mpsc::channel(1);
+        // Channels for management
+        let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
         let (ready_tx, mut ready_rx) = mpsc::channel(1);
 
-        let _listener_task = tokio::spawn(async move {
-            start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        // Start off the manager
+        tokio::spawn(async move {
+            start(config, shutdown_rx, ready_tx).await.unwrap();
         });
 
         let manager = ready_rx.recv().await.unwrap();
+
+        // Add a simple flow
         let rpath = manager.file_store.store_path(&["flows"]);
-
-        let manager_clone = manager.clone();
-
         add_flow_directory(rpath.clone(), "some-simple-flow");
+        let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
 
-        let manager = manager_clone;
-        sleep(Duration::from_millis(SLEEP_TIME)).await;
-        let flows = manager.get_flows().await.unwrap();
-        assert_eq!(flows.len(), 1);
+        // the actual test
+        let server_task = tokio::spawn(async move {
+            let flow = manager
+                .get_flow("some-simple-flow".to_string())
+                .await
+                .unwrap();
 
-        sleep(Duration::from_millis(SLEEP_TIME)).await;
-        add_flow_directory(rpath.clone(), "one-other-flow");
-        sleep(Duration::from_millis(SLEEP_TIME)).await;
-        let flows = manager.get_flows().await.unwrap();
-        assert_eq!(flows.len(), 2);
+            let flow_actor = manager.flow_actor().unwrap();
+            // Send the execute flow message
+            cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
+            // Give the flow a few milliseconds to execute
+            let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
 
-        manager.file_store.cleanup_base_dir().unwrap();
+            let update_actor_ref = manager.actor_refs.as_ref().unwrap().update_actor.clone();
 
-        stop_tx.send(()).await.unwrap();
+            let res = call!(
+                update_actor_ref,
+                UpdateActorMessage::GetLatestProcessorMessages
+            )
+            .unwrap();
+
+            assert_eq!(res.len(), 1);
+            let msg = res.first().unwrap();
+            match msg {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "echo");
+                    assert_eq!(result, "hello world");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+
+            // update_actor_re
+
+            // Get the flow to ensure it changed in the database
+            let _found_flow = shutdown_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(5), server_task).await;
+        assert!(res.is_ok(), "server task did not quit");
     }
 
     #[tokio::test]
-    #[ignore]
-    async fn test_process_flow_can_fetch_loaded_flow() {
-        let config = get_unique_config();
+    async fn test_can_trigger_flow_run() {
+        let config = AnythingConfig::default();
 
-        let (stop_tx, stop_rx) = mpsc::channel(1);
+        // Channels for management
+        let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
         let (ready_tx, mut ready_rx) = mpsc::channel(1);
 
-        let _listener_task = tokio::spawn(async move {
-            start(config.clone(), stop_rx, ready_tx).await.unwrap();
+        // Start off the manager
+        tokio::spawn(async move {
+            start(config, shutdown_rx, ready_tx).await.unwrap();
         });
 
         let manager = ready_rx.recv().await.unwrap();
-        let rpath = manager.file_store.store_path(&["flows"]);
 
-        add_flow_directory(rpath.clone(), "some-simple-flow");
-        sleep(Duration::from_millis(SLEEP_TIME)).await;
-        let flow = manager.get_flow("some-simple-flow").await.unwrap();
-        assert_eq!(flow.name, "some-simple-flow");
+        // Add a simple flow
+        let file = get_fixtures_directory().join("simple.toml");
+        let test_flow = Flowfile::from_file(file).unwrap();
+        let flow: Flow = test_flow.into();
+        let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
 
-        manager.file_store.cleanup_base_dir().unwrap();
+        // the actual test
+        let server_task = tokio::spawn(async move {
+            let flow_actor = manager.flow_actor().unwrap();
+            // Send the execute flow message
+            cast!(flow_actor.clone(), FlowMessage::ExecuteFlow(flow)).unwrap();
+            // Give the flow a few milliseconds to execute
+            let _ = sleep(Duration::from_millis(SLEEP_TIME)).await;
 
-        stop_tx.send(()).await.unwrap();
+            let update_actor_ref = manager.actor_refs.as_ref().unwrap().update_actor.clone();
+
+            let res = call!(
+                update_actor_ref,
+                UpdateActorMessage::GetLatestProcessorMessages
+            )
+            .unwrap();
+
+            assert_eq!(res.len(), 3);
+            let messages = res.iter().map(|m| m.clone()).collect::<Vec<_>>();
+            match messages.get(0).unwrap() {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "echo-cheer");
+                    assert_eq!(result, "hello Jingle Bells");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+            match messages.get(1).unwrap() {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "say-cheers");
+                    assert_eq!(result, "second Jingle Bells");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+
+            match messages.get(2).unwrap() {
+                ProcessorMessage::FlowTaskFinishedSuccessfully(task_name, result) => {
+                    assert_eq!(task_name, "share");
+                    assert_eq!(result, "cheers Jingle Bells to all");
+                }
+                _ => assert!(false, "unexpected message type"),
+            };
+
+            // update_actor_re
+
+            // Get the flow to ensure it changed in the database
+            let _found_flow = shutdown_tx.send(()).await.unwrap();
+        });
+
+        let res = timeout(Duration::from_secs(5), server_task).await;
+        assert!(res.is_ok(), "server task did not quit");
     }
 
     #[allow(unused)]

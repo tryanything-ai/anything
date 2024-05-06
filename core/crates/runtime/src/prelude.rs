@@ -6,8 +6,9 @@ pub use crate::{
     core::variables::{RawVariables, ValueKind},
     errors::*,
     errors::{PluginError, PluginResult},
-    exec::{cmd::CommandExt, runner::Runner, scope::ExecutionResult, scope::Scope},
-    plugins::manager::{ExecutionPlugin, Plugin},
+    // exec::{cmd::CommandExt, runner::Runner, scope::ExecutionResult, scope::Scope},
+    exec::{cmd::CommandExt, scope::ExecutionResult, scope::Scope},
+    plugins::manager::{ExecutionPlugin, Extension},
     plugins::options::PluginOption,
 };
 

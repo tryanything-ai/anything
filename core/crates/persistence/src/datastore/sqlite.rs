@@ -1,15 +1,17 @@
+#![cfg(feature = "sqlite")]
 use anything_common::tracing;
 
 use crate::error::{PersistenceError, PersistenceResult};
 
-use super::{DatabaseTransaction, Datastore};
+use super::DatastoreTrait;
 
+#[derive(Debug, Clone)]
 pub struct SqliteDatastore {
     pool: sqlx::sqlite::SqlitePool,
 }
 
 #[async_trait::async_trait]
-impl Datastore<sqlx::Sqlite> for SqliteDatastore {
+impl DatastoreTrait<sqlx::Sqlite> for SqliteDatastore {
     async fn new_with_pool(pool: sqlx::sqlite::SqlitePool) -> PersistenceResult<Self>
     where
         Self: Sized + Send + Sync,
@@ -32,12 +34,8 @@ impl Datastore<sqlx::Sqlite> for SqliteDatastore {
                 tracing::error!("Error running migrations: {}", e);
                 PersistenceError::MigrationError(e)
             })?;
-        Ok(())
-    }
 
-    async fn begin_transaction(&self) -> PersistenceResult<DatabaseTransaction<'_>> {
-        let tx = self.pool.begin().await?;
-        Ok(DatabaseTransaction::Sqlite(tx))
+        Ok(())
     }
 
     fn get_pool(&self) -> &sqlx::Pool<sqlx::Sqlite> {

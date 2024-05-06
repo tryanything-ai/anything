@@ -1,20 +1,15 @@
 import * as listen from "./listen";
-import * as invoke from "./invoke";
-import * as fs from "./fs";
 import * as os from "./os";
 import * as path from "./path";
-import * as watch from "./watch";
+import * as flows from './flows';
 import db from "./db";
 
 const api = {
-  ...invoke,
-  ...listen,      
-  // ...watch, //stub for listening for file changes vs using fs-watch api          
+  ...listen,
+  flows,
   db,
-  fs, 
-  os, 
-  path, 
-  watch, 
+  os,
+  path,
 };
 
 export default api;

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 
-import { Model,useModelContext  } from "../context/ModelsProvider";
 import api from "../tauri_api/api";
 
-const DownloadedModelCard = ({ model }: { model: Model }) => {
+const DownloadedModelCard = ({ model }: { model: any }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [message, setMessage] = useState<string>("");
@@ -21,7 +20,7 @@ const DownloadedModelCard = ({ model }: { model: Model }) => {
     // });
   };
 
-  const { architectures, modelPromptTemplates } = useModelContext();
+  // const { architectures, modelPromptTemplates } = useModelContext();
 
   useEffect(() => {
     let unlisten = api.subscribeToEvent("model_loading", (event: any) => {

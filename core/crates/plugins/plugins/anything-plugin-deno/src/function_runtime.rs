@@ -1,13 +1,13 @@
+use crate::error::DenoPluginResult;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug, path::Path, rc::Rc, sync::Arc};
 
-use anyhow::Result;
 use deno_runtime::{
     deno_core::{v8, ResolutionKind},
     permissions::PermissionsContainer,
 };
 
-use crate::utils::create_script_file;
+use crate::{error::DenoPluginError, utils::create_script_file};
 
 pub struct FunctionRuntime {
     runtime: deno_runtime::worker::MainWorker,
@@ -23,7 +23,7 @@ impl Debug for FunctionRuntime {
 }
 
 impl FunctionRuntime {
-    pub fn new(code: &str) -> anyhow::Result<Self> {
+    pub fn new(code: &str) -> DenoPluginResult<Self> {
         let mut module_loader = ModuleLoader::new();
 
         let (script_file, _tmpdir) =
@@ -74,7 +74,7 @@ impl FunctionRuntime {
     }
 
     #[allow(unused)]
-    pub fn get_params(&mut self) -> Result<FunctionParams> {
+    pub fn get_params(&mut self) -> DenoPluginResult<FunctionParams> {
         let module_ns = self
             .runtime
             .js_runtime
@@ -86,18 +86,18 @@ impl FunctionRuntime {
         match binding {
             Some(value) => {
                 if !value.is_object() {
-                    return Err(anyhow::anyhow!("params is not an object"));
+                    return Err(DenoPluginError::ParamsIsNotAnObject);
                 }
                 let params: FunctionParams =
                     deno_runtime::deno_core::serde_v8::from_v8(scope, value)
                         .map_err(|_| anyhow::anyhow!("unable to deserialize params"))?;
                 Ok(params)
             }
-            None => Err(anyhow::Error::msg("No params export found")),
+            None => Err(DenoPluginError::NoDefaultExportFound),
         }
     }
 
-    pub fn run(&mut self, params: &String, payload: &String) -> anyhow::Result<String> {
+    pub fn run(&mut self, params: &String, payload: &String) -> DenoPluginResult<String> {
         let mut rt = tokio::runtime::Runtime::new().unwrap();
         let local = tokio::task::LocalSet::new();
         let result = local.block_on(&mut rt, async {

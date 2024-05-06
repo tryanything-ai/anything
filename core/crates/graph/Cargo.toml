@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = { workspace = true }
 anything-runtime = { workspace = true }
-anything-common = { workspace = true}
+anything-common = { workspace = true }
 tracing = { workspace = true }
 
 anymap2 = "0.13.0"
@@ -16,10 +16,11 @@ petgraph = { version = "0.6.4", features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tera = "1.19.1"
-derive_builder = {workspace = true}
+derive_builder = { workspace = true }
 thiserror = "1.0.49"
 tokio = { workspace = true, features = ["full"] }
 toml = { workspace = true, features = ["indexmap"] }
 indexmap = { workspace = true, features = ["serde"] }
 serde_bytes = "0.11.12"
-chrono = {workspace = true}
+chrono = { workspace = true }
+uuid = { workspace = true }

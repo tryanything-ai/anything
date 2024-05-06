@@ -4,18 +4,18 @@ import "reactflow/dist/style.css";
 //Sliding Panels
 import { Allotment } from "allotment";
 import { useMemo, useRef } from "react";
+
+//Drag and Drop Editor
 import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 
 import FlowName from "../components/flowName";
 import NodePanel from "../components/nodePanel";
-import ManualNode from "../components/nodes/manualNode";
 import SuperNode from "../components/nodes/superNode";
 import RightPanel from "../components/RightPanel";
-import {
-  FlowNavigationProvider,
-  useFlowNavigationContext,
-} from "../context/FlowNavigationProvider";
-import { FlowProvider, useFlowContext } from "../context/FlowProvider";
+import { useFlowContext } from "../context/FlowProvider";
+
+import { FlowProvider } from "../context/FlowProvider";
+import { FlowNavigationProvider } from "../context/FlowNavigationProvider";
 
 function Flows() {
   const {
@@ -27,15 +27,12 @@ function Flows() {
     onDragOver,
     onDrop,
     setReactFlowInstance,
-    currentProcessingStatus,
   } = useFlowContext();
 
-  const { nodePanel, nodeConfigPanel, nodeId } = useFlowNavigationContext();
   const reactFlowWrapper = useRef(null);
 
   const nodeTypes = useMemo(
     () => ({
-      manualNode: ManualNode,
       superNode: SuperNode,
     }),
     []
@@ -56,14 +53,12 @@ function Flows() {
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}
-                // defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onDragOver={onDragOver}
                 onInit={setReactFlowInstance}
                 onDrop={(e) => onDrop(e, reactFlowWrapper)}
                 onConnect={onConnect}
-                // fitView
               >
                 <FlowName />
                 <Controls style={{ background: "darkgray" }} />

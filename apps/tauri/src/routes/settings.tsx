@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { useSettingsContext } from "../context/SettingsProvider";
-import themes from "../utils/themes";
+import themes from "../utils/daisyThemes";
 import PageLayout from "../pageLayout";
 import { useAuthenticationContext } from "../context/AuthenticaionProvider";
 

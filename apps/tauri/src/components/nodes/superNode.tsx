@@ -1,4 +1,4 @@
-import { AnythingNodeProps } from "../../utils/nodeUtils";
+import { AnythingNodeProps } from "../../utils/flowTypes";
 import BaseNode from "./baseNode";
 
 export default function SuperNode({ id, data }: AnythingNodeProps) {
