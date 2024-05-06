@@ -1,4 +1,17 @@
-# 🚀 Anything [Alpha Pre Release]
+<p align="center">
+  <img src="https://github.com/tryanything-ai/anything/blob/main/apps/web/public/3og.svg" height="300" alt="Anything" />
+</p>
+<p align="center">
+  <em>Rebuilding Zapier in Rust to make Local AI do way more than chat</em>
+</p>
+
+<p align="center">
+<a href="https://www.tryanything.xyz/">🔗 Main site</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://discord.gg/95pNMNGW7c">💬 Discord</a>
+</p>
+
+# Anything
 
 ✨ Have AI do work for you!
 
