@@ -22,13 +22,14 @@
 
 
 ### 🔧 Setting Up
-
-### 💻 Developing
 ```bash
+git clone https://github.com/tryanything-ai/anything.git
 pnpm dev
 ```
--> runs all shared packages in watch mode. 
--> runs tauri app && website
+
+-> starts all shared packages
+
+-> starts tauri app && website
 
 ### 🤖 Roadmap
 
@@ -107,5 +108,6 @@ Love Anything? Give us a star ⭐️!
 - Makes easy to adopt into different clouds and organizations
 
 
-### Contact
-Carl Lippert on [Twitter](https://twitter.com/carllippert)
+### Core Team:
+
+Carl Lippert: [Twitter](https://twitter.com/carllippert)
