@@ -71,7 +71,7 @@ Repo structure based on turborepo tailwind template
 - [ ] Flow Version Control ( Stages, Semantic Versioning, etc)
 
 ##### Ecosystem 
-- [x] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/templates)
+- [ ] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/templates)
 - [ ] Action Marketplace
 - [ ] Extensions Marketplace
 
