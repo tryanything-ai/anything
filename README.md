@@ -1,8 +1,18 @@
-# 🚀 Anything [Alpha Pre Release]
+<p align="center">
+  <img src="https://github.com/tryanything-ai/anything/blob/main/apps/web/public/magic_3po.webp" height="300" alt="Anything" />
+</p>
+<p align="center">
+  <em>Rebuilding Zapier in Rust to make Local AI do way more than chat</em>
+</p>
 
-✨ Have AI do work for you!
+<p align="center">
+<a href="https://www.tryanything.xyz/">🔗 Main site</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://discord.gg/95pNMNGW7c">💬 Discord</a>
+</p>
 
-## Don't hire your next employee. Build them!
+# Anything
+
 
 ![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_dnd_sept_11.gif)
 
@@ -10,50 +20,16 @@
 
 ![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_sept_11.gif)
 
-### 🌟 Welcome to Anything - the future of local automation!
-
-Looking for a tool that blends the simplicity of Zapier, the power of AI and the the ability to be self hosted?
-
-Look no further.
-
-Anything will be the first tool you go to grab when your dreaming of putting AI to work for you.
-
-### 💡 Why Anything?
-
-- Local Power: Why get locked into some SaaS when you've got Apple Silicon under the sheets?
-- AI Integration: Boost your workflows with integrated AI models.
-- WYSIWYG Designer: Visualize your automation workflows like never before.
-- 100% Open Source: Freedom to modify, integrate, and extend.
-
-### 🤝 Contribute
-
-We're on the lookout for passionate developers to build with. Dive into our code, bring your crazy ideas, and let's build.
-
-But first.
-
-Check out our [contributors guide](https://github.com/tryanything-ai/anything/tree/main/.github/CONTRIBUTING.md).
 
 ### 🔧 Setting Up
-
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
-pnpm quick
-```
-
-### 💻 Developing
-```bash
 pnpm dev
 ```
--> runs all shared packages in watch mode. 
--> runs tauri && website && docs (soon)
 
-For a lighter weight experience just run dev on the app you are working on in /apps and remember to build or dev the packages it consumes if your working on them
+-> starts all shared packages
 
-Repo structure based on turborepo tailwind template
--> https://github.com/vercel/turbo/tree/main/examples/with-tailwind
-
-
-[Go to an example flow definition](https://github.com/tryanything-ai/anything/tree/main/assets/examples)
+-> starts tauri app && website
 
 ### 🤖 Roadmap
 
@@ -61,7 +37,10 @@ Repo structure based on turborepo tailwind template
 - [x] Embeded Sqlite DB
 - [x] WYSIWYG Editor
 - [x] Event System
-- [ ] Custom Extensions ( Like in VSCode )
+- [x] Cron Trigger
+- [x] HTTP Extension
+- [x] CLI Extension
+- [ ] Custom Extensions ( probably WASM )
 - [ ] Sqlite Vectors 
 - [ ] Deno Extension
 - [ ] Python Extension
@@ -77,16 +56,16 @@ Repo structure based on turborepo tailwind template
 
 ##### Business [ Paid ]
 - [ ] Integration with popular apps and services
-- [ ] Webhook "Mailbox" to persist incoming requests for later processing
+- [ ] Webhook "Mailbox" to persist incoming requests for later local processing
 - [ ] Enterprise Hosting Plans
 
 ### 💌 Feedback
 
 Love Anything? Give us a star ⭐️!
 
-### Architecture
+# Architecture
 
-#### Core Goals
+## Core Goals
 - An open automation tool that allows for maximum creativity and extensibility without sacrificing __understandability__. 
 - An architecture that lends itself towards the __incremental adoption of new AI__ no matter which "shape" it takes
 - An architecture that is focused on skating towards the puck of __self authoring__ by storing state, logs, events etc in human centric, sovereign mediums easily understood and created by low cost local LLM's. 
@@ -129,5 +108,6 @@ Love Anything? Give us a star ⭐️!
 - Makes easy to adopt into different clouds and organizations
 
 
-### Contact
-Carl Lippert on [Twitter](https://twitter.com/carllippert)
+### Core Team:
+
+Carl Lippert: [Twitter](https://twitter.com/carllippert)
