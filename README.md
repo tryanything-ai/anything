@@ -60,31 +60,28 @@ Repo structure based on turborepo tailwind template
 ##### Core 
 - [x] Embeded Sqlite DB
 - [x] WYSIWYG Editor
-- [x] Event System
+- [x] Work Queue System
 - [ ] Custom Extensions ( Like in VSCode )
 - [ ] Sqlite Vectors 
 - [ ] Deno Extension
 - [ ] Python Extension
 - [ ] Local AI Extension
 - [ ] Developer Documentation
-- [ ] Docker Version for Cloud Hosting 24/7
+- [ ] Docker Version for Cloud Self Hosting 24/7
 - [ ] Flow Version Control ( Stages, Semantic Versioning, etc)
 
 ##### Ecosystem 
-- [ ] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/templates)
+- [ ] Template Marketplace
 - [ ] Action Marketplace
-- [ ] Extensions Marketplace
+- [ ] Trigger Marketplace
+- [ ] Extension Marketplace
 
-##### Business [ Paid ]
-- [ ] Integration with popular apps and services
-- [ ] Webhook "Mailbox" to persist incoming requests for later processing
-- [ ] Enterprise Hosting Plans
 
 ### 💌 Feedback
 
 Love Anything? Give us a star ⭐️!
 
-### Architecture
+# Architecture
 
 #### Core Goals
 - An open automation tool that allows for maximum creativity and extensibility without sacrificing __understandability__. 
@@ -108,7 +105,7 @@ Love Anything? Give us a star ⭐️!
 
 ##### Extensibility without sacrificing understandability
 - Each Action is defined by an Extension.
-- Think of Extensions the same as in VSCode but they process events.
+- Think of Extensions the same as in VSCode but they execute events.
 - You only download the extensions you need protecting the project from "package bloat"
 - You can author your own extensions or grab them from the community
 - Extensions are written in Rust so you can also write them in other interpretted languages like Python or Typescript
