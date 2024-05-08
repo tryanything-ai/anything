@@ -55,10 +55,6 @@ pnpm dev
 - [ ] Trigger Marketplace
 - [ ] Extension Marketplace
 
-##### Business [ Paid ]
-- [ ] Integration with popular apps and services
-- [ ] Webhook "Mailbox" to persist incoming requests for later local processing
-- [ ] Enterprise Hosting Plans
 
 ### 💌 Feedback
 
