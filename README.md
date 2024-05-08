@@ -60,9 +60,8 @@ pnpm dev
 
 Love Anything? Give us a star ⭐️!
 
-# Architecture
+# Architecture Goals
 
-## Core Goals
 - An open automation tool that allows for maximum creativity and extensibility without sacrificing __understandability__. 
 - An architecture that lends itself towards the __incremental adoption of new AI__ no matter which "shape" it takes
 - An architecture that is focused on skating towards the puck of __self authoring__ by storing state, logs, events etc in human centric, sovereign mediums easily understood and created by low cost local LLM's. 
