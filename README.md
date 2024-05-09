@@ -11,6 +11,8 @@
 <a href="https://discord.gg/95pNMNGW7c">💬 Discord</a>
 <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
 <a href="https://www.loom.com/share/c71dc4d5a07c4424b3f6d5bbe218549f?sid=6eb7eb8c-4acd-44e2-ae4e-d9563d1a376a">💻 Demo Video</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://github.com/tryanything-ai/anything/releases">💿 Download App</a>
 </p>
 
 # Anything
