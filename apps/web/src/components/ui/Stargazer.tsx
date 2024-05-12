@@ -23,7 +23,7 @@ export const Stargazer = ({ count }: { count: number }) => {
         <span className="">Star</span>
       </Link>
       <Link
-        href="https://github.com/tryanything-ai/anything/stargazers"
+        href="https://github.com/tryanything-ai/anything"
         className="group inline-flex items-center rounded-r-[4px] border-y border-r border-slate-7 bg-slate-1 px-2 py-[2px] hover:bg-slate-2"
       >
         <span className="caption-s font-medium text-slate-12 group-hover:text-crimson-9">
