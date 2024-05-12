@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
+use serde_json::Value;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::{
     core::{
@@ -16,6 +18,7 @@ pub struct ExecutionResult {
     pub stdout: String,
     pub stderr: String,
     pub status: i32,
+    pub result: Value,
 }
 
 #[derive(Debug, Default)]

@@ -14,7 +14,6 @@ file = "/Users/auser/Desktop/watch-directory"
 [[nodes]]
 name = "echocheer"
 label = "Holiday cheers"
-depends_on = []
 variables = [{ cheers = "Jingle Bells" }]
 
 [nodes.action]
@@ -26,7 +25,6 @@ command = "echo 'Jingle Bells'"
 [[nodes]]
 name = "say-cheers"
 label = "say holiday cheer"
-depends_on = ["echocheer"]
 variables = [{ cheer = "{{echocheer.stdout}}" }]
 
 [nodes.action]

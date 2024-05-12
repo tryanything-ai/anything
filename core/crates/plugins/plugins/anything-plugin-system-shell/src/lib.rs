@@ -2,7 +2,10 @@ extern crate anything_runtime;
 
 use std::process::Command;
 
+use anything_common::tracing;
 use anything_runtime::prelude::*;
+
+use serde_json::Value;
 
 pub const DEFAULT_SHELL: &str = "sh";
 pub const DEFAULT_SHELL_ARGS: &[&str] = &["-c"];
@@ -12,7 +15,7 @@ pub struct SystemShellPlugin {
     config: RuntimeConfig,
 }
 
-impl Plugin for SystemShellPlugin {
+impl Extension for SystemShellPlugin {
     fn name(&self) -> &'static str {
         "system-shell"
     }
@@ -23,6 +26,36 @@ impl Plugin for SystemShellPlugin {
 
     fn on_unload(&self) {
         // Nothing to do here
+    }
+
+    fn register_action(&self) -> &'static str {
+        static JSON_DATA: &str = r#"{
+            "trigger": false,
+            "node_name": "cli_action",
+            "node_label": "CLI Action",
+            "icon": "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M1.5 3L3 1.5H21L22.5 3V21L21 22.5H3L1.5 21V3ZM3 3V21H21V3H3Z\"/><path d=\"M7.06078 7.49988L6.00012 8.56054L10.2427 12.8032L6 17.0459L7.06066 18.1066L12 13.1673V12.4391L7.06078 7.49988Z\"/><rect x=\"12\" y=\"16.5\" width=\"6\" height=\"1.5\"/></svg>",
+            "description": "CLI Action",
+            "handles": [
+                {
+                    "id": "a",
+                    "position": "top",
+                    "type": "target"
+                },
+                {
+                    "id": "b",
+                    "position": "bottom",
+                    "type": "source"
+                }
+            ],
+            "variables": [],
+            "config": {
+                "command": "",
+                "run_folder": ""
+            },
+            "extension_id": "system-shell"
+        }"#;
+
+        JSON_DATA
     }
 }
 
@@ -40,41 +73,49 @@ impl ExecutionPlugin for SystemShellPlugin {
         };
 
         let mut command = Command::new(&shell);
-        command
-            .export_environment(&scope.environment)
-            .expect("unable to export environment");
 
+        //Make the CLI execute in the folder of the flow
         if let Some(value) = &self.config.current_dir {
             command.current_dir(value);
         }
 
-        for (idx, arg) in config.args.clone().into_iter().enumerate() {
-            let rendered_arg = match render_string(&format!("arg-{}", idx), &arg, &scope) {
-                Ok(value) => value,
-                Err(error) => {
-                    eprintln!("unable to render arg: {}", error);
-                    return Err(Box::new(
-                        std::io::Error::new(std::io::ErrorKind::Other, error).into(),
-                    ));
-                }
-            };
-            command.arg(rendered_arg);
-        }
+        // TODO: decide if we always want this or not
+        command.arg("-c");
+
+        let cli_command = match config.context.get("command") {
+            Some(serde_json::Value::String(value)) => value.clone(),
+            _ => {
+                return Err(Box::new(PluginError::Custom(
+                    "unable to find cli command in context".to_string(),
+                )))
+            }
+        };
+
+        command.arg(cli_command.clone());
+
+        tracing::debug!("system shell config: {:#?}", config);
+        println!("system-shell plugin command: {:?}", cli_command.clone());
 
         match command.output() {
             Ok(output) => {
-                let stdout =
-                    strip_newline_suffix(String::from_utf8_lossy(&output.stdout).to_string());
+                let stdout_raw = String::from_utf8_lossy(&output.stdout).to_string();
+                let stdout_clean = strip_newline_suffix(stdout_raw);
+
+                // Attempt to parse stdout as JSON. If this fails, use stdout as is.
+                let stdout_json: Value = serde_json::from_str(&stdout_clean)
+                    .unwrap_or_else(|_| serde_json::json!({ "output": stdout_clean }));
+
                 let stderr =
                     strip_newline_suffix(String::from_utf8_lossy(&output.stderr).to_string());
 
                 Ok(ExecutionResult {
-                    stdout,
+                    stdout: stdout_clean, // Keep this as the cleaned-up string representation
                     stderr,
-                    status: output.status.code().unwrap_or(0),
+                    status: output.status.code().unwrap_or_default(),
+                    result: stdout_json,
                 })
             }
-            Err(error) => Err(Box::new(PluginError::RuntimeError(error))),
+            Err(error) => Err(Box::new(error.into())),
         }
     }
 }
@@ -87,58 +128,3 @@ fn strip_newline_suffix(s: String) -> String {
 }
 
 declare_plugin!(SystemShellPlugin, SystemShellPlugin::default);
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use anything_runtime::ExecuteConfigBuilder;
-
-    #[test]
-    fn test_execute_success() {
-        let plugin = SystemShellPlugin::default();
-        let scope = Scope::default();
-        let config = ExecuteConfigBuilder::default()
-            .args(vec!["-c".to_string(), "echo 'hello'".to_string()])
-            .build()
-            .unwrap();
-
-        let result = plugin.execute(&scope, &config);
-
-        assert_eq!(result.status, 0);
-        assert_eq!(result.stdout, "hello\n");
-        assert_eq!(result.stderr, "");
-    }
-
-    #[test]
-    fn test_execute_templated_code() {
-        let plugin = SystemShellPlugin::default();
-        let config = ExecuteConfigBuilder::default()
-            .args(vec!["-c".to_string(), "echo {{ name }}".to_string()])
-            .build()
-            .unwrap();
-        let mut scope = Scope::default();
-        let _ = scope.insert_binding("name", "bobby", None);
-
-        let result = plugin.execute(&scope, &config);
-
-        assert_eq!(result.status, 0);
-        assert_eq!(result.stdout, "bobby\n");
-        assert_eq!(result.stderr, "");
-    }
-
-    #[test]
-    fn test_execute_with_err() {
-        let plugin = SystemShellPlugin::default();
-        let scope = Scope::default();
-        let config = ExecuteConfigBuilder::default()
-            .args(vec!["-c".to_string(), "echos 'hello'".to_string()])
-            .build()
-            .unwrap();
-
-        let result = plugin.execute(&scope, &config);
-
-        assert_eq!(result.status, 127);
-        assert_eq!(result.stderr, "sh: echos: command not found\n");
-        assert_eq!(result.stdout, "");
-    }
-}

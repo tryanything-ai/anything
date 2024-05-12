@@ -1,23 +1,21 @@
-use std::sync::atomic::AtomicUsize;
-
 use anything_runtime::{RawEnvironment, RawVariables};
 use derive_builder::Builder;
-use petgraph::prelude::DiGraph;
 use serde::{Deserialize, Serialize};
 
-use crate::{core::keyable::Keyable, error::GraphResult, NodeType};
+use crate::{core::keyable::Keyable, error::GraphResult};
 
-use super::{flow_graph::FlowGraph, flowfile::Flowfile, node::Task, trigger::Trigger};
+use super::{flowfile::Flowfile, trigger::Trigger};
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default, Deserialize, Serialize, Builder)]
-#[builder(setter(into, strip_option), default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Builder)]
+#[builder(default)]
 pub struct Flow {
+    #[serde(default = "crate::core::id_alloc::alloc_uuid_string")]
+    pub flow_id: String,
+
     pub name: String,
     pub version: String,
     pub description: String,
-
-    pub active: bool,
 
     #[serde(default)]
     pub variables: RawVariables,
@@ -27,10 +25,25 @@ pub struct Flow {
 
     #[serde(default)]
     pub trigger: Trigger,
+    // #[serde(skip)]
+    // pub graph: FlowGraph,
+    // pub nodes: Vec<Task>,
+}
 
-    #[serde(skip)]
-    pub graph: FlowGraph,
-    pub nodes: Vec<Task>,
+impl Default for Flow {
+    fn default() -> Self {
+        Self {
+            flow_id: crate::core::id_alloc::alloc_uuid_string(),
+            name: "default".to_string(),
+            version: "0.0.1".to_string(),
+            description: "".to_string(),
+            variables: RawVariables::default(),
+            environment: RawEnvironment::default(),
+            trigger: Trigger::default(),
+            // graph: FlowGraph::default(),
+            // nodes: Vec::new(),
+        }
+    }
 }
 
 impl Keyable for Flow {
@@ -41,10 +54,10 @@ impl Keyable for Flow {
 
 #[allow(unused)]
 impl Flow {
-    pub fn add_node(&mut self, node: Task) -> GraphResult<()> {
-        self.graph.add_node(node);
-        Ok(())
-    }
+    // pub fn add_node(&mut self, node: Task) -> GraphResult<()> {
+    //     self.graph.add_node(node);
+    //     Ok(())
+    // }
 
     // TODO: write tests
     pub fn add_global_variable(&mut self, input: &str, value: String) -> GraphResult<()> {
@@ -58,40 +71,45 @@ impl Flow {
         Ok(())
     }
 
-    pub fn get_nodes(&self) -> Vec<Task> {
-        self.graph
-            .nodes
-            .iter()
-            .map(|(_id, n)| (*n).clone())
-            .collect::<Vec<Task>>()
-    }
+    // pub fn get_nodes(&self) -> Vec<Task> {
+    //     self.graph
+    //         .nodes
+    //         .iter()
+    //         .map(|(_id, n)| (*n).clone())
+    //         .collect::<Vec<Task>>()
+    // }
 
-    pub fn get_flowgraph(&self) -> FlowGraph {
-        let mut graph = FlowGraph::new();
+    // pub fn get_flowgraph(&self) -> FlowGraph {
+    //     let mut graph = FlowGraph::new();
 
-        for node in self.get_nodes() {
-            graph.add_node(node);
-        }
+    //     for node in self.get_nodes() {
+    //         graph.add_node(node);
+    //     }
 
-        graph
-    }
+    //     graph
+    // }
 
-    pub fn into_graph(&self) -> GraphResult<DiGraph<NodeType, usize>> {
-        self.get_flowgraph().into_graph()
-    }
+    // pub fn into_graph(&self) -> GraphResult<DiGraph<NodeType, usize>> {
+    //     self.get_flowgraph().into_graph()
+    // }
 }
 
 impl From<Flowfile> for Flow {
     fn from(value: Flowfile) -> Self {
         let mut flow = Flow::default();
+        flow.flow_id = value.flow_id;
         flow.name = value.name;
-        flow.version = value.version.unwrap_or_else(|| "0.0.0".to_string());
+        flow.version = value.version.unwrap_or_else(|| "0.0.1".to_string());
         flow.description = value
             .description
             .unwrap_or_else(|| "no description".to_string());
-        flow.nodes = value.nodes;
         flow.variables = value.variables;
         flow.environment = value.environment;
+        flow.trigger = value.trigger;
+
+        // for node in value.nodes {
+        //     flow.add_node(node).unwrap();
+        // }
 
         flow
     }
@@ -109,7 +127,7 @@ impl Into<Flowfile> for Flow {
         flowfile.name = self.name;
         flowfile.version = Some(self.version);
         flowfile.description = Some(self.description);
-        flowfile.nodes = self.nodes;
+        // flowfile.nodes = self.nodes;
         flowfile.variables = self.variables;
         flowfile.environment = self.environment;
 
@@ -163,6 +181,12 @@ mod tests {
     }
 
     #[test]
+    fn test_flow_gets_a_unique_uuid_by_default() {
+        let flow = Flow::default();
+        assert_ne!(flow.flow_id, "".to_string());
+    }
+
+    #[test]
     fn test_can_serialize_flow_into_a_flowfile() {
         let mut flow = build_flow("DemoFlow".to_string());
         let node1 = build_task("node1".to_string(), "one.js".to_string());
@@ -174,10 +198,10 @@ mod tests {
 
         assert_eq!(
             flow_str,
-            r#"name = "DemoFlow"
-version = "0.1"
+            r#"flow_id = ""
+name = "DemoFlow"
+version = "0.0.1"
 description = ""
-active = false
 nodes = []
 
 [variables]

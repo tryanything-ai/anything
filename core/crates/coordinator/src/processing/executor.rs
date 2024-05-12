@@ -1,19 +1,18 @@
-use std::{
-    collections::BTreeMap,
-    future::Future,
-    ops::ControlFlow,
-    sync::{Arc, Mutex},
-};
+use std::{collections::BTreeMap, future::Future, ops::ControlFlow, sync::Arc};
 
 use anything_graph::Task;
-use anything_runtime::{EngineKind, PluginEngine, Runner, Scope};
+use anything_runtime::{EngineKind, PluginEngine, Scope, ValueKind};
 use petgraph::{
     algo::has_path_connecting,
     graph::{DiGraph, IndexType, NodeIndex},
     visit::{VisitMap, Visitable},
     Directed, Direction, Graph,
 };
-use tokio::{sync::mpsc, task::JoinSet, time::Instant};
+use tokio::{
+    sync::{mpsc, Mutex},
+    task::JoinSet,
+    time::Instant,
+};
 
 use crate::error::{CoordinatorError, CoordinatorResult};
 
@@ -176,6 +175,34 @@ pub async fn run_task(
     let mut runner = runner
         .try_lock()
         .map_err(|_e| CoordinatorError::RuntimeError)?;
+
+    let run_options = task.run_options.clone();
+
+    run_options.variables.vars.iter().for_each(|(k, v)| {
+        let value = match v {
+            ValueKind::String(s) => s.to_string(),
+            ValueKind::Http(h) => (*h).clone().into(),
+            ValueKind::File(f) => (*f).clone().into(),
+            ValueKind::Int(i) => i.to_string(),
+            ValueKind::Computable(c) => (*c).clone().into(),
+            ValueKind::None => "".to_string(),
+            ValueKind::List(l) => l
+                .iter()
+                .map(|v| (*v).clone().into())
+                .collect::<Vec<String>>()
+                .join(","),
+        };
+
+        runner.add_global_variable(k, &value);
+    });
+
+    run_options.environment.vars.iter().for_each(|(k, v)| {
+        let value = match v.as_str() {
+            "" => None,
+            s => Some(String::from(s)),
+        };
+        runner.add_global_environment(k, value);
+    });
 
     runner
         .execute(task_name, cfg)

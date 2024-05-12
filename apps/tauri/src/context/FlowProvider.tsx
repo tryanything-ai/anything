@@ -1,4 +1,3 @@
-import { parse, stringify } from "iarna-toml-esm";
 import {
   createContext,
   ReactNode,
@@ -24,42 +23,39 @@ import {
   ReactFlowInstance,
 } from "reactflow";
 
+import { Action, Flow, FlowFrontMatter, Trigger } from "../utils/flowTypes";
+import { ProcessingStatus, SessionComplete } from "../utils/eventTypes";
+
 import api from "../tauri_api/api";
-import { useLocalFileContext } from "./LocalFileProvider";
+import { useFlowsContext } from "./FlowsProvider";
+import { Node as FlowNode } from "../utils/flowTypes";
 
-function findNextNodeId(nodes: any): string {
-  // Return 1 if there are no nodes
-  if (!nodes) {
-    console.log("no nodes in FindNextNodeId, returning id 1");
-    return "1";
+function findConflictFreeId(nodes: Node[], planned_node_name: string): string {
+  const nodesWithSubstring = nodes.filter((node: Node) => node.id.startsWith(planned_node_name));
+  let suffix = nodesWithSubstring.length;
+  if (suffix === 0) {
+    return planned_node_name;
+  } else {
+    let highestSuffixedNode = 0;
+    nodesWithSubstring.forEach((node: Node) => {
+      const lastChar = node.id.slice(-1);
+      const lastCharIsInt = !isNaN(parseInt(lastChar));
+      if (lastCharIsInt) {
+        let suffix = parseInt(lastChar);
+        if (suffix > highestSuffixedNode) {
+          highestSuffixedNode = suffix;
+        }
+      }
+    });
+
+    return `${planned_node_name}_${highestSuffixedNode + 1}`;
   }
-  // Initialize the maxId to 0
-  let maxId = 0;
-
-  // Loop through the nodes and find the maximum numeric ID value
-  nodes.forEach((node: any) => {
-    const numericId = parseInt(node.id, 10);
-    if (!isNaN(numericId) && numericId > maxId) {
-      maxId = numericId;
-    }
-  });
-  // Increment the maxId to get the next ID for the new node
-  const nextId = (maxId + 1).toString();
-
-  return nextId;
 }
-
-type FlowFrontMatter = {
-  name: string;
-  id: string;
-  version: string;
-  author: string;
-  description: string;
-};
 
 interface FlowContextInterface {
   nodes: Node[];
   edges: Edge[];
+  flowVersions: Flow[];
   flowFrontmatter: FlowFrontMatter | undefined;
   currentProcessingStatus: ProcessingStatus | undefined;
   currentProcessingSessionId: string | undefined;
@@ -67,54 +63,47 @@ interface FlowContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   toml: string;
+  getTrigger: () => Trigger | undefined;
   onDragOver: (event: any) => void;
   onDrop: (event: any, reactFlowWrapper: any) => void;
-  addNode: (type: string, specialData?: any) => void;
+  addNode: (position: { x: number; y: number }, specialData?: any) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
-  updateFlowFrontmatter: (flow_name: string, keysToUpdate: any) => void;
+  readNodeConfig: (nodeId: string) => Promise<FlowNode | undefined>;
+  writeNodeConfig: (nodeId: string, data: any) => Promise<FlowNode | undefined>;
+  getFlowDefinitionsFromReactFlowState: () => Flow;
 }
 
 export const FlowContext = createContext<FlowContextInterface>({
+  toml: "",
   nodes: [],
   edges: [],
+  flowVersions: [],
   flowFrontmatter: undefined,
   currentProcessingStatus: undefined,
   currentProcessingSessionId: undefined,
-  onNodesChange: () => {},
-  onEdgesChange: () => {},
-  onConnect: () => {},
-  onDragOver: () => {},
-  onDrop: () => {},
-  toml: "",
-  addNode: () => {},
-  setReactFlowInstance: () => {},
-  updateFlowFrontmatter: () => {},
+  onNodesChange: () => { },
+  onEdgesChange: () => { },
+  onConnect: () => { },
+  onDragOver: () => { },
+  onDrop: () => { },
+  addNode: () => { },
+  setReactFlowInstance: () => { },
+  getTrigger: () => undefined,
+  readNodeConfig: () => undefined,
+  writeNodeConfig: () => undefined,
+  getFlowDefinitionsFromReactFlowState: () => undefined,
 });
 
 export const useFlowContext = () => useContext(FlowContext);
 
-type ProcessingStatus = {
-  message: string;
-  event_id: string;
-  node_id: string;
-  flow_id: string;
-  session_id: string;
-};
-
-type SessionComplete = {
-  event_id: string;
-  node_id: string;
-  flow_id: string;
-  session_id: string;
-};
-
 export const FlowProvider = ({ children }: { children: ReactNode }) => {
-  const { renameFlowFiles } = useLocalFileContext();
+  const { updateFlow } = useFlowsContext();
   const { flow_name } = useParams();
-  const [initialTomlLoaded, setInitialTomlLoaded] = useState<boolean>(false);
-  const [loadingToml, setLoadingToml] = useState<boolean>(false);
+  const [hydrated, setHydrated] = useState<boolean>(false);
+  const [firstLook, setFirstLook] = useState<boolean>(true);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [flowVersions, setFlowVersions] = useState<Flow[]>([]);
   const [flowFrontmatter, setFlowFrontmatter] = useState<
     FlowFrontMatter | undefined
   >();
@@ -133,17 +122,22 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     useState<ReactFlowInstance | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const addNode = (
-    type: string,
-    position: { x: number; y: number },
-    specialData?: any
-  ) => {
-    const nextId = findNextNodeId(nodes);
+  const addNode = (position: { x: number; y: number }, specialData?: any) => {
+    let planned_node_name;
+
+    //set node_name
+    if (specialData) {
+      planned_node_name = specialData.node_name;
+    }
+
+    const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
+    console.log("conflictFreeId", conflictFreeId);
+    console.log("special data", specialData);
     const newNode: Node = {
-      id: nextId,
-      type,
+      id: conflictFreeId,
+      type: "superNode",
       position,
-      data: { ...specialData },
+      data: { ...specialData, node_name: conflictFreeId },
     };
 
     setNodes((nodes) => {
@@ -181,34 +175,25 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
       event.preventDefault();
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       if (event.dataTransfer === null) return;
-      const nodeType = event.dataTransfer.getData("nodeType");
-      const nodeProcessData = JSON.parse(
-        event.dataTransfer.getData("nodeProcessData")
-      );
-      const nodeConfigurationData = JSON.parse(
-        event.dataTransfer.getData("nodeConfigurationData")
-      );
-      const nodePresentationData = JSON.parse(
-        event.dataTransfer.getData("nodePresentationData")
+
+      const nodeData: FlowNode = JSON.parse(
+        event.dataTransfer.getData("nodeData")
       );
 
-      if (typeof nodeType === "undefined" || !nodeType) {
+      console.log("Dropped nodeData", nodeData);
+
+      if (typeof nodeData === "undefined" || !nodeData) {
         return;
       }
-      if (typeof nodeProcessData === "undefined" || !nodeProcessData) {
-        return;
-      }
-      if (
-        typeof nodeConfigurationData === "undefined" ||
-        !nodeConfigurationData
-      ) {
-        return;
-      }
-      if (
-        typeof nodePresentationData === "undefined" ||
-        !nodePresentationData
-      ) {
-        return;
+
+      // only allow one trigger at a time
+      if (nodeData.trigger) {
+        console.log("Its a triggger");
+        const triggerNodeExists = nodes.some((node) => node.data.trigger);
+        if (triggerNodeExists) {
+          console.error("Only one trigger node is allowed at a time.");
+          return;
+        }
       }
 
       if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
@@ -218,162 +203,186 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      addNode(nodeType, position, {
-        ...nodeProcessData,
-        ...nodeConfigurationData,
-        ...nodePresentationData,
-      });
+      addNode(position, nodeData);
     },
     [addNode]
   );
 
-  const updateFlowFrontmatter = async (
-    flow_name: string,
-    keysToUpdate: any
-  ) => {
+  const hydrateFlow = async () => {
     try {
-      //if we are updating name in TOML we also need to update the folder name
-      if (keysToUpdate.name) {
-        await renameFlowFiles(flow_name, keysToUpdate.name);
-      }
-      let flow_frontmatter = { ...flowFrontmatter, ...keysToUpdate };
-      //TODO: check if name change causes race condition
-      setFlowFrontmatter(flow_frontmatter);
-    } catch (error) {
-      console.log("error updating flow frontmatter", error);
-    }
-  };
-
-  const writeToml = async (toml: string, explicit_flow_name?: string) => {
-    // if (!flow_name) {
-    //   throw new Error("appDocuments or flow_name is undefined");
-    // }
-    // console.log("writing toml in FlowProvider");
-    // let name = explicit_flow_name ? explicit_flow_name : flow_name;
-    // await api.saveToml({ toml, flow_id: name });
-    // return await api.fs.writeTextFile(
-    //   appDocuments + "/flows/" + name + "/flow.toml",
-    //   toml
-    // );
-  };
-
-  const readToml = async () => {
-    try {
-      //TODO:
-      //RUST_MIGRATION
-      // if (!flow_name) {
-      //   throw new Error("appDocuments or flow_name is undefined");
-      // }
-      // console.log("reading toml in FlowProvider");
-      // return await api.fs.readTextFile(
-      //   appDocuments + "/flows/" + flow_name + "/flow.toml"
-      // );
-
-      return "";
-    } catch (error) {
-      console.log("error reading toml in FlowProvider", error);
-      return "";
-    }
-  };
-
-  //we have heard there is new toml
-  const updateStateFromToml = async () => {
-    try {
-      let new_toml = await readToml();
-      if (!new_toml) throw new Error("new_toml is undefined");
-      //don't update if nothing has changed in toml file
-      if (new_toml === toml) return;
-      setToml(new_toml);
-      let parsedToml = parse(new_toml);
-
-      if (!parsedToml.nodes) {
-        parsedToml.nodes = [];
-      }
-      setNodes(parsedToml.nodes as any);
-      if (!parsedToml.edges) {
-        parsedToml.edges = [];
-      }
-
-      setNodes(parsedToml.nodes as any);
-      setEdges(parsedToml.edges as any);
-      setFlowFrontmatter(parsedToml.flow as FlowFrontMatter);
-    } catch (error) {
-      console.log("error loading toml in FlowProvider", error);
-    }
-  };
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (flow_name && !initialTomlLoaded && !loadingToml) {
-  //       console.log("hydrating initial TOML");
-  //       setLoadingToml(true);
-  //       await updateStateFromToml();
-  //       setInitialTomlLoaded(true);
-  //       setLoadingToml(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [flow_name, initialTomlLoaded]);
-
-  const fetchFlow = async () => {
-    try {
-      console.log("Fetch Flow By Name", flow_name);
+      console.log("Fetch Flow By Name: ", flow_name);
       if (!flow_name) return;
-      let flow: any = await api.getFlowByName(flow_name);
+      let { flow } = await api.flows.getFlowByName<any>(flow_name);
       console.log(
-        "FLow Result in flow provider",
+        "Flow Result in flow provider",
         JSON.stringify(flow, null, 3)
       );
 
-      // let flow_versions = await api.getFlowVersions(flow.flow_id);
+      //TODO: these are shaped wrong not shaped as flows but can still pick up ids etc
+      setFlowVersions(flow.versions);
 
-      // console.log(
-      //   "Flow versions response",
-      //   JSON.stringify(flow_versions, null, 3)
-      // );
+      let newDef = flow.versions[0].flow_definition as Flow;
 
-      let flow_versions = [
-        {
-          id: "a3893cf7-4683-40cd-9b42-b3de6e32e7e0",
-          version: "0.0.1",
-          description: "",
-        },
-      ];
+      //Pull out actions and trigger
+      let _actions: Action[] = newDef.actions || [];
+      let _trigger: Trigger | undefined = newDef.trigger || undefined;
+
+      //convert to what react flow needs
+      let _nodes: Node[] = _actions.map((action) => {
+        return {
+          ...action.presentation,
+          data: action,
+          id: action.node_name,
+          type: "superNode",
+        };
+      });
+
+      //Json might have no trigger
+      if (_trigger) {
+        _nodes.push({
+          ..._trigger.presentation,
+          data: _trigger,
+          id: _trigger.node_name,
+          type: "superNode",
+        });
+      }
+
+      let _edges = newDef.edges || [];
+
+      console.log("_nodes: ", _nodes);
+      console.log("_edges: ", _edges);
+      console.log("Presentation nodes: ", _nodes);
+
+      setEdges(_edges);
+      setNodes(_nodes);
+
+      let fm = flow;
+
+      //TODO: not great. a bit hacky. fix when doing Flow Version Mangement
+      fm.version = flow.latest_version_id;
+      fm.flow_version_id = flow.versions[0].flow_version_id;
+
+      delete fm.versions;
+
+      console.log("FrontMatter saved", JSON.stringify(fm, null, 3));
+      setFlowFrontmatter(fm);
+
+      setHydrated(true);
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
   };
 
-  useEffect(() => {
-    if (!flow_name) return;
+  const getTrigger = () => {
+    if (!nodes) return undefined;
+    let triggerNode = nodes.find((node) => node.data.trigger === true);
+    return triggerNode.data;
+  };
 
-    fetchFlow();
-  }, [flow_name]);
+  //TODO: integrate here vs in flwos
+  const readNodeConfig = async (
+    nodeId: string
+  ): Promise<FlowNode | undefined> => {
+    try {
+      let reactFlowNode = nodes.find((node) => node.id === nodeId);
+      return reactFlowNode?.data;
+    } catch (error) {
+      console.log("error reading node config in FlowProvider", error);
+    }
+  };
 
-  //Debounced write state to toml used for when we draggin things around.
+  const writeNodeConfig = async (
+    nodeId: string,
+    data: any
+  ): Promise<FlowNode | undefined> => {
+    try {
+      let updatedNodes = nodes.map((node) => {
+        // console.log("node in writeNodeConfig", node);
+        if (node.id === nodeId) {
+          return { ...node, data };
+        } else {
+          return node;
+        }
+      });
+      setNodes(updatedNodes);
+      //TODO: actually update state.
+      let reactFlowNode = nodes.find((node) => node.id === nodeId);
+      return reactFlowNode?.data;
+    } catch (error) {
+      console.log("error writing node config in FlowProvider", error);
+    }
+  };
+  const getFlowDefinitionsFromReactFlowState = (): Flow => {
+    let trigger;
+    let actions = [];
+
+    //Loop through all nodes
+    nodes.forEach((node) => {
+      let freshNode = {
+        ...node.data,
+        presentation: {
+          position: node.position,
+        },
+      };
+
+      if (node.data.trigger) {
+        trigger = freshNode as Trigger;
+      } else {
+        actions.push(freshNode as Action);
+      }
+    });
+
+    //create shape needed for backend
+    let newFlow: Flow = {
+      ...(flowFrontmatter as FlowFrontMatter),
+      trigger: trigger as Trigger,
+      actions: actions as Action[],
+      edges: edges as Edge[],
+    };
+
+    console.log("New Flow Definition", newFlow);
+
+    return newFlow;
+  };
+
+  const synchronize = async () => {
+    try {
+      //TODO: hash to comapre and only run if dif?
+      console.log("Synchronising Flow in FlowProivders.tsx");
+      let newFlow = getFlowDefinitionsFromReactFlowState();
+
+      console.log("newFlow in synchronize", newFlow);
+
+      //send
+      let res = await api.flows.updateFlowVersion(
+        flowFrontmatter.flow_id,
+        newFlow
+      );
+
+      console.log("Flow Synchronized");
+      console.log("res in updateFlowVersion", res);
+    } catch (error) {
+      console.log("error in synchronise", error);
+    }
+  };
+
+  //Synchronise
   useEffect(() => {
+    //Ugly but works to prevent write on load
+    if (!hydrated) return;
+    if (firstLook) {
+      setFirstLook(false);
+      return;
+    }
     // Clear any existing timers
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
 
-    // Set a new timer to write to TOML file
+    // Set a new timer to write to flow to backend
     timerRef.current = setTimeout(async () => {
-      if (!initialTomlLoaded || loadingToml) return;
-
-      let newToml = stringify({
-        flow: flowFrontmatter as FlowFrontMatter,
-        nodes: nodes as any,
-        edges: edges as any,
-      });
-      console.log("writing to toml");
-      // console.log(newToml);
-      //don't write if nothing has changed in react state
-      if (newToml === toml) return;
-      setToml(newToml);
-      await writeToml(newToml);
-    }, 200);
+      synchronize();
+    }, 100);
 
     // Clean up
     return () => {
@@ -383,47 +392,41 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [nodes, edges, flowFrontmatter]);
 
-  //Watch TOML file for changes
-  // useEffect(() => {
-  //   if (!initialTomlLoaded) return;
-  //   let stopWatching = () => {};
-  //   let path = `${appDocuments}/flows/${flow_name}/flow.toml`;
-
-  //   console.log(`Watching ${path} for changes`);
-
-  //   const watchThisFile = async () => {
-  //     stopWatching = await api.watch.watchImmediate(path, (event) => {
-  //       console.log("TOML file changed");
-  //       updateStateFromToml();
-  //     });
-  //   };
-
-  //   watchThisFile();
-  //   return () => {
-  //     stopWatching();
-  //   };
-  // }, [initialTomlLoaded]);
-
   //Watch event processing for fun ui updates
-  useEffect(() => {
-    let unlisten = api.subscribeToEvent("event_processing", (event: any) => {
-      setCurrentProcessingStatus(event);
-    });
-    let unlisten2 = api.subscribeToEvent("session_complete", (event: any) => {
-      setSessionComplete(event);
-    });
+  // useEffect(() => {
+  //   let unlistenFromEventProcessing = api.subscribeToEvent(
+  //     "event_processing",
+  //     (event: any) => {
+  //       setCurrentProcessingStatus(event);
+  //     }
+  //   );
 
-    return () => {
-      unlisten.then((unlisten) => unlisten());
-      unlisten2.then((unlisten) => unlisten());
-    };
-  }, [currentProcessingSessionId]);
+  //   let unlistenSessionComplete = api.subscribeToEvent(
+  //     "session_complete",
+  //     (event: any) => {
+  //       setSessionComplete(event);
+  //     }
+  //   );
+
+  //   return () => {
+  //     unlistenFromEventProcessing.then((unlisten) => unlisten());
+  //     unlistenSessionComplete.then((unlisten) => unlisten());
+  //   };
+  // }, [currentProcessingSessionId]);
+
+  //Hydrate all flow data on navigation
+  //User params fetches url params from React-Router-Dom
+  useEffect(() => {
+    if (!flow_name) return;
+    hydrateFlow();
+  }, [flow_name]);
 
   return (
     <FlowContext.Provider
       value={{
         nodes,
         edges,
+        flowVersions,
         flowFrontmatter,
         currentProcessingStatus,
         currentProcessingSessionId,
@@ -434,8 +437,11 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
         onDrop,
         toml,
         addNode,
+        getTrigger,
         setReactFlowInstance,
-        updateFlowFrontmatter,
+        readNodeConfig,
+        writeNodeConfig,
+        getFlowDefinitionsFromReactFlowState,
       }}
     >
       {children}

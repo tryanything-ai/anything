@@ -1,21 +1,14 @@
 import { ReactNode } from "react";
-
 import posthogClient from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 
 // Contexts
 import { AuthenticationProvider } from "../context/AuthenticaionProvider";
-import { LocalFileProvider } from "../context/LocalFileProvider";
+import { FlowsProvider } from "./FlowsProvider";
 import { MarketplaceProvider } from "../context/MarketplaceProvider";
-import { ModelProvider } from "../context/ModelsProvider";
-import { NotificationsProvider } from "../context/NotificationProvider";
 import { SettingsProvider } from "../context/SettingsProvider";
-import { SqlProvider } from "../context/SqlProvider";
-import { TauriProvider } from "../context/TauriProvider";
 import { DeeplinkProvider } from "../context/DeeplinkProvider";
 import { SoftwareUpdateProvider } from "./SoftwareUpdateProvider";
-import { FlowProvider } from "./FlowProvider";
-import { FlowNavigationProvider } from "./FlowNavigationProvider";
 
 const VITE_PUBLIC_POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 const VITE_PUBLIC_POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
@@ -34,23 +27,11 @@ const Context = ({ children }: { children: ReactNode }) => {
         <SettingsProvider>
           <AuthenticationProvider>
             <MarketplaceProvider>
-              <NotificationsProvider>
-                <PostHogProvider client={posthogClient}>
-                  <TauriProvider>
-                    <LocalFileProvider>
-                      <ModelProvider>
-                        <SqlProvider>
-                          <FlowProvider>
-                            <FlowNavigationProvider>
-                              {children}
-                            </FlowNavigationProvider>
-                          </FlowProvider>
-                        </SqlProvider>
-                      </ModelProvider>
-                    </LocalFileProvider>
-                  </TauriProvider>
-                </PostHogProvider>
-              </NotificationsProvider>
+              <PostHogProvider client={posthogClient}>
+                <FlowsProvider>
+                  {children}
+                </FlowsProvider>
+              </PostHogProvider>
             </MarketplaceProvider>
           </AuthenticationProvider>
         </SettingsProvider>

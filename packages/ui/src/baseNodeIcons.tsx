@@ -1,6 +1,6 @@
 import React from "react";
 
-interface Props {
+interface IconProps {
   icon: string; // Expected to be SVG content
   className?: string; // Optional className property
 }
@@ -9,6 +9,23 @@ export function removeWidthHeight(svgString: string) {
   let cleanedSvgString = svgString
     .replace(/\s*width="[^"]*"/, "")
     .replace(/\s*height="[^"]*"/, "");
+
+  // Ensure viewBox and preserveAspectRatio are properly set
+  if (!cleanedSvgString.includes('preserveAspectRatio="')) {
+    cleanedSvgString = cleanedSvgString.replace(
+      "<svg",
+      '<svg preserveAspectRatio="xMidYMid meet"'
+    );
+  }
+
+  // Check if fill attribute already exists
+  // if (!cleanedSvgString.includes('fill="')) {
+  //   // Add fill attribute with currentValue
+  //   cleanedSvgString = cleanedSvgString.replace(
+  //     "<svg",
+  //     '<svg fill="currentColor"'
+  //   );
+  // }
 
   // Check if fill attribute already exists
   if (!cleanedSvgString.includes('fill="')) {
@@ -19,12 +36,15 @@ export function removeWidthHeight(svgString: string) {
     );
   }
 
+
+
   return cleanedSvgString;
 }
 
-const BaseNodeOrIcon: React.FC<Props> = ({ icon, className }) => {
-  const combinedClasses = `w-full h-full ${className ?? ""}`;
-  let cleanIcon = icon;
+export const SvgRenderer: React.FC<IconProps> = ({ icon, className }) => {
+  // const combinedClasses = `${className ?? ""}`;
+  const combinedClasses = `block w-full h-auto leading-none ${className ?? ""}`;
+  const cleanIcon = icon;
 
   const cleanSizedIcon = removeWidthHeight(cleanIcon);
 
@@ -39,17 +59,16 @@ const BaseNodeOrIcon: React.FC<Props> = ({ icon, className }) => {
   }
 
   // If it's not an SVG, render a fallback (e.g., a default icon or message)
-  return <span className="bg-red-500 p-2 border rounded">Invalid</span>;
+  return <span className="bg-red-300 p-2 border rounded">🚫</span>;
 };
 
-export const BaseNodeIcon: React.FC<Props> = ({ icon, className }) => {
+export const BaseNodeIcon: React.FC<IconProps> = ({ icon, className }) => {
   return (
     <div
-      className={` h-14 w-14 p-2 rounded-md bg-white bg-opacity-30 ${
-        className ?? ""
-      }`}
+      className={`h-14 w-14 p-2 rounded-md bg-white bg-opacity-30 ${className ?? ""
+        }`}
     >
-      <BaseNodeOrIcon icon={icon} className={className} />
+      <SvgRenderer className={`${className} w-full h-full`} icon={icon} />
     </div>
   );
 };

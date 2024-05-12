@@ -2,7 +2,7 @@
 name = "anything"
 version = "0.0.0"
 description = "A local app to do anything"
-authors = ["Carl Lippert", "Ari Lerner"]
+authors = ["Carl Lippert"]
 license = ""
 repository = "https://github.com/tryanything-ai/anything"
 edition = "2021"
@@ -17,7 +17,7 @@ anything-common = { path = "../../../core/crates/common" }
 anything-coordinator = { path = "../../../core/crates/coordinator" }
 anything-runtime = { path = "../../../core/crates/runtime" }
 anything-graph = { path = "../../../core/crates/graph" }
-tauri-plugin-anything-tauri = { path = "../../../core/crates/tauri-plugin-anything-tauri" }
+tauri-plugin-anything = { path = "../../../core/crates/tauri-plugin-anything" }
 
 tauri = { version = "1.5", features = [
     "fs-all",
@@ -29,7 +29,6 @@ tonic = "0.10.0"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-deep-link = { git = "https://github.com/FabianLars/tauri-plugin-deep-link" }
 toml = "0.5"
 dirs = "5.0"

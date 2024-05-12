@@ -9,7 +9,6 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { useSqlContext } from "../context/SqlProvider";
 import PageLayout from "../pageLayout";
 
 interface Event {
@@ -32,147 +31,148 @@ interface Event {
   data: string;
 }
 
-const columnHelper = createColumnHelper<Event>();
+// const columnHelper = createColumnHelper<Event>();
 
-export const eventColumnDefs = [
-  columnHelper.accessor((event: Event) => event.event_id, {
-    id: "event_id",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Event ID</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.session_id, {
-    id: "session_id",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Session ID</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.node_id, {
-    id: "node_id",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Node ID</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.node_type, {
-    id: "node_type",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Node Type</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.node_label, {
-    id: "node_label",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Node Label</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.flow_id, {
-    id: "flow_id",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Flow ID</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.flow_name, {
-    id: "flow_name",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Flow Name</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.flow_version, {
-    id: "flow_version",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Flow Version</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.worker_type, {
-    id: "worker_type",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Worker Type</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.worker_name, {
-    id: "worker_name",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Worker Name</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.stage, {
-    id: "stage",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Stage</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.event_status, {
-    id: "event_status",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Event Status</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.session_status, {
-    id: "session_status",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Session Status</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.created_at, {
-    id: "created_at",
-    cell: (info) => <span>{new Date(info.getValue()).toLocaleString()}</span>,
-    header: () => <span>Created At</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.event_context, {
-    id: "event_context",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Event Context</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.event_result, {
-    id: "event_result",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Event Result</span>,
-  }),
-  columnHelper.accessor((event: Event) => event.data, {
-    id: "data",
-    cell: (info) => <span>{info.getValue()}</span>,
-    header: () => <span>Data</span>,
-  }),
-];
+// export const eventColumnDefs = [
+//   columnHelper.accessor((event: Event) => event.event_id, {
+//     id: "event_id",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Event ID</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.session_id, {
+//     id: "session_id",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Session ID</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.node_id, {
+//     id: "node_id",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Node ID</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.node_type, {
+//     id: "node_type",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Node Type</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.node_label, {
+//     id: "node_label",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Node Label</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.flow_id, {
+//     id: "flow_id",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Flow ID</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.flow_name, {
+//     id: "flow_name",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Flow Name</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.flow_version, {
+//     id: "flow_version",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Flow Version</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.worker_type, {
+//     id: "worker_type",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Worker Type</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.worker_name, {
+//     id: "worker_name",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Worker Name</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.stage, {
+//     id: "stage",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Stage</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.event_status, {
+//     id: "event_status",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Event Status</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.session_status, {
+//     id: "session_status",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Session Status</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.created_at, {
+//     id: "created_at",
+//     cell: (info) => <span>{new Date(info.getValue()).toLocaleString()}</span>,
+//     header: () => <span>Created At</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.event_context, {
+//     id: "event_context",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Event Context</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.event_result, {
+//     id: "event_result",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Event Result</span>,
+//   }),
+//   columnHelper.accessor((event: Event) => event.data, {
+//     id: "data",
+//     cell: (info) => <span>{info.getValue()}</span>,
+//     header: () => <span>Data</span>,
+//   }),
+// ];
 
 export default function Tables() {
-  const { getTableData } = useSqlContext();
   const [data, setData] = useState<any[]>([]);
   const { table } = useParams();
 
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const react_table = useReactTable({
-    columns: eventColumnDefs,
-    data: data as Event[],
-    getCoreRowModel: getCoreRowModel(),
-    //2. add getSortedRowModel into the pipeline. this will calculate the sorted rows when the sort state changes
-    getSortedRowModel: getSortedRowModel(),
-    //3. add state to our table we use the  sorting state from step 1
-    state: {
-      sorting,
-    },
-    //4. add a handler for onSortingChange using the setSorting from step 1
-    onSortingChange: setSorting,
-    // columns: eventColumnDefs,
-    // data: data ?? [],
-    // getCoreRowModel: getCoreRowModel(),
-  });
+  // const react_table = useReactTable({
+  //   columns: eventColumnDefs,
+  //   data: data as Event[],
+  //   getCoreRowModel: getCoreRowModel(),
+  //   //2. add getSortedRowModel into the pipeline. this will calculate the sorted rows when the sort state changes
+  //   getSortedRowModel: getSortedRowModel(),
+  //   //3. add state to our table we use the  sorting state from step 1
+  //   state: {
+  //     sorting,
+  //   },
+  //   //4. add a handler for onSortingChange using the setSorting from step 1
+  //   onSortingChange: setSorting,
+  //   // columns: eventColumnDefs,
+  //   // data: data ?? [],
+  //   // getCoreRowModel: getCoreRowModel(),
+  // });
 
-  const headers = react_table.getFlatHeaders();
-  const rows = react_table.getRowModel().rows;
+  // const headers = react_table.getFlatHeaders();
+  // const rows = react_table.getRowModel().rows;
 
-  const hydrate = async () => {
-    try {
-      if (!table) return;
-      const data = await getTableData(table);
-      setData(data);
-    } catch (error) {
-      console.log("error", error);
-    }
-  };
+  // const hydrate = async () => {
+  //   try {
+  //     if (!table) return;
+  //     const data = await getTableData(table);
+  //     setData(data);
+  //   } catch (error) {
+  //     console.log("error", error);
+  //   }
+  // };
 
-  useEffect(() => {
-    hydrate();
+  // useEffect(() => {
+  //   hydrate();
 
-    // Set up the interval to call hydrate every one second
-    const intervalId = setInterval(hydrate, 1000);
+  //   // Set up the interval to call hydrate every one second
+  //   const intervalId = setInterval(hydrate, 1000);
 
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
+  //   // Clean up the interval when the component unmounts
+  //   return () => clearInterval(intervalId);
+  // }, []);
+  let headers = []
+  let rows = []
   return (
     <PageLayout>
       <div className="flex flex-row">
         <div className="text-5xl text-white m-5">table/{table}</div>
-        <button onClick={hydrate}>Refresh</button>
+        {/* <button onClick={hydrate}>Refresh</button> */}
       </div>
       <div className="overflow-y-auto overflow-x-auto">
         {/* <table className="table table-xs"> */}

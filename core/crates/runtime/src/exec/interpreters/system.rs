@@ -7,6 +7,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use serde_json::Value;
+
 use crate::{
     core::config::ExecuteConfig,
     errors::{RuntimeError, RuntimeResult},
@@ -133,6 +135,7 @@ impl SystemShell {
                     stdout,
                     stderr,
                     status,
+                    result: Value::Null,
                 })
             }
             Err(e) => Err(RuntimeError::IoError(e)),

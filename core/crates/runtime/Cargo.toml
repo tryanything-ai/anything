@@ -6,24 +6,25 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = {workspace = true}
-async-trait = {workspace = true}
-derive_builder = {workspace = true}
-lazy_static = {workspace = true}
-thiserror = {workspace = true}
-tokio = {workspace = true}
-tracing = {workspace = true}
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+derive_builder = { workspace = true }
+lazy_static = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
 
-indexmap = {version = "2.0.2", features = ["serde"]}
+indexmap = { version = "2.0.2", features = ["serde"] }
 libloading = "0.8.1"
 regex.workspace = true
-serde = {workspace = true}
+serde = { workspace = true }
 serde_json = "1.0.107"
 serde_v8 = "0.131.0"
 tempfile = "3.8.0"
 tera = "1.19.1"
-toml = {workspace = true, features = ["indexmap", "parse"]}
-uuid = {version = "1.4.1", features = ["v4", "serde"]}
+toml = { workspace = true, features = ["indexmap", "parse"] }
+uuid = { version = "1.4.1", features = ["v4", "serde"] }
+dirs = "3.0.2"
 
 [dev-dependencies]
 assert_fs = "1.0.13"

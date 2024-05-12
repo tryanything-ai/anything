@@ -1,22 +1,25 @@
 import { BaseNodeIcon } from "ui";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { VscChevronDown, VscChevronUp } from "react-icons/vsc";
 
-import { getActionNodes, getTriggerNodes } from "../utils/nodeGenerators";
-import { Node } from "../utils/nodeUtils";
+import { getTriggerNodes } from "../utils/nodeGenerators";
+import { Node, Action, Trigger } from "../utils/flowTypes";
 import BaseSearch from "./baseSearch";
+import api from "../tauri_api/api";
 
 const NodePanel = () => {
   const [allNodes, setAllNodes] = useState<Node[]>([]);
-  const [triggerNodeResults, setTriggerNodeResults] = useState<Node[]>([]);
-  const [actionNodeResults, setActionNodeResults] = useState<Node[]>([]);
+  const [triggerNodeResults, setTriggerNodeResults] = useState<Trigger[]>([]);
+  const [actionNodeResults, setActionNodeResults] = useState<Action[]>([]);
   const [showActions, setShowActions] = useState(true);
   const [showTriggers, setShowTriggers] = useState(true);
 
-  useEffect(() => {
+  const hydrate = async () => {
     console.log("Initial hydrate");
-    let action_nodes = getActionNodes();
+    let action_nodes = await api.flows.getActions();
+    console.log("action_nodes from rust files", action_nodes);
     let trigger_nodes = getTriggerNodes();
+    console.log("trigger_nodes from js generator", trigger_nodes);
 
     // populate original data to maintain for search
     setAllNodes([...action_nodes, ...trigger_nodes]);
@@ -24,15 +27,17 @@ const NodePanel = () => {
     //popoulate results as all data to begin
     setActionNodeResults(action_nodes);
     setTriggerNodeResults(trigger_nodes);
+  }
+  useEffect(() => {
+    hydrate();
   }, []);
 
   const setResults = (results: Node[]) => {
-    console.log("results", results);
     setTriggerNodeResults(
-      results.filter((node) => node.nodeProcessData.trigger)
+      results.filter((node): node is Trigger => node.trigger)
     );
     setActionNodeResults(
-      results.filter((node) => !node.nodeProcessData.trigger)
+      results.filter((node): node is Action => !node.trigger)
     );
   };
 
@@ -41,9 +46,8 @@ const NodePanel = () => {
       <div className="py-4">
         <BaseSearch
           data={allNodes}
-          searchKey={["nodePresentationData.node_label"]}
+          searchKey={["node_label"]}
           onResultsChange={(results) => {
-            console.log("results", results);
             setResults(results);
           }}
         />
@@ -57,12 +61,11 @@ const NodePanel = () => {
         {showTriggers ? <VscChevronDown /> : <VscChevronUp />}
       </h1>
       <div
-        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${
-          showTriggers ? "max-h-auto" : "max-h-0"
-        }`}
+        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${showTriggers ? "max-h-auto" : "max-h-0"
+          }`}
       >
-        {triggerNodeResults.map((node: Node) => (
-          <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+        {triggerNodeResults.map((node: Trigger) => (
+          <NodeDnD node={node} key={node.node_label} />
         ))}
       </div>
       <h1
@@ -73,12 +76,11 @@ const NodePanel = () => {
         {showActions ? <VscChevronDown /> : <VscChevronUp />}
       </h1>
       <div
-        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${
-          showActions ? "max-h-auto" : "max-h-0"
-        }`}
+        className={`transition-max-height overflow-hidden pb-2 duration-500 ease-in-out ${showActions ? "max-h-auto" : "max-h-0"
+          }`}
       >
-        {actionNodeResults.map((node: Node) => (
-          <NodeDnD node={node} key={node.nodePresentationData.node_label} />
+        {actionNodeResults.map((node: Action) => (
+          <NodeDnD node={node} key={node.node_label} />
         ))}
       </div>
     </div>
@@ -87,29 +89,26 @@ const NodePanel = () => {
 
 const NodeDnD = ({ node }: { node: Node }) => {
   const onDragStart = (event: any) => {
-    let nodeType;
+    // let nodeType;
 
-    if (!node.nodePresentationData.nodeType) {
-      nodeType = "superNode";
-    } else {
-      nodeType = node.nodePresentationData.nodeType;
-    }
+    // if ('trigger' in node && node.trigger !== true) {
+    //   nodeType = "superNode";
+    // } else {
+    //   nodeType = node.nodePresentationData.nodeType;
+    // }
 
-    console.log("drag started", nodeType);
+    // console.log("drag started", nodeType);
 
-    event.dataTransfer.setData("nodeType", nodeType);
-    event.dataTransfer.setData(
-      "nodeProcessData",
-      JSON.stringify(node.nodeProcessData)
-    );
-    event.dataTransfer.setData(
-      "nodeConfigurationData",
-      JSON.stringify(node.nodeConfigurationData)
-    );
-    event.dataTransfer.setData(
-      "nodePresentationData",
-      JSON.stringify(node.nodePresentationData)
-    );
+    // event.dataTransfer.setData("nodeType", nodeType);
+    event.dataTransfer.setData("nodeData", JSON.stringify(node));
+    // event.dataTransfer.setData(
+    //   "nodeConfigurationData",
+    //   JSON.stringify(node.nodeConfigurationData)
+    // );
+    // event.dataTransfer.setData(
+    //   "nodePresentationData",
+    //   JSON.stringify(node.nodePresentationData)
+    // );
     event.dataTransfer.effectAllowed = "move";
   };
 
@@ -120,14 +119,11 @@ const NodeDnD = ({ node }: { node: Node }) => {
       draggable
     >
       <BaseNodeIcon
-        icon={node.nodePresentationData.icon}
-        // className={`h-9 w-9 bg-opacity-80 ${
-        //   node.nodeProcessData.trigger ? "text-secondary" : "text-primary"
-        //   }`}
+        icon={node.icon}
         className={`h-9 w-9 bg-opacity-80 text-white`}
       />
       <h1 className="truncate overflow-ellipsis pl-2 text-lg">
-        {node.nodePresentationData.node_label}
+        {node.node_label}
       </h1>
     </div>
   );

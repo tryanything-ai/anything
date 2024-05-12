@@ -1,18 +1,35 @@
 import { Link } from "react-router-dom";
 
-import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useFlowsContext } from "../context/FlowsProvider";
 import PageLayout from "../pageLayout";
-import { PageHeader } from "../components/wholePageHeader";
+import { HeaderButton, PageHeader } from "../components/wholePageHeader";
+import { useEffect } from "react";
 
 export default function Flows() {
-  const { createNewFlow, flows } = useLocalFileContext();
+  //TODO: need a way to fetch if flows are stopped etc
+  const { createNewFlow, flows, stopExecution, updateFlow, getFlows } =
+    useFlowsContext();
 
+  useEffect(() => {
+    getFlows();
+  }, []);
   return (
     <PageLayout>
       <PageHeader
-        callback={createNewFlow}
         title="Flows"
-        buttonLabel="New Flow"
+        ActionComponent={() => {
+          return (
+            <div>
+              <HeaderButton
+                className="btn-error btn-outline"
+                callback={stopExecution}
+              >
+                Pause System
+              </HeaderButton>
+              <HeaderButton callback={createNewFlow}>New Flow</HeaderButton>
+            </div>
+          );
+        }}
       />
 
       <ul className="mt-4">
@@ -28,11 +45,27 @@ export default function Flows() {
                   <div className="text-2xl">{flow.name}</div>
                 </div>
                 <div className="flex text-lg">Stats</div>
-                <div className="flex text-lg">Live</div>
-                {/* <h2 className="card-title">{flow.flow_name}</h2>
-                  <div className="card-actions justify-end">
-                    <div className="bg-pink-200 h-full w-full">derp</div>
-                  </div> */}
+                {/* <div className="flex text-lg">Live</div> */}
+                <label
+                  className="flex justify-center items-center gap-2 text-lg"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="w-16">{flow.active ? "Live" : "Paused"}</div>
+
+                  <input
+                    className="toggle toggle-success"
+                    type="checkbox"
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      updateFlow(flow.flow_id, {
+                        active: !flow.active,
+                        flow_name: flow.name,
+                        version: flow.latest_version_id,
+                      });
+                    }}
+                    checked={flow.active}
+                  />
+                </label>
               </div>
             </Link>
           );

@@ -9,20 +9,26 @@ target_directory := base_directory / "target" / "release"
 # TODO: figure out a better way of handling this
 system_shell_dylib := target_directory / "libanything_plugin_system_shell.dylib"
 deno_plugin_dylib := target_directory / "libanything_plugin_deno.dylib"
+http_dylib := target_directory / "libanything_plugin_http.dylib"
 
 default:
   @just --list --justfile {{justfile()}}
 
-build-all: build-system-shell build-deno
-
+build-all: build-system-shell build-deno build-http
+# 
+#  
 # Build system shell plugin
 build-system-shell: artifact-directory
-  cd {{ base_directory / "plugins/anything-plugin-system-shell" }} && cargo build --release
+  cd {{ base_directory / "plugins/anything-plugin-system-shell" }} && cargo test && cargo build --release
   @cp {{system_shell_dylib}} {{artifact_directory}}
 
 build-deno: artifact-directory
-  cd {{ base_directory / "plugins/anything-plugin-deno" }} && cargo build --release
+  cd {{ base_directory / "plugins/anything-plugin-deno" }} && cargo test && cargo build --release
   @cp {{deno_plugin_dylib}} {{artifact_directory}}
+
+build-http: artifact-directory
+  cd {{ base_directory / "plugins/anything-plugin-http" }} && cargo test && cargo build --release
+  @cp {{http_dylib}} {{artifact_directory}}
 
 # ensure the artifact directory exists
 artifact-directory:

@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
 
-import { useSqlContext } from "../context/SqlProvider";
 import PageLayout from "../pageLayout";
 import { PageHeader } from "../components/wholePageHeader";
 
 export default function Tables() {
-  const { tables } = useSqlContext();
-
+  let tables = []
   return (
     <PageLayout>
-      <PageHeader callback={() => {}} title="Tables" buttonLabel="New Table" />
+      <PageHeader callback={() => { }} title="Tables" buttonLabel="New Table" />
       <ul>
         {tables.map((table) => {
           return (

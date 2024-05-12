@@ -1,9 +1,11 @@
 import ModelCard from "../components/downloadedModelCard";
-import { useModelContext } from "../context/ModelsProvider";
 import PageLayout from "../pageLayout";
 
 export default function Models() {
-  const { models, downloadModel, downloadedModels } = useModelContext();
+
+  let models = []
+  let downloadedModels = []
+  let downloadedModel = null;
 
   return (
     <PageLayout>
@@ -43,7 +45,7 @@ export default function Models() {
                   <button
                     className="btn btn-neutral text-lg"
                     onClick={() => {
-                      downloadModel(model.filename);
+                      // downloadModel(model.filename);
                     }}
                   >
                     Download

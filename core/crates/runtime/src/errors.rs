@@ -2,8 +2,8 @@ use std::sync::TryLockError;
 
 use thiserror::Error;
 
-pub type RuntimeResult<T> = Result<T, RuntimeError>;
-pub type PluginResult<T> = Result<T, PluginError>;
+pub type RuntimeResult<T> = std::result::Result<T, RuntimeError>;
+pub type PluginResult<T> = std::result::Result<T, PluginError>;
 
 #[derive(Debug, Error)]
 pub enum RuntimeError {

@@ -1,14 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import BaseCard from "../components/baseCard";
-import { useLocalFileContext } from "../context/LocalFileProvider";
+import { useFlowsContext } from "../context/FlowsProvider";
 import PageLayout from "../pageLayout";
 import { PageHeader } from "../components/wholePageHeader";
+import { useEffect } from "react";
 
 export default function Home() {
-  const { flows, createNewFlow } = useLocalFileContext();
-  const navigate = useNavigate();
+  const { flows, createNewFlow, getFlows } = useFlowsContext();
 
+  useEffect(() => {
+    getFlows(); 
+  }, []); 
+  
   return (
     <PageLayout>
       {/* FLows */}
@@ -28,7 +32,7 @@ export default function Home() {
                   to={`flows/${flow.name}`}
                   className="w-full"
                 >
-                  <h2 className="card-title">{flow.name}</h2>
+                  <h2 className="card-title line-clamp-1">{flow.name}</h2>
                 </BaseCard>
               );
             })}
@@ -36,14 +40,14 @@ export default function Home() {
         </div>
 
         {/* Tables */}
-        <div className="flex flex-col w-1/3 pl-10">
+        {/* <div className="flex flex-col w-1/3 pl-10">
           <PageHeader
             title="Templates"
             callback={() => navigate("/templates")}
             buttonLabel="Explore"
           />
           <ul></ul>
-        </div>
+        </div> */}
       </div>
     </PageLayout>
   );

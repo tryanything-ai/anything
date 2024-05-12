@@ -18,8 +18,17 @@ pub enum StoreError {
         path: std::path::PathBuf,
         err: std::io::Error,
     },
+    UnableToReadDirectory {
+        path: std::path::PathBuf,
+        err: std::io::Error,
+    },
     UnableToReadFile {
         path: std::path::PathBuf,
+        err: std::io::Error,
+    },
+    UnableToRenameDirectory {
+        from: std::path::PathBuf,
+        to: std::path::PathBuf,
         err: std::io::Error,
     },
     NotifierError(String),
@@ -35,12 +44,22 @@ impl std::fmt::Display for StoreError {
             StoreError::UnableToDeleteDirectory { path, err } => {
                 write!(f, "Unable to delete directory {}: {}", path.display(), err)
             }
+            StoreError::UnableToReadDirectory { path, err } => {
+                write!(f, "Unable to read directory {}: {}", path.display(), err)
+            }
             StoreError::UnableToWriteFile { path, err } => {
                 write!(f, "Unable to write file {}: {}", path.display(), err)
             }
             StoreError::UnableToReadFile { path, err } => {
                 write!(f, "Unable to read file {}: {}", path.display(), err)
             }
+            StoreError::UnableToRenameDirectory { from, to, err } => write!(
+                f,
+                "Unable to rename directory {} to {}: {}",
+                from.display(),
+                to.display(),
+                err
+            ),
             StoreError::NotifierError(msg) => write!(f, "Notifier error: {}", msg),
             StoreError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }

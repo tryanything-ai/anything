@@ -45,7 +45,6 @@ interface NodePresentation {
 export interface Action extends Node {
   trigger: false;
   action_type: string;
-  depends_on: string[]; //node_name for parallelization
 }
 
 export interface Trigger extends Node {
@@ -88,7 +87,7 @@ export const MockNewFlows: FlowTemplate[] = [
         config: {},
 
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
       {
         trigger: false,
@@ -98,7 +97,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
       {
         trigger: false,
@@ -108,7 +107,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
     ],
   },
@@ -140,7 +139,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
       {
         trigger: false,
@@ -151,7 +150,7 @@ export const MockNewFlows: FlowTemplate[] = [
         config: {},
 
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
       {
         trigger: false,
@@ -162,7 +161,7 @@ export const MockNewFlows: FlowTemplate[] = [
         config: {},
 
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
       {
         trigger: false,
@@ -172,7 +171,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
       {
         trigger: false,
@@ -182,7 +181,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
         action_type: "Mock Action Type",
-        depends_on: [],
+
       },
     ],
   },

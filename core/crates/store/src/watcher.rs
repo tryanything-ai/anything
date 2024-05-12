@@ -4,7 +4,7 @@ use anything_common::tracing::*;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-use crate::{errors::Result, file_store::FileStore, types::ChangeMessage};
+use crate::{errors::Result, file_store::FileStore, types::ChangeMessage}; 
 
 pub async fn store_watcher(notifier: Sender<ChangeMessage>, store: &FileStore) -> Result<()> {
     let (mut watcher, mut rx) = async_watcher()?;
