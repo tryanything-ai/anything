@@ -9,6 +9,10 @@
 <a href="https://www.tryanything.xyz/">🔗 Main site</a>
 <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
 <a href="https://discord.gg/95pNMNGW7c">💬 Discord</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://www.loom.com/share/c71dc4d5a07c4424b3f6d5bbe218549f?sid=6eb7eb8c-4acd-44e2-ae4e-d9563d1a376a">💻 Demo Video</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://github.com/tryanything-ai/anything/releases">💿 Download App</a>
 </p>
 
 # Anything
@@ -27,9 +31,7 @@ git clone https://github.com/tryanything-ai/anything.git
 pnpm dev
 ```
 
--> starts all shared packages
 
--> starts tauri app && website
 
 ### 🤖 Roadmap
 
@@ -46,39 +48,35 @@ pnpm dev
 - [ ] Python Extension
 - [ ] Local AI Extension
 - [ ] Developer Documentation
-- [ ] Docker Version for Cloud Hosting 24/7
+- [ ] Docker Version for Cloud Self Hosting 24/7
 - [ ] Flow Version Control ( Stages, Semantic Versioning, etc)
 
 ##### Ecosystem 
-- [x] Template Marketplace @ [www.tryanything.yz](https://www.tryanything.xyz/templates)
+- [ ] Template Marketplace
 - [ ] Action Marketplace
-- [ ] Extensions Marketplace
+- [ ] Trigger Marketplace
+- [ ] Extension Marketplace
 
-##### Business [ Paid ]
-- [ ] Integration with popular apps and services
-- [ ] Webhook "Mailbox" to persist incoming requests for later local processing
-- [ ] Enterprise Hosting Plans
 
 ### 💌 Feedback
 
 Love Anything? Give us a star ⭐️!
 
-# Architecture
+# Architecture Goals
 
-## Core Goals
-- An open automation tool that allows for maximum creativity and extensibility without sacrificing __understandability__. 
-- An architecture that lends itself towards the __incremental adoption of new AI__ no matter which "shape" it takes
-- An architecture that is focused on skating towards the puck of __self authoring__ by storing state, logs, events etc in human centric, sovereign mediums easily understood and created by low cost local LLM's. 
+- An open automation tool that allows for maximum creativity and extensibility without sacrificing <ins>understandability</ins>. 
+- An architecture that lends itself towards the <ins>incremental adoption of new AI</ins> no matter which "shape" it takes
+- An architecture that is focused on skating towards the puck of <ins>self authoring</ins> by storing state, logs, events etc in human centric, sovereign mediums easily understood and created by low cost local LLM's. 
 
-##### Application state is __Simple and Understandable__
-- State of flows is just a __file__ that can be kept in __version control__
-- State is __File First__ which means it can be edited from an IDE or the Application with equal support.
+##### Application state is <ins>Simple and Understandable</ins>
+- State of flows is just a <ins>file<ins> that can be kept in <ins>version control</ins>
+- State is <ins>File First</ins> which means it can be edited from an IDE or the Application with equal support
 - Triggers, Actions, and Flows are portable and fully encapsulated.
-- File and Folder names are __Human Centric__ following similar design patters as NextJS routing.
+- File and Folder names are <ins>Human Centric</ins> following similar design patters as NextJS routing
 
 ##### Application does not require docker
 - Makes it easy to adopt like normal apps
-- Makes it so it can run all day even on low powered devices
+- Makes it so it can run all day even on low powered device
 
 #### Event Processing focuses on simple vs fast. Buts its still fast. 
 - Events are stored in an event queue based on SQLite
@@ -87,20 +85,20 @@ Love Anything? Give us a star ⭐️!
 
 ##### Extensibility without sacrificing understandability
 - Each Action is defined by an Extension.
-- Think of Extensions the same as in VSCode but they process events.
+- Think of Extensions the same as in VSCode but they execute events.
 - You only download the extensions you need protecting the project from "package bloat"
-- You can author your own extensions or grab them from the community
-- Extensions are written in Rust so you can also write them in other interpretted languages like Python or Typescript
+- You can <ins>author your own extensions</ins> or grab them from the community
+- Extensions are written in Rust so you can also write them in other interpreted languages like Python or Typescript
 
 ##### Extension Interface
 - defines an "execution" function to process events
-- defines a "validation" function for validating user configuration dynamically. This also helps LLM's write config with high certainty from the feedback
+- defines a "validation" function for validating user configuration. This allows for "deterministic magic" preventing hallucinating humans or LLM's from writing bad configurations
 - defines an "action" the node a user see's, the SVG, the name, default arguments, etc
-- has access to event system and full flow definition it exists inside of to allow for arbitrary complexity of loop and decision nodes that are a common problem point in automation tools. 
+- has access to event system and full flow definition it exists inside of to allow for arbitrary complexity of loop and decision nodes that are a common problem point in automation tools
 
 #### User Interface
-- Designed to be __self describing__ so at first glance flows describe what they do more than "how" they do it.
-- Configuring is done through {{templating}} arguments with access to previous results, .env, system constants etc.
+- Designed to be <ins>self describing</ins> so at first glance flows describe what they do more than "how" they do it
+- Configuring is done through {{templating}} arguments with access to previous results, .env, system constants etc
 
 #### Logs
 - Everything logged into Open Telemetry
