@@ -5,6 +5,8 @@ import { headers } from "next/headers";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import Llama from "../../../public/llamascreenshot.png";
+import Features from "@/components/Features";
+import Faq from "@/components/Faq";
 
 export default function IndexPage() {
   const headerList = headers();
@@ -62,19 +64,21 @@ export default function IndexPage() {
         // height="1000"
         />
       </div>
+      <Features />
       {/* TODO: Add Features List */}
       {/* Templates https://tailwindui.com/components/marketing/sections/feature-sections */}
       {/* <div className="relative w-full max-w-5xl mx-auto"> */}
-      <h2 className="text-2xl text-center m-20 font-semibold text-slate-12">Demo Video</h2>
+      <h2 className="text-2xl text-center mb-12 font-semibold text-slate-12">Demo Video</h2>
       <div className="relative w-full max-w-5xl mx-auto" style={{ paddingBottom: "62.5%", height: 0 }}>
         <iframe
           src="https://www.loom.com/embed/c71dc4d5a07c4424b3f6d5bbe218549f?sid=6cc91e63-8d1e-431d-a88a-1f1458c58411"
           frameBorder="0"
           allowFullScreen
-          title="Anything Demo"
-          className="absolute top-0 left-0 w-full h-full"
+          title="Anything AI Demo"
+          className="absolute top-0 left-0 w-full h-full sm: px0-0 px-6"
         ></iframe>
       </div>
+      <Faq />
     </>
   );
 }
