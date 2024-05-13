@@ -75,7 +75,7 @@ export default function IndexPage() {
           frameBorder="0"
           allowFullScreen
           title="Anything AI Demo"
-          className="absolute top-0 left-0 w-full h-full sm: px0-0 px-6"
+          className="absolute top-0 left-0 w-full h-full sm:px-0 px-6"
         ></iframe>
       </div>
       <Faq />
