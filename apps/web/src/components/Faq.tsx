@@ -1,7 +1,7 @@
 const faqs = [
     {
         id: 1,
-        question: "If it\'s free how do you make money?",
+        question: "If its free how do you make money?",
         answer:
             "We will charge large businesses for the additional features they need.",
     },
