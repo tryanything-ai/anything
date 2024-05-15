@@ -3,8 +3,8 @@ name = "anything-pdk-mock-host"
 version = "0.0.1"
 edition = "2021"
 
+[lib]
+crate_type = ["cdylib"]
+
 [dependencies]
-extism-pdk = "1.1.0"
-# anything-pdk = { path = "../../pdk" }
-serde = { version = "1.0.201", features = ["derive"] }
-serde_json = "1.0.117"
+extism = "1.2.0"
