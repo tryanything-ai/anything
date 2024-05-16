@@ -1,8 +1,15 @@
+# Set the base directory and crate directories
 base_dir := justfile_directory()
 crates_dir := base_dir / "crates"
 pdk_test_runner_dir := crates_dir / "pdk-test-runner"
 pdk_mock_plugin_dir := crates_dir / "pdk-mock-plugin"
 pdk_mock_host_dir := crates_dir / "pdk-mock-host"
+
+# Define target paths
+target := "wasm32-unknown-unknown/release"
+mock_plugin_wasm := pdk_mock_plugin_dir / "target" / target / "anything_pdk_mock_plugin.wasm"
+mock_host_wasm := pdk_mock_host_dir / "target" / target / "anything_pdk_mock_host.wasm"
+test_runner_wasm := pdk_test_runner_dir / "target" / target / "anything_pdk_test_runner.wasm"
 
 default:
   @just --list --justfile {{justfile()}}
@@ -20,6 +27,6 @@ build-mock-host:
 build-test-runner: 
   cd {{ pdk_test_runner_dir }} && cargo build --release
 
-# Test Mock Plugin with Mock Host with test runner. 
+# Test Mock Plugin with Mock Host using the test runner
 test:
-  cd {{ crates_dir }} &&  xtp plugin test pdk-mock-plugin/target/wasm32-unknown-unknown/debug/anything_pdk_mock_plugin.wasm --with pdk-test-runner/target/wasm32-unknown-unknown/debug/anything_pdk_test_runner.wasm --mock-host pdk-mock-host/target/wasm32-unknown-unknown/debug/anything_pdk_mock_host.wasm
+  cd {{crates_dir}} && xtp plugin test {{mock_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}}
