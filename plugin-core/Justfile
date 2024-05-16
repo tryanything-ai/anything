@@ -1,0 +1,25 @@
+base_dir := justfile_directory()
+crates_dir := base_dir / "crates"
+pdk_test_runner_dir := crates_dir / "pdk-test-runner"
+pdk_mock_plugin_dir := crates_dir / "pdk-mock-plugin"
+pdk_mock_host_dir := crates_dir / "pdk-mock-host"
+
+default:
+  @just --list --justfile {{justfile()}}
+
+all: build-all test
+
+build-all: build-mock-plugin build-mock-host build-test-runner
+
+build-mock-plugin: 
+  cd {{ pdk_mock_plugin_dir }} && cargo build --release
+
+build-mock-host: 
+  cd {{ pdk_mock_host_dir }} && cargo build --release
+
+build-test-runner: 
+  cd {{ pdk_test_runner_dir }} && cargo build --release
+
+# Test Mock Plugin with Mock Host with test runner. 
+test:
+  cd {{ crates_dir }} &&  xtp plugin test pdk-mock-plugin/target/wasm32-unknown-unknown/debug/anything_pdk_mock_plugin.wasm --with pdk-test-runner/target/wasm32-unknown-unknown/debug/anything_pdk_test_runner.wasm --mock-host pdk-mock-host/target/wasm32-unknown-unknown/debug/anything_pdk_mock_host.wasm
