@@ -1,6 +1,7 @@
+use anything_pdk::{Action, Event, Handle, Log};
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
-use anything_pdk::{Action, Event, Handle, Log};
+use serde_json::Value;
 use xtp_test;
 
 // You _must_ export a single `test` function for the runner to execute.
@@ -15,7 +16,42 @@ pub fn test() -> FnResult<()> {
 
     let Json(action): Json<Action> = xtp_test::call("register", "")?;
 
-    xtp_test::assert_eq!("action id is test", action.extension_id, "test");
+    // Testing basic top level info on trigger is returned.
+    xtp_test::assert!("action trigger is false", action.trigger == false);
+
+    xtp_test::assert!(
+        "action extension_id is non-empty",
+        !action.extension_id.is_empty()
+    );
+
+    xtp_test::assert!(
+        "action node_name is non-empty",
+        !action.node_name.is_empty()
+    );
+    xtp_test::assert!(
+        "action node_label is non-empty",
+        !action.node_label.is_empty()
+    );
+    xtp_test::assert!("action icon is non-empty", !action.icon.is_empty());
+    xtp_test::assert!(
+        "action description is non-empty",
+        !action.description.is_empty()
+    );
+
+    // Validate the config field
+    xtp_test::assert!(
+        "config is valid JSON and has keys",
+        validate_config(&action.config)
+    );
 
     Ok(())
+}
+
+// Function to validate the config field
+fn validate_config(config: &Value) -> bool {
+    // Check if config is an object and contains at least one key
+    if let Some(config_obj) = config.as_object() {
+        return !config_obj.is_empty();
+    }
+    false
 }
