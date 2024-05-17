@@ -24,6 +24,8 @@ default:
 
 all: build-all test-all
 
+mock: build-mock-plugin build-mock-host build-test-runner test-mock
+
 build-all: build-mock-plugin build-mock-host build-test-runner build-anything-http-plugin
 
 build-mock-plugin: 
@@ -43,6 +45,9 @@ build-anything-http-plugin:
 
 # Test All 
 test-all: test-mock-plugin test-http-plugin
+
+# Test Mock
+test-mock: test-mock-plugin
 
 # Test Mock Plugin with Mock Host using the test runner
 test-mock-plugin:
