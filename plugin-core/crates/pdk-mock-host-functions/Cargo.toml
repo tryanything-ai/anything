@@ -1,5 +1,5 @@
 [package]
-name = "anything-pdk-mock-host"
+name = "anything-pdk-mock-host-functions"
 version = "0.0.1"
 edition = "2021"
 

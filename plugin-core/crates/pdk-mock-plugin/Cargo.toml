@@ -10,3 +10,11 @@ crate_type = ["cdylib"]
 extism-pdk = "1.1.0"
 serde = { version = "1.0.201", features = ["derive"] }
 serde_json = "1.0.117"
+
+# inspired from moonrepo proto https://moonrepo.dev/docs/guides/wasm-plugins#creating-a-plugin
+[profile.release]
+codegen-units = 1
+debug = false
+lto = true
+opt-level = "s"
+panic = "abort"
