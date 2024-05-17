@@ -1,14 +1,7 @@
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
+use anything_pdk::{Action, Event, Handle, Log};
 use xtp_test;
-
-#[derive(Serialize, Deserialize)]
-struct Action {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub timestamp: String,
-}
 
 // You _must_ export a single `test` function for the runner to execute.
 #[plugin_fn]
@@ -22,7 +15,7 @@ pub fn test() -> FnResult<()> {
 
     let Json(action): Json<Action> = xtp_test::call("register", "")?;
 
-    xtp_test::assert_eq!("action id is 1", action.id, "1");
+    xtp_test::assert_eq!("action id is test", action.extension_id, "test");
 
     Ok(())
 }

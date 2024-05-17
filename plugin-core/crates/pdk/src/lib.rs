@@ -3,14 +3,39 @@
 
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 //export a type used for register function
-#[derive(serde::Serialize, ToBytes)]
+// #[derive(serde::Serialize, ToBytes)]
+// #[encoding(Json)]
+// pub struct Action {
+//     pub id: String,
+//     pub name: String,
+//     pub description: String,
+//     pub timestamp: String,
+// }
+
+// Define the Handle struct
+#[derive(Serialize, Deserialize, ToBytes)]
+#[encoding(Json)]
+pub struct Handle {
+    pub id: String,
+    pub position: String,
+    pub r#type: String,
+}
+
+// Define the main Action struct
+#[derive(Serialize, Deserialize, ToBytes)]
 #[encoding(Json)]
 pub struct Action {
-    pub id: String,
-    pub name: String,
+    pub trigger: bool,
+    pub node_name: String,
+    pub node_label: String,
+    pub icon: String,
     pub description: String,
-    pub timestamp: String,
+    pub handles: Vec<Handle>,
+    pub variables: Vec<Value>, // Assuming variables is a list of arbitrary JSON values. Adjust if needed.
+    pub config: Value,         // Config as arbitrary JSON
+    pub extension_id: String,
 }
 
 #[derive(Deserialize, Serialize)]
