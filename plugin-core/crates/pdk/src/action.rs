@@ -1,4 +1,5 @@
 use extism_pdk::*;
+use jsonschema::{is_valid, JSONSchema};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -14,14 +15,15 @@ pub struct Handle {
 #[encoding(Json)]
 pub struct Action {
     pub trigger: bool,
-    pub node_name: String,
-    pub node_label: String,
+    pub action_name: String,
+    pub action_label: String,
+    pub plugin_id: String,
     pub icon: String,
     pub description: String,
     pub handles: Vec<Handle>,
     pub variables: Vec<Value>,
-    pub config: Value,
-    pub extension_id: String,
+    pub config: Value,        //a base config that actually works.
+    pub config_schema: Value, // a json schema for the config.
 }
 
 impl Action {
@@ -34,14 +36,15 @@ impl Action {
 #[derive(Default)]
 pub struct ActionBuilder {
     trigger: Option<bool>,
-    node_name: Option<String>,
-    node_label: Option<String>,
+    action_name: Option<String>,
+    action_label: Option<String>,
     icon: Option<String>,
     description: Option<String>,
     handles: Option<Vec<Handle>>,
     variables: Vec<Value>,
     config: Option<Value>,
-    extension_id: Option<String>,
+    config_schema: Option<Value>,
+    plugin_id: Option<String>,
 }
 
 impl ActionBuilder {
@@ -49,8 +52,9 @@ impl ActionBuilder {
         // Set the minimally required fields of Action.
         ActionBuilder {
             trigger: Some(false),
-            node_name: Some("default_node_name".to_string()),
-            node_label: Some("default_node_label".to_string()),
+            //TODO: maybe add a "flow_manager" type of some sort to differentate ones taht use Flow Changing API? ( loops, decisions etc )
+            action_name: Some("default_action_name".to_string()),
+            action_label: Some("default_action_label".to_string()),
             icon: Some("default_icon".to_string()),
             description: Some("default_description".to_string()),
             handles: Some(vec![
@@ -67,7 +71,8 @@ impl ActionBuilder {
             ]),
             variables: Vec::new(),
             config: Some(serde_json::json!({})),
-            extension_id: Some("default_extension_id".to_string()),
+            config_schema: Some(serde_json::json!({})),
+            plugin_id: Some("default_plugin_id".to_string()),
         }
     }
 
@@ -76,13 +81,13 @@ impl ActionBuilder {
         self
     }
 
-    pub fn node_name(mut self, node_name: String) -> Self {
-        self.node_name = Some(node_name);
+    pub fn action_name(mut self, action_name: String) -> Self {
+        self.action_name = Some(action_name);
         self
     }
 
-    pub fn node_label(mut self, node_label: String) -> Self {
-        self.node_label = Some(node_label);
+    pub fn action_label(mut self, action_label: String) -> Self {
+        self.action_label = Some(action_label);
         self
     }
 
@@ -111,33 +116,49 @@ impl ActionBuilder {
         self
     }
 
-    pub fn extension_id(mut self, extension_id: String) -> Self {
-        self.extension_id = Some(extension_id);
+    pub fn config_schema(mut self, config_schema: Value) -> Self {
+        self.config_schema = Some(config_schema);
+        self
+    }
+
+    pub fn plugin_id(mut self, plugin_id: String) -> Self {
+        self.plugin_id = Some(plugin_id);
         self
     }
 
     pub fn build(self) -> Action {
         Action {
             trigger: self.trigger.unwrap_or(false),
-            node_name: self.node_name.unwrap_or_else(|| "default_node_name".to_string()),
-            node_label: self.node_label.unwrap_or_else(|| "default_node_label".to_string()),
+            action_name: self
+                .action_name
+                .unwrap_or_else(|| "default_action_name".to_string()),
+            action_label: self
+                .action_label
+                .unwrap_or_else(|| "default_action_label".to_string()),
             icon: self.icon.unwrap_or_else(|| "default_icon".to_string()),
-            description: self.description.unwrap_or_else(|| "default_description".to_string()),
-            handles: self.handles.unwrap_or_else(|| vec![
-                Handle {
-                    id: "a".to_string(),
-                    position: "top".to_string(),
-                    r#type: "target".to_string(),
-                },
-                Handle {
-                    id: "b".to_string(),
-                    position: "bottom".to_string(),
-                    r#type: "source".to_string(),
-                },
-            ]),
+            description: self
+                .description
+                .unwrap_or_else(|| "default_description".to_string()),
+            handles: self.handles.unwrap_or_else(|| {
+                vec![
+                    Handle {
+                        id: "a".to_string(),
+                        position: "top".to_string(),
+                        r#type: "target".to_string(),
+                    },
+                    Handle {
+                        id: "b".to_string(),
+                        position: "bottom".to_string(),
+                        r#type: "source".to_string(),
+                    },
+                ]
+            }),
             variables: self.variables,
             config: self.config.unwrap_or_else(|| serde_json::json!({})),
-            extension_id: self.extension_id.unwrap_or_else(|| "default_extension_id".to_string()),
+            config_schema: self.config_schema.unwrap_or_else(|| serde_json::json!({})),
+            plugin_id: self
+                .plugin_id
+                .unwrap_or_else(|| "default_plugin_id".to_string()),
         }
     }
 }
@@ -146,8 +167,8 @@ impl ActionBuilder {
 fn builder_test() {
     let action = Action {
         trigger: false,
-        node_name: "example_node".to_string(),
-        node_label: "Example Node".to_string(),
+        action_name: "example_node".to_string(),
+        action_label: "Example Node".to_string(),
         icon: "<svg></svg>".to_string(),
         description: "This is an example action".to_string(),
         handles: vec![
@@ -169,13 +190,33 @@ fn builder_test() {
             "headers": {},
             "body": ""
         }),
-        extension_id: "example_extension".to_string(),
+        config_schema: serde_json::json!({
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": ["GET", "POST", "PUT", "DELETE"]
+                },
+                "url": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object"
+                },
+                "body": {
+                    "type": "string"
+                }
+            },
+            "required": ["method", "url"],
+            "additionalProperties": false
+        }),
+        plugin_id: "example_extension".to_string(),
     };
 
     let action_from_builder: Action = Action::builder()
         .trigger(false)
-        .node_name("example_node".to_string())
-        .node_label("Example Node".to_string())
+        .action_name("example_node".to_string())
+        .action_label("Example Node".to_string())
         .icon("<svg></svg>".to_string())
         .description("This is an example action".to_string())
         .variables(vec![])
@@ -185,8 +226,32 @@ fn builder_test() {
             "headers": {},
             "body": ""
         }))
-        .extension_id("example_extension".to_string())
+        .config_schema(serde_json::json!({
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": ["GET", "POST", "PUT", "DELETE"]
+                },
+                "url": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object"
+                },
+                "body": {
+                    "type": "string"
+                }
+            },
+            "required": ["method", "url"],
+            "additionalProperties": false
+        }))
+        .plugin_id("example_extension".to_string())
         .build();
 
     assert_eq!(action, action_from_builder);
+
+    let compiled = JSONSchema::compile(&action_from_builder.config_schema).expect("A valid schema");
+
+    assert!(compiled.is_valid(&action_from_builder.config));
 }

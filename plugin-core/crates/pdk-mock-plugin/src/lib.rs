@@ -15,6 +15,7 @@ pub fn execute(config: Value) -> FnResult<Value> {
     Ok(config)
 }
 
+
 #[plugin_fn]
 pub fn register() -> FnResult<Action> {
     //Used to let UI and users know how to configure actions
