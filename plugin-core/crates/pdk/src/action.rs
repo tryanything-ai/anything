@@ -2,7 +2,6 @@ use extism_pdk::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-
 #[derive(Serialize, Deserialize, ToBytes, Debug, PartialEq, Clone)]
 #[encoding(Json)]
 pub struct Handle {
@@ -22,8 +21,9 @@ pub struct Action {
     pub description: String,
     pub handles: Vec<Handle>,
     pub variables: Vec<Value>,
-    pub config: Value,        //a base config that actually works.
-    pub config_schema: Value, // a json schema for the config.
+    pub input: Value,        //a base input that actually works.
+    pub input_schema: Value, // a json schema for the input.
+    pub output_schema: Value, // A JSON schema for the response.
 }
 
 impl Action {
@@ -42,8 +42,9 @@ pub struct ActionBuilder {
     description: Option<String>,
     handles: Option<Vec<Handle>>,
     variables: Vec<Value>,
-    config: Option<Value>,
-    config_schema: Option<Value>,
+    input: Option<Value>,
+    input_schema: Option<Value>,
+    output_schema: Option<Value>,
     plugin_id: Option<String>,
 }
 
@@ -70,8 +71,9 @@ impl ActionBuilder {
                 },
             ]),
             variables: Vec::new(),
-            config: Some(serde_json::json!({})),
-            config_schema: Some(serde_json::json!({})),
+            input: Some(serde_json::json!({})),
+            input_schema: Some(serde_json::json!({})),
+            output_schema: Some(serde_json::json!({})),
             plugin_id: Some("default_plugin_id".to_string()),
         }
     }
@@ -111,13 +113,18 @@ impl ActionBuilder {
         self
     }
 
-    pub fn config(mut self, config: Value) -> Self {
-        self.config = Some(config);
+    pub fn input(mut self, input: Value) -> Self {
+        self.input = Some(input);
         self
     }
 
-    pub fn config_schema(mut self, config_schema: Value) -> Self {
-        self.config_schema = Some(config_schema);
+    pub fn input_schema(mut self, input_schema: Value) -> Self {
+        self.input_schema = Some(input_schema);
+        self
+    }
+
+    pub fn output_schema(mut self, output_schema: Value) -> Self {
+        self.output_schema = Some(output_schema);
         self
     }
 
@@ -154,8 +161,9 @@ impl ActionBuilder {
                 ]
             }),
             variables: self.variables,
-            config: self.config.unwrap_or_else(|| serde_json::json!({})),
-            config_schema: self.config_schema.unwrap_or_else(|| serde_json::json!({})),
+            input: self.input.unwrap_or_else(|| serde_json::json!({})),
+            input_schema: self.input_schema.unwrap_or_else(|| serde_json::json!({})),
+            output_schema: self.output_schema.unwrap_or_else(|| serde_json::json!({})),
             plugin_id: self
                 .plugin_id
                 .unwrap_or_else(|| "default_plugin_id".to_string()),
@@ -190,13 +198,13 @@ mod tests {
                 },
             ],
             variables: vec![],
-            config: serde_json::json!({
+            input: serde_json::json!({
                 "method": "GET",
                 "url": "http://example.com",
                 "headers": {},
                 "body": ""
             }),
-            config_schema: serde_json::json!({
+            input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
                     "method": {
@@ -215,6 +223,22 @@ mod tests {
                 },
                 "required": ["method", "url"],
                 "additionalProperties": false
+            }),
+            output_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["success", "error"]
+                    },
+                    "response": {
+                        "type": "object"
+                    },
+                    "error": {
+                        "type": "object"
+                    }
+                },
+                "required": ["status"]
             }),
             plugin_id: "example_extension".to_string(),
         };
@@ -226,13 +250,13 @@ mod tests {
             .icon("<svg></svg>".to_string())
             .description("This is an example action".to_string())
             .variables(vec![])
-            .config(serde_json::json!({
+            .input(serde_json::json!({
                 "method": "GET",
                 "url": "http://example.com",
                 "headers": {},
                 "body": ""
             }))
-            .config_schema(serde_json::json!({
+            .input_schema(serde_json::json!({
                 "type": "object",
                 "properties": {
                     "method": {
@@ -252,14 +276,37 @@ mod tests {
                 "required": ["method", "url"],
                 "additionalProperties": false
             }))
+            .output_schema(serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["success", "error"]
+                    },
+                    "response": {
+                        "type": "object"
+                    },
+                    "error": {
+                        "type": "object"
+                    }
+                },
+                "required": ["status"]
+            }))
             .plugin_id("example_extension".to_string())
             .build();
 
         assert_eq!(action, action_from_builder);
 
         let compiled =
-            JSONSchema::compile(&action_from_builder.config_schema).expect("A valid schema");
+            JSONSchema::compile(&action_from_builder.input_schema).expect("A valid schema");
 
-        assert!(compiled.is_valid(&action_from_builder.config));
+        assert!(compiled.is_valid(&action_from_builder.input));
+
+        let compiled_output =
+            JSONSchema::compile(&action_from_builder.output_schema).expect("A valid schema");
+
+        assert!(compiled_output.is_valid(&serde_json::json!({
+            "status": "success"
+        })));
     }
 }
