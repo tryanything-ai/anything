@@ -9,10 +9,17 @@ use xtp_test;
 pub fn test() -> FnResult<()> {
     // call a function from some Extism plugin (you'll link these up in the CLI command to run the test),
     // passing in some data and getting back a string (`callString` is a helper for string output)
-    let res: String = xtp_test::call("execute", "carls test input")?;
+    let config = serde_json::json!({
+        "method": "GET",
+        "url": "http://example.com",
+        "headers": {},
+        "body": ""
+    });
+
+    let res: String = xtp_test::call("execute", config.clone())?;
     // assert the count of the vowels is correct, giving the test case a name (which will be shown in the CLI output)
     // using the macro version here will also capture filename and line number
-    xtp_test::assert_eq!("response is as expected", res, "carls test input");
+    xtp_test::assert_eq!("response is as expected", res, config.to_string());
 
     let Json(action): Json<Action> = xtp_test::call("register", "")?;
 

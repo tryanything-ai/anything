@@ -1,6 +1,7 @@
 use anything_pdk::{Action, Event, Handle, Log};
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -9,9 +10,9 @@ extern "ExtismHost" {
 }
 
 #[plugin_fn]
-pub fn execute(message: String) -> FnResult<String> {
-    let _res = unsafe { host_log(message.clone())? };
-    Ok(message)
+pub fn execute(config: Value) -> FnResult<Value> {
+    // let _res = unsafe { host_log(message.clone())? };
+    Ok(config)
 }
 
 #[plugin_fn]
