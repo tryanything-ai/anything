@@ -15,14 +15,13 @@ pub fn execute(config: Value) -> FnResult<Value> {
     Ok(config)
 }
 
-
 #[plugin_fn]
 pub fn register() -> FnResult<Action> {
     //Used to let UI and users know how to configure actions
     let action: Action = Action::builder()
         .trigger(false)
-        .node_name("example_node".to_string())
-        .node_label("Example Node".to_string())
+        .action_name("example_node".to_string())
+        .action_label("Example Node".to_string())
         .icon("<svg></svg>".to_string())
         .description("This is an example action".to_string())
         .variables(vec![])
@@ -32,7 +31,27 @@ pub fn register() -> FnResult<Action> {
             "headers": {},
             "body": ""
         }))
-        .extension_id("example_extension".to_string())
+        .config_schema(serde_json::json!({
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": ["GET", "POST", "PUT", "DELETE"]
+                },
+                "url": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object"
+                },
+                "body": {
+                    "type": "string"
+                }
+            },
+            "required": ["method", "url"],
+            "additionalProperties": false
+        }))
+        .plugin_id("example_extension".to_string())
         .build();
 
     Ok(action)

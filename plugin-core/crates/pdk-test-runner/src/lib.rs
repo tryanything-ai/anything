@@ -27,18 +27,15 @@ pub fn test() -> FnResult<()> {
     xtp_test::assert!("action trigger is false", action.trigger == false);
 
     xtp_test::assert!(
-        "action extension_id is non-empty",
-        !action.extension_id.is_empty()
+        "action plugin_id is non-empty",
+        !action.plugin_id.is_empty()
     );
 
     xtp_test::assert!(
-        "action node_name is non-empty",
-        !action.node_name.is_empty()
+        "action action_name is non-empty",
+        !action.action_name.is_empty()
     );
-    xtp_test::assert!(
-        "action node_label is non-empty",
-        !action.node_label.is_empty()
-    );
+    xtp_test::assert!("action_label is non-empty", !action.action_label.is_empty());
     xtp_test::assert!("action icon is non-empty", !action.icon.is_empty());
     xtp_test::assert!(
         "action description is non-empty",
@@ -51,9 +48,16 @@ pub fn test() -> FnResult<()> {
         validate_config(&action.config)
     );
 
+    // Validate that the config schema is real
+    // Validate the config field
+    xtp_test::assert!(
+        "config_schema is valid JSON and has keys",
+        validate_config(&action.config_schema)
+    );
     Ok(())
 }
 
+//TODO: run integration tests with jsonschema rs in the "simple mock host"
 // Function to validate the config field
 fn validate_config(config: &Value) -> bool {
     // Check if config is an object and contains at least one key

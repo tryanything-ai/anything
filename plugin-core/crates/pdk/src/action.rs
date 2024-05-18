@@ -1,7 +1,7 @@
 use extism_pdk::*;
-use jsonschema::{is_valid, JSONSchema};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
 
 #[derive(Serialize, Deserialize, ToBytes, Debug, PartialEq, Clone)]
 #[encoding(Json)]
@@ -163,95 +163,103 @@ impl ActionBuilder {
     }
 }
 
-#[test]
-fn builder_test() {
-    let action = Action {
-        trigger: false,
-        action_name: "example_node".to_string(),
-        action_label: "Example Node".to_string(),
-        icon: "<svg></svg>".to_string(),
-        description: "This is an example action".to_string(),
-        handles: vec![
-            Handle {
-                id: "a".to_string(),
-                position: "top".to_string(),
-                r#type: "target".to_string(),
-            },
-            Handle {
-                id: "b".to_string(),
-                position: "bottom".to_string(),
-                r#type: "source".to_string(),
-            },
-        ],
-        variables: vec![],
-        config: serde_json::json!({
-            "method": "GET",
-            "url": "http://example.com",
-            "headers": {},
-            "body": ""
-        }),
-        config_schema: serde_json::json!({
-            "type": "object",
-            "properties": {
-                "method": {
-                    "type": "string",
-                    "enum": ["GET", "POST", "PUT", "DELETE"]
-                },
-                "url": {
-                    "type": "string"
-                },
-                "headers": {
-                    "type": "object"
-                },
-                "body": {
-                    "type": "string"
-                }
-            },
-            "required": ["method", "url"],
-            "additionalProperties": false
-        }),
-        plugin_id: "example_extension".to_string(),
-    };
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jsonschema::{Draft, JSONSchema};
 
-    let action_from_builder: Action = Action::builder()
-        .trigger(false)
-        .action_name("example_node".to_string())
-        .action_label("Example Node".to_string())
-        .icon("<svg></svg>".to_string())
-        .description("This is an example action".to_string())
-        .variables(vec![])
-        .config(serde_json::json!({
-            "method": "GET",
-            "url": "http://example.com",
-            "headers": {},
-            "body": ""
-        }))
-        .config_schema(serde_json::json!({
-            "type": "object",
-            "properties": {
-                "method": {
-                    "type": "string",
-                    "enum": ["GET", "POST", "PUT", "DELETE"]
+    #[test]
+    fn builder_test() {
+        use jsonschema::{is_valid, JSONSchema};
+        let action = Action {
+            trigger: false,
+            action_name: "example_node".to_string(),
+            action_label: "Example Node".to_string(),
+            icon: "<svg></svg>".to_string(),
+            description: "This is an example action".to_string(),
+            handles: vec![
+                Handle {
+                    id: "a".to_string(),
+                    position: "top".to_string(),
+                    r#type: "target".to_string(),
                 },
-                "url": {
-                    "type": "string"
+                Handle {
+                    id: "b".to_string(),
+                    position: "bottom".to_string(),
+                    r#type: "source".to_string(),
                 },
-                "headers": {
-                    "type": "object"
+            ],
+            variables: vec![],
+            config: serde_json::json!({
+                "method": "GET",
+                "url": "http://example.com",
+                "headers": {},
+                "body": ""
+            }),
+            config_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "DELETE"]
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "headers": {
+                        "type": "object"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
                 },
-                "body": {
-                    "type": "string"
-                }
-            },
-            "required": ["method", "url"],
-            "additionalProperties": false
-        }))
-        .plugin_id("example_extension".to_string())
-        .build();
+                "required": ["method", "url"],
+                "additionalProperties": false
+            }),
+            plugin_id: "example_extension".to_string(),
+        };
 
-    assert_eq!(action, action_from_builder);
+        let action_from_builder: Action = Action::builder()
+            .trigger(false)
+            .action_name("example_node".to_string())
+            .action_label("Example Node".to_string())
+            .icon("<svg></svg>".to_string())
+            .description("This is an example action".to_string())
+            .variables(vec![])
+            .config(serde_json::json!({
+                "method": "GET",
+                "url": "http://example.com",
+                "headers": {},
+                "body": ""
+            }))
+            .config_schema(serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "DELETE"]
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "headers": {
+                        "type": "object"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": ["method", "url"],
+                "additionalProperties": false
+            }))
+            .plugin_id("example_extension".to_string())
+            .build();
 
-    let compiled = JSONSchema::compile(&action_from_builder.config_schema).expect("A valid schema");
+        assert_eq!(action, action_from_builder);
 
-    assert!(compiled.is_valid(&action_from_builder.config));
+        let compiled =
+            JSONSchema::compile(&action_from_builder.config_schema).expect("A valid schema");
+
+        assert!(compiled.is_valid(&action_from_builder.config));
+    }
 }
