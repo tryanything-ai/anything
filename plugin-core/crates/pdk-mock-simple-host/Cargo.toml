@@ -1,0 +1,9 @@
+[package]
+name = "anything-pdk-mock-simple-host"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+extism = "1.0.0"
+serde = { version = "1.0.201", features = ["derive"] }
+serde_json = "1.0.117"
