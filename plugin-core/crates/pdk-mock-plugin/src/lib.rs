@@ -25,13 +25,13 @@ pub fn register() -> FnResult<Action> {
         .icon("<svg></svg>".to_string())
         .description("This is an example action".to_string())
         .variables(vec![])
-        .config(serde_json::json!({
+        .input(serde_json::json!({
             "method": "GET",
             "url": "http://example.com",
             "headers": {},
             "body": ""
         }))
-        .config_schema(serde_json::json!({
+        .input_schema(serde_json::json!({
             "type": "object",
             "properties": {
                 "method": {

@@ -9,17 +9,17 @@ use xtp_test;
 pub fn test() -> FnResult<()> {
     // call a function from some Extism plugin (you'll link these up in the CLI command to run the test),
     // passing in some data and getting back a string (`callString` is a helper for string output)
-    let config = serde_json::json!({
+    let input = serde_json::json!({
         "method": "GET",
         "url": "http://example.com",
         "headers": {},
         "body": ""
     });
 
-    let res: String = xtp_test::call("execute", config.clone())?;
+    let res: String = xtp_test::call("execute", input.clone())?;
     // assert the count of the vowels is correct, giving the test case a name (which will be shown in the CLI output)
     // using the macro version here will also capture filename and line number
-    xtp_test::assert_eq!("response is as expected", res, config.to_string());
+    xtp_test::assert_eq!("response is as expected", res, input.to_string());
 
     let Json(action): Json<Action> = xtp_test::call("register", "")?;
 
@@ -44,22 +44,22 @@ pub fn test() -> FnResult<()> {
 
     // Validate the config field
     xtp_test::assert!(
-        "config is valid JSON and has keys",
-        validate_config(&action.config)
+        "input is valid JSON and has keys",
+        validate_schema(&action.input)
     );
 
     // Validate that the config schema is real
     // Validate the config field
     xtp_test::assert!(
-        "config_schema is valid JSON and has keys",
-        validate_config(&action.config_schema)
+        "input_schema is valid JSON and has keys",
+        validate_schema(&action.input_schema)
     );
     Ok(())
 }
 
 //TODO: run integration tests with jsonschema rs in the "simple mock host"
 // Function to validate the config field
-fn validate_config(config: &Value) -> bool {
+fn validate_schema(config: &Value) -> bool {
     // Check if config is an object and contains at least one key
     if let Some(config_obj) = config.as_object() {
         return !config_obj.is_empty();
