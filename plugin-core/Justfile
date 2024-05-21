@@ -5,6 +5,7 @@ plugins_dir := crates_dir / "plugins"
 pdk_test_runner_dir := crates_dir / "pdk-test-runner"
 pdk_mock_plugin_dir := crates_dir / "pdk-mock-plugin"
 pdk_mock_host_dir := crates_dir / "pdk-mock-host-functions"
+pdk_mock_simple_host_dir := crates_dir / "pdk-mock-simple-host"
 
 
 # Define target paths for testing infra
@@ -22,9 +23,11 @@ anything_http_plugin_wasm := anything-http-plugin_dir / "target" / target / "any
 default:
   @just --list --justfile {{justfile()}}
 
-all: build-all test-all
+all: build-all test-all 
 
 mock: build-mock-plugin build-mock-host build-test-runner test-mock
+
+integration: build-anything-http-plugin test-mock-host
 
 build-all: build-mock-plugin build-mock-host build-test-runner build-anything-http-plugin
 
@@ -44,7 +47,7 @@ build-anything-http-plugin:
 
 
 # Test All 
-test-all: test-mock-plugin test-http-plugin
+test-all: test-mock-plugin test-http-plugin test-mock-host
 
 # Test Mock
 test-mock: test-mock-plugin
@@ -56,3 +59,6 @@ test-mock-plugin:
 # Test Real Plugin with Mock Host using the test runner
 test-http-plugin:
   cd {{crates_dir}} && xtp plugin test {{anything_http_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}} --allow-host "*"
+
+test-mock-host: 
+ cd {{pdk_mock_simple_host_dir}} && cargo test -- --nocapture

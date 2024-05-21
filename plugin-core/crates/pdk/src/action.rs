@@ -21,8 +21,8 @@ pub struct Action {
     pub description: String,
     pub handles: Vec<Handle>,
     pub variables: Vec<Value>,
-    pub input: Value,        //a base input that actually works.
-    pub input_schema: Value, // a json schema for the input.
+    pub input: Value,         //a base input that actually works.
+    pub input_schema: Value,  // a json schema for the input.
     pub output_schema: Value, // A JSON schema for the response.
 }
 
@@ -231,7 +231,7 @@ mod tests {
                         "type": "string",
                         "enum": ["success", "error"]
                     },
-                    "response": {
+                    "": {
                         "type": "object"
                     },
                     "error": {
@@ -283,7 +283,7 @@ mod tests {
                         "type": "string",
                         "enum": ["success", "error"]
                     },
-                    "response": {
+                    "output": {
                         "type": "object"
                     },
                     "error": {

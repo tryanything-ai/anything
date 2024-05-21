@@ -41,6 +41,22 @@ pub fn register() -> FnResult<Action> {
             "required": ["method", "url"],
             "additionalProperties": false
         }))
+        .output_schema(serde_json::json!({
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                },
+                "output": {
+                    "type": "object"
+                },
+                "error": {
+                    "type": "object"
+                }
+            },
+            "required": ["status"],
+            "additionalProperties": false
+        }))
         .plugin_id("http".to_string())
         .build();
 
@@ -49,76 +65,81 @@ pub fn register() -> FnResult<Action> {
 
 #[plugin_fn]
 pub fn execute(config: Value) -> FnResult<Value> {
-    Ok(config)
+    let res = serde_json::json!({
+        "status": "success",
+        "output": {},
+        "error": {}, 
+    });
+    Ok(res)
 }
 
-#[plugin_fn]
-pub fn validate(config: Value) -> FnResult<Value> {
-    let mut errors = serde_json::Map::new();
+// #[plugin_fn]
+// pub fn validate(config: Value) -> FnResult<Value> {
+//     let mut errors = serde_json::Map::new();
 
-    if let Some(method) = config.get("method") {
-        let mut method_errors = Vec::new();
-        if !method.is_string() || method.as_str().unwrap().is_empty() {
-            method_errors.push("The 'method' field must be a non-empty string.".to_string());
-        }
-        if !method_errors.is_empty() {
-            errors.insert("method".to_string(), json!(method_errors));
-        }
-    } else {
-        errors.insert(
-            "method".to_string(),
-            json!(["The 'method' field is required.".to_string()]),
-        );
-    }
+//     if let Some(method) = config.get("method") {
+//         let mut method_errors = Vec::new();
+//         if !method.is_string() || method.as_str().unwrap().is_empty() {
+//             method_errors.push("The 'method' field must be a non-empty string.".to_string());
+//         }
+//         if !method_errors.is_empty() {
+//             errors.insert("method".to_string(), json!(method_errors));
+//         }
+//     } else {
+//         errors.insert(
+//             "method".to_string(),
+//             json!(["The 'method' field is required.".to_string()]),
+//         );
+//     }
 
-    if let Some(url) = config.get("url") {
-        let mut url_errors = Vec::new();
-        if !url.is_string() || url.as_str().unwrap().is_empty() {
-            url_errors.push("The 'url' field must be a non-empty string.".to_string());
-        }
-        if !url_errors.is_empty() {
-            errors.insert("url".to_string(), json!(url_errors));
-        }
-    } else {
-        errors.insert(
-            "url".to_string(),
-            json!(["The 'url' field is required.".to_string()]),
-        );
-    }
+//     if let Some(url) = config.get("url") {
+//         let mut url_errors = Vec::new();
+//         if !url.is_string() || url.as_str().unwrap().is_empty() {
+//             url_errors.push("The 'url' field must be a non-empty string.".to_string());
+//         }
+//         if !url_errors.is_empty() {
+//             errors.insert("url".to_string(), json!(url_errors));
+//         }
+//     } else {
+//         errors.insert(
+//             "url".to_string(),
+//             json!(["The 'url' field is required.".to_string()]),
+//         );
+//     }
 
-    if let Some(headers) = config.get("headers") {
-        let mut headers_errors = Vec::new();
-        if !headers.is_object() {
-            headers_errors.push("The 'headers' field must be an object.".to_string());
-        }
-        if !headers_errors.is_empty() {
-            errors.insert("headers".to_string(), json!(headers_errors));
-        }
-    } else {
-        errors.insert(
-            "headers".to_string(),
-            json!(["The 'headers' field is required.".to_string()]),
-        );
-    }
+//     if let Some(headers) = config.get("headers") {
+//         let mut headers_errors = Vec::new();
+//         if !headers.is_object() {
+//             headers_errors.push("The 'headers' field must be an object.".to_string());
+//         }
+//         if !headers_errors.is_empty() {
+//             errors.insert("headers".to_string(), json!(headers_errors));
+//         }
+//     } else {
+//         errors.insert(
+//             "headers".to_string(),
+//             json!(["The 'headers' field is required.".to_string()]),
+//         );
+//     }
 
-    if let Some(body) = config.get("body") {
-        let mut body_errors = Vec::new();
-        if !body.is_string() {
-            body_errors.push("The 'body' field must be a string.".to_string());
-        }
-        if !body_errors.is_empty() {
-            errors.insert("body".to_string(), json!(body_errors));
-        }
-    } else {
-        errors.insert(
-            "body".to_string(),
-            json!(["The 'body' field is required.".to_string()]),
-        );
-    }
+//     if let Some(body) = config.get("body") {
+//         let mut body_errors = Vec::new();
+//         if !body.is_string() {
+//             body_errors.push("The 'body' field must be a string.".to_string());
+//         }
+//         if !body_errors.is_empty() {
+//             errors.insert("body".to_string(), json!(body_errors));
+//         }
+//     } else {
+//         errors.insert(
+//             "body".to_string(),
+//             json!(["The 'body' field is required.".to_string()]),
+//         );
+//     }
 
-    if errors.is_empty() {
-        Ok(json!({"valid": true}))
-    } else {
-        Ok(json!({"valid": false, "errors": errors}))
-    }
-}
+//     if errors.is_empty() {
+//         Ok(json!({"valid": true}))
+//     } else {
+//         Ok(json!({"valid": false, "errors": errors}))
+//     }
+// }
