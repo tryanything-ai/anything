@@ -18,9 +18,11 @@ test_runner_wasm := pdk_test_runner_dir / "target" / target / "anything_pdk_test
 
 # Set paths for real plugins
 anything-http-plugin_dir := plugins_dir / "anything-http-plugin"
+anything-cron-plugin_dir := plugins_dir / "anything-cron-plugin"
 
 # Define target paths for real plugins
 anything_http_plugin_wasm := anything-http-plugin_dir / "target" / target / "anything_http_plugin.wasm"
+anything_cron_plugin_wasm := anything-cron-plugin_dir / "target" / target / "anything_cron_plugin.wasm"
 
 default:
   @just --list --justfile {{justfile()}}
@@ -31,7 +33,7 @@ mock: build-mock-plugin build-mock-host build-test-runner build-mock-trigger-plu
 
 integration: build-anything-http-plugin test-mock-host
 
-build-all: build-mock-plugin build-mock-host build-test-runner build-anything-http-plugin
+build-all: build-mock-plugin build-mock-host build-test-runner build-anything-http-plugin build-anything-cron-plugin
 
 build-mock-plugin: 
   cd {{ pdk_mock_plugin_dir }} && cargo build --release
@@ -50,9 +52,12 @@ build-test-runner:
 build-anything-http-plugin:
   cd {{ anything-http-plugin_dir }} && cargo build --release
 
+build-anything-cron-plugin:
+  cd {{ anything-cron-plugin_dir }} && cargo build --release
+
 
 # Test All 
-test-all: test-mock-plugin test-mock-trigger-plugin test-http-plugin test-mock-host
+test-all: test-mock-plugin test-mock-trigger-plugin test-http-plugin test-cron-plugin test-mock-host
 
 # Test Mock
 test-mock: test-mock-plugin test-mock-trigger-plugin
@@ -68,6 +73,8 @@ test-mock-trigger-plugin:
 # Test Real Plugin with Mock Host using the test runner
 test-http-plugin:
   cd {{crates_dir}} && xtp plugin test {{anything_http_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}} --allow-host "*"
+test-cron-plugin: 
+  cd {{crates_dir}} && xtp plugin test {{anything_cron_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}}
 
 test-mock-host: 
  cd {{pdk_mock_simple_host_dir}} && cargo test -- --nocapture

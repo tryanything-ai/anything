@@ -17,33 +17,69 @@ mod tests {
     #[test]
     fn test_json_schemas() {
         //load a local plugin
-        let file = Wasm::file("../plugins/anything-http-plugin/target/wasm32-unknown-unknown/release/anything_http_plugin.wasm");
+        let http_plugin_file = Wasm::file("../plugins/anything-http-plugin/target/wasm32-unknown-unknown/release/anything_http_plugin.wasm");
+        let cron_plugin_trigger_file = Wasm::file("../plugins/anything-cron-plugin/target/wasm32-unknown-unknown/release/anything_cron_plugin.wasm");
 
-        let manifest = Manifest::new([file]);
-        println!("{:?}", manifest);
-        let mut plugin = Plugin::new(&manifest, [], false).unwrap();
-        //TODO: call register, then execute, then evaluate the output and inputes etc against schemas
-        let register_res = plugin.call::<&str, &str>("register", "").unwrap();
+        //Create Http Plugin
+        let http_manifest = Manifest::new([http_plugin_file]);
+        println!("{:?}", http_manifest);
+        let mut http_plugin = Plugin::new(&http_manifest, [], false).unwrap();
 
-        println!("{:?}", register_res);
+        //Create Cron Plugin
+        let cron_manifest = Manifest::new([cron_plugin_trigger_file]);
+        println!("{:?}", cron_manifest);
+        let mut cron_plugin = Plugin::new(&cron_manifest, [], false).unwrap();
 
-        let plugin_registration_object: AnythingPlugin =
-            serde_json::from_str(&register_res).expect("Failed to deserialize Plugin Registration JSON");
+        //Call Register on HTTP Plugin
+        let http_register_response = http_plugin.call::<&str, &str>("register", "").unwrap();
+        println!("{:?}", http_register_response);
+        //Call Register on Cron Plugin
+        let cron_register_response = cron_plugin.call::<&str, &str>("register", "").unwrap();
+        println!("{:?}", cron_register_response);
 
-        let input_schema = plugin_registration_object.input_schema;
-        println!("input_schema {:?}\n", input_schema);
-        let input = plugin_registration_object.input;
+        //Parse HTTP Response
+        let http_plugin_registration_object: AnythingPlugin =
+            serde_json::from_str(&http_register_response)
+                .expect("Failed to deserialize Plugin Registration JSON");
 
+        let http_input_schema = http_plugin_registration_object.input_schema;
+        println!("http_input_schema {:?}\n", http_input_schema);
+        let http_input = http_plugin_registration_object.input;
+
+        //Parse Cron Response
+        let cron_plugin_registration_object: AnythingPlugin =
+            serde_json::from_str(&cron_register_response)
+                .expect("Failed to deserialize Plugin Registration JSON");
+
+        let cron_input_schema = cron_plugin_registration_object.input_schema;
+        println!("cron_input_schema {:?}\n", cron_input_schema);
+        let cron_input = cron_plugin_registration_object.input;
+
+        //Asserts HTTP Response Is Good
         assert!(
-            is_valid(&input_schema, &input),
-            "Input does not match the expected schema"
+            is_valid(&http_input_schema, &http_input),
+            "HTTP Input does not match the expected schema"
         );
 
-        let execute_res = plugin
-            .call::<&str, &str>("execute", &input.to_string())
+        //Asserts Cron Response Is Good
+        assert!(
+            is_valid(&cron_input_schema, &cron_input),
+            "Cron Input does not match the expected schema"
+        );
+
+        //Execute HTTP Plugin
+        let http_execute_res = http_plugin
+            .call::<&str, &str>("execute", &http_input.to_string())
             .unwrap();
 
-        println!("{:?}", execute_res);
+        println!("http_execute_res {:?}", http_execute_res);
+
+        //Execute Cron Plugin
+        let cron_execute_res = cron_plugin
+            .call::<&str, &str>("execute", &cron_input.to_string())
+            .unwrap();
+
+        println!("cron_execute_res {:?}", cron_execute_res);
 
         //Base Anything Schema
         let anything_output_schema = json!({
@@ -63,23 +99,49 @@ mod tests {
             "required": ["status"]
         });
 
-        let output_schema = plugin_registration_object.output_schema;
-        println!("output_schema {:?}\n", output_schema);
+        //Get Http Plugin Output Schema
+        let http_output_schema = http_plugin_registration_object.output_schema;
+        println!("http_output_schema {:?}\n", http_output_schema);
 
-        let exec_res_json =
-            serde_json::from_str(&execute_res).expect("Failed to deserialize JSON Execute Result");
+        //Get Cron Plugin Output Schema
+        let cron_output_schema = cron_plugin_registration_object.output_schema;
+        println!("cron_output_schema {:?}\n", cron_output_schema);
 
-        println!("{:?}", exec_res_json);
-        //Check output works in anything schema
+        //Parse HTTP Execute Response
+        let http_exec_res_json = serde_json::from_str(&http_execute_res)
+            .expect("Failed to deserialize JSON Execute Result");
+
+        println!("http_exec_res_json {:?}", http_exec_res_json);
+
+        //Parse Cron Execute Response
+        let cron_exec_res_json = serde_json::from_str(&cron_execute_res)
+            .expect("Failed to deserialize JSON Execute Result");
+
+        println!("cron_exec_res_json {:?}", cron_exec_res_json);
+
+        //Check if http exec output works in anything schema
         assert!(
-            is_valid(&anything_output_schema, &exec_res_json),
+            is_valid(&anything_output_schema, &http_exec_res_json),
+            "Output does not match the expected schema"
+        );
+
+        //Check if cron exec output works in anything schema
+        assert!(
+            is_valid(&anything_output_schema, &cron_exec_res_json),
             "Output does not match the expected schema"
         );
 
         //Check output works in plugin defined schema ( always compatable )
         //Plugin schema just more specific
+        //Check for HTTP
         assert!(
-            is_valid(&output_schema, &exec_res_json),
+            is_valid(&http_output_schema, &http_exec_res_json),
+            "Output does not match the expected schema"
+        );
+
+        //Check for Cron
+        assert!(
+            is_valid(&cron_output_schema, &cron_exec_res_json),
             "Output does not match the expected schema"
         );
     }
