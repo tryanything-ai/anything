@@ -45,7 +45,8 @@ pub fn register() -> FnResult<Action> {
             "type": "object",
             "properties": {
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["success", "error"]
                 },
                 "output": {
                     "type": "object"

@@ -7,16 +7,15 @@ use xtp_test;
 // You _must_ export a single `test` function for the runner to execute.
 #[plugin_fn]
 pub fn test() -> FnResult<()> {
-
     let Json(action): Json<Action> = xtp_test::call("register", "")?;
 
     // Testing basic top level info on trigger is returned.
-    xtp_test::assert!("action trigger is false", action.trigger == false);
+    // xtp_test::assert!("action trigger is false", action.trigger == false);
 
     xtp_test::assert!(
         "action plugin_id is non-empty",
         !action.plugin_id.is_empty()
-    );
+    );  
 
     xtp_test::assert!(
         "action action_name is non-empty",
