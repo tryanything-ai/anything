@@ -1,4 +1,4 @@
-use anything_pdk::{Action, Event, Handle, Log};
+use anything_pdk::{AnythingPlugin, Event, Handle, Log};
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -16,14 +16,13 @@ pub fn execute(config: Value) -> FnResult<Value> {
 }
 
 #[plugin_fn]
-pub fn register() -> FnResult<Action> {
-    //Used to let UI and users know how to configure actions
-    let action: Action = Action::builder()
+pub fn register() -> FnResult<AnythingPlugin> {
+    //Used to let UI and users know how to configure
+    let plugin: AnythingPlugin = AnythingPlugin::builder()
         .trigger(false)
-        .action_name("example_node".to_string())
-        .action_label("Example Node".to_string())
+        .label("Example Plugin".to_string())
         .icon("<svg></svg>".to_string())
-        .description("This is an example action".to_string())
+        .description("This is an example plugin".to_string())
         .variables(vec![])
         .input(serde_json::json!({
             "method": "GET",
@@ -51,8 +50,8 @@ pub fn register() -> FnResult<Action> {
             "required": ["method", "url"],
             "additionalProperties": false
         }))
-        .plugin_id("example_extension".to_string())
+        .plugin_id("example_plugin".to_string())
         .build();
 
-    Ok(action)
+    Ok(plugin)
 }

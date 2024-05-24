@@ -1,4 +1,4 @@
-use anything_pdk::{Action, Event, Handle, Log};
+use anything_pdk::{AnythingPlugin, Event, Handle, Log};
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -18,12 +18,11 @@ pub fn execute(config: Value) -> FnResult<Value> {
 }
 
 #[plugin_fn]
-pub fn register() -> FnResult<Action> {
+pub fn register() -> FnResult<AnythingPlugin> {
     //Used to let UI and users know how to configure actions
-    let action: Action = Action::builder()
+    let plugin: AnythingPlugin = AnythingPlugin::builder()
         .trigger(true)
-        .action_name("example_cron_trigger".to_string())
-        .action_label("Example Cron Trigger".to_string())
+        .label("Example Cron Trigger".to_string())
         .icon("<svg></svg>".to_string())
         .description("Example Of A Cron Trigger".to_string())
         .variables(vec![])
@@ -44,7 +43,7 @@ pub fn register() -> FnResult<Action> {
             "type": "object",
             "properties": {
                 "status": {
-                    "type": "string"
+                    "type": "string",
                     "enum": ["success", "error"]
                 },
                 "output": {
@@ -57,8 +56,8 @@ pub fn register() -> FnResult<Action> {
             "required": ["status"],
             "additionalProperties": false
         }))
-        .plugin_id("example_cron_extension".to_string())
+        .plugin_id("example_cron_plugin".to_string())
         .build();
 
-    Ok(action)
+    Ok(plugin)
 }
