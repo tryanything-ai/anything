@@ -12,10 +12,9 @@ pub struct Handle {
 
 #[derive(Serialize, Deserialize, ToBytes, Debug, PartialEq)]
 #[encoding(Json)]
-pub struct Action {
+pub struct AnythingPlugin {
     pub trigger: bool,
-    pub action_name: String,
-    pub action_label: String,
+    pub label: String,
     pub plugin_id: String,
     pub icon: String,
     pub description: String,
@@ -26,18 +25,17 @@ pub struct Action {
     pub output_schema: Value, // A JSON schema for the response.
 }
 
-impl Action {
+impl AnythingPlugin {
     // This method will help users discover the builder
-    pub fn builder() -> ActionBuilder {
-        ActionBuilder::default()
+    pub fn builder() -> AnythingPluginBuilder {
+        AnythingPluginBuilder::default()
     }
 }
 
 #[derive(Default)]
-pub struct ActionBuilder {
+pub struct AnythingPluginBuilder {
     trigger: Option<bool>,
-    action_name: Option<String>,
-    action_label: Option<String>,
+    label: Option<String>,
     icon: Option<String>,
     description: Option<String>,
     handles: Option<Vec<Handle>>,
@@ -48,14 +46,12 @@ pub struct ActionBuilder {
     plugin_id: Option<String>,
 }
 
-impl ActionBuilder {
-    pub fn new() -> ActionBuilder {
+impl AnythingPluginBuilder {
+    pub fn new() -> AnythingPluginBuilder {
         // Set the minimally required fields of Action.
-        ActionBuilder {
+        AnythingPluginBuilder {
             trigger: Some(false),
-            //TODO: maybe add a "flow_manager" type of some sort to differentate ones taht use Flow Changing API? ( loops, decisions etc )
-            action_name: Some("default_action_name".to_string()),
-            action_label: Some("default_action_label".to_string()),
+            label: Some("default_label".to_string()),
             icon: Some("default_icon".to_string()),
             description: Some("default_description".to_string()),
             handles: Some(vec![
@@ -83,13 +79,8 @@ impl ActionBuilder {
         self
     }
 
-    pub fn action_name(mut self, action_name: String) -> Self {
-        self.action_name = Some(action_name);
-        self
-    }
-
-    pub fn action_label(mut self, action_label: String) -> Self {
-        self.action_label = Some(action_label);
+    pub fn label(mut self, label: String) -> Self {
+        self.label = Some(label);
         self
     }
 
@@ -133,15 +124,10 @@ impl ActionBuilder {
         self
     }
 
-    pub fn build(self) -> Action {
-        Action {
+    pub fn build(self) -> AnythingPlugin {
+        AnythingPlugin {
             trigger: self.trigger.unwrap_or(false),
-            action_name: self
-                .action_name
-                .unwrap_or_else(|| "default_action_name".to_string()),
-            action_label: self
-                .action_label
-                .unwrap_or_else(|| "default_action_label".to_string()),
+            label: self.label.unwrap_or_else(|| "default_label".to_string()),
             icon: self.icon.unwrap_or_else(|| "default_icon".to_string()),
             description: self
                 .description
@@ -174,17 +160,18 @@ impl ActionBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jsonschema::{Draft, JSONSchema};
+    use jsonschema::JSONSchema;
 
     #[test]
     fn builder_test() {
-        use jsonschema::{is_valid, JSONSchema};
-        let action = Action {
+        use jsonschema::JSONSchema;
+
+        let plugin = AnythingPlugin {
             trigger: false,
-            action_name: "example_node".to_string(),
-            action_label: "Example Node".to_string(),
+            label: "Example Plugin".to_string(),
             icon: "<svg></svg>".to_string(),
-            description: "This is an example action".to_string(),
+            description: "This is an example plugin".to_string(),
+            variables: vec![],
             handles: vec![
                 Handle {
                     id: "a".to_string(),
@@ -197,7 +184,6 @@ mod tests {
                     r#type: "source".to_string(),
                 },
             ],
-            variables: vec![],
             input: serde_json::json!({
                 "method": "GET",
                 "url": "http://example.com",
@@ -231,24 +217,24 @@ mod tests {
                         "type": "string",
                         "enum": ["success", "error"]
                     },
-                    "": {
+                    "output": {
                         "type": "object"
                     },
                     "error": {
                         "type": "object"
                     }
                 },
-                "required": ["status"]
+                "required": ["status"],
+                "additionalProperties": false
             }),
-            plugin_id: "example_extension".to_string(),
+            plugin_id: "example_plugin".to_string(),
         };
 
-        let action_from_builder: Action = Action::builder()
+        let plugin_from_builder: AnythingPlugin = AnythingPlugin::builder()
             .trigger(false)
-            .action_name("example_node".to_string())
-            .action_label("Example Node".to_string())
+            .label("Example Plugin".to_string())
             .icon("<svg></svg>".to_string())
-            .description("This is an example action".to_string())
+            .description("This is an example plugin".to_string())
             .variables(vec![])
             .input(serde_json::json!({
                 "method": "GET",
@@ -290,20 +276,21 @@ mod tests {
                         "type": "object"
                     }
                 },
-                "required": ["status"]
+                "required": ["status"],
+                "additionalProperties": false
             }))
-            .plugin_id("example_extension".to_string())
+            .plugin_id("example_plugin".to_string())
             .build();
 
-        assert_eq!(action, action_from_builder);
+        assert_eq!(plugin, plugin_from_builder);
 
         let compiled =
-            JSONSchema::compile(&action_from_builder.input_schema).expect("A valid schema");
+            JSONSchema::compile(&plugin_from_builder.input_schema).expect("A valid schema");
 
-        assert!(compiled.is_valid(&action_from_builder.input));
+        assert!(compiled.is_valid(&plugin_from_builder.input));
 
         let compiled_output =
-            JSONSchema::compile(&action_from_builder.output_schema).expect("A valid schema");
+            JSONSchema::compile(&plugin_from_builder.output_schema).expect("A valid schema");
 
         assert!(compiled_output.is_valid(&serde_json::json!({
             "status": "success"

@@ -1,8 +1,8 @@
 use extism_pdk::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-mod action;
-pub use action::*;
+mod plugin;
+pub use plugin::*;
 
 #[derive(Deserialize, Serialize)]
 pub struct Log {
