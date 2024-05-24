@@ -13,9 +13,10 @@ mod tests {
     use super::*;
     use jsonschema::is_valid;
     use serde_json::{json, Value};
+    use tokio::time::{sleep, Duration};
 
-    #[test]
-    fn test_json_schemas() {
+    #[tokio::test]
+    async fn test_json_schemas() {
         //load a local plugin
         let http_plugin_file = Wasm::file("../plugins/anything-http-plugin/target/wasm32-unknown-unknown/release/anything_http_plugin.wasm");
         let cron_plugin_trigger_file = Wasm::file("../plugins/anything-cron-plugin/target/wasm32-unknown-unknown/release/anything_cron_plugin.wasm");
@@ -144,5 +145,15 @@ mod tests {
             is_valid(&cron_output_schema, &cron_exec_res_json),
             "Output does not match the expected schema"
         );
+
+         // Schedule Cron Plugin Execution
+         for _ in 0..5 {
+            let cron_execute_res = cron_plugin
+                .call::<&str, &str>("execute", &cron_input.to_string())
+                .unwrap();
+            println!("Scheduled cron_execute_res {:?}", cron_execute_res);
+
+            sleep(Duration::from_secs(1)).await;
+        }
     }
 }
