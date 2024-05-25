@@ -1,9 +1,51 @@
 use anything_pdk::AnythingPlugin;
 use extism::*;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
+
+// Define the Event struct
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Event {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub timestamp: String,
+}
+
+// Define a simple counter to track the number of events
+type EventCounter = usize; 
+// Implement the create_event host function
+host_fn!(create_event(user_data: EventCounter; _id: String, _name: String, _description: String, _timestamp: String) {
+    let counter = user_data.get()?;
+    let mut counter = counter.lock().unwrap();
+    *counter += 1;
+    Ok(())
+});
 
 fn main() {
     println!("Run `cargo test` to execute the tests.");
 }
+
+// When a first argument separated with a semicolon is provided to `host_fn` it is used as the
+// variable name and type for the `UserData` parameter
+// host_fn!(pub hello_world (a: String) -> String { Ok(a) });
+//TODO: add create_event host function
+// Define a simple KV store to hold the events
+// type EventStore = Arc<Mutex<BTreeMap<String, Event>>>;
+
+// // Implement the create_event host function
+// host_fn!(create_event(user_data: EventStore; id: String, name: String, description: String, timestamp: String) {
+//     let mut store = user_data.lock().unwrap();
+//     let event = Event {
+//         id: id.clone(),
+//         name,
+//         description,
+//         timestamp,
+//     };
+//     store.insert(id, event);
+//     Ok(())
+// });
 
 //Generally this is ran via the Included Justfile.
 //Need to build all the related packages to wasm as instructed in Justfile for this test to run.
@@ -17,8 +59,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_json_schemas() {
-        //load a local plugin
+
+        //Hold Events for testing creation of events from triggers
+          // Initialize the event counter
+        let event_count = UserData::new(EventCounter::default());
+
+        //load a http plugin as a test action
         let http_plugin_file = Wasm::file("../plugins/anything-http-plugin/target/wasm32-unknown-unknown/release/anything_http_plugin.wasm");
+        //load a cron plugin as a test trigger
         let cron_plugin_trigger_file = Wasm::file("../plugins/anything-cron-plugin/target/wasm32-unknown-unknown/release/anything_cron_plugin.wasm");
 
         //Create Http Plugin
@@ -29,7 +77,18 @@ mod tests {
         //Create Cron Plugin
         let cron_manifest = Manifest::new([cron_plugin_trigger_file]);
         println!("{:?}", cron_manifest);
-        let mut cron_plugin = Plugin::new(&cron_manifest, [], false).unwrap();
+        // let mut cron_plugin = Plugin::new(&cron_manifest, [], false).unwrap();
+        let mut cron_plugin = PluginBuilder::new(cron_manifest)
+        .with_wasi(false)
+        .with_function(
+            "create_event",
+            [ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+            [],
+            event_count.clone(), //Resources liek sql that need to be piped into implementations
+            create_event, //the host function
+        )
+        .build()
+        .unwrap();
 
         //Call Register on HTTP Plugin
         let http_register_response = http_plugin.call::<&str, &str>("register", "").unwrap();
@@ -146,14 +205,25 @@ mod tests {
             "Output does not match the expected schema"
         );
 
+        let cron_test_input = serde_json::json!({
+            "pattern": "*/2 * * * * * *", //Every 2 seconds
+        });
+
+        //TODO: test how to make this plugin really work and really test itd
          // Schedule Cron Plugin Execution
+         let expected_minimum_triggers = 2; 
+
+        //TODO: need to use the plugin builder and have host functions to create events
+        //https://github.com/extism/extism/tree/main/runtime#host-functions
          for _ in 0..5 {
             let cron_execute_res = cron_plugin
-                .call::<&str, &str>("execute", &cron_input.to_string())
+                .call::<&str, &str>("execute", &cron_test_input.to_string())
                 .unwrap();
             println!("Scheduled cron_execute_res {:?}", cron_execute_res);
 
             sleep(Duration::from_secs(1)).await;
         }
+
+        println!("Cron Plugin Test Complete");
     }
 }
