@@ -6,12 +6,10 @@ use serde_json::Value;
 #[host_fn]
 extern "ExtismHost" {
     fn host_log(log: String) -> Json<Log>;
-    fn create_event(event: String) -> Json<Event>;
 }
 
 #[plugin_fn]
 pub fn execute(config: Value) -> FnResult<Value> {
-    // let _res = unsafe { host_log(message.clone())? };
     Ok(config)
 }
 

@@ -1,27 +1,53 @@
-use anything_pdk::AnythingPlugin;
+use anything_pdk::{AnythingPlugin, Event}; 
 use extism::*;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
+use crate::convert::Json; 
 
 // Define the Event struct
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Event {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub timestamp: String,
-}
+// #[derive(Deserialize, Serialize, Debug, Clone)]
+// pub struct Event {
+//     pub id: String,
+//     pub name: String,
+//     pub description: String,
+//     pub timestamp: String,
+// }
 
 // Define a simple counter to track the number of events
 type EventCounter = usize; 
 // Implement the create_event host function
-host_fn!(create_event(user_data: EventCounter; _id: String, _name: String, _description: String, _timestamp: String) {
-    let counter = user_data.get()?;
-    let mut counter = counter.lock().unwrap();
-    *counter += 1;
-    Ok(())
+host_fn!(create_event(user_data: EventCounter; event: Json<Event>) -> String {
+    // let counter = user_data.get()?;
+    // let mut counter = counter.lock().unwrap();
+    // *counter += 1;
+    Ok("Success".to_string())
 });
+
+// #[no_mangle]
+// pub extern "C" fn create_event(event_ptr: i64) -> i64 {
+//     // Find the memory at the given pointer
+//     let event_mem = Memory::find(event_ptr as u64).expect("can't find event memory");
+
+//     // Convert memory to a string
+//     let event_data = event_mem.to_string().expect("bad data?");
+
+//     // Deserialize the event data to the Event struct
+//     let event: Event = serde_json::from_str(&event_data).expect("deserialization failed");
+
+//     // Here you can perform any operations you need with the event
+//     // For example, log the event details or store them somewhere
+//     // println!("Received event: {:?}", event);
+
+//     // Serialize the event back to JSON
+//     let output = serde_json::to_vec(&event).expect("serialization failed");
+
+//     // Create new memory for the output
+//     let output_mem = Memory::from_bytes(&output);
+
+//     // Return the offset of the new memory as an i64
+//     return output_mem.expect("cant return offset").offset() as i64;
+// }
 
 fn main() {
     println!("Run `cargo test` to execute the tests.");
@@ -82,8 +108,8 @@ mod tests {
         .with_wasi(false)
         .with_function(
             "create_event",
-            [ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-            [],
+            [ValType::I64],
+            [ValType::I64],
             event_count.clone(), //Resources liek sql that need to be piped into implementations
             create_event, //the host function
         )
@@ -221,8 +247,19 @@ mod tests {
                 .unwrap();
             println!("Scheduled cron_execute_res {:?}", cron_execute_res);
 
-            sleep(Duration::from_secs(1)).await;
+            sleep(Duration::from_secs(2)).await;
         }
+
+        let binding = event_count.get().unwrap();
+        let counter = binding.lock().unwrap();
+
+        println!("Counter: {:?}", *counter);
+        // Check if the cron plugin was triggered at least twice
+        // let counter = event_count.get().unwrap().lock().unwrap();
+        // assert!(
+        //     *counter >= expected_minimum_triggers,
+        //     "Cron Plugin was not triggered the expected number of times"
+        // );
 
         println!("Cron Plugin Test Complete");
     }

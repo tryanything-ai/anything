@@ -5,16 +5,30 @@ use serde_json::Value;
 
 #[host_fn]
 extern "ExtismHost" {
-    fn create_event(event: String) -> Json<Event>;
+    fn create_event(event: Json<Event>) -> String;
 }
 
 #[plugin_fn]
 pub fn execute(config: Value) -> FnResult<Value> {
     //TODO: Determine what events need to be created. Create Them
     //TODO: host function for creating a real event not just stubbed string
-    let message = "Creating an event".to_string();
-    let _res = unsafe { create_event(message.clone())? };
-    Ok(config)
+    let event = Event {
+        id: "1".to_string(),
+        name: "Test Event".to_string(),
+        description: "This is a test event".to_string(),
+        timestamp: "2021-01-01T00:00:00Z".to_string(),
+    };
+
+    //Call Create Event
+    let _res = unsafe { create_event(Json(event))? };
+
+    let res = serde_json::json!({
+        "status": "success",
+        "output": {},
+        "error": {},
+    });
+
+    Ok(res)
 }
 
 #[plugin_fn]

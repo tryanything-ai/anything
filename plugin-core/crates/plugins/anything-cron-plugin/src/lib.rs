@@ -3,6 +3,34 @@ use extism_pdk::*;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
+
+#[host_fn]
+extern "ExtismHost" {
+    fn create_event(event: Json<Event>) -> String;
+}
+
+#[plugin_fn]
+pub fn execute(config: Value) -> FnResult<Value> {
+    //TODO: add create event
+    let event = Event {
+        id: "1".to_string(),
+        name: "Test Event".to_string(),
+        description: "This is a test event".to_string(),
+        timestamp: "2021-01-01T00:00:00Z".to_string(),
+    };
+
+    //Call Create Event
+    let _res = unsafe { create_event(Json(event))? };
+
+    let res = serde_json::json!({
+        "status": "success",
+        "output": {},
+        "error": {},
+    });
+
+    Ok(res)
+}
+
 //Called when the plugin is loaded. This gives the host the needed information about the plugin.
 //It also provides Information to generate a nice UI including icons and labels.
 //Not all hosts will use all information ( likely )
@@ -48,16 +76,4 @@ pub fn register() -> FnResult<AnythingPlugin> {
         .build();
 
     Ok(plugin)
-}
-
-#[plugin_fn]
-pub fn execute(config: Value) -> FnResult<Value> {
-    //TODO: add create event
-    //TODO: add to simple host
-    let res = serde_json::json!({
-        "status": "success",
-        "output": {},
-        "error": {},
-    });
-    Ok(res)
 }

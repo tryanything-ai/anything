@@ -1,19 +1,20 @@
+use anything_pdk::{AnythingPlugin, Event, Handle, Log};
 use extism_pdk::Memory;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
-struct Log {
-    pub time: String,
-    pub message: String,
-}
+// #[derive(Deserialize, Serialize)]
+// struct Log {
+//     pub time: String,
+//     pub message: String,
+// }
 
-#[derive(Deserialize, Serialize)]
-struct Event {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub timestamp: String,
-}
+// #[derive(Deserialize, Serialize)]
+// struct Event {
+//     pub id: String,
+//     pub name: String,
+//     pub description: String,
+//     pub timestamp: String,
+// }
 
 #[no_mangle]
 pub extern "C" fn host_log(log_ptr: i64) -> i64 {
