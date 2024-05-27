@@ -1,0 +1,13 @@
+[package]
+name = "anything-loop-plugin"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate_type = ["cdylib"]
+
+[dependencies]
+extism-pdk = "1.1.0"
+anything-pdk = { path = "../../pdk" }
+serde = { version = "1.0.201", features = ["derive"] }
+serde_json = "1.0.117"
