@@ -9,14 +9,11 @@ use xtp_test;
 pub fn test() -> FnResult<()> {
     let Json(plugin): Json<AnythingPlugin> = xtp_test::call("register", "")?;
 
-    // Testing basic top level info on trigger is returned.
-    // xtp_test::assert!("plugin trigger is false", plugin.trigger == false);
 
     xtp_test::assert!(
         "plugin plugin_id is non-empty",
         !plugin.plugin_id.is_empty()
-    );  
-
+    );
 
     xtp_test::assert!("label is non-empty", !plugin.label.is_empty());
     xtp_test::assert!("plugin icon is non-empty", !plugin.icon.is_empty());

@@ -43,16 +43,16 @@ pub fn register() -> FnResult<AnythingPlugin> {
         .description("Trigger somethign using cron".to_string())
         .variables(vec![])
         .input(serde_json::json!({
-            "pattern": "0 */5 * * * *", //Every 5 minutes
+            "cron_expression": "0 */5 * * * *", //Every 5 minutes
         }))
         .input_schema(serde_json::json!({
             "type": "object",
             "properties": {
-                "pattern": {
+                "cron_expression": {
                     "type": "string",
                 },
             },
-            "required": ["pattern"],
+            "required": ["cron_expression"],
             "additionalProperties": false
         }))
         .output_schema(serde_json::json!({

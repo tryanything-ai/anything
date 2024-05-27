@@ -41,16 +41,16 @@ pub fn register() -> FnResult<AnythingPlugin> {
         .description("Example Of A Cron Trigger".to_string())
         .variables(vec![])
         .input(serde_json::json!({
-            "pattern": "0 */5 * * * *", //Every 5 minutes
+            "cron_expression": "0 */5 * * * *", //Every 5 minutes
         }))
         .input_schema(serde_json::json!({
             "type": "object",
             "properties": {
-                "pattern": {
-                    "type": "string",
+                "cron_expression": {
+                    "type": "string", //Extensiosn of type trigger are required to have a cron_expression property
                 },
             },
-            "required": ["pattern"],
+            "required": ["cron_expression"],
             "additionalProperties": false
         }))
         .output_schema(serde_json::json!({

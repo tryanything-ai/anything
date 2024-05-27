@@ -5,73 +5,21 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use crate::convert::Json; 
 
-// Define the Event struct
-// #[derive(Deserialize, Serialize, Debug, Clone)]
-// pub struct Event {
-//     pub id: String,
-//     pub name: String,
-//     pub description: String,
-//     pub timestamp: String,
-// }
-
 // Define a simple counter to track the number of events
 type EventCounter = usize; 
 // Implement the create_event host function
 host_fn!(create_event(user_data: EventCounter; event: Json<Event>) -> String {
-    // let counter = user_data.get()?;
-    // let mut counter = counter.lock().unwrap();
-    // *counter += 1;
+    let counter = user_data.get()?;
+    let mut counter = counter.lock().unwrap();
+    *counter += 1;
+    println!("Event created: {:?}", counter);
     Ok("Success".to_string())
 });
 
-// #[no_mangle]
-// pub extern "C" fn create_event(event_ptr: i64) -> i64 {
-//     // Find the memory at the given pointer
-//     let event_mem = Memory::find(event_ptr as u64).expect("can't find event memory");
-
-//     // Convert memory to a string
-//     let event_data = event_mem.to_string().expect("bad data?");
-
-//     // Deserialize the event data to the Event struct
-//     let event: Event = serde_json::from_str(&event_data).expect("deserialization failed");
-
-//     // Here you can perform any operations you need with the event
-//     // For example, log the event details or store them somewhere
-//     // println!("Received event: {:?}", event);
-
-//     // Serialize the event back to JSON
-//     let output = serde_json::to_vec(&event).expect("serialization failed");
-
-//     // Create new memory for the output
-//     let output_mem = Memory::from_bytes(&output);
-
-//     // Return the offset of the new memory as an i64
-//     return output_mem.expect("cant return offset").offset() as i64;
-// }
 
 fn main() {
     println!("Run `cargo test` to execute the tests.");
 }
-
-// When a first argument separated with a semicolon is provided to `host_fn` it is used as the
-// variable name and type for the `UserData` parameter
-// host_fn!(pub hello_world (a: String) -> String { Ok(a) });
-//TODO: add create_event host function
-// Define a simple KV store to hold the events
-// type EventStore = Arc<Mutex<BTreeMap<String, Event>>>;
-
-// // Implement the create_event host function
-// host_fn!(create_event(user_data: EventStore; id: String, name: String, description: String, timestamp: String) {
-//     let mut store = user_data.lock().unwrap();
-//     let event = Event {
-//         id: id.clone(),
-//         name,
-//         description,
-//         timestamp,
-//     };
-//     store.insert(id, event);
-//     Ok(())
-// });
 
 //Generally this is ran via the Included Justfile.
 //Need to build all the related packages to wasm as instructed in Justfile for this test to run.
@@ -153,6 +101,23 @@ mod tests {
             "Cron Input does not match the expected schema"
         );
 
+        //Test if the input schema of triggers includes cron_expression atleast
+         //Base Trigger Input Schema
+         let anything_trigger_input_schema = json!({
+            "type": "object",
+            "properties": {
+                "cron_expression": {
+                    "type": "string",
+                },
+            },
+            "required": ["cron_expression"],
+        });
+
+        assert!(
+            is_valid(&anything_trigger_input_schema, &cron_input),
+            "Cron Input does not match the expected schema"
+        );
+
         //Execute HTTP Plugin
         let http_execute_res = http_plugin
             .call::<&str, &str>("execute", &http_input.to_string())
@@ -184,6 +149,8 @@ mod tests {
             },
             "required": ["status"]
         });
+
+       
 
         //Get Http Plugin Output Schema
         let http_output_schema = http_plugin_registration_object.output_schema;
@@ -235,13 +202,12 @@ mod tests {
             "pattern": "*/2 * * * * * *", //Every 2 seconds
         });
 
-        //TODO: test how to make this plugin really work and really test itd
-         // Schedule Cron Plugin Execution
-         let expected_minimum_triggers = 2; 
+        //This will be one more then expected triggers because it is called once above to validate schemas
+         let expected_triggers = 3;
 
         //TODO: need to use the plugin builder and have host functions to create events
         //https://github.com/extism/extism/tree/main/runtime#host-functions
-         for _ in 0..5 {
+         for _ in 0..expected_triggers - 1  {
             let cron_execute_res = cron_plugin
                 .call::<&str, &str>("execute", &cron_test_input.to_string())
                 .unwrap();
@@ -254,12 +220,11 @@ mod tests {
         let counter = binding.lock().unwrap();
 
         println!("Counter: {:?}", *counter);
-        // Check if the cron plugin was triggered at least twice
-        // let counter = event_count.get().unwrap().lock().unwrap();
-        // assert!(
-        //     *counter >= expected_minimum_triggers,
-        //     "Cron Plugin was not triggered the expected number of times"
-        // );
+
+        assert!(
+            *counter == expected_triggers,
+            "Cron Plugin was not triggered the expected number of times"
+        );
 
         println!("Cron Plugin Test Complete");
     }
