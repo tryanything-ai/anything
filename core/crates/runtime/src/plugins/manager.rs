@@ -125,6 +125,7 @@ impl PluginManager {
     pub fn load_plugins(&mut self, config: &RuntimeConfig) -> PluginResult<()> {
         // pub fn load_plugins(&mut self) -> PluginResult<()> {
         // let runtime_config = self.config.clone();
+        //TODO: update how we load plugins and load them from new source in WASM
         for (name, path) in BUILT_IN_PLUGINS.iter() {
             debug!("Loading plugin: {} from {}", name, path.display());
             println!("Loading plugin: {} from {}", name, path.display());
