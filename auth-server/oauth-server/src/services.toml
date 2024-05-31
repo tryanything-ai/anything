@@ -1,0 +1,20 @@
+[airtable]
+client_id = "your_airtable_client_id"
+client_secret = "your_airtable_client_secret"
+auth_url = "https://airtable.com/oauth2/authorize"
+token_url = "https://airtable.com/oauth2/token"
+redirect_url = "http://localhost:8080/oauth/callback/airtable"
+
+[google]
+client_id = "your_google_client_id"
+client_secret = "your_google_client_secret"
+auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
+token_url = "https://oauth2.googleapis.com/token"
+redirect_url = "http://localhost:8080/oauth/callback/google"
+
+[discord]
+client_id = "your_discord_client_id"
+client_secret = "your_discord_client_secret"
+auth_url = "https://discord.com/api/oauth2/authorize"
+token_url = "https://discord.com/api/oauth2/token"
+redirect_url = "http://localhost:8080/oauth/callback/discord"

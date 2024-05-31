@@ -37,3 +37,4 @@ toml = { workspace = true }
 tera = "1.19.1"
 chrono = { workspace = true }
 cron = "0.12.1"
+extism = "1.2.0"
