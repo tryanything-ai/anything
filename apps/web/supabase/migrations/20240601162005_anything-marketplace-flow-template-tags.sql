@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS public.flow_template_tags
+CREATE TABLE IF NOT EXISTS marketplace.flow_template_tags
 (
     tag_id uuid NOT NULL,
     -- If your model is owned by an account, you want to make sure you have an account_id column
@@ -24,19 +24,19 @@ CREATE TABLE IF NOT EXISTS public.flow_template_tags
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_template_tags_timestamp
-    BEFORE INSERT OR UPDATE ON public.flow_template_tags
+    BEFORE INSERT OR UPDATE ON marketplace.flow_template_tags
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_timestamps();
 
 -- protect the updated_by and created_by columns by setting them to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_template_tags_user_tracking
-    BEFORE INSERT OR UPDATE ON public.flow_template_tags
+    BEFORE INSERT OR UPDATE ON marketplace.flow_template_tags
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_user_tracking();
 
 
 -- enable RLS on the table
-ALTER TABLE public.flow_template_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketplace.flow_template_tags ENABLE ROW LEVEL SECURITY;
 
 
 -- Because RLS is enabled, this table will NOT be accessible to any users by default
@@ -46,7 +46,7 @@ ALTER TABLE public.flow_template_tags ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all records regardless of account
 ----------------
-create policy "All logged in users can select" on public.flow_template_tags
+create policy "All logged in users can select" on marketplace.flow_template_tags
     for select
     to authenticated
     using (true);
@@ -54,7 +54,7 @@ create policy "All logged in users can select" on public.flow_template_tags
 ----------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
 ----------------
-create policy "All authenticated and anonymous users can select" on public.flow_template_tags
+create policy "All authenticated and anonymous users can select" on marketplace.flow_template_tags
     for select
     to authenticated, anon
     using (true);
@@ -62,7 +62,7 @@ create policy "All authenticated and anonymous users can select" on public.flow_
 -------------
 -- Users should be able to read records that are owned by an account they belong to
 --------------
--- create policy "Account members can select" on public.flow_template_tags
+-- create policy "Account members can select" on marketplace.flow_template_tags
 --     for select
 --     to authenticated
 --     using (
@@ -73,7 +73,7 @@ create policy "All authenticated and anonymous users can select" on public.flow_
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
--- create policy "Account members can insert" on public.flow_template_tags
+-- create policy "Account members can insert" on marketplace.flow_template_tags
 --     for insert
 --     to authenticated
 --     with check (
@@ -83,7 +83,7 @@ create policy "All authenticated and anonymous users can select" on public.flow_
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
--- create policy "Account members can update" on public.flow_template_tags
+-- create policy "Account members can update" on marketplace.flow_template_tags
 --     for update
 --     to authenticated
 --     using (
@@ -93,7 +93,7 @@ create policy "All authenticated and anonymous users can select" on public.flow_
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account members can delete" on public.flow_template_tags
+-- create policy "Account members can delete" on marketplace.flow_template_tags
 --     for delete
 --     to authenticated
 --     using (
@@ -103,7 +103,7 @@ create policy "All authenticated and anonymous users can select" on public.flow_
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account owners can delete" on public.flow_template_tags
+-- create policy "Account owners can delete" on marketplace.flow_template_tags
 --     for delete
 --     to authenticated
 --     using (

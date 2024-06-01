@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS public.flow_template_versions
+CREATE TABLE IF NOT EXISTS marketplace.flow_template_versions
 (
     flow_template_version_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
@@ -33,18 +33,18 @@ CREATE TABLE IF NOT EXISTS public.flow_template_versions
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_template_versions_timestamp
-    BEFORE INSERT OR UPDATE ON public.flow_template_versions
+    BEFORE INSERT OR UPDATE ON marketplace.flow_template_versions
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_timestamps();
 
 -- protect the updated_by and created_by columns by setting them to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_template_versions_user_tracking
-    BEFORE INSERT OR UPDATE ON public.flow_template_versions
+    BEFORE INSERT OR UPDATE ON marketplace.flow_template_versions
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_user_tracking();
 
 -- enable RLS on the table
-ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketplace.flow_template_versions ENABLE ROW LEVEL SECURITY;
 
 
 -- Because RLS is enabled, this table will NOT be accessible to any users by default
@@ -54,7 +54,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all records regardless of account
 ----------------
--- create policy "All logged in users can select" on public.flow_template_versions
+-- create policy "All logged in users can select" on marketplace.flow_template_versions
 --     for select
 --     to authenticated
 --     using (true);
@@ -62,7 +62,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
 ----------------
--- create policy "All authenticated and anonymous users can select" on public.flow_template_versions
+-- create policy "All authenticated and anonymous users can select" on marketplace.flow_template_versions
 --     for select
 --     to authenticated, anon
 --     using (true);
@@ -70,7 +70,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 -------------
 -- Users should be able to read records that are owned by an account they belong to
 --------------
--- create policy "Account members can select" on public.flow_template_versions
+-- create policy "Account members can select" on marketplace.flow_template_versions
 --     for select
 --     to authenticated
 --     using (
@@ -81,7 +81,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
--- create policy "Account members can insert" on public.flow_template_versions
+-- create policy "Account members can insert" on marketplace.flow_template_versions
 --     for insert
 --     to authenticated
 --     with check (
@@ -91,7 +91,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
--- create policy "Account members can update" on public.flow_template_versions
+-- create policy "Account members can update" on marketplace.flow_template_versions
 --     for update
 --     to authenticated
 --     using (
@@ -101,7 +101,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account members can delete" on public.flow_template_versions
+-- create policy "Account members can delete" on marketplace.flow_template_versions
 --     for delete
 --     to authenticated
 --     using (
@@ -111,7 +111,7 @@ ALTER TABLE public.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account owners can delete" on public.flow_template_versions
+-- create policy "Account owners can delete" on marketplace.flow_template_versions
 --     for delete
 --     to authenticated
 --     using (
