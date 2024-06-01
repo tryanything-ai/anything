@@ -1,7 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS marketplace.flow_template_tags
 (
-    tag_id uuid NOT NULL,
+    tag_id text NOT NULL,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
     account_id uuid not null references basejump.accounts(id),

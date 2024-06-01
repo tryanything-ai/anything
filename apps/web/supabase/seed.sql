@@ -1,5 +1,15 @@
 -- -- Create Data for Marketplace
 
+-- -- Insert into "tags" table
+-- Insert sample tags into the tags table
+INSERT INTO marketplace.tags (id, tag_uuid, tag_label, tag_slug, tag_icon, updated_at, created_at, updated_by, created_by)
+VALUES
+    ('school', uuid_generate_v4(), 'School', 'school', null, now(), now(), null, null),
+    ('work', uuid_generate_v4(), 'Work', 'work', null, now(), now(), null, null),
+    ('dev', uuid_generate_v4(), 'Development', 'dev', null, now(), now(), null, null),
+    ('content', uuid_generate_v4(), 'Content', 'content', null, now(), now(), null, null);
+
+
 -- -- Insert into "profiles" table
 -- INSERT INTO marketplace.profiles (
 --     id, 
