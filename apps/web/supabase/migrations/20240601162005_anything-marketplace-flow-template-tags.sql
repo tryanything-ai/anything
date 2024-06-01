@@ -4,13 +4,13 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_tags
     tag_id uuid NOT NULL,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
-    account_id uuid not null references accounts(id),
+    account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE 
     flow_template_id uuid not null,
     constraint flow_tags_pkey primary key (tag_id, flow_template_id),
-    constraint flow_template_tags_flow_template_id_fkey foreign key (flow_template_id) references flow_templates (flow_template_id),
-    constraint flow_template_tags_tag_id_fkey foreign key (tag_id) references tags (id)
+    constraint flow_template_tags_flow_template_id_fkey foreign key (flow_template_id) references marketplace.flow_templates(flow_template_id),
+    constraint flow_template_tags_tag_id_fkey foreign key (tag_id) references marketplace.tags(id),
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_tags
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 

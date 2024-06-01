@@ -1,19 +1,19 @@
 
 CREATE TABLE IF NOT EXISTS marketplace.tags
 (
-    id uuid unique NOT NULL primary key,
+    id text unique NOT NULL primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
     -- account_id uuid not null references accounts(id),
 
     -- ADD YOUR COLUMNS HERE
-    created_at timestamp with time zone not null default now(),
+    -- created_at timestamp with time zone not null default now(),
     tag_uuid uuid not null DEFAULT uuid_generate_v4(),
     tag_label text not null,
     tag_slug text not null,
     tag_icon text null,
     constraint tags_tag_slug_key unique (tag_slug),
-    constraint tags_tag_uuid_key unique (tag_uuid)
+    constraint tags_tag_uuid_key unique (tag_uuid),
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS marketplace.tags
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 

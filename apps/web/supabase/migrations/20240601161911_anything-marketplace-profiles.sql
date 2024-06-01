@@ -5,11 +5,9 @@ CREATE TABLE IF NOT EXISTS marketplace.profiles
     id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
-    account_id uuid not null references accounts(id),
+    account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
-    id uuid not null,
-    updated_at timestamp with time zone null,
     username text null,
     full_name text null,
     avatar_url text null default 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png'::text,
@@ -24,7 +22,7 @@ CREATE TABLE IF NOT EXISTS marketplace.profiles
     bio text null,
     constraint profiles_username_key unique (username),
     constraint profiles_id_fkey foreign key (id) references auth.users(id) on delete cascade,
-    constraint username_length check ((char_length(username) >= 3))
+    constraint username_length check ((char_length(username) >= 3)),
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,
@@ -32,7 +30,7 @@ CREATE TABLE IF NOT EXISTS marketplace.profiles
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 

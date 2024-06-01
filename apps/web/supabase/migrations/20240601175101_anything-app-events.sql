@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS public.events
     event_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
-    account_id uuid not null references accounts(id),
+    account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
     event_status TEXT NOT NULL,
@@ -22,11 +22,11 @@ CREATE TABLE IF NOT EXISTS public.events
     stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
     config json NOT NULL, -- the config used to run the flow
     context json, -- the bundle of args used for the action to process
-    created_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP), --stats for action run time
+    -- created_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP), --stats for action run time
     started_at timestamp with time zone, --stats for action run time
     ended_at timestamp with time zone, --stats for action run time
     debug_result json, -- debug info, a place where we can store extra data if we want like intermediate steps in the flow
-    result json -- the result of the action
+    result json, -- the result of the action
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.events
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 

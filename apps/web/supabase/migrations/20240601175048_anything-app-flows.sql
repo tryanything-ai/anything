@@ -4,14 +4,14 @@ CREATE TABLE IF NOT EXISTS public.flows
     flow_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
-    account_id uuid not null references accounts(id),
+    account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
     flow_name TEXT NOT NULL,
     latest_version_id TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     -- updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
-    UNIQUE (flow_name)
+    UNIQUE (flow_name),
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.flows
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 

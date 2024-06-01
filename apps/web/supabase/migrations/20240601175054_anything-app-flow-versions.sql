@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS public.flow_versions
     flow_version_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
-    account_id uuid not null references accounts(id),
+    account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
     flow_id TEXT NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.flow_versions
     -- updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
     published BOOLEAN NOT NULL DEFAULT FALSE,
     flow_definition json NOT NULL,
-    UNIQUE (flow_id, flow_version)
+    UNIQUE (flow_id, flow_version),
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.flow_versions
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 
@@ -108,12 +108,12 @@ create policy "Account members can delete" on public.flow_versions
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to
 ----------------
-create policy "Account owners can delete" on public.flow_versions
-    for delete
-    to authenticated
-    using (
-    (account_id IN ( SELECT basejump.get_accounts_with_role("owner")))
-     );
+-- create policy "Account owners can delete" on public.flow_versions
+--     for delete
+--     to authenticated
+--     using (
+--     (account_id IN ( SELECT basejump.get_accounts_with_role("owner")))
+--      );
 
 
 

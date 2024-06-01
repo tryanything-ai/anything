@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     flow_template_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
-    account_id uuid not null references accounts(id),
+    account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
     -- flow_template_id uuid not null default gen_random_uuid (),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     slug text not null,
     -- constraint flow_templates_pkey1 primary key (flow_template_id),
     constraint flow_templates_slug_key unique (slug),
-    constraint flow_templates_publisher_id_fkey foreign key (publisher_id) references profiles (id)
+    constraint flow_templates_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(id),
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
-    created_by uuid references auth.users(id),
+    created_by uuid references auth.users(id)
 );
 
 
