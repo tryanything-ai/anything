@@ -1,3 +1,5 @@
+"use client"
+
 import {
     createContext,
     ReactNode,
@@ -15,7 +17,7 @@ export type UpdateFlowArgs = {
     version?: string;
 };
 
-interface FlowsContextInterface {
+export interface FlowsContextInterface {
     flows: any[];
     createNewFlow: () => void;
     getFlows: () => void;
