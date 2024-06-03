@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "gen-types": "pnpm gen-app-types && pnpm gen-marketplace-types",
+    "gen-marketplace-types": "supabase gen types typescript --local --schema marketplace > types/supabase-marketplace.ts",
+    "gen-app-types": "supabase gen types typescript --local > types/supabase-app.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.0.4",
