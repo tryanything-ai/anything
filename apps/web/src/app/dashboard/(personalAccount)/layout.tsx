@@ -29,7 +29,7 @@ export default async function PersonalAccountDashboard({ children }: { children:
     return (
         <>
             <DashboardHeader accountId={personalAccount.account_id} navigation={navigation} />
-            <div className="w-full p-8">{children}</div>
+            <div className="w-full p-4">{children}</div>
         </>
     )
 

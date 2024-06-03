@@ -130,7 +130,7 @@ export default function AccountSelector({ className, accountId, onAccountSelecte
                             <CommandGroup>
                                 <DialogTrigger asChild>
                                     <CommandItem
-                                    value="new-team"
+                                        value="new-team"
                                         onSelect={() => {
                                             setOpen(false)
                                             setShowNewTeamDialog(true)
@@ -152,7 +152,7 @@ export default function AccountSelector({ className, accountId, onAccountSelecte
                         Create a team to collaborate with others.
                     </DialogDescription>
                 </DialogHeader>
-                <NewTeamForm  />
+                <NewTeamForm />
             </DialogContent>
         </Dialog>
     )
