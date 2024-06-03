@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "gen-types": "pnpm gen-app-types && pnpm gen-marketplace-types",
-    "gen-marketplace-types": "supabase gen types typescript --local --schema marketplace > types/supabase-marketplace.ts",
-    "gen-app-types": "supabase gen types typescript --local > types/supabase-app.ts"
+    "gen-marketplace-types": "supabase gen types typescript --local --schema marketplace > src/types/supabase-marketplace.ts",
+    "gen-app-types": "supabase gen types typescript --local > src/types/supabase-app.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.0.4",
@@ -34,6 +34,7 @@
     "postcss": "8.4.33",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "reactflow": "^11.7.4",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.3.0",
     "tailwindcss": "3.4.1",
