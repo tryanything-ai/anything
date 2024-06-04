@@ -1,4 +1,5 @@
 import { Action, Flow } from "@/types/flows";
+import { createClient } from "../supabase/client";
 
 export type UpdateFlowArgs = {
   flow_name: string;
@@ -7,9 +8,29 @@ export type UpdateFlowArgs = {
 };
 
 export const getFlows = async () => {
-  // let res = await anything.getFlows();
-  // return res;
-};
+  //TODO: make this actually work
+  try {
+    // Get JWT from supabase to pass to the API
+    // API conforms to RLS policies on behalf of users for external API
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Session:', session);
+
+    if (session) {
+      const response = await fetch('http://localhost:3001/items', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      console.log('Data from /api/items:', data);
+    }
+  } catch (error) {
+    console.error('Error fetching items:', error);
+  } finally {
+  }
+}
 
 export const createFlow = async (flowName: string) => {
   // console.log(`Called createFlow with ${flowName}`);
