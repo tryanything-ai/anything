@@ -20,7 +20,7 @@ export const getFlows = async () => {
     if (session) {
       const response = await fetch('http://localhost:3001/items', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `${session.access_token}`,
         },
       });
       const data = await response.json();
