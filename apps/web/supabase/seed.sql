@@ -1,15 +1,58 @@
--- -- Create Data for Marketplace
 
--- insert users into the auth.users table
--- Inserting sample users into auth.users
+-- inspired by https://gist.github.com/khattaksd/4e8f4c89f4e928a2ecaad56d4a17ecd1
+-- Create test users
 INSERT INTO auth.users (
-    id, email, created_at, updated_at
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    recovery_sent_at,
+    last_sign_in_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token
 ) VALUES
-    ('0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'user1@example.com', now(), now()),
-    ('5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'user2@example.com', now(), now()),
-    ('1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'user3@example.com', now(), now()),
-    ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', 'user4@example.com', now(), now()),
-    ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'user5@example.com', now(), now());
+    ('00000000-0000-0000-0000-000000000000', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'authenticated', 'authenticated', 'user1@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'authenticated', 'authenticated', 'user2@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'authenticated', 'authenticated', 'user3@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', 'authenticated', 'authenticated', 'user4@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'authenticated', 'authenticated', 'user5@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', '');
+
+-- inspired by https://gist.github.com/khattaksd/4e8f4c89f4e928a2ecaad56d4a17ecd1
+-- test user email identities
+INSERT INTO
+    auth.identities (
+        id,
+        user_id,
+        -- New column
+        provider_id,
+        identity_data,
+        provider,
+        last_sign_in_at,
+        created_at,
+        updated_at
+    ) (
+        select
+            uuid_generate_v4 (),
+            id,
+            -- New column
+            id,
+            format('{"sub":"%s","email":"%s"}', id :: text, email) :: jsonb,
+            'email',
+            current_timestamp,
+            current_timestamp,
+            current_timestamp
+        from
+            auth.users
+    );
 
 -- Inserting sample accounts into basejump.accounts
 INSERT INTO basejump.accounts (
@@ -37,7 +80,7 @@ INSERT INTO marketplace.profiles (
     ('1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user3', 'User Three', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user3.example.com', '@user3', '@user3', '@user3', 'https://youtube.com/user3', 'https://linkedin.com/in/user3', 'https://github.com/user3', true, 'Bio of User Three', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
     ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'user4', 'User Four', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user4.example.com', '@user4', '@user4', '@user4', 'https://youtube.com/user4', 'https://linkedin.com/in/user4', 'https://github.com/user4', true, 'Bio of User Four', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
     ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user5', 'User Five', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user5.example.com', '@user5', '@user5', '@user5', 'https://youtube.com/user5', 'https://linkedin.com/in/user5', 'https://github.com/user5', true, 'Bio of User Five', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
--- -- Insert into "tags" table
+
 -- Insert sample tags into the tags table
 INSERT INTO marketplace.tags (id, tag_uuid, tag_label, tag_slug, tag_icon, updated_at, created_at, updated_by, created_by)
 VALUES
@@ -45,7 +88,6 @@ VALUES
     ('work', uuid_generate_v4(), 'Work', 'work', null, now(), now(), null, null),
     ('dev', uuid_generate_v4(), 'Development', 'dev', null, now(), now(), null, null),
     ('content', uuid_generate_v4(), 'Content', 'content', null, now(), now(), null, null);
-
 
 -- Inserting sample flow templates into marketplace.flow_templates
 INSERT INTO marketplace.flow_templates (
@@ -56,6 +98,7 @@ INSERT INTO marketplace.flow_templates (
     ('33333333-3333-3333-3333-333333333333', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Template 3', 'Description for Template 3', true, '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', false, 'template-3', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
     ('44444444-4444-4444-4444-444444444444', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Template 4', 'Description for Template 4', false, '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', true, 'template-4', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
     ('55555555-5555-5555-5555-555555555555', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Template 5', 'Description for Template 5', true, '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', false, 'template-5', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
+
 -- Inserting sample flow template versions into marketplace.flow_template_versions
 -- Inserting sample flow template versions into marketplace.flow_template_versions
 INSERT INTO marketplace.flow_template_versions (
@@ -77,7 +120,6 @@ INSERT INTO marketplace.flow_template_tags (
     ('dev', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '33333333-3333-3333-3333-333333333333', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
     ('content', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', '44444444-4444-4444-4444-444444444444', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
     ('school', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '55555555-5555-5555-5555-555555555555', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
-
 
 ---------------------------------------
 --- APPLICATION WORKFLOW MANAGEMENT ---
@@ -101,7 +143,6 @@ INSERT INTO public.flow_versions (
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'v1.0', 'Initial version of Flow 3', 'checksum3', true, '{"steps": []}', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
     (uuid_generate_v4(), '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'v1.0', 'Initial version of Flow 4', 'checksum4', true, '{"steps": []}', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'v1.0', 'Initial version of Flow 5', 'checksum5', true, '{"steps": []}', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
-
 
 -- Inserting sample events into public.events
 INSERT INTO public.events (
