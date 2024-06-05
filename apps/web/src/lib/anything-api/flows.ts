@@ -25,6 +25,7 @@ export const getFlows = async () => {
       });
       const data = await response.json();
       console.log('Data from /api/items:', data);
+      return data;
     }
   } catch (error) {
     console.error('Error fetching items:', error);
