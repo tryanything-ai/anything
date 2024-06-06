@@ -32,7 +32,7 @@ export default function WorkflowManager() {
                 workflow ?
                     <div className="space-y-6 w-full">
 
-                        < DashboardTitleWithNavigation title={workflow?.flow_name} description="Manage workflows." href="/edit" />
+                        < DashboardTitleWithNavigation title={workflow?.flow_name} description="Manage workflows." href={`/dashboard/workflows/${workflow.flow_id}/editor`} />
                         < Separator />
 
                         <div className="flex flex-col gap-y-4 py-12 h-full w-full items-center justify-center content-center max-w-screen-md mx-auto text-center">
