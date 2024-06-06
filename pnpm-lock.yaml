@@ -375,7 +375,7 @@ importers:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       reactflow:
-        specifier: ^11.7.4
+        specifier: ^11.11.3
         version: 11.11.3(@types/react@18.2.48)(react-dom@18.2.0)(react@18.2.0)
       swr:
         specifier: ^2.2.5
