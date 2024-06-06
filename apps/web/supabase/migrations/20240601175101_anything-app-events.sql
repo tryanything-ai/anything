@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS public.events
 
     -- ADD YOUR COLUMNS HERE
     event_status TEXT NOT NULL,
-    flow_id TEXT NOT NULL, -- the flow that was running UUID ( root flow name and stuff)
-    flow_version_id TEXT NOT NULL, -- the version of the flow that was running UUID
+    flow_id uuid not null references public.flows(flow_id), -- the flow that was running UUID ( root flow name and stuff)
+    flow_version_id uuid not null references public.flow_versions(flow_version_id), -- the version of the flow that was running UUID
     flow_version_name TEXT, -- the name of the flow version that was running example 0.0.1
     trigger_id TEXT NOT NULL, -- the trigger that caused the event
     trigger_session_id TEXT NOT NULL, -- anything that is triggered by a single trigger including nested flow runs

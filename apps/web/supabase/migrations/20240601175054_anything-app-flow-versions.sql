@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.flow_versions
     account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
-    flow_id TEXT NOT NULL,
+    flow_id uuid not null references public.flows(flow_id),
     flow_version TEXT NOT NULL, -- semver version
     description TEXT,
     checksum TEXT,
