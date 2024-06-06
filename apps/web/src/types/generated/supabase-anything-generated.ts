@@ -132,6 +132,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "events_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flows"
+            referencedColumns: ["flow_id"]
+          },
+          {
+            foreignKeyName: "events_flow_version_id_fkey"
+            columns: ["flow_version_id"]
+            isOneToOne: false
+            referencedRelation: "flow_versions"
+            referencedColumns: ["flow_version_id"]
+          },
+          {
             foreignKeyName: "events_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
@@ -197,6 +211,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flow_versions_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flows"
+            referencedColumns: ["flow_id"]
           },
           {
             foreignKeyName: "flow_versions_updated_by_fkey"

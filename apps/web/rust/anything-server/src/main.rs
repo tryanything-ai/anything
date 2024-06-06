@@ -82,15 +82,7 @@ async fn get_items(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> 
     let response = match client
         .from("flows")
         .auth(jwt)
-        // .select("*")
         .select("*,flow_versions(*)")
-        // .select("
-        //     *,
-        //     flow_id,
-        //     flow_version (
-        //       flow_id
-        //     )
-        // ")
         .execute()
         .await
     {

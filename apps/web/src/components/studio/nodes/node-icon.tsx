@@ -69,10 +69,9 @@ export const SvgRenderer: React.FC<IconProps> = ({ icon, className }) => {
 export const BaseNodeIcon: React.FC<IconProps> = ({ icon, className }) => {
   return (
     <div
-      className={`h-14 w-14 p-2 rounded-md bg-white bg-opacity-30 ${className ?? ""
-        }`}
+      className={`h-14 w-14 p-1 rounded-md bg-white bg-opacity-30`}
     >
-      <SvgRenderer className={`${className} w-full h-full`} icon={icon} />
+      <SvgRenderer className={`${className} p-1 w-full h-full`} icon={icon} />
     </div>
   );
 };
