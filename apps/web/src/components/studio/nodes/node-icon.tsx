@@ -5,7 +5,13 @@ interface IconProps {
   className?: string; // Optional className property
 }
 
+
 export function removeWidthHeight(svgString: string) {
+
+  if (!svgString) {
+    return "";
+  }
+
   let cleanedSvgString = svgString
     .replace(/\s*width="[^"]*"/, "")
     .replace(/\s*height="[^"]*"/, "");
@@ -35,8 +41,6 @@ export function removeWidthHeight(svgString: string) {
       '<svg fill="currentColor"'
     );
   }
-
-
 
   return cleanedSvgString;
 }

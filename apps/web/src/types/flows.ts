@@ -61,7 +61,6 @@ export interface Trigger extends BaseNode {
   anything_trigger_version: string; //defines compatability
   trigger_type: string;
   //Mock Data should be shaped like Config. Zod to confirm?
-
 }
 
 export type Node = Action | Trigger;
