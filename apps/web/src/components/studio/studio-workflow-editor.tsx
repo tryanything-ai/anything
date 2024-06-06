@@ -12,7 +12,7 @@ import BaseNode
     from "./nodes/workflow-node";
 
 const initialNodes = [
-    { id: '1', type: "anything", position: { x: 0, y: 0 }, data: { label: '1' } },
+    { id: '1', type: "anything", position: { x: 0, y: 0 }, data: { label: '1', trigger: true } },
     { id: '2', type: "anything", position: { x: 0, y: 100 }, data: { label: '2' } },
 ];
 
@@ -39,7 +39,6 @@ export default function StudioWorkflowEditor() {
                             variant={BackgroundVariant.Dots}
                             gap={20}
                             size={1}
-                        // color="gray"
                         />
                         <Controls />
                     </ReactFlow>
