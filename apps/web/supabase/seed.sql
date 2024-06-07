@@ -124,8 +124,8 @@ INSERT INTO marketplace.flow_template_tags (
 ---------------------------------------
 --- APPLICATION WORKFLOW MANAGEMENT ---
 ---------------------------------------
--- Inserting sample flows into public.flows
-INSERT INTO public.flows (
+-- Inserting sample flows into anything.flows
+INSERT INTO anything.flows (
     flow_id, account_id, flow_name, latest_version_id, active, updated_at, created_at, updated_by, created_by
 ) VALUES
     ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 1', 'v1.0', true, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
@@ -134,8 +134,8 @@ INSERT INTO public.flows (
     ('dddddddd-dddd-dddd-dddd-dddddddddddd', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Flow 4', 'v1.0', true, now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
     ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 5', 'v1.0', false, now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
 
--- Inserting sample flow versions into public.flow_versions
-INSERT INTO public.flow_versions (
+-- Inserting sample flow versions into anything.flow_versions
+INSERT INTO anything.flow_versions (
     flow_version_id, account_id, flow_id, flow_version, description, checksum, published, flow_definition, updated_at, created_at, updated_by, created_by
 ) VALUES
     ('11111111-1111-1111-1111-111111111111', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'v1.0', 'Initial version of Flow 1', 'checksum1', true, '{
@@ -674,9 +674,9 @@ INSERT INTO public.flow_versions (
     "version": "0.0.1"
 }', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
 
--- Inserting sample events into public.events
-INSERT INTO public.events (
-    event_id, account_id, event_status, flow_id, flow_version_id, flow_version_name, trigger_id, trigger_session_id, trigger_session_status, flow_session_id, flow_session_status, node_id, is_trigger, extension_id, stage, config, context, started_at, ended_at, debug_result, result, updated_at, created_at, updated_by, created_by
+-- Inserting sample events into anything.events
+INSERT INTO anything.tasks (
+    task_id, account_id, task_status, flow_id, flow_version_id, flow_version_name, trigger_id, trigger_session_id, trigger_session_status, flow_session_id, flow_session_status, node_id, is_trigger, extension_id, stage, config, context, started_at, ended_at, debug_result, result, updated_at, created_at, updated_by, created_by
 ) VALUES
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'completed', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'v1.0', 'trigger1', 'session1', 'completed', 'flow_session_1', 'completed', 'node1', false, 'extension1', 'DEV', '{"key": "value"}', '{"key": "value"}', now(), now(), '{"key": "value"}', '{"key": "value"}', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
     (uuid_generate_v4(), '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'completed', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222', 'v1.0', 'trigger2', 'session2', 'completed', 'flow_session_2', 'completed', 'node2', false, 'extension2', 'DEV', '{"key": "value"}', '{"key": "value"}', now(), now(), '{"key": "value"}', '{"key": "value"}', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),

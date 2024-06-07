@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS marketplace.tags
     tag_label text not null,
     tag_slug text not null,
     tag_icon text null,
+    archived boolean not null default false, 
     constraint tags_tag_slug_key unique (tag_slug),
     constraint tags_tag_uuid_key unique (tag_uuid),
 

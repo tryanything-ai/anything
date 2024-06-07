@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS public.flows
+CREATE TABLE IF NOT EXISTS anything.flows
 (
     flow_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.flows
     flow_name TEXT NOT NULL,
     latest_version_id TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT FALSE,
+    archived boolean not null default false, 
     -- updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
     UNIQUE (flow_name),
 
@@ -26,19 +27,19 @@ CREATE TABLE IF NOT EXISTS public.flows
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_flows_timestamp
-    BEFORE INSERT OR UPDATE ON public.flows
+    BEFORE INSERT OR UPDATE ON anything.flows
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_timestamps();
 
 -- protect the updated_by and created_by columns by setting them to be read-only and managed by a trigger
 CREATE TRIGGER set_flows_user_tracking
-    BEFORE INSERT OR UPDATE ON public.flows
+    BEFORE INSERT OR UPDATE ON anything.flows
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_user_tracking();
 
 
 -- enable RLS on the table
-ALTER TABLE public.flows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE anything.flows ENABLE ROW LEVEL SECURITY;
 
 
 -- Because RLS is enabled, this table will NOT be accessible to any users by default
@@ -48,7 +49,7 @@ ALTER TABLE public.flows ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all records regardless of account
 ----------------
--- create policy "All logged in users can select" on public.flows
+-- create policy "All logged in users can select" on anything.flows
 --     for select
 --     to authenticated
 --     using (true);
@@ -56,7 +57,7 @@ ALTER TABLE public.flows ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
 ----------------
--- create policy "All authenticated and anonymous users can select" on public.flows
+-- create policy "All authenticated and anonymous users can select" on anything.flows
 --     for select
 --     to authenticated, anon
 --     using (true);
@@ -64,7 +65,7 @@ ALTER TABLE public.flows ENABLE ROW LEVEL SECURITY;
 -------------
 -- Users should be able to read records that are owned by an account they belong to
 --------------
-create policy "Account members can select" on public.flows
+create policy "Account members can select" on anything.flows
     for select
     to authenticated
     using (
@@ -75,7 +76,7 @@ create policy "Account members can select" on public.flows
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
-create policy "Account members can insert" on public.flows
+create policy "Account members can insert" on anything.flows
     for insert
     to authenticated
     with check (
@@ -85,7 +86,7 @@ create policy "Account members can insert" on public.flows
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
-create policy "Account members can update" on public.flows
+create policy "Account members can update" on anything.flows
     for update
     to authenticated
     using (
@@ -95,7 +96,7 @@ create policy "Account members can update" on public.flows
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
-create policy "Account members can delete" on public.flows
+create policy "Account members can delete" on anything.flows
     for delete
     to authenticated
     using (
@@ -105,7 +106,7 @@ create policy "Account members can delete" on public.flows
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account owners can delete" on public.flows
+-- create policy "Account owners can delete" on anything.flows
 --     for delete
 --     to authenticated
 --     using (

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     publisher_id uuid not null, -- kind like the same as the above account_id i think
     anonymous_publish boolean not null,
     slug text not null,
+    archived boolean not null default false, 
     -- constraint flow_templates_pkey1 primary key (flow_template_id),
     constraint flow_templates_slug_key unique (slug),
     constraint flow_templates_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(id),

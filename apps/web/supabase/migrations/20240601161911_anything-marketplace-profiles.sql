@@ -20,9 +20,11 @@ CREATE TABLE IF NOT EXISTS marketplace.profiles
     github text null,
     public boolean not null default false,
     bio text null,
+    archived boolean not null default false, 
     constraint profiles_username_key unique (username),
     constraint profiles_id_fkey foreign key (id) references auth.users(id) on delete cascade,
     constraint username_length check ((char_length(username) >= 3)),
+   
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,

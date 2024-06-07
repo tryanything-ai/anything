@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_tags
 
     -- ADD YOUR COLUMNS HERE 
     flow_template_id uuid not null,
+    archived boolean not null default false, 
     constraint flow_tags_pkey primary key (tag_id, flow_template_id),
     constraint flow_template_tags_flow_template_id_fkey foreign key (flow_template_id) references marketplace.flow_templates(flow_template_id),
     constraint flow_template_tags_tag_id_fkey foreign key (tag_id) references marketplace.tags(id),

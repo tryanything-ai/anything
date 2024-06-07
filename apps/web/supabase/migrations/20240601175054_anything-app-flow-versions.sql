@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS public.flow_versions
+CREATE TABLE IF NOT EXISTS anything.flow_versions
 (
     flow_version_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
@@ -7,11 +7,11 @@ CREATE TABLE IF NOT EXISTS public.flow_versions
     account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
-    flow_id uuid not null references public.flows(flow_id),
+    flow_id uuid not null references anything.flows(flow_id),
     flow_version TEXT NOT NULL, -- semver version
+    archived boolean not null default false, 
     description TEXT,
     checksum TEXT,
-    -- updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
     published BOOLEAN NOT NULL DEFAULT FALSE,
     flow_definition json NOT NULL,
     UNIQUE (flow_id, flow_version),
@@ -29,19 +29,19 @@ CREATE TABLE IF NOT EXISTS public.flow_versions
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_versions_timestamp
-    BEFORE INSERT OR UPDATE ON public.flow_versions
+    BEFORE INSERT OR UPDATE ON anything.flow_versions
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_timestamps();
 
 -- protect the updated_by and created_by columns by setting them to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_versions_user_tracking
-    BEFORE INSERT OR UPDATE ON public.flow_versions
+    BEFORE INSERT OR UPDATE ON anything.flow_versions
     FOR EACH ROW
 EXECUTE PROCEDURE basejump.trigger_set_user_tracking();
 
 
 -- enable RLS on the table
-ALTER TABLE public.flow_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE anything.flow_versions ENABLE ROW LEVEL SECURITY;
 
 
 -- Because RLS is enabled, this table will NOT be accessible to any users by default
@@ -51,7 +51,7 @@ ALTER TABLE public.flow_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all records regardless of account
 ----------------
--- create policy "All logged in users can select" on public.flow_versions
+-- create policy "All logged in users can select" on anything.flow_versions
 --     for select
 --     to authenticated
 --     using (true);
@@ -59,7 +59,7 @@ ALTER TABLE public.flow_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
 ----------------
--- create policy "All authenticated and anonymous users can select" on public.flow_versions
+-- create policy "All authenticated and anonymous users can select" on anything.flow_versions
 --     for select
 --     to authenticated, anon
 --     using (true);
@@ -67,7 +67,7 @@ ALTER TABLE public.flow_versions ENABLE ROW LEVEL SECURITY;
 -------------
 -- Users should be able to read records that are owned by an account they belong to
 --------------
-create policy "Account members can select" on public.flow_versions
+create policy "Account members can select" on anything.flow_versions
     for select
     to authenticated
     using (
@@ -78,7 +78,7 @@ create policy "Account members can select" on public.flow_versions
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
-create policy "Account members can insert" on public.flow_versions
+create policy "Account members can insert" on anything.flow_versions
     for insert
     to authenticated
     with check (
@@ -88,7 +88,7 @@ create policy "Account members can insert" on public.flow_versions
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
-create policy "Account members can update" on public.flow_versions
+create policy "Account members can update" on anything.flow_versions
     for update
     to authenticated
     using (
@@ -98,7 +98,7 @@ create policy "Account members can update" on public.flow_versions
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
-create policy "Account members can delete" on public.flow_versions
+create policy "Account members can delete" on anything.flow_versions
     for delete
     to authenticated
     using (
@@ -108,7 +108,7 @@ create policy "Account members can delete" on public.flow_versions
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account owners can delete" on public.flow_versions
+-- create policy "Account owners can delete" on anything.flow_versions
 --     for delete
 --     to authenticated
 --     using (
