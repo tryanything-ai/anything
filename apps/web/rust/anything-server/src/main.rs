@@ -1,4 +1,9 @@
-use axum::{Router, routing::get, Json, extract::State,  http::{HeaderValue, Method, StatusCode}, response::IntoResponse};
+use axum::{Router, 
+    routing::get, Json, 
+    extract::{Path, State},  
+    http::{HeaderValue, Method, StatusCode}, 
+    response::IntoResponse
+};
 use hyper::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE}; 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -14,6 +19,9 @@ use tokio::time::{sleep, Duration};
 use chrono::{Utc, DateTime, Timelike};
 use std::str::FromStr;
 use serde_with::{serde_as, DisplayFromStr};
+
+//gpt wrote this 
+//https://chatgpt.com/share/65c4bd30-e38f-4db0-b410-696eb0759989
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Task {
@@ -133,7 +141,9 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(root))
-        .route("/items", get(get_items))
+        .route("/workflows", get(get_workflows))
+        .route("/workflow/:id", get(get_workflow))
+        .route("/workflow/:id/versions", get(get_flow_versions))
         .layer(cors)
         .with_state(client.clone());
 
@@ -206,7 +216,8 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn get_items(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> impl IntoResponse {
+
+async fn get_workflows(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> impl IntoResponse {
     let jwt = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
         Some(jwt) => jwt,
         None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
@@ -216,6 +227,83 @@ async fn get_items(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> 
         .from("flows")
         .auth(jwt)
         .select("*,flow_versions(*)")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    println!("response: {:?}", response);
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    Json(items).into_response()
+}
+
+
+// New function to get a specific workflow by flow_id
+async fn get_workflow(
+    Path(flow_id): Path<String>,
+    State(client): State<Arc<Postgrest>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let jwt = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
+        Some(jwt) => jwt,
+        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
+    };
+
+    let response = match client
+        .from("flows")
+        .auth(jwt)
+        .eq("id", &flow_id)
+        .select("*,flow_versions(*)")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    println!("response: {:?}", response);
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    Json(item).into_response()
+}
+
+// New function to get flow_versions for a specific flow_id
+async fn get_flow_versions(
+    Path(flow_id): Path<String>,
+    State(client): State<Arc<Postgrest>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let jwt = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
+        Some(jwt) => jwt,
+        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
+    };
+
+    let response = match client
+        .from("flow_versions")
+        .auth(jwt)
+        .eq("flow_id", &flow_id)
+        .select("*")
         .execute()
         .await
     {

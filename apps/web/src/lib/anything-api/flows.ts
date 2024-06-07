@@ -18,17 +18,17 @@ export const getFlows = async () => {
     console.log('Session:', session);
 
     if (session) {
-      const response = await fetch('http://localhost:3001/items', {
+      const response = await fetch('http://localhost:3001/workflows', {
         headers: {
           Authorization: `${session.access_token}`,
         },
       });
       const data = await response.json();
-      console.log('Data from /api/items:', data);
+      console.log('Data from /api/workflows:', data);
       return data;
     }
   } catch (error) {
-    console.error('Error fetching items:', error);
+    console.error('Error fetching workflows:', error);
   } finally {
   }
 }
