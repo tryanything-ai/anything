@@ -1,8 +1,23 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
+import { useRouter } from 'next/navigation';
+import { XIcon } from "lucide-react"
 
 export default function StudioHeader({ flow_name }: { flow_name: string }) {
+    const router = useRouter();
+
+    const handleBack = () => {
+        router.back();
+    };
+
     return (
         <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
+            <div className="border-b p-2">
+                <Button onClick={handleBack} variant="outline" size="icon" aria-label="Home">
+                    <XIcon className="size-5 fill-foreground" />
+                </Button>
+            </div>
             <h1 className="text-xl font-semibold">{flow_name}</h1>
             <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
                 <ShareIcon className="size-3.5" />

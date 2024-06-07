@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, State, Extension},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
@@ -12,20 +12,29 @@ use postgrest::Postgrest;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Workflow {
-    id: String,
-    name: String,
-    description: Option<String>,
+    flow_id: String,
+    flow_name: String
 }
 
 pub async fn root() -> &'static str {
     "Hello, World!"
 }
 
-pub async fn get_workflows(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> impl IntoResponse {
-    let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-        Some(jwt) => jwt,
-        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    };
+pub async fn get_workflows(
+    State(client): State<Arc<Postgrest>>, 
+    headers: HeaderMap,
+    Extension(user_id): Extension<String>,
+    Extension(jwt): Extension<String>,
+) -> impl IntoResponse {
+    // let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+    //     Some(jwt) => jwt,
+    //     None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
+    // };
+
+    println!("Handling a get_workflows");
+
+    println!("User ID: {}", user_id);
+    println!("JWT: {}", jwt);
 
     let response = match client
         .from("flows")
@@ -128,13 +137,18 @@ pub async fn create_workflow(
     headers: HeaderMap,
     Json(payload): Json<Workflow>,
 ) -> impl IntoResponse {
+
+    println!("Create Workflow in Rust");
+
     let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
         Some(jwt) => jwt.to_string(),
         None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
     };
 
+    println!("JWT: {}", jwt);
+    //TODO: get accound id from JWT
+
     let workflow = Workflow {
-        id: flow_id,
         ..payload
     };
 
@@ -201,7 +215,7 @@ pub async fn update_workflow(
     };
 
     let workflow = Workflow {
-        id: flow_id.clone(),
+        flow_id: flow_id.clone(),
         ..payload
     };
 

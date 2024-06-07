@@ -1,4 +1,4 @@
-use axum::{Router, routing::{get, post, delete, put}, http::{HeaderValue, Method}};
+use axum::{Router, routing::{get, post, delete, put}, middleware::{self, Next}, http::{HeaderValue, Method}};
 use dotenv::dotenv;
 use std::env;
 use std::sync::Arc;
@@ -9,6 +9,7 @@ use tower_http::cors::CorsLayer;
 
 mod api;
 mod engine;
+mod auth;
 
 #[tokio::main]
 async fn main() {
@@ -35,6 +36,7 @@ async fn main() {
         .route("/workflow/:id", post(api::create_workflow))
         .route("/workflow/:id", delete(api::delete_workflow))
         .route("/workflow/:id", put(api::update_workflow))
+        .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(client.clone());
 

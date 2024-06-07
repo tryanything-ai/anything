@@ -1,23 +1,18 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { createClient } from "@/lib/supabase/server";
-import { Table, TableRow, TableBody, TableCell } from "../ui/table";
-import { Button } from "../ui/button";
 import Link from "next/link";
-import { Badge } from "../ui/badge";
-import { useAnything } from "@/context/AnythingContext";
-import { DB_FLOW_VERSION } from "@/types/supabase-anything";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function ManageWorkflows() {
 
-    let { flows } = useAnything();
+    let { workflows } = useAnything();
 
-    console.log("flows in component", flows.flows);
+    console.log("flows in component", workflows.flows);
     return (
         <div>
-            {flows.flows.map((flow) => {
+            {workflows.flows.map((flow) => {
 
                 let icons: string[] = flow.flow_versions[0].flow_definition.actions.map((action) => {
                     return action.icon;
@@ -29,7 +24,7 @@ export default function ManageWorkflows() {
                 }
 
                 return (
-                    <Link href={`/dashboard/workflows/${flow.flow_id}`}>
+                    <Link href={`/dashboard/workflows/${flow.flow_id}/editor`}>
                         <Card key={flow.flow_id} className="mt-2 flex flex-row hover:border-green-500">
 
                             <CardHeader>

@@ -28,12 +28,11 @@ import {
 } from "reactflow";
 
 import api from "@/lib/anything-api"
-import { useFlowsContext } from "./FlowsProvider";
 import { Action, Flow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/flows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 
-interface FlowContextInterface {
+export interface WorkflowVersionContextInterface {
     nodes: Node[];
     edges: Edge[];
     flowVersions: Flow[];
@@ -51,7 +50,7 @@ interface FlowContextInterface {
     getFlowDefinitionsFromReactFlowState: () => Flow;
 }
 
-export const FlowContext = createContext<FlowContextInterface>({
+export const WorkflowVersionContext = createContext<WorkflowVersionContextInterface>({
     nodes: [],
     edges: [],
     flowVersions: [],
@@ -74,10 +73,9 @@ export const FlowContext = createContext<FlowContextInterface>({
 });
 
 
-export const useFlowContext = () => useContext(FlowContext);
+export const useWorkflowVersionContext = () => useContext(WorkflowVersionContext);
 
-export const FlowProvider = ({ children }: { children: ReactNode }) => {
-    const { updateFlow } = useFlowsContext();
+export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) => {
     const { flow_name } = useParams();
     const [hydrated, setHydrated] = useState<boolean>(false);
     const [firstLook, setFirstLook] = useState<boolean>(true);
@@ -373,7 +371,7 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
     }, [flow_name]);
 
     return (
-        <FlowContext.Provider
+        <WorkflowVersionContext.Provider
             value={{
                 nodes,
                 edges,
@@ -393,6 +391,6 @@ export const FlowProvider = ({ children }: { children: ReactNode }) => {
             }}
         >
             {children}
-        </FlowContext.Provider>
+        </WorkflowVersionContext.Provider>
     );
 };

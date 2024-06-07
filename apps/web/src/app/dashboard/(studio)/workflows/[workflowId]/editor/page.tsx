@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAnything } from "@/context/AnythingContext";
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from "react";
-import { DBWorkflow } from "@/context/FlowsProvider";
+import { DBWorkflow } from "@/context/WorkflowsProvider";
 import { Button } from "@/components/ui/button"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { Label } from "@/components/ui/label"
@@ -15,23 +15,24 @@ import { Badge } from "@/components/ui/badge"
 import { XIcon } from "lucide-react"
 import StudioHeader from '@/components/studio/studio-header';
 import StudioWorkflowEditor from '@/components/studio/studio-workflow-editor';
+import FormTabs from '@/components/studio/forms/form-tabs';
 
 export default function StudioLayout() {
     const router = useRouter();
-    const { flows: { getFlowById, flows } } = useAnything();
+    const { flow: { flow } } = useAnything();
     const [workflow, setWorkflow] = useState<DBWorkflow | undefined>(undefined);
     const params = useParams<{ workflowId: string; }>()
 
     useEffect(() => {
-        const fetchData = async () => {
-            console.log("params in useEffect", params);
-            if (params.workflowId) {
-                let flow = await getFlowById(params.workflowId);
-                setWorkflow(flow);
-            }
-        };
+        // const fetchData = async () => {
+        //     console.log("params in useEffect", params);
+        //     if (params.workflowId) {
+        //         let flow = await getFlowById(params.workflowId);
+        //         setWorkflow(flow);
+        //     }
+        // };
 
-        fetchData();
+        // fetchData();
     }, [params.workflowId, flows]);
 
     console.log("workflow", workflow);
@@ -39,86 +40,23 @@ export default function StudioLayout() {
         router.back();
     };
     return (
-        <div className="grid h-screen w-full pl-[56px]">
-            {/* Left Bar */}
-            <aside className="inset-y fixed  left-0 z-20 flex h-full flex-col border-r">
-                <div className="border-b p-2">
-                    <Button onClick={handleBack} variant="outline" size="icon" aria-label="Home">
-                        <XIcon className="size-5 fill-foreground" />
-                    </Button>
-                </div>
-                <nav className="grid gap-1 p-2">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-lg bg-muted" aria-label="Workflow Name">
-                                    <SquareTerminalIcon className="size-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" sideOffset={5}>
-                                Terminal
-                            </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Models">
-                                    <BotIcon className="size-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" sideOffset={5}>
-                                Models
-                            </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-lg" aria-label="API">
-                                    <FileCode2Icon className="size-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" sideOffset={5}>
-                                API
-                            </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Documentation">
-                                    <BookIcon className="size-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" sideOffset={5}>
-                                Documentation
-                            </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Settings">
-                                    <Settings2Icon className="size-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" sideOffset={5}>
-                                Settings
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </nav>
-            </aside>
+        <div className="grid h-screen w-full">
             {/* Header */}
             <div className="flex flex-col">
                 <StudioHeader flow_name={workflow?.flow_name || ""} />
                 <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
                     {/* Main Box */}
                     <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-2 lg:col-span-2">
-                        {/* <Badge variant="outline" className="absolute right-3 top-3">
-                            Output
-                        </Badge> */}
                         {/* Add Editor */}
                         <StudioWorkflowEditor />
                     </div>
                     {/* Right Hand Form */}
                     <div className="relative hidden flex-col items-start gap-8 md:flex" x-chunk="dashboard-03-chunk-0">
+                        <FormTabs />
                         <form className="grid w-full items-start gap-6">
                             <fieldset className="grid gap-6 rounded-lg border p-4">
                                 <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
+                                {/* <legend className="-ml-1 px-1 text-sm font-medium">Sharing</legend> */}
                                 <div className="grid gap-3">
                                     <Label htmlFor="model">Model</Label>
                                     <Select>

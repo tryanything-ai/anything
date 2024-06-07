@@ -10,39 +10,38 @@ import {
 
 import api from "@/lib/anything-api";
 import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
+// export type DB_WORKFLOWS_QUERY;
 
-export type UpdateFlowArgs = {
+export type UpdateWorklowArgs = {
     flow_name: string;
     active: boolean;
     version?: string;
 };
 
-export interface FlowsContextInterface {
+export interface WorkflowsContextInterface {
     flows: DB_WORKFLOWS_QUERY,
-    createNewFlow: () => Promise<void>;
-    getFlows: () => Promise<void>;
-    getFlowById: (flowId: string) => Promise<DB_WORKFLOWS_QUERY | undefined>;
-    deleteFlow: (flowId: string) => Promise<void>;
-    updateFlow: (flowId: string, args: UpdateFlowArgs) => Promise<void>;
-    stopExecution: () => Promise<void>;
+    createWorkflow: () => Promise<void>;
+    getWorkflows: () => Promise<void>;
+    getWorkflowById: (flowId: string) => Promise<DB_WORKFLOWS_QUERY | undefined>;
+    deleteWorkflow: (flowId: string) => Promise<void>;
+    updateWorkflow: (flowId: string, args: UpdateWorklowArgs) => Promise<void>;
 }
 
-export const FlowsContext = createContext<FlowsContextInterface>({
+export const WorkflowsContext = createContext<WorkflowsContextInterface>({
     flows: [],
-    createNewFlow: async () => { },
-    getFlows: async () => { },
-    getFlowById: async () => undefined,
-    deleteFlow: async () => { },
-    updateFlow: async () => { },
-    stopExecution: async () => { },
+    createWorkflow: async () => { },
+    getWorkflows: async () => { },
+    getWorkflowById: async () => undefined,
+    deleteWorkflow: async () => { },
+    updateWorkflow: async () => { }
 });
 
-export const useFlowsContext = () => useContext(FlowsContext);
+export const useWorkflowsContext = () => useContext(WorkflowsContext);
 
-export const FlowsProvider = ({ children }: { children: ReactNode }) => {
+export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
     const [flows, setFlows] = useState<DB_WORKFLOWS_QUERY>([]);
 
-    const createNewFlow = async (): Promise<void> => {
+    const createWorkflow = async (): Promise<void> => {
         try {
             //TODO Move to DB to fix collision problem
             let flowName = "Flow" + " " + (flows.length + 1);
@@ -52,31 +51,31 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
             console.log("error creating new flow in FlowsProvider", error);
             console.error(error);
         } finally {
-            await getFlows();
+            await getWorkflows();
         }
     };
 
-    const deleteFlow = async (flowId: string): Promise<void> => {
+    const deleteWorkflow = async (flowId: string): Promise<void> => {
         try {
             await api.flows.deleteFlow(flowId);
         } catch (error) {
             console.error(error);
         } finally {
-            await getFlows();
+            await getWorkflows();
         }
     };
 
-    const updateFlow = async (flowId: string, args: UpdateFlowArgs): Promise<void> => {
+    const updateWorkflow = async (flowId: string, args: UpdateWorklowArgs): Promise<void> => {
         try {
             await api.flows.updateFlow(flowId, args);
         } catch (error) {
             console.error(error);
         } finally {
-            await getFlows();
+            await getWorkflows();
         }
     };
 
-    const getFlows = async (): Promise<void> => {
+    const getWorkflows = async (): Promise<void> => {
         console.log("Getting Flows from API");
         try {
             let res: DB_WORKFLOWS_QUERY = await api.flows.getFlows();
@@ -90,35 +89,30 @@ export const FlowsProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const getFlowById = async (flowId: string): Promise<DB_WORKFLOWS_QUERY | undefined> => {
+    const getWorkflowById = async (flowId: string): Promise<DB_WORKFLOWS_QUERY | undefined> => {
         console.log("Getting Flow by ID from State");
         let res = flows.find((flow) => flow.flow_id === flowId);
         console.log("getFlowById:", res);
         return res;
     };
 
-    const stopExecution = async (): Promise<void> => {
-        await api.flows.stopExecution();
-    };
-
     // Hydrate flows on launch
     useEffect(() => {
-        getFlows();
+        getWorkflows();
     }, []);
 
     return (
-        <FlowsContext.Provider
+        <WorkflowsContext.Provider
             value={{
                 flows,
-                createNewFlow,
-                getFlows,
-                getFlowById,
-                deleteFlow,
-                updateFlow,
-                stopExecution,
+                createWorkflow,
+                getWorkflows,
+                getWorkflowById,
+                deleteWorkflow,
+                updateWorkflow,
             }}
         >
             {children}
-        </FlowsContext.Provider>
+        </WorkflowsContext.Provider>
     );
 };

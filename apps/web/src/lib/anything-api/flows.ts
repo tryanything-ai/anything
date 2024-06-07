@@ -1,5 +1,6 @@
 import { Action, Flow } from "@/types/flows";
 import { createClient } from "../supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 export type UpdateFlowArgs = {
   flow_name: string;
@@ -8,7 +9,6 @@ export type UpdateFlowArgs = {
 };
 
 export const getFlows = async () => {
-  //TODO: make this actually work
   try {
     // Get JWT from supabase to pass to the API
     // API conforms to RLS policies on behalf of users for external API
@@ -34,6 +34,35 @@ export const getFlows = async () => {
 }
 
 export const createFlow = async (flowName: string) => {
+  try {
+    // Get JWT from supabase to pass to the API
+    // API conforms to RLS policies on behalf of users for external API
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Creating Workflow');
+
+    if (session) {
+      let flow_id = uuidv4();
+      const response = await fetch(`http://localhost:3001/workflow/${flow_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${session.access_token}`,
+        },
+        body: JSON.stringify({
+          flow_id,
+          flow_name: flowName
+        }),
+      });
+      const data = await response.json();
+      console.log('Data from /api/workflows POST:', data);
+      return data;
+    }
+  } catch (error) {
+    console.error('Error creating Workflow:', error);
+  } finally {
+  }
   // console.log(`Called createFlow with ${flowName}`);
   // let res = await anything.createFlow(flowName);
   // console.log(`Got back from createFlow ${JSON.stringify(res)}`);

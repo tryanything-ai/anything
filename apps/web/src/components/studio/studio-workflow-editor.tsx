@@ -3,7 +3,7 @@ import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 
 import 'reactflow/dist/style.css';
 
-import { FlowProvider } from "@/context/FlowProvider";
+import { FlowProvider } from "@/context/WorkflowVersionProvider";
 import {
     FlowNavigationProvider
 

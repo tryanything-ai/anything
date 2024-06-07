@@ -5,11 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from "react";
-import { DBWorkflow } from "@/context/FlowsProvider";
+import { DBWorkflow } from "@/context/WorkflowsProvider";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
 
 export default function WorkflowManager() {
-    const { flows: { getFlowById, flows } } = useAnything();
+    const { workflows: { getWorkflowById, flows } } = useAnything();
     const [workflow, setWorkflow] = useState<DBWorkflow | undefined>(undefined);
     const params = useParams<{ workflowId: string; }>()
 
@@ -17,7 +17,7 @@ export default function WorkflowManager() {
         const fetchData = async () => {
             console.log("params in useEffect", params);
             if (params.workflowId) {
-                let flow = await getFlowById(params.workflowId);
+                let flow = await getWorkflowById(params.workflowId);
                 setWorkflow(flow);
             }
         };

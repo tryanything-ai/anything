@@ -1,27 +1,34 @@
 "use client"
 
 import React, { createContext, useContext } from 'react';
-import { FlowsContext,FlowsProvider, FlowsContextInterface } from "./FlowsProvider";
+import { WorkflowsContext, WorkflowsProvider, WorkflowsContextInterface } from "./WorkflowsProvider";
+import { WorkflowVersionProvider, WorkflowVersionContext, WorkflowVersionContextInterface } from './WorkflowVersionProvider'
 
 interface AnythingContextInterface {
-    flows: FlowsContextInterface;
+    workflows: WorkflowsContextInterface;
+    workflow_version: WorkflowVersionContextInterface;
 }
 
 const AnythingContext = createContext<AnythingContextInterface | undefined>(undefined);
 
 export const AnythingProvider = ({ children }: { children: React.ReactNode }) => {
-
     return (
-        <FlowsProvider>
-            <FlowsContext.Consumer>
-                {flows => (
-                    <AnythingContext.Provider value={{ flows }}>
-                        {children}
-                    </AnythingContext.Provider>
+        <WorkflowsProvider>
+            <WorkflowsContext.Consumer>
+                {workflows => (
+                    <WorkflowVersionProvider>
+                        <WorkflowVersionContext.Consumer>
+                            {workflow_version => (
+                                <AnythingContext.Provider value={{ workflow_version, workflows }}>
+                                    {children}
+                                </AnythingContext.Provider>
+                            )}
+                        </WorkflowVersionContext.Consumer>
+                    </WorkflowVersionProvider>
                 )}
-            </FlowsContext.Consumer>
-        </FlowsProvider>
-    );
+            </WorkflowsContext.Consumer>
+        </WorkflowsProvider>
+    )
 };
 
 export const useAnything = () => {

@@ -19,6 +19,7 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
@@ -41,12 +42,14 @@
     "tailwindcss": "3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "type-fest": "^4.19.0",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
+    "@types/uuid": "^9.0.8",
     "encoding": "^0.1.13"
   }
 }

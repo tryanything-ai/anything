@@ -1,12 +1,19 @@
 "use client"
 import ManageWorkflows from "@/components/workflows/manage-workflows";
-import { PartyPopper } from "lucide-react";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
 import { Separator } from "@/components/ui/separator";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function Workflows() {
-    const createWorkflow = () => {
-        //TODO: Implement
+    const { workflows } = useAnything();
+
+    const createWorkflow = async () => {
+        try { 
+            let res = await workflows.createWorkflow();
+            console.log("created workflow", res);
+        } catch (error) {
+            console.error("error creating workflow", error);
+        }
     }
     return (
         <div className="space-y-6 w-full">
