@@ -7,7 +7,116 @@ use dotenv::dotenv;
 use std::env;
 use postgrest::Postgrest;
 use tower_http::cors::CorsLayer;
+use extism::*;
+use tokio::sync::{Mutex, Semaphore};
+use tokio::task;
+use tokio::time::{sleep, Duration};
+use chrono::{Utc, DateTime, Timelike};
+use std::str::FromStr;
+use serde_with::{serde_as, DisplayFromStr};
 
+#[derive(Debug, Deserialize, Serialize)]
+struct Task {
+    id: i32,
+    data: String,
+    status: String,
+}
+
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize)]
+struct Trigger {
+    id: i32,
+    cron_expression: String,
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    last_run: Option<DateTime<Utc>>,
+}
+
+// Function to fetch a task from the database
+async fn fetch_task(client: &Postgrest) -> Option<Task> {
+    let response = client
+        .from("tasks")
+        .select("*")
+        .eq("status", "pending")
+        .limit(1)
+        .execute()
+        .await
+        .ok()?
+        .text()
+        .await
+        .ok()?;
+
+    let tasks: Vec<Task> = serde_json::from_str(&response).ok()?;
+    tasks.into_iter().next()
+}
+
+// Function to update the status of a task
+async fn update_task_status(client: &Postgrest, task: &Task, status: &str) {
+    let task = Task {
+        id: task.id,
+        data: task.data.clone(),
+        status: status.to_string(),
+    };
+    client
+        .from("tasks")
+        .eq("id", &task.id.to_string())
+        .update(serde_json::to_string(&task).unwrap())
+        .execute()
+        .await
+        .unwrap();
+}
+
+// Function to process a task with the Extism plugin
+async fn process_task(plugin: &mut Plugin, task: &Task) {
+    let res = plugin.call::<&str, &str>("process_task", &task.data).unwrap();
+    println!("Processed task {}: {}", task.id, res);
+}
+
+// Function to fetch triggers from the database
+async fn fetch_triggers(client: &Postgrest) -> Vec<Trigger> {
+    let response = client
+        .from("triggers")
+        .select("*")
+        .execute()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+
+    serde_json::from_str(&response).unwrap()
+}
+
+// Function to update the last run time of a trigger
+async fn update_trigger_last_run(client: &Postgrest, trigger: &Trigger) {
+    let updated_trigger = Trigger {
+        id: trigger.id,
+        cron_expression: trigger.cron_expression.clone(),
+        last_run: Some(Utc::now()),
+    };
+    client
+        .from("triggers")
+        .eq("id", &updated_trigger.id.to_string())
+        .update(serde_json::to_string(&updated_trigger).unwrap())
+        .execute()
+        .await
+        .unwrap();
+}
+
+// Function to check if the trigger should run
+fn should_trigger_run(trigger: &Trigger) -> bool {
+    let now = Utc::now();
+    let next_run_time = cron::Schedule::from_str(&trigger.cron_expression)
+        .unwrap()
+        .upcoming(Utc)
+        .next()
+        .unwrap();
+
+    if let Some(last_run) = trigger.last_run {
+        now > next_run_time && now.minute() != last_run.minute()
+    } else {
+        now > next_run_time
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -15,63 +124,87 @@ async fn main() {
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
 
-    let client = Arc::new(Postgrest::new(supabase_url).insert_header("apikey", supabase_api_key));
+    let client = Arc::new(Postgrest::new(supabase_url.clone()).insert_header("apikey", supabase_api_key.clone()));
 
     let cors = CorsLayer::new()
-    .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
-    .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
-    .allow_headers([AUTHORIZATION, CONTENT_TYPE]);
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_headers([AUTHORIZATION, CONTENT_TYPE]);
 
     let app = Router::new()
         .route("/", get(root))
         .route("/items", get(get_items))
         .layer(cors)
-            // see https://docs.rs/tower-http/latest/tower_http/cors/index.html
-            // for more details
-            //
-            // pay attention that for some request types like posting content-type: application/json
-            // it is required to add ".allow_headers([http::header::CONTENT_TYPE])"
-        //     // or see this issue https://github.com/tokio-rs/axum/issues/849
-        //     CorsLayer::new()
-        //     // .allow_origin(Any)
-        //     // .allow_methods(Any)
-        //     // .allow_headers(Any)
-        //         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
-        //         .allow_methods([Method::GET]),
-        // )
-        // .layer(ServiceBuilder::new().layer(TraceLayer::new_for_http()))
-        .with_state(client);
+        .with_state(client.clone());
 
-          // run our app with hyper, listening globally on port 3000
+    let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
+    let manifest = Manifest::new([url]);
+    let plugin = Arc::new(Mutex::new(
+        Plugin::new(&manifest, [], true).unwrap()
+    ));
+
+    // Create a semaphore to limit the number of concurrent tasks
+    let semaphore = Arc::new(Semaphore::new(5));
+
+    // Spawn task processing loop
+    let client_clone = client.clone();
+    let plugin_clone = plugin.clone();
+    let semaphore_clone = semaphore.clone();
+
+    // tokio::spawn(async move {
+    //     let mut backoff = Duration::from_millis(200);
+
+    //     loop {
+    //         let task = fetch_task(&client_clone).await;
+            
+    //         if let Some(task) = task {
+    //             backoff = Duration::from_millis(200); // Reset backoff when a task is found
+    //             update_task_status(&client_clone, &task, "in_progress").await;
+
+    //             let plugin = plugin_clone.clone();
+    //             let client = client_clone.clone();
+    //             let permit = semaphore_clone.clone().acquire_owned().await.unwrap();
+
+    //             task::spawn(async move {
+    //                 let mut plugin = plugin.lock().await;
+    //                 process_task(&mut plugin, &task).await;
+    //                 update_task_status(&client, &task, "completed").await;
+    //                 drop(permit);
+    //             });
+    //         } else {
+    //             // Increase the backoff duration, up to a maximum
+    //             sleep(backoff).await;
+    //             backoff = (backoff * 2).min(Duration::from_secs(60));
+    //         }
+    //     }
+    // });
+
+    // Spawn cron job loop
+    let client_clone = client.clone();
+
+    // tokio::spawn(async move {
+    //     loop {
+    //         let triggers = fetch_triggers(&client_clone).await;
+    //         for trigger in triggers {
+    //             if should_trigger_run(&trigger) {
+    //                 // Execute the task associated with the trigger
+    //                 println!("Triggering task for cron expression: {}", trigger.cron_expression);
+    //                 update_trigger_last_run(&client_clone, &trigger).await;
+    //             }
+    //         }
+    //         // Sleep for a minute before checking again
+    //         sleep(Duration::from_secs(60)).await;
+    //     }
+    // });
+
+    // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-
 async fn root() -> &'static str {
     "Hello, World!"
 }
-
-// #[derive(Serialize, Deserialize)]
-// struct Item {
-//     id: i32,
-//     name: String,
-// }
-
-// async fn get_items(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> Json<Vec<Item>> {
-//     let jwt = headers.get("Authorization").and_then(|h| h.to_str().ok()).unwrap_or("");
-
-//     let response = client
-//         .from("flows")
-//         .auth(jwt)
-//         .select("*")
-//         .execute()
-//         .await?; 
-
-//     let body = response.text().await?; 
-//     let items: Vec<Item> = serde_json::from_str(&body).unwrap();
-//     Json(items)
-// }
 
 async fn get_items(State(client): State<Arc<Postgrest>>, headers: HeaderMap) -> impl IntoResponse {
     let jwt = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
