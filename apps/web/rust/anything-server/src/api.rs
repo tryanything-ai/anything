@@ -10,6 +10,8 @@ use std::sync::Arc;
 use hyper::header::AUTHORIZATION;
 use postgrest::Postgrest;
 
+use crate::auth::User;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Workflow {
     flow_id: String,
@@ -22,18 +24,16 @@ pub async fn root() -> &'static str {
 
 pub async fn get_workflows(
     State(client): State<Arc<Postgrest>>, 
+    Extension(user): Extension<User>,
     headers: HeaderMap,
-    Extension(user_id): Extension<String>,
-    Extension(jwt): Extension<String>,
 ) -> impl IntoResponse {
     println!("Handling a get_workflows");
 
-    println!("User ID: {}", user_id);
-    println!("JWT: {}", jwt);
+    println!("User in handler: {:?}", user);
 
     let response = match client
         .from("flows")
-        .auth(jwt)
+        .auth(user.jwt)
         .select("*,flow_versions(*)")
         .execute()
         .await
@@ -63,7 +63,7 @@ pub async fn get_workflow(
 
     let response = match client
         .from("flows")
-        .auth(jwt)
+        // .auth(jwt)
         .eq("id", &flow_id)
         .select("*,flow_versions(*)")
         .execute()
@@ -95,7 +95,7 @@ pub async fn get_flow_versions(
 
     let response = match client
         .from("flow_versions")
-        .auth(jwt)
+        // .auth(jwt)
         .eq("flow_id", &flow_id)
         .select("*")
         .execute()
@@ -142,7 +142,7 @@ pub async fn create_workflow(
 
     let response = match client
         .from("flows")
-        .auth(jwt)
+        // .auth(jwt)
         .insert(serde_json::to_string(&workflow).unwrap())
         .execute()
         .await
@@ -169,7 +169,7 @@ pub async fn delete_workflow(
 
     let response = match client
         .from("flows")
-        .auth(jwt)
+        // .auth(jwt)
         .eq("id", &flow_id)
         .delete()
         .execute()
@@ -203,7 +203,7 @@ pub async fn update_workflow(
 
     let response = match client
         .from("flows")
-        .auth(jwt)
+        // .auth(jwt)
         .eq("id", &flow_id)
         .update(serde_json::to_string(&workflow).unwrap())
         .execute()

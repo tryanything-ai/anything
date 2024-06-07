@@ -10,6 +10,12 @@ use std::env;
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct User {
+    pub jwt: String,
+    pub account_id: String,
+}
+
 // JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
@@ -17,6 +23,8 @@ struct Claims {
     aud: String,
     iss: String,
 }
+
+
 
 //https://stackoverflow.com/a/76347410
 //https://docs.rs/jsonwebtoken/latest/jsonwebtoken/struct.Validation.html#method.insecure_disable_signature_validation
@@ -47,10 +55,19 @@ pub async fn middleware(
 
     match decode_jwt(jwt, &secret) {
         Ok(claims) => {
-            request.extensions_mut().insert(claims.sub.clone());
-            request.extensions_mut().insert(jwt.to_string());
+
+            let user = User {
+                jwt: jwt.to_string(),
+                account_id: claims.sub.clone(),
+            };
+
+            // println!("User in auth middleware: {:?}", user);
+
+            request.extensions_mut().insert(user);
+            // request.extensions_mut().insert(claims.sub.clone());
+            // request.extensions_mut().insert(jwt.to_string());
             let response = next.run(request).await;
-            println!("Response after decode: {:?}", response);
+            // println!("Response after response: {:?}", response);
             Ok(response)
         }
         Err(e) => {
