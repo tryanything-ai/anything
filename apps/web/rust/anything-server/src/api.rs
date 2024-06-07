@@ -26,11 +26,6 @@ pub async fn get_workflows(
     Extension(user_id): Extension<String>,
     Extension(jwt): Extension<String>,
 ) -> impl IntoResponse {
-    // let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-    //     Some(jwt) => jwt,
-    //     None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    // };
-
     println!("Handling a get_workflows");
 
     println!("User ID: {}", user_id);
@@ -65,10 +60,6 @@ pub async fn get_workflow(
     State(client): State<Arc<Postgrest>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-        Some(jwt) => jwt,
-        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    };
 
     let response = match client
         .from("flows")
@@ -100,10 +91,7 @@ pub async fn get_flow_versions(
     State(client): State<Arc<Postgrest>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-        Some(jwt) => jwt,
-        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    };
+    
 
     let response = match client
         .from("flow_versions")
@@ -177,10 +165,7 @@ pub async fn delete_workflow(
     State(client): State<Arc<Postgrest>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-        Some(jwt) => jwt,
-        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    };
+    
 
     let response = match client
         .from("flows")
@@ -209,10 +194,7 @@ pub async fn update_workflow(
     headers: HeaderMap,
     Json(payload): Json<Workflow>,  
 ) -> impl IntoResponse {
-    let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-        Some(jwt) => jwt,
-        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    };
+    
 
     let workflow = Workflow {
         flow_id: flow_id.clone(),
