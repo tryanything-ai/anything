@@ -12,12 +12,21 @@ use postgrest::Postgrest;
 
 use crate::auth::User;
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BaseFlowVersionInput {
+    account_id: String,
+    flow_id: String, 
+    flow_version: String, 
+    flow_definition: Value, 
+
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateWorkflowHandleInput {
     flow_id: String,
     flow_name: String
 }
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateWorkflowInput {
     flow_id: String,
@@ -148,9 +157,11 @@ pub async fn create_workflow(
 
     println!("Workflow: {:?}", input);
 
+    let jwt = user.jwt.clone();
+    // Create Flow
     let response = match client
         .from("flows")
-        .auth(user.jwt)
+        .auth(jwt)
         .insert(serde_json::to_string(&input).unwrap())
         .execute()
         .await
@@ -158,6 +169,30 @@ pub async fn create_workflow(
         Ok(response) => response,
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
     };
+
+    let versionInput = BaseFlowVersionInput {
+        account_id: user.account_id.clone(),
+        flow_id: payload.flow_id.clone(),
+        flow_version: "0.0.1".to_string(),
+        flow_definition: serde_json::json!({
+            "actions": [],
+        })
+    };
+
+    let clonedUser = user.clone();
+    
+    //Create Flow Version
+    let version_response = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&versionInput).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
 
     let body = match response.text().await {
         Ok(body) => body,
