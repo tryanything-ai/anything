@@ -45,6 +45,7 @@ pub async fn get_workflows(
     let response = match client
         .from("flows")
         .auth(user.jwt)
+        .eq("archived", "false")
         .select("*,flow_versions(*)")
         .execute()
         .await
@@ -69,12 +70,13 @@ pub async fn get_workflows(
 pub async fn get_workflow(
     Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
 
     let response = match client
         .from("flows")
-        // .auth(jwt)
+        .auth(user.jwt)
         .eq("id", &flow_id)
         .select("*,flow_versions(*)")
         .execute()
@@ -100,13 +102,13 @@ pub async fn get_workflow(
 pub async fn get_flow_versions(
     Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    
 
     let response = match client
         .from("flow_versions")
-        // .auth(jwt)
+        .auth(user.jwt)
         .eq("flow_id", &flow_id)
         .select("*")
         .execute()
@@ -129,9 +131,7 @@ pub async fn get_flow_versions(
     Json(items).into_response()
 }
 
-
 pub async fn create_workflow(
-    Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
@@ -167,19 +167,18 @@ pub async fn create_workflow(
     Json(body).into_response()
 }
 
-//TODO: change this to some sort of soft delete or archive
 pub async fn delete_workflow(
     Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    
 
     let response = match client
         .from("flows")
-        // .auth(jwt)
+        .auth(user.jwt)
         .eq("id", &flow_id)
-        .delete()
+        .update("{\"archived\": true}")
         .execute()
         .await
     {
@@ -199,13 +198,14 @@ pub async fn delete_workflow(
 pub async fn update_workflow(
     Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
     headers: HeaderMap,
     Json(payload): Json<UpdateWorkflowInput>,  
 ) -> impl IntoResponse {
     
     let response = match client
         .from("flows")
-        // .auth(user.jwt)
+        .auth(user.jwt)
         .eq("id", &flow_id)
         .update(serde_json::to_string(&payload).unwrap())
         .execute()

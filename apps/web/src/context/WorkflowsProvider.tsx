@@ -10,7 +10,6 @@ import {
 
 import api from "@/lib/anything-api";
 import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
-// export type DB_WORKFLOWS_QUERY;
 
 export type UpdateWorklowArgs = {
     flow_name: string;

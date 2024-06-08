@@ -44,7 +44,7 @@ export const createFlow = async (flowName: string) => {
 
     if (session) {
       let flow_id = uuidv4();
-      const response = await fetch(`http://localhost:3001/workflow/${flow_id}`, {
+      const response = await fetch(`http://localhost:3001/workflow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +84,30 @@ export async function updateFlowVersion(flowId: string, flow: Flow) {
 }
 
 export async function deleteFlow(flowId: string) {
-  // return await anything.deleteFlow(flowId);
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Deleting Workflow');
+
+    if (session) {
+      const response = await fetch(`http://localhost:3001/workflow/${flowId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${session.access_token}`,
+        }
+      });
+
+      const data = await response.json();
+      console.log('Data from /api/workflows DELETE:', data);
+      return data;
+    }
+
+  } catch (error) {
+    console.error('Error deleting Workflow:', error);
+  } finally {
+  }
 }
 
 export const getFlow = async (flowId: string) => {
