@@ -211,7 +211,7 @@ pub async fn delete_workflow(
     let response = match client
         .from("flows")
         .auth(user.jwt)
-        .eq("id", &flow_id)
+        .eq("flow_id", &flow_id)
         .update("{\"archived\": true}")
         .execute()
         .await

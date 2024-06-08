@@ -32,8 +32,10 @@ import { Action, Flow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/type
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 
+
 export interface WorkflowVersionContextInterface {
     db_flow_version_id: string;
+    db_flow_id: string;
     db_flow: any,
     db_flow_version: any,
     nodes: Node[];
@@ -55,6 +57,7 @@ export interface WorkflowVersionContextInterface {
 
 export const WorkflowVersionContext = createContext<WorkflowVersionContextInterface>({
     db_flow_version_id: "",
+    db_flow_id: "",
     db_flow: {},
     db_flow_version: {},
     nodes: [],
@@ -81,10 +84,16 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
 export const useWorkflowVersionContext = () => useContext(WorkflowVersionContext);
 
 export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) => {
-    const { workflowId } = useParams<{ workflowId: string; }>()
+    const { workflowId, workflowVersionId } = useParams<{ workflowId: string; workflowVersionId: string }>()
+
+    //Easy Access State
     const [dbFlow, setDbFlow] = useState<any>({})
     const [dbFlowVersion, setDbFlowVersion] = useState<any>({})
-    const [dbFlowVersionId, setDebFlowVersionId] = useState<string>("")
+    //Easy Access Id's
+    const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
+    const [dbFlowId, setDbFlowId] = useState<string>("")
+
+    //Internal for ReactFlow and Flow Definition Management
     const [hydrated, setHydrated] = useState<boolean>(false);
     const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
@@ -93,8 +102,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [flowFrontmatter, setFlowFrontmatter] = useState<
         FlowFrontMatter | undefined
     >();
-    // const [toml, setToml] = useState<string>("");
-
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
@@ -378,9 +385,18 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     //     hydrateFlow();
     // }, [flow_name]);
 
+    //React to Navigtaion
+    useEffect(() => {
+        if (!workflowId || !workflowVersionId) return;
+        setDbFlowVersionId(workflowVersionId);
+        setDbFlowId(workflowId);
+        // hydrateFlow(); //TODO: reimplement loading from JSON. 
+    }, [workflowId, workflowVersionId]);
+
     return (
         <WorkflowVersionContext.Provider
             value={{
+                db_flow_id: dbFlowId,
                 db_flow_version_id: dbFlowVersionId,
                 db_flow: dbFlow,
                 db_flow_version: dbFlowVersion,
