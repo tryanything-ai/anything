@@ -31,6 +31,8 @@ import api from "@/lib/anything-api"
 import { Action, Flow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/flows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
+import { useWorkflowsContext } from "./WorkflowsProvider";
+import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 
 export interface WorkflowVersionContextInterface {
@@ -38,6 +40,7 @@ export interface WorkflowVersionContextInterface {
     db_flow_id: string;
     db_flow: any,
     db_flow_version: any,
+    flow_version_definition: any;
     nodes: Node[];
     edges: Edge[];
     flowVersions: Flow[];
@@ -60,6 +63,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     db_flow_id: "",
     db_flow: {},
     db_flow_version: {},
+    flow_version_definition: {},
     nodes: [],
     edges: [],
     flowVersions: [],
@@ -85,10 +89,12 @@ export const useWorkflowVersionContext = () => useContext(WorkflowVersionContext
 
 export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) => {
     const { workflowId, workflowVersionId } = useParams<{ workflowId: string; workflowVersionId: string }>()
+    const { getWorkflowById } = useWorkflowsContext();
 
     //Easy Access State
     const [dbFlow, setDbFlow] = useState<any>({})
     const [dbFlowVersion, setDbFlowVersion] = useState<any>({})
+    const [flow_version_definition, setFlowVersionDefinition] = useState<any>({})
     //Easy Access Id's
     const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
     const [dbFlowId, setDbFlowId] = useState<string>("")
@@ -385,11 +391,31 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     //     hydrateFlow();
     // }, [flow_name]);
 
+    const newHydrateFlow = async () => {
+        try {
+            console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
+            if (!workflowId) return;
+            let workflow_response = await getWorkflowById(workflowId);
+
+            if (!workflow_response) return;
+            let flow = workflow_response[0];
+            console.log("New Hydreate in Workflow Provider", flow);
+            console.log('Version in New Hydrate Flow', flow.flow_versions[0]);
+            console.log('Flow Definition in New Hydrate Flow', flow.flow_versions[0].flow_definition);
+
+            setDbFlow(flow);
+            setDbFlowVersion(flow.flow_versions[0]);
+            setFlowVersionDefinition(flow.flow_versions[0].flow_definition);
+        } catch (e) {
+            console.log("error in fetch flow", JSON.stringify(e, null, 3));
+        }
+    }
     //React to Navigtaion
     useEffect(() => {
         if (!workflowId || !workflowVersionId) return;
         setDbFlowVersionId(workflowVersionId);
         setDbFlowId(workflowId);
+        newHydrateFlow();
         // hydrateFlow(); //TODO: reimplement loading from JSON. 
     }, [workflowId, workflowVersionId]);
 
@@ -400,6 +426,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 db_flow_version_id: dbFlowVersionId,
                 db_flow: dbFlow,
                 db_flow_version: dbFlowVersion,
+                flow_version_definition,
                 nodes,
                 edges,
                 flowVersions,

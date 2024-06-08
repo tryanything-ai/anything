@@ -13,7 +13,7 @@ import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export type UpdateWorklowArgs = {
     flow_name: string;
-    active: boolean;
+    active?: boolean;
     version?: string;
 };
 
@@ -81,6 +81,8 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
             console.log("getFlows:", res);
             if (res.length > 0) {
                 setFlows(res);
+            } else {
+                setFlows([]);
             }
 
         } catch (error) {
@@ -90,9 +92,12 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
 
     const getWorkflowById = async (flowId: string): Promise<DB_WORKFLOWS_QUERY | undefined> => {
         console.log("Getting Flow by ID from State");
-        let res = flows.find((flow) => flow.flow_id === flowId);
-        console.log("getFlowById:", res);
-        return res;
+        let res = flows.filter((flow) => flow.flow_id === flowId);
+        if (res.length > 0) {
+            return res;
+        } else {
+            return await api.flows.getFlow(flowId);
+        }
     };
 
     // Hydrate flows on launch

@@ -11,7 +11,7 @@ export default function StudioLayout() {
         <div className="grid h-screen w-full">
             {/* Header */}
             <div className="flex flex-col">
-                <StudioHeader flow_name={workflow?.db_flow_version.flow_name || ""} />
+                <StudioHeader flow_name={workflow?.db_flow.flow_name || ""} />
                 <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
                     {/* Main Box */}
                     <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-2 lg:col-span-2">

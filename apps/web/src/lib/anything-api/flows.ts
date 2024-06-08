@@ -111,7 +111,30 @@ export async function deleteFlow(flowId: string) {
 }
 
 export const getFlow = async (flowId: string) => {
-  // return await invoke("get_flow", { flowId });
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Fetching Workflow by ID');
+
+    if (session) {
+      const response = await fetch(`http://localhost:3001/workflow/${flowId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${session.access_token}`,
+        }
+      });
+
+      const data = await response.json();
+      console.log('Data from /api/workflows GET:', data);
+      return data;
+    }
+
+  } catch (error) {
+    console.error('Error deleting Workflow:', error);
+  } finally {
+  }
 };
 
 export const getFlowByName = async (flowName: string) => {

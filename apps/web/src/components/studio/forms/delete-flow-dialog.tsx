@@ -35,10 +35,7 @@ export default function DeleteFlowDialog({ workflowId }: { workflowId: string })
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Deleting Workflows is permanent.  {workflowId}
-                    </AlertDialogDescription>
-                    <AlertDialogDescription>
-                        workflow_id {workflowId}
+                        Deleting Workflows is permanent.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
