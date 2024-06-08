@@ -12,8 +12,21 @@ use postgrest::Postgrest;
 
 use crate::auth::User;
 
+
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Workflow {
+pub struct CreateWorkflowHandleInput {
+    flow_id: String,
+    flow_name: String
+}
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateWorkflowInput {
+    flow_id: String,
+    flow_name: String,
+    account_id: String
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateWorkflowInput {
     flow_id: String,
     flow_name: String
 }
@@ -28,8 +41,6 @@ pub async fn get_workflows(
     headers: HeaderMap,
 ) -> impl IntoResponse {
     println!("Handling a get_workflows");
-
-    println!("User in handler: {:?}", user);
 
     let response = match client
         .from("flows")
@@ -118,32 +129,29 @@ pub async fn get_flow_versions(
     Json(items).into_response()
 }
 
-//TODO: Validate against Schema. etc
+
 pub async fn create_workflow(
     Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
     headers: HeaderMap,
-    Json(payload): Json<Workflow>,
+    Json(payload): Json<CreateWorkflowHandleInput>,
 ) -> impl IntoResponse {
 
-    println!("Create Workflow in Rust");
+    println!("Handling a create_workflow");
 
-    let jwt = match headers.get(AUTHORIZATION).and_then(|h| h.to_str().ok()) {
-        Some(jwt) => jwt.to_string(),
-        None => return (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
-    };
+    let input = CreateWorkflowInput {
+        flow_id: payload.flow_id.clone(),
+        flow_name: payload.flow_name.clone(),
+        account_id: user.account_id.clone()
+    }; 
 
-    println!("JWT: {}", jwt);
-    //TODO: get accound id from JWT
-
-    let workflow = Workflow {
-        ..payload
-    };
+    println!("Workflow: {:?}", input);
 
     let response = match client
         .from("flows")
-        // .auth(jwt)
-        .insert(serde_json::to_string(&workflow).unwrap())
+        .auth(user.jwt)
+        .insert(serde_json::to_string(&input).unwrap())
         .execute()
         .await
     {
@@ -192,20 +200,14 @@ pub async fn update_workflow(
     Path(flow_id): Path<String>,
     State(client): State<Arc<Postgrest>>,
     headers: HeaderMap,
-    Json(payload): Json<Workflow>,  
+    Json(payload): Json<UpdateWorkflowInput>,  
 ) -> impl IntoResponse {
     
-
-    let workflow = Workflow {
-        flow_id: flow_id.clone(),
-        ..payload
-    };
-
     let response = match client
         .from("flows")
-        // .auth(jwt)
+        // .auth(user.jwt)
         .eq("id", &flow_id)
-        .update(serde_json::to_string(&workflow).unwrap())
+        .update(serde_json::to_string(&payload).unwrap())
         .execute()
         .await
     {

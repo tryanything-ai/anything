@@ -8,11 +8,8 @@ CREATE TABLE IF NOT EXISTS anything.flows
 
     -- ADD YOUR COLUMNS HERE
     flow_name TEXT NOT NULL,
-    latest_version_id TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT FALSE,
-    archived boolean not null default false, 
-    -- updated_at timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
-    UNIQUE (flow_name),
+    archived boolean not null default false,
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these

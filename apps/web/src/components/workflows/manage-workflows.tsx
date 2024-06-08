@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 import { useAnything } from "@/context/AnythingContext";
 
+
 export default function ManageWorkflows() {
 
     let { workflows } = useAnything();
@@ -13,14 +14,17 @@ export default function ManageWorkflows() {
     return (
         <div>
             {workflows.flows.map((flow) => {
+                let icons: string[] = [];
+                //only do if we have actual data
+                if (flow.flow_versions.length !== 0) {
+                    icons = flow.flow_versions[0].flow_definition.actions.map((action) => {
+                        return action.icon;
+                    });
 
-                let icons: string[] = flow.flow_versions[0].flow_definition.actions.map((action) => {
-                    return action.icon;
-                });
-
-                if (flow.flow_versions[0].flow_definition.trigger?.icon) {
-                    let trigger_icon = flow.flow_versions[0].flow_definition.trigger?.icon;
-                    icons.unshift(trigger_icon);
+                    if (flow.flow_versions[0].flow_definition.trigger?.icon) {
+                        let trigger_icon = flow.flow_versions[0].flow_definition.trigger?.icon;
+                        icons.unshift(trigger_icon);
+                    }
                 }
 
                 return (

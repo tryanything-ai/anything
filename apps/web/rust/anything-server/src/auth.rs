@@ -24,8 +24,6 @@ struct Claims {
     iss: String,
 }
 
-
-
 //https://stackoverflow.com/a/76347410
 //https://docs.rs/jsonwebtoken/latest/jsonwebtoken/struct.Validation.html#method.insecure_disable_signature_validation
 //https://github.com/orgs/supabase/discussions/20763#discussioncomment-9502807 ( audience = authenticated )
