@@ -5,7 +5,6 @@ import Link from "next/link";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 import { useAnything } from "@/context/AnythingContext";
 
-
 export default function ManageWorkflows() {
 
     let { workflows } = useAnything();
@@ -28,7 +27,7 @@ export default function ManageWorkflows() {
                 }
 
                 return (
-                    <Link href={`/dashboard/workflows/${flow.flow_id}/editor`}>
+                    <Link href={`/dashboard/workflows/${flow.flow_id}/${flow.flow_versions[0]?.flow_version_id}/editor`}>
                         <Card key={flow.flow_id} className="mt-2 flex flex-row hover:border-green-500">
 
                             <CardHeader>

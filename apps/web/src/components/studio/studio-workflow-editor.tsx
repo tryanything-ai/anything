@@ -1,13 +1,8 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import ReactFlow, { Background, BackgroundVariant, Controls } from "reactflow";
 
 import 'reactflow/dist/style.css';
 
-import { FlowProvider } from "@/context/WorkflowVersionProvider";
-import {
-    FlowNavigationProvider
-
-} from "@/context/FlowNavigationProvider";
 import BaseNode
     from "./nodes/workflow-node";
 
@@ -17,6 +12,7 @@ const initialNodes = [
 ];
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+
 export default function StudioWorkflowEditor() {
 
     const nodeTypes = useMemo(
@@ -27,24 +23,19 @@ export default function StudioWorkflowEditor() {
     );
 
     return (
-        <FlowProvider>
-            <FlowNavigationProvider>
-                <div style={{ width: '100%', height: '100%' }}>
-                    <ReactFlow
-                        nodeTypes={nodeTypes}
-                        nodes={initialNodes}
-                        edges={initialEdges}
-                    >
-                        <Background
-                            variant={BackgroundVariant.Dots}
-                            gap={20}
-                            size={1}
-                        />
-                        <Controls />
-                    </ReactFlow>
-                </div>
-            </FlowNavigationProvider>
-        </FlowProvider>
-
+        <div style={{ width: '100%', height: '100%' }}>
+            <ReactFlow
+                nodeTypes={nodeTypes}
+                nodes={initialNodes}
+                edges={initialEdges}
+            >
+                <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={20}
+                    size={1}
+                />
+                <Controls />
+            </ReactFlow>
+        </div>
     )
 }

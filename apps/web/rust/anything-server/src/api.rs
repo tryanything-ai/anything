@@ -18,7 +18,6 @@ pub struct BaseFlowVersionInput {
     flow_id: String, 
     flow_version: String, 
     flow_definition: Value, 
-
 }
 
 #[derive(Debug, Deserialize, Serialize)]

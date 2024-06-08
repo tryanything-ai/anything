@@ -1,49 +1,17 @@
 "use client"
 
-import { useRouter } from 'next/navigation';
 import { useAnything } from "@/context/AnythingContext";
-import { useParams } from 'next/navigation'
-import { useEffect, useState } from "react";
-import { DBWorkflow } from "@/context/WorkflowsProvider";
-import { Button } from "@/components/ui/button"
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { Label } from "@/components/ui/label"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { XIcon } from "lucide-react"
 import StudioHeader from '@/components/studio/studio-header';
 import StudioWorkflowEditor from '@/components/studio/studio-workflow-editor';
-import FormTabs from '@/components/studio/forms/form-tabs';
+import RightPanelFormEditor from '@/components/studio/forms/right-panel-form-editor';
 
 export default function StudioLayout() {
-    const router = useRouter();
-    const { flow: { flow } } = useAnything();
-    const [workflow, setWorkflow] = useState<DBWorkflow | undefined>(undefined);
-    const params = useParams<{ workflowId: string; }>()
-
-    useEffect(() => {
-        // const fetchData = async () => {
-        //     console.log("params in useEffect", params);
-        //     if (params.workflowId) {
-        //         let flow = await getFlowById(params.workflowId);
-        //         setWorkflow(flow);
-        //     }
-        // };
-
-        // fetchData();
-    }, [params.workflowId, flows]);
-
-    console.log("workflow", workflow);
-    const handleBack = () => {
-        router.back();
-    };
+    const { workflow } = useAnything();
     return (
         <div className="grid h-screen w-full">
             {/* Header */}
             <div className="flex flex-col">
-                <StudioHeader flow_name={workflow?.flow_name || ""} />
+                <StudioHeader flow_name={workflow?.db_flow_version.flow_name || ""} />
                 <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
                     {/* Main Box */}
                     <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-2 lg:col-span-2">
@@ -52,96 +20,7 @@ export default function StudioLayout() {
                     </div>
                     {/* Right Hand Form */}
                     <div className="relative hidden flex-col items-start gap-8 md:flex" x-chunk="dashboard-03-chunk-0">
-                        <FormTabs />
-                        <form className="grid w-full items-start gap-6">
-                            <fieldset className="grid gap-6 rounded-lg border p-4">
-                                <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
-                                {/* <legend className="-ml-1 px-1 text-sm font-medium">Sharing</legend> */}
-                                <div className="grid gap-3">
-                                    <Label htmlFor="model">Model</Label>
-                                    <Select>
-                                        <SelectTrigger id="model" className="items-start [&_[data-description]]:hidden">
-                                            <SelectValue placeholder="Select a model" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="genesis">
-                                                <div className="flex items-start gap-3 text-muted-foreground">
-                                                    <RabbitIcon className="size-5" />
-                                                    <div className="grid gap-0.5">
-                                                        <p>
-                                                            Neural <span className="font-medium text-foreground">Genesis</span>
-                                                        </p>
-                                                        <p className="text-xs" data-description>
-                                                            Our fastest model for general use cases.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </SelectItem>
-                                            <SelectItem value="explorer">
-                                                <div className="flex items-start gap-3 text-muted-foreground">
-                                                    <BirdIcon className="size-5" />
-                                                    <div className="grid gap-0.5">
-                                                        <p>
-                                                            Neural <span className="font-medium text-foreground">Explorer</span>
-                                                        </p>
-                                                        <p className="text-xs" data-description>
-                                                            Performance and speed for efficiency.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </SelectItem>
-                                            <SelectItem value="quantum">
-                                                <div className="flex items-start gap-3 text-muted-foreground">
-                                                    <TurtleIcon className="size-5" />
-                                                    <div className="grid gap-0.5">
-                                                        <p>
-                                                            Neural <span className="font-medium text-foreground">Quantum</span>
-                                                        </p>
-                                                        <p className="text-xs" data-description>
-                                                            The most powerful model for complex computations.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="temperature">Temperature</Label>
-                                    <Input id="temperature" type="number" placeholder="0.4" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="top-p">Top P</Label>
-                                        <Input id="top-p" type="number" placeholder="0.7" />
-                                    </div>
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="top-k">Top K</Label>
-                                        <Input id="top-k" type="number" placeholder="0.0" />
-                                    </div>
-                                </div>
-                            </fieldset>
-                            <fieldset className="grid gap-6 rounded-lg border p-4">
-                                <legend className="-ml-1 px-1 text-sm font-medium">Messages</legend>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="role">Role</Label>
-                                    <Select defaultValue="system">
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="system">System</SelectItem>
-                                            <SelectItem value="user">User</SelectItem>
-                                            <SelectItem value="assistant">Assistant</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="content">Content</Label>
-                                    <Textarea id="content" placeholder="You are a..." className="min-h-[9.5rem]" />
-                                </div>
-                            </fieldset>
-                        </form>
+                        <RightPanelFormEditor />
                     </div>
                 </main>
             </div>

@@ -7,7 +7,7 @@ import {
     useEffect,
     useState,
 } from "react";
-
+import { useParams } from 'next/navigation'
 import api from "@/lib/anything-api";
 import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 

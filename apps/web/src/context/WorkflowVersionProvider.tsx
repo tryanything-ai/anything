@@ -33,6 +33,9 @@ import { Action, Flow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/type
 import { findConflictFreeId } from "@/lib/studio/helpers";
 
 export interface WorkflowVersionContextInterface {
+    db_flow_version_id: string;
+    db_flow: any,
+    db_flow_version: any,
     nodes: Node[];
     edges: Edge[];
     flowVersions: Flow[];
@@ -51,6 +54,9 @@ export interface WorkflowVersionContextInterface {
 }
 
 export const WorkflowVersionContext = createContext<WorkflowVersionContextInterface>({
+    db_flow_version_id: "",
+    db_flow: {},
+    db_flow_version: {},
     nodes: [],
     edges: [],
     flowVersions: [],
@@ -72,11 +78,13 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     },
 });
 
-
 export const useWorkflowVersionContext = () => useContext(WorkflowVersionContext);
 
 export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) => {
-    const { flow_name } = useParams();
+    const { workflowId } = useParams<{ workflowId: string; }>()
+    const [dbFlow, setDbFlow] = useState<any>({})
+    const [dbFlowVersion, setDbFlowVersion] = useState<any>({})
+    const [dbFlowVersionId, setDebFlowVersionId] = useState<string>("")
     const [hydrated, setHydrated] = useState<boolean>(false);
     const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
@@ -365,14 +373,17 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     //Hydrate all flow data on navigation
     //User params fetches url params from React-Router-Dom
-    useEffect(() => {
-        if (!flow_name) return;
-        hydrateFlow();
-    }, [flow_name]);
+    // useEffect(() => {
+    //     if (!flow_name) return;
+    //     hydrateFlow();
+    // }, [flow_name]);
 
     return (
         <WorkflowVersionContext.Provider
             value={{
+                db_flow_version_id: dbFlowVersionId,
+                db_flow: dbFlow,
+                db_flow_version: dbFlowVersion,
                 nodes,
                 edges,
                 flowVersions,

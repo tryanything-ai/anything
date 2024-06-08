@@ -6,7 +6,7 @@ import { WorkflowVersionProvider, WorkflowVersionContext, WorkflowVersionContext
 
 interface AnythingContextInterface {
     workflows: WorkflowsContextInterface;
-    workflow_version: WorkflowVersionContextInterface;
+    workflow: WorkflowVersionContextInterface;
 }
 
 const AnythingContext = createContext<AnythingContextInterface | undefined>(undefined);
@@ -18,8 +18,8 @@ export const AnythingProvider = ({ children }: { children: React.ReactNode }) =>
                 {workflows => (
                     <WorkflowVersionProvider>
                         <WorkflowVersionContext.Consumer>
-                            {workflow_version => (
-                                <AnythingContext.Provider value={{ workflow_version, workflows }}>
+                            {workflow => (
+                                <AnythingContext.Provider value={{ workflow, workflows }}>
                                     {children}
                                 </AnythingContext.Provider>
                             )}
