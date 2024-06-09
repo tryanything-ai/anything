@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS anything.tasks
     flow_session_status TEXT NOT NULL, -- the status of the flow session
     node_id TEXT NOT NULL, -- the node that defined this event
     is_trigger BOOLEAN NOT NULL DEFAULT FALSE, -- if this event is a trigger event
-    extension_id TEXT NOT NULL, -- the extension that processed this event
+    plugin_id TEXT NOT NULL, -- the extension that processed this event
     stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
     config json NOT NULL, -- the config used to run the flow
     context json, -- the bundle of args used for the action to process

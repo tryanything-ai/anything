@@ -7,8 +7,8 @@ import BaseNode
     from "./nodes/workflow-node";
 
 const initialNodes = [
-    { id: '1', type: "anything", position: { x: 0, y: 0 }, data: { label: '1', trigger: true } },
-    { id: '2', type: "anything", position: { x: 0, y: 100 }, data: { label: '2' } },
+    { id: '1', type: "anything", position: { x: 0, y: 0 }, },
+    { id: '2', type: "anything", position: { x: 0, y: 100 },  },
 ];
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];

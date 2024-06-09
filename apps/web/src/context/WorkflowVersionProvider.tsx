@@ -28,7 +28,7 @@ import {
 } from "reactflow";
 
 import api from "@/lib/anything-api"
-import { Action, Workflow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/flows";
+import { Action, Workflow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";

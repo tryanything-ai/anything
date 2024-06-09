@@ -7,24 +7,26 @@ export interface Workflow {
 }
 
 //Guessing to what the total list of 
-enum ActionType {
+enum PluginType {
+  Input = "input",
   Trigger = "trigger",
   Action = "action",
   Loop = "loop",
   Decision = "decision",
-  Filter = "filter"
+  Filter = "filter",
+  Output = "output"
 }
 
 //Node Configuration needed to display and run a Node
-interface Action {
-  anything_action_version: string; //defines compatability
-  action_type: ActionType.Trigger;
+export interface Action {
+  anything_action_version: string; //defines compatability so in future we can upgrade actions
+  type: PluginType;
   plugin_id: string;
-  node_name: string; //will use as nodeID
-  icon: string;
-  node_label: string;
+  plugin_version: string; //TODO: so we can manage upgrade of plugins
+  label: string;
   description?: string;
-  variables: Variable[]; //Local variables
+  icon: string;
+  variables: Variable[]; //Action Variables. Almost like node level .env
   input: Variable;
   input_schema: Variable;
   presentation?: NodePresentation;

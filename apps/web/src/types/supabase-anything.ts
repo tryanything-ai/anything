@@ -2,7 +2,7 @@ import { MergeDeep } from 'type-fest'
 import { QueryResult, QueryData, QueryError } from '@supabase/supabase-js'
 import { Database as DatabaseGenerated, Tables } from './generated/supabase-anything-generated'
 export type { Json } from './generated/supabase-anything-generated'
-import { Workflow } from './flows'
+import { Workflow } from './workflows'
 import { createClient } from "@/lib/supabase/server";
 
 // Create Helper Types for nested queries from Anything-Server 

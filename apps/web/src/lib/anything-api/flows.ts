@@ -1,4 +1,4 @@
-import { Action, Workflow } from "@/types/flows";
+import { Action, Workflow } from "@/types/workflows";
 import { createClient } from "../supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
