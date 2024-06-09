@@ -2,7 +2,7 @@ import { MergeDeep } from 'type-fest'
 import { QueryResult, QueryData, QueryError } from '@supabase/supabase-js'
 import { Database as DatabaseGenerated, Tables } from './generated/supabase-anything-generated'
 export type { Json } from './generated/supabase-anything-generated'
-import { Flow } from './flows'
+import { Workflow } from './flows'
 import { createClient } from "@/lib/supabase/server";
 
 // Create Helper Types for nested queries from Anything-Server 
@@ -30,13 +30,13 @@ export type Database = MergeDeep<
             Tables: {
                 flow_versions: {
                     Row: {
-                        flow_definition: Flow;
+                        flow_definition: Workflow;
                     };
                     Insert: {
-                        flow_definition: Flow;
+                        flow_definition: Workflow;
                     };
                     Update: {
-                        flow_definition?: Flow;
+                        flow_definition?: Workflow;
                     };
                 }
             }

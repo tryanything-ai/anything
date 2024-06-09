@@ -28,7 +28,7 @@ import {
 } from "reactflow";
 
 import api from "@/lib/anything-api"
-import { Action, Flow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/flows";
+import { Action, Workflow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/flows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";
@@ -43,7 +43,7 @@ export interface WorkflowVersionContextInterface {
     flow_version_definition: any;
     nodes: Node[];
     edges: Edge[];
-    flowVersions: Flow[];
+    flowVersions: Workflow[];
     flowFrontmatter: FlowFrontMatter | undefined;
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
@@ -55,7 +55,7 @@ export interface WorkflowVersionContextInterface {
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     readNodeConfig: (nodeId: string) => Promise<FlowNode | undefined>;
     writeNodeConfig: (nodeId: string, data: any) => Promise<FlowNode | undefined>;
-    getFlowDefinitionsFromReactFlowState: () => Flow;
+    getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
 
 export const WorkflowVersionContext = createContext<WorkflowVersionContextInterface>({
@@ -81,7 +81,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     getFlowDefinitionsFromReactFlowState: () => {
         return {
             // Define the structure of Flow here if it's needed for the initial value
-        } as Flow;
+        } as Workflow;
     },
 });
 
@@ -104,7 +104,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    const [flowVersions, setFlowVersions] = useState<Flow[]>([]);
+    const [flowVersions, setFlowVersions] = useState<Workflow[]>([]);
     const [flowFrontmatter, setFlowFrontmatter] = useState<
         FlowFrontMatter | undefined
     >();
@@ -304,7 +304,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             console.log("error writing node config in FlowProvider", error);
         }
     };
-    const getFlowDefinitionsFromReactFlowState = (): Flow => {
+    const getFlowDefinitionsFromReactFlowState = (): Workflow => {
         let trigger;
         let actions: any[] = []; //TODO: fix
 
@@ -325,7 +325,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         });
 
         //create shape needed for backend
-        let newFlow: Flow = {
+        let newFlow: Workflow = {
             ...(flowFrontmatter as FlowFrontMatter),
             trigger: trigger as unknown as Trigger, //TODO: weird fix
             actions: actions as Action[],

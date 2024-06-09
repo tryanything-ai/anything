@@ -1,4 +1,4 @@
-import { Action, Flow } from "@/types/flows";
+import { Action, Workflow } from "@/types/flows";
 import { createClient } from "../supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
@@ -73,7 +73,7 @@ export async function updateFlow(flowId: string, args: UpdateFlowArgs) {
   // return await anything.updateFlow(flowId, args);
 }
 
-export async function updateFlowVersion(flowId: string, flow: Flow) {
+export async function updateFlowVersion(flowId: string, flow: Workflow) {
   // console.log(`updateFlowVersion called for flow_id: ${flowId}}`, flow);
   // return await anything.updateFlowVersion(flowId, flow.version, {
   //   version: flow.version,
