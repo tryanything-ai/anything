@@ -28,12 +28,11 @@ import {
 } from "reactflow";
 
 import api from "@/lib/anything-api"
-import { Action, Workflow, FlowFrontMatter, Trigger, Node as FlowNode } from "@/types/workflows";
+import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";
 import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
-
 
 export interface WorkflowVersionContextInterface {
     db_flow_version_id: string;
@@ -43,18 +42,15 @@ export interface WorkflowVersionContextInterface {
     flow_version_definition: any;
     nodes: Node[];
     edges: Edge[];
-    flowVersions: Workflow[];
-    flowFrontmatter: FlowFrontMatter | undefined;
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
     onConnect: OnConnect;
-    getTrigger: () => Trigger | undefined;
     onDragOver: (event: any) => void;
     onDrop: (event: any, reactFlowWrapper: any) => void;
     addNode: (position: { x: number; y: number }, specialData?: any) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
-    readNodeConfig: (nodeId: string) => Promise<FlowNode | undefined>;
-    writeNodeConfig: (nodeId: string, data: any) => Promise<FlowNode | undefined>;
+    readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
+    writeNodeConfig: (nodeId: string, data: any) => Promise<Action | undefined>;
     getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
 
@@ -66,8 +62,6 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     flow_version_definition: {},
     nodes: [],
     edges: [],
-    flowVersions: [],
-    flowFrontmatter: undefined,
     onNodesChange: () => { },
     onEdgesChange: () => { },
     onConnect: () => { },
@@ -75,7 +69,6 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     onDrop: () => { },
     addNode: () => { },
     setReactFlowInstance: () => { },
-    getTrigger: () => undefined,
     readNodeConfig: async () => undefined,
     writeNodeConfig: async () => undefined,
     getFlowDefinitionsFromReactFlowState: () => {
@@ -98,16 +91,12 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     //Easy Access Id's
     const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
     const [dbFlowId, setDbFlowId] = useState<string>("")
-
     //Internal for ReactFlow and Flow Definition Management
     const [hydrated, setHydrated] = useState<boolean>(false);
     const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [flowVersions, setFlowVersions] = useState<Workflow[]>([]);
-    const [flowFrontmatter, setFlowFrontmatter] = useState<
-        FlowFrontMatter | undefined
-    >();
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
@@ -167,7 +156,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
             if (event.dataTransfer === null) return;
 
-            const nodeData: FlowNode = JSON.parse(
+            const nodeData: Action = JSON.parse(
                 event.dataTransfer.getData("nodeData")
             );
 
@@ -178,14 +167,14 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             }
 
             // only allow one trigger at a time
-            if (nodeData.trigger) {
-                console.log("Its a triggger");
-                const triggerNodeExists = nodes.some((node) => node.data.trigger);
-                if (triggerNodeExists) {
-                    console.error("Only one trigger node is allowed at a time.");
-                    return;
-                }
-            }
+            // if (nodeData.trigger) {
+            //     console.log("Its a triggger");
+            //     const triggerNodeExists = nodes.some((node) => node.data.trigger);
+            //     if (triggerNodeExists) {
+            //         console.error("Only one trigger node is allowed at a time.");
+            //         return;
+            //     }
+            // }
 
             if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
 
@@ -265,16 +254,16 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         // }
     };
 
-    const getTrigger = () => {
-        if (!nodes) return undefined;
-        let triggerNode = nodes.find((node) => node.data.trigger === true);
-        return triggerNode?.data;
-    };
+    // const getTrigger = () => {
+    //     if (!nodes) return undefined;
+    //     let triggerNode = nodes.find((node) => node.data.trigger === true);
+    //     return triggerNode?.data;
+    // };
 
     //TODO: integrate here vs in flwos
     const readNodeConfig = async (
         nodeId: string
-    ): Promise<FlowNode | undefined> => {
+    ): Promise<Action | undefined> => {
         try {
             let reactFlowNode = nodes.find((node) => node.id === nodeId);
             return reactFlowNode?.data;
@@ -286,7 +275,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const writeNodeConfig = async (
         nodeId: string,
         data: any
-    ): Promise<FlowNode | undefined> => {
+    ): Promise<Action | undefined> => {
         try {
             let updatedNodes = nodes.map((node) => {
                 // console.log("node in writeNodeConfig", node);
@@ -304,6 +293,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             console.log("error writing node config in FlowProvider", error);
         }
     };
+
     const getFlowDefinitionsFromReactFlowState = (): Workflow => {
         let trigger;
         let actions: any[] = []; //TODO: fix
@@ -318,7 +308,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             };
 
             if (node.data.trigger) {
-                trigger = freshNode as Trigger;
+                // trigger = freshNode as Trigger;
             } else {
                 actions.push(freshNode as Action);
             }
@@ -326,8 +316,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         //create shape needed for backend
         let newFlow: Workflow = {
-            ...(flowFrontmatter as FlowFrontMatter),
-            trigger: trigger as unknown as Trigger, //TODO: weird fix
             actions: actions as Action[],
             edges: edges as Edge[],
         };
@@ -346,19 +334,19 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             console.log("newFlow in synchronize", newFlow);
 
             //send
-            let res = await api.flows.updateFlowVersion(
-                flowFrontmatter?.flow_id || "",
-                newFlow
-            );
+            // let res = await api.flows.updateFlowVersion(
+            //     flowFrontmatter?.flow_id || "",
+            //     newFlow
+            // );
 
-            console.log("Flow Synchronized");
-            console.log("res in updateFlowVersion", res);
+            // console.log("Flow Synchronized");
+            // console.log("res in updateFlowVersion", res);
         } catch (error) {
             console.log("error in synchronise", error);
         }
     };
 
-    //Synchronise
+    //Buffer editor write to DB
     useEffect(() => {
         //Ugly but works to prevent write on load
         if (!hydrated) return;
@@ -382,14 +370,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 clearTimeout(timerRef.current);
             }
         };
-    }, [nodes, edges, flowFrontmatter]);
-
-    //Hydrate all flow data on navigation
-    //User params fetches url params from React-Router-Dom
-    // useEffect(() => {
-    //     if (!flow_name) return;
-    //     hydrateFlow();
-    // }, [flow_name]);
+    }, [nodes, edges]);
 
     const newHydrateFlow = async () => {
         try {
@@ -404,13 +385,38 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             console.log('Flow Definition in New Hydrate Flow', flow.flow_versions[0].flow_definition);
 
             setDbFlow(flow);
-            setDbFlowVersion(flow.flow_versions[0]);
-            setFlowVersionDefinition(flow.flow_versions[0].flow_definition);
+            let flow_version = flow.flow_versions[0];
+            setDbFlowVersion(flow_version);
+            setFlowVersionDefinition(flow_version.flow_definition);
+            if (flow_version && flow_version.flow_definition) {
+                let _nodes: Node[] = flow_version.flow_definition.actions.map((action) => {
+
+                    let position = action.presentation?.position || { x: 0, y: 0 };
+
+                    return {
+                        position,
+                        data: action,
+                        id: action.label,
+                        type: "anything",
+                    };
+                });
+                setNodes(_nodes);
+
+                let _edges: Edge[] = flow_version.flow_definition.edges.map((edge) => {
+                    return {
+                        id: edge.id,
+                        source: edge.source,
+                        target: edge.target,
+                    };
+                });
+            }
+      
         } catch (e) {
             console.log("error in fetch flow", JSON.stringify(e, null, 3));
         }
     }
-    //React to Navigtaion
+
+    //Hydrate on Navigation
     useEffect(() => {
         if (!workflowId || !workflowVersionId) return;
         setDbFlowVersionId(workflowVersionId);
@@ -429,15 +435,12 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 flow_version_definition,
                 nodes,
                 edges,
-                flowVersions,
-                flowFrontmatter,
                 onConnect,
                 onNodesChange,
                 onEdgesChange,
                 onDragOver,
                 onDrop,
                 addNode,
-                getTrigger,
                 setReactFlowInstance,
                 readNodeConfig,
                 writeNodeConfig,

@@ -85,7 +85,7 @@ pub async fn get_workflow(
     let response = match client
         .from("flows")
         .auth(user.jwt)
-        .eq("id", &flow_id)
+        .eq("flow_id", &flow_id)
         .select("*,flow_versions(*)")
         .execute()
         .await

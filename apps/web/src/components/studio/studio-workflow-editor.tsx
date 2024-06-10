@@ -5,15 +5,11 @@ import 'reactflow/dist/style.css';
 
 import BaseNode
     from "./nodes/workflow-node";
-
-const initialNodes = [
-    { id: '1', type: "anything", position: { x: 0, y: 0 }, },
-    { id: '2', type: "anything", position: { x: 0, y: 100 },  },
-];
-
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+import { useAnything } from "@/context/AnythingContext";
 
 export default function StudioWorkflowEditor() {
+
+    const { workflow } = useAnything();
 
     const nodeTypes = useMemo(
         () => ({
@@ -26,8 +22,12 @@ export default function StudioWorkflowEditor() {
         <div style={{ width: '100%', height: '100%' }}>
             <ReactFlow
                 nodeTypes={nodeTypes}
-                nodes={initialNodes}
-                edges={initialEdges}
+                nodes={workflow.nodes}
+                edges={workflow.edges}
+                onNodesChange={workflow.onNodesChange}
+                onEdgesChange={workflow.onEdgesChange}
+                // onDragOver={workflow.onDragOver}
+                onInit={workflow.setReactFlowInstance}
             >
                 <Background
                     variant={BackgroundVariant.Dots}
