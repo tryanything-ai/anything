@@ -28,7 +28,7 @@ import {
 } from "reactflow";
 
 import api from "@/lib/anything-api"
-import { Action, Workflow } from "@/types/workflows";
+import { Action, AnythingNodeProps, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";
@@ -39,7 +39,8 @@ export interface WorkflowVersionContextInterface {
     db_flow: any,
     db_flow_version: any,
     flow_version_definition: any;
-    nodes: Node[];
+    selected_node_id?: string;
+    nodes: AnythingNodeProps[];
     edges: Edge[];
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
@@ -59,6 +60,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     db_flow: {},
     db_flow_version: {},
     flow_version_definition: {},
+    selected_node_id: undefined,
     nodes: [],
     edges: [],
     onNodesChange: () => { },
@@ -126,6 +128,12 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
         console.log("onNodesChange nodeChanges", nodeChanges);
+        nodeChanges.forEach((nodeChange) => {
+            if (nodeChange.type === "select") {
+                //TODO: update selected node in other state so the config panel can know about it
+                console.log("Node Selected", nodeChange);
+            }
+        });
         setNodes((nodes) => {
             return applyNodeChanges(nodeChanges, nodes);
         });
@@ -190,77 +198,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         [addNode]
     );
 
-    const hydrateFlow = async () => {
-        //TODO: reimplement
-        // try {
-        //     console.log("Fetch Flow By Name: ", flow_name);
-        //     if (!flow_name) return;
-        //     let { flow } = await api.flows.getFlowByName(flow_name);
-        //     console.log(
-        //         "Flow Result in flow provider",
-        //         JSON.stringify(flow, null, 3)
-        //     );
-
-        //     //TODO: these are shaped wrong not shaped as flows but can still pick up ids etc
-        //     setFlowVersions(flow.versions);
-
-        //     let newDef = flow.versions[0].flow_definition as Flow;
-
-        //     //Pull out actions and trigger
-        //     let _actions: Action[] = newDef.actions || [];
-        //     let _trigger: Trigger | undefined = newDef.trigger || undefined;
-
-        //     //convert to what react flow needs
-        //     let _nodes: Node[] = _actions.map((action) => {
-        //         return {
-        //             ...action.presentation,
-        //             data: action,
-        //             id: action.node_name,
-        //             type: "superNode",
-        //         };
-        //     });
-
-        //     //Json might have no trigger
-        //     if (_trigger) {
-        //         _nodes.push({
-        //             ..._trigger.presentation,
-        //             data: _trigger,
-        //             id: _trigger.node_name,
-        //             type: "superNode",
-        //         });
-        //     }
-
-        //     let _edges = newDef.edges || [];
-
-        //     console.log("_nodes: ", _nodes);
-        //     console.log("_edges: ", _edges);
-        //     console.log("Presentation nodes: ", _nodes);
-
-        //     setEdges(_edges);
-        //     setNodes(_nodes);
-
-        //     let fm = flow;
-
-        //     //TODO: not great. a bit hacky. fix when doing Flow Version Mangement
-        //     fm.version = flow.latest_version_id;
-        //     fm.flow_version_id = flow.versions[0].flow_version_id;
-
-        //     delete fm.versions;
-
-        //     console.log("FrontMatter saved", JSON.stringify(fm, null, 3));
-        //     setFlowFrontmatter(fm);
-
-        //     setHydrated(true);
-        // } catch (e) {
-        //     console.log("error in fetch flow", JSON.stringify(e, null, 3));
-        // }
-    };
-
-    // const getTrigger = () => {
-    //     if (!nodes) return undefined;
-    //     let triggerNode = nodes.find((node) => node.data.trigger === true);
-    //     return triggerNode?.data;
-    // };
 
     //TODO: integrate here vs in flwos
     const readNodeConfig = async (
@@ -297,10 +234,10 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     };
 
     const getFlowDefinitionsFromReactFlowState = (): Workflow => {
-        // let trigger;
-        let actions: any[] = []; //TODO: fix
 
-        //Loop through all nodes
+        let actions: any[] = [];
+
+        //Loop through all nodes and reformat them to what actions prefer
         nodes.forEach((node) => {
             let freshNode = {
                 ...node.data,
@@ -375,7 +312,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         };
     }, [nodes, edges]);
 
-    const newHydrateFlow = async () => {
+    const hydrateFlow = async () => {
         try {
             console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
             if (!workflowId) return;
@@ -419,10 +356,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     //Hydrate on Navigation
     useEffect(() => {
+        //TODO: why does this always write when we start the flow? How can we prevent this?
         if (!workflowId || !workflowVersionId) return;
         setDbFlowVersionId(workflowVersionId);
         setDbFlowId(workflowId);
-        newHydrateFlow();
+        hydrateFlow();
         // hydrateFlow(); //TODO: reimplement loading from JSON. 
     }, [workflowId, workflowVersionId]);
 

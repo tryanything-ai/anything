@@ -9,9 +9,11 @@ import { ZapIcon } from "lucide-react";
 export default function BaseNode({
   id,
   data,
+  selected,
 }: {
   id: string;
   data: Action;
+  selected: boolean;
 }) {
 
   const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
@@ -27,7 +29,11 @@ export default function BaseNode({
   return (
     <div
       onClick={toggleNodeConfig}
-      className="bg-white border border-gray-300 text-primary-content flex h-20 w-80 flex-row rounded-md text-xl"
+      className={cn(
+        "bg-white border border-gray-300 text-primary-content flex h-20 w-80 flex-row rounded-md text-xl",
+        selected ? "border-pink-700 border-2" : "",
+      )}
+    // className=""
     >
       {data.handles ? data.handles.map((handle: HandleProps) => {
         return (
