@@ -32,7 +32,6 @@ import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";
-import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export interface WorkflowVersionContextInterface {
     db_flow_version_id: string;
@@ -115,7 +114,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         console.log("special data", specialData);
         const newNode: Node = {
             id: conflictFreeId,
-            type: "superNode",
+            type: "anything",
             position,
             data: { ...specialData, node_name: conflictFreeId },
         };
@@ -134,12 +133,15 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     const onEdgesChange: OnEdgesChange = (edgeChanges: EdgeChange[]) => {
         setEdges((edges) => {
+            console.log("onEdgesChange edgeChanges", edgeChanges);
             return applyEdgeChanges(edgeChanges, edges);
         });
     };
 
     const onConnect: OnConnect = (params: Connection) => {
         setEdges((edges) => {
+            // console.log("onEdgesChange edgeChanges", edgeChanges);
+            console.log("onConnect params", params);
             return addEdge(params, edges);
         });
     };
@@ -295,7 +297,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     };
 
     const getFlowDefinitionsFromReactFlowState = (): Workflow => {
-        let trigger;
+        // let trigger;
         let actions: any[] = []; //TODO: fix
 
         //Loop through all nodes
@@ -334,13 +336,14 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             console.log("newFlow in synchronize", newFlow);
 
             //send
-            // let res = await api.flows.updateFlowVersion(
-            //     flowFrontmatter?.flow_id || "",
-            //     newFlow
-            // );
+            let res = await api.flows.updateFlowVersion(
+                dbFlowId,
+                dbFlowVersionId,
+                newFlow
+            );
 
-            // console.log("Flow Synchronized");
-            // console.log("res in updateFlowVersion", res);
+            console.log("Flow Synchronized");
+            console.log("res in updateFlowVersion", res);
         } catch (error) {
             console.log("error in synchronise", error);
         }
@@ -396,21 +399,19 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                     return {
                         position,
                         data: action,
-                        id: action.label,
+                        id: action.node_id,
                         type: "anything",
                     };
                 });
                 setNodes(_nodes);
 
                 let _edges: Edge[] = flow_version.flow_definition.edges.map((edge) => {
-                    return {
-                        id: edge.id,
-                        source: edge.source,
-                        target: edge.target,
-                    };
+                    return edge;
                 });
+                setEdges(_edges);
+                setHydrated(true);
             }
-      
+
         } catch (e) {
             console.log("error in fetch flow", JSON.stringify(e, null, 3));
         }

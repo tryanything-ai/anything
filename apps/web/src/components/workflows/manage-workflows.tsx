@@ -14,16 +14,12 @@ export default function ManageWorkflows() {
         <div>
             {workflows.flows.map((flow) => {
                 let icons: string[] = [];
+                
                 //only do if we have actual data
                 if (flow.flow_versions.length !== 0) {
                     icons = flow.flow_versions[0].flow_definition.actions.map((action) => {
                         return action.icon;
                     });
-
-                    if (flow.flow_versions[0].flow_definition.trigger?.icon) {
-                        let trigger_icon = flow.flow_versions[0].flow_definition.trigger?.icon;
-                        icons.unshift(trigger_icon);
-                    }
                 }
 
                 return (
@@ -38,9 +34,9 @@ export default function ManageWorkflows() {
                             <CardContent>
                                 <div className="flex flex-row h-full items-end">
                                     {/* <div className="flex flex-row"> */}
-                                    {icons.map((icon) => {
+                                    {icons.map((icon, index) => {
                                         return (
-                                            <BaseNodeIcon className="rounded-xl border" icon={icon} />
+                                            <BaseNodeIcon key={index} className="rounded-xl border" icon={icon} />
                                         )
                                     })}
                                     {/* </div> */}

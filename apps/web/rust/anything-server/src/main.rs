@@ -34,6 +34,7 @@ async fn main() {
         .route("/workflows", get(api::get_workflows))
         .route("/workflow/:id", get(api::get_workflow))
         .route("/workflow/:id/versions", get(api::get_flow_versions))
+        .route("/workflow/:workflow_id/version/:workflow_version_id", put(api::update_workflow_version))
         .route("/workflow", post(api::create_workflow))
         .route("/workflow/:id", delete(api::delete_workflow))
         .route("/workflow/:id", put(api::update_workflow))

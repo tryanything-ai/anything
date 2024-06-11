@@ -256,3 +256,37 @@ pub async fn update_workflow(
 
     Json(body).into_response()
 }
+
+pub async fn update_workflow_version(
+    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+    Json(payload): Json<Value>,  
+) -> impl IntoResponse {
+
+    // let payload_json = serde_json::to_string(&payload).unwrap();
+
+    let update_json = serde_json::json!({
+        "flow_definition": payload,
+    });
+    
+    let response = match client
+        .from("flow_versions")
+        .auth(user.jwt)
+        .eq("flow_version_id", &workflow_version_id)
+        .update(update_json.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    Json(body).into_response()
+}

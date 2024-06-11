@@ -22,6 +22,7 @@ export interface Action {
   anything_action_version: string; //defines compatability so in future we can upgrade actions
   type: PluginType;
   plugin_id: string;
+  node_id: string; //unique id for react flow. probably generated based on action_id or plugin_id or slug of label
   plugin_version: string; //TODO: so we can manage upgrade of plugins
   label: string;
   description?: string;
@@ -35,6 +36,7 @@ export interface Action {
 
 // Presentation data only needed for react flow but we need all of it
 interface NodePresentation {
+
   position: {
     x: number;
     y: number;
