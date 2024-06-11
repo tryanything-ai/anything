@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SettingsForm from "./flow-settings-form";
+import ActionSettingsForm from "./action-settings-form"
 
 export default function RightPanelFormEditor() {
     return (
@@ -9,7 +10,7 @@ export default function RightPanelFormEditor() {
                 <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
             <TabsContent value="config">
-                {/* //TODO: add form */}
+                <ActionSettingsForm />
             </TabsContent>
             <TabsContent value="settings">
                 <SettingsForm />

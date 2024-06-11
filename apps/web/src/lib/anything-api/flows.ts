@@ -91,7 +91,7 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
       });
 
       const data = await response.json();
-      console.log('Data from /api/workflows/id/version/id PUT:', data);
+      // console.log('Data from /api/workflows/id/version/id PUT:', data);
       return data;
     }
 

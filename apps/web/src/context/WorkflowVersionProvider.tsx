@@ -21,6 +21,7 @@ import {
     EdgeChange,
     Node,
     NodeChange,
+    NodeSelectionChange,
     OnConnect,
     OnEdgesChange,
     OnNodesChange,
@@ -40,7 +41,7 @@ export interface WorkflowVersionContextInterface {
     db_flow_version: any,
     flow_version_definition: any;
     selected_node_id?: string;
-    nodes: AnythingNodeProps[];
+    nodes: Node[];
     edges: Edge[];
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
@@ -92,6 +93,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     //Easy Access Id's
     const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
     const [dbFlowId, setDbFlowId] = useState<string>("")
+    const [selectedNodeId, setSelectedNodeId] = useState<string>("")
     //Internal for ReactFlow and Flow Definition Management
     const [hydrated, setHydrated] = useState<boolean>(false);
     const [firstLook, setFirstLook] = useState<boolean>(true);
@@ -128,12 +130,21 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
         console.log("onNodesChange nodeChanges", nodeChanges);
-        nodeChanges.forEach((nodeChange) => {
-            if (nodeChange.type === "select") {
-                //TODO: update selected node in other state so the config panel can know about it
-                console.log("Node Selected", nodeChange);
+
+        //find the node with selected = true
+        let selectionChanges: NodeSelectionChange[] =
+            nodeChanges.filter((nodeChange) => nodeChange.type === "select") as NodeSelectionChange[];
+        // get the id of the node with selected = true
+        if (selectionChanges.length > 0) {
+            let selectedNode = selectionChanges.find((nodeChange: NodeSelectionChange) => nodeChange.selected);
+
+            if (selectedNode) {
+                setSelectedNodeId(selectedNode.id);
+            } else {
+                setSelectedNodeId("");
             }
-        });
+        }
+
         setNodes((nodes) => {
             return applyNodeChanges(nodeChanges, nodes);
         });
@@ -280,7 +291,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             );
 
             console.log("Flow Synchronized");
-            console.log("res in updateFlowVersion", res);
+            // console.log("res in updateFlowVersion", res);
         } catch (error) {
             console.log("error in synchronise", error);
         }
@@ -372,6 +383,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 db_flow: dbFlow,
                 db_flow_version: dbFlowVersion,
                 flow_version_definition,
+                selected_node_id: selectedNodeId,
                 nodes,
                 edges,
                 onConnect,
