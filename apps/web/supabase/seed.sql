@@ -168,7 +168,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -223,7 +223,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -278,7 +278,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -337,7 +337,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -392,7 +392,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -447,7 +447,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -506,7 +506,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -561,7 +561,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
@@ -616,7 +616,7 @@ INSERT INTO anything.flow_versions (
             "type": "string"
           },
           "headers": {
-            "type": "object"
+            "type": "string"
           },
           "body": {
             "type": "string"
