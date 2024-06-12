@@ -14,7 +14,8 @@ import set from "lodash/set";
 export function formValuesToJsonValues(fields: any, values: any) {
     const fieldTypeTransform: any = {
         number: (val: any) => (val === "" ? val : +val),
-        text: (val: any) => val
+        text: (val: any) => val,
+        select: (val: any) => val
         // TODO support all types
     };
 

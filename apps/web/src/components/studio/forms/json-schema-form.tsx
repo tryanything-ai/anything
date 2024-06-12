@@ -1,45 +1,26 @@
 import { useState } from "react";
 
-// import "./styles.css";
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { formValuesToJsonValues, getDefaultValuesFromFields } from "@/lib/json-schema-utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-// import {
-//   Box,
-//   Stack,
-//   LabelRadio,
-//   RadioOptions,
-//   Fieldset,
-//   InputText,
-//   Hint,
-//   ErrorMessage,
-//   Label
-// } from "./App.styled";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const fieldsMap: { [key: string]: any } = {
     text: FieldText,
-    // number: FieldNumber,
-    // radio: FieldRadio,
-    // error: FieldUnknown
+    number: FieldNumber,
+    radio: FieldRadio,
+    select: FieldSelect,
+    error: FieldUnknown
 };
-
-// const fieldsMap = {
-// //   text: FieldText,
-// //   number: FieldNumber,
-// //   radio: FieldRadio,
-// //   error: FieldUnknown
-// };
-
-// const initialValuesFromAPI = {
-//   name: 'Mega team'
-// }
 
 export default function WithReact({ input_schema, input }: any) {
     const { fields, handleValidation } = createHeadlessForm(input_schema, {
         strictInputType: false, // so you don't need to pass presentation.inputType,
         initialValues: input,
     });
+
     async function handleOnSubmit(jsonValues: any, { formValues }: any) {
         alert(
             `Submitted with succes! ${JSON.stringify(
@@ -54,20 +35,14 @@ export default function WithReact({ input_schema, input }: any) {
     console.log("fields in form", fields);
 
     return (
-        <article>
-            <h1>json-schema-form + React</h1>
-            <p>This demo uses React without any other Form library.</p>
-            <br />
-
-            <SmartForm
-                name="my-form"
-                onSubmit={handleOnSubmit}
-                // From JSF
-                fields={fields}
-                initialValues={input}
-                handleValidation={handleValidation}
-            />
-        </article>
+        <SmartForm
+            name="my-form"
+            onSubmit={handleOnSubmit}
+            // From JSF
+            fields={fields}
+            initialValues={input}
+            handleValidation={handleValidation}
+        />
     );
 }
 
@@ -76,10 +51,6 @@ export default function WithReact({ input_schema, input }: any) {
 // ===============================
 
 function SmartForm({ name, fields, initialValues, handleValidation, onSubmit }: any) {
-    // const [values, setValues] = useState(() =>
-    //     getDefaultValuesFromFields(fields, initialValues)
-    // );
-    // const [errors, setErrors] = useState({});
 
     const [values, setValues] = useState<{ [key: string]: any }>(() =>
         getDefaultValuesFromFields(fields, initialValues)
@@ -137,6 +108,7 @@ function SmartForm({ name, fields, initialValues, handleValidation, onSubmit }: 
                             error={errors[fieldName]}
                             submited={submited}
                             onChange={handleFieldChange}
+                            onValueChange={(value: any) => handleFieldChange(fieldName, value)}
                             {...field}
                         />
                     );
@@ -171,9 +143,9 @@ function FieldText({
     }
 
     return (
-        <div>
+        <div className="grid gap-3 my-4">
             <Label htmlFor={name}>{label}</Label>
-            {/* {description && <Hint id={`${name}-description`}>{description}</Hint>} */}
+            {/* {description && <div id={`${name}-description`}>{description}</div>} */}
             <Input
                 id={name}
                 type="text"
@@ -191,70 +163,116 @@ function FieldText({
     );
 }
 
-// function FieldNumber(props) {
-//     return (
-//         <FieldText
-//             inputMode="decimal"
-//             // accepts numbers and dots (eg 10, 15.50)
-//             pattern="^[0-9.]*$"
-//             {...props}
-//         />
-//     );
-// }
+function FieldNumber(props: any) {
+    return (
+        <FieldText
+            inputMode="decimal"
+            // accepts numbers and dots (eg 10, 15.50)
+            pattern="^[0-9.]*$"
+            {...props}
+        />
+    );
+}
 
-// function FieldRadio({
-//     name,
-//     label,
-//     description,
-//     value,
-//     options,
-//     isVisible,
-//     error,
-//     submited,
-//     onChange
-// }) {
-//     const [touched, setTouched] = useState(false);
+function FieldRadio({
+    name,
+    label,
+    description,
+    value,
+    options,
+    isVisible,
+    error,
+    submited,
+    onChange
+}: any) {
+    const [touched, setTouched] = useState(false);
 
-//     if (!isVisible) return null;
+    if (!isVisible) return null;
 
-//     function handleChange(e) {
-//         if (!touched) setTouched(true);
-//         onChange(name, e.target.value);
-//     }
+    function handleChange(e: any) {
+        if (!touched) setTouched(true);
+        onChange(name, e.target.value);
+    }
 
-//     const displayError = submited || touched ? error : null;
+    const displayError = submited || touched ? error : null;
 
-//     return (
-//         <Fieldset key={name}>
-//             {/* A11Y errors: https://blog.tenon.io/accessible-validation-of-checkbox-and-radiobutton-groups/ */}
-//             <Label as="legend" aria-label={`${label} ${displayError}`}>
-//                 {label}
-//             </Label>
-//             {description && <Hint>{description}</Hint>}
-//             <RadioOptions onChange={handleChange}>
-//                 {options.map((opt) => (
-//                     <LabelRadio key={opt.value}>
-//                         <input
-//                             type="radio"
-//                             name={name}
-//                             value={opt.value}
-//                             defaultChecked={value === opt.value}
-//                         />
-//                         {opt.label}
-//                     </LabelRadio>
-//                 ))}
-//             </RadioOptions>
-//             {displayError && <ErrorMessage>{displayError}</ErrorMessage>}
-//         </Fieldset>
-//     );
-// }
+    return (
+        <fieldset key={name}>
+            {/* A11Y errors: https://blog.tenon.io/accessible-validation-of-checkbox-and-radiobutton-groups/ */}
+            <Label aria-label={`${label} ${displayError}`}>
+                {label}
+            </Label>
+            {description && <div>{description}</div>}
+            <div onChange={handleChange}>
+                {options.map((opt: any) => (
+                    <Checkbox key={opt.value}>
+                        <input
+                            type="radio"
+                            name={name}
+                            value={opt.value}
+                            defaultChecked={value === opt.value}
+                        />
+                        {opt.label}
+                    </Checkbox>
+                ))}
+            </div>
+            {displayError && <div>{displayError}</div>}
+        </fieldset>
+    );
+}
 
-// function FieldUnknown({ type, name, error }) {
-//     return (
-//         <p style={{ border: "1px dashed gray", padding: "8px" }}>
-//             Field "{name}" unsupported: The type "{type}" has no UI component built
-//             yet.
-//             {error && <ErrorMessage id={`${name}-error`}>{error}</ErrorMessage>}
-//         </p>
-//     );
-// }
+function FieldUnknown({ type, name, error }: any) {
+    return (
+        <p style={{ border: "1px dashed gray", padding: "8px" }}>
+            Field "{name}" unsupported: The type "{type}" has no UI component built
+            yet.
+            {error && <div id={`${name}-error`}>{error}</div>}
+        </p>
+    );
+}
+
+function FieldSelect({
+    type,
+    name,
+    label,
+    options,
+    description,
+    value,
+    isVisible,
+    error,
+    submited,
+    onChange,
+    onValueChange,
+    required,
+    ...props
+}: any) {
+    const [touched, setTouched] = useState(false);
+
+    if (!isVisible) return null;
+
+    function handleValueChange(e: any) {
+        if (!touched) setTouched(true);
+        onValueChange(e);
+    }
+
+    return (
+        <div className="grid gap-3 my-4">
+            <Label htmlFor={name}>{label}</Label>
+            <Select value={value} onValueChange={handleValueChange}>
+                <SelectTrigger>
+                    <SelectValue placeholder={description} />
+                </SelectTrigger>
+                <SelectContent>
+                    {options.map((option: any) => (
+                        <SelectItem key={option.label} value={option.value}>
+                            {option.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {(touched || submited) && error && (
+                <div id={`${name}-error`}>{error}</div>
+            )}
+        </div>
+    );
+}

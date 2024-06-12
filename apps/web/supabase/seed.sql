@@ -154,26 +154,55 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "GET",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
         "type": "object",
         "properties": {
           "method": {
-            "type": "string",
-            "enum": ["GET", "POST", "PUT", "DELETE"]
+             "title": "Method",
+              "description": "HTTP Method for request",
+              "type": "string",
+              "oneOf": [
+                {
+                  "value": "GET",
+                  "title": "GET"
+                },
+                {
+                  "value": "POST",
+                  "title": "POST"
+                },
+                {
+                  "value": "PUT",
+                  "title": "PUT"
+                },
+                {
+                  "value": "DELETE",
+                  "title": "DELETE"
+                }
+              ],
+              "x-jsf-presentation": {
+                "inputType": "select"
+              }
           },
           "url": {
+             "title": "URL",
+            "description": "URL for request",
             "type": "string"
           },
           "headers": {
+            "title": "Headers",
+            "description": "Headers for request",
             "type": "string"
           },
           "body": {
+            "title": "Body",
+            "description": "Body for request",
             "type": "string"
           }
         },
+        "x-jsf-order": ["url", "method", "headers", "body"],
         "required": ["method", "url"],
         "additionalProperties": false
       },
@@ -209,7 +238,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "POST",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -264,7 +293,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "PUT",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -323,7 +352,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "GET",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -378,7 +407,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "POST",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -433,7 +462,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "PUT",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -492,7 +521,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "GET",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -547,7 +576,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "POST",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
@@ -602,7 +631,7 @@ INSERT INTO anything.flow_versions (
       "input": {
         "method": "PUT",
         "url": "http://example.com",
-        "headers": {},
+        "headers": "",
         "body": ""
       },
       "input_schema": {
