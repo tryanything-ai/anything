@@ -53,6 +53,8 @@ export default function ActionSettingsForm() {
     return (
         <form className="grid w-full items-start gap-6">
             {workflow.selected_node_id}
+            <br />
+            {JSON.stringify(workflow.selected_node_data?.input, null, 3)}
             {/* <fieldset className="grid gap-6 rounded-lg border p-4">
                 <div className="grid gap-3">
                 

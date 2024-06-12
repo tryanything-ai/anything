@@ -33,6 +33,12 @@ import { Action, AnythingNodeProps, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";
+import { set } from "date-fns";
+
+export enum PanelTab {
+    SETTINGS = "settings",
+    CONFIG = "config"
+}
 
 export interface WorkflowVersionContextInterface {
     db_flow_version_id: string;
@@ -41,6 +47,9 @@ export interface WorkflowVersionContextInterface {
     db_flow_version: any,
     flow_version_definition: any;
     selected_node_id?: string;
+    selected_node_data?: Action;
+    panel_tab: string;
+    setPanelTab: (tab: string) => void;
     nodes: Node[];
     edges: Edge[];
     onNodesChange: OnNodesChange;
@@ -50,7 +59,7 @@ export interface WorkflowVersionContextInterface {
     onDrop: (event: any, reactFlowWrapper: any) => void;
     addNode: (position: { x: number; y: number }, specialData?: any) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
-    readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
+    // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
     writeNodeConfig: (nodeId: string, data: any) => Promise<Action | undefined>;
     getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
@@ -62,6 +71,8 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     db_flow_version: {},
     flow_version_definition: {},
     selected_node_id: undefined,
+    panel_tab: PanelTab.CONFIG,
+    setPanelTab: () => { },
     nodes: [],
     edges: [],
     onNodesChange: () => { },
@@ -71,7 +82,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     onDrop: () => { },
     addNode: () => { },
     setReactFlowInstance: () => { },
-    readNodeConfig: async () => undefined,
+    // readNodeConfig: async () => undefined,
     writeNodeConfig: async () => undefined,
     getFlowDefinitionsFromReactFlowState: () => {
         return {
@@ -94,12 +105,16 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
     const [dbFlowId, setDbFlowId] = useState<string>("")
     const [selectedNodeId, setSelectedNodeId] = useState<string>("")
+    const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(undefined)
     //Internal for ReactFlow and Flow Definition Management
     const [hydrated, setHydrated] = useState<boolean>(false);
     const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [flowVersions, setFlowVersions] = useState<Workflow[]>([]);
+
+    //Navigation State
+    const [panel_tab, setPanelTab] = useState<string>(PanelTab.CONFIG);
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
@@ -128,6 +143,21 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         });
     };
 
+    const set_panel_tab = (tab: string) => {
+        //Used to make nice navigation in side panel
+        if (tab === PanelTab.SETTINGS) {
+            setSelectedNodeData(undefined);
+            setSelectedNodeId("");
+            //Trick to clear selection inisde ReactFlow
+            onNodesChange([{
+                id: selectedNodeId,
+                type: 'select',
+                selected: false
+            }]);
+        }
+        setPanelTab(tab);
+    }
+
     const onNodesChange: OnNodesChange = (nodeChanges: NodeChange[]) => {
         console.log("onNodesChange nodeChanges", nodeChanges);
 
@@ -136,12 +166,18 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             nodeChanges.filter((nodeChange) => nodeChange.type === "select") as NodeSelectionChange[];
         // get the id of the node with selected = true
         if (selectionChanges.length > 0) {
+            console.log("selectionChanges", selectionChanges);
             let selectedNode = selectionChanges.find((nodeChange: NodeSelectionChange) => nodeChange.selected);
 
             if (selectedNode) {
+                //Set node and node data for easy access
                 setSelectedNodeId(selectedNode.id);
+                let selectedNodeData = nodes.find((node) => node.id === selectedNode.id)?.data;
+                setSelectedNodeData(selectedNodeData);
+                setPanelTab(PanelTab.CONFIG);
             } else {
                 setSelectedNodeId("");
+                setSelectedNodeData(undefined);
             }
         }
 
@@ -187,16 +223,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 return;
             }
 
-            // only allow one trigger at a time
-            // if (nodeData.trigger) {
-            //     console.log("Its a triggger");
-            //     const triggerNodeExists = nodes.some((node) => node.data.trigger);
-            //     if (triggerNodeExists) {
-            //         console.error("Only one trigger node is allowed at a time.");
-            //         return;
-            //     }
-            // }
-
             if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
 
             let position = reactFlowInstance.project({
@@ -208,19 +234,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         },
         [addNode]
     );
-
-
-    //TODO: integrate here vs in flwos
-    const readNodeConfig = async (
-        nodeId: string
-    ): Promise<Action | undefined> => {
-        try {
-            let reactFlowNode = nodes.find((node) => node.id === nodeId);
-            return reactFlowNode?.data;
-        } catch (error) {
-            console.log("error reading node config in FlowProvider", error);
-        }
-    };
 
     const writeNodeConfig = async (
         nodeId: string,
@@ -384,8 +397,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 db_flow_version: dbFlowVersion,
                 flow_version_definition,
                 selected_node_id: selectedNodeId,
+                selected_node_data: selectedNodeData,
                 nodes,
                 edges,
+                panel_tab,
+                setPanelTab: set_panel_tab,
                 onConnect,
                 onNodesChange,
                 onEdgesChange,
@@ -393,7 +409,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 onDrop,
                 addNode,
                 setReactFlowInstance,
-                readNodeConfig,
                 writeNodeConfig,
                 getFlowDefinitionsFromReactFlowState,
             }}
