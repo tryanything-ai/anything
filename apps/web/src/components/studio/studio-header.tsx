@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from 'next/navigation';
 import { XIcon } from "lucide-react"
 
-export default function StudioHeader({ flow_name }: { flow_name: string }) {
+export default function StudioHeader({ flow_name, savingStatus }: { flow_name: string, savingStatus: string }) {
     const router = useRouter();
 
     const handleBack = () => {
@@ -18,7 +18,7 @@ export default function StudioHeader({ flow_name }: { flow_name: string }) {
                     <XIcon className="size-5 fill-foreground" />
                 </Button>
             </div>
-            <h1 className="text-xl font-semibold">{flow_name}</h1>
+            <h1 className="text-xl font-semibold inline">{flow_name} <span className="text-sm font-normal">{"  "}{savingStatus}</span></h1>
             <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
                 <ShareIcon className="size-3.5" />
                 Share

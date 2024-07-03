@@ -6,11 +6,12 @@ import {
     useCallback,
     useContext,
     useEffect,
-    useRef,
+    // useRef,
     useState,
 } from "react";
 
 import { useParams } from 'next/navigation'
+import { debounce } from 'lodash';
 
 import {
     addEdge,
@@ -33,11 +34,16 @@ import { Action, AnythingNodeProps, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useWorkflowsContext } from "./WorkflowsProvider";
-import { set } from "date-fns";
 
 export enum PanelTab {
     SETTINGS = "settings",
     CONFIG = "config"
+}
+
+export enum SavingStatus {
+    SAVING = "saving...",
+    SAVED = "saved!",
+    NONE = ""
 }
 
 export interface WorkflowVersionContextInterface {
@@ -49,6 +55,7 @@ export interface WorkflowVersionContextInterface {
     selected_node_id?: string;
     selected_node_data?: Action;
     panel_tab: string;
+    savingStatus: string;
     setPanelTab: (tab: string) => void;
     nodes: Node[];
     edges: Edge[];
@@ -72,6 +79,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     flow_version_definition: {},
     selected_node_id: undefined,
     panel_tab: PanelTab.CONFIG,
+    savingStatus: SavingStatus.NONE,
     setPanelTab: () => { },
     nodes: [],
     edges: [],
@@ -107,18 +115,36 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [selectedNodeId, setSelectedNodeId] = useState<string>("")
     const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(undefined)
     //Internal for ReactFlow and Flow Definition Management
-    const [hydrated, setHydrated] = useState<boolean>(false);
-    const [firstLook, setFirstLook] = useState<boolean>(true);
+    // const [hydrated, setHydrated] = useState<boolean>(false);
+    // const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    const [flowVersions, setFlowVersions] = useState<Workflow[]>([]);
+    // const [flowVersions, setFlowVersions] = useState<Workflow[]>([]);
 
     //Navigation State
     const [panel_tab, setPanelTab] = useState<string>(PanelTab.CONFIG);
+    //Saving State
+    const [savingStatus, setSavingStatus] = useState<string>(SavingStatus.NONE);
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    // const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+
+    const resetState = () => {
+        console.log("Resetting State in WorkflowVersionProvider");
+        setNodes([]);
+        setEdges([]);
+        setDbFlowVersionId("");
+        setDbFlowId("");
+        setDbFlow({});
+        setDbFlowVersion({});
+        setFlowVersionDefinition({});
+        // setHydrated(false);
+        setSelectedNodeId("");
+        setSelectedNodeData(undefined);
+        // setFirstLook(false);
+    }
 
     const addNode = (position: { x: number; y: number }, specialData?: any) => {
         let planned_node_name;
@@ -164,6 +190,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         //find the node with selected = true
         let selectionChanges: NodeSelectionChange[] =
             nodeChanges.filter((nodeChange) => nodeChange.type === "select") as NodeSelectionChange[];
+
+        // let nonDimmensionChanges = nodeChanges.filter((nodeChange) => nodeChange.type !== "dimensions") as NodeSelectionChange[];
         // get the id of the node with selected = true
         if (selectionChanges.length > 0) {
             console.log("selectionChanges", selectionChanges);
@@ -181,15 +209,34 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             }
         }
 
+        let new_nodes = applyNodeChanges(nodeChanges, nodes);
+        console.log("new_nodes", new_nodes);
+
+        let unPersistedChanges: NodeSelectionChange[] =
+            nodeChanges.filter((nodeChange) => nodeChange.type === "dimensions" || nodeChange.type === "select") as NodeSelectionChange[];
+
+        if (unPersistedChanges.length === 0) {
+            console.log("Saving Node Update because not dimmension or select changes")
+            let updateFlow = makeUpdateFlow(new_nodes, edges);
+            saveFlowVersion(updateFlow);
+        } else {
+            console.log("Skipping Save because dimmension or select changes")
+        }
+
         setNodes((nodes) => {
-            return applyNodeChanges(nodeChanges, nodes);
+            return new_nodes;
         });
     };
 
     const onEdgesChange: OnEdgesChange = (edgeChanges: EdgeChange[]) => {
+        let new_edges = applyEdgeChanges(edgeChanges, edges);
+        let updateFlow = makeUpdateFlow(nodes, new_edges);
+
+        saveFlowVersion(updateFlow);
+
         setEdges((edges) => {
             console.log("onEdgesChange edgeChanges", edgeChanges);
-            return applyEdgeChanges(edgeChanges, edges);
+            return new_edges;
         });
     };
 
@@ -288,54 +335,52 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         return newFlow;
     };
 
-    const synchronize = async () => {
-        try {
-            //TODO: hash to comapre and only run if dif?
-            console.log("Synchronising Flow in FlowProivders.tsx");
-            let newFlow = getFlowDefinitionsFromReactFlowState();
+    const makeUpdateFlow = (nodes: any, edges: any) => {
+        return {
+            actions: nodes.map((node: any) => {
+                return {
+                    ...node.data,
+                    presentation: {
+                        position: node.position,
+                    },
+                };
+            }),
+            edges: edges,
+        };
+    }
 
-            console.log("newFlow in synchronize", newFlow);
+    // const saveFlowVersion = useCallback(
+    //     debounce(async (workflow: Workflow) => {
+    //         try {
+    //             const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
+    //             console.log('Flow Saved: ', res);
+    //         } catch (error) {
+    //             console.log('error in saveFlowVersion', error);
+    //         }
+    //     }, 1000),
+    //     [dbFlowId, dbFlowVersionId]
+    // );
 
-            //send
-            let res = await api.flows.updateFlowVersion(
-                dbFlowId,
-                dbFlowVersionId,
-                newFlow
-            );
+    const debouncedSaveFlowVersion = useCallback(
+        debounce(async (workflow: Workflow) => {
+            try {
+                const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
+                console.log('Flow Saved: ', res);
+                setSavingStatus(SavingStatus.SAVED);
+                setTimeout(() => setSavingStatus(SavingStatus.NONE), 2000); // Clear the status after 2 seconds
+            } catch (error) {
+                console.log('error in saveFlowVersion', error);
+            }
+        }, 1000),
+        [dbFlowId, dbFlowVersionId]
+    );
 
-            console.log("Flow Synchronized");
-            // console.log("res in updateFlowVersion", res);
-        } catch (error) {
-            console.log("error in synchronise", error);
-        }
+    const saveFlowVersion = (workflow: Workflow) => {
+        setSavingStatus(SavingStatus.SAVING);
+        debouncedSaveFlowVersion(workflow);
     };
 
-    //Buffer editor write to DB
-    useEffect(() => {
-        //Ugly but works to prevent write on load
-        if (!hydrated) { console.log("Not hydrated, skipping useEffect"); return; }
-        if (firstLook) {
-            console.log("First Look, skipping useEffect");
-            setFirstLook(false);
-            return;
-        }
-        // Clear any existing timers
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-        }
 
-        // Set a new timer to write to flow to backend
-        timerRef.current = setTimeout(async () => {
-            synchronize();
-        }, 100);
-
-        // Clean up
-        return () => {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-            }
-        };
-    }, [nodes, edges]);
 
     const hydrateFlow = async () => {
         try {
@@ -384,8 +429,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                     console.log("SKIPPING: No Edges in Flow Definition in hydrateFlow");
                 }
 
-                console.log("Hydrated Flow - setHydrated(true)");
-                setHydrated(true);
+                console.log("Hydrated Flow");
+                // setHydrated(true);
             } else {
                 console.log("No Flow Definition in Flow Version in hydrateFlow");
             }
@@ -395,14 +440,16 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         }
     }
 
-    //Hydrate on Navigation
+    //Hydrate on Navigation and clean on remove
     useEffect(() => {
         //TODO: why does this always write when we start the flow? How can we prevent this?
         if (!workflowId || !workflowVersionId) return;
         setDbFlowVersionId(workflowVersionId);
         setDbFlowId(workflowId);
         hydrateFlow();
-        // hydrateFlow(); //TODO: reimplement loading from JSON. 
+        return () => {
+            resetState();
+        };
     }, [workflowId, workflowVersionId]);
 
     return (
@@ -417,6 +464,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 selected_node_data: selectedNodeData,
                 nodes,
                 edges,
+                savingStatus,
                 panel_tab,
                 setPanelTab: set_panel_tab,
                 onConnect,

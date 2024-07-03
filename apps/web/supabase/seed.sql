@@ -140,6 +140,22 @@ INSERT INTO anything.flow_versions (
 ) VALUES
     ('11111111-1111-1111-1111-111111111111', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'v1.0', 'Initial version of Flow 1', 'checksum1', true, 
     '{
+      "edges": [
+      {
+        "id": "reactflow__edge-example_actionb-example_action_2a",
+        "source": "example_action",
+        "sourceHandle": "b",
+        "target": "example_action_2",
+        "targetHandle": "a"
+      },
+      {
+        "id": "reactflow__edge-example_action_2b-other_example_actiona",
+        "source": "example_action_2",
+        "sourceHandle": "b",
+        "target": "other_example_action",
+        "targetHandle": "a"
+      }
+    ],
     "actions": [
     {
       "anything_action_version": "1.0.0",

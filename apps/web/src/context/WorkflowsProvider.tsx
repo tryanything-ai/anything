@@ -92,12 +92,7 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
 
     const getWorkflowById = async (flowId: string): Promise<DB_WORKFLOWS_QUERY | undefined> => {
         console.log("Getting Flow by ID from State");
-        let res = flows.filter((flow) => flow.flow_id === flowId);
-        if (res.length > 0) {
-            return res;
-        } else {
-            return await api.flows.getFlow(flowId);
-        }
+        return await api.flows.getFlow(flowId);
     };
 
     // Hydrate flows on launch

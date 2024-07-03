@@ -32,7 +32,7 @@ export default function WithReact({ input_schema, input }: any) {
         console.log("Submitted!", { formValues, jsonValues });
     }
 
-    console.log("fields in form", fields);
+    // console.log("fields in form", fields);
 
     return (
         <SmartForm

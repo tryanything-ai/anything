@@ -10,9 +10,9 @@ import { useAnything } from "@/context/AnythingContext";
 //     'custom-edge': CustomEdge
 //   }
 
-  const nodeTypes = {
-        "anything": BaseNode,
-}; 
+const nodeTypes = {
+    "anything": BaseNode,
+};
 export default function StudioWorkflowEditor() {
 
     const { workflow } = useAnything();
@@ -26,6 +26,7 @@ export default function StudioWorkflowEditor() {
                 onNodesChange={workflow.onNodesChange}
                 onEdgesChange={workflow.onEdgesChange}
                 onConnect={workflow.onConnect}
+                nodeDragThreshold={1}
                 // onDragOver={workflow.onDragOver}
                 // onDrop={(e) => onDrop(e, reactFlowWrapper)}
                 onInit={workflow.setReactFlowInstance}
