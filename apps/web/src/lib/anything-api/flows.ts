@@ -78,7 +78,7 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
-    console.log('Deleting Workflow');
+    console.log('Updating Workflow');
 
     if (session) {
       const response = await fetch(`http://localhost:3001/workflow/${flow_id}/version/${flow_version_id}`, {
@@ -158,7 +158,7 @@ export const getFlow = async (flowId: string) => {
     }
 
   } catch (error) {
-    console.error('Error deleting Workflow:', error);
+    console.error('Error getting Workflow:', error);
   } finally {
   }
 };

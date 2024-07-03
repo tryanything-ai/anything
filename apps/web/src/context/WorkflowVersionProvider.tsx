@@ -313,8 +313,9 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     //Buffer editor write to DB
     useEffect(() => {
         //Ugly but works to prevent write on load
-        if (!hydrated) return;
+        if (!hydrated) { console.log("Not hydrated, skipping useEffect"); return; }
         if (firstLook) {
+            console.log("First Look, skipping useEffect");
             setFirstLook(false);
             return;
         }
@@ -344,33 +345,49 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
             if (!workflow_response) return;
             let flow = workflow_response[0];
+            let flow_version = flow.flow_versions[0];
             console.log("New Hydreate in Workflow Provider", flow);
-            console.log('Version in New Hydrate Flow', flow.flow_versions[0]);
-            console.log('Flow Definition in New Hydrate Flow', flow.flow_versions[0].flow_definition);
+            console.log('Version in New Hydrate Flow', flow_version);
+            console.log('Flow Definition in New Hydrate Flow', flow_version.flow_definition);
 
             setDbFlow(flow);
-            let flow_version = flow.flow_versions[0];
+            // let flow_version = flow.flow_versions[0];
             setDbFlowVersion(flow_version);
             setFlowVersionDefinition(flow_version.flow_definition);
             if (flow_version && flow_version.flow_definition) {
-                let _nodes: Node[] = flow_version.flow_definition.actions.map((action) => {
 
-                    let position = action.presentation?.position || { x: 0, y: 0 };
+                if (flow_version.flow_definition.actions && flow_version.flow_definition.actions.length !== 0) {
+                    let _nodes: Node[] = flow_version.flow_definition.actions.map((action) => {
 
-                    return {
-                        position,
-                        data: action,
-                        id: action.node_id,
-                        type: "anything",
-                    };
-                });
-                setNodes(_nodes);
+                        let position = action.presentation?.position || { x: 0, y: 0 };
 
-                let _edges: Edge[] = flow_version.flow_definition.edges.map((edge) => {
-                    return edge;
-                });
-                setEdges(_edges);
+                        return {
+                            position,
+                            data: action,
+                            id: action.node_id,
+                            type: "anything",
+                        };
+                    });
+                    console.log("Nodes in hydrate flow", _nodes);
+                    setNodes(_nodes);
+                } else {
+                    console.log("SKIPPING: No Actions in Flow Definition in hydrateFlow");
+                }
+
+                if (flow_version.flow_definition.edges && flow_version.flow_definition.edges.length !== 0) {
+                    let _edges: Edge[] = flow_version.flow_definition.edges.map((edge) => {
+                        return edge;
+                    });
+                    console.log("Edges in hydrate flow", _edges);
+                    setEdges(_edges);
+                } else {
+                    console.log("SKIPPING: No Edges in Flow Definition in hydrateFlow");
+                }
+
+                console.log("Hydrated Flow - setHydrated(true)");
                 setHydrated(true);
+            } else {
+                console.log("No Flow Definition in Flow Version in hydrateFlow");
             }
 
         } catch (e) {
