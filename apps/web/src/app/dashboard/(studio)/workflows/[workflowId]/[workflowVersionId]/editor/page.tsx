@@ -4,6 +4,7 @@ import { useAnything } from "@/context/AnythingContext";
 import StudioHeader from '@/components/studio/studio-header';
 import StudioWorkflowEditor from '@/components/studio/studio-workflow-editor';
 import RightPanelFormEditor from '@/components/studio/forms/right-panel-form-editor';
+import { StudioActionsSheet } from "@/components/studio/studio-actions-sheet";
 
 export default function StudioLayout() {
     const { workflow } = useAnything();
@@ -18,6 +19,8 @@ export default function StudioLayout() {
                         {/* Add Editor */}
                         <StudioWorkflowEditor />
                     </div>
+                    {/* Actions sheet */}
+                    <StudioActionsSheet />
                     {/* Right Hand Form */}
                     <div className="relative hidden flex-col items-start gap-8 md:flex" x-chunk="dashboard-03-chunk-0">
                         <RightPanelFormEditor />

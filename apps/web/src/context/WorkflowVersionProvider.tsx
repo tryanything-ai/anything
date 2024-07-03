@@ -57,6 +57,8 @@ export interface WorkflowVersionContextInterface {
     panel_tab: string;
     savingStatus: string;
     setPanelTab: (tab: string) => void;
+    showingActionSheet: boolean;
+    setShowingActionSheet: (showing: boolean) => void;
     nodes: Node[];
     edges: Edge[];
     onNodesChange: OnNodesChange;
@@ -81,6 +83,8 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     panel_tab: PanelTab.CONFIG,
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => { },
+    showingActionSheet: false,
+    setShowingActionSheet: () => { },
     nodes: [],
     edges: [],
     onNodesChange: () => { },
@@ -125,6 +129,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [panel_tab, setPanelTab] = useState<string>(PanelTab.CONFIG);
     //Saving State
     const [savingStatus, setSavingStatus] = useState<string>(SavingStatus.NONE);
+    //Action sheet for adding nodes
+    const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
@@ -240,10 +246,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         });
     };
 
-    const onConnect: OnConnect = (params: Connection) => {
+    const onConnect: OnConnect = (params: any) => {
         setEdges((edges) => {
             // console.log("onEdgesChange edgeChanges", edgeChanges);
             console.log("onConnect params", params);
+            params.type = "anything";
             return addEdge(params, edges);
         });
     };
@@ -466,6 +473,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 edges,
                 savingStatus,
                 panel_tab,
+                showingActionSheet,
+                setShowingActionSheet,
                 setPanelTab: set_panel_tab,
                 onConnect,
                 onNodesChange,

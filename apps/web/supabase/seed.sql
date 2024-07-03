@@ -145,6 +145,7 @@ INSERT INTO anything.flow_versions (
         "id": "reactflow__edge-example_actionb-example_action_2a",
         "source": "example_action",
         "sourceHandle": "b",
+        "type": "anything",
         "target": "example_action_2",
         "targetHandle": "a"
       },
@@ -152,6 +153,7 @@ INSERT INTO anything.flow_versions (
         "id": "reactflow__edge-example_action_2b-other_example_actiona",
         "source": "example_action_2",
         "sourceHandle": "b",
+        "type": "anything",
         "target": "other_example_action",
         "targetHandle": "a"
       }

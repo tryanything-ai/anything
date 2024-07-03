@@ -5,7 +5,7 @@ import 'reactflow/dist/style.css';
 import BaseNode
     from "./nodes/workflow-node";
 import { useAnything } from "@/context/AnythingContext";
-
+import CustomEdge from "./edges/workflow-edge";
 // const edgeTypes = {
 //     'custom-edge': CustomEdge
 //   }
@@ -13,6 +13,11 @@ import { useAnything } from "@/context/AnythingContext";
 const nodeTypes = {
     "anything": BaseNode,
 };
+
+const edgeTypes = {
+    'anything': CustomEdge,
+};
+
 export default function StudioWorkflowEditor() {
 
     const { workflow } = useAnything();
@@ -21,6 +26,7 @@ export default function StudioWorkflowEditor() {
         <div style={{ width: '100%', height: '100%' }}>
             <ReactFlow
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
                 nodes={workflow.nodes}
                 edges={workflow.edges}
                 onNodesChange={workflow.onNodesChange}
