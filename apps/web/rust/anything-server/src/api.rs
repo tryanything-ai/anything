@@ -358,3 +358,31 @@ pub async fn get_secrets(
 
     Json(items).into_response()
 }
+
+
+pub async fn delete_secret(
+    Path(secret_id): Path<String>,
+    State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+
+    let response = match client
+        .from("secrets")
+        .auth(user.jwt)
+        .eq("secret_id", &secret_id)
+        .update("{\"archived\": true}")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    Json(body).into_response()
+}

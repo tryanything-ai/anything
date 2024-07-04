@@ -40,6 +40,7 @@ async fn main() {
         .route("/workflow/:id", put(api::update_workflow))
         .route("/actions", get(api::get_actions))
         .route("/secrets", get(api::get_secrets))
+        .route("/secret/:id", delete(api::delete_secret))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(client.clone());

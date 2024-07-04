@@ -26,3 +26,31 @@ export const getSecrets = async () => {
     } finally {
     }
 }
+
+
+export async function deleteSecret(secret_id: string) {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Deleting Secret');
+
+        if (session) {
+            const response = await fetch(`http://localhost:3001/secret/${secret_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                }
+            });
+
+            const data = await response.json();
+            console.log('Data from /api/secret DELETE:', data);
+            return data;
+        }
+
+    } catch (error) {
+        console.error('Error deleting Secret:', error);
+    } finally {
+    }
+}
