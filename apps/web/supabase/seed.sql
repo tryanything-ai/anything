@@ -961,3 +961,13 @@ INSERT INTO anything.action_templates (
       ]
     }', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'); 
    
+
+   -- Inserting sample secrets into marketplace.secrets
+INSERT INTO anything.secrets (
+    secret_id, account_id, secret_name, vault_secret_id, created_at, updated_at, created_by, updated_by
+) VALUES
+    (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_1', '123e4567-e89b-12d3-a456-426614174000', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
+    (uuid_generate_v4(), '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_2', '123e4567-e89b-12d3-a456-426614174001', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
+    (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_3', '123e4567-e89b-12d3-a456-426614174002', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
+    (uuid_generate_v4(), '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_4', '123e4567-e89b-12d3-a456-426614174003', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
+    (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_5', '123e4567-e89b-12d3-a456-426614174004', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
