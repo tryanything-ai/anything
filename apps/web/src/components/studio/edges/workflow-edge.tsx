@@ -6,9 +6,11 @@ import {
   getSmoothStepPath,
   getStraightPath,
   useReactFlow,
+  Edge,
+  EdgeProps,
 } from 'reactflow';
 
-export default function CustomEdge({ id, sourceX, sourceY, targetX, targetY }: { id: string, sourceX: number, sourceY: number, targetX: number, targetY: number }) {
+export default function CustomEdge({ id, sourceX, sourceY, targetX, targetY }: EdgeProps) {
   const { setEdges } = useReactFlow();
   const { workflow } = useAnything();
 
@@ -30,10 +32,10 @@ export default function CustomEdge({ id, sourceX, sourceY, targetX, targetY }: {
             pointerEvents: 'all',
           }}
 
-          className="nodrag nopan h-6 w-6 bg-green-500 rounded-xl text-white font-bold text-md"
+          className="nodrag nopan h-6 w-6 hover:bg-green-500 bg-gray-300 rounded-xl text-white font-bold text-md"
           onClick={() => {
             // setEdges((es) => es.filter((e) => e.id !== id));
-            workflow.setShowingActionSheet(true);
+            workflow.showActionSheetForEdge(id);
           }}
         >
           +

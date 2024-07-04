@@ -17,9 +17,9 @@ import {
     addEdge,
     applyEdgeChanges,
     applyNodeChanges,
-    Connection,
     Edge,
     EdgeChange,
+    EdgeSelectionChange,
     Node,
     NodeChange,
     NodeSelectionChange,
@@ -27,6 +27,9 @@ import {
     OnEdgesChange,
     OnNodesChange,
     ReactFlowInstance,
+    getIncomers,
+    getOutgoers,
+    getConnectedEdges,
 } from "reactflow";
 
 import api from "@/lib/anything-api"
@@ -59,6 +62,7 @@ export interface WorkflowVersionContextInterface {
     setPanelTab: (tab: string) => void;
     showingActionSheet: boolean;
     setShowingActionSheet: (showing: boolean) => void;
+    showActionSheetForEdge: (id: string) => void;
     nodes: Node[];
     edges: Edge[];
     onNodesChange: OnNodesChange;
@@ -84,6 +88,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => { },
     showingActionSheet: false,
+    showActionSheetForEdge: () => { },
     setShowingActionSheet: () => { },
     nodes: [],
     edges: [],
@@ -131,11 +136,17 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [savingStatus, setSavingStatus] = useState<string>(SavingStatus.NONE);
     //Action sheet for adding nodes
     const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
+    const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
     // const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+    const showActionSheetForEdge = (id: string) => {
+        console.log("Show Action Sheet for Edge: ", id);
+        setShowingActionSheet(true);
+        setActionSheetEdge(id);
+    }
 
     const resetState = () => {
         console.log("Resetting State in WorkflowVersionProvider");
@@ -174,6 +185,28 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             return [...nodes, newNode];
         });
     };
+
+    const addActionTemplateAtEdge = (id: string, action_template: Action) => {
+
+        let planned_node_name = action_template.label;
+
+        const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
+        console.log("conflictFreeId", conflictFreeId);
+
+        //TODO: update all the effected edges
+        //Update all the effected positions for the nodes
+        // console.log("special data", specialData);
+        // const newNode: Node = {
+        //     id: conflictFreeId,
+        //     type: "anything",
+        //     position,
+        //     data: { ...specialData, node_name: conflictFreeId },
+        // };
+
+        // setNodes((nodes) => {
+        //     return [...nodes, newNode];
+        // });
+    }
 
     const set_panel_tab = (tab: string) => {
         //Used to make nice navigation in side panel
@@ -238,7 +271,16 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         let new_edges = applyEdgeChanges(edgeChanges, edges);
         let updateFlow = makeUpdateFlow(nodes, new_edges);
 
-        saveFlowVersion(updateFlow);
+        //find the node with selected = true
+        let selectionChanges: EdgeSelectionChange[] =
+            edgeChanges.filter((edgeChange) => edgeChange.type === "select") as EdgeSelectionChange[];
+
+        if (selectionChanges.length === 0) {
+            console.log("Saving Edge Update because not select changes")
+            saveFlowVersion(updateFlow);
+        } else {
+            console.log("Skipping Save because select changes")
+        }
 
         setEdges((edges) => {
             console.log("onEdgesChange edgeChanges", edgeChanges);
@@ -247,11 +289,18 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     };
 
     const onConnect: OnConnect = (params: any) => {
+
+        params.type = "anything";
+        let new_edges = addEdge(params, edges);
+
+        let updateFlow = makeUpdateFlow(nodes, new_edges);
+        saveFlowVersion(updateFlow);
+
         setEdges((edges) => {
             // console.log("onEdgesChange edgeChanges", edgeChanges);
-            console.log("onConnect params", params);
-            params.type = "anything";
-            return addEdge(params, edges);
+            // console.log("onConnect params", params);
+            // params.type = "anything";
+            return new_edges;
         });
     };
 
@@ -475,6 +524,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 panel_tab,
                 showingActionSheet,
                 setShowingActionSheet,
+                showActionSheetForEdge,
                 setPanelTab: set_panel_tab,
                 onConnect,
                 onNodesChange,
