@@ -20,6 +20,9 @@ import { Package, ShoppingCart, Home, Users, LineChart } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ActionPanelLeftPanelNavigation } from "./left-panel-navigation"
 import api from "@/lib/anything-api"
+import { Action } from "@/types/workflows"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 
 
 export function StudioActionsSheet() {
@@ -50,8 +53,33 @@ export function StudioActionsSheet() {
                 </SheetHeader>
                 <div className="py-4 flex flex-row">
                     {/* Left Hand Panel */}
-                    <ActionPanelLeftPanelNavigation />
-                    <div className="bg-pink-400 flex-1 w-full h-full mx-7">{JSON.stringify(actions, null, 3)}</div>
+                    {/* <ActionPanelLeftPanelNavigation /> */}
+                    <div className="flex-1 w-full h-full">
+                        <ScrollArea>
+                            {
+                                actions.map((db_action: any) => {
+                                    let action: Action = db_action.action_template_definition;
+                                    return (
+                                        <div className="flex flex-row justify-between items-center p-4 m-1 border rounded-md border-black">
+                                            <div className="flex flex-row gap-4 items-center">
+                                                {/* <div className="flex items-center justify-center w-10 h-10 bg-background rounded-lg"> */}
+                                                <BaseNodeIcon icon={action.icon} />
+                                                {/* <Package className="size-6 fill-foreground" />   */}
+                                                {/* </div> */}
+                                                <div>
+                                                    <div className="text-lg font-semibold">{action.label}</div>
+                                                    <div className="text-sm font-normal">{action.description}</div>
+                                                </div>
+                                            </div>
+                                            {/* <div>
+                                        <Button variant="primary" size="sm">Add</Button>
+                                    </div> */}
+                                        </div>
+                                    )
+                                })
+                            }
+                        </ScrollArea>
+                    </div>
                 </div>
             </SheetContent>
         </Sheet>
