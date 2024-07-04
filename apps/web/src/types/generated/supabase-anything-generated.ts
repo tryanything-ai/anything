@@ -7,146 +7,56 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
+  anything: {
     Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  public: {
-    Tables: {
-      events: {
+      action_templates: {
         Row: {
           account_id: string
-          config: Json
-          context: Json | null
+          action_template_definition: Json
+          action_template_id: string
+          archived: boolean
           created_at: string | null
           created_by: string | null
-          debug_result: Json | null
-          ended_at: string | null
-          event_id: string
-          event_status: string
-          extension_id: string
-          flow_id: string
-          flow_session_id: string
-          flow_session_status: string
-          flow_version_id: string
-          flow_version_name: string | null
-          is_trigger: boolean
-          node_id: string
-          result: Json | null
-          stage: string
-          started_at: string | null
-          trigger_id: string
-          trigger_session_id: string
-          trigger_session_status: string
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
           account_id: string
-          config: Json
-          context?: Json | null
+          action_template_definition: Json
+          action_template_id?: string
+          archived?: boolean
           created_at?: string | null
           created_by?: string | null
-          debug_result?: Json | null
-          ended_at?: string | null
-          event_id?: string
-          event_status: string
-          extension_id: string
-          flow_id: string
-          flow_session_id: string
-          flow_session_status: string
-          flow_version_id: string
-          flow_version_name?: string | null
-          is_trigger?: boolean
-          node_id: string
-          result?: Json | null
-          stage: string
-          started_at?: string | null
-          trigger_id: string
-          trigger_session_id: string
-          trigger_session_status: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
           account_id?: string
-          config?: Json
-          context?: Json | null
+          action_template_definition?: Json
+          action_template_id?: string
+          archived?: boolean
           created_at?: string | null
           created_by?: string | null
-          debug_result?: Json | null
-          ended_at?: string | null
-          event_id?: string
-          event_status?: string
-          extension_id?: string
-          flow_id?: string
-          flow_session_id?: string
-          flow_session_status?: string
-          flow_version_id?: string
-          flow_version_name?: string | null
-          is_trigger?: boolean
-          node_id?: string
-          result?: Json | null
-          stage?: string
-          started_at?: string | null
-          trigger_id?: string
-          trigger_session_id?: string
-          trigger_session_status?: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "events_account_id_fkey"
+            foreignKeyName: "action_templates_account_id_fkey"
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "events_created_by_fkey"
+            foreignKeyName: "action_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "events_flow_id_fkey"
-            columns: ["flow_id"]
-            isOneToOne: false
-            referencedRelation: "flows"
-            referencedColumns: ["flow_id"]
-          },
-          {
-            foreignKeyName: "events_flow_version_id_fkey"
-            columns: ["flow_version_id"]
-            isOneToOne: false
-            referencedRelation: "flow_versions"
-            referencedColumns: ["flow_version_id"]
-          },
-          {
-            foreignKeyName: "events_updated_by_fkey"
+            foreignKeyName: "action_templates_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "users"
@@ -157,6 +67,7 @@ export type Database = {
       flow_versions: {
         Row: {
           account_id: string
+          archived: boolean
           checksum: string | null
           created_at: string | null
           created_by: string | null
@@ -171,6 +82,7 @@ export type Database = {
         }
         Insert: {
           account_id: string
+          archived?: boolean
           checksum?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -185,6 +97,7 @@ export type Database = {
         }
         Update: {
           account_id?: string
+          archived?: boolean
           checksum?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -232,33 +145,33 @@ export type Database = {
         Row: {
           account_id: string
           active: boolean
+          archived: boolean
           created_at: string | null
           created_by: string | null
           flow_id: string
           flow_name: string
-          latest_version_id: string
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
           account_id: string
           active?: boolean
+          archived?: boolean
           created_at?: string | null
           created_by?: string | null
           flow_id?: string
           flow_name: string
-          latest_version_id: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
           account_id?: string
           active?: boolean
+          archived?: boolean
           created_at?: string | null
           created_by?: string | null
           flow_id?: string
           flow_name?: string
-          latest_version_id?: string
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -286,6 +199,171 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          account_id: string
+          archived: boolean
+          config: Json
+          context: Json | null
+          created_at: string | null
+          created_by: string | null
+          debug_result: Json | null
+          ended_at: string | null
+          flow_id: string
+          flow_session_id: string
+          flow_session_status: string
+          flow_version_id: string
+          flow_version_name: string | null
+          is_trigger: boolean
+          node_id: string
+          plugin_id: string
+          result: Json | null
+          stage: string
+          started_at: string | null
+          task_id: string
+          task_status: string
+          trigger_id: string
+          trigger_session_id: string
+          trigger_session_status: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          account_id: string
+          archived?: boolean
+          config: Json
+          context?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          debug_result?: Json | null
+          ended_at?: string | null
+          flow_id: string
+          flow_session_id: string
+          flow_session_status: string
+          flow_version_id: string
+          flow_version_name?: string | null
+          is_trigger?: boolean
+          node_id: string
+          plugin_id: string
+          result?: Json | null
+          stage: string
+          started_at?: string | null
+          task_id?: string
+          task_status: string
+          trigger_id: string
+          trigger_session_id: string
+          trigger_session_status: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          account_id?: string
+          archived?: boolean
+          config?: Json
+          context?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          debug_result?: Json | null
+          ended_at?: string | null
+          flow_id?: string
+          flow_session_id?: string
+          flow_session_status?: string
+          flow_version_id?: string
+          flow_version_name?: string | null
+          is_trigger?: boolean
+          node_id?: string
+          plugin_id?: string
+          result?: Json | null
+          stage?: string
+          started_at?: string | null
+          task_id?: string
+          task_status?: string
+          trigger_id?: string
+          trigger_session_id?: string
+          trigger_session_status?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flows"
+            referencedColumns: ["flow_id"]
+          },
+          {
+            foreignKeyName: "tasks_flow_version_id_fkey"
+            columns: ["flow_version_id"]
+            isOneToOne: false
+            referencedRelation: "flow_versions"
+            referencedColumns: ["flow_version_id"]
+          },
+          {
+            foreignKeyName: "tasks_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

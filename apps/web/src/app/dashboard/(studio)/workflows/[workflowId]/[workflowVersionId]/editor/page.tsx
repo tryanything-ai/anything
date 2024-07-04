@@ -4,7 +4,7 @@ import { useAnything } from "@/context/AnythingContext";
 import StudioHeader from '@/components/studio/studio-header';
 import StudioWorkflowEditor from '@/components/studio/studio-workflow-editor';
 import RightPanelFormEditor from '@/components/studio/forms/right-panel-form-editor';
-import { StudioActionsSheet } from "@/components/studio/studio-actions-sheet";
+import { StudioActionsSheet } from "@/components/studio/action-sheet/studio-actions-sheet";
 
 export default function StudioLayout() {
     const { workflow } = useAnything();

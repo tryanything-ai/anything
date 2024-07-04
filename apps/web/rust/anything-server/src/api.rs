@@ -290,3 +290,37 @@ pub async fn update_workflow_version(
 
     Json(body).into_response()
 }
+
+
+// Actions
+pub async fn get_actions(
+    State(client): State<Arc<Postgrest>>, 
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    println!("Handling a get_actions");
+
+    let response = match client
+        .from("action_templates")
+        .auth(user.jwt)
+        .eq("archived", "false")
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    Json(items).into_response()
+}

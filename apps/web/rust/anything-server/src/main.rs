@@ -38,6 +38,7 @@ async fn main() {
         .route("/workflow", post(api::create_workflow))
         .route("/workflow/:id", delete(api::delete_workflow))
         .route("/workflow/:id", put(api::update_workflow))
+        .route("/actions", get(api::get_actions))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(client.clone());
