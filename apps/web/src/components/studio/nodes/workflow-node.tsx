@@ -1,10 +1,26 @@
+"use client"
+
+import { useState } from "react";
 import { cn } from "@/lib/utils"
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { Handle, HandleProps } from "reactflow";
 import { useFlowNavigationContext } from "@/context/FlowNavigationProvider";
 import { Action } from "@/types/workflows"
 import { Badge } from "@/components/ui/badge";
-import { ZapIcon } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+type Checked = DropdownMenuCheckboxItemProps["checked"]
+
 
 export default function BaseNode({
   id,
@@ -26,40 +42,73 @@ export default function BaseNode({
       closeAllPanelsOpenOne("nodeConfig", id)
     }
   }
-  return (
-    <div
-      onClick={toggleNodeConfig}
-      className={cn(
-        "bg-white border border-gray-300 text-primary-content flex h-20 w-80 flex-row rounded-md text-xl",
-        selected ? "border-pink-700 border-2" : "",
-      )}
-    // className=""
-    >
-      {data.handles ? data.handles.map((handle: HandleProps) => {
-        return (
-          <Handle
-            key={handle.id}
-            type={handle.type}
-            position={handle.position}
-            id={handle.id}
-          />
-        );
-      }) : null}
 
-      {/* Container */}
-      <div className="flex h-full w-full flex-row items-center p-3">
-        <BaseNodeIcon icon={data.icon} />
-        <div className="flex flex-col">
-          <div className="p-4">{data.label}</div>
+  const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    // Handle button click logic here
+
+  }
+
+  const createReusableAction = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    console.log("TODO: Make reusable")
+  }
+
+  const duplicateAction = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    console.log("TODO: Make duplicate action")
+  }
+
+  const deleteAction = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    console.log("TODO: Delete Action")
+  }
+
+
+  return (
+    <>
+      <DropdownMenu>
+        <div
+          onClick={toggleNodeConfig}
+          className={cn(
+            "bg-white border border-gray-300 text-primary-content flex h-20 w-90 flex-row rounded-md text-xl",
+            selected ? "border-pink-700 border-2" : "",
+          )}
+        // className=""
+        >
+          {data.handles ? data.handles.map((handle: HandleProps) => {
+            return (
+              <Handle
+                key={handle.id}
+                type={handle.type}
+                position={handle.position}
+                id={handle.id}
+              />
+            );
+          }) : null}
+
+          {/* Container */}
+          <div className="flex h-full w-full flex-row items-center p-3">
+            <BaseNodeIcon icon={data.icon} />
+            <div className="flex flex-col">
+              <div className="p-4">{data.label}</div>
+            </div>
+          </div>
+          <div className="flex h-full flex-row items-center pr-3">
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="p-2" onClick={handleButtonClick}>
+                <EllipsisVertical className="w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </div>
         </div>
-      </div>
-      {/* {data.type === "trigger" ?
-        <Badge className="bg-green-200 border border-gray-200 rounded-xl h-6 w-22 mr-2 mt-2 p-1 hover:bg-green-200">
-          <ZapIcon className="h-4 w-4 text-green-700" />
-          {" "}<span className="text-gray-700 text-xs font-">Trigger</span>
-        </Badge>
-        : null} */}
-    </div>
+        {/* Content of Dropdown */}
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuItem onClick={createReusableAction}>Make Reusable Action</DropdownMenuItem>
+          <DropdownMenuItem onClick={duplicateAction}>Duplicate</DropdownMenuItem>
+          <DropdownMenuItem onClick={deleteAction}>Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }
-
