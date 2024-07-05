@@ -10,6 +10,7 @@ use tower_http::cors::CorsLayer;
 mod api;
 mod engine;
 mod auth;
+mod secrets;
 
 #[macro_use] extern crate slugify;
 
@@ -41,7 +42,7 @@ async fn main() {
         .route("/workflow/:id", put(api::update_workflow))
         .route("/actions", get(api::get_actions))
         .route("/secrets", get(api::get_secrets))
-        .route("/secret", post(api::create_secret))
+        .route("/secret", post(secrets::create_secret))
         .route("/secret/:id", delete(api::delete_secret))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
