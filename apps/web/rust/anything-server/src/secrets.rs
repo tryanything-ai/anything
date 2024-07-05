@@ -48,9 +48,7 @@ pub async fn create_secret(
     headers: HeaderMap,
     Json(payload): Json<CreateSecretPayload>,
 ) -> impl IntoResponse {
-
  
-
     println!("create_secret Input?: {:?}", payload);
 
     let vault_secret_name = slugify!(format!("{}_{}", user.account_id.clone(), payload.secret_name.clone()).as_str(), separator = "_");
@@ -70,24 +68,12 @@ pub async fn create_secret(
     // vault functions with a service role priveledges
     // Otherwise users might find ways into a very naughty place
     dotenv().ok();
-    let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-    
-    println!("Supabase URL: {:?}", supabase_url);
-    println!("Supabase SERVICE_ROLE API Key: {:?}", supabase_service_role_api_key);
-
-    // let service_role_client = 
-    //     Postgrest::new(supabase_url.clone())
-    //     // .insert_header("apikey", supabase_service_role_api_key.clone())
-    //     .schema("anything");
-    
-
-    // let jwt = user.jwt.clone();
 
     // Create Secret in Vault
     let response = match client
         .rpc("insert_secret", serde_json::to_string(&input).unwrap())
-        .auth(supabase_service_role_api_key.clone())
+        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
         .execute()
         .await
     {

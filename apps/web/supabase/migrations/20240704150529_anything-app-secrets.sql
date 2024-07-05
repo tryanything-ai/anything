@@ -111,41 +111,19 @@ create policy "Account members can delete" on anything.secrets
 
 -- //https://supabase.com/docs/guides/api/securing-your-api
 -- Create Functions for Managing Secrets
--- create or replace function anything.insert_secret(name text, secret text)
--- returns uuid
--- language plpgsql
--- security invoker
--- as $$
--- begin
---   if current_setting('role') != 'service_role' then
---     raise exception 'authentication required';
---   end if;
+create or replace function anything.insert_secret(name text, secret text)
+returns uuid
+language plpgsql
+security invoker
+as $$
+begin
+  if current_setting('role') != 'service_role' then
+    raise exception 'authentication required';
+  end if;
  
---   return vault.create_secret(secret, name);
--- end;
--- $$;
-
-CREATE OR REPLACE FUNCTION anything.insert_secret(name TEXT, secret TEXT)
-RETURNS TEXT
-LANGUAGE plpgsql
-SECURITY INVOKER
-AS $$
-DECLARE
-    created_secret_id UUID;
-BEGIN
-    -- Check if the current role is 'service_role'
-    IF current_setting('role', true) IS DISTINCT FROM 'service_role' THEN
-        RETURN 'authentication required: current role is ' || current_user;
-    END IF;
-
-    -- Call the vault.create_secret function
-    created_secret_id := vault.create_secret(secret, name);
-
-    -- Return the created secret ID
-    RETURN created_secret_id::TEXT;
-END;
+  return vault.create_secret(secret, name);
+end;
 $$;
-
 
 create function anything.read_secret(secret_name text)
 returns text
