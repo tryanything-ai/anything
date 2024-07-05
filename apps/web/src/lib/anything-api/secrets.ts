@@ -1,8 +1,6 @@
-import { Action, Workflow } from "@/types/workflows";
 import { createClient } from "../supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
-export async function createSecret(secret_name: string, secret_value: string) {
+export async function createSecret(secret_name: string, secret_value: string, secret_description: string) {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -21,7 +19,7 @@ export async function createSecret(secret_name: string, secret_value: string) {
                 body: JSON.stringify({
                     secret_name,
                     secret_value,
-                    secret_description: 'test'
+                    secret_description,
                 }),
             });
 
@@ -62,7 +60,6 @@ export const getSecrets = async () => {
     }
 }
 
-
 export async function deleteSecret(secret_id: string) {
     try {
         const supabase = createClient();
@@ -86,6 +83,41 @@ export async function deleteSecret(secret_id: string) {
 
     } catch (error) {
         console.error('Error deleting Secret:', error);
+    } finally {
+    }
+}
+
+export async function updateSecret(secret_id: string, secret_vault_id: string, secret_value: string, secret_description: string) {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Updating Secret');
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`http://localhost:3001/secret`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    secret_id,
+                    secret_vault_id,
+                    secret_value,
+                    secret_description,
+                }),
+            });
+
+            const data = await response.json();
+            console.log('Data from /api/secret PUT:', data);
+            return data;
+        }
+
+    } catch (error) {
+        console.error('Error updating Secret:', error);
     } finally {
     }
 }

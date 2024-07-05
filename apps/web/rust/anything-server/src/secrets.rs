@@ -29,7 +29,7 @@ pub struct CreateSecretPayload {
 pub struct CreateSecretInput {
     name: String,
     secret: String,
-    // description: String,
+    description: String,
 }
 
 
@@ -235,3 +235,106 @@ pub async fn delete_secret(
     Json(body).into_response()
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateSecretPayload {
+    secret_id: String,
+    secret_vault_id: String,
+    secret_value: String,
+    secret_description: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateVaultSecretInput {
+    id: String,
+    secret: String,
+    description: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateAnythingSecretInput {
+    secret_id: String,
+    secret_value: String,
+    secret_description: String,
+}
+
+pub async fn update_secret(
+    State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+    Json(payload): Json<UpdateSecretPayload>,
+) -> impl IntoResponse {
+ 
+    println!("update_secret Input?: {:?}", payload);
+
+    let input = UpdateVaultSecretInput {
+        id: payload.secret_vault_id.clone(),
+        secret: payload.secret_value.clone(),
+        description: payload.secret_description.clone(),
+    }; 
+
+    println!("update_secret rpc Input?: {:?}", input);
+  
+    //Create Service Role Client   
+    //We need a service role client here so that we only ever trigger
+    // vault functions with a service role priveledges
+    // Otherwise users might find ways into a very naughty place
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    // Create Secret in Vault
+    let response = match client
+        .rpc("update_secret", serde_json::to_string(&input).unwrap())
+        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+       // Extract the id from the response
+    // Extract the id from the response
+    // let vault_secret_id = match response.get("id").and_then(|id| id.as_str()) {
+    //     Some(id) => id.to_string(),
+    //     None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get id from response").into_response(),
+    // };
+
+    // println!("Response from vault insert: {:?}", vault_secret_id);
+
+    println!("Response from vault insert: {:?}", body);
+
+    let cleaned_response = body.trim_matches('"');
+
+    let anythingSecretInput = AnythingCreateSecretInput {
+        secret_name: payload.secret_name.clone(),
+        vault_secret_id: cleaned_response.to_string(), //vault_secret_id.clone(),
+        secret_description: payload.secret_description.clone(),
+        account_id: user.account_id.clone()
+    };
+    
+    //Create Flow Version
+    let db_secret_response = match client
+        .from("secrets")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&anythingSecretInput).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let db_secret_body = match db_secret_response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    println!("DB Secret Body: {:?}", db_secret_body);
+
+    Json(db_secret_body).into_response()
+}

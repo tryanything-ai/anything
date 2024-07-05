@@ -43,6 +43,7 @@ async fn main() {
         .route("/actions", get(api::get_actions))
         .route("/secrets", get(secrets::get_decrypted_secrets))
         .route("/secret", post(secrets::create_secret))
+        .route("/secret", put(secrets::update_secret))
         .route("/secret/:id", delete(secrets::delete_secret))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
