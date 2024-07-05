@@ -164,7 +164,7 @@ pub async fn get_secrets(
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetDecryptedSecretsInput {
-    account_id: String,
+    user_account_id: String,
 }
 
 // Secrets
@@ -179,7 +179,7 @@ pub async fn get_decrypted_secrets(
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     let input = GetDecryptedSecretsInput {
-        account_id: user.account_id.clone()
+        user_account_id: user.account_id.clone()
     }; 
 
     println!("get_decrypted_secrets rpc Input?: {:?}", input);

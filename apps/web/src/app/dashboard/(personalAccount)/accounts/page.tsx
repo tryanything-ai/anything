@@ -28,7 +28,7 @@ export default function AccountsPage() {
     const fetchSecrets = async () => {
         try {
             const response = await api.secrets.getSecrets();
-            if(response.length === 0) {
+            if (response.length === 0) {
                 setSecrets([]);
                 return;
             }
@@ -84,7 +84,7 @@ export default function AccountsPage() {
                     <div key={index} className="flex m-2 items-center justify-center content-center">
                         {/* <PartyPopper className="size-5" /> */}
                         <div className="text-lg font-bold mr-2">{secret.secret_name}</div>
-                        <Input type="" value={secret.vault_secret_id} readOnly />
+                        <Input type="" value={secret.secret_value} readOnly />
                         <Button variant="outline" size="sm" className="ml-2" onClick={() => openDialog(secret)}>
                             <Trash2 className="size-5" />
                         </Button>

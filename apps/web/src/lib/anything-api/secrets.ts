@@ -9,6 +9,8 @@ export async function createSecret(secret_name: string, secret_value: string) {
 
         console.log('Creating Secret');
 
+        console.log('Session:', session);
+
         if (session) {
             const response = await fetch(`http://localhost:3001/secret`, {
                 method: 'POST',

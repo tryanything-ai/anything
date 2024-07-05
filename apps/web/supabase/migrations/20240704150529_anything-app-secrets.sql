@@ -143,7 +143,7 @@ begin
 end;
 $$;
 
-CREATE OR REPLACE FUNCTION anything.get_decrypted_secrets(account_id uuid)
+CREATE OR REPLACE FUNCTION anything.get_decrypted_secrets(user_account_id uuid)
 RETURNS TABLE (
     secret_id uuid,
     secret_name text,
@@ -171,6 +171,10 @@ BEGIN
     ON 
         s.vault_secret_id = vs.id
     WHERE
-        s.account_id = get_decrypted_secrets.account_id; -- Use the function's parameter explicitly
+        s.account_id IN (
+            SELECT account_id
+            FROM basejump.account_user wu
+            WHERE wu.user_id = user_account_id
+        );
 END;
 $$;

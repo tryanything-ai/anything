@@ -41,7 +41,7 @@ async fn main() {
         .route("/workflow/:id", delete(api::delete_workflow))
         .route("/workflow/:id", put(api::update_workflow))
         .route("/actions", get(api::get_actions))
-        .route("/secrets", get(secrets::get_secrets))
+        .route("/secrets", get(secrets::get_decrypted_secrets))
         .route("/secret", post(secrets::create_secret))
         .route("/secret/:id", delete(secrets::delete_secret))
         .layer(middleware::from_fn(auth::middleware))
