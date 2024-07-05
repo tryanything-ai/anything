@@ -109,38 +109,89 @@ create policy "Account members can delete" on anything.secrets
 --     (account_id IN ( SELECT basejump.get_accounts_with_role("owner")))
 --      );
 
-
+-- //https://supabase.com/docs/guides/api/securing-your-api
 -- Create Functions for Managing Secrets
-create or replace function anything.insert_secret(name text, secret text)
-returns uuid
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  -- if current_setting('role') != 'service_role' then
-  --   raise exception 'authentication required';
-  -- end if;
+-- create or replace function anything.insert_secret(name text, secret text)
+-- returns uuid
+-- language plpgsql
+-- security invoker
+-- as $$
+-- begin
+--   if current_setting('role') != 'service_role' then
+--     raise exception 'authentication required';
+--   end if;
  
-  return vault.create_secret(secret, name);
-end;
+--   return vault.create_secret(secret, name);
+-- end;
+-- $$;
+
+CREATE OR REPLACE FUNCTION anything.insert_secret(name TEXT, secret TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+DECLARE
+    created_secret_id UUID;
+BEGIN
+    -- Check if the current role is 'service_role'
+    IF current_setting('role', true) IS DISTINCT FROM 'service_role' THEN
+        RETURN 'authentication required: current role is ' || current_user;
+    END IF;
+
+    -- Call the vault.create_secret function
+    created_secret_id := vault.create_secret(secret, name);
+
+    -- Return the created secret ID
+    RETURN created_secret_id::TEXT;
+END;
 $$;
 
 
 create function anything.read_secret(secret_name text)
 returns text
 language plpgsql
-security definer set search_path = public
+security invoker
 as $$
 declare
   secret text;
 begin
-  -- if current_setting('role') != 'authenticated' then
-  --   raise exception 'authentication required';
-  -- end if;
+  if current_setting('role') != 'service_role' then
+    raise exception 'authentication required';
+  end if;
  
   select decrypted_secret from vault.decrypted_secrets where name =
   secret_name into secret;
   return secret;
 end;
+$$;
+
+--have not tested this at all
+CREATE OR REPLACE FUNCTION anything.get_decrypted_secrets()
+RETURNS TABLE (
+    secret_id uuid,
+    secret_name text,
+    secret_value text,
+    secret_description text,
+    account_id uuid
+) 
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        s.secret_id,
+        s.secret_name,
+        vs.decrypted_secret AS secret_value,
+        s.secret_description,
+        s.account_id
+    FROM 
+        anything.secrets s
+    JOIN 
+        vault.secrets vs
+    ON 
+        s.vault_secret_id = vs.secret_id
+    WHERE 
+        s.user_id = current_user;
+END;
 $$;

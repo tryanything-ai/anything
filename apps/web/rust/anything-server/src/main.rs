@@ -23,7 +23,7 @@ async fn main() {
     let client = Arc::new(
         Postgrest::new(supabase_url.clone())
         .schema("anything")
-        .insert_header("apikey", supabase_api_key.clone())
+        // .insert_header("apikey", supabase_api_key.clone())
     );
 
     let cors = CorsLayer::new()

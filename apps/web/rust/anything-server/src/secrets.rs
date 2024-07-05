@@ -66,25 +66,28 @@ pub async fn create_secret(
     println!("insert_secret rpc Input?: {:?}", input);
   
     //Create Service Role Client   
+    //We need a service role client here so that we only ever trigger
+    // vault functions with a service role priveledges
+    // Otherwise users might find ways into a very naughty place
     dotenv().ok();
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
-    let supabase_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
     
-    let service_role_client = Arc::new(
-        Postgrest::new(supabase_url.clone())
-        .schema("anything")
-        .insert_header("apikey", supabase_api_key.clone())
-    );
+    println!("Supabase URL: {:?}", supabase_url);
+    println!("Supabase SERVICE_ROLE API Key: {:?}", supabase_service_role_api_key);
 
-    let jwt = user.jwt.clone();
+    // let service_role_client = 
+    //     Postgrest::new(supabase_url.clone())
+    //     // .insert_header("apikey", supabase_service_role_api_key.clone())
+    //     .schema("anything");
+    
+
+    // let jwt = user.jwt.clone();
 
     // Create Secret in Vault
-    let response = match service_role_client
-    // .insert_header("apikey", supabase_api_key.clone())
-    // .rpc("insert_secret",)
-    .rpc("insert_secret", serde_json::to_string(&input).unwrap())
-        // .auth(jwt)
-        // .insert(serde_json::to_string(&input).unwrap())
+    let response = match client
+        .rpc("insert_secret", serde_json::to_string(&input).unwrap())
+        .auth(supabase_service_role_api_key.clone())
         .execute()
         .await
     {
