@@ -12,6 +12,9 @@ use postgrest::Postgrest;
 
 use crate::auth::User;
 
+
+use slugify::slugify;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
     account_id: String,
@@ -178,7 +181,7 @@ pub async fn create_workflow(
         })
     };
 
-    let clonedUser = user.clone();
+    // let clonedUser = user.clone();
     
     //Create Flow Version
     let version_response = match client
@@ -262,7 +265,7 @@ pub async fn update_workflow_version(
     State(client): State<Arc<Postgrest>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
-    Json(payload): Json<Value>,  
+    Json(payload): Json<Value>,
 ) -> impl IntoResponse {
 
     // let payload_json = serde_json::to_string(&payload).unwrap();
@@ -385,4 +388,113 @@ pub async fn delete_secret(
     };
 
     Json(body).into_response()
+}
+
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateSecretPayload {
+    secret_name: String,
+    secret_value: String,
+    secret_description: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateSecretInput {
+    name: String,
+    secret: String,
+    // description: String,
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AnythingCreateSecretInput {
+    secret_name: String,
+    vault_secret_id: String,
+    secret_description: String,
+    account_id: String,
+}
+
+pub async fn create_secret(
+    State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+    Json(payload): Json<CreateSecretPayload>,
+) -> impl IntoResponse {
+
+    println!("create_secret Input?: {:?}", payload);
+
+    let vault_secret_name = slugify!(format!("{}_{}", user.account_id.clone(), payload.secret_name.clone()).as_str(), separator = "_");
+
+    println!("New Name: {}", vault_secret_name);
+
+    let input = CreateSecretInput {
+        name: vault_secret_name,
+        secret: payload.secret_value.clone(),
+        // description: payload.secret_description.clone(),
+    }; 
+
+    println!("insert_secret rpc Input?: {:?}", input);
+
+    let jwt = user.jwt.clone();
+
+    // Create Secret in Vault
+    let response = match client
+    // .insert_header("apikey", supabase_api_key.clone())
+    // .rpc("insert_secret",)
+    .rpc("insert_secret", serde_json::to_string(&input).unwrap())
+        // .auth(jwt)
+        // .insert(serde_json::to_string(&input).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+       // Extract the id from the response
+    // Extract the id from the response
+    // let vault_secret_id = match response.get("id").and_then(|id| id.as_str()) {
+    //     Some(id) => id.to_string(),
+    //     None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get id from response").into_response(),
+    // };
+
+    // println!("Response from vault insert: {:?}", vault_secret_id);
+
+    println!("Response from vault insert: {:?}", body);
+
+    let cleaned_response = body.trim_matches('"');
+
+    let anythingSecretInput = AnythingCreateSecretInput {
+        secret_name: payload.secret_name.clone(),
+        vault_secret_id: cleaned_response.to_string(), //vault_secret_id.clone(),
+        secret_description: payload.secret_description.clone(),
+        account_id: user.account_id.clone()
+    };
+    
+    //Create Flow Version
+    let db_secret_response = match client
+        .from("secrets")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&anythingSecretInput).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let db_secret_body = match db_secret_response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    println!("DB Secret Body: {:?}", db_secret_body);
+
+    Json(db_secret_body).into_response()
 }

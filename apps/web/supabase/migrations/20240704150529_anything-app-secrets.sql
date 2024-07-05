@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS anything.secrets
     -- ADD YOUR COLUMNS HERE
     secret_name text not null,
     vault_secret_id uuid not null, -- this is how we fetch from encrypted storage
+    secret_description text,
     archived boolean not null default false,
 
     -- timestamps are useful for auditing
@@ -109,4 +110,37 @@ create policy "Account members can delete" on anything.secrets
 --      );
 
 
+-- Create Functions for Managing Secrets
+create or replace function anything.insert_secret(name text, secret text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- if current_setting('role') != 'service_role' then
+  --   raise exception 'authentication required';
+  -- end if;
+ 
+  return vault.create_secret(secret, name);
+end;
+$$;
 
+
+create function anything.read_secret(secret_name text)
+returns text
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  secret text;
+begin
+  -- if current_setting('role') != 'authenticated' then
+  --   raise exception 'authentication required';
+  -- end if;
+ 
+  select decrypted_secret from vault.decrypted_secrets where name =
+  secret_name into secret;
+  return secret;
+end;
+$$;

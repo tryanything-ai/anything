@@ -5,6 +5,8 @@ import { Trash2 } from "lucide-react";
 import api from "@/lib/anything-api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
+import { Separator } from "@/components/ui/separator";
 
 import {
     AlertDialog,
@@ -17,13 +19,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-//   import { Button } from "@/components/ui/button"
 
-//   export function AlertDialogDemo() {
-//     return (
-
-//     )
-//   }
 
 
 export default function AccountsPage() {
@@ -52,6 +48,19 @@ export default function AccountsPage() {
         }
     }
 
+    const createSecret = async () => {
+        try {
+            const randomNumber = Math.floor(100 + Math.random() * 900);
+            await api.secrets.createSecret('New Secret' + randomNumber, 'New_SECRET_value');
+            fetchSecrets();
+        } catch (error) {
+            console.error('Error deleting secret:', error);
+        } finally {
+            setSecretToDelete({});
+            setShowDeleteDialog(false);
+        }
+    }
+
     const openDialog = (secret: any) => {
         setShowDeleteDialog(true);
         setSecretToDelete(secret);
@@ -62,10 +71,13 @@ export default function AccountsPage() {
     }, []);
 
     return (
-        <div className="flex flex-col gap-y-4 py-12 h-full w-full max-w-screen-md mx-auto text-center">
-            <h1 className="text-2xl font-bold">Secrets</h1>
+        // <div className="flex flex-col gap-y-4 py-12 h-full w-full max-w-screen-md mx-auto text-center">
+        <div className="space-y-6 w-full">
+            <DashboardTitleWithAction title="Secrets" description="Manage secrets." action={createSecret} />
+            <Separator />
+            {/* <h1 className="text-2xl font-bold">Secrets</h1> */}
 
-            <p>
+            <div>
                 {secrets.map((secret: any, index) => (
                     <div key={index} className="flex m-2 items-center justify-center content-center">
                         {/* <PartyPopper className="size-5" /> */}
@@ -76,7 +88,7 @@ export default function AccountsPage() {
                         </Button>
                     </div>
                 ))}
-            </p>
+            </div>
             <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); setSecretToDelete({}); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
