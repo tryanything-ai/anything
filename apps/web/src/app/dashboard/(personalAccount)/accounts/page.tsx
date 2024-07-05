@@ -20,8 +20,6 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-
-
 export default function AccountsPage() {
     const [secrets, setSecrets] = useState<any[]>([]);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -30,6 +28,10 @@ export default function AccountsPage() {
     const fetchSecrets = async () => {
         try {
             const response = await api.secrets.getSecrets();
+            if(response.length === 0) {
+                setSecrets([]);
+                return;
+            }
             setSecrets(response);
         } catch (error) {
             console.error('Error fetching secrets:', error);

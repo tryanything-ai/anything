@@ -962,7 +962,18 @@ INSERT INTO anything.action_templates (
     }', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'); 
    
 
+
    -- Inserting sample secrets into marketplace.secrets
+INSERT INTO vault.secrets (
+    id, name, description, secret
+) VALUES
+    ('123e4567-e89b-12d3-a456-426614174000', 'API_KEY_1', 'silly description', 'SUPER_SECRET_KEY_1'),
+    ('123e4567-e89b-12d3-a456-426614174001', 'API_KEY_2', 'silly description', 'SUPER_SECRET_KEY_2'),
+    ('123e4567-e89b-12d3-a456-426614174002', 'API_KEY_3', 'silly description', 'SUPER_SECRET_KEY_3'),
+    ('123e4567-e89b-12d3-a456-426614174003', 'API_KEY_4', 'silly description', 'SUPER_SECRET_KEY_4'),
+    ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5');
+
+   -- Inserting sample secrets into anything.secrets
 INSERT INTO anything.secrets (
     secret_id, account_id, secret_name, vault_secret_id, created_at, updated_at, created_by, updated_by
 ) VALUES

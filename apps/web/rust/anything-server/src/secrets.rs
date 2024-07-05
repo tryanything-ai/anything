@@ -18,7 +18,6 @@ use slugify::slugify;
 use dotenv::dotenv;
 
 
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateSecretPayload {
     secret_name: String,
@@ -127,3 +126,112 @@ pub async fn create_secret(
 
     Json(db_secret_body).into_response()
 }
+
+
+// Secrets
+pub async fn get_secrets(
+    State(client): State<Arc<Postgrest>>, 
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    println!("Handling a get_actions");
+
+    let response = match client
+        .from("secrets")
+        .auth(user.jwt)
+        .eq("archived", "false")
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    Json(items).into_response()
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GetDecryptedSecretsInput {
+    account_id: String,
+}
+
+// Secrets
+pub async fn get_decrypted_secrets(
+    State(client): State<Arc<Postgrest>>, 
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    println!("Handling a get_actions");
+
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let input = GetDecryptedSecretsInput {
+        account_id: user.account_id.clone()
+    }; 
+
+    println!("get_decrypted_secrets rpc Input?: {:?}", input);
+
+    let response = match client
+        .rpc("get_decrypted_secrets", serde_json::to_string(&input).unwrap())
+        .auth(supabase_service_role_api_key.clone())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    Json(items).into_response()
+}
+
+
+pub async fn delete_secret(
+    Path(secret_id): Path<String>,
+    State(client): State<Arc<Postgrest>>,
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+
+    let response = match client
+        .from("secrets")
+        .auth(user.jwt)
+        .eq("secret_id", &secret_id)
+        .update("{\"archived\": true}")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    Json(body).into_response()
+}
+
