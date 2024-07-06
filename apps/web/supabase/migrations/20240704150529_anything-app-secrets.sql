@@ -131,16 +131,11 @@ begin
 end;
 $$;
 
-
-
-
-create function anything.update_secret(id uuid, secret text, name text, description text)
+create or replace function anything.update_secret(id uuid, secret text, name text, description text)
 returns text
 language plpgsql
 security invoker
 as $$
-declare
-  secret text;
 begin
   if current_setting('role') != 'service_role' then
     raise exception 'authentication required';
@@ -170,22 +165,48 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION anything.read_secret(secret_id UUID)
+RETURNS TABLE (
+  id UUID,
+  name TEXT,
+  description TEXT,
+  secret TEXT,
+  key_id UUID,
+  nonce BYTEA,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+  IF current_setting('role') != 'service_role' THEN
+    RAISE EXCEPTION 'authentication required';
+  END IF;
 
-create function anything.read_secret(secret_id text)
-returns text
-language plpgsql
-security invoker
-as $$
-begin
-  if current_setting('role') != 'service_role' then
-    raise exception 'authentication required';
-  end if;
- 
-  select * from vault.decrypted_secrets where id =
-  secret_id; 
-
-end;
+  RETURN QUERY
+  SELECT s.id, s.name, s.description, s.secret, s.key_id, s.nonce, s.created_at, s.updated_at
+  FROM vault.decrypted_secrets s
+  WHERE s.id = secret_id;
+END;
 $$;
+
+
+-- create or replace function anything.read_secret(secret_id text)
+-- returns text
+-- language plpgsql
+-- security invoker
+-- as $$
+-- begin
+--   if current_setting('role') != 'service_role' then
+--     raise exception 'authentication required';
+--   end if;
+ 
+--   select * from vault.decrypted_secrets where id =
+--   secret_id; 
+
+-- end;
+-- $$;
 
 CREATE OR REPLACE FUNCTION anything.get_decrypted_secrets(user_account_id uuid)
 RETURNS TABLE (

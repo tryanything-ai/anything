@@ -174,14 +174,13 @@ pub struct UpdateSecretPayload {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateVaultSecretInput {
     id: String,
-    name: String, 
     secret: String,
+    name: String, 
     description: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateAnythingSecretInput {
-    secret_value: String,
     secret_description: String,
 }
 
@@ -224,7 +223,7 @@ pub async fn update_secret(
     println!("Vault Secret Body: {:?}", vault_secret_body);
 
     let vault_secret_json: serde_json::Value = serde_json::from_str(&vault_secret_body).unwrap();
-    let secret_name = vault_secret_json["name"].as_str().unwrap_or_default();
+    let secret_name = vault_secret_json[0]["name"].as_str().unwrap_or_default();
 
     println!("Secret Name: {:?}", secret_name);
 
@@ -232,14 +231,13 @@ pub async fn update_secret(
 
     let input = UpdateVaultSecretInput {
         id: payload.secret_id.clone(),
-        name: secret_name.to_string(),
         secret: payload.secret_value.clone(),
+        name: secret_name.to_string(),
         description: payload.secret_description.clone(),
     }; 
 
     println!("update_secret rpc Input?: {:?}", input);
     
-
     // Create Secret in Vault
     let response = match client
         .rpc("update_secret", serde_json::to_string(&input).unwrap())
@@ -251,9 +249,14 @@ pub async fn update_secret(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
     };
 
+    let update_secret_body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    println!("update_secret_body: {:?}", update_secret_body);
 
     let anythingSecretInput = UpdateAnythingSecretInput {
-        secret_value: payload.secret_value.clone(),
         secret_description: payload.secret_description.clone()
     };
     

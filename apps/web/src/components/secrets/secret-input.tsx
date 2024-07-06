@@ -5,12 +5,6 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
-const formSchema = z.object({
-    secret_name: z.string().regex(/^[A-Z0-9]+(?:_{0,2}[A-Z0-9]+)*$/, { message: "Must be all caps and SNAKE_CASE example: OPENAI_API_KEY" }).max(50),
-    secret_value: z.string().min(2).max(200),
-    secret_description: z.string().min(2).max(50),
-})
-
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -25,6 +19,13 @@ import { Input } from "@/components/ui/input"
 
 import { useState } from "react";
 import { Edit2, Trash2 } from "lucide-react";
+
+//Use same schema for both
+const formSchema = z.object({
+    secret_name: z.string().regex(/^[A-Z0-9]+(?:_{0,2}[A-Z0-9]+)*$/, { message: "Must be all caps and SNAKE_CASE example: OPENAI_API_KEY" }).max(50),
+    secret_value: z.string().min(2).max(200),
+    secret_description: z.string().min(2).max(50),
+})
 
 export function CreateNewSecret({ cancel, saveSecret }: any) {
 
@@ -97,7 +98,7 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
                                         <Input placeholder="Our api key for interacting with ..." {...field} />
                                     </FormControl>
                                     <FormDescription>
-                                        One line note to help you recall how this is used.
+                                        One line note to help you and AI recall how this is used.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -112,7 +113,6 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
     )
 }
 
-
 export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
 
     const [editing, setEditing] = useState(false);
@@ -121,17 +121,19 @@ export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            secret_name: "",
-            secret_value: "",
-            secret_description: "",
+            secret_name: secret.secret_name,
+            secret_value: secret.secret_value,
+            secret_description: secret.secret_description,
         },
     })
 
     // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
-        console.log(values)
+        // console.log(values)
+        await updateSecret(secret.secret_id, values.secret_name, values.secret_value, values.secret_description)
+        setEditing(false)
     }
 
     return (
@@ -151,7 +153,7 @@ export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
                     <Button variant="outline" size="sm" className="ml-2" onClick={() => setEditing(!editing)}>
                         <Edit2 className="size-5" />
                     </Button>
-                    <Button variant="outline" size="sm" className="ml-2" onClick={() => openDialog(secret)}>
+                    <Button variant="outline" size="sm" className="ml-2" onClick={() => deleteSecret(secret)}>
                         <Trash2 className="size-5" />
                     </Button>
                 </div>

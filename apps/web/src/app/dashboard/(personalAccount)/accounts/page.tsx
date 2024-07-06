@@ -20,7 +20,6 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { EditSecret, CreateNewSecret } from "@/components/secrets/secret-input";
-// import { updateSecret } from "@/lib/anything-api/secrets";
 
 
 export default function AccountsPage() {
@@ -46,9 +45,9 @@ export default function AccountsPage() {
         }
     }
 
-    const updateSecret = async () => {
+    const updateSecret = async (secret_id: string, secret_name: string, secret_value: string, secret_description: string) => {
         try {
-            // await api.secrets.updateSecret(secret_id, secret_name, secret_value, secret_description);
+            await api.secrets.updateSecret(secret_id, secret_name, secret_value, secret_description);
             fetchSecrets();
         } catch (error) {
             console.error('Error updating secret:', error);
