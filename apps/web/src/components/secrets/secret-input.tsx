@@ -6,8 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
 const formSchema = z.object({
-    secret_name: z.string().min(2).max(50),
-    secret_value: z.string().min(2).max(50),
+    secret_name: z.string().regex(/^[A-Z0-9]+(?:_{0,2}[A-Z0-9]+)*$/, { message: "Must be all caps and SNAKE_CASE example: OPENAI_API_KEY" }).max(50),
+    secret_value: z.string().min(2).max(200),
     secret_description: z.string().min(2).max(50),
 })
 
@@ -39,10 +39,11 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
     })
 
     // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        // console.log(values)
+        await saveSecret(values.secret_name, values.secret_value, values.secret_description)
+        form.reset()
+        cancel();
     }
 
     return (

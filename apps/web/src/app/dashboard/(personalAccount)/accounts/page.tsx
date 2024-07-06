@@ -67,10 +67,9 @@ export default function AccountsPage() {
         }
     }
 
-    const saveNewSecret = async () => {
+    const saveNewSecret = async (secret_name: string, secret_value: string, secret_description: string) => {
         try {
-            const randomNumber = Math.floor(100 + Math.random() * 900);
-            await api.secrets.createSecret('New Secret' + randomNumber, 'New_SECRET_value', 'New Secret Description');
+            await api.secrets.createSecret(secret_name, secret_value, secret_description);
             fetchSecrets();
         } catch (error) {
             console.error('Error deleting secret:', error);
