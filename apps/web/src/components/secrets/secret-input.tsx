@@ -23,22 +23,98 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Edit2, Trash2 } from "lucide-react";
-import api from "@/lib/anything-api";
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
-import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@/components/ui/separator";
 
-export default function SecretInput({ secret, openDialog, cancel }: any) {
+export function CreateNewSecret({ cancel, saveSecret }: any) {
+
+    // 1. Define your form.
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            secret_name: "",
+            secret_value: "",
+            secret_description: "",
+        },
+    })
+
+    // 2. Define a submit handler.
+    function onSubmit(values: z.infer<typeof formSchema>) {
+        // Do something with the form values.
+        // ✅ This will be type-safe and validated.
+        console.log(values)
+    }
+
+    return (
+        <div className="flex flex-row max-w-5xl mx-auto">
+
+            <div className="flex-1 flex flex-row max-w-5xl mx-auto border p-7 rounded-md m-7">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <div className="flex flex-row">
+                            <FormField
+                                control={form.control}
+                                name="secret_name"
+                                render={({ field }) => (
+                                    <FormItem className="mr-10">
+                                        <FormLabel>Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="OPENAI_API_KEY" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            This is the public name you will use to refer to this secret.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="secret_value"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Value</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="pk_0498234i-0i" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Stored enrypted in the database for use in your automations.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="secret_description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Description</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Our api key for interacting with ..." {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        One line note to help you recall how this is used.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button variant={"secondary"} className="mr-2" onClick={cancel}>Cancel</Button>
+                        <Button type="submit">Save</Button>
+                    </form>
+                </Form>
+            </div>
+        </div>
+    )
+}
+
+
+export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
 
     const [editing, setEditing] = useState(false);
-
-    const handleCancel = () => {
-        setEditing(false);
-        cancel();
-    }
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
@@ -133,7 +209,7 @@ export default function SecretInput({ secret, openDialog, cancel }: any) {
                                     </FormItem>
                                 )}
                             />
-                            <Button variant={"secondary"} className="mr-2" onClick={handleCancel}>Cancel</Button>
+                            <Button variant={"secondary"} className="mr-2" onClick={() => setEditing(false)}>Cancel</Button>
                             <Button type="submit">Save</Button>
                         </form>
                     </Form>

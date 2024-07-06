@@ -19,7 +19,9 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import SecretInput from "@/components/secrets/secret-input";
+import { EditSecret, CreateNewSecret } from "@/components/secrets/secret-input";
+// import { updateSecret } from "@/lib/anything-api/secrets";
+
 
 export default function AccountsPage() {
     const [secrets, setSecrets] = useState<any[]>([]);
@@ -41,6 +43,15 @@ export default function AccountsPage() {
             setSecrets(response);
         } catch (error) {
             console.error('Error fetching secrets:', error);
+        }
+    }
+
+    const updateSecret = async () => {
+        try {
+            // await api.secrets.updateSecret(secret_id, secret_name, secret_value, secret_description);
+            fetchSecrets();
+        } catch (error) {
+            console.error('Error updating secret:', error);
         }
     }
 
@@ -86,12 +97,12 @@ export default function AccountsPage() {
             {/* <h1 className="text-2xl font-bold">Secrets</h1> */}
             {showNewSecretEditor && (
                 <div className="w-full ">
-                    <SecretInput secret={null} openDialog={openDialog} cancel={cancel} />
+                    <CreateNewSecret cancel={cancel} saveSecret={saveNewSecret} />
                 </div>)
             }
             <div className="w-full ">
                 {secrets.map((secret: any, index) => (
-                    <SecretInput key={index} secret={secret} openDialog={openDialog} cancel={cancel} />
+                    <EditSecret key={index} secret={secret} deleteSecret={openDialog} updateSecret={updateSecret} />
                 ))}
             </div>
             <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); setSecretToDelete({}); }}>
