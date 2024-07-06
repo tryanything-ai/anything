@@ -54,14 +54,14 @@ pub async fn middleware(
     match decode_jwt(jwt, &secret) {
         Ok(claims) => {
 
-            println!("Claims: {:?}", claims);
+            // println!("Claims: {:?}", claims);
 
             let user = User {
                 jwt: jwt.to_string(),
                 account_id: claims.sub.clone(),
             };
 
-            println!("User in auth middleware: {:?}", user);
+            // println!("User in auth middleware: {:?}", user);
 
             request.extensions_mut().insert(user);
             // request.extensions_mut().insert(claims.sub.clone());
