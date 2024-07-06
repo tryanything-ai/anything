@@ -11,6 +11,7 @@
     "gen-anything-supabase-types": "supabase gen types typescript --local > src/types/generated/supabase-anything-generated.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-checkbox": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",

@@ -19,11 +19,17 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import SecretInput from "@/components/secrets/secret-input";
 
 export default function AccountsPage() {
     const [secrets, setSecrets] = useState<any[]>([]);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [secretToDelete, setSecretToDelete] = useState<any>({});
+    const [showNewSecretEditor, setShowNewSecretEditor] = useState(false);
+
+    const cancel = () => {
+        setShowNewSecretEditor(false);
+    }
 
     const fetchSecrets = async () => {
         try {
@@ -50,7 +56,7 @@ export default function AccountsPage() {
         }
     }
 
-    const createSecret = async () => {
+    const saveNewSecret = async () => {
         try {
             const randomNumber = Math.floor(100 + Math.random() * 900);
             await api.secrets.createSecret('New Secret' + randomNumber, 'New_SECRET_value', 'New Secret Description');
@@ -75,20 +81,17 @@ export default function AccountsPage() {
     return (
         // <div className="flex flex-col gap-y-4 py-12 h-full w-full max-w-screen-md mx-auto text-center">
         <div className="space-y-6 w-full">
-            <DashboardTitleWithAction title="Secrets" description="Manage secrets." action={createSecret} />
+            <DashboardTitleWithAction title="Secrets" description="Manage secrets." action={() => setShowNewSecretEditor(true)} />
             <Separator />
             {/* <h1 className="text-2xl font-bold">Secrets</h1> */}
-
-            <div>
+            {showNewSecretEditor && (
+                <div className="w-full ">
+                    <SecretInput secret={null} openDialog={openDialog} cancel={cancel} />
+                </div>)
+            }
+            <div className="w-full ">
                 {secrets.map((secret: any, index) => (
-                    <div key={index} className="flex m-2 items-center justify-center content-center">
-                        {/* <PartyPopper className="size-5" /> */}
-                        <div className="text-lg font-bold mr-2">{secret.secret_name}</div>
-                        <Input type="" value={secret.secret_value} readOnly />
-                        <Button variant="outline" size="sm" className="ml-2" onClick={() => openDialog(secret)}>
-                            <Trash2 className="size-5" />
-                        </Button>
-                    </div>
+                    <SecretInput key={index} secret={secret} openDialog={openDialog} cancel={cancel} />
                 ))}
             </div>
             <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); setSecretToDelete({}); }}>
