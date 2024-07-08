@@ -27,7 +27,8 @@ export interface Action {
   label: string;
   description?: string;
   icon: string;
-  variables: Variable[]; //Action Variables. Almost like node level .env
+  variables: Variable;
+  variables_schema: Variable; //Action Variables. Almost like node level .env
   input: Variable;
   input_schema: Variable;
   presentation?: NodePresentation;

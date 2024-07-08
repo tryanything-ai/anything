@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const fieldsMap: { [key: string]: any } = {
     text: FieldText,
@@ -15,10 +16,10 @@ const fieldsMap: { [key: string]: any } = {
     error: FieldUnknown
 };
 
-export default function JsonSchemaForm({ input_schema, input }: any) {
-    const { fields, handleValidation } = createHeadlessForm(input_schema, {
+export default function VariablesForm({ variables_schema, variables }: any) {
+    const { fields, handleValidation } = createHeadlessForm(variables_schema, {
         strictInputType: false, // so you don't need to pass presentation.inputType,
-        initialValues: input,
+        initialValues: variables,
     });
 
     async function handleOnSubmit(jsonValues: any, { formValues }: any) {
@@ -37,7 +38,7 @@ export default function JsonSchemaForm({ input_schema, input }: any) {
             onSubmit={handleOnSubmit}
             // From JSF
             fields={fields}
-            initialValues={input}
+            initialValues={variables}
             handleValidation={handleValidation}
         />
     );
@@ -53,8 +54,13 @@ function SmartForm({ name, fields, initialValues, handleValidation, onSubmit }: 
         getDefaultValuesFromFields(fields, initialValues)
     );
     const [errors, setErrors] = useState<{ [key: string]: any }>({});
-
     const [submited, setSubmited] = useState(false);
+    const [editingVariables, setEditingVariables] = useState(false);
+
+    const editVariables = () => {
+        console.log("Edit Variables");
+        setEditingVariables(true);
+    }
 
     function handleInternalValidation(valuesToValidate: any) {
         const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
@@ -110,8 +116,15 @@ function SmartForm({ name, fields, initialValues, handleValidation, onSubmit }: 
                         />
                     );
                 })}
-
-                <button type="submit">Submit</button>
+                {fields.length > 0 ? (<div className="space-x-2">
+                    <Button variant={"secondary"} onClick={editVariables}>Edit Variables</Button>
+                    <Button type="submit" variant={"default"} >Submit</Button>
+                </div>) :
+                    (<Button variant={"default"} onClick={(e) => {
+                        e.preventDefault(); // Prevent the default form submission
+                        editVariables();
+                    }}>Add Variables</Button>)
+                }
             </div>
         </form>
     );

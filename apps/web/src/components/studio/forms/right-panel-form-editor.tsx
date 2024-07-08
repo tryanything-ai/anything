@@ -9,7 +9,7 @@ export default function RightPanelFormEditor() {
     return (
         <Tabs defaultValue="account" value={workflow.panel_tab} onValueChange={workflow.setPanelTab} className="w-full">
             <TabsList className="">
-                <TabsTrigger value="config">Config</TabsTrigger>
+                <TabsTrigger value="config">Configuration</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
             <TabsContent value="config">
