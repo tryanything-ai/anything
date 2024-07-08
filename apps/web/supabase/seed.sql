@@ -141,24 +141,66 @@ INSERT INTO anything.flow_versions (
     ('11111111-1111-1111-1111-111111111111', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'v1.0', 'Initial version of Flow 1', 'checksum1', true, 
     '{
       "edges": [
-      {
-        "id": "reactflow__edge-example_actionb-example_action_2a",
-        "source": "example_action",
-        "sourceHandle": "b",
-        "type": "anything",
-        "target": "example_action_2",
-        "targetHandle": "a"
-      },
-      {
-        "id": "reactflow__edge-example_action_2b-other_example_actiona",
-        "source": "example_action_2",
-        "sourceHandle": "b",
-        "type": "anything",
-        "target": "other_example_action",
-        "targetHandle": "a"
-      }
+   {
+      "id": "reactflow__edge-example_actionb-example_action_2a",
+      "source": "example_action",
+      "sourceHandle": "b",
+      "target": "example_action_2",
+      "targetHandle": "a",
+      "type": "anything"
+    },
+    {
+      "id": "reactflow__edge-example_action_2b-other_example_actiona",
+      "source": "example_action_2",
+      "sourceHandle": "b",
+      "target": "other_example_action",
+      "targetHandle": "a",
+      "type": "anything"
+    },
+    {
+      "id": "reactflow__edge-anything_inputb-example_actiona",
+      "source": "anything_input",
+      "sourceHandle": "b",
+      "target": "example_action",
+      "targetHandle": "a",
+      "type": "anything"
+    },
+    {
+      "id": "reactflow__edge-other_example_actionb-anything_outputa",
+      "source": "other_example_action",
+      "sourceHandle": "b",
+      "target": "anything_output",
+      "targetHandle": "a",
+      "type": "anything"
+    }
     ],
     "actions": [
+      {
+      "anything_action_version": "1.0.0",
+      "type": "action",
+      "plugin_id": "anything_input",
+      "node_id": "anything_input", 
+      "plugin_version": "1.0.0",
+      "label": "Inputs",
+      "description": "Inputs for the flow",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-braces\"><path d=\"M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1\"/><path d=\"M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1\"/></svg>",
+      "variables": {},
+      "input": {},
+      "input_schema": {},
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    },
     {
       "anything_action_version": "1.0.0",
       "type": "action",
@@ -227,7 +269,7 @@ INSERT INTO anything.flow_versions (
       "presentation": {
         "position": {
           "x": 300,
-          "y": 100
+          "y": 300
         }
       },
       "handles": [
@@ -282,7 +324,7 @@ INSERT INTO anything.flow_versions (
       "presentation": {
         "position": {
           "x": 300,
-          "y": 300
+          "y": 500
         }
       },
       "handles": [
@@ -337,7 +379,7 @@ INSERT INTO anything.flow_versions (
       "presentation": {
         "position": {
           "x": 300,
-          "y": 500
+          "y": 700
         }
       },
       "handles": [
@@ -350,6 +392,32 @@ INSERT INTO anything.flow_versions (
           "id": "b",
           "type": "source",
           "position": "bottom"
+        }
+      ]
+    },
+     {
+      "anything_action_version": "1.0.0",
+      "type": "action",
+      "plugin_id": "anything_output",
+      "node_id": "anything_output", 
+      "plugin_version": "1.0.0",
+      "label": "Outputs",
+      "description": "Outputs for the flow",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-braces\"><path d=\"M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1\"/><path d=\"M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1\"/></svg>",
+      "variables": {},
+      "input": {},
+      "input_schema": {},
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 900
+        }
+      },
+      "handles": [
+        {
+          "id": "a", 
+          "type": "target",
+          "position": "top"
         }
       ]
     }
@@ -565,7 +633,7 @@ INSERT INTO anything.flow_versions (
       "presentation": {
         "position": {
           "x": 300,
-          "y": 100
+          "y": 300
         }
       },
       "handles": [
@@ -620,7 +688,7 @@ INSERT INTO anything.flow_versions (
       "presentation": {
         "position": {
           "x": 300,
-          "y": 300
+          "y": 500
         }
       },
       "handles": [
@@ -675,7 +743,7 @@ INSERT INTO anything.flow_versions (
       "presentation": {
         "position": {
           "x": 300,
-          "y": 500
+          "y": 700
         }
       },
       "handles": [

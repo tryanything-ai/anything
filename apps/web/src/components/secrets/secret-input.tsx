@@ -163,6 +163,7 @@ export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                             <div className="flex flex-row">
                                 <FormField
+                                    disabled
                                     control={form.control}
                                     name="secret_name"
                                     render={({ field }) => (
@@ -173,6 +174,7 @@ export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
                                             </FormControl>
                                             <FormDescription>
                                                 This is the public name you will use to refer to this secret.
+                                                Cannot be updated.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
