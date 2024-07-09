@@ -3,10 +3,12 @@
 import React, { createContext, useContext } from 'react';
 import { WorkflowsContext, WorkflowsProvider, WorkflowsContextInterface } from "./WorkflowsProvider";
 import { WorkflowVersionProvider, WorkflowVersionContext, WorkflowVersionContextInterface } from './WorkflowVersionProvider'
+import { VariablesContext, VariablesContextInterface, VariablesProvider } from './VariablesContext';
 
 interface AnythingContextInterface {
     workflows: WorkflowsContextInterface;
     workflow: WorkflowVersionContextInterface;
+    variables: VariablesContextInterface;
 }
 
 const AnythingContext = createContext<AnythingContextInterface | undefined>(undefined);
@@ -19,10 +21,15 @@ export const AnythingProvider = ({ children }: { children: React.ReactNode }) =>
                     <WorkflowVersionProvider>
                         <WorkflowVersionContext.Consumer>
                             {workflow => (
-                                <AnythingContext.Provider value={{ workflow, workflows }}>
-                                    {children}
-                                </AnythingContext.Provider>
-                            )}
+                                <VariablesProvider>
+                                    <VariablesContext.Consumer>
+                                        {variables => (
+                                            <AnythingContext.Provider value={{ workflow, workflows, variables }}>
+                                                {children}
+                                            </AnythingContext.Provider>
+                                        )}
+                                    </VariablesContext.Consumer>
+                                </VariablesProvider>)}
                         </WorkflowVersionContext.Consumer>
                     </WorkflowVersionProvider>
                 )}

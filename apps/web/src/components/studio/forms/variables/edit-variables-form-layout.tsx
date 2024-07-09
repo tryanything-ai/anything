@@ -80,20 +80,5 @@ export default function EditVariablesFormLayout({ variables_schema, cancel }: Ed
                     <EditVariablesForm variables_schema={variables_schema} editVariable={editVariable} deleteVariable={deleteVariable} />
             }
         </div>
-        // <div className="space-y-2">
-        //     <Button variant="default" className="w-full" onClick={addVariable}>Add Variable</Button>
-        //     {variablesList.map((variable) => (
-        //         <div key={variable.name} className="rounded-lg border p-1 flex flex-row align-center ">
-        //             <h2 className="flex items-center text-xl text-left w-full ">{variable.title}</h2>
-        //             <div className="flex-1" />
-        //             <Button variant="outline" size="sm" className="ml-2" onClick={handleDelete}>
-        //                 <Edit2 className="size-5" />
-        //             </Button>
-        //             <Button variant="outline" size="sm" className="ml-2" onClick={handleEdit}>
-        //                 <Trash2 className="size-5" />
-        //             </Button>
-        //         </div>
-        //     ))}
-        // </div>
     );
 }

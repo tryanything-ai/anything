@@ -404,18 +404,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         };
     }
 
-    // const saveFlowVersion = useCallback(
-    //     debounce(async (workflow: Workflow) => {
-    //         try {
-    //             const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
-    //             console.log('Flow Saved: ', res);
-    //         } catch (error) {
-    //             console.log('error in saveFlowVersion', error);
-    //         }
-    //     }, 1000),
-    //     [dbFlowId, dbFlowVersionId]
-    // );
-
     const debouncedSaveFlowVersion = useCallback(
         debounce(async (workflow: Workflow) => {
             try {
@@ -435,8 +423,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         debouncedSaveFlowVersion(workflow);
     };
 
-
-
     const hydrateFlow = async () => {
         try {
             console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
@@ -451,7 +437,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             console.log('Flow Definition in New Hydrate Flow', flow_version.flow_definition);
 
             setDbFlow(flow);
-            // let flow_version = flow.flow_versions[0];
+
             setDbFlowVersion(flow_version);
             setFlowVersionDefinition(flow_version.flow_definition);
             if (flow_version && flow_version.flow_definition) {

@@ -1,6 +1,7 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { EDIT_VARIABLES_SCHEMA, EDIT_VARIABLES_VARIABLES } from "./edit-variable-schema";
 import { JsonSchemaForm } from "./json-schema-form";
+import { useAnything } from "@/context/AnythingContext";
 
 type OrderedVariable = {
     name: string;
@@ -25,12 +26,12 @@ function extractObjectValues(obj: Record<string, any> | null, keys: string[]): R
     return extractedObject;
 }
 
-
 // Edit a single variable
-export default function EditVariableForm({ variable }: { variable: OrderedVariable | null }) {
+export default function EditVariableForm() {
 
+    const { variables } = useAnything();
     // console.log("Variable in EditVariableForm", variable);
-    let the_variable = { ...EDIT_VARIABLES_VARIABLES, ...extractObjectValues(variable, Object.keys(EDIT_VARIABLES_VARIABLES)) };
+    let the_variable = { ...EDIT_VARIABLES_VARIABLES, ...extractObjectValues(variables.selectedProperty, Object.keys(EDIT_VARIABLES_VARIABLES)) };
 
     console.log("The Variable", the_variable);
 

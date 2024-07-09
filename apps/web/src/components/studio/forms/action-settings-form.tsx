@@ -11,14 +11,14 @@ export default function ActionSettingsForm() {
             {(workflow.selected_node_data && workflow.selected_node_id) ?
                 <div className="grid w-full items-start gap-6">
                     <div className="grid gap-6">
-                        <VariablesFormLayout variables={workflow.selected_node_data.variables} variables_schema={workflow.selected_node_data.variables_schema} />
+                        <VariablesFormLayout />
                         <ConfigurationForm
                             input_schema={workflow.selected_node_data.input_schema}
                             input={workflow.selected_node_data.input}
                         />
                     </div>
                 </div>
-                :
+            :
                 <div>
                     Select A Node
                 </div>

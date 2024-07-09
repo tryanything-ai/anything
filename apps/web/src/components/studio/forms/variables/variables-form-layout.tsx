@@ -1,48 +1,64 @@
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import EditVariablesFormLayout from "./edit-variables-form-layout";
 import InputVariablesForm from "./input-variables-form";
+import { useAnything } from "@/context/AnythingContext";
+import { EditVariableFormMode } from "@/context/VariablesContext";
+import EditVariableForm from "./edit-variable-form";
+import EditVariablesForm from "./edit-variables-form";
+import { Button } from "@/components/ui/button";
 
-export function VariablesFormLayout({ variables, variables_schema }: any) {
-    const [editing, setEditing] = useState(false);
+export function VariablesFormLayout() {
+    const { variables } = useAnything();
 
-    // const EditButton = () => {
-    //     let action: () => void = () => { };
-    //     let text = "";
+    const Header = () => {
+        let header_title = "Variables";
+        let link_button_text = "";
+        let action = () => { };
 
-    //     if (editing) {
-    //         action = () => setEditing(false);
-    //         text = "Cancel";
-    //     } else {
-    //         if (Object.keys(variables).length === 0) {
-    //             action = () => setEditing(true);
-    //             text = "Add Variables";
-    //         } else {
-    //             action = () => setEditing(true);
-    //             text = "Edit";
-    //         }
-    //     }
+        switch (variables.editingMode) {
+            case EditVariableFormMode.EDIT:
+                header_title = "Edit Variable";
+                link_button_text = "Cancel";
+                action = () => variables.setEditingMode(EditVariableFormMode.INPUT);
+                break;
+            case EditVariableFormMode.DELETE:
+                header_title = "Edit Variables";
+                link_button_text = "Cancel";
+                action = () => variables.setEditingMode(EditVariableFormMode.INPUT);
+                break;
+            case EditVariableFormMode.INPUT:
+                header_title = "Variables";
+                link_button_text = Object.keys(variables).length > 0 ? "Edit" : "Add New Variable";
+                action = () => variables.setEditingMode(EditVariableFormMode.DELETE);
+                break;
+            default:
+                header_title = "Variables";
+        }
 
-    //     return (
-    //         <Button variant={"link"} onClick={action}>{text}</Button>
-    //     )
-    // }
+        return (
+            <div className="flex flex-row items-center">
+                <div className="font-bold">{header_title}</div>
+                <div className="flex-1" />
+                <Button variant={"link"} onClick={action}>{link_button_text}</Button>
+            </div>
+        )
+    }
+
+    const renderEditor = () => {
+        switch (variables.editingMode) {
+            case EditVariableFormMode.EDIT:
+                return <EditVariableForm />
+            case EditVariableFormMode.DELETE:
+                return <EditVariablesForm />
+            case EditVariableFormMode.INPUT:
+                return <InputVariablesForm />
+            default:
+                null;
+        }
+    }
 
     return (
         <div className="rounded-lg border p-4">
-            {/* <div className="flex flex-row items-center">
-                <div className="font-bold">{editing ? "Edit Variables" : "Variables"}</div>
-                <div className="flex-1" />
-                <EditButton />
-            </div> */}
-            {
-                editing
-                    ?
-                    <EditVariablesFormLayout variables_schema={variables_schema} cancel={() => setEditing(false)} />
-                    :
-                    <InputVariablesForm variables={variables} variables_schema={variables_schema} edit={() => setEditing(true)} />
-            }
+            <Header />
+            {renderEditor()}
         </div>
     )
 }

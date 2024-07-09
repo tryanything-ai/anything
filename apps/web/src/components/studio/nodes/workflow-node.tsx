@@ -18,7 +18,6 @@ import {
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
 
-
 export default function BaseNode({
   id,
   data,
