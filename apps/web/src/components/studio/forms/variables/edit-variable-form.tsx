@@ -1,17 +1,42 @@
-import { useState } from "react";
-
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
-import { formValuesToJsonValues, getDefaultValuesFromFields } from "@/lib/json-schema-utils";
-import { Button } from "@/components/ui/button";
-import { fieldsMap } from "../form-fields";
 import { EDIT_VARIABLES_SCHEMA, EDIT_VARIABLES_VARIABLES } from "./edit-variable-schema";
+import { JsonSchemaForm } from "./json-schema-form";
+
+type OrderedVariable = {
+    name: string;
+    title: string;
+    description: string;
+    type: string;
+    oneOf?: { value: string; title: string }[];
+    "x-jsf-presentation"?: { inputType: string };
+};
+
+function extractObjectValues(obj: Record<string, any> | null, keys: string[]): Record<string, any> {
+    if (obj === null) {
+        return {};
+    }
+
+    const extractedObject: Record<string, any> = {};
+    keys.forEach(key => {
+        if (obj.hasOwnProperty(key)) {
+            extractedObject[key] = obj[key];
+        }
+    });
+    return extractedObject;
+}
+
 
 // Edit a single variable
-export default function EditVariableForm() {
+export default function EditVariableForm({ variable }: { variable: OrderedVariable | null }) {
+
+    // console.log("Variable in EditVariableForm", variable);
+    let the_variable = { ...EDIT_VARIABLES_VARIABLES, ...extractObjectValues(variable, Object.keys(EDIT_VARIABLES_VARIABLES)) };
+
+    console.log("The Variable", the_variable);
 
     const { fields, handleValidation } = createHeadlessForm(EDIT_VARIABLES_SCHEMA, {
         strictInputType: false, // so you don't need to pass presentation.inputType,
-        initialValues: EDIT_VARIABLES_VARIABLES,
+        initialValues: the_variable,
     });
 
     async function handleOnSubmit(jsonValues: any, { formValues }: any) {
@@ -24,11 +49,11 @@ export default function EditVariableForm() {
         );
         console.log("Submitted!", { formValues, jsonValues });
     }
+
     return (
-        <SmartForm
-            name="my-form"
+        <JsonSchemaForm
+            name="edit-single-variable-form"
             onSubmit={handleOnSubmit}
-            // From JSF
             fields={fields}
             initialValues={EDIT_VARIABLES_VARIABLES}
             handleValidation={handleValidation}

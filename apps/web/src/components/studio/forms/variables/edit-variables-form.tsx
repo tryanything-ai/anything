@@ -38,10 +38,11 @@ function getOrderedVariables(schema: VariableSchema): OrderedVariable[] {
 
 type EditVariablesFormProps = {
     variables_schema: VariableSchema;
-    setEditing: (editing: boolean) => void;
+    editVariable: (variable: OrderedVariable | null) => void;
+    deleteVariable: (variable: OrderedVariable) => void
 };
 
-export default function EditVariablesForm({ variables_schema, setEditing }: EditVariablesFormProps) {
+export default function EditVariablesForm({ variables_schema, editVariable, deleteVariable }: EditVariablesFormProps) {
     const [variablesList, setVariablesList] = useState<OrderedVariable[]>([]);
 
     useEffect(() => {
@@ -50,32 +51,36 @@ export default function EditVariablesForm({ variables_schema, setEditing }: Edit
         setVariablesList(varsList);
     }, [variables_schema]);
 
-    const handleEdit = useCallback(() => {
+    const handleEdit = useCallback((variable: OrderedVariable | null
+    ) => {
         console.log("Create Variable");
+        editVariable(variable);
     }, []);
 
-    const handleDelete = useCallback(() => {
+    const handleDelete = useCallback((variable: OrderedVariable) => {
         console.log("Delete Variable");
+        deleteVariable(variable)
     }, []);
+
+    const addVariable = () => {
+        console.log("Add Variable");
+    }
 
     return (
-        <div className="space-y-2">
-            <Button variant="default" className="w-full">Add Variable</Button>
+        <div className="space-y-2 mt-4">
+            <Button variant="default" className="w-full" onClick={() => editVariable(null)}>Add Variable</Button>
             {variablesList.map((variable) => (
                 <div key={variable.name} className="rounded-lg border p-1 flex flex-row align-center ">
                     <h2 className="flex items-center text-xl text-left w-full ">{variable.title}</h2>
                     <div className="flex-1" />
-                    <Button variant="outline" size="sm" className="ml-2" onClick={handleDelete}>
+                    <Button variant="outline" size="sm" className="ml-2" onClick={() => handleEdit(variable)}>
                         <Edit2 className="size-5" />
                     </Button>
-                    <Button variant="outline" size="sm" className="ml-2" onClick={handleEdit}>
+                    <Button variant="outline" size="sm" className="ml-2" onClick={() => handleDelete(variable)}>
                         <Trash2 className="size-5" />
                     </Button>
-                    {/* <Button onClick={handleEdit}>Edit</Button>
-                    <Button onClick={handleDelete}>Delete</Button> */}
                 </div>
             ))}
-            <Button onClick={() => setEditing(false)} variant={"secondary"}>Cancel</Button>
         </div>
     );
 }
