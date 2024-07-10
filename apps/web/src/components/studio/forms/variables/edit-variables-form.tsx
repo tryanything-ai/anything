@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
+import { VariableProperty } from "./edit-variable-schema";
 
 type VariableSchema = {
     type: string;
@@ -13,22 +14,14 @@ type VariableSchema = {
     additionalProperties: boolean;
 };
 
-type OrderedVariable = {
-    name: string;
-    title: string;
-    description: string;
-    type: string;
-    oneOf?: { value: string; title: string }[];
-    "x-jsf-presentation"?: { inputType: string };
-};
 
-function getOrderedVariables(schema: VariableSchema): OrderedVariable[] {
+function getOrderedVariables(schema: VariableSchema): VariableProperty[] {
     const { properties, "x-jsf-order": order } = schema;
 
     return order.map((key) => {
         const property = properties[key];
         return {
-            name: key,
+            key,
             title: property.title,
             description: property.description,
             type: property.type,
@@ -42,7 +35,7 @@ function getOrderedVariables(schema: VariableSchema): OrderedVariable[] {
 export default function EditVariablesForm() {
     const { variables } = useAnything();
 
-    const [variablesList, setVariablesList] = useState<OrderedVariable[]>([]);
+    const [variablesList, setVariablesList] = useState<VariableProperty[]>([]);
 
     useEffect(() => {
         if (!variables.variables_schema) return;
@@ -50,14 +43,14 @@ export default function EditVariablesForm() {
         setVariablesList(varsList);
     }, [variables.variables_schema]);
 
-    const handleEdit = useCallback((variable: OrderedVariable | null
+    const handleEdit = useCallback((variable: VariableProperty | null
     ) => {
         console.log("Create Variable");
         variables.setSelectedProperty(variable);
         variables.setEditingMode(EditVariableFormMode.EDIT)
     }, []);
 
-    const handleDelete = useCallback((variable: OrderedVariable) => {
+    const handleDelete = useCallback((variable: VariableProperty) => {
         console.log("Delete Variable");
         variables.setSelectedProperty(variable);
     }, []);
@@ -70,7 +63,7 @@ export default function EditVariablesForm() {
         <div className="space-y-2 mt-4">
             <Button variant="default" className="w-full" onClick={() => handleEdit(null)}>Add Variable</Button>
             {variablesList.map((variable) => (
-                <div key={variable.name} className="rounded-lg border p-1 flex flex-row align-center ">
+                <div key={variable.key} className="rounded-lg border p-1 flex flex-row align-center ">
                     <h2 className="flex items-center text-xl text-left w-full ">{variable.title}</h2>
                     <div className="flex-1" />
                     <Button variant="outline" size="sm" className="ml-2" onClick={() => handleEdit(variable)}>

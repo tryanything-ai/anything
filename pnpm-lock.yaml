@@ -398,6 +398,9 @@ importers:
       reactflow:
         specifier: ^11.11.3
         version: 11.11.3(@types/react@18.2.48)(react-dom@18.2.0)(react@18.2.0)
+      slugify:
+        specifier: ^1.6.6
+        version: 1.6.6
       swr:
         specifier: ^2.2.5
         version: 2.2.5(react@18.2.0)

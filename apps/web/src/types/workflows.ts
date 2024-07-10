@@ -45,7 +45,7 @@ interface NodePresentation {
 }
 
 interface Variable {
-  [key: string]: string; // Using an index signature since the keys can vary.
+  [key: string]: any; // Using an index signature since the keys can vary.
 }
 
 export type AnythingNodeProps = NodeProps<Action>;

@@ -1,4 +1,4 @@
-export const EDIT_VARIABLES_SCHEMA = {
+export let EDIT_VARIABLES_SCHEMA: any = {
     type: "object",
     properties: {
         "title": {
@@ -39,4 +39,17 @@ export const EDIT_VARIABLES_VARIABLES = {
     "title": "",
     "description": "",
     "type": ""
+}
+
+export type VariableProperty = {
+    key?: string;
+    title: string;
+    description: string;
+    type: string;
+    oneOf?: { value: string; title: string }[];
+    "x-jsf-presentation"?: { inputType: string };
+};
+
+export type SimpleVariablesSchema = {
+    properties: Record<string, VariableProperty>
 }

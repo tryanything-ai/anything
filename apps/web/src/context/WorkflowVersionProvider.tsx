@@ -73,6 +73,7 @@ export interface WorkflowVersionContextInterface {
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
     updateNodeData: (update_key: string, data: any) => Promise<boolean>;
+ 
     getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
 
