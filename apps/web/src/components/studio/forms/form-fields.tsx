@@ -18,6 +18,8 @@ function FieldText({
     type,
     name,
     label,
+    const: constantValue,
+    default: defaultValue,
     description,
     value,
     isVisible,
@@ -31,6 +33,11 @@ function FieldText({
 
     if (!isVisible) return null;
 
+    // console.log("fieldtext name", label)
+    // // console.log("fieldtext props", props)
+    // console.log("fieldtext const", constantValue)
+    // console.log("fieldtext default", defaultValue)
+
     function handleChange(e: any) {
         if (!touched) setTouched(true);
         onChange(name, e.target.value);
@@ -43,6 +50,7 @@ function FieldText({
             <Input
                 id={name}
                 type="text"
+                disabled={constantValue && defaultValue && constantValue === defaultValue}
                 defaultValue={value}
                 onChange={handleChange}
                 aria-invalid={!!error}

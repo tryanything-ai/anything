@@ -19,7 +19,6 @@ import { EditVariableFormMode } from "@/context/VariablesContext";
 
 export default function DeleteVariableDialog({ variable }: { variable: VariableProperty }) {
 
-
     const { variables } = useAnything();
 
     const handleDelete = useCallback(async () => {
@@ -27,8 +26,8 @@ export default function DeleteVariableDialog({ variable }: { variable: VariableP
         if (!variable.key) return;
         variables.setSelectedProperty(variable);
         await variables.deleteVariable(variable.key);
-        variables.setEditingMode(EditVariableFormMode.INPUT);
     }, []);
+
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
