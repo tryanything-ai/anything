@@ -34,7 +34,7 @@ function FieldText({
     if (!isVisible) return null;
 
     // console.log("fieldtext name", label)
-    // // console.log("fieldtext props", props)
+    // console.log("fieldtext props", props)
     // console.log("fieldtext const", constantValue)
     // console.log("fieldtext default", defaultValue)
 

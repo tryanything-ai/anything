@@ -41,7 +41,7 @@ function getOrderedVariables(schema: VariableSchema): VariableProperty[] {
 }
 
 export default function EditVariablesForm() {
-    const { variables } = useAnything();
+    const { variables, workflow } = useAnything();
 
     const [variablesList, setVariablesList] = useState<VariableProperty[]>([]);
 
@@ -73,7 +73,7 @@ export default function EditVariablesForm() {
                     <Button variant="outline" size="sm" className="ml-2" onClick={() => handleEdit(variable)}>
                         <Edit2 className="size-5" />
                     </Button>
-                    <DeleteVariableDialog variable={variable} />
+                    <DeleteVariableDialog variable={variable}/>
                 </div>
             ))}
         </div>

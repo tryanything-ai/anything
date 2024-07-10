@@ -15,7 +15,7 @@ export default function ConfigurationForm({ input_schema, input }: any) {
     }
 
     async function handleOnSubmit(jsonValues: any, { formValues }: any) {
-        await workflow.updateNodeData("input", formValues);
+        await workflow.updateNodeData(["input"], [formValues]);
         console.log("Submitted!", { formValues, jsonValues });
     }
 

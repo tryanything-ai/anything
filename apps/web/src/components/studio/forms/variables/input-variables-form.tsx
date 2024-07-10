@@ -17,9 +17,12 @@ export default function InputVariablesForm() {
 
     //Update Configuration
     async function handleVariableInputSubmit(jsonValues: any, { formValues }: any) {
-        await workflow.updateNodeData('variables', formValues);
+        await workflow.updateNodeData(['variables'], [formValues]);
         console.log("Submitted!", { formValues, jsonValues });
     }
+
+    console.log("Variables Schema: ", variables.variables_schema);
+    console.log("Variables: ", variables.variables);
 
     return (
         <>

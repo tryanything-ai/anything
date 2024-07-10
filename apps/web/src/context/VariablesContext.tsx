@@ -51,8 +51,8 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
 
     const updateVariablesProperty = async (data: any) => {
         try {
+            
             if (selectedProperty) {
-
                 if (!variables_schema) return false;
                 if (!selectedProperty) return false;
                 if (!variables_schema.properties) return false;
@@ -64,7 +64,7 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
                 console.log("Updating variables property -> New Variables Schema: ", variables_schema);
 
                 //update to Anyting Context and Db
-                await updateNodeData("variables_schema", variables_schema);
+                await updateNodeData(["variables_schema"], [variables_schema]);
 
                 //Update local state
                 setVariablesSchema(variables_schema);
@@ -85,7 +85,7 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
                 variables_schema.required.push(key);
 
                 //update to Anyting Context and Db
-                await updateNodeData("variables_schema", variables_schema);
+                await updateNodeData(["variables_schema"], [variables_schema]);
 
                 //Update local state
                 setVariablesSchema(variables_schema);
@@ -98,49 +98,40 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
         return true;
     }
 
-    const deleteVariable = async (variableName: string) => {
+    const deleteVariable = async (variableKey: string) => {
         try {
             // Create a copy of the current state
             const updatedSchema = { ...variables_schema };
 
             // Delete the variable from properties
-            delete updatedSchema.properties[variableName];
+            delete updatedSchema.properties[variableKey];
 
-            // Remove the variable from x-jsf-order
-            const orderIndex = updatedSchema["x-jsf-order"].indexOf(variableName);
-            if (orderIndex > -1) {
-                updatedSchema["x-jsf-order"] = [
-                    ...updatedSchema["x-jsf-order"].slice(0, orderIndex),
-                    ...updatedSchema["x-jsf-order"].slice(orderIndex + 1),
-                ];
+            const index = updatedSchema["x-jsf-order"].indexOf(variableKey);
+            if (index > -1) {
+                variables_schema["x-jsf-order"].splice(index, 1);
             }
 
-            // Remove the variable from required
-            const reqIndex = updatedSchema.required.indexOf(variableName);
+            const reqIndex = updatedSchema.required.indexOf(variableKey);
             if (reqIndex > -1) {
-                updatedSchema.required = [
-                    ...updatedSchema.required.slice(0, reqIndex),
-                    ...updatedSchema.required.slice(reqIndex + 1),
-                ];
+                variables_schema.required.splice(reqIndex, 1);
             }
-
-            // Update the database
-            await updateNodeData("variables_schema", updatedSchema);
 
             console.log("Deleted variable - new schema: ", updatedSchema);
 
-            // Update the local state
-            setVariablesSchema(updatedSchema);
-
-            //Remove the key from teh variables
+            //Remove the key from the variables
             let updatedVariables = { ...variables };
 
-            delete updatedVariables[variableName];
+            console.log("Deleting variable: ", variableKey);
+            console.log("Variables beofre delete: ", updatedVariables);
+            delete updatedVariables[variableKey];
+            console.log("Variables after delete: ", updatedVariables);
 
-            //Save to db
-            await updateNodeData("variables", updatedVariables);
+            // Update the database
+            await updateNodeData(["variables_schema", "variables"], [updatedSchema, updatedVariables]);
 
+            // Update the local state
             setVariables(updatedVariables);
+            setVariablesSchema(updatedSchema);
 
             return true;
         } catch (e) {
@@ -148,36 +139,6 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
             return false;
         }
     };
-
-
-    // const deleteVariable = async (variableName: string) => {
-    //     try {
-
-
-    //         delete variables_schema.properties[variableName]
-
-    //         const index = variables_schema["x-jsf-order"].indexOf(variableName);
-    //         if (index > -1) {
-    //             variables_schema["x-jsf-order"].splice(index, 1);
-    //         }
-
-    //         const reqIndex = variables_schema.required.indexOf(variableName);
-    //         if (reqIndex > -1) {
-    //             variables_schema.required.splice(reqIndex, 1);
-    //         }
-    //         //update db
-    //         await updateNodeData("variables_schema", variables_schema);
-
-    //         console.log("Deleted variable - new schema: ", variables_schema);
-    //         //update local state
-    //         setVariablesSchema(variables_schema);
-
-    //         return true;
-    //     } catch (e) {
-    //         console.log("Error deleting variable: ", e);
-    //         return false;
-    //     }
-    // }
 
     useEffect(() => {
         if (selected_node_data) {

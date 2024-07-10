@@ -72,8 +72,8 @@ export interface WorkflowVersionContextInterface {
     addNode: (position: { x: number; y: number }, specialData?: any) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
-    updateNodeData: (update_key: string, data: any) => Promise<boolean>;
- 
+    updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
+
     getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
 
@@ -331,17 +331,24 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     );
 
     const updateNodeData = async (
-        update_key: string,
-        data: any
+        update_key: string[],
+        data: any[]
     ): Promise<boolean> => {
         try {
             console.log("writeNodeConfig");
+
             let updatedNodes = nodes.map((node) => {
                 if (node.id === selectedNodeId) {
-                    // console.log("Node Data before writeNodeConfig", node.data);
-                    let new_node = node;
-                    node.data[update_key] = data;
-                    console.log("New Node Data", node.data);
+                    console.log("Node Data before updateNodeData", node.data);
+
+                    // Clone the node and its data
+                    let new_node = { ...node, data: { ...node.data } };
+
+                    update_key.forEach((key, index) => {
+                        new_node.data[key] = data[index];
+                    });
+
+                    console.log("New Node Data in updateNodeData", new_node.data);
                     return new_node;
                 } else {
                     return node;
@@ -356,6 +363,36 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             return false;
         }
     };
+
+    // const updateNodeData = async (
+    //     update_key: string[],
+    //     data: any[]
+    // ): Promise<boolean> => {
+    //     try {
+    //         console.log("writeNodeConfig");
+
+    //         let updatedNodes = nodes.map((node) => {
+    //             if (node.id === selectedNodeId) {
+    //                 console.log("Node Data before updateNodeData", node.data);
+    //                 let new_node = node;
+    //                 update_key.forEach((key, index) => {
+    //                     new_node.data[key] = data[index];
+    //                 });
+    //                 console.log("New Node Data in updateNodeData", node.data);
+    //                 return new_node;
+    //             } else {
+    //                 return node;
+    //             }
+    //         });
+
+    //         saveFlowVersion(updatedNodes, edges);
+    //         setNodes(updatedNodes);
+    //         return true;
+    //     } catch (error) {
+    //         console.log("error writing node config in WorkflowVersionProvider", error);
+    //         return false;
+    //     }
+    // };
 
     const getFlowDefinitionsFromReactFlowState = (): Workflow => {
 
@@ -409,6 +446,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 console.log('Flow Saved: ', res);
                 setSavingStatus(SavingStatus.SAVED);
                 setTimeout(() => setSavingStatus(SavingStatus.NONE), 2000); // Clear the status after 2 seconds
+                await hydrateFlow();
             } catch (error) {
                 console.log('error in saveFlowVersion', error);
             }
