@@ -4,30 +4,27 @@ import { useAnything } from "@/context/AnythingContext";
 
 export default function InputVariablesForm() {
 
-    const { variables } = useAnything();
+    const { variables, workflow } = useAnything();
 
-    const { fields, handleValidation } = createHeadlessForm(variables.variables_schema, {
-        strictInputType: false, // so you don't need to pass presentation.inputType,
-        initialValues: variables.variables,
-    });
+    let fields, handleValidation;
+
+    if (variables && variables.variables_schema && Object.keys(variables.variables_schema).length > 0) {
+        ({ fields, handleValidation } = createHeadlessForm(variables.variables_schema, {
+            strictInputType: false, // so you don't need to pass presentation.inputType,
+            initialValues: variables.variables,
+        }));
+    }
 
     //Update Configuration
     async function handleVariableInputSubmit(jsonValues: any, { formValues }: any) {
-        alert(
-            `Submitted with succes! ${JSON.stringify(
-                { formValues, jsonValues },
-                null,
-                3
-            )}`
-        );
-
+        await workflow.updateNodeData('variables', formValues);
         console.log("Submitted!", { formValues, jsonValues });
     }
 
     return (
         <>
             {
-                (Object.keys(variables.variables).length > 0) &&
+                variables && variables.variables_schema && variables.variables && Object.keys(variables.variables_schema).length > 0 && Object.keys(variables.variables).length > 0 &&
                 <JsonSchemaForm
                     name="input-variables-form"
                     onSubmit={handleVariableInputSubmit}

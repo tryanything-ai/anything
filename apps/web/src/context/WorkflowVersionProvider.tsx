@@ -6,7 +6,7 @@ import {
     useCallback,
     useContext,
     useEffect,
-    useState,
+    useState
 } from "react";
 
 import { useParams } from 'next/navigation'
@@ -72,7 +72,7 @@ export interface WorkflowVersionContextInterface {
     addNode: (position: { x: number; y: number }, specialData?: any) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
-    writeNodeConfig: (nodeId: string, data: any) => Promise<Action | undefined>;
+    updateNodeData: (update_key: string, data: any) => Promise<boolean>;
     getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
 
@@ -99,7 +99,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     addNode: () => { },
     setReactFlowInstance: () => { },
     // readNodeConfig: async () => undefined,
-    writeNodeConfig: async () => undefined,
+    updateNodeData: async () => false,
     getFlowDefinitionsFromReactFlowState: () => {
         return {
             // Define the structure of Flow here if it's needed for the initial value
@@ -255,8 +255,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         if (unPersistedChanges.length === 0) {
             console.log("Saving Node Update because not dimmension or select changes")
-            let updateFlow = makeUpdateFlow(new_nodes, edges);
-            saveFlowVersion(updateFlow);
+            saveFlowVersion(new_nodes, edges);
         } else {
             console.log("Skipping Save because dimmension or select changes")
         }
@@ -268,7 +267,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     const onEdgesChange: OnEdgesChange = (edgeChanges: EdgeChange[]) => {
         let new_edges = applyEdgeChanges(edgeChanges, edges);
-        let updateFlow = makeUpdateFlow(nodes, new_edges);
 
         //find the node with selected = true
         let selectionChanges: EdgeSelectionChange[] =
@@ -276,7 +274,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         if (selectionChanges.length === 0) {
             console.log("Saving Edge Update because not select changes")
-            saveFlowVersion(updateFlow);
+            saveFlowVersion(nodes, new_edges);
         } else {
             console.log("Skipping Save because select changes")
         }
@@ -292,15 +290,9 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         params.type = "anything";
         let new_edges = addEdge(params, edges);
 
-        let updateFlow = makeUpdateFlow(nodes, new_edges);
-        saveFlowVersion(updateFlow);
+        saveFlowVersion(nodes, new_edges);
 
-        setEdges((edges) => {
-            // console.log("onEdgesChange edgeChanges", edgeChanges);
-            // console.log("onConnect params", params);
-            // params.type = "anything";
-            return new_edges;
-        });
+        setEdges(() => { return new_edges });
     };
 
     const onDragOver = useCallback((event: DragEvent) => {
@@ -337,25 +329,30 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         [addNode]
     );
 
-    const writeNodeConfig = async (
-        nodeId: string,
+    const updateNodeData = async (
+        update_key: string,
         data: any
-    ): Promise<Action | undefined> => {
+    ): Promise<boolean> => {
         try {
+            console.log("writeNodeConfig");
             let updatedNodes = nodes.map((node) => {
-                // console.log("node in writeNodeConfig", node);
-                if (node.id === nodeId) {
-                    return { ...node, data };
+                if (node.id === selectedNodeId) {
+                    // console.log("Node Data before writeNodeConfig", node.data);
+                    let new_node = node;
+                    node.data[update_key] = data;
+                    console.log("New Node Data", node.data);
+                    return new_node;
                 } else {
                     return node;
                 }
             });
+
+            saveFlowVersion(updatedNodes, edges);
             setNodes(updatedNodes);
-            //TODO: actually update state.
-            let reactFlowNode = nodes.find((node) => node.id === nodeId);
-            return reactFlowNode?.data;
+            return true;
         } catch (error) {
-            console.log("error writing node config in FlowProvider", error);
+            console.log("error writing node config in WorkflowVersionProvider", error);
+            return false;
         }
     };
 
@@ -369,7 +366,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 ...node.data,
                 presentation: {
                     position: node.position,
-                },
+                }
             };
 
             if (node.data.trigger) {
@@ -418,7 +415,9 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         [dbFlowId, dbFlowVersionId]
     );
 
-    const saveFlowVersion = (workflow: Workflow) => {
+
+    const saveFlowVersion = (nodes: any, edges: any) => {
+        const workflow = makeUpdateFlow(nodes, edges);
         setSavingStatus(SavingStatus.SAVING);
         debouncedSaveFlowVersion(workflow);
     };
@@ -485,6 +484,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     useEffect(() => {
         //TODO: why does this always write when we start the flow? How can we prevent this?
         if (!workflowId || !workflowVersionId) return;
+        resetState();
         setDbFlowVersionId(workflowVersionId);
         setDbFlowId(workflowId);
         hydrateFlow();
@@ -518,7 +518,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 onDrop,
                 addNode,
                 setReactFlowInstance,
-                writeNodeConfig,
+                updateNodeData,
                 getFlowDefinitionsFromReactFlowState,
             }}
         >

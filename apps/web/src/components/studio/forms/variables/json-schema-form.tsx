@@ -4,7 +4,7 @@ import { formValuesToJsonValues, getDefaultValuesFromFields } from "@/lib/json-s
 import { Button } from "@/components/ui/button";
 import { fieldsMap } from "../form-fields";
 
-export function JsonSchemaForm({ name, fields, initialValues, handleValidation, onSubmit }: any) {
+export function JsonSchemaForm({ name, fields, initialValues, handleValidation, onSubmit}: any) {
 
     const [values, setValues] = useState<{ [key: string]: any }>(() =>
         getDefaultValuesFromFields(fields, initialValues)
@@ -64,6 +64,7 @@ export function JsonSchemaForm({ name, fields, initialValues, handleValidation, 
                             onChange={handleFieldChange}
                             onValueChange={(value: any) => handleFieldChange(fieldName, value)}
                             {...field}
+
                         />
                     );
                 })}

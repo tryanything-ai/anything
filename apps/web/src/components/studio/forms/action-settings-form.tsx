@@ -1,6 +1,5 @@
 import { useAnything } from "@/context/AnythingContext";
 import ConfigurationForm from "./configuration-form";
-import InputVariablesForm from "./variables/input-variables-form";
 import { VariablesFormLayout } from "./variables/variables-form-layout";
 
 export default function ActionSettingsForm() {

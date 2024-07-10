@@ -67,8 +67,8 @@ export default function BaseNode({
         <div
           onClick={toggleNodeConfig}
           className={cn(
-            "bg-white border border-gray-300 text-primary-content flex h-20 w-90 flex-row rounded-md text-xl",
-            selected ? "border-pink-700 border-2" : "",
+            "bg-white border border-gray-300 text-primary-content flex h-20 w-90 flex-row rounded-md text-xl hover:bg-gray-50",
+            selected ? "border-pink-700" : "",
           )}
         // className=""
         >

@@ -3,14 +3,14 @@ import { EDIT_VARIABLES_SCHEMA, EDIT_VARIABLES_VARIABLES } from "./edit-variable
 import { JsonSchemaForm } from "./json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 
-type OrderedVariable = {
-    name: string;
-    title: string;
-    description: string;
-    type: string;
-    oneOf?: { value: string; title: string }[];
-    "x-jsf-presentation"?: { inputType: string };
-};
+// type OrderedVariable = {
+//     name: string;
+//     title: string;
+//     description: string;
+//     type: string;
+//     oneOf?: { value: string; title: string }[];
+//     "x-jsf-presentation"?: { inputType: string };
+// };
 
 function extractObjectValues(obj: Record<string, any> | null, keys: string[]): Record<string, any> {
     if (obj === null) {

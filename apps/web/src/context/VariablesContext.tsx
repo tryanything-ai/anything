@@ -49,6 +49,10 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
             setVariables(selected_node_data.variables);
             setVariablesSchema(selected_node_data.variables_schema);
             setEditingMode(EditVariableFormMode.INPUT);
+        } else {
+            setVariables({});
+            setVariablesSchema({});
+            setEditingMode(EditVariableFormMode.INPUT);
         }
     }, [selected_node_data])
 

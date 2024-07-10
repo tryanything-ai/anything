@@ -38,11 +38,6 @@ function getOrderedVariables(schema: VariableSchema): OrderedVariable[] {
     });
 }
 
-// type EditVariablesFormProps = {
-//     variables_schema: VariableSchema;
-//     editVariable: (variable: OrderedVariable | null) => void;
-//     deleteVariable: (variable: OrderedVariable) => void
-// };
 
 export default function EditVariablesForm() {
     const { variables } = useAnything();
@@ -58,7 +53,6 @@ export default function EditVariablesForm() {
     const handleEdit = useCallback((variable: OrderedVariable | null
     ) => {
         console.log("Create Variable");
-        // editVariable(variable);
         variables.setSelectedProperty(variable);
         variables.setEditingMode(EditVariableFormMode.EDIT)
     }, []);
@@ -66,7 +60,6 @@ export default function EditVariablesForm() {
     const handleDelete = useCallback((variable: OrderedVariable) => {
         console.log("Delete Variable");
         variables.setSelectedProperty(variable);
-        // variables.deleteVariable(variable)
     }, []);
 
     const addVariable = () => {
