@@ -8,10 +8,9 @@ import {
     useState,
 } from "react";
 
-
 import slugify from "slugify";
 import { useWorkflowVersionContext } from "./WorkflowVersionProvider";
-import { VariableProperty, SimpleVariablesSchema } from "@/components/studio/forms/variables/edit-variable-schema";
+import { VariableProperty, DEFAULT_VARIABLES_SCHEMA } from "@/components/studio/forms/variables/edit-variable-schema";
 export enum EditVariableFormMode {
     INPUT = "input",
     DELETE = "delete",
@@ -54,7 +53,6 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
         try {
             if (selectedProperty) {
 
-
                 if (!variables_schema) return false;
                 if (!selectedProperty) return false;
                 if (!variables_schema.properties) return false;
@@ -71,6 +69,7 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
                 //Update local state
                 setVariablesSchema(variables_schema);
             } else {
+
                 //TODO: this is a new variable create it from scratch
                 console.log("Creating new variable: ", data);
                 let key = slugify(data.title, {
@@ -95,23 +94,45 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
         } catch (e) {
             console.log("Error updating variables property: ", e);
             return false;
-
         }
-        //TODO: calculate shape of new variables_schema and variables
-        //Call Update Node Data on variables and variables_schema
         return true;
     }
 
     const deleteVariable = async (variableName: string) => {
-        //TODO: calculate shape of new variables_schema and variables
-        //Call Update Node Data on variables and variables_schema
-        return true;
+        try {
+
+            delete variables_schema.properties[variableName]
+            const index = variables_schema["x-jsf-order"].indexOf(variableName);
+            if (index > -1) {
+                variables_schema["x-jsf-order"].splice(index, 1);
+            }
+            const reqIndex = variables_schema.required.indexOf(variableName);
+            if (reqIndex > -1) {
+                variables_schema.required.splice(reqIndex, 1);
+            }
+            //update db
+            await updateNodeData("variables_schema", variables_schema);
+            //update local state
+            setVariablesSchema(variables_schema);
+
+            return true;
+        } catch (e) {
+            console.log("Error deleting variable: ", e);
+            return false;
+        }
     }
 
     useEffect(() => {
         if (selected_node_data) {
             setVariables(selected_node_data.variables);
-            setVariablesSchema(selected_node_data.variables_schema);
+            if (!selected_node_data.variables_schema || Object.keys(selected_node_data.variables_schema).length === 0) {
+                //We are starting a fresh schema.
+                //We need to create a new schema framework
+                setVariablesSchema(DEFAULT_VARIABLES_SCHEMA);
+            } else {
+                setVariablesSchema(selected_node_data.variables_schema);
+            }
+
             setEditingMode(EditVariableFormMode.INPUT);
         } else {
             setVariables({});

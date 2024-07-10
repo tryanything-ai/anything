@@ -53,3 +53,11 @@ export type VariableProperty = {
 export type SimpleVariablesSchema = {
     properties: Record<string, VariableProperty>
 }
+
+export const DEFAULT_VARIABLES_SCHEMA: any = {
+    type: "object",
+    properties: {},
+    "x-jsf-order": [],
+    required: [],
+    additionalProperties: false
+}

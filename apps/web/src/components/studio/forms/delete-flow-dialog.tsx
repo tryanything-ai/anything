@@ -26,6 +26,8 @@ export default function DeleteFlowDialog({ workflowId }: { workflowId: string })
             console.error(error);
         }
     }
+
+
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>

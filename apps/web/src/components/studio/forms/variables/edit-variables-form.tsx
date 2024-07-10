@@ -5,6 +5,7 @@ import { Edit2, Trash2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
 import { VariableProperty } from "./edit-variable-schema";
+import DeleteVariableDialog from "./delete-variable-dialog";
 
 type VariableSchema = {
     type: string;
@@ -50,14 +51,14 @@ export default function EditVariablesForm() {
         variables.setEditingMode(EditVariableFormMode.EDIT)
     }, []);
 
-    const handleDelete = useCallback((variable: VariableProperty) => {
-        console.log("Delete Variable");
-        variables.setSelectedProperty(variable);
-    }, []);
+    // const handleDelete = useCallback((variable: VariableProperty) => {
+    //     console.log("Delete Variable");
+    //     if (!variable.key) return;
+    //     variables.setSelectedProperty(variable);
+    //     variables.deleteVariable(variable.key);
+    // }, []);
 
-    const addVariable = () => {
-        console.log("Add Variable");
-    }
+
 
     return (
         <div className="space-y-2 mt-4">
@@ -69,9 +70,10 @@ export default function EditVariablesForm() {
                     <Button variant="outline" size="sm" className="ml-2" onClick={() => handleEdit(variable)}>
                         <Edit2 className="size-5" />
                     </Button>
-                    <Button variant="outline" size="sm" className="ml-2" onClick={() => handleDelete(variable)}>
+                    <DeleteVariableDialog variable={variable} />
+                    {/* <Button variant="outline" size="sm" className="ml-2" onClick={() => handleDelete(variable)}>
                         <Trash2 className="size-5" />
-                    </Button>
+                    </Button> */}
                 </div>
             ))}
         </div>
