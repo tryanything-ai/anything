@@ -45,8 +45,8 @@ export function formValuesToJsonValues(fields: any, values: any) {
  */
 export function getDefaultValuesFromFields(fields: any, initialValues: any) {
     // TODO/BUG needs to support fieldsets recursively
-    console.log("fields", fields);
-    console.log("initialValues", initialValues);
+    // console.log("fields", fields);
+    // console.log("initialValues", initialValues);
     return fields.reduce((acc: any, cur: any) => {
         return {
             ...acc,

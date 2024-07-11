@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { useParams } from 'next/navigation'
-import { cloneDeep, debounce } from 'lodash';
+import { cloneDeep, debounce, set } from 'lodash';
 
 import {
     addEdge,
@@ -54,8 +54,10 @@ export interface WorkflowVersionContextInterface {
     db_flow: any,
     db_flow_version: any,
     flow_version_definition: any;
-    selected_node_id?: string;
-    selected_node_data?: Action;
+    selected_node_id: string;
+    selected_node_data: Action | undefined;
+    selected_node_variables: any;
+    selected_node_variables_schema: any;
     panel_tab: string;
     savingStatus: string;
     setPanelTab: (tab: string) => void;
@@ -73,8 +75,6 @@ export interface WorkflowVersionContextInterface {
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
     updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
-
-    getFlowDefinitionsFromReactFlowState: () => Workflow;
 }
 
 export const WorkflowVersionContext = createContext<WorkflowVersionContextInterface>({
@@ -83,7 +83,10 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     db_flow: {},
     db_flow_version: {},
     flow_version_definition: {},
-    selected_node_id: undefined,
+    selected_node_id: "",
+    selected_node_data: undefined,
+    selected_node_variables: null,
+    selected_node_variables_schema: null,
     panel_tab: PanelTab.CONFIG,
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => { },
@@ -100,12 +103,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     addNode: () => { },
     setReactFlowInstance: () => { },
     // readNodeConfig: async () => undefined,
-    updateNodeData: async () => false,
-    getFlowDefinitionsFromReactFlowState: () => {
-        return {
-            // Define the structure of Flow here if it's needed for the initial value
-        } as Workflow;
-    },
+    updateNodeData: async () => false
 });
 
 export const useWorkflowVersionContext = () => useContext(WorkflowVersionContext);
@@ -122,13 +120,14 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
     const [dbFlowId, setDbFlowId] = useState<string>("")
     const [selectedNodeId, setSelectedNodeId] = useState<string>("")
-    // const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(undefined)
+    const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(undefined)
+    const [selectedNodeVariables, setSelectedNodeVariables] = useState<any>({})
+    const [selectedNodeVariablesSchema, setSelectedNodeVariablesSchema] = useState<any>({})
     //Internal for ReactFlow and Flow Definition Management
     // const [hydrated, setHydrated] = useState<boolean>(false);
     // const [firstLook, setFirstLook] = useState<boolean>(true);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    // const [flowVersions, setFlowVersions] = useState<Workflow[]>([]);
 
     //Navigation State
     const [panel_tab, setPanelTab] = useState<string>(PanelTab.CONFIG);
@@ -140,7 +139,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
     const [reactFlowInstance, setReactFlowInstance] =
         useState<ReactFlowInstance | null>(null);
-    // const timerRef = useRef<NodeJS.Timeout | null>(null);
+
 
     const showActionSheetForEdge = (id: string) => {
         console.log("Show Action Sheet for Edge: ", id);
@@ -157,10 +156,10 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setDbFlow({});
         setDbFlowVersion({});
         setFlowVersionDefinition({});
-        // setHydrated(false);
         setSelectedNodeId("");
-        // setSelectedNodeData(undefined);
-        // setFirstLook(false);
+        setSelectedNodeData(undefined);
+        setSelectedNodeVariables({});
+        setSelectedNodeVariablesSchema({});
     }
 
     const addNode = (position: { x: number; y: number }, specialData?: any) => {
@@ -208,11 +207,41 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         // });
     }
 
+    const fanOutLocalSelectedNodeData = (node: any) => {
+        console.log("Fan Out Local Node Data", node);
+        if (node.id) {
+            setSelectedNodeId(() => node.id);
+        } else {
+            setSelectedNodeId(() => "");
+            console.log("No Node Id in Fan Out Local Node Data");
+        }
+        if (node.data) {
+            setSelectedNodeData(() => node.data);
+        } else {
+            setSelectedNodeData(() => undefined);
+            console.log("No Node Data in Fan Out Local Node Data");
+        }
+        if (node.data.variables) {
+            setSelectedNodeVariables(() => node.data.variables);
+        } else {
+            setSelectedNodeVariables(() => null);
+            console.log("No Node Variables in Fan Out Local Node Data");
+        }
+        if (node.data.variables_schema) {
+            setSelectedNodeVariablesSchema(() => node.data.variables_schema);
+        } else {
+            setSelectedNodeVariablesSchema(() => null);
+            console.log("No Node Variables Schema in Fan Out Local Node Data");
+        }
+    }
+
     const set_panel_tab = (tab: string) => {
         //Used to make nice navigation in side panel
         if (tab === PanelTab.SETTINGS) {
             // setSelectedNodeData(undefined);
-            setSelectedNodeId("");
+            // setSelectedNodeId("");
+            fanOutLocalSelectedNodeData(null);
+
             //Trick to clear selection inisde ReactFlow
             onNodesChange([{
                 id: selectedNodeId,
@@ -238,12 +267,14 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
             if (selectedNode) {
                 //Set node and node data for easy access
-                setSelectedNodeId(selectedNode.id);
-                let selectedNodeData = nodes.find((node) => node.id === selectedNode.id)?.data;
+                // setSelectedNodeId(selectedNode.id);
+                let selectedNodeObj: any = nodes.find((node) => node.id === selectedNode.id);
+                fanOutLocalSelectedNodeData(selectedNodeObj);
                 // setSelectedNodeData(selectedNodeData);
                 setPanelTab(PanelTab.CONFIG);
             } else {
-                setSelectedNodeId("");
+                fanOutLocalSelectedNodeData(null);
+                // setSelectedNodeId("");
                 // setSelectedNodeData(undefined);
             }
         }
@@ -335,29 +366,36 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         data: any[]
     ): Promise<boolean> => {
         try {
-            console.log("writeNodeConfig");
+            console.log("updateNodeData:", update_key, data);
 
-            let updatedNodes;
-            setNodes((prevNodes) => {
-                const newNodes = cloneDeep(prevNodes);
+            // setNodes((prevNodes) => {
+            const newNodes = cloneDeep(nodes);
 
-                updatedNodes = newNodes.map((node) => {
-                    if (node.id === selectedNodeId) {
-                        update_key.forEach((key, index) => {
-                            node.data[key] = data[index];
-                        });
-                    }
-                    return node;
-                });
-
-                return updatedNodes;
+            let updatedNodes = newNodes.map((node) => {
+                if (node.id === selectedNodeId) {
+                    update_key.forEach((key, index) => {
+                        console.log(`Updating Node Data in updateNodeData for ${node.id}:${key} with:`, data[index]);
+                        node.data[key] = data[index];
+                    });
+                    console.log("NEW_DATA_FOR_NODE", node.data);
+                    fanOutLocalSelectedNodeData(node);
+                }
+                return node;
             });
 
-            // Wait for the state update to complete
-            await new Promise((resolve) => setTimeout(resolve, 0));
+            // return updatedNodes;
+            // });
+
+            // // Wait for the state update to complete
+            // await new Promise((resolve) => setTimeout(resolve, 0));
+
+            console.log("ALL_NEW_NODE_DATA", updatedNodes);
 
             // Call saveFlowVersion with the latest state
             saveFlowVersionImmediate(updatedNodes, edges);
+
+            // Update the state with the latest state
+            setNodes(updatedNodes);
 
             return true;
         } catch (error) {
@@ -365,81 +403,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             return false;
         }
     };
-    // const updateNodeData = async (
-    //     update_key: string[],
-    //     data: any[]
-    // ): Promise<boolean> => {
-    //     try {
-    //         console.log("writeNodeConfig");
-
-    //         setNodes((prevNodes) => {
-
-
-    //         }); 
-
-    //         let new_nodes = cloneDeep(nodes);
-
-    //         let updatedNodes = new_nodes.map((node) => {
-    //             if (node.id === selectedNodeId) {
-
-    //                 // Clone the node and its data
-    //                 // let new_node = { ...node, data: { ...node.data } };
-
-    //                 update_key.forEach((key, index) => {
-    //                     node.data[key] = data[index];
-    //                 });
-
-    //                 // console.log("New Node Data in updateNodeData", node.data);
-    //                 return node;
-    //             } else {
-    //                 return node;
-    //             }
-    //         });
-
-    //         saveFlowVersion(updatedNodes, edges);
-    //         setNodes(updatedNodes);
-    //         return true;
-
-    //     } catch (error) {
-    //         console.log("error writing node config in WorkflowVersionProvider", error);
-    //         return false;
-    //     }
-    // };
-
-    const getFlowDefinitionsFromReactFlowState = (): Workflow => {
-
-        let actions: any[] = [];
-
-        //Loop through all nodes and reformat them to what actions prefer
-        nodes.forEach((node) => {
-            let freshNode = {
-                ...node.data,
-                presentation: {
-                    position: node.position,
-                }
-            };
-
-            if (node.data.trigger) {
-                // trigger = freshNode as Trigger;
-            } else {
-                actions.push(freshNode as Action);
-            }
-        });
-
-        //create shape needed for backend
-        let newFlow: Workflow = {
-            actions: actions as Action[],
-            edges: edges as Edge[],
-        };
-
-        console.log("New Flow Definition", newFlow);
-
-        return newFlow;
-    };
 
     const makeUpdateFlow = (nodes: any, edges: any) => {
+        let new_nodes = cloneDeep(nodes);
         return {
-            actions: nodes.map((node: any) => {
+            actions: new_nodes.map((node: any) => {
                 return {
                     ...node.data,
                     presentation: {
@@ -460,7 +428,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         }
     }
 
-
     const saveFlowVersionImmediate = (nodes: any, edges: any) => {
         const workflow = makeUpdateFlow(nodes, edges);
         setSavingStatus(SavingStatus.SAVING);
@@ -470,7 +437,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const _saveFlowVersion = async (workflow: Workflow) => {
         try {
             const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
-            console.log('Flow Saved: ', res);
+            console.log('Flow Saved!', JSON.stringify(res, null, 3));
             setSavingStatus(SavingStatus.SAVED);
             setTimeout(() => setSavingStatus(SavingStatus.NONE), 1500); // Clear the status after 2 seconds
             // NOTES:
@@ -571,10 +538,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         };
     }, [workflowId, workflowVersionId]);
 
-
-    // Selector for selected node data
-    const selectedNodeData = nodes.find((node) => node.id === selectedNodeId)?.data;
-
     return (
         <WorkflowVersionContext.Provider
             value={{
@@ -585,6 +548,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 flow_version_definition,
                 selected_node_id: selectedNodeId,
                 selected_node_data: selectedNodeData,
+                selected_node_variables: selectedNodeVariables,
+                selected_node_variables_schema: selectedNodeVariablesSchema,
                 nodes,
                 edges,
                 savingStatus,
@@ -600,8 +565,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 onDrop,
                 addNode,
                 setReactFlowInstance,
-                updateNodeData,
-                getFlowDefinitionsFromReactFlowState,
+                updateNodeData
             }}
         >
             {children}

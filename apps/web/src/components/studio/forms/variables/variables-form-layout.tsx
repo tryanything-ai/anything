@@ -6,7 +6,7 @@ import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@/components/ui/button";
 
 export function VariablesFormLayout() {
-    const { variables } = useAnything();
+    const { variables, workflow } = useAnything();
 
     const Header = () => {
         let header_title = "Variables";
@@ -26,7 +26,7 @@ export function VariablesFormLayout() {
                 break;
             case EditVariableFormMode.INPUT:
                 header_title = "Variables";
-                link_button_text = Object.keys(variables).length > 0 ? "Edit" : "Add New Variable";
+                link_button_text = Object.keys(workflow.selected_node_variables).length > 0 ? "Edit" : "Add New Variable";
                 action = () => variables.setEditingMode(EditVariableFormMode.DELETE);
                 break;
             default:
