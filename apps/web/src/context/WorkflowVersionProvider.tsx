@@ -256,7 +256,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         if (unPersistedChanges.length === 0) {
             console.log("Saving Node Update because not dimmension or select changes")
-            saveFlowVersion(new_nodes, edges);
+            saveFlowVersionDebounced(new_nodes, edges);
         } else {
             console.log("Skipping Save because dimmension or select changes")
         }
@@ -275,7 +275,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         if (selectionChanges.length === 0) {
             console.log("Saving Edge Update because not select changes")
-            saveFlowVersion(nodes, new_edges);
+            saveFlowVersionDebounced(nodes, new_edges);
         } else {
             console.log("Skipping Save because select changes")
         }
@@ -291,7 +291,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         params.type = "anything";
         let new_edges = addEdge(params, edges);
 
-        saveFlowVersion(nodes, new_edges);
+        saveFlowVersionDebounced(nodes, new_edges);
 
         setEdges(() => { return new_edges });
     };
@@ -336,11 +336,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     ): Promise<boolean> => {
         try {
             console.log("writeNodeConfig");
-    
+
             let updatedNodes;
             setNodes((prevNodes) => {
                 const newNodes = cloneDeep(prevNodes);
-    
+
                 updatedNodes = newNodes.map((node) => {
                     if (node.id === selectedNodeId) {
                         update_key.forEach((key, index) => {
@@ -349,16 +349,16 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                     }
                     return node;
                 });
-    
+
                 return updatedNodes;
             });
-    
+
             // Wait for the state update to complete
             await new Promise((resolve) => setTimeout(resolve, 0));
-    
+
             // Call saveFlowVersion with the latest state
-            await saveFlowVersion(updatedNodes, edges);
-    
+            saveFlowVersionImmediate(updatedNodes, edges);
+
             return true;
         } catch (error) {
             console.log("error writing node config in WorkflowVersionProvider", error);
@@ -451,13 +451,45 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         };
     }
 
-    const debouncedSaveFlowVersion = useCallback(
+    const saveFlowVersionDebounced = async (nodes: any, edges: any) => {
+        try {
+            setSavingStatus(SavingStatus.SAVING);
+            await _debouncedSaveFlowVersion(makeUpdateFlow(nodes, edges));
+        } catch (error) {
+            console.log('error in saveFlowVersion', error);
+        }
+    }
+
+
+    const saveFlowVersionImmediate = (nodes: any, edges: any) => {
+        const workflow = makeUpdateFlow(nodes, edges);
+        setSavingStatus(SavingStatus.SAVING);
+        _saveFlowVersion(workflow);
+    };
+
+    const _saveFlowVersion = async (workflow: Workflow) => {
+        try {
+            const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
+            console.log('Flow Saved: ', res);
+            setSavingStatus(SavingStatus.SAVED);
+            setTimeout(() => setSavingStatus(SavingStatus.NONE), 1500); // Clear the status after 2 seconds
+            // NOTES:
+            // await hydrateFlow(); //This means we would have to hand manage syncing of 
+            //things like selected node and its dependences liek selected_node_data etc etc
+            //Maybe difficult!
+        } catch (error) {
+            console.log('error in saveFlowVersion', error);
+        }
+    }
+
+    const _debouncedSaveFlowVersion = useCallback(
         debounce(async (workflow: Workflow) => {
             try {
-                const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
-                console.log('Flow Saved: ', res);
-                setSavingStatus(SavingStatus.SAVED);
-                setTimeout(() => setSavingStatus(SavingStatus.NONE), 2000); // Clear the status after 2 seconds
+                await _saveFlowVersion(workflow);
+                // const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
+                // console.log('Flow Saved: ', res);
+                // setSavingStatus(SavingStatus.SAVED);
+                // setTimeout(() => setSavingStatus(SavingStatus.NONE), 2000); // Clear the status after 2 seconds
                 // await hydrateFlow(); //This means we would have to hand manage syncing of 
                 //things like selected node and its dependences liek selected_node_data etc etc
                 //Maybe difficult!
@@ -467,13 +499,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         }, 1000),
         [dbFlowId, dbFlowVersionId]
     );
-
-
-    const saveFlowVersion = (nodes: any, edges: any) => {
-        const workflow = makeUpdateFlow(nodes, edges);
-        setSavingStatus(SavingStatus.SAVING);
-        debouncedSaveFlowVersion(workflow);
-    };
 
     const hydrateFlow = async () => {
         try {
