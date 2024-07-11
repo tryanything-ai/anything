@@ -21,7 +21,7 @@ export default function DeleteVariableDialog({ variable }: { variable: VariableP
     const { variables, workflow: { savingStatus } } = useAnything();
 
     const handleDelete = useCallback(async () => {
-        console.log("Delete Variable");
+        console.log("Delete Variable: " + variable.key);
         if (!variable.key) return;
         await variables.deleteVariable(variable.key);
     }, []);
@@ -32,7 +32,9 @@ export default function DeleteVariableDialog({ variable }: { variable: VariableP
                 {/* TODO: this savingStatus thing is a hack. Having deep problems preventing erros updating variables when you do it fast and we recreate json state in config to hyrate to server */}
                 {/* Probbaly need to rebuild lots of state management to get around this much closer to the server. Allow endpoints for updating indivudal nodes in a flow versus just handling a large json object locally.  */}
                 {/* Skipped a good fix to just get launched */}
-                <Button variant="outline" size="sm" className="ml-2" disabled={savingStatus !== ""}>
+                <Button variant="outline" size="sm" className="ml-2" 
+                disabled={savingStatus !== ""}
+                >
                     {
                         savingStatus !== "" ? <LoaderCircle className="animate-spin" /> : <Trash2 className="size-5" />
                     }

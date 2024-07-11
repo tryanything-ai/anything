@@ -21,7 +21,7 @@ function extractObjectValues(obj: Record<string, any> | null, keys: string[]): R
 // Edit a single variable
 export default function EditVariableForm() {
 
-    const { variables } = useAnything();
+    const { workflow, variables } = useAnything();
 
     let the_variable = { ...EDIT_VARIABLES_VARIABLES, ...extractObjectValues(variables.selectedProperty, Object.keys(EDIT_VARIABLES_VARIABLES)) };
 

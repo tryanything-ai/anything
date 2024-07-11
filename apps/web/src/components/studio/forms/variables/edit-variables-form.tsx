@@ -15,7 +15,6 @@ type VariableSchema = {
     additionalProperties: boolean;
 };
 
-
 function getOrderedVariables(schema: VariableSchema): VariableProperty[] {
     const { properties, "x-jsf-order": order } = schema;
 
@@ -42,26 +41,27 @@ function getOrderedVariables(schema: VariableSchema): VariableProperty[] {
 
 export default function EditVariablesForm() {
     const { variables, workflow } = useAnything();
-
     const [variablesList, setVariablesList] = useState<VariableProperty[]>([]);
 
     useEffect(() => {
-        if (!variables.variables_schema) {
+        if (!workflow) return;
+        if (!workflow.selected_node_data) return;
+        if (!workflow.selected_node_data.variables_schema) return;
+        if (!workflow?.selected_node_data?.variables_schema) {
             console.log("No Variables Schema. Not setting variables list.");
             return;
         }
-        console.log("Variable Schema in EditVariablesForm: ", variables.variables_schema)
-        const varsList = getOrderedVariables(variables.variables_schema);
+        console.log("Setting Variables List")
+        const varsList = getOrderedVariables(workflow.selected_node_data.variables_schema as VariableSchema);
         setVariablesList(varsList);
-    }, [variables.variables_schema]);
+    }, [workflow.selected_node_data?.variables_schema]);
 
-    const handleEdit = useCallback((variable: VariableProperty | null
+    const handleEdit = useCallback((property: any | undefined
     ) => {
         console.log("Create Variable");
-        variables.setSelectedProperty(variable);
+        variables.setSelectedProperty(property);
         variables.setEditingMode(EditVariableFormMode.EDIT)
     }, []);
-
 
     return (
         <div className="space-y-2 mt-4">
@@ -73,7 +73,7 @@ export default function EditVariablesForm() {
                     <Button variant="outline" size="sm" className="ml-2" onClick={() => handleEdit(variable)}>
                         <Edit2 className="size-5" />
                     </Button>
-                    <DeleteVariableDialog variable={variable}/>
+                    <DeleteVariableDialog variable={variable} />
                 </div>
             ))}
         </div>
