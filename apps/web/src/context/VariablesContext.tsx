@@ -3,6 +3,7 @@
 import {
     createContext,
     ReactNode,
+    useEffect,
     useContext,
     useState,
 } from "react";
@@ -61,7 +62,7 @@ export const VariablesContext = createContext<VariablesContextInterface>({
 
 export const VariablesProvider = ({ children }: { children: ReactNode }) => {
 
-    const { selected_node_data, updateNodeData } = useWorkflowVersionContext();
+    const { selected_node_data, selected_node_id, updateNodeData } = useWorkflowVersionContext();
     const [editingMode, setEditingMode] = useState<EditVariableFormMode>(EditVariableFormMode.INPUT);
     const [selectedProperty, setSelectedProperty] = useState<any>(null)
 
@@ -163,6 +164,11 @@ export const VariablesProvider = ({ children }: { children: ReactNode }) => {
             return false;
         }
     };
+
+    useEffect(() => {
+        //Reset form to main view when we select differnt node ids
+        setEditingMode(EditVariableFormMode.INPUT);
+    }, [selected_node_id])
 
     return (
         <VariablesContext.Provider

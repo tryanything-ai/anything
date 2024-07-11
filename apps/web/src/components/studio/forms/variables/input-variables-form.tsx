@@ -23,7 +23,7 @@ export default function InputVariablesForm() {
             Object.keys(workflow.selected_node_data.variables).length > 0 &&
             Object.keys(workflow.selected_node_data.variables_schema).length > 0
         ) {
-            
+
             ({ fields, handleValidation } = createHeadlessForm(workflow.selected_node_data.variables_schema, {
                 strictInputType: false, // so you don't need to pass presentation.inputType,
                 initialValues: workflow.selected_node_data.variables,

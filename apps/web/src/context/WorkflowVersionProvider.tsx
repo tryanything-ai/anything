@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { useParams } from 'next/navigation'
-import { debounce } from 'lodash';
+import { cloneDeep, debounce } from 'lodash';
 
 import {
     addEdge,
@@ -336,33 +336,75 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     ): Promise<boolean> => {
         try {
             console.log("writeNodeConfig");
-
-            let updatedNodes = nodes.map((node) => {
-                if (node.id === selectedNodeId) {
-
-                    // Clone the node and its data
-                    let new_node = { ...node, data: { ...node.data } };
-
-                    update_key.forEach((key, index) => {
-                        new_node.data[key] = data[index];
-                    });
-
-                    console.log("New Node Data in updateNodeData", new_node.data);
-                    return new_node;
-                } else {
+    
+            let updatedNodes;
+            setNodes((prevNodes) => {
+                const newNodes = cloneDeep(prevNodes);
+    
+                updatedNodes = newNodes.map((node) => {
+                    if (node.id === selectedNodeId) {
+                        update_key.forEach((key, index) => {
+                            node.data[key] = data[index];
+                        });
+                    }
                     return node;
-                }
+                });
+    
+                return updatedNodes;
             });
-
-            saveFlowVersion(updatedNodes, edges);
-            setNodes(updatedNodes);
+    
+            // Wait for the state update to complete
+            await new Promise((resolve) => setTimeout(resolve, 0));
+    
+            // Call saveFlowVersion with the latest state
+            await saveFlowVersion(updatedNodes, edges);
+    
             return true;
-
         } catch (error) {
             console.log("error writing node config in WorkflowVersionProvider", error);
             return false;
         }
     };
+    // const updateNodeData = async (
+    //     update_key: string[],
+    //     data: any[]
+    // ): Promise<boolean> => {
+    //     try {
+    //         console.log("writeNodeConfig");
+
+    //         setNodes((prevNodes) => {
+
+
+    //         }); 
+
+    //         let new_nodes = cloneDeep(nodes);
+
+    //         let updatedNodes = new_nodes.map((node) => {
+    //             if (node.id === selectedNodeId) {
+
+    //                 // Clone the node and its data
+    //                 // let new_node = { ...node, data: { ...node.data } };
+
+    //                 update_key.forEach((key, index) => {
+    //                     node.data[key] = data[index];
+    //                 });
+
+    //                 // console.log("New Node Data in updateNodeData", node.data);
+    //                 return node;
+    //             } else {
+    //                 return node;
+    //             }
+    //         });
+
+    //         saveFlowVersion(updatedNodes, edges);
+    //         setNodes(updatedNodes);
+    //         return true;
+
+    //     } catch (error) {
+    //         console.log("error writing node config in WorkflowVersionProvider", error);
+    //         return false;
+    //     }
+    // };
 
     const getFlowDefinitionsFromReactFlowState = (): Workflow => {
 
