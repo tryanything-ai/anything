@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAnything } from "@/context/AnythingContext";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
 
@@ -28,27 +29,28 @@ export default function BaseNode({
   selected: boolean;
 }) {
 
-  const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
-    useFlowNavigationContext();
+  const { workflow: { deleteNode } } = useAnything();
 
-  const toggleNodeConfig = () => {
-    if (nodeConfigPanel && nodeId === id) {
-      setNodeConfigPanel(false, "")
-    } else {
-      closeAllPanelsOpenOne("nodeConfig", id)
-    }
-  }
+  // const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
+  //   useFlowNavigationContext();
+
+  // const toggleNodeConfig = () => {
+  //   if (nodeConfigPanel && nodeId === id) {
+  //     setNodeConfigPanel(false, "")
+  //   } else {
+  //     closeAllPanelsOpenOne("nodeConfig", id)
+  //   }
+  // }
 
   const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     // Handle button click logic here
-
   }
 
-  const createReusableAction = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    console.log("TODO: Make reusable")
-  }
+  // const createReusableAction = (event: React.MouseEvent<HTMLDivElement>) => {
+  //   event.stopPropagation();
+  //   console.log("TODO: Make reusable")
+  // }
 
   const duplicateAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -58,6 +60,7 @@ export default function BaseNode({
   const deleteAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     console.log("TODO: Delete Action")
+    deleteNode(id)
   }
 
 
@@ -65,7 +68,7 @@ export default function BaseNode({
     <>
       <DropdownMenu>
         <div
-          onClick={toggleNodeConfig}
+          // onClick={toggleNodeConfig}
           className={cn(
             "bg-white border border-gray-300 text-primary-content flex h-20 w-90 flex-row rounded-md text-xl hover:bg-gray-50",
             selected ? "border-pink-700" : "",
@@ -100,8 +103,8 @@ export default function BaseNode({
         </div>
         {/* Content of Dropdown */}
         <DropdownMenuContent className="w-56">
-          <DropdownMenuItem onClick={createReusableAction}>Make Reusable Action</DropdownMenuItem>
-          <DropdownMenuItem onClick={duplicateAction}>Duplicate</DropdownMenuItem>
+          {/* <DropdownMenuItem onClick={createReusableAction}>Make Reusable Action</DropdownMenuItem> */}
+          {/* <DropdownMenuItem onClick={duplicateAction}>Duplicate</DropdownMenuItem> */}
           <DropdownMenuItem onClick={deleteAction}>Delete</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

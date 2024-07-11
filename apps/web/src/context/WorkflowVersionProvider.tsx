@@ -73,6 +73,7 @@ export interface WorkflowVersionContextInterface {
     onDrop: (event: any, reactFlowWrapper: any) => void;
     addNode: (position: { x: number; y: number }, specialData?: any) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
+    deleteNode: (id: string) => void;
     // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
     updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
 }
@@ -102,6 +103,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     onDrop: () => { },
     addNode: () => { },
     setReactFlowInstance: () => { },
+    deleteNode: () => { },
     // readNodeConfig: async () => undefined,
     updateNodeData: async () => false
 });
@@ -207,27 +209,44 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         // });
     }
 
+    //https://reactflow.dev/examples/interaction/context-menu
+    const deleteNode = (id: string) => {
+        //TODO: Delete the node
+        //TODO: delete any edges
+        let new_nodes = cloneDeep(nodes);
+        let new_edges = cloneDeep(edges);
+
+        let updated_nodes = new_nodes.filter((node) => node.id !== id);
+        let updated_edges = new_edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        saveFlowVersionImmediate(updated_nodes, updated_edges);
+
+        setNodes(() => updated_nodes);
+        setEdges(() => updated_edges);
+    }
+
     const fanOutLocalSelectedNodeData = (node: any) => {
         console.log("Fan Out Local Node Data", node);
-        if (node.id) {
+
+        if (node?.id) {
             setSelectedNodeId(() => node.id);
         } else {
             setSelectedNodeId(() => "");
             console.log("No Node Id in Fan Out Local Node Data");
         }
-        if (node.data) {
+        if (node?.data) {
             setSelectedNodeData(() => node.data);
         } else {
             setSelectedNodeData(() => undefined);
             console.log("No Node Data in Fan Out Local Node Data");
         }
-        if (node.data.variables) {
+        if (node?.data?.variables) {
             setSelectedNodeVariables(() => node.data.variables);
         } else {
             setSelectedNodeVariables(() => null);
             console.log("No Node Variables in Fan Out Local Node Data");
         }
-        if (node.data.variables_schema) {
+        if (node?.data?.variables_schema) {
             setSelectedNodeVariablesSchema(() => node.data.variables_schema);
         } else {
             setSelectedNodeVariablesSchema(() => null);
@@ -564,6 +583,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 onDragOver,
                 onDrop,
                 addNode,
+                deleteNode,
                 setReactFlowInstance,
                 updateNodeData
             }}
