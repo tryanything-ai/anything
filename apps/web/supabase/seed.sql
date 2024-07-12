@@ -126,12 +126,12 @@ INSERT INTO marketplace.flow_template_tags (
 ---------------------------------------
 -- Inserting sample flows into anything.flows
 INSERT INTO anything.flows (
-    flow_id, account_id, flow_name, active, updated_at, created_at, updated_by, created_by
+    flow_id, account_id, flow_name, description, active, updated_at, created_at, updated_by, created_by
 ) VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 1', true, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Flow 2', false, now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 3', true, now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Flow 4', true, now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'); 
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 1','Flow that does basic stuff for marketing dept', true, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Flow 2','Flow that does basic stuff for marketing dept', false, now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
+    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 3','Flow that does basic stuff for marketing dept', true, now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
+    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Flow 4','Flow that does basic stuff for marketing dept', true, now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'); 
     -- ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Flow 5', false, now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
 
 -- Inserting sample flow versions into anything.flow_versions

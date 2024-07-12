@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS anything.flows
 
     -- ADD YOUR COLUMNS HERE
     flow_name TEXT NOT NULL,
+    description TEXT,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     archived boolean not null default false,
 
