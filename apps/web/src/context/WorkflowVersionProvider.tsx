@@ -60,6 +60,8 @@ export interface WorkflowVersionContextInterface {
     selected_node_variables_schema: any;
     panel_tab: string;
     savingStatus: string;
+    detailedMode: boolean;
+    setDetailedMode: (mode: boolean) => void;
     setPanelTab: (tab: string) => void;
     showingActionSheet: boolean;
     setShowingActionSheet: (showing: boolean) => void;
@@ -93,6 +95,8 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => { },
     showingActionSheet: false,
+    detailedMode: false,
+    setDetailedMode: () => { },
     showActionSheetForEdge: () => { },
     setShowingActionSheet: () => { },
     showActionSheet: () => { },
@@ -127,6 +131,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(undefined)
     const [selectedNodeVariables, setSelectedNodeVariables] = useState<any>({})
     const [selectedNodeVariablesSchema, setSelectedNodeVariablesSchema] = useState<any>({})
+    const [detailedMode, setDetailedMode] = useState<boolean>(false);
     //Internal for ReactFlow and Flow Definition Management
     // const [hydrated, setHydrated] = useState<boolean>(false);
     // const [firstLook, setFirstLook] = useState<boolean>(true);
@@ -180,26 +185,26 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             return;
         }
 
-        let planned_node_name;
+        let planned_node_id;
 
         console.log("Node Data", node_data);
-        //set node_name
+        //set node_id
         if (node_data) {
-            planned_node_name = node_data.node_id;
+            planned_node_id = node_data.node_id;
         }
 
         if (!position) {
             position = { x: 300, y: 300 };
         }
 
-        const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
+        const conflictFreeId = findConflictFreeId(nodes, planned_node_id);
         console.log("conflictFreeId", conflictFreeId);
         console.log("special data", node_data);
         const newNode: Node = {
             id: conflictFreeId,
             type: "anything",
             position,
-            data: { ...node_data, node_name: conflictFreeId },
+            data: { ...node_data, node_id: conflictFreeId },
         };
 
         let udpatedNodes = [...nodes, newNode];
@@ -209,7 +214,70 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setNodes(() => udpatedNodes);
     };
 
-    const addActionTemplateAtEdge = (id: string, action_template_data: any) => {
+    // const addActionTemplateAtEdge = (id: string, action_template_data: any) => {
+    //     const newNodes = cloneDeep(nodes);
+    //     const newEdges = cloneDeep(edges);
+
+    //     const edge = newEdges.find((edge) => edge.id === id);
+    //     if (!edge) return;
+
+    //     const { source, target } = edge;
+
+    //     console.log("Source and Target", source, target);   
+
+    //     const conflictFreeId = findConflictFreeId(newNodes, action_template_data.node_id);
+
+    //     const sourceNode = newNodes.find(node => node.id === source);
+    //     const targetNode = newNodes.find(node => node.id === target);
+
+    //     if (!sourceNode || !targetNode) return;
+
+    //     // Determine the new node position, for simplicity place it at the middle of source and target nodes
+    //     const position = {
+    //         x: (sourceNode.position.x + targetNode.position.x) / 2,
+    //         y: (sourceNode.position.y + targetNode.position.y) / 2,
+    //     };
+
+    //     const newNode = {
+    //         id: conflictFreeId,
+    //         type: "anything",
+    //         position,
+    //         data: { ...action_template_data, node_name: conflictFreeId },
+    //     };
+
+    //     // Add the new node to the nodes array
+    //     newNodes.push(newNode);
+
+    //     // Create new edges connecting the new node
+    //     const newEdge1 = {
+    //         id: `${source}->${conflictFreeId}`,
+    //         source,
+    //         sourceHandle: 'b',
+    //         targetHandle: 'a',
+    //         target: conflictFreeId,
+    //         type: 'anything',
+    //     };
+
+    //     const newEdge2 = {
+    //         id: `${conflictFreeId}->${target}`,
+    //         source: conflictFreeId,
+    //         target: target,
+    //         sourceHandle: 'b',
+    //         targetHandle: 'a',
+    //         type: 'anything',
+    //     };
+
+    //     // Remove the original edge and add the new edges
+    //     const updatedEdges = newEdges.filter(edge => edge.id !== id);
+    //     updatedEdges.push(newEdge1, newEdge2);
+
+    //     // Update the state with the new nodes and edges
+    //     saveFlowVersionImmediate(newNodes, updatedEdges);
+    //     setNodes(() => newNodes);
+    //     setEdges(() => updatedEdges);
+    // };
+
+    const addActionTemplateAtEdge = (id: string, action_template: any) => {
         const newNodes = cloneDeep(nodes);
         const newEdges = cloneDeep(edges);
 
@@ -218,14 +286,14 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         const { source, target } = edge;
 
-        const planned_node_name = action_template_data.node_id;
-        const conflictFreeId = findConflictFreeId(newNodes, planned_node_name);
+        const planned_node_id = action_template.node_id;
+        const conflictFreeId = findConflictFreeId(newNodes, planned_node_id);
+        //TODO: somehow we are making ndoes with bad id's somewhere in here. 
 
         const sourceNode = newNodes.find(node => node.id === source);
         const targetNode = newNodes.find(node => node.id === target);
 
         if (!sourceNode || !targetNode) return;
-
         // Determine the new node position, for simplicity place it at the middle of source and target nodes
         const position = {
             x: (sourceNode.position.x + targetNode.position.x) / 2,
@@ -236,7 +304,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             id: conflictFreeId,
             type: "anything",
             position,
-            data: { ...action_template_data, node_name: conflictFreeId },
+            data: { ...action_template, node_id: conflictFreeId },
         };
 
         // Add the new node to the nodes array
@@ -247,6 +315,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             id: `${source}->${conflictFreeId}`,
             source: source,
             target: conflictFreeId,
+            sourceHandle: 'b',
+            targetHandle: 'a',
             type: 'anything',
         };
 
@@ -254,6 +324,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             id: `${conflictFreeId}->${target}`,
             source: conflictFreeId,
             target: target,
+            sourceHandle: 'b',
+            targetHandle: 'a',
             type: 'anything',
         };
 
@@ -261,10 +333,10 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         const updatedEdges = newEdges.filter(edge => edge.id !== id);
         updatedEdges.push(newEdge1, newEdge2);
 
-        // Update the state with the new nodes and edges
         saveFlowVersionImmediate(newNodes, updatedEdges);
-        setNodes(newNodes);
-        setEdges(updatedEdges);
+
+        setNodes(() => newNodes);
+        setEdges(() => updatedEdges);
     };
 
 
@@ -284,8 +356,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         );
 
         const createdEdges = incomers.flatMap(({ id: source }) =>
-            outgoers.map(({ id: target }) => ({
-                id: `${source}->${target}`,
+            outgoers.map(({ id: target }, index: number) => ({
+                id: `${source}->${target}_${index}`,
                 source,
                 sourceHandle: 'b',
                 targetHandle: 'a',
@@ -419,40 +491,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         setEdges(() => { return new_edges });
     };
-
-    // const onDragOver = useCallback((event: DragEvent) => {
-    //     event.preventDefault();
-    //     if (event.dataTransfer === null) return;
-    //     event.dataTransfer.dropEffect = "move";
-    // }, []);
-
-    // const onDrop = useCallback(
-    //     (event: DragEvent, reactFlowWrapper: any) => {
-    //         event.preventDefault();
-    //         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-    //         if (event.dataTransfer === null) return;
-
-    //         const nodeData: Action = JSON.parse(
-    //             event.dataTransfer.getData("nodeData")
-    //         );
-
-    //         console.log("Dropped nodeData", nodeData);
-
-    //         if (typeof nodeData === "undefined" || !nodeData) {
-    //             return;
-    //         }
-
-    //         if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
-
-    //         let position = reactFlowInstance.project({
-    //             x: event.clientX - reactFlowBounds.left,
-    //             y: event.clientY - reactFlowBounds.top,
-    //         });
-
-    //         addNode(nodeData, position);
-    //     },
-    //     [addNode]
-    // );
 
     const updateNodeData = async (
         update_key: string[],
@@ -648,6 +686,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 savingStatus,
                 panel_tab,
                 showingActionSheet,
+                detailedMode,
+                setDetailedMode,
                 setShowingActionSheet,
                 showActionSheetForEdge,
                 showActionSheet,

@@ -1,6 +1,5 @@
-import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
 import DeleteVariableDialog from "./delete-variable-dialog";

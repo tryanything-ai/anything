@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import DeleteFlowDialog from "./delete-flow-dialog";
+import { Switch } from "@/components/ui/switch";
 
 type Inputs = {
     flow_name: string;
@@ -64,6 +65,13 @@ export default function SettingsForm() {
                     />
                 </div>
             </fieldset>
+            <div className="flex flex-row justify-between m-4">
+                <div>Detailed Editor</div>
+                <Switch
+                    checked={workflow.detailedMode}
+                    onCheckedChange={() => workflow.setDetailedMode(!workflow.detailedMode)}
+                />
+            </div>
 
             <div className="absolute bottom-0 w-full mb-2">
                 <DeleteFlowDialog workflowId={workflow.db_flow_id} />

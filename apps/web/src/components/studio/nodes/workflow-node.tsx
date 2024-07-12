@@ -29,7 +29,7 @@ export default function BaseNode({
   selected: boolean;
 }) {
 
-  const { workflow: { deleteNode } } = useAnything();
+  const { workflow: { deleteNode, detailedMode } } = useAnything();
 
   // const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
   //   useFlowNavigationContext();
@@ -90,7 +90,9 @@ export default function BaseNode({
           <div className="flex h-full w-full flex-row items-center p-3">
             <BaseNodeIcon icon={data.icon} />
             <div className="flex flex-col">
-              <div className="p-4">{data.label}</div>
+              <div className="px-4">{data.label}</div>
+              {/* {detailedMode && data.description && (<div className="text-sm">{data.description}</div>)} */}
+              {detailedMode && data.node_id && (<div className=" px-4 text-sm font-light">{data.node_id}</div>)}
             </div>
           </div>
           <div className="flex h-full flex-row items-center pr-3">
