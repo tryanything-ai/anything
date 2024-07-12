@@ -64,6 +64,7 @@ export interface WorkflowVersionContextInterface {
     showingActionSheet: boolean;
     setShowingActionSheet: (showing: boolean) => void;
     showActionSheetForEdge: (id: string) => void;
+    showActionSheet: () => void;
     nodes: Node[];
     edges: Edge[];
     onNodesChange: OnNodesChange;
@@ -94,6 +95,7 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     showingActionSheet: false,
     showActionSheetForEdge: () => { },
     setShowingActionSheet: () => { },
+    showActionSheet: () => { },
     nodes: [],
     edges: [],
     onNodesChange: () => { },
@@ -149,6 +151,12 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setActionSheetEdge(id);
     }
 
+    const showActionSheet = () => {
+        console.log("Show Action Sheet");
+        setShowingActionSheet(true);
+        setActionSheetEdge("");
+    }
+
     const resetState = () => {
         console.log("Resetting State in WorkflowVersionProvider");
         setNodes([]);
@@ -164,22 +172,23 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setSelectedNodeVariablesSchema({});
     }
 
-    const addNode = (position: { x: number; y: number }, specialData?: any) => {
+    const addNode = (position: { x: number; y: number }, node_data?: any) => {
         let planned_node_name;
 
+        console.log("Node Data", node_data);
         //set node_name
-        if (specialData) {
-            planned_node_name = specialData.node_name;
+        if (node_data) {
+            planned_node_name = node_data.node_id;
         }
 
         const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
         console.log("conflictFreeId", conflictFreeId);
-        console.log("special data", specialData);
+        console.log("special data", node_data);
         const newNode: Node = {
-            id: conflictFreeId,
+        id: conflictFreeId,
             type: "anything",
             position,
-            data: { ...specialData, node_name: conflictFreeId },
+            data: { ...node_data, node_name: conflictFreeId },
         };
 
         setNodes((nodes) => {
@@ -576,6 +585,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 showingActionSheet,
                 setShowingActionSheet,
                 showActionSheetForEdge,
+                showActionSheet,
                 setPanelTab: set_panel_tab,
                 onConnect,
                 onNodesChange,

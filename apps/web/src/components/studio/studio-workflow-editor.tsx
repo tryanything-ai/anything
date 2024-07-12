@@ -6,6 +6,7 @@ import BaseNode
     from "./nodes/workflow-node";
 import { useAnything } from "@/context/AnythingContext";
 import CustomEdge from "./edges/workflow-edge";
+import { Button } from "../ui/button";
 // const edgeTypes = {
 //     'custom-edge': CustomEdge
 //   }
@@ -42,8 +43,21 @@ export default function StudioWorkflowEditor() {
                     gap={20}
                     size={1}
                 />
+
                 <Controls />
+                <Button style={{
+                    position: 'absolute',
+                    bottom: '15px',
+                    left: '55px',
+                    margin: 0,
+                    zIndex: '100',
+                    cursor: 'pointer',
+                }}
+                    onClick={workflow.showActionSheet}
+                    className="">
+                    Add Node
+                </Button>
             </ReactFlow>
-        </div>
+        </div >
     )
 }
