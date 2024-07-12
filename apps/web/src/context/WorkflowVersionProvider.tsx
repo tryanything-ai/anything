@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { useParams } from 'next/navigation'
-import { cloneDeep, debounce, set } from 'lodash';
+import { cloneDeep, debounce } from 'lodash';
 
 import {
     addEdge,
@@ -35,7 +35,7 @@ import api from "@/lib/anything-api"
 import { Action, AnythingNodeProps, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
-import { useWorkflowsContext } from "./WorkflowsProvider";
+import { UpdateWorklowArgs, useWorkflowsContext } from "./WorkflowsProvider";
 
 export enum PanelTab {
     SETTINGS = "settings",
@@ -72,13 +72,11 @@ export interface WorkflowVersionContextInterface {
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
     onConnect: OnConnect;
-    // onDragOver: (event: any) => void;
-    // onDrop: (event: any, reactFlowWrapper: any) => void;
     addNode: (node_data: any, position: { x: number; y: number }) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     deleteNode: (id: string) => void;
-    // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
     updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
+    updateWorkflow: (args: UpdateWorklowArgs) => Promise<void>;
 }
 
 export const WorkflowVersionContext = createContext<WorkflowVersionContextInterface>({
@@ -105,13 +103,11 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     onNodesChange: () => { },
     onEdgesChange: () => { },
     onConnect: () => { },
-    // onDragOver: () => { },
-    // onDrop: () => { },
     addNode: () => { },
     setReactFlowInstance: () => { },
     deleteNode: () => { },
-    // readNodeConfig: async () => undefined,
-    updateNodeData: async () => false
+    updateNodeData: async () => false,
+    updateWorkflow: async () => { },
 });
 
 export const useWorkflowVersionContext = () => useContext(WorkflowVersionContext);
@@ -124,6 +120,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [dbFlow, setDbFlow] = useState<any>({})
     const [dbFlowVersion, setDbFlowVersion] = useState<any>({})
     const [flow_version_definition, setFlowVersionDefinition] = useState<any>({})
+
     //Easy Access Id's
     const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("")
     const [dbFlowId, setDbFlowId] = useState<string>("")
@@ -132,9 +129,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
     const [selectedNodeVariables, setSelectedNodeVariables] = useState<any>({})
     const [selectedNodeVariablesSchema, setSelectedNodeVariablesSchema] = useState<any>({})
     const [detailedMode, setDetailedMode] = useState<boolean>(false);
-    //Internal for ReactFlow and Flow Definition Management
-    // const [hydrated, setHydrated] = useState<boolean>(false);
-    // const [firstLook, setFirstLook] = useState<boolean>(true);
+    //React Flow State
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
 
@@ -214,68 +209,28 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setNodes(() => udpatedNodes);
     };
 
-    // const addActionTemplateAtEdge = (id: string, action_template_data: any) => {
-    //     const newNodes = cloneDeep(nodes);
-    //     const newEdges = cloneDeep(edges);
+    const updateWorkflow = async (args: UpdateWorklowArgs) => {
+        try {
 
-    //     const edge = newEdges.find((edge) => edge.id === id);
-    //     if (!edge) return;
+            if (!dbFlowId) return;
 
-    //     const { source, target } = edge;
+            //Save to cloud
+            await api.flows.updateFlow(dbFlowId, args);
+            
+            //Update state here
+            setDbFlow((prevFlow: any) => {
+                return {
+                    ...prevFlow,
+                    ...args
+                }
+            });
 
-    //     console.log("Source and Target", source, target);   
+        } catch (error) {
+            console.error(error);
+        } finally {
 
-    //     const conflictFreeId = findConflictFreeId(newNodes, action_template_data.node_id);
-
-    //     const sourceNode = newNodes.find(node => node.id === source);
-    //     const targetNode = newNodes.find(node => node.id === target);
-
-    //     if (!sourceNode || !targetNode) return;
-
-    //     // Determine the new node position, for simplicity place it at the middle of source and target nodes
-    //     const position = {
-    //         x: (sourceNode.position.x + targetNode.position.x) / 2,
-    //         y: (sourceNode.position.y + targetNode.position.y) / 2,
-    //     };
-
-    //     const newNode = {
-    //         id: conflictFreeId,
-    //         type: "anything",
-    //         position,
-    //         data: { ...action_template_data, node_name: conflictFreeId },
-    //     };
-
-    //     // Add the new node to the nodes array
-    //     newNodes.push(newNode);
-
-    //     // Create new edges connecting the new node
-    //     const newEdge1 = {
-    //         id: `${source}->${conflictFreeId}`,
-    //         source,
-    //         sourceHandle: 'b',
-    //         targetHandle: 'a',
-    //         target: conflictFreeId,
-    //         type: 'anything',
-    //     };
-
-    //     const newEdge2 = {
-    //         id: `${conflictFreeId}->${target}`,
-    //         source: conflictFreeId,
-    //         target: target,
-    //         sourceHandle: 'b',
-    //         targetHandle: 'a',
-    //         type: 'anything',
-    //     };
-
-    //     // Remove the original edge and add the new edges
-    //     const updatedEdges = newEdges.filter(edge => edge.id !== id);
-    //     updatedEdges.push(newEdge1, newEdge2);
-
-    //     // Update the state with the new nodes and edges
-    //     saveFlowVersionImmediate(newNodes, updatedEdges);
-    //     setNodes(() => newNodes);
-    //     setEdges(() => updatedEdges);
-    // };
+        }
+    }
 
     const addActionTemplateAtEdge = (id: string, action_template: any) => {
         const newNodes = cloneDeep(nodes);
@@ -288,7 +243,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
         const planned_node_id = action_template.node_id;
         const conflictFreeId = findConflictFreeId(newNodes, planned_node_id);
-        //TODO: somehow we are making ndoes with bad id's somewhere in here. 
 
         const sourceNode = newNodes.find(node => node.id === source);
         const targetNode = newNodes.find(node => node.id === target);
@@ -514,12 +468,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 return node;
             });
 
-            // return updatedNodes;
-            // });
-
-            // // Wait for the state update to complete
-            // await new Promise((resolve) => setTimeout(resolve, 0));
-
             console.log("ALL_NEW_NODE_DATA", updatedNodes);
 
             // Call saveFlowVersion with the latest state
@@ -584,13 +532,6 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         debounce(async (workflow: Workflow) => {
             try {
                 await _saveFlowVersion(workflow);
-                // const res = await api.flows.updateFlowVersion(dbFlowId, dbFlowVersionId, workflow);
-                // console.log('Flow Saved: ', res);
-                // setSavingStatus(SavingStatus.SAVED);
-                // setTimeout(() => setSavingStatus(SavingStatus.NONE), 2000); // Clear the status after 2 seconds
-                // await hydrateFlow(); //This means we would have to hand manage syncing of 
-                //things like selected node and its dependences liek selected_node_data etc etc
-                //Maybe difficult!
             } catch (error) {
                 console.log('error in saveFlowVersion', error);
             }
@@ -695,12 +636,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 onConnect,
                 onNodesChange,
                 onEdgesChange,
-                // onDragOver,
-                // onDrop,
                 addNode,
                 deleteNode,
                 setReactFlowInstance,
-                updateNodeData
+                updateNodeData,
+                updateWorkflow
             }}
         >
             {children}

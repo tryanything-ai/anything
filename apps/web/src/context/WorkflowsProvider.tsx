@@ -13,6 +13,7 @@ import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export type UpdateWorklowArgs = {
     flow_name: string;
+    description: string;
     active: boolean;
     version?: string;
 };

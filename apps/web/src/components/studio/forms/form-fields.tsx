@@ -11,6 +11,7 @@ export const fieldsMap: { [key: string]: any } = {
     number: FieldNumber,
     radio: FieldRadio,
     select: FieldSelect,
+    checkbox: FieldCheckbox,
     error: FieldUnknown
 };
 
@@ -120,6 +121,50 @@ function FieldRadio({
             </div>
             {displayError && <div>{displayError}</div>}
         </fieldset>
+    );
+}
+
+function FieldCheckbox({
+    name,
+    label,
+    description,
+    value,
+    options,
+    isVisible,
+    error,
+    submited,
+    onChange
+}: any) {
+    const [touched, setTouched] = useState(false);
+
+    if (!isVisible) return null;
+
+    function handleChange(e: any) {
+        console.log("checkbox e", e)
+        if (!touched) setTouched(true);
+        onChange(name, e);
+    }
+
+    const displayError = submited || touched ? error : null;
+
+    return (
+        <div key={name} className="grid gap-3 my-4">
+            {/* A11Y errors: https://blog.tenon.io/accessible-validation-of-checkbox-and-radiobutton-groups/ */}
+            <Label htmlFor={name}>{label}</Label>
+
+            <div className="flex items-center" >
+                <Checkbox name={name} checked={value} onCheckedChange={handleChange} />
+                <label
+                    htmlFor={name}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    {value ? <span className="p-1 bg-green-400 rounded-lg ml-2">Active</span> : <span className="p-1 bg-red-400 rounded-lg ml-2">Inactive</span>}
+                </label>
+                {(touched || submited) && error && (
+                    <div id={`${name}-error`}>{error}</div>
+                )}
+            </div>
+        </div>
     );
 }
 

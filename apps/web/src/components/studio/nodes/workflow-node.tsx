@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils"
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { Handle, HandleProps } from "reactflow";
-import { useFlowNavigationContext } from "@/context/FlowNavigationProvider";
 import { Action } from "@/types/workflows"
 import { Badge } from "@/components/ui/badge";
 import { EllipsisVertical } from "lucide-react";

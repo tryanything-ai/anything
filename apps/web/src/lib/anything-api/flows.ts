@@ -69,8 +69,32 @@ export const createFlow = async (flowName: string) => {
   // return res;
 };
 
-export async function updateFlow(flowId: string, args: UpdateFlowArgs) {
-  // return await anything.updateFlow(flowId, args);
+export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Updating Workflow');
+
+    if (session) {
+      const response = await fetch(`http://localhost:3001/workflow/${flow_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${session.access_token}`,
+        },
+        body: JSON.stringify(args),
+      });
+
+      const data = await response.json();
+      console.log('Data from /api/workflows/id PUT:', data);
+      return data;
+    }
+
+  } catch (error) {
+    console.error('Error updating Workflow definition:', error);
+  } finally {
+  }
 }
 
 export async function updateFlowVersion(flow_id: string, flow_version_id: string, flow_definition: Workflow) {
@@ -99,14 +123,6 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
     console.error('Error updating Workflow definition:', error);
   } finally {
   }
-
-  // console.log(`updateFlowVersion called for flow_id: ${flowId}}`, flow);
-  // return await anything.updateFlowVersion(flowId, flow.version, {
-  //   version: flow.version,
-  //   flow_definition: JSON.stringify(flow),
-  //   published: false,
-  //   description: flow.description,
-  // });
 }
 
 export async function deleteFlow(flowId: string) {
