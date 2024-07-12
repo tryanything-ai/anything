@@ -70,9 +70,9 @@ export interface WorkflowVersionContextInterface {
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
     onConnect: OnConnect;
-    onDragOver: (event: any) => void;
-    onDrop: (event: any, reactFlowWrapper: any) => void;
-    addNode: (position: { x: number; y: number }, specialData?: any) => void;
+    // onDragOver: (event: any) => void;
+    // onDrop: (event: any, reactFlowWrapper: any) => void;
+    addNode: (node_data: any, position: { x: number; y: number }) => void;
     setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
     deleteNode: (id: string) => void;
     // readNodeConfig: (nodeId: string) => Promise<Action | undefined>;
@@ -101,8 +101,8 @@ export const WorkflowVersionContext = createContext<WorkflowVersionContextInterf
     onNodesChange: () => { },
     onEdgesChange: () => { },
     onConnect: () => { },
-    onDragOver: () => { },
-    onDrop: () => { },
+    // onDragOver: () => { },
+    // onDrop: () => { },
     addNode: () => { },
     setReactFlowInstance: () => { },
     deleteNode: () => { },
@@ -172,7 +172,14 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setSelectedNodeVariablesSchema({});
     }
 
-    const addNode = (position: { x: number; y: number }, node_data?: any) => {
+    const addNode = (node_data: any, position?: { x: number; y: number }) => {
+        //call helper function if edge_id is present
+        if (actionSheetEdge && actionSheetEdge !== "") {
+            console.log("Adding Node at Edge", actionSheetEdge);
+            addActionTemplateAtEdge(actionSheetEdge, node_data);
+            return;
+        }
+
         let planned_node_name;
 
         console.log("Node Data", node_data);
@@ -181,58 +188,120 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
             planned_node_name = node_data.node_id;
         }
 
+        if (!position) {
+            position = { x: 300, y: 300 };
+        }
+
         const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
         console.log("conflictFreeId", conflictFreeId);
         console.log("special data", node_data);
         const newNode: Node = {
-        id: conflictFreeId,
+            id: conflictFreeId,
             type: "anything",
             position,
             data: { ...node_data, node_name: conflictFreeId },
         };
 
-        setNodes((nodes) => {
-            return [...nodes, newNode];
-        });
+        let udpatedNodes = [...nodes, newNode];
+
+        saveFlowVersionImmediate(udpatedNodes, edges);
+
+        setNodes(() => udpatedNodes);
     };
 
-    const addActionTemplateAtEdge = (id: string, action_template: Action) => {
+    const addActionTemplateAtEdge = (id: string, action_template_data: any) => {
+        const newNodes = cloneDeep(nodes);
+        const newEdges = cloneDeep(edges);
 
-        let planned_node_name = action_template.label;
+        const edge = newEdges.find((edge) => edge.id === id);
+        if (!edge) return;
 
-        const conflictFreeId = findConflictFreeId(nodes, planned_node_name);
-        console.log("conflictFreeId", conflictFreeId);
+        const { source, target } = edge;
 
-        //TODO: update all the effected edges
-        //Update all the effected positions for the nodes
-        // console.log("special data", specialData);
-        // const newNode: Node = {
-        //     id: conflictFreeId,
-        //     type: "anything",
-        //     position,
-        //     data: { ...specialData, node_name: conflictFreeId },
-        // };
+        const planned_node_name = action_template_data.node_id;
+        const conflictFreeId = findConflictFreeId(newNodes, planned_node_name);
 
-        // setNodes((nodes) => {
-        //     return [...nodes, newNode];
-        // });
-    }
+        const sourceNode = newNodes.find(node => node.id === source);
+        const targetNode = newNodes.find(node => node.id === target);
 
-    //https://reactflow.dev/examples/interaction/context-menu
+        if (!sourceNode || !targetNode) return;
+
+        // Determine the new node position, for simplicity place it at the middle of source and target nodes
+        const position = {
+            x: (sourceNode.position.x + targetNode.position.x) / 2,
+            y: (sourceNode.position.y + targetNode.position.y) / 2,
+        };
+
+        const newNode = {
+            id: conflictFreeId,
+            type: "anything",
+            position,
+            data: { ...action_template_data, node_name: conflictFreeId },
+        };
+
+        // Add the new node to the nodes array
+        newNodes.push(newNode);
+
+        // Create new edges connecting the new node
+        const newEdge1 = {
+            id: `${source}->${conflictFreeId}`,
+            source: source,
+            target: conflictFreeId,
+            type: 'anything',
+        };
+
+        const newEdge2 = {
+            id: `${conflictFreeId}->${target}`,
+            source: conflictFreeId,
+            target: target,
+            type: 'anything',
+        };
+
+        // Remove the original edge and add the new edges
+        const updatedEdges = newEdges.filter(edge => edge.id !== id);
+        updatedEdges.push(newEdge1, newEdge2);
+
+        // Update the state with the new nodes and edges
+        saveFlowVersionImmediate(newNodes, updatedEdges);
+        setNodes(newNodes);
+        setEdges(updatedEdges);
+    };
+
+
     const deleteNode = (id: string) => {
-        //TODO: Delete the node
-        //TODO: delete any edges
         let new_nodes = cloneDeep(nodes);
         let new_edges = cloneDeep(edges);
 
-        let updated_nodes = new_nodes.filter((node) => node.id !== id);
-        let updated_edges = new_edges.filter((edge) => edge.source !== id && edge.target !== id);
+        const node = new_nodes.find((node) => node.id === id);
+        if (!node) return;
 
-        saveFlowVersionImmediate(updated_nodes, updated_edges);
+        const incomers = getIncomers(node, new_nodes, new_edges);
+        const outgoers = getOutgoers(node, new_nodes, new_edges);
+        const connectedEdges = getConnectedEdges([node], new_edges);
 
-        setNodes(() => updated_nodes);
-        setEdges(() => updated_edges);
-    }
+        const remainingEdges = new_edges.filter(
+            (edge) => !connectedEdges.includes(edge),
+        );
+
+        const createdEdges = incomers.flatMap(({ id: source }) =>
+            outgoers.map(({ id: target }) => ({
+                id: `${source}->${target}`,
+                source,
+                sourceHandle: 'b',
+                targetHandle: 'a',
+                target,
+                type: 'anything',  // Ensure new edges have the correct type
+            }))
+        );
+
+        new_nodes = new_nodes.filter((node) => node.id !== id);
+        new_edges = [...remainingEdges, ...createdEdges];
+
+        saveFlowVersionImmediate(new_nodes, new_edges);
+
+        setNodes(new_nodes);
+        setEdges(new_edges);
+    };
 
     const fanOutLocalSelectedNodeData = (node: any) => {
         console.log("Fan Out Local Node Data", node);
@@ -295,15 +364,11 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
             if (selectedNode) {
                 //Set node and node data for easy access
-                // setSelectedNodeId(selectedNode.id);
                 let selectedNodeObj: any = nodes.find((node) => node.id === selectedNode.id);
                 fanOutLocalSelectedNodeData(selectedNodeObj);
-                // setSelectedNodeData(selectedNodeData);
                 setPanelTab(PanelTab.CONFIG);
             } else {
                 fanOutLocalSelectedNodeData(null);
-                // setSelectedNodeId("");
-                // setSelectedNodeData(undefined);
             }
         }
 
@@ -355,39 +420,39 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
         setEdges(() => { return new_edges });
     };
 
-    const onDragOver = useCallback((event: DragEvent) => {
-        event.preventDefault();
-        if (event.dataTransfer === null) return;
-        event.dataTransfer.dropEffect = "move";
-    }, []);
+    // const onDragOver = useCallback((event: DragEvent) => {
+    //     event.preventDefault();
+    //     if (event.dataTransfer === null) return;
+    //     event.dataTransfer.dropEffect = "move";
+    // }, []);
 
-    const onDrop = useCallback(
-        (event: DragEvent, reactFlowWrapper: any) => {
-            event.preventDefault();
-            const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-            if (event.dataTransfer === null) return;
+    // const onDrop = useCallback(
+    //     (event: DragEvent, reactFlowWrapper: any) => {
+    //         event.preventDefault();
+    //         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    //         if (event.dataTransfer === null) return;
 
-            const nodeData: Action = JSON.parse(
-                event.dataTransfer.getData("nodeData")
-            );
+    //         const nodeData: Action = JSON.parse(
+    //             event.dataTransfer.getData("nodeData")
+    //         );
 
-            console.log("Dropped nodeData", nodeData);
+    //         console.log("Dropped nodeData", nodeData);
 
-            if (typeof nodeData === "undefined" || !nodeData) {
-                return;
-            }
+    //         if (typeof nodeData === "undefined" || !nodeData) {
+    //             return;
+    //         }
 
-            if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
+    //         if (!reactFlowInstance) throw new Error("reactFlowInstance is undefined");
 
-            let position = reactFlowInstance.project({
-                x: event.clientX - reactFlowBounds.left,
-                y: event.clientY - reactFlowBounds.top,
-            });
+    //         let position = reactFlowInstance.project({
+    //             x: event.clientX - reactFlowBounds.left,
+    //             y: event.clientY - reactFlowBounds.top,
+    //         });
 
-            addNode(position, nodeData);
-        },
-        [addNode]
-    );
+    //         addNode(nodeData, position);
+    //     },
+    //     [addNode]
+    // );
 
     const updateNodeData = async (
         update_key: string[],
@@ -590,8 +655,8 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
                 onConnect,
                 onNodesChange,
                 onEdgesChange,
-                onDragOver,
-                onDrop,
+                // onDragOver,
+                // onDrop,
                 addNode,
                 deleteNode,
                 setReactFlowInstance,

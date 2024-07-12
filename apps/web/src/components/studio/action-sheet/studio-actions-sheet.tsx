@@ -54,7 +54,7 @@ export function StudioActionsSheet() {
                                     let action: Action = db_action.action_template_definition;
                                     return (
                                         <div key={db_action.action_template_id} onClick={() => {
-                                            workflow.addNode({ x: 100, y: 300 }, action);
+                                            workflow.addNode(action, { x: 100, y: 300 });
                                             workflow.setShowingActionSheet(false)
                                         }}
                                             className="flex flex-row justify-between items-center p-4 m-1 border rounded-md border-black cursor-pointer hover:bg-gray-50">
