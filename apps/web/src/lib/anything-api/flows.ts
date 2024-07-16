@@ -8,6 +8,8 @@ export type UpdateFlowArgs = {
   version?: string;
 };
 
+const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
+
 export const getFlows = async () => {
   try {
     // Get JWT from supabase to pass to the API
@@ -18,7 +20,7 @@ export const getFlows = async () => {
     console.log('Session:', session);
 
     if (session) {
-      const response = await fetch('http://localhost:3001/workflows', {
+      const response = await fetch(`${ANYTHING_API_URL}/workflows`, {
         headers: {
           Authorization: `${session.access_token}`,
         },
@@ -44,7 +46,7 @@ export const createFlow = async (flowName: string) => {
 
     if (session) {
       let flow_id = uuidv4();
-      const response = await fetch(`http://localhost:3001/workflow`, {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +79,7 @@ export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
     console.log('Updating Workflow');
 
     if (session) {
-      const response = await fetch(`http://localhost:3001/workflow/${flow_id}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +107,7 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
     console.log('Updating Workflow');
 
     if (session) {
-      const response = await fetch(`http://localhost:3001/workflow/${flow_id}/version/${flow_version_id}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}/version/${flow_version_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +135,7 @@ export async function deleteFlow(flowId: string) {
     console.log('Deleting Workflow');
 
     if (session) {
-      const response = await fetch(`http://localhost:3001/workflow/${flowId}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flowId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +162,7 @@ export const getFlow = async (flowId: string) => {
     console.log('Fetching Workflow by ID');
 
     if (session) {
-      const response = await fetch(`http://localhost:3001/workflow/${flowId}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flowId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,8 @@ import { Action, Workflow } from "@/types/workflows";
 import { createClient } from "../supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
+const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
+
 export const getActionTemplates = async () => {
     try {
         // Get JWT from supabase to pass to the API
@@ -12,7 +14,7 @@ export const getActionTemplates = async () => {
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch('http://localhost:3001/actions', {
+            const response = await fetch(`${ANYTHING_API_URL}/actions`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },

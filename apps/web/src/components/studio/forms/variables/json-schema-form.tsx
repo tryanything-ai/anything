@@ -11,7 +11,7 @@ export function JsonSchemaForm({ name, fields, initialValues, handleValidation, 
     );
     const [errors, setErrors] = useState<{ [key: string]: any }>({});
     const [submited, setSubmited] = useState(false);
-
+    
 
     function handleInternalValidation(valuesToValidate: any) {
         const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-
 export const fieldsMap: { [key: string]: any } = {
     text: FieldText,
     number: FieldNumber,
@@ -60,7 +59,7 @@ function FieldText({
                 {...props}
             />
             {(touched || submited) && error && (
-                <div id={`${name}-error`}>{error}</div>
+                <div className="text-red-500" id={`${name}-error`}>{error}</div>
             )}
         </div>
     );
@@ -119,7 +118,7 @@ function FieldRadio({
                     </Checkbox>
                 ))}
             </div>
-            {displayError && <div>{displayError}</div>}
+            {displayError && <div className="text-red-500">{displayError}</div>}
         </fieldset>
     );
 }
@@ -161,7 +160,7 @@ function FieldCheckbox({
                     {value ? <span className="p-1 bg-green-400 rounded-lg ml-2">Active</span> : <span className="p-1 bg-red-400 rounded-lg ml-2">Inactive</span>}
                 </label>
                 {(touched || submited) && error && (
-                    <div id={`${name}-error`}>{error}</div>
+                    <div className="text-red-500" id={`${name}-error`}>{error}</div>
                 )}
             </div>
         </div>
@@ -173,7 +172,7 @@ function FieldUnknown({ type, name, error }: any) {
         <p style={{ border: "1px dashed gray", padding: "8px" }}>
             Field "{name}" unsupported: The type "{type}" has no UI component built
             yet.
-            {error && <div id={`${name}-error`}>{error}</div>}
+            {error && <div className="text-red-500" id={`${name}-error`}>{error}</div>}
         </p>
     );
 }
@@ -218,7 +217,7 @@ function FieldSelect({
                 </SelectContent>
             </Select>
             {(touched || submited) && error && (
-                <div id={`${name}-error`}>{error}</div>
+                <div className="text-red-500" id={`${name}-error`}>{error}</div>
             )}
         </div>
     );

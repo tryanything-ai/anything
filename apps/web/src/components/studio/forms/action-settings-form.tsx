@@ -1,16 +1,35 @@
 import { useAnything } from "@/context/AnythingContext";
 import ConfigurationForm from "./configuration-form";
 import { VariablesFormLayout } from "./variables/variables-form-layout";
-import { ArrowBigLeft } from "lucide-react";
+import { ArrowBigLeft, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ActionSettingsForm() {
     const { workflow } = useAnything();
+
+    const runAction = async () => {
+        //TODO: Implement run action
+    }
+
+    const runWorkflow = async () => {
+    }
 
     return (
         <div className="flex flex-col h-full w-full">
             {(workflow.selected_node_data && workflow.selected_node_id) ?
                 <div className="grid w-full items-start gap-6">
                     <div className="grid gap-6">
+                        {/* Debug essentially */}
+                        <div className="flex flex-row gap-2 mt-2">
+                            <Button onClick={runAction} className="hover:bg-green-500">
+                                Test Action
+                                <Play size={16} className="ml-2" />
+                            </Button>
+                            <Button onClick={runAction} className="hover:bg-green-500">
+                                Test Workflow
+                                <Play size={16} className="ml-2" />
+                            </Button>
+                        </div>
                         <VariablesFormLayout />
                         <ConfigurationForm
                             input_schema={workflow.selected_node_data.input_schema}
@@ -31,8 +50,6 @@ export default function ActionSettingsForm() {
                     </div>
                 </div>
             }
-
         </div>
-
     )
 }

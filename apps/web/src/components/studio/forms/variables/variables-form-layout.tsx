@@ -4,6 +4,8 @@ import { EditVariableFormMode } from "@/context/VariablesContext";
 import EditVariableForm from "./edit-variable-form";
 import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@/components/ui/button";
+import { PluginType } from "@/types/workflows";
+
 
 export function VariablesFormLayout() {
     const { variables, workflow } = useAnything();
@@ -56,9 +58,14 @@ export function VariablesFormLayout() {
     }
 
     return (
-        <div className="rounded-lg border p-4">
-            <Header />
-            {renderEditor()}
-        </div>
+        // Hide variables if its a trigger
+        <> {workflow && workflow.selected_node_data && workflow.selected_node_data.type !== PluginType.Trigger &&
+            <div className="rounded-lg border p-4">
+                <Header />
+                {renderEditor()}
+            </div>
+        }
+        </>
+
     )
 }

@@ -39,7 +39,8 @@ import { UpdateWorklowArgs, useWorkflowsContext } from "./WorkflowsProvider";
 
 export enum PanelTab {
     SETTINGS = "settings",
-    CONFIG = "config"
+    CONFIG = "config",
+    TESTING = "testing"
 }
 
 export enum SavingStatus {
@@ -216,7 +217,7 @@ export const WorkflowVersionProvider = ({ children }: { children: ReactNode }) =
 
             //Save to cloud
             await api.flows.updateFlow(dbFlowId, args);
-            
+
             //Update state here
             setDbFlow((prevFlow: any) => {
                 return {

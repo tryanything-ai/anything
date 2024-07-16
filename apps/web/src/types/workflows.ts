@@ -7,7 +7,7 @@ export interface Workflow {
 }
 
 //Guessing to what the total list of 
-enum PluginType {
+export enum PluginType {
   Input = "input",
   Trigger = "trigger",
   Action = "action",

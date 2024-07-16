@@ -1,5 +1,7 @@
 import { createClient } from "../supabase/client";
 
+const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
+
 export async function createSecret(secret_name: string, secret_value: string, secret_description: string) {
     try {
         const supabase = createClient();
@@ -10,7 +12,7 @@ export async function createSecret(secret_name: string, secret_value: string, se
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`http://localhost:3001/secret`, {
+            const response = await fetch(`${ANYTHING_API_URL}/secret`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
