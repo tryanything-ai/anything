@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS anything.tasks
     is_trigger BOOLEAN NOT NULL DEFAULT FALSE, -- if this event is a trigger event
     plugin_id TEXT NOT NULL, -- the extension that processed this event
     stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
+    test_config json, -- the config used to do special testing for flow and action
     config json NOT NULL, -- the config used to run the flow
     context json, -- the bundle of args used for the action to process
     started_at timestamp with time zone, --stats for action run time

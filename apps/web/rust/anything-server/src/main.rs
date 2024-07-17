@@ -48,7 +48,7 @@ async fn main() {
         .route("/secret/:id", delete(secrets::delete_secret))
         // Testing
         .route("/testing/workflow/:workflow_id/version/:workflow_version_id", get(api::test_workflow))
-        // .route("/testing//workflow/:workflow_id/version/:workflow_version_id/action/:action_id", get(api::test_action))
+        .route("/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id", get(api::test_action))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(client.clone()); 

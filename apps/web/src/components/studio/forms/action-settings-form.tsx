@@ -5,13 +5,22 @@ import { ArrowBigLeft, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ActionSettingsForm() {
-    const { workflow } = useAnything();
+    const { workflow, testing } = useAnything();
 
-    const runAction = async () => {
-        //TODO: Implement run action
+    const testAction = async (action_id: string) => {
+        try {
+            testing.testAction(action_id);
+        } catch {
+            console.error("Error testing workflow");
+        }
     }
 
-    const runWorkflow = async () => {
+    const testWorkflow = async () => {
+        try {
+            testing.testWorkflow();
+        } catch {
+            console.error("Error testing workflow");
+        }
     }
 
     return (
@@ -21,11 +30,11 @@ export default function ActionSettingsForm() {
                     <div className="grid gap-6">
                         {/* Debug essentially */}
                         <div className="flex flex-row gap-2 mt-2">
-                            <Button onClick={runAction} className="hover:bg-green-500">
+                            <Button onClick={() => testAction(workflow.selected_node_id)} className="hover:bg-green-500">
                                 Test Action
                                 <Play size={16} className="ml-2" />
                             </Button>
-                            <Button onClick={runAction} className="hover:bg-green-500">
+                            <Button onClick={testWorkflow} className="hover:bg-green-500">
                                 Test Workflow
                                 <Play size={16} className="ml-2" />
                             </Button>

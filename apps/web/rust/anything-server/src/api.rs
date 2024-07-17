@@ -350,11 +350,19 @@ pub struct CreateTaskInput {
     plugin_id: String,
     stage: String,
     config: Value,
+    test_config: Option<Value>
     // context: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TaskContext {
+    pub variables: Value,
+    pub inputs: Value
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TestConfig {
+    pub action_id: Option<String>, //if action_id is present, then we are testing just an action
     pub variables: Value,
     pub inputs: Value
 }
@@ -451,6 +459,7 @@ pub async fn test_workflow(
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: "test".to_string(),
         config: serde_json::json!(taskContext), 
+        test_config: None
     }; 
 
     println!("Input: {:?}", input);
@@ -484,34 +493,127 @@ pub async fn test_workflow(
 }
 
 //Just ask the user for dummy data and send it up when they do the call
-// pub async fn test_action(
-//     Path((workflow_id, workflow_version_id, action_id)): Path<(String, String, String)>,
-//     Extension(user): Extension<User>,
-//     headers: HeaderMap,
-// ) -> impl IntoResponse {
-//     println!("Handling a get_actions");
+// Testing a workflow
+pub async fn test_action(
+    Path((workflow_id, workflow_version_id, action_id)): Path<(String, String, String)>,
+    State(client): State<Arc<Postgrest>>, 
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
 
-//     let response = match client
-//         .from("action_templates")
-//         .auth(user.jwt)
-//         .eq("archived", "false")
-//         .select("*")
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
-//     };
+    println!("Handling test workflow");
 
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
-//     };
+    // GET the workflow_version
+    let response = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .eq("flow_version_id", &workflow_version_id)
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
 
-//     let items: Value = match serde_json::from_str(&body) {
-//         Ok(items) => items,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
-//     };
+    // println!("Response from flow_versions: {:?}", response);
 
-//     Json(items).into_response()
-// }
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    // println!("Body from flow_versions: {:?}", body);
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    // println!("Items from flow_versions: {:?}", items);
+
+    let db_version_def = match items.get(0) {
+        Some(item) => item,
+        None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get item zero").into_response(),
+    };
+
+    // println!("db_version_def: {:?}", db_version_def);
+
+      // Parse response into Workflow type
+    let flow_definition = match db_version_def.get("flow_definition") {
+        Some(flow_definition) => flow_definition,
+        None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get flow_definition").into_response(),
+    };
+
+    println!("flow_definition: {:?}", flow_definition);
+
+    let workflow: Workflow = match serde_json::from_value(flow_definition.clone()) {
+        Ok(workflow) => workflow,
+        Err(err) => {
+            println!("Failed to parse flow_definition into Workflow: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to parse flow_definition into Workflow: {:?}", err)).into_response();
+        }
+    };
+
+    // Use the `workflow` variable as needed
+    println!("Workflow Definition {:#?}", workflow);
+
+    let taskContext = TaskContext {
+        variables: serde_json::json!(workflow.actions[0].variables), 
+        inputs: serde_json::json!(workflow.actions[0].input), 
+    }; 
+
+    let testConfig = TestConfig {
+        action_id: Some(action_id.clone()),
+        variables: serde_json::json!({}), //TODO: we should take this from like a body as a one time argument for the action
+        inputs: serde_json::json!({}),
+    }; 
+
+    let input = CreateTaskInput {
+        account_id: user.account_id.clone(),
+        task_status: "pending".to_string(),
+        flow_id: workflow_id.clone(),
+        flow_version_id: workflow_version_id.clone(),
+        flow_version_name: "derp".to_string(),
+        trigger_id: workflow.actions[0].node_id.clone(),
+        trigger_session_id: Uuid::new_v4().to_string(),
+        trigger_session_status: "pending".to_string(),
+        flow_session_id: Uuid::new_v4().to_string(),
+        flow_session_status: "pending".to_string(),
+        node_id: workflow.actions[0].node_id.clone(),
+        is_trigger: true,
+        plugin_id: workflow.actions[0].plugin_id.clone(),
+        stage: "test".to_string(),
+        config: serde_json::json!(taskContext), 
+        test_config: Some(serde_json::json!(testConfig))
+    }; 
+
+    println!("Input: {:?}", input);
+
+     //Get service_role priveledges by passing service_role in auth()
+     dotenv().ok();
+     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let response = match client
+        .from("tasks")
+        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
+        .insert(serde_json::to_string(&input).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    Json(items).into_response()
+}
