@@ -12,11 +12,8 @@ use std::sync::Arc;
 use std::env;
 
 use crate::auth::User;
-
 use slugify::slugify;
-
 use dotenv::dotenv;
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateSecretPayload {

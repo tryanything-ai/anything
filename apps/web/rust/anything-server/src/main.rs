@@ -5,12 +5,13 @@ use std::sync::Arc;
 use postgrest::Postgrest;
 use tower_http::cors::CorsLayer;
 // use extism::*;
-// use tokio::sync::{Mutex, Semaphore};
+use tokio::sync::{Mutex, Semaphore};
 
 mod api;
 mod engine;
 mod auth;
 mod secrets;
+mod workflow_types;
 
 #[macro_use] extern crate slugify;
 
@@ -45,6 +46,9 @@ async fn main() {
         .route("/secret", post(secrets::create_secret))
         .route("/secret", put(secrets::update_secret))
         .route("/secret/:id", delete(secrets::delete_secret))
+        // Testing
+        .route("/testing/workflow/:workflow_id/version/:workflow_version_id", get(api::test_workflow))
+        // .route("/testing//workflow/:workflow_id/version/:workflow_version_id/action/:action_id", get(api::test_action))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(client.clone()); 
@@ -56,13 +60,13 @@ async fn main() {
     // ));
 
     // Create a semaphore to limit the number of concurrent tasks
-    // let semaphore = Arc::new(Semaphore::new(5));
+    let semaphore = Arc::new(Semaphore::new(5));
 
     // // Spawn task processing loop
-    // tokio::spawn(engine::task_processing_loop(client.clone(), plugin.clone(), semaphore.clone()));
+    tokio::spawn(engine::task_processing_loop(client.clone(), semaphore.clone()));
 
     // // Spawn cron job loop
-    // tokio::spawn(engine::cron_job_loop(client.clone()));
+    tokio::spawn(engine::cron_job_loop(client.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

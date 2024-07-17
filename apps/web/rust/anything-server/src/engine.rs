@@ -58,9 +58,9 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &str) {
         .unwrap();
 }
 
-pub async fn process_task(plugin: &mut Plugin, task: &Task) {
-    let res = plugin.call::<&str, &str>("process_task", &task.data).unwrap();
-    println!("Processed task {}: {}", task.id, res);
+pub async fn process_task(task: &Task) {
+    // let res = plugin.call::<&str, &str>("process_task", &task.data).unwrap();
+    println!("Processed task {}", task.id);
 }
 
 pub async fn fetch_triggers(client: &Postgrest) -> Vec<Trigger> {
@@ -107,23 +107,26 @@ pub fn should_trigger_run(trigger: &Trigger) -> bool {
     }
 }
 
-pub async fn task_processing_loop(client: Arc<Postgrest>, plugin: Arc<Mutex<Plugin>>, semaphore: Arc<Semaphore>) {
+pub async fn task_processing_loop(client: Arc<Postgrest>, semaphore: Arc<Semaphore>) {
+    //To not hit db like crazy if no work to do. 
     let mut backoff = Duration::from_millis(200);
 
     loop {
         let task = fetch_task(&client).await;
+
+        println!("Task: {:?}", task);
         
         if let Some(task) = task {
             backoff = Duration::from_millis(200); // Reset backoff when a task is found
             update_task_status(&client, &task, "in_progress").await;
 
-            let plugin = plugin.clone();
+            // let plugin = plugin.clone();
             let client = client.clone();
             let permit = semaphore.clone().acquire_owned().await.unwrap();
 
             task::spawn(async move {
-                let mut plugin = plugin.lock().await;
-                process_task(&mut plugin, &task).await;
+                // let mut plugin = plugin.lock().await;
+                process_task(&task).await;
                 update_task_status(&client, &task, "completed").await;
                 drop(permit);
             });

@@ -18,7 +18,7 @@ export interface WorkflowTestingContextInterface {
     testingAction: boolean;
     testAction: (action_id: string) => Promise<void>;
     testingWorkflow: boolean;
-    testWorkflow: (workflow_id: string) => Promise<void>;
+    testWorkflow: () => Promise<void>;
 }
 
 export const WorkflowTestingContext = createContext<WorkflowTestingContextInterface>({
@@ -37,7 +37,7 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
     const [testingAction, setTestingAction] = useState<boolean>(false);
     const [testingWorkflow, setTestingWorkflow] = useState<boolean>(false);
 
-    const testWorkflow = async (workflow_id: string) => {
+    const testWorkflow = async () => {
         try {
             if (!db_flow_id || !db_flow_version_id) {
                 console.log("No flow or version id ot test action");

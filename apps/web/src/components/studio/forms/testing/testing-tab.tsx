@@ -5,10 +5,14 @@ import { Play } from "lucide-react";
 
 
 export default function TestingTab() {
-    const { workflow } = useAnything();
+    const { workflow, testing } = useAnything();
 
     const runAction = async () => {
-
+        try {
+            testing.testWorkflow();
+        } catch {
+            console.error("Error testing workflow");
+        }
     }
 
     const runWorkflow = async () => {
@@ -22,6 +26,7 @@ export default function TestingTab() {
                     Test Workflow
                     <Play size={16} className="ml-2" />
                 </Button>
+                {testing.testingWorkflow ? "TESTING WORKFLOW" : null}
             </div>
         </div>
     )
