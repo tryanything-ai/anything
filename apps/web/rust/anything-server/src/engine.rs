@@ -107,7 +107,6 @@ pub async fn fetch_task(client: &Postgrest) -> Option<Task> {
     tasks.into_iter().next()
 }
 
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateTaskInput {
     task_status: String
