@@ -21,7 +21,6 @@ pub struct AppState {
     task_signal: watch::Sender<()>,
 }
 
-
 #[tokio::main]
 async fn main() {
     dotenv().ok();
@@ -50,20 +49,21 @@ async fn main() {
     let app = Router::new()
         .route("/", get(api::root))
         .route("/workflows", get(api::get_workflows))
-        // .route("/workflow/:id", get(api::get_workflow))
-        // .route("/workflow/:id/versions", get(api::get_flow_versions))
-        // .route("/workflow/:workflow_id/version/:workflow_version_id", put(api::update_workflow_version))
-        // .route("/workflow", post(api::create_workflow))
-        // .route("/workflow/:id", delete(api::delete_workflow))
-        // .route("/workflow/:id", put(api::update_workflow))
-        // .route("/actions", get(api::get_actions))
-        // .route("/secrets", get(secrets::get_decrypted_secrets))
-        // .route("/secret", post(secrets::create_secret))
-        // .route("/secret", put(secrets::update_secret))
-        // .route("/secret/:id", delete(secrets::delete_secret))
-        // // Testing
-        // .route("/testing/workflow/:workflow_id/version/:workflow_version_id", get(api::test_workflow))
-        // .route("/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id", get(api::test_action))
+        .route("/workflow/:id", get(api::get_workflow))
+        .route("/workflow/:id/versions", get(api::get_flow_versions))
+        .route("/workflow/:workflow_id/version/:workflow_version_id", put(api::update_workflow_version))
+        .route("/workflow", post(api::create_workflow))
+        .route("/workflow/:id", delete(api::delete_workflow))
+        .route("/workflow/:id", put(api::update_workflow))
+        .route("/actions", get(api::get_actions))
+        // Secrets
+        .route("/secrets", get(secrets::get_decrypted_secrets))
+        .route("/secret", post(secrets::create_secret))
+        .route("/secret", put(secrets::update_secret))
+        .route("/secret/:id", delete(secrets::delete_secret))
+        // Users Testing Workflows
+        .route("/testing/workflow/:workflow_id/version/:workflow_version_id", get(api::test_workflow))
+        .route("/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id", get(api::test_action))
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(state.clone()); 
@@ -84,9 +84,9 @@ async fn main() {
     // Spawn cron job loop
     // Initiates work to be done on schedule tasks
     // tokio::spawn(engine::cron_job_loop(client.clone()));
-    // tokio::spawn(engine::task_processing_loop(state.clone()));
+    tokio::spawn(engine::task_processing_loop(state.clone()));
 
-    // tokio::spawn(engine::cron_job_loop(state.client.clone()));
+    tokio::spawn(engine::cron_job_loop(state.client.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

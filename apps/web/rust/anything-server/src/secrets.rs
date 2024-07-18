@@ -12,6 +12,8 @@ use std::sync::Arc;
 use std::env;
 
 use crate::auth::User;
+use crate::AppState; 
+
 use slugify::slugify;
 use dotenv::dotenv;
 
@@ -40,12 +42,14 @@ pub struct AnythingCreateSecretInput {
 }
 
 pub async fn create_secret(
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
     Json(payload): Json<CreateSecretPayload>,
 ) -> impl IntoResponse {
- 
+    
+    let client = &state.client;
+
     println!("create_secret Input?: {:?}", payload);
 
     let vault_secret_name = slugify!(format!("{}_{}", user.account_id.clone(), payload.secret_name.clone()).as_str(), separator = "_");
@@ -123,7 +127,7 @@ pub struct GetDecryptedSecretsInput {
 
 // Secrets
 pub async fn get_decrypted_secrets(
-    State(client): State<Arc<Postgrest>>, 
+    State(state): State<Arc<AppState>>, 
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
@@ -137,6 +141,8 @@ pub async fn get_decrypted_secrets(
     }; 
 
     println!("get_decrypted_secrets rpc Input?: {:?}", input);
+
+    let client = &state.client;
 
     let response = match client
         .rpc("get_decrypted_secrets", serde_json::to_string(&input).unwrap())
@@ -187,7 +193,7 @@ pub struct ReadVaultSecretInput {
 }
 
 pub async fn update_secret(
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
     Json(payload): Json<UpdateSecretPayload>,
@@ -200,6 +206,8 @@ pub async fn update_secret(
     //Get Special Priveledges by passing service_role in auth()
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let client = &state.client;
 
     // Read Secret in Vault
     let response = match client
@@ -287,12 +295,14 @@ pub struct DeleteVaultSecretInput {
 
 pub async fn delete_secret(
     Path(secret_id): Path<String>,
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {    
 
     println!("Delete Secret: {:?}", secret_id);
+
+    let client = &state.client;
 
     // Delete in DB
     let response = match client

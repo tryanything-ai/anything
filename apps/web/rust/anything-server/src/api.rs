@@ -85,80 +85,15 @@ pub async fn get_workflows(
     Json(items).into_response()
 }
 
-// pub async fn get_workflows(
-//     State(state): State<Arc<AppState>>, 
-//     Extension(user): Extension<User>,
-//     headers: HeaderMap,
-// ) -> impl IntoResponse {
-//     println!("Handling a get_workflows");
-
-//     let client = &state.client;
-
-//     let response = match client
-//         .from("flows")
-//         .auth(user.jwt) // Ensure jwt is cloned
-//         .eq("archived", "false")
-//         .select("*,flow_versions(*)")
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
-//     };
-
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
-//     };
-
-//     let items: Value = match serde_json::from_str(&body) {
-//         Ok(items) => items,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
-//     };
-
-//     Json(items).into_response()
-// }
-
-// pub async fn get_workflows(
-//     State(state): State<Arc<AppState>>, 
-//     Extension(user): Extension<User>,
-//     headers: HeaderMap,
-// ) -> impl IntoResponse {
-//     println!("Handling a get_workflows");
-
-//     let client = &state.client;
-
-//     let response = match client
-//         .from("flows")
-//         .auth(user.jwt)
-//         .eq("archived", "false")
-//         .select("*,flow_versions(*)")
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
-//     };
-
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
-//     };
-
-//     let items: Value = match serde_json::from_str(&body) {
-//         Ok(items) => items,
-//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
-//     };
-
-//     Json(items).into_response()
-// }
 
 pub async fn get_workflow(
     Path(flow_id): Path<String>,
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>, 
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
+
+    let client = &state.client;
 
     let response = match client
         .from("flows")
@@ -187,10 +122,12 @@ pub async fn get_workflow(
 
 pub async fn get_flow_versions(
     Path(flow_id): Path<String>,
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
+
+    let client = &state.client;
 
     let response = match client
         .from("flow_versions")
@@ -218,13 +155,15 @@ pub async fn get_flow_versions(
 }
 
 pub async fn create_workflow(
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
     Json(payload): Json<CreateWorkflowHandleInput>,
 ) -> impl IntoResponse {
 
     println!("Handling a create_workflow");
+
+    let client = &state.client;
 
     let input = CreateWorkflowInput {
         flow_id: payload.flow_id.clone(),
@@ -281,10 +220,12 @@ pub async fn create_workflow(
 
 pub async fn delete_workflow(
     Path(flow_id): Path<String>,
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
+
+    let client = &state.client;
 
     let response = match client
         .from("flows")
@@ -309,12 +250,14 @@ pub async fn delete_workflow(
 //TODO: validate schema. make sure its not a published flow
 pub async fn update_workflow(
     Path(flow_id): Path<String>,
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
     Json(payload): Json<UpdateWorkflowInput>,  
 ) -> impl IntoResponse {
     
+    let client = &state.client;
+
     let response = match client
         .from("flows")
         .auth(user.jwt)
@@ -337,13 +280,14 @@ pub async fn update_workflow(
 
 pub async fn update_workflow_version(
     Path((workflow_id, workflow_version_id)): Path<(String, String)>,
-    State(client): State<Arc<Postgrest>>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
 
     // let payload_json = serde_json::to_string(&payload).unwrap();
+    let client = &state.client;
 
     let update_json = serde_json::json!({
         "flow_definition": payload,
@@ -372,11 +316,13 @@ pub async fn update_workflow_version(
 
 // Actions
 pub async fn get_actions(
-    State(client): State<Arc<Postgrest>>, 
+    State(state): State<Arc<AppState>>, 
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
     println!("Handling a get_actions");
+
+    let client = &state.client;
 
     let response = match client
         .from("action_templates")
@@ -441,10 +387,12 @@ pub struct TestConfig {
 // Testing a workflow
 pub async fn test_workflow(
     Path((workflow_id, workflow_version_id)): Path<(String, String)>,
-    State(client): State<Arc<Postgrest>>, 
+    State(state): State<Arc<AppState>>, 
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
+
+    let client = &state.client;
 
     println!("Handling test workflow");
 
@@ -490,7 +438,7 @@ pub async fn test_workflow(
         None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get flow_definition").into_response(),
     };
 
-    println!("flow_definition: {:?}", flow_definition);
+    // println!("flow_definition: {:?}", flow_definition);
 
     let workflow: Workflow = match serde_json::from_value(flow_definition.clone()) {
         Ok(workflow) => workflow,
@@ -501,7 +449,7 @@ pub async fn test_workflow(
     };
 
     // Use the `workflow` variable as needed
-    println!("Workflow Definition {:#?}", workflow);
+    // println!("Workflow Definition {:#?}", workflow);
 
     //PARSE RESPONSE. 
     //db_version_def.flow_definition is the Workflow type
@@ -533,7 +481,7 @@ pub async fn test_workflow(
         test_config: None
     }; 
 
-    println!("Input: {:?}", input);
+    // println!("Input: {:?}", input);
 
      //Get service_role priveledges by passing service_role in auth()
      dotenv().ok();
@@ -560,6 +508,11 @@ pub async fn test_workflow(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
     };
 
+    // Signal the task processing loop and write error if it can't
+    if let Err(err) = state.task_signal.send(()) {
+        println!("Failed to send task signal: {:?}", err);
+    }
+
     Json(items).into_response()
 }
 
@@ -567,12 +520,14 @@ pub async fn test_workflow(
 // Testing a workflow
 pub async fn test_action(
     Path((workflow_id, workflow_version_id, action_id)): Path<(String, String, String)>,
-    State(client): State<Arc<Postgrest>>, 
+    State(state): State<Arc<AppState>>, 
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
 
-    println!("Handling test workflow");
+    println!("Handling test workflow action");
+
+    let client = &state.client;
 
     // GET the workflow_version
     let response = match client
@@ -627,7 +582,7 @@ pub async fn test_action(
     };
 
     // Use the `workflow` variable as needed
-    println!("Workflow Definition {:#?}", workflow);
+    // println!("Workflow Definition {:#?}", workflow);
 
     let taskContext = TaskContext {
         variables: serde_json::json!(workflow.actions[0].variables), 
@@ -659,7 +614,7 @@ pub async fn test_action(
         test_config: Some(serde_json::json!(testConfig))
     }; 
 
-    println!("Input: {:?}", input);
+    // println!("Input: {:?}", input);
 
      //Get service_role priveledges by passing service_role in auth()
      dotenv().ok();
@@ -685,6 +640,12 @@ pub async fn test_action(
         Ok(items) => items,
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
     };
+
+     // Signal the task processing loop and write error if it can't
+     // This is just a hint to the processing system. Processing is lazy sometimes to prevent using resources when not needed
+     if let Err(err) = state.task_signal.send(()) {
+        println!("Failed to send task signal: {:?}", err);
+    }
 
     Json(items).into_response()
 }
