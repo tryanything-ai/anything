@@ -11,7 +11,7 @@ use hyper::header::AUTHORIZATION;
 use postgrest::Postgrest;
 
 use crate::auth::User;
-use crate::workflow_types::Workflow;
+use crate::workflow_types::{Workflow, CreateTaskInput, TestConfig, TaskConfig};
 use crate::AppState; 
 use uuid::Uuid;
 
@@ -350,39 +350,7 @@ pub async fn get_actions(
 }
 
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CreateTaskInput {
-    account_id: String,
-    task_status: String,
-    flow_id: String,
-    flow_version_id: String,
-    flow_version_name: String,
-    trigger_id: String,
-    trigger_session_id: String, 
-    trigger_session_status: String,
-    flow_session_id: String,
-    flow_session_status: String,
-    node_id: String,
-    is_trigger: bool,
-    plugin_id: String,
-    stage: String,
-    config: Value,
-    test_config: Option<Value>
-    // context: Value,
-}
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TaskContext {
-    pub variables: Value,
-    pub inputs: Value
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TestConfig {
-    pub action_id: Option<String>, //if action_id is present, then we are testing just an action
-    pub variables: Value,
-    pub inputs: Value
-}
 
 // Testing a workflow
 pub async fn test_workflow(
@@ -457,7 +425,7 @@ pub async fn test_workflow(
     //TODO: call the engine
     //OR just create a task with the correct type and data
 
-    let taskContext = TaskContext {
+    let taskConfig = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables), 
         inputs: serde_json::json!(workflow.actions[0].input), 
     }; 
@@ -477,7 +445,7 @@ pub async fn test_workflow(
         is_trigger: true,
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: "test".to_string(),
-        config: serde_json::json!(taskContext), 
+        config: serde_json::json!(taskConfig), 
         test_config: None
     }; 
 
@@ -584,7 +552,7 @@ pub async fn test_action(
     // Use the `workflow` variable as needed
     // println!("Workflow Definition {:#?}", workflow);
 
-    let taskContext = TaskContext {
+    let taskConfig = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables), 
         inputs: serde_json::json!(workflow.actions[0].input), 
     }; 
@@ -610,7 +578,7 @@ pub async fn test_action(
         is_trigger: true,
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: "test".to_string(),
-        config: serde_json::json!(taskContext), 
+        config: serde_json::json!(taskConfig), 
         test_config: Some(serde_json::json!(testConfig))
     }; 
 

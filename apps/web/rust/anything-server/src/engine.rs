@@ -14,64 +14,19 @@ use dotenv::dotenv;
 use std::env;
 
 use reqwest::Client;
-// use serde_json::Value;
-// use hyper::{Body, Client, Method, Request, Response};
-// use hyper::client::HttpConnector;
-// use hyper::header::{HeaderMap, HeaderName, HeaderValue};
-// use hyper::{Body, Client, Method, Request};
-// use hyper::header::{HeaderMap, HeaderName, HeaderValue};
-
-// use serde_json::Value;
 
 use crate::AppState; 
+use crate::workflow_types::{Task, Trigger};
+use crate::execution_planner::process_trigger_task;
 
-// #[derive(Debug, Deserialize, Serialize)]
-// use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-// use chrono::{DateTime, Utc};
 use serde_json::Value;
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Task {
-    pub task_id: Uuid,
-    pub account_id: Uuid,
-    pub task_status: String,
-    pub flow_id: Uuid,
-    pub flow_version_id: Uuid,
-    pub flow_version_name: Option<String>,
-    pub trigger_id: String,
-    pub trigger_session_id: String,
-    pub trigger_session_status: String,
-    pub flow_session_id: String,
-    pub flow_session_status: String,
-    pub node_id: String,
-    pub is_trigger: bool,
-    pub plugin_id: Option<String>,
-    pub stage: String,
-    pub test_config: Option<Value>,
-    pub config: Value,
-    pub context: Option<Value>,
-    pub started_at: Option<DateTime<Utc>>,
-    pub ended_at: Option<DateTime<Utc>>,
-    pub debug_result: Option<Value>,
-    pub result: Option<Value>,
-    pub archived: bool,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub created_at: Option<DateTime<Utc>>,
-    pub updated_by: Option<Uuid>,
-    pub created_by: Option<Uuid>,
-}
-
-#[serde_as]
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Trigger {
-    id: i32,
-    cron_expression: String,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    last_run: Option<DateTime<Utc>>,
-}
 
 pub async fn fetch_task(client: &Postgrest) -> Option<Task> {
+
+    println!("Looking for pending task");
+
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
@@ -104,7 +59,8 @@ pub async fn fetch_task(client: &Postgrest) -> Option<Task> {
         },
     };
 
-    println!("Response body: {}", body);
+    // println!("Response body: {}", body);
+    // println!("Fetched Task");
 
     let tasks: Vec<Task> = match serde_json::from_str(&body) {
         Ok(tasks) => tasks,
@@ -146,126 +102,87 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &str) {
 //     println!("Processed task {}", task.task_id);
 // }
 
-pub async fn process_task(task: &Task) {
-    if let Some(plugin_id) = &task.plugin_id {
-        if plugin_id == "http" {
-            if let (Some(method), Some(url)) = (
-                task.config.get("method").and_then(Value::as_str),
-                task.config.get("url").and_then(Value::as_str),
-            ) {
-                let client = Client::new();
-                let method = match method.to_uppercase().as_str() {
-                    "GET" => reqwest::Method::GET,
-                    "POST" => reqwest::Method::POST,
-                    "PUT" => reqwest::Method::PUT,
-                    "DELETE" => reqwest::Method::DELETE,
-                    _ => {
-                        println!("Unsupported HTTP method: {}", method);
-                        return;
-                    }
-                };
-
-                let mut request_builder = client.request(method, url);
-
-                if let Some(headers) = task.config.get("headers").and_then(Value::as_object) {
-                    for (key, value) in headers {
-                        if let Some(value_str) = value.as_str() {
-                            request_builder = request_builder.header(key.as_str(), value_str);
-                        }
-                    }
-                }
-
-                if let Some(body) = task.config.get("body").and_then(Value::as_str) {
-                    request_builder = request_builder.body(body.to_string());
-                }
-
-                match request_builder.send().await {
-                    Ok(response) => {
-                        match response.text().await {
-                            Ok(text) => {
-                                println!("HTTP request successful. Response: {}", text);
-                            }
-                            Err(err) => {
-                                println!("Failed to read response text: {}", err);
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        println!("HTTP request failed: {}", err);
-                    }
-                }
-            } else {
-                println!("Missing required fields (method, url) in task config.");
-            }
-        } else {
-            println!("Processed task {} with plugin_id {}", task.task_id, plugin_id);
+pub async fn process_task(client: &Postgrest, task: &Task) {
+    println!("Processing task");
+    if task.is_trigger {
+        println!("Processed trigger task {}", task.task_id);
+        if let Err(e) = process_trigger_task(client,task).await {
+            println!("Failed to process trigger task: {}", e);
         }
     } else {
-        println!("No plugin_id found for task {}", task.task_id);
+        println!("Procesing task {}", task.task_id);
+        if let Some(plugin_id) = &task.plugin_id {
+            if plugin_id == "http" {
+                if let (Some(method), Some(url)) = (
+                    task.config.get("method").and_then(Value::as_str),
+                    task.config.get("url").and_then(Value::as_str),
+                ) {
+                    println!("Processing HTTP task");
+                    let client = Client::new();
+                    let method = match method.to_uppercase().as_str() {
+                        "GET" => reqwest::Method::GET,
+                        "POST" => reqwest::Method::POST,
+                        "PUT" => reqwest::Method::PUT,
+                        "DELETE" => reqwest::Method::DELETE,
+                        _ => {
+                            println!("Unsupported HTTP method: {}", method);
+                            return;
+                        }
+                    };
+
+                    let mut request_builder = client.request(method, url);
+
+                    if let Some(headers) = task.config.get("headers").and_then(Value::as_object) {
+                        for (key, value) in headers {
+                            if let Some(value_str) = value.as_str() {
+                                request_builder = request_builder.header(key.as_str(), value_str);
+                            }
+                        }
+                    }
+
+                    if let Some(body) = task.config.get("body").and_then(Value::as_str) {
+                        request_builder = request_builder.body(body.to_string());
+                    }
+
+                    match request_builder.send().await {
+                        // println!("HTTP request sent")
+                        Ok(response) => {
+                            println!("HTTP request response! {:?}", response);
+                            match response.text().await {
+                                Ok(text) => {
+                                    println!("HTTP request successful. Response: {}", text);
+                                }
+                                Err(err) => {
+                                    println!("HTTP Failed to read response text: {}", err);
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            println!("HTTP request failed: {}", err);
+                        }
+                    }
+                } else {
+                    println!("HTTP Missing required fields (method, url) in task config.");
+                }
+            } else {
+                println!("HTTP Processed task {} with plugin_id {}", task.task_id, plugin_id);
+            }
+        } else {
+            println!("No plugin_id found for task {}", task.task_id);
+        }
     }
 }
 
 // pub async fn process_task(task: &Task) {
-//     if let Some(plugin_id) = &task.plugin_id {
-//         if plugin_id == "http" {
-//             if let (Some(method), Some(url)) = (
-//                 task.config.get("method").and_then(Value::as_str),
-//                 task.config.get("url").and_then(Value::as_str),
-//             ) {
-//                 let client = Client::new();
-//                 let method = match method.to_uppercase().as_str() {
-//                     "GET" => Method::GET,
-//                     "POST" => Method::POST,
-//                     "PUT" => Method::PUT,
-//                     "DELETE" => Method::DELETE,
-//                     _ => {
-//                         println!("Unsupported HTTP method: {}", method);
-//                         return;
-//                     }
-//                 };
-
-//                 let mut request_builder = Request::builder()
-//                     .method(method)
-//                     .uri(url);
-
-//                 if let Some(headers) = task.config.get("headers").and_then(Value::as_object) {
-//                     let mut header_map = HeaderMap::new();
-//                     for (key, value) in headers {
-//                         if let (Ok(header_name), Ok(header_value)) = (
-//                             HeaderName::from_str(key),
-//                             HeaderValue::from_str(value.as_str().unwrap_or("")),
-//                         ) {
-//                             header_map.insert(header_name, header_value);
-//                         }
-//                     }
-//                     request_builder = request_builder.headers(header_map);
-//                 }
-
-//                 let body = task.config.get("body").and_then(Value::as_str).unwrap_or("").to_string();
-//                 let request = request_builder.body(Body::from(body)).unwrap();
-
-//                 match client.request(request).await {
-//                     Ok(response) => {
-//                         let bytes = Body::to_bytes(response.into_body()).await.unwrap();
-//                         let response_text = String::from_utf8(bytes.to_vec()).unwrap();
-//                         println!("HTTP request successful. Response: {}", response_text);
-//                     }
-//                     Err(err) => {
-//                         println!("HTTP request failed: {}", err);
-//                     }
-//                 }
-//             } else {
-//                 println!("Missing required fields (method, url) in task config.");
-//             }
+//     if let Some(trigger) = &task.is_trigger {
+//         if trigger {
+//             println!("Processed trigger task {}", task.task_id);
 //         } else {
-//             println!("Processed task {} with plugin_id {}", task.task_id, plugin_id);
+//             println!("Processed task {}", task.task_id);
 //         }
 //     } else {
-//         println!("No plugin_id found for task {}", task.task_id);
+//         println!("Processed task {}", task.task_id);
 //     }
-// }
-
-// pub async fn process_task(task: &Task) {
 //     if let Some(plugin_id) = &task.plugin_id {
 //         if plugin_id == "http" {
 //             if let (Some(method), Some(url)) = (
@@ -274,37 +191,40 @@ pub async fn process_task(task: &Task) {
 //             ) {
 //                 let client = Client::new();
 //                 let method = match method.to_uppercase().as_str() {
-//                     "GET" => Method::GET,
-//                     "POST" => Method::POST,
-//                     "PUT" => Method::PUT,
-//                     "DELETE" => Method::DELETE,
+//                     "GET" => reqwest::Method::GET,
+//                     "POST" => reqwest::Method::POST,
+//                     "PUT" => reqwest::Method::PUT,
+//                     "DELETE" => reqwest::Method::DELETE,
 //                     _ => {
 //                         println!("Unsupported HTTP method: {}", method);
 //                         return;
 //                     }
 //                 };
 
-//                 let mut request = Request::builder()
-//                     .method(method)
-//                     .uri(url);
+//                 let mut request_builder = client.request(method, url);
 
-//                 if let Some(headers) = task.config.get("headers").and_then(Value::as_str) {
-//                     let headers_map: Result<HeaderMap, _> = serde_json::from_str(headers);
-//                     if let Ok(headers_map) = headers_map {
-//                         for (key, value) in headers_map.iter() {
-//                             request = request.header(key, value);
+//                 if let Some(headers) = task.config.get("headers").and_then(Value::as_object) {
+//                     for (key, value) in headers {
+//                         if let Some(value_str) = value.as_str() {
+//                             request_builder = request_builder.header(key.as_str(), value_str);
 //                         }
 //                     }
 //                 }
 
-//                 let body = task.config.get("body").and_then(Value::as_str).unwrap_or("").to_string();
-//                 let request = request.body(Body::from(body)).unwrap();
+//                 if let Some(body) = task.config.get("body").and_then(Value::as_str) {
+//                     request_builder = request_builder.body(body.to_string());
+//                 }
 
-//                 match client.request(request).await {
+//                 match request_builder.send().await {
 //                     Ok(response) => {
-//                         let bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
-//                         let response_text = String::from_utf8(bytes.to_vec()).unwrap();
-//                         println!("HTTP request successful. Response: {}", response_text);
+//                         match response.text().await {
+//                             Ok(text) => {
+//                                 println!("HTTP request successful. Response: {}", text);
+//                             }
+//                             Err(err) => {
+//                                 println!("Failed to read response text: {}", err);
+//                             }
+//                         }
 //                     }
 //                     Err(err) => {
 //                         println!("HTTP request failed: {}", err);
@@ -397,7 +317,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
 
         let task = fetch_task(&client).await;
 
-        println!("Task in Loop: {:?}", task);
+        // println!("Task in Loop: {:?}", task);
 
         if let Some(task) = task {
             backoff = Duration::from_millis(200); // Reset backoff when a task is found
@@ -407,7 +327,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
             let permit = semaphore.clone().acquire_owned().await.unwrap();
 
             task::spawn(async move {
-                process_task(&task).await;
+                process_task(&client, &task).await;
                 update_task_status(&client, &task, "completed").await;
                 drop(permit);
             });

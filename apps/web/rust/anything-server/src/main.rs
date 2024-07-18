@@ -12,6 +12,7 @@ mod engine;
 mod auth;
 mod secrets;
 mod workflow_types;
+mod execution_planner;
 
 #[macro_use] extern crate slugify;
 
