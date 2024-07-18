@@ -12,9 +12,10 @@ use postgrest::Postgrest;
 
 use crate::auth::User;
 use crate::workflow_types::Workflow;
+use crate::AppState; 
 use uuid::Uuid;
 
-use dotenv::dotenv;
+use dotenv::dotenv; 
 use std::env;
 
 use slugify::slugify;
@@ -51,15 +52,17 @@ pub async fn root() -> &'static str {
 }
 
 pub async fn get_workflows(
-    State(client): State<Arc<Postgrest>>, 
+    State(state): State<Arc<AppState>>, 
     Extension(user): Extension<User>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> impl IntoResponse {
     println!("Handling a get_workflows");
 
+    let client = &state.client;
+
     let response = match client
         .from("flows")
-        .auth(user.jwt)
+        .auth(&user.jwt) // Pass a reference to the JWT
         .eq("archived", "false")
         .select("*,flow_versions(*)")
         .execute()
@@ -81,6 +84,74 @@ pub async fn get_workflows(
 
     Json(items).into_response()
 }
+
+// pub async fn get_workflows(
+//     State(state): State<Arc<AppState>>, 
+//     Extension(user): Extension<User>,
+//     headers: HeaderMap,
+// ) -> impl IntoResponse {
+//     println!("Handling a get_workflows");
+
+//     let client = &state.client;
+
+//     let response = match client
+//         .from("flows")
+//         .auth(user.jwt) // Ensure jwt is cloned
+//         .eq("archived", "false")
+//         .select("*,flow_versions(*)")
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+//     };
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+//     };
+
+//     let items: Value = match serde_json::from_str(&body) {
+//         Ok(items) => items,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+//     };
+
+//     Json(items).into_response()
+// }
+
+// pub async fn get_workflows(
+//     State(state): State<Arc<AppState>>, 
+//     Extension(user): Extension<User>,
+//     headers: HeaderMap,
+// ) -> impl IntoResponse {
+//     println!("Handling a get_workflows");
+
+//     let client = &state.client;
+
+//     let response = match client
+//         .from("flows")
+//         .auth(user.jwt)
+//         .eq("archived", "false")
+//         .select("*,flow_versions(*)")
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+//     };
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+//     };
+
+//     let items: Value = match serde_json::from_str(&body) {
+//         Ok(items) => items,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+//     };
+
+//     Json(items).into_response()
+// }
 
 pub async fn get_workflow(
     Path(flow_id): Path<String>,

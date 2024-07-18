@@ -114,7 +114,7 @@ pub async fn task_processing_loop(client: Arc<Postgrest>, semaphore: Arc<Semapho
     loop {
         let task = fetch_task(&client).await;
 
-        println!("Task: {:?}", task);
+        println!("Task in Loop: {:?}", task);
         
         if let Some(task) = task {
             backoff = Duration::from_millis(200); // Reset backoff when a task is found
