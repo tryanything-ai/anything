@@ -5,11 +5,9 @@ use postgrest::Postgrest;
 use dotenv::dotenv;
 use std::env;
 
-// use serde_json::Value;
 use std::sync::Arc;
 
 use crate::AppState;
-// use crate::workflow_types::{Task};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 
@@ -31,9 +29,10 @@ pub struct InMemoryTrigger {
     pub next_fire: Option<DateTime<Utc>>,  //data so we know when it will fire next
 }
 
-pub async fn cron_job_loop(client: Arc<Postgrest>) {
+pub async fn cron_job_loop(state: Arc<AppState>) {
     let trigger_state = Arc::new(RwLock::new(HashMap::new()));
 
+    let client = state.client.clone(); 
     // Initial hydration of known cron triggers
     hydrate_triggers(&client, &trigger_state).await;
 
@@ -64,39 +63,7 @@ pub async fn cron_job_loop(client: Arc<Postgrest>) {
         hydrate_triggers(&client, &trigger_state).await;
     }
 }
-// pub async fn cron_job_loop(client: Arc<Postgrest>) {
-//     let trigger_state = Arc::new(RwLock::new(HashMap::new()));
 
-//     // Initial hydration of known cron triggers
-//     hydrate_triggers(&client, &trigger_state).await;
-
-//     // Refresh interval for checking the database
-//     let refresh_interval = Duration::from_secs(60);
-
-//     loop {
-//         // Check if any triggers should run
-//         {
-//             let triggers = trigger_state.read().await;
-//             for (id, trigger) in triggers.iter() {
-//                 println!("Checking trigger: {}", id);
-//                 if should_trigger_run(trigger) {
-//                     // Execute the task associated with the trigger
-//                     println!("Running triggering task for trigger: {}", trigger.trigger_id);
-//                        // TODO: Execute the task by creating a trigger task
-//                        update_trigger_last_run(trigger, &trigger_state).await;
-//                 } else {
-//                     println!("Trigger {} should not run", id); 
-//                 }
-//             }
-//         }
-
-//         // Sleep for a short duration before the next check
-//         sleep(refresh_interval).await;
-
-//         // Periodically refresh triggers from the database
-//         hydrate_triggers(&client, &trigger_state).await;
-//     }
-// }
 
 pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>) {
     println!("Hydrating triggers from the database");
@@ -255,3 +222,131 @@ async fn update_trigger_last_run(trigger: &InMemoryTrigger, triggers: &Arc<RwLoc
     let mut triggers = triggers.write().await;
     triggers.insert(trigger.flow_version_id.clone(), updated_trigger);
 }
+
+// async fn create_trigger_task()
+// Testing a workflow
+// async fn create_trigger_task(client: &Postgrest, trigger: &InMemoryTrigger) -> impl IntoResponse {
+
+//     let client = &state.client;
+
+//     println!("Handling test workflow");
+
+//     // GET the workflow_version
+//     let response = match client
+//         .from("flow_versions")
+//         // .auth(user.jwt.clone())
+//         .eq("flow_version_id", &workflow_version_id)
+//         .select("*")
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+//     };
+
+//     // println!("Response from flow_versions: {:?}", response);
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+//     };
+
+//     // println!("Body from flow_versions: {:?}", body);
+
+//     let items: Value = match serde_json::from_str(&body) {
+//         Ok(items) => items,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+//     };
+
+//     // println!("Items from flow_versions: {:?}", items);
+
+//     let db_version_def = match items.get(0) {
+//         Some(item) => item,
+//         None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get item zero").into_response(),
+//     };
+
+//     // println!("db_version_def: {:?}", db_version_def);
+
+//       // Parse response into Workflow type
+//     let flow_definition = match db_version_def.get("flow_definition") {
+//         Some(flow_definition) => flow_definition,
+//         None => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get flow_definition").into_response(),
+//     };
+
+//     // println!("flow_definition: {:?}", flow_definition);
+
+//     let workflow: Workflow = match serde_json::from_value(flow_definition.clone()) {
+//         Ok(workflow) => workflow,
+//         Err(err) => {
+//             println!("Failed to parse flow_definition into Workflow: {:?}", err);
+//             return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to parse flow_definition into Workflow: {:?}", err)).into_response();
+//         }
+//     };
+
+//     // Use the `workflow` variable as needed
+//     // println!("Workflow Definition {:#?}", workflow);
+
+//     //PARSE RESPONSE. 
+//     //db_version_def.flow_definition is the Workflow type
+
+//     //TODO: call the engine
+//     //OR just create a task with the correct type and data
+
+//     let taskConfig = TaskConfig {
+//         variables: serde_json::json!(workflow.actions[0].variables), 
+//         inputs: serde_json::json!(workflow.actions[0].input), 
+//     }; 
+
+//     let input = CreateTaskInput {
+//         account_id: user.account_id.clone(),
+//         task_status: "pending".to_string(),
+//         flow_id: workflow_id.clone(),
+//         flow_version_id: workflow_version_id.clone(),
+//         flow_version_name: "derp".to_string(),
+//         trigger_id: workflow.actions[0].node_id.clone(),
+//         trigger_session_id: Uuid::new_v4().to_string(),
+//         trigger_session_status: "pending".to_string(),
+//         flow_session_id: Uuid::new_v4().to_string(),
+//         flow_session_status: "pending".to_string(),
+//         node_id: workflow.actions[0].node_id.clone(),
+//         is_trigger: true,
+//         plugin_id: workflow.actions[0].plugin_id.clone(),
+//         stage: "production".to_string(),
+//         config: serde_json::json!(taskConfig), 
+//         test_config: None
+//     }; 
+
+//     // println!("Input: {:?}", input);
+
+//      //Get service_role priveledges by passing service_role in auth()
+//      dotenv().ok();
+//      let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+//     let response = match client
+//         .from("tasks")
+//         .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
+//         .insert(serde_json::to_string(&input).unwrap())
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+//     };
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+//     };
+
+//     let items: Value = match serde_json::from_str(&body) {
+//         Ok(items) => items,
+//         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+//     };
+
+//     // Signal the task processing loop and write error if it can't
+//     if let Err(err) = state.task_signal.send(()) {
+//         println!("Failed to send task signal: {:?}", err);
+//     }
+
+//     Json(items).into_response()
+// }

@@ -175,9 +175,6 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
     }
 }
 
-
-
-
 // The task processing loop function
 pub async fn task_processing_loop(state: Arc<AppState>) {
     // Receive info from other systems
