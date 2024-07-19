@@ -507,7 +507,7 @@ INSERT INTO anything.flow_versions (
       "variables": {},
       "variables_schema": {},
       "input": {
-        "cron_expression": "*/2 * * * *"
+        "cron_expression": "*/2 * * * * *"
       },
       "input_schema": {
          "type": "object",

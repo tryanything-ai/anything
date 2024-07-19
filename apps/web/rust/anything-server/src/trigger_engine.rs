@@ -13,14 +13,9 @@ use crate::AppState;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 
-// use cron::Schedule;
-// use std::str::FromStr;
-
-// use chrono::{DateTime, Utc};
 use cron::Schedule;
 use serde_json::Value;
 use std::str::FromStr;
-
 
 pub struct TriggerEngineState {
     pub triggers: Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
@@ -38,10 +33,10 @@ pub struct InMemoryTrigger {
 
 
 pub async fn cron_job_loop(client: Arc<Postgrest>) {
-    let triggers = Arc::new(RwLock::new(HashMap::new()));
+    let trigger_state = Arc::new(RwLock::new(HashMap::new()));
 
     // Initial hydration of known cron triggers
-    hydrate_triggers(&client, &triggers).await;
+    hydrate_triggers(&client, &trigger_state).await;
 
     // Refresh interval for checking the database
     let refresh_interval = Duration::from_secs(60);
@@ -49,13 +44,16 @@ pub async fn cron_job_loop(client: Arc<Postgrest>) {
     loop {
         // Check if any triggers should run
         {
-            let triggers = triggers.read().await;
+            let triggers = trigger_state.read().await;
             for (id, trigger) in triggers.iter() {
+                println!("Checking trigger: {}", id);
                 if should_trigger_run(trigger) {
                     // Execute the task associated with the trigger
-                    println!("Triggering task for cron expression: {}", trigger.config);
-                    // TODO: Execute the task by creating a trigger task
-                    update_trigger_last_run(&client, trigger).await;
+                    println!("Running triggering task for trigger: {}", trigger.trigger_id);
+                       // TODO: Execute the task by creating a trigger task
+                       update_trigger_last_run(trigger, &trigger_state).await;
+                } else {
+                    println!("Trigger {} should not run", id); 
                 }
             }
         }
@@ -64,7 +62,7 @@ pub async fn cron_job_loop(client: Arc<Postgrest>) {
         sleep(refresh_interval).await;
 
         // Periodically refresh triggers from the database
-        hydrate_triggers(&client, &triggers).await;
+        hydrate_triggers(&client, &trigger_state).await;
     }
 }
 
@@ -105,7 +103,7 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
         },
     };
 
-    println!("Found of flow_versions vector: {}", flow_versions.len());
+    println!("Found flow_versions vector: {}", flow_versions.len());
 
     let mut new_triggers = HashMap::new();
 
@@ -122,7 +120,7 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                         action.get("type").and_then(|v| v.as_str()),
                     ) {
                         if trigger_type == "trigger" {
-                            println!("Found trigger a action of type trigger");
+                            println!("Found trigger action of type trigger");
 
                             let input = action.get("input").cloned().unwrap_or_default();
                             let variables = action.get("variables").cloned().unwrap_or_default();
@@ -134,18 +132,42 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
 
                             println!("Creating trigger with config: {:?}", config);
 
-                            let trigger = InMemoryTrigger {
+                            // Parse the cron expression and calculate the next fire time
+                            let cron_expression = config["input"]["cron_expression"]
+                                .as_str()
+                                .unwrap_or("* * * * *");
+                            
+                            let next_fire = match Schedule::from_str(cron_expression) {
+                                Ok(schedule) => schedule.upcoming(Utc).next(),
+                                Err(e) => {
+                                    println!("Error parsing cron expression: {}", e);
+                                    None
+                                }
+                            };
+
+                            let new_trigger = InMemoryTrigger {
                                 trigger_id: trigger_id.to_string(),
                                 flow_id: flow_id.to_string(),
                                 flow_version_id: flow_version_id.to_string(),
                                 config,
                                 last_fired: None,
-                                next_fire: None,
+                                next_fire,
                             };
-                            println!("Adding trigger to in-memory store: {:?}", trigger);
-                            new_triggers.insert(trigger_id.to_string(), trigger);
+
+                            // Check if the trigger already exists in memory
+                            if let Some(existing_trigger) = triggers.read().await.get(&trigger_id.to_string()) {
+                                println!("Trigger already exists, preserving last_fired and next_fired value");
+                                new_triggers.insert(trigger_id.to_string(), InMemoryTrigger {
+                                    last_fired: existing_trigger.last_fired,
+                                    next_fire: existing_trigger.next_fire,
+                                    ..new_trigger
+                                });
+                            } else {
+                                println!("Adding new trigger to in-memory store: {:?}", new_trigger);
+                                new_triggers.insert(trigger_id.to_string(), new_trigger);
+                            }
                         } else {
-                             println!("Found an action thats not a trigger.");
+                            println!("Found an action that's not a trigger.");
                         }
                     }
                 }
@@ -154,136 +176,71 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
     }
 
     let mut triggers = triggers.write().await;
-    *triggers = new_triggers;
+    for (id, trigger) in new_triggers.into_iter() {
+        triggers.insert(id, trigger);
+    }
 }
 
 pub fn should_trigger_run(trigger: &InMemoryTrigger) -> bool {
     let now = Utc::now();
-    
-    let cron_expression = trigger.config["input"]["cron_expression"]
-        .as_str()
-        .unwrap_or("* * * * *");
 
-    println!("Cron expression from config: {}", cron_expression);
+    println!("Current time: {}", now);
+    if let Some(next_fire) = trigger.next_fire {
+        println!("Next fire time: {}", next_fire);
 
-    match Schedule::from_str(cron_expression) {
-        Ok(schedule) => {
-            let next_run_time = schedule.upcoming(Utc).next().unwrap();
-            println!("Next run time: {}", next_run_time);
-
-            if let Some(last_fired) = trigger.last_fired {
-                now >= next_run_time && now.minute() != last_fired.minute()
-            } else {
-                now >= next_run_time
-            }
-        },
-        Err(e) => {
-            println!("Error parsing cron expression: {}", e);
-            false // Do not run the trigger if cron expression is invalid
+        if now >= next_fire {
+            println!("Trigger should run (now >= next_fire)");
+            return true;
         }
+    } else {
+        println!("No next_fire time set, trigger should not run.");
     }
+
+    println!("Trigger should not run");
+    false
 }
 
-// pub fn should_trigger_run(trigger: &InMemoryTrigger) -> bool {
-//     let now = Utc::now();
+async fn update_trigger_last_run(trigger: &InMemoryTrigger, triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>) {
+   
+    println!("Updating trigger last run and next_run time");
 
-//     println!("Trigger config: {:?}", trigger.config);
-//     println!("Input config: {:?}", trigger.config.get("input"));
-//     println!("Cron expression from config: {:?}", trigger.config.get("input").and_then(|input| input.get("cron_expression")));
+    let new_next_fire = match Schedule::from_str(trigger.config["input"]["cron_expression"].as_str().unwrap()) {
+        Ok(schedule) => schedule.upcoming(Utc).next(),
+        Err(e) => {
+            println!("Error parsing cron expression: {}", e);
+            None
+        }
+    };
 
-//     // let cron_expression = trigger.config.get("input")
-//     //     .and_then(|input| input.get("cron_expression"))
-//     //     .and_then(|v| v.as_str())
-//     //     .unwrap_or("* * * * *"); 
-//     let cron_expression = trigger.config["input"]["cron_expression"]
-//         .as_str()
-//         .unwrap_or("* * * * *");
+    println!("New next fire time: {:?}", new_next_fire);
 
-//     println!("Cron expression from config: {:?}", cron_expression);
-//     println!("Cron expression type: {}", std::any::type_name_of_val(&cron_expression));
-//     println!("Cron expression length: {}", cron_expression.len());
-//     println!("Cron expression bytes: {:?}", cron_expression.as_bytes());
-
-//     // println!("Cron expression in should_trigger_run: {}", cron_expression);
-
-//     let schedule = match Schedule::from_str(cron_expression) {
-//         Ok(schedule) => schedule,
-//         Err(e) => {
-//             println!("Error parsing cron expression: {}", e);
-//             return false; // Do not run the trigger if cron expression is invalid
-//         }
-//     };
-
-//     let next_run_time = match schedule.upcoming(Utc).next() {
-//         Some(time) => time,
-//         None => {
-//             println!("No upcoming run times found for cron expression: {}", cron_expression);
-//             return false; // Do not run the trigger if there are no upcoming times
-//         }
-//     };
-
-//     println!("Next run time: {}", next_run_time);
-
-//     if let Some(last_fired) = trigger.last_fired {
-//         now > next_run_time && now.minute() != last_fired.minute()
-//     } else {
-//         now > next_run_time
-//     }
-// }
-// pub fn should_trigger_run(trigger: &InMemoryTrigger) -> bool {
-//     let now = Utc::now();
-//     let cron_expression = trigger.config.get("input")
-//         .and_then(|input| input.get("cron_expression"))
-//         .and_then(|v| v.as_str())
-//         .unwrap_or("* * * * *");
-
-//     println!("Cron expression in should_trigger_run: {}", cron_expression);
-
-//     let next_run_time = Schedule::from_str(cron_expression)
-//         .unwrap()
-//         .upcoming(Utc)
-//         .next()
-//         .unwrap();
-
-//     println!("Next run time: {}", next_run_time);
-
-//     if let Some(last_fired) = trigger.last_fired {
-//         now > next_run_time && now.minute() != last_fired.minute()
-//     } else {
-//         now > next_run_time
-//     }
-// }
-
-// pub fn should_trigger_run(trigger: &InMemoryTrigger) -> bool {
-//     let now = Utc::now();
-//     let cron_expression = trigger.config.get("cron_expression").and_then(|v| v.as_str()).unwrap_or("* * * * *");
-//     let next_run_time = Schedule::from_str(cron_expression)
-//         .unwrap()
-//         .upcoming(Utc)
-//         .next()
-//         .unwrap();
-
-//     if let Some(last_fired) = trigger.last_fired {
-//         now > next_run_time && now.minute() != last_fired.minute()
-//     } else {
-//         now > next_run_time
-//     }
-// }
-
-pub async fn update_trigger_last_run(client: &Postgrest, trigger: &InMemoryTrigger) {
     let updated_trigger = InMemoryTrigger {
         last_fired: Some(Utc::now()),
+        next_fire: new_next_fire,
         ..trigger.clone()
     };
 
-    // let response = client
-    //     .from("flow_versions")
-    //     .eq("flow_version_id", updated_trigger.flow_version_id.clone())
-    //     .update(serde_json::json!({ "last_fired": updated_trigger.last_fired }))
-    //     .execute()
-    //     .await;
-
-    // if let Err(e) = response {
-    //     println!("Failed to update trigger last fired time: {:?}", e);
-    // }
+    // Update the trigger in memory
+    let mut triggers = triggers.write().await;
+    triggers.insert(trigger.trigger_id.clone(), updated_trigger);
 }
+// async fn update_trigger_last_run(trigger: &InMemoryTrigger,  triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>) {
+//     let new_next_fire = match Schedule::from_str(trigger.config["input"]["cron_expression"].as_str().unwrap()) {
+//         Ok(schedule) => schedule.upcoming(Utc).next(),
+//         Err(e) => {
+//             println!("Error parsing cron expression: {}", e);
+//             None
+//         }
+//     };
+
+//     let updated_trigger = InMemoryTrigger {
+//         last_fired: Some(Utc::now()),
+//         next_fire: new_next_fire,
+//         ..trigger.clone()
+//     };
+
+
+//     // Update the trigger in memory
+//     let mut triggers = triggers.write().await;
+//     triggers.insert(trigger.trigger_id.clone(), updated_trigger);
+// }
