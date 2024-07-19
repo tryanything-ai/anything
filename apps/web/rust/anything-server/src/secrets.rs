@@ -138,7 +138,7 @@ pub async fn get_decrypted_secrets(
 
     let input = GetDecryptedSecretsInput {
         user_account_id: user.account_id.clone()
-    }; 
+    };
 
     println!("get_decrypted_secrets rpc Input?: {:?}", input);
 

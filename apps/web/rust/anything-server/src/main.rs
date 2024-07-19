@@ -13,6 +13,7 @@ mod auth;
 mod secrets;
 mod workflow_types;
 mod execution_planner;
+mod bundler;
 
 #[macro_use] extern crate slugify;
 
@@ -81,12 +82,11 @@ async fn main() {
     // Spawn task processing loop
     // Keeps making progress on work that is meant to be down now. 
     // tokio::spawn(engine::task_processing_loop(client.clone(), semaphore.clone()));
+    tokio::spawn(engine::task_processing_loop(state.clone()));
 
     // Spawn cron job loop
     // Initiates work to be done on schedule tasks
     // tokio::spawn(engine::cron_job_loop(client.clone()));
-    tokio::spawn(engine::task_processing_loop(state.clone()));
-
     tokio::spawn(engine::cron_job_loop(state.client.clone()));
 
     // Run the API server

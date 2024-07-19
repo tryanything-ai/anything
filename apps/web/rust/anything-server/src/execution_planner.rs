@@ -11,7 +11,6 @@ use std::env;
 
 use crate::workflow_types::{Task, Workflow, Action, PluginType, CreateTaskInput, FlowVersion, TaskConfig, TestConfig};
 
-
 pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
@@ -79,38 +78,6 @@ pub async fn process_trigger_task(
     Ok(())
 }
 
-// pub async fn process_trigger_task(
-//     client: &Postgrest,
-//     task: &Task
-// ) -> Result<(), Box<dyn std::error::Error>> {
-//     println!("process_trigger_task");   
-
-//     dotenv().ok();
-//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-//     // Fetch the flow version from the database
-//     let flow_version = client
-//         .from("flow_versions")
-//         .auth(supabase_service_role_api_key.clone())
-//         .select("*")
-//         .eq("flow_version_id", task.flow_version_id.to_string())
-//         .single()
-//         .execute()
-//         .await 
-
-//     // Create the execution plan
-//     let events = create_execution_plan(task.clone(), flow_version).await?;
-
-//     // Insert the events into the database in a single transaction
-//     client
-//         .from("tasks")
-//         .auth(supabase_service_role_api_key.clone())
-//         .insert(&events)
-//         .execute()
-//         .await?;
-
-//     Ok(())
-// }
 
 async fn create_execution_plan(
     task: &Task,
