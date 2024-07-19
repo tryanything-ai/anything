@@ -97,11 +97,6 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &str) {
         .unwrap();
 }
 
-// pub async fn process_task(task: &Task) {
-//     // let res = plugin.call::<&str, &str>("process_task", &task.data).unwrap();
-//     println!("Processed task {}", task.task_id);
-// }
-
 pub async fn process_task(client: &Postgrest, task: &Task) {
     println!("Processing task");
 
@@ -117,8 +112,8 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
                 if let Some(plugin_id) = &task.plugin_id {
                     if plugin_id == "http" {
                         if let (Some(method), Some(url)) = (
-                            task.config.get("method").and_then(Value::as_str),
-                            task.config.get("url").and_then(Value::as_str),
+                            bundled_context.get("method").and_then(Value::as_str),
+                            bundled_context.get("url").and_then(Value::as_str),
                         ) {
                             println!("Processing HTTP task");
                             let client = Client::new();
@@ -135,7 +130,7 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
 
                             let mut request_builder = client.request(method, url);
 
-                            if let Some(headers) = task.config.get("headers").and_then(Value::as_object) {
+                            if let Some(headers) = bundled_context.get("headers").and_then(Value::as_object) {
                                 for (key, value) in headers {
                                     if let Some(value_str) = value.as_str() {
                                         request_builder = request_builder.header(key.as_str(), value_str);
@@ -143,7 +138,7 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
                                 }
                             }
 
-                            if let Some(body) = task.config.get("body").and_then(Value::as_str) {
+                            if let Some(body) = bundled_context.get("body").and_then(Value::as_str) {
                                 request_builder = request_builder.body(body.to_string());
                             }
 
@@ -164,7 +159,7 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
                                 }
                             }
                         } else {
-                            println!("HTTP Missing required fields (method, url) in task config.");
+                            println!("HTTP Missing required fields (method, url) in task context.");
                         }
                     } else {
                         println!("Processed task {} with plugin_id {}", task.task_id, plugin_id);
@@ -181,98 +176,25 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
 }
 
 
-// pub async fn process_task(client: &Postgrest, task: &Task) {
-//     println!("Processing task");
 
-//     let bundled_context = bundle_context(client, task).await;
+// pub async fn fetch_triggers(client: &Postgrest) -> Vec<Trigger> {
 
-//     if task.is_trigger {
-//         println!("Processed trigger task {}", task.task_id);
-//         if let Err(e) = process_trigger_task(client,task).await {
-//             println!("Failed to process trigger task: {}", e);
-//         }
-//     } else {
-//         println!("Procesing task {}", task.task_id);
-//         if let Some(plugin_id) = &task.plugin_id {
-//             if plugin_id == "http" {
-//                 if let (Some(method), Some(url)) = (
-//                     task.config.get("method").and_then(Value::as_str),
-//                     task.config.get("url").and_then(Value::as_str),
-//                 ) {
-//                     println!("Processing HTTP task");
-//                     let client = Client::new();
-//                     let method = match method.to_uppercase().as_str() {
-//                         "GET" => reqwest::Method::GET,
-//                         "POST" => reqwest::Method::POST,
-//                         "PUT" => reqwest::Method::PUT,
-//                         "DELETE" => reqwest::Method::DELETE,
-//                         _ => {
-//                             println!("Unsupported HTTP method: {}", method);
-//                             return;
-//                         }
-//                     };
+//     dotenv().ok();
+//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-//                     let mut request_builder = client.request(method, url);
+//     let response = client
+//         .from("triggers")
+//         .auth(supabase_service_role_api_key.clone())
+//         .select("*")
+//         .execute()
+//         .await
+//         .unwrap()
+//         .text()
+//         .await
+//         .unwrap();
 
-//                     if let Some(headers) = task.config.get("headers").and_then(Value::as_object) {
-//                         for (key, value) in headers {
-//                             if let Some(value_str) = value.as_str() {
-//                                 request_builder = request_builder.header(key.as_str(), value_str);
-//                             }
-//                         }
-//                     }
-
-//                     if let Some(body) = task.config.get("body").and_then(Value::as_str) {
-//                         request_builder = request_builder.body(body.to_string());
-//                     }
-
-//                     match request_builder.send().await {
-//                         // println!("HTTP request sent")
-//                         Ok(response) => {
-//                             println!("HTTP request response! {:?}", response);
-//                             match response.text().await {
-//                                 Ok(text) => {
-//                                     println!("HTTP request successful. Response: {}", text);
-//                                 }
-//                                 Err(err) => {
-//                                     println!("HTTP Failed to read response text: {}", err);
-//                                 }
-//                             }
-//                         }
-//                         Err(err) => {
-//                             println!("HTTP request failed: {}", err);
-//                         }
-//                     }
-//                 } else {
-//                     println!("HTTP Missing required fields (method, url) in task config.");
-//                 }
-//             } else {
-//                 println!("HTTP Processed task {} with plugin_id {}", task.task_id, plugin_id);
-//             }
-//         } else {
-//             println!("No plugin_id found for task {}", task.task_id);
-//         }
-//     }
+//     serde_json::from_str(&response).unwrap()
 // }
-
-pub async fn fetch_triggers(client: &Postgrest) -> Vec<Trigger> {
-
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    let response = client
-        .from("triggers")
-        .auth(supabase_service_role_api_key.clone())
-        .select("*")
-        .execute()
-        .await
-        .unwrap()
-        .text()
-        .await
-        .unwrap();
-
-    serde_json::from_str(&response).unwrap()
-}
 
 pub async fn update_trigger_last_run(client: &Postgrest, trigger: &Trigger) {
     let updated_trigger = Trigger {
@@ -352,17 +274,17 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
     }
 }
 
-pub async fn cron_job_loop(client: Arc<Postgrest>) {
-    loop {
-        let triggers = fetch_triggers(&client).await;
-        for trigger in triggers {
-            if should_trigger_run(&trigger) {
-                // Execute the task associated with the trigger
-                println!("Triggering task for cron expression: {}", trigger.cron_expression);
-                update_trigger_last_run(&client, &trigger).await;
-            }
-        }
-        // Sleep for a minute before checking again
-        sleep(Duration::from_secs(60)).await;
-    }
-}
+// pub async fn cron_job_loop(client: Arc<Postgrest>) {
+//     loop {
+//         let triggers = fetch_triggers(&client).await;
+//         for trigger in triggers {
+//             if should_trigger_run(&trigger) {
+//                 // Execute the task associated with the trigger
+//                 println!("Triggering task for cron expression: {}", trigger.cron_expression);
+//                 update_trigger_last_run(&client, &trigger).await;
+//             }
+//         }
+//         // Sleep for a minute before checking again
+//         sleep(Duration::from_secs(60)).await;
+//     }
+// }

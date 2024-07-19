@@ -151,7 +151,7 @@ pub struct Task {
     pub stage: String,
     pub test_config: Option<Value>,
     pub config: Value,
-    pub context: Option<Value>,
+    pub context: Option<Value>, //TODO: probably delete so we don't leak secrets
     pub started_at: Option<DateTime<Utc>>,
     pub ended_at: Option<DateTime<Utc>>,
     pub debug_result: Option<Value>,
