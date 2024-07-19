@@ -498,7 +498,7 @@ INSERT INTO anything.flow_versions (
       {
       "anything_action_version": "1.0.0",
       "type": "trigger",
-      "plugin_id": "anything_cron_trigger",
+      "plugin_id": "cron_trigger",
       "node_id": "anything_cron_trigger", 
       "plugin_version": "1.0.0",
       "label": "Cron Trigger",
@@ -507,7 +507,7 @@ INSERT INTO anything.flow_versions (
       "variables": {},
       "variables_schema": {},
       "input": {
-        "cron_expression": ""
+        "cron_expression": "*/2 * * * *"
       },
       "input_schema": {
          "type": "object",

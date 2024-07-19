@@ -8,7 +8,8 @@ use tower_http::cors::CorsLayer;
 use tokio::sync::{Mutex, Semaphore, watch};
 
 mod api;
-mod engine;
+mod task_engine;
+mod trigger_engine;
 mod auth;
 mod secrets;
 mod workflow_types;
@@ -81,13 +82,11 @@ async fn main() {
 
     // Spawn task processing loop
     // Keeps making progress on work that is meant to be down now. 
-    // tokio::spawn(engine::task_processing_loop(client.clone(), semaphore.clone()));
-    tokio::spawn(engine::task_processing_loop(state.clone()));
+    tokio::spawn(task_engine::task_processing_loop(state.clone()));
 
     // Spawn cron job loop
     // Initiates work to be done on schedule tasks
-    // tokio::spawn(engine::cron_job_loop(client.clone()));
-    // tokio::spawn(engine::cron_job_loop(state.client.clone()));
+    tokio::spawn(trigger_engine::cron_job_loop(state.client.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

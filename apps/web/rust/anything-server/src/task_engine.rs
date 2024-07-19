@@ -177,60 +177,6 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
 
 
 
-// pub async fn fetch_triggers(client: &Postgrest) -> Vec<Trigger> {
-
-//     dotenv().ok();
-//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-//     let response = client
-//         .from("triggers")
-//         .auth(supabase_service_role_api_key.clone())
-//         .select("*")
-//         .execute()
-//         .await
-//         .unwrap()
-//         .text()
-//         .await
-//         .unwrap();
-
-//     serde_json::from_str(&response).unwrap()
-// }
-
-pub async fn update_trigger_last_run(client: &Postgrest, trigger: &Trigger) {
-    let updated_trigger = Trigger {
-        id: trigger.id,
-        cron_expression: trigger.cron_expression.clone(),
-        last_run: Some(Utc::now()),
-    };
-
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-
-    client
-        .from("triggers")
-        .auth(supabase_service_role_api_key.clone())
-        .eq("id", &updated_trigger.id.to_string())
-        .update(serde_json::to_string(&updated_trigger).unwrap())
-        .execute()
-        .await
-        .unwrap();
-}
-
-pub fn should_trigger_run(trigger: &Trigger) -> bool {
-    let now = Utc::now();
-    let next_run_time = cron::Schedule::from_str(&trigger.cron_expression)
-        .unwrap()
-        .upcoming(Utc)
-        .next()
-        .unwrap();
-
-    if let Some(last_run) = trigger.last_run {
-        now > next_run_time && now.minute() != last_run.minute()
-    } else {
-        now > next_run_time
-    }
-}
 
 // The task processing loop function
 pub async fn task_processing_loop(state: Arc<AppState>) {
@@ -273,18 +219,3 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
         }
     }
 }
-
-// pub async fn cron_job_loop(client: Arc<Postgrest>) {
-//     loop {
-//         let triggers = fetch_triggers(&client).await;
-//         for trigger in triggers {
-//             if should_trigger_run(&trigger) {
-//                 // Execute the task associated with the trigger
-//                 println!("Triggering task for cron expression: {}", trigger.cron_expression);
-//                 update_trigger_last_run(&client, &trigger).await;
-//             }
-//         }
-//         // Sleep for a minute before checking again
-//         sleep(Duration::from_secs(60)).await;
-//     }
-// }
