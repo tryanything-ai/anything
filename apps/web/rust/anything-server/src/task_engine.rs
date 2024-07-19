@@ -25,7 +25,7 @@ use serde_json::Value;
 
 pub async fn fetch_task(client: &Postgrest) -> Option<Task> {
 
-    println!("Looking for pending task");
+    println!("[TASK_ENGINE] Looking for pending task");
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
@@ -41,31 +41,31 @@ pub async fn fetch_task(client: &Postgrest) -> Option<Task> {
     {
         Ok(response) => response,
         Err(e) => {
-            println!("Error executing request: {:?}", e);
+            println!("[TASK_ENGINE] Error executing request: {:?}", e);
             return None;
         },
     };
 
     if !response.status().is_success() {
-        println!("Request failed with status: {}", response.status());
+        println!("[TASK_ENGINE] Request failed with status: {}", response.status());
         return None;
     }
 
     let body = match response.text().await {
         Ok(body) => body,
         Err(e) => {
-            println!("Error reading response body: {:?}", e);
+            println!("[TASK_ENGINE] Error reading response body: {:?}", e);
             return None;
         },
     };
 
-    // println!("Response body: {}", body);
-    // println!("Fetched Task");
+    // println!("[TASK_ENGINE] Response body: {}", body);
+    // println!("[TASK_ENGINE] Fetched Task");
 
     let tasks: Vec<Task> = match serde_json::from_str(&body) {
         Ok(tasks) => tasks,
         Err(e) => {
-            println!("Error parsing JSON: {:?}", e);
+            println!("[TASK_ENGINE] Error parsing JSON: {:?}", e);
             return None;
         },
     };
@@ -98,24 +98,24 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &str) {
 }
 
 pub async fn process_task(client: &Postgrest, task: &Task) {
-    println!("Processing task");
+    println!("[TASK_ENGINE] Processing task");
 
     match bundle_context(client, task).await {
         Ok(bundled_context) => {
             if task.is_trigger {
-                println!("Processed trigger task {}", task.task_id);
+                println!("[TASK_ENGINE] Processed trigger task {}", task.task_id);
                 if let Err(e) = process_trigger_task(client, task).await {
-                    println!("Failed to process trigger task: {}", e);
+                    println!("[TASK_ENGINE] Failed to process trigger task: {}", e);
                 }
             } else {
-                println!("Processing task {}", task.task_id);
+                println!("[TASK_ENGINE] Processing task {}", task.task_id);
                 if let Some(plugin_id) = &task.plugin_id {
                     if plugin_id == "http" {
                         if let (Some(method), Some(url)) = (
                             bundled_context.get("method").and_then(Value::as_str),
                             bundled_context.get("url").and_then(Value::as_str),
                         ) {
-                            println!("Processing HTTP task");
+                            println!("[TASK_ENGINE] Processing HTTP task");
                             let client = Client::new();
                             let method = match method.to_uppercase().as_str() {
                                 "GET" => reqwest::Method::GET,
@@ -123,7 +123,7 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
                                 "PUT" => reqwest::Method::PUT,
                                 "DELETE" => reqwest::Method::DELETE,
                                 _ => {
-                                    println!("Unsupported HTTP method: {}", method);
+                                    println!("[TASK_ENGINE] Unsupported HTTP method: {}", method);
                                     return;
                                 }
                             };
@@ -144,33 +144,33 @@ pub async fn process_task(client: &Postgrest, task: &Task) {
 
                             match request_builder.send().await {
                                 Ok(response) => {
-                                    println!("HTTP request response! {:?}", response);
+                                    println!("[TASK_ENGINE] HTTP request response! {:?}", response);
                                     match response.text().await {
                                         Ok(text) => {
-                                            println!("HTTP request successful. Response: {}", text);
+                                            println!("[TASK_ENGINE] HTTP request successful. Response: {}", text);
                                         }
                                         Err(err) => {
-                                            println!("HTTP Failed to read response text: {}", err);
+                                            println!("[TASK_ENGINE] HTTP Failed to read response text: {}", err);
                                         }
                                     }
                                 }
                                 Err(err) => {
-                                    println!("HTTP request failed: {}", err);
+                                    println!("[TASK_ENGINE] HTTP request failed: {}", err);
                                 }
                             }
                         } else {
-                            println!("HTTP Missing required fields (method, url) in task context.");
+                            println!("[TASK_ENGINE] HTTP Missing required fields (method, url) in task context.");
                         }
                     } else {
-                        println!("Processed task {} with plugin_id {}", task.task_id, plugin_id);
+                        println!("[TASK_ENGINE] Processed task {} with plugin_id {}", task.task_id, plugin_id);
                     }
                 } else {
-                    println!("No plugin_id found for task {}", task.task_id);
+                    println!("[TASK_ENGINE] No plugin_id found for task {}", task.task_id);
                 }
             }
         },
         Err(e) => {
-            println!("Failed to bundle context: {}", e);
+            println!("[TASK_ENGINE] Failed to bundle context: {}", e);
         }
     }
 }
@@ -187,7 +187,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
     loop {
         tokio::select! {
             _ = task_signal_rx.changed() => {
-                println!("Received start signal, checking for tasks.");
+                println!("[TASK_ENGINE] Received start signal, checking for tasks.");
             }
             _ = sleep(backoff) => {
                 // Periodic task checking
@@ -196,7 +196,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
 
         let task = fetch_task(&client).await;
 
-        // println!("Task in Loop: {:?}", task);
+        // println!("[TASK_ENGINE] Task in Loop: {:?}", task);
 
         if let Some(task) = task {
             backoff = Duration::from_millis(200); // Reset backoff when a task is found
