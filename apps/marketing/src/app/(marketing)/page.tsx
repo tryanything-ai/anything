@@ -63,12 +63,12 @@ export default function IndexPage() {
         // height="1000"
         />
       </div>
-      <Features />
+      {/* <Features /> */}
       {/* TODO: Add Features List */}
       {/* Templates https://tailwindui.com/components/marketing/sections/feature-sections */}
       {/* <div className="relative w-full max-w-5xl mx-auto"> */}
-      <h2 className="text-2xl text-center mb-12 font-semibold text-slate-12">Demo Video</h2>
-      <div className="relative w-full max-w-5xl mx-auto" style={{ paddingBottom: "62.5%", height: 0 }}>
+      {/* <h2 className="text-2xl text-center mb-12 font-semibold text-slate-12">Demo Video</h2> */}
+      {/* <div className="relative w-full max-w-5xl mx-auto" style={{ paddingBottom: "62.5%", height: 0 }}>
         <iframe
           src="https://www.loom.com/embed/c71dc4d5a07c4424b3f6d5bbe218549f?sid=6cc91e63-8d1e-431d-a88a-1f1458c58411"
           frameBorder="0"
@@ -76,8 +76,8 @@ export default function IndexPage() {
           title="Anything AI Demo"
           className="absolute top-0 left-0 w-full h-full sm:px-0 px-6"
         ></iframe>
-      </div>
-      <Faq />
+      </div> */}
+      {/* <Faq /> */}
     </>
   );
 }
