@@ -1,71 +1,38 @@
+import { Inter as FontSans } from "next/font/google"
 import "./globals.css";
-import "ui/styles.css";
+import { cn } from "@/lib/utils";
+import { AnythingProvider } from "@/context/AnythingContext";
 
-import type { Metadata } from "next";
-import { ReactNode, Suspense, JSX } from "react";
-import { siteConfig } from "../config/site";
-import { dm_sans, inter } from "../lib/fonts";
-import { PHProvider, PostHogPageview } from "./providers";
+const defaultUrl = process.env.NEXT_PUBLIC_URL as string || "http://localhost:3000";
 
-export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  keywords: ["Automation", "AI", "Zapier", "Node Red", "N8N"],
-  authors: [
-    {
-      name: "anything",
-      url: "https://tryanything.xyz",
-    },
-  ],
-  creator: "anything",
-  metadataBase: new URL(siteConfig.url),
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    title: siteConfig.name,
-    description: siteConfig.description,
-    siteName: siteConfig.name,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: ["/og.jpg"],
-    creator: "@carllippert",
-  },
-  icons: {
-    icon: "/favicons/favicon.ico",
-    shortcut: "/favicons/favicon-16x16.png",
-    apple: "/favicons/apple-touch-icon.png",
-  },
-  manifest: `${siteConfig.url}/favicons/site.webmanifest`,
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
+
+export const metadata = {
+  metadataBase: new URL(defaultUrl),
+  title: "Basejump starter kit",
+  description: "The fastest way to build apps with Next.js and Supabase",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
-  children: ReactNode;
-}): Promise<JSX.Element> {
+  children: React.ReactNode;
+}) {
   return (
-    <html
-      className={`${inter.variable} ${dm_sans.variable}`}
-      data-theme="dark"
-      lang="en"
-      suppressHydrationWarning
-    >
-      <head />
-      <Suspense>
-        <PostHogPageview />
-      </Suspense>
-      <PHProvider>
-        <body className=" text-slate-12 font-sans">{children}</body>
-      </PHProvider>
+    <html lang="en" className={cn(
+      "min-h-screen bg-background font-sans antialiased",
+      fontSans.variable
+    )}>
+      <body className="bg-background text-foreground">
+        <AnythingProvider>
+          <main className="min-h-screen flex flex-col items-center">
+            {children}
+          </main>
+        </AnythingProvider>
+      </body>
     </html>
   );
 }

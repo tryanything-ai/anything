@@ -1,0 +1,80 @@
+# Set the base directory and crate directories
+base_dir := justfile_directory()
+crates_dir := base_dir / "crates"
+plugins_dir := crates_dir / "plugins"
+pdk_test_runner_dir := crates_dir / "pdk-test-runner"
+pdk_mock_plugin_dir := crates_dir / "pdk-mock-plugin"
+pdk_mock_triggger_plugin_dir := crates_dir / "pdk-mock-trigger-plugin"
+pdk_mock_host_dir := crates_dir / "pdk-mock-host-functions"
+pdk_mock_simple_host_dir := crates_dir / "pdk-mock-simple-host"
+
+
+# Define target paths for testing infra
+target := "wasm32-unknown-unknown/release"
+mock_plugin_wasm := pdk_mock_plugin_dir / "target" / target / "anything_pdk_mock_plugin.wasm"
+mock_trigger_plugin_wasm := pdk_mock_triggger_plugin_dir / "target" / target / "anything_pdk_mock_trigger_plugin.wasm"
+mock_host_wasm := pdk_mock_host_dir / "target" / target / "anything_pdk_mock_host_functions.wasm"
+test_runner_wasm := pdk_test_runner_dir / "target" / target / "anything_pdk_test_runner.wasm"
+
+# Set paths for real plugins
+anything-http-plugin_dir := plugins_dir / "anything-http-plugin"
+anything-cron-plugin_dir := plugins_dir / "anything-cron-plugin"
+
+# Define target paths for real plugins
+anything_http_plugin_wasm := anything-http-plugin_dir / "target" / target / "anything_http_plugin.wasm"
+anything_cron_plugin_wasm := anything-cron-plugin_dir / "target" / target / "anything_cron_plugin.wasm"
+
+default:
+  @just --list --justfile {{justfile()}}
+
+all: build-all test-all 
+
+mock: build-mock-plugin build-mock-host build-test-runner build-mock-trigger-plugin test-mock
+
+integration: build-anything-http-plugin test-mock-host
+
+build-all: build-mock-plugin build-mock-host build-test-runner build-anything-http-plugin build-anything-cron-plugin
+
+build-mock-plugin: 
+  cd {{ pdk_mock_plugin_dir }} && cargo build --release
+
+build-mock-trigger-plugin: 
+  cd {{ pdk_mock_triggger_plugin_dir }} && cargo build --release
+
+build-mock-host: 
+  cd {{ pdk_mock_host_dir }} && cargo build --release
+
+build-test-runner: 
+  cd {{ pdk_test_runner_dir }} && cargo build --release
+
+
+# Build the real plugin
+build-anything-http-plugin:
+  cd {{ anything-http-plugin_dir }} && cargo build --release
+
+build-anything-cron-plugin:
+  cd {{ anything-cron-plugin_dir }} && cargo build --release
+
+
+# Test All 
+test-all: test-mock-plugin test-mock-trigger-plugin test-http-plugin test-cron-plugin test-mock-host
+
+# Test Mock
+test-mock: test-mock-plugin test-mock-trigger-plugin
+
+# Test Mock Plugin with Mock Host using the test runner
+test-mock-plugin:
+  cd {{crates_dir}} && xtp plugin test {{mock_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}}
+
+# Test Mock Trigger Plugin with Mock Host using the test runner
+test-mock-trigger-plugin:
+  cd {{crates_dir}} && xtp plugin test {{mock_trigger_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}}  
+
+# Test Real Plugin with Mock Host using the test runner
+test-http-plugin:
+  cd {{crates_dir}} && xtp plugin test {{anything_http_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}} --allow-host "*"
+test-cron-plugin: 
+  cd {{crates_dir}} && xtp plugin test {{anything_cron_plugin_wasm}} --with {{test_runner_wasm}} --mock-host {{mock_host_wasm}}
+
+test-mock-host: 
+ cd {{pdk_mock_simple_host_dir}} && cargo test -- --nocapture
