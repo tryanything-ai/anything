@@ -54,8 +54,8 @@ export default async function RootLayout({
 }): Promise<JSX.Element> {
   return (
     <html
+      // data-theme="light"
       className={`${inter.variable} ${dm_sans.variable}`}
-      data-theme="dark"
       lang="en"
       suppressHydrationWarning
     >
@@ -64,7 +64,7 @@ export default async function RootLayout({
         <PostHogPageview />
       </Suspense>
       <PHProvider>
-        <body className=" text-slate-12 font-sans">{children}</body>
+        <body data-theme="dark" className="text-slate-12 font-sans">{children}</body>
       </PHProvider>
     </html>
   );

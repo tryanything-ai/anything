@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
-import Llama from "../../../public/llamascreenshot.png";
+import Llama from "../../../../public/llamascreenshot.png";
 import Features from "@/components/LocalFeatures";
 import Faq from "@/components/LocalFaq";
 
@@ -13,7 +13,7 @@ export default function IndexPage() {
   const referringDomain = headerList.get("referer");
 
   return (
-    <>
+    <div>
       {/* Bg Pattern */}
       {/* <BgPattern /> */}
       {/* Hero Copy */}
@@ -21,10 +21,11 @@ export default function IndexPage() {
         {/*  */}
         {/* <h1 className="font-display text-[80px] font-semibold leading-[88px] tracking-[-2%] h2 w-full px-4 text-center md:w-[802px] md:px-0"> */}
         <h1 className="md:display h3 w-full px-4 text-center md:w-[800px] md:px-0">
-          Set up <span className="text-crimson-9">AI Automations</span> for your business
+          Build <span className="text-crimson-9">AI Automations</span> for your
+          startup
         </h1>
         <p className="body-xl px-4 text-center md:py-5 text-slate-11 md:w-[705px] md:px-0">
-          Save time. Reduce errors. Automate drudgery.
+          Run Locally. Customize. Self host.
         </p>
       </div>
       {/* Hero CTA */}
@@ -36,7 +37,7 @@ export default function IndexPage() {
           {/* <SignUpButton className="block" />
            */}
           <Button
-            href={`https://airtable.com/app4pkbS50GcnTaeA/pagg9ciOWMGFeh6BN/form?prefill_fldVLaD0gtTpY1jxP=anything_web&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
+            href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             rel="noopener noreferrer"
             target="_blank"
             variant="daisy_primary"
@@ -78,6 +79,6 @@ export default function IndexPage() {
         ></iframe>
       </div>
       <Faq />
-    </>
+    </div>
   );
 }
