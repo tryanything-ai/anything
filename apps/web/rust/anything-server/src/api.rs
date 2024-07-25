@@ -56,8 +56,6 @@ pub async fn get_workflows(
 
     let client = &state.client;
 
-    println!("user {:?}", &user); 
-
     let response = match client
         .from("flows")
         .auth(&user.jwt) // Pass a reference to the JWT

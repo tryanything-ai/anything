@@ -10,19 +10,19 @@ export default async function PersonalAccountDashboard({ children }: { children:
     const navigation = [
         {
             name: 'Overview',
-            href: '/dashboard',
+            href: '/',
         },
         {
             name: 'Workflows',
-            href: '/dashboard/workflows'
+            href: '/workflows'
         },
         {
             name: "Templates",
-            href: '/dashboard/templates'
+            href: '/templates'
         },
         {
             name: "Connections",
-            href: '/dashboard/accounts'
+            href: '/accounts'
         },
         {
             name: 'Settings',

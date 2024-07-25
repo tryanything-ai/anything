@@ -150,26 +150,17 @@ pub async fn get_decrypted_secrets(
         .await
     {
         Ok(response) => response,
-        Err(err) => {
-            println!("Failed to execute request: {:?}", err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response();
-        },
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
     };
 
     let body = match response.text().await {
         Ok(body) => body,
-        Err(err) => {
-            println!("Failed to read response body: {:?}", err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response();
-        },
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
     };
 
     let items: Value = match serde_json::from_str(&body) {
         Ok(items) => items,
-        Err(err) => {
-            println!("Failed to parse JSON: {:?}", err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
-        },
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
     };
 
     Json(items).into_response()

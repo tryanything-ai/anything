@@ -4,9 +4,9 @@ import { Separator } from "@/components/ui/separator";
 
 export default function PersonalAccountSettingsPage({ children }: { children: React.ReactNode }) {
     const items = [
-        { name: "Profile", href: "/dashboard/settings" },
-        { name: "Teams", href: "/dashboard/settings/teams" },
-        { name: "Billing", href: "/dashboard/settings/billing" },
+        { name: "Profile", href: "/settings" },
+        { name: "Teams", href: "/settings/teams" },
+        { name: "Billing", href: "/settings/billing" },
     ]
     return (
         <div className="space-y-6 w-full">

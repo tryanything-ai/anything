@@ -26,7 +26,7 @@ export default function Login({
       return redirect(`/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`);
     }
 
-    return redirect(searchParams.returnUrl || "/dashboard");
+    return redirect(searchParams.returnUrl || "/");
   };
 
   const signUp = async (_prevState: any, formData: FormData) => {

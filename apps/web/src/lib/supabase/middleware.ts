@@ -71,12 +71,18 @@ export const validateSession = async (request: NextRequest) => {
     // https://supabase.com/docs/guides/auth/server-side/nextjs
     const { data: { user } } = await supabase.auth.getUser();
 
-    const protectedRoutes = ['/dashboard', '/invitation'];
+    const protectedRoutes = ['/'];
 
-    if (!user && protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
+
+    // Exclude /login route from being protected
+    if (request.nextUrl.pathname !== '/login' && !user && protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
       // redirect to /login
       return forceLoginWithReturn(request);
     }
+    // if (!user && protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
+    //   // redirect to /login
+    //   return forceLoginWithReturn(request);
+    // }
 
     return response;
   } catch (e) {

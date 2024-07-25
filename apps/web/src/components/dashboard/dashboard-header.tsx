@@ -5,7 +5,6 @@ import NavigatingAccountSelector from "@/components/dashboard/navigation-account
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { Menu } from "lucide-react";
 
-
 interface Props {
     accountId: string;
     navigation?: {
@@ -13,6 +12,7 @@ interface Props {
         href: string;
     }[]
 }
+
 export default function DashboardHeader({ accountId, navigation = [] }: Props) {
 
     return (

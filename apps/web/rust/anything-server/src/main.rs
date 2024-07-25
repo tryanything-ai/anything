@@ -1,11 +1,11 @@
-use axum::{Router, routing::{get, post, delete, put}, middleware::{self, Next}, http::{HeaderValue, Method}};
+use axum::{Router, routing::{get, post, delete, put}, middleware::{self}, http::{HeaderValue, Method}};
 use dotenv::dotenv;
 use std::env;
 use std::sync::Arc;
 use postgrest::Postgrest;
 use tower_http::cors::CorsLayer;
 // use extism::*;
-use tokio::sync::{Mutex, Semaphore, watch};
+use tokio::sync::{Semaphore, watch};
 
 mod api;
 mod task_engine;
@@ -30,13 +30,10 @@ async fn main() {
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
 
-    println!("supabase url {}", supabase_url); 
-    println!("supabase api key {}", supabase_api_key);
-
     let client = Arc::new(
         Postgrest::new(supabase_url.clone())
         .schema("anything")
-        // .insert_header("apikey", supabase_api_key.clone())
+        .insert_header("apikey", supabase_api_key.clone())
     );
 
     let cors = CorsLayer::new()
@@ -85,11 +82,11 @@ async fn main() {
 
     // Spawn task processing loop
     // Keeps making progress on work that is meant to be down now. 
-    // tokio::spawn(task_engine::task_processing_loop(state.clone()));
+    tokio::spawn(task_engine::task_processing_loop(state.clone()));
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
-    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

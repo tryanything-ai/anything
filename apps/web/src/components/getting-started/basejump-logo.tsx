@@ -29,10 +29,10 @@ const Logo = ({ size = "sm", className, logoOnly = false }: Props) => {
             })}
         >
           <Image
-              src={"/images/basejump-logo.png"}
+              src={"/images/icon.png"}
               height={height}
               width={width}
-              alt="Basejump Logo"
+              alt="Anything Logo"
           />
         </div>
           {!logoOnly && (
@@ -42,7 +42,7 @@ const Logo = ({ size = "sm", className, logoOnly = false }: Props) => {
               "text-2xl": size === "sm",
             })}
         >
-          Basejump
+          Anything
         </h1>)}
       </div>
   );
