@@ -16,7 +16,7 @@ use crate::secrets::GetDecryptedSecretsInput;
 // Secrets for building context with API KEYS
 pub async fn get_decrypted_secrets(client: &Postgrest, account_id: Uuid) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
     
     let input = serde_json::json!({
         "user_account_id": account_id.to_string()
