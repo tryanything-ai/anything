@@ -7,8 +7,6 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
-use hyper::header::AUTHORIZATION;
-use postgrest::Postgrest;
 
 use crate::auth::User;
 use crate::workflow_types::{Workflow, CreateTaskInput, TestConfig, TaskConfig};
@@ -17,8 +15,6 @@ use uuid::Uuid;
 
 use dotenv::dotenv; 
 use std::env;
-
-use slugify::slugify;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
@@ -60,26 +56,41 @@ pub async fn get_workflows(
 
     let client = &state.client;
 
+    println!("user {:?}", &user); 
+
     let response = match client
         .from("flows")
         .auth(&user.jwt) // Pass a reference to the JWT
-        .eq("archived", "false")
+        // .eq("archived", "false")
         .select("*,flow_versions(*)")
         .execute()
         .await
     {
         Ok(response) => response,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+        Err(err) => {
+            println!("Failed to execute request: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response();
+        },
     };
+
+    if response.status() == 204 {
+        return (StatusCode::NO_CONTENT, "No content").into_response();
+    }
 
     let body = match response.text().await {
         Ok(body) => body,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+        Err(err) => {
+            println!("Failed to read response body: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response();
+        },
     };
 
     let items: Value = match serde_json::from_str(&body) {
         Ok(items) => items,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+        Err(err) => {
+            println!("Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        },
     };
 
     Json(items).into_response()
@@ -89,8 +100,7 @@ pub async fn get_workflows(
 pub async fn get_workflow(
     Path(flow_id): Path<String>,
     State(state): State<Arc<AppState>>, 
-    Extension(user): Extension<User>,
-    headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
 
     let client = &state.client;
