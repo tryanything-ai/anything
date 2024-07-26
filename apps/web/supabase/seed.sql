@@ -54,7 +54,7 @@ INSERT INTO
             auth.users
     );
 
--- Inserting sample accounts into basejump.accounts
+-- Inserting sample team accounts into basejump.accounts
 INSERT INTO basejump.accounts (
     id, primary_owner_user_id, name, slug, personal_account, updated_at, created_at, created_by, updated_by
 ) VALUES
@@ -70,16 +70,15 @@ VALUES
     ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'member'),
     ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'member');
 
--- Insert into marketplace profiles
 -- Inserting sample profiles into marketplace.profiles
-INSERT INTO marketplace.profiles (
-    id, account_id, username, full_name, avatar_url, website, twitter, tiktok, instagram, youtube, linkedin, github, public, bio, updated_at, created_at, updated_by, created_by
-) VALUES
-    ('0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user1', 'User One', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user1.example.com', '@user1', '@user1', '@user1', 'https://youtube.com/user1', 'https://linkedin.com/in/user1', 'https://github.com/user1', true, 'Bio of User One', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
-    ('5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'user2', 'User Two', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user2.example.com', '@user2', '@user2', '@user2', 'https://youtube.com/user2', 'https://linkedin.com/in/user2', 'https://github.com/user2', true, 'Bio of User Two', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
-    ('1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user3', 'User Three', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user3.example.com', '@user3', '@user3', '@user3', 'https://youtube.com/user3', 'https://linkedin.com/in/user3', 'https://github.com/user3', true, 'Bio of User Three', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
-    ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'user4', 'User Four', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user4.example.com', '@user4', '@user4', '@user4', 'https://youtube.com/user4', 'https://linkedin.com/in/user4', 'https://github.com/user4', true, 'Bio of User Four', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
-    ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user5', 'User Five', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user5.example.com', '@user5', '@user5', '@user5', 'https://youtube.com/user5', 'https://linkedin.com/in/user5', 'https://github.com/user5', true, 'Bio of User Five', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
+-- INSERT INTO marketplace.profiles (
+--     id, account_id, username, full_name, avatar_url, website, twitter, tiktok, instagram, youtube, linkedin, github, public, bio, updated_at, created_at, updated_by, created_by
+-- ) VALUES
+--     ('0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user1', 'User One', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user1.example.com', '@user1', '@user1', '@user1', 'https://youtube.com/user1', 'https://linkedin.com/in/user1', 'https://github.com/user1', true, 'Bio of User One', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
+--     ('5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'user2', 'User Two', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user2.example.com', '@user2', '@user2', '@user2', 'https://youtube.com/user2', 'https://linkedin.com/in/user2', 'https://github.com/user2', true, 'Bio of User Two', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
+--     ('1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user3', 'User Three', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user3.example.com', '@user3', '@user3', '@user3', 'https://youtube.com/user3', 'https://linkedin.com/in/user3', 'https://github.com/user3', true, 'Bio of User Three', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
+--     ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'user4', 'User Four', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user4.example.com', '@user4', '@user4', '@user4', 'https://youtube.com/user4', 'https://linkedin.com/in/user4', 'https://github.com/user4', true, 'Bio of User Four', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
+--     ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'user5', 'User Five', 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', 'https://user5.example.com', '@user5', '@user5', '@user5', 'https://youtube.com/user5', 'https://linkedin.com/in/user5', 'https://github.com/user5', true, 'Bio of User Five', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
 
 -- Insert sample tags into the tags table
 INSERT INTO marketplace.tags (id, tag_uuid, tag_label, tag_slug, tag_icon, updated_at, created_at, updated_by, created_by)

@@ -63,7 +63,7 @@ ALTER TABLE marketplace.profiles ENABLE ROW LEVEL SECURITY;
 create policy "All logged in users can select" on marketplace.profiles
     for select
     to authenticated
-    using (true);
+    USING (public IS TRUE);
 
 ----------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
@@ -71,7 +71,7 @@ create policy "All logged in users can select" on marketplace.profiles
 create policy "All authenticated and anonymous users can select" on marketplace.profiles
     for select
     to authenticated, anon
-    using (true);
+     USING (public IS TRUE);
 
 -------------
 -- Users should be able to read records that are owned by an account they belong to
@@ -125,4 +125,21 @@ create policy "Account members can update" on marketplace.profiles
 --      );
 
 
+-- From GPT
+-- To create a marketplace profile for every new user when they sign up so they can publish public stuff
+-- Function to insert a new profile when a new user is created
+-- CREATE OR REPLACE FUNCTION marketplace.create_profile_for_new_user()
+-- RETURNS TRIGGER AS
+-- $$
+-- BEGIN
+--     INSERT INTO marketplace.profiles (id, account_id, username, full_name, avatar_url, website, twitter, tiktok, instagram, youtube, linkedin, github, public, bio, archived, created_by, updated_by)
+--     VALUES (NEW.id, NEW.id, NULL, NULL, 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, false, NEW.id, NEW.id);
+--     RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
+-- -- -- -- Trigger to call the function after a new user is created
+-- CREATE TRIGGER create_profile_after_user_creation
+-- AFTER INSERT ON auth.users
+-- FOR EACH ROW
+-- EXECUTE FUNCTION marketplace.create_profile_for_new_user();

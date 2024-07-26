@@ -55,18 +55,18 @@ ALTER TABLE marketplace.flow_templates ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all records regardless of account
 ----------------
-create policy "All logged in users can select" on marketplace.flow_templates
-    for select
-    to authenticated
-    using (true);
+-- create policy "All logged in users can select" on marketplace.flow_templates
+--     for select
+--     to authenticated
+--     using (true);
 
 ----------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
 ----------------
-create policy "All authenticated and anonymous users can select" on marketplace.flow_templates
-    for select
-    to authenticated, anon
-    using (true);
+-- create policy "All authenticated and anonymous users can select" on marketplace.flow_templates
+--     for select
+--     to authenticated, anon
+--     using (true);
 
 -------------
 -- Users should be able to read records that are owned by an account they belong to
@@ -120,4 +120,53 @@ create policy "All authenticated and anonymous users can select" on marketplace.
 --      );
 
 
+-- From GPT
 
+-- Policy to allow all authenticated users to view public templates
+CREATE POLICY "Public templates are visible to all authenticated users" ON marketplace.flow_templates
+    FOR SELECT
+    TO authenticated
+    USING (public_template IS TRUE);
+
+-- Policy to allow account owners to view their own non-public templates
+CREATE POLICY "Account owners can view non-public templates" ON marketplace.flow_templates
+    FOR SELECT
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role('owner'))
+        AND public_template IS FALSE
+    );
+
+-- Example policies for other operations (create, update, delete)
+
+-- Policy to allow account members to create records
+CREATE POLICY "Account members can insert" ON marketplace.flow_templates
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+    );
+
+-- Policy to allow account members to update their own records
+CREATE POLICY "Account members can update" ON marketplace.flow_templates
+    FOR UPDATE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+    );
+
+-- Policy to allow account members to delete their own records
+CREATE POLICY "Account members can delete" ON marketplace.flow_templates
+    FOR DELETE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+    );
+
+-- Policy to allow account owners to delete their own records
+CREATE POLICY "Account owners can delete" ON marketplace.flow_templates
+    FOR DELETE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role('owner'))
+    );
