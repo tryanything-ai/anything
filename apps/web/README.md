@@ -4,7 +4,7 @@
 cd apps/web
 supabase start
 cd ...
-pnpm dev ==filter=web
+pnpm dev --filter=web
 ```
 
 # How to reset supabase db

@@ -26,7 +26,7 @@ export default async function PersonalAccountDashboard({ children }: { children:
         },
         {
             name: 'Settings',
-            href: '/dashboard/settings'
+            href: '/settings'
         }
     ]
 
