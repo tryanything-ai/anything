@@ -49,8 +49,7 @@ pub async fn root() -> &'static str {
 
 pub async fn get_workflows(
     State(state): State<Arc<AppState>>, 
-    Extension(user): Extension<User>,
-    _headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
     println!("Handling a get_workflows");
 
@@ -131,8 +130,7 @@ pub async fn get_workflow(
 pub async fn get_flow_versions(
     Path(flow_id): Path<String>,
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-    headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
 
     let client = &state.client;
@@ -165,7 +163,7 @@ pub async fn get_flow_versions(
 pub async fn create_workflow(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(payload): Json<CreateWorkflowHandleInput>,
 ) -> impl IntoResponse {
 
@@ -229,8 +227,7 @@ pub async fn create_workflow(
 pub async fn delete_workflow(
     Path(flow_id): Path<String>,
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-    headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
 
     let client = &state.client;
@@ -260,7 +257,7 @@ pub async fn update_workflow(
     Path(flow_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(payload): Json<UpdateWorkflowInput>,  
 ) -> impl IntoResponse {
     
@@ -290,7 +287,7 @@ pub async fn update_workflow_version(
     Path((workflow_id, workflow_version_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
 
@@ -325,8 +322,7 @@ pub async fn update_workflow_version(
 // Actions
 pub async fn get_actions(
     State(state): State<Arc<AppState>>, 
-    Extension(user): Extension<User>,
-    headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
     println!("Handling a get_actions");
 
@@ -362,8 +358,7 @@ pub async fn get_actions(
 pub async fn test_workflow(
     Path((workflow_id, workflow_version_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>, 
-    Extension(user): Extension<User>,
-    headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
 
     let client = &state.client;
@@ -436,6 +431,9 @@ pub async fn test_workflow(
         inputs: serde_json::json!(workflow.actions[0].input), 
     }; 
 
+    let trigger_session_id = Uuid::new_v4().to_string();
+    let flow_session_id = Uuid::new_v4().to_string();
+
     let input = CreateTaskInput {
         account_id: user.account_id.clone(),
         task_status: "pending".to_string(),
@@ -443,9 +441,9 @@ pub async fn test_workflow(
         flow_version_id: workflow_version_id.clone(),
         flow_version_name: "derp".to_string(),
         trigger_id: workflow.actions[0].node_id.clone(),
-        trigger_session_id: Uuid::new_v4().to_string(),
+        trigger_session_id: trigger_session_id.clone(),
         trigger_session_status: "pending".to_string(),
-        flow_session_id: Uuid::new_v4().to_string(),
+        flow_session_id: flow_session_id.clone(),
         flow_session_status: "pending".to_string(),
         node_id: workflow.actions[0].node_id.clone(),
         is_trigger: true,
@@ -487,7 +485,10 @@ pub async fn test_workflow(
         println!("Failed to send task signal: {:?}", err);
     }
 
-    Json(items).into_response()
+    Json(serde_json::json!({
+        "flow_session_id": flow_session_id,
+        "trigger_session_id": trigger_session_id
+    })).into_response()
 }
 
 //Just ask the user for dummy data and send it up when they do the call
@@ -495,8 +496,7 @@ pub async fn test_workflow(
 pub async fn test_action(
     Path((workflow_id, workflow_version_id, action_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>, 
-    Extension(user): Extension<User>,
-    headers: HeaderMap,
+    Extension(user): Extension<User>
 ) -> impl IntoResponse {
 
     println!("Handling test workflow action");
@@ -622,4 +622,53 @@ pub async fn test_action(
     }
 
     Json(items).into_response()
+}
+
+// Actions
+pub async fn get_test_session_results(
+    Path((workflow_id, workflow_version_id, session_id)): Path<(String, String, String)>,
+    State(state): State<Arc<AppState>>, 
+    Extension(user): Extension<User>
+) -> impl IntoResponse {
+    println!("Handling a get_test_session_results");
+
+let client = &state.client;
+
+    let response = match client
+        .from("tasks")
+        .auth(user.jwt)
+        .eq("flow_session_id", &session_id)
+        .eq("flow_id", &workflow_id)
+        .eq("flow_version_id", &workflow_version_id)
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read response body").into_response(),
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response(),
+    };
+
+    let all_completed = items.as_array().map_or(false, |tasks| {
+        tasks.iter().all(|task| {
+            task.get("flow_session_status") == Some(&Value::String("completed".to_string())) &&
+            task.get("trigger_session_status") == Some(&Value::String("completed".to_string()))
+        })
+    });
+
+    let result = serde_json::json!({
+        "tasks": items,
+        "complete": all_completed
+    });
+
+    Json(result).into_response()
 }

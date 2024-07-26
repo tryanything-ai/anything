@@ -61,7 +61,7 @@ INSERT INTO basejump.accounts (
     ('c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'Account 1', 'account-1', false, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
     ('7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'Account 2', 'account-2', false, now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f');
 
--- Inserting sample users into basejump.account_user table
+-- Inserting sample users into basejump.account_user table  
 INSERT INTO basejump.account_user (user_id, account_id, account_role)
 VALUES
     ('0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'owner'),

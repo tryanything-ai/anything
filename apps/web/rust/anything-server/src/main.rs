@@ -65,8 +65,12 @@ async fn main() {
         .route("/secret", put(secrets::update_secret))
         .route("/secret/:id", delete(secrets::delete_secret))
         // Users Testing Workflows
+        //Test Workflows
         .route("/testing/workflow/:workflow_id/version/:workflow_version_id", get(api::test_workflow))
+        .route("/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id", get(api::get_test_session_results))
+        //Test Actions
         .route("/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id", get(api::test_action))
+       
         .layer(middleware::from_fn(auth::middleware))
         .layer(cors)
         .with_state(state.clone()); 

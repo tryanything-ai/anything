@@ -80,12 +80,12 @@ ALTER TABLE anything.tasks ENABLE ROW LEVEL SECURITY;
 -------------
 -- Users should be able to read records that are owned by an account they belong to
 --------------
--- create policy "Account members can select" on anything.tasks
---     for select
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can select" on anything.tasks
+    for select
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 
 ----------------
