@@ -52,7 +52,6 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
         setTestingWorkflow(false);
     }
 
-
     const pollForResults = async (flowId: string, versionId: string, workflow_session_id: string) => {
         let isComplete = false;
 

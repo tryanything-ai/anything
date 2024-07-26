@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Play } from "lucide-react";
+import { TaskResult } from "./task-card";
 
 export default function TestingTab() {
     const { workflow, testing } = useAnything();
@@ -26,17 +27,7 @@ export default function TestingTab() {
                 </Button>
                 {testing.testingWorkflow ? "TESTING WORKFLOW" : null}
                 {testing.worklowTestingSessionTasks.map((task, index) => (
-                    <div key={index} className="border rounded-md bg-pink-400 mt-2">
-                        <div>
-                            {task.flow_version_name}
-                        </div>
-                        <div>
-                            {task.task_status}
-                        </div>
-                        <div>
-                            {task.started_at}
-                        </div>
-                    </div>
+                    <TaskResult key={index} task={task} />
                 ))}
             </div>
         </div>

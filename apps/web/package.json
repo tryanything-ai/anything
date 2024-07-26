@@ -44,6 +44,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.45.4",
+    "react-json-view": "^1.21.3",
     "reactflow": "^11.11.3",
     "slugify": "^1.6.6",
     "swr": "^2.2.5",
