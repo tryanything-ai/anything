@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::{auth::User, task_types::{FlowSessionStatus, TaskStatus, TriggerSessionStatus}};
+use crate::{auth::User, task_types::{ActionType, FlowSessionStatus, TaskStatus, TriggerSessionStatus}};
 use crate::workflow_types::{Workflow, CreateTaskInput, TestConfig, TaskConfig};
 use crate::AppState; 
 use crate::task_types::Stage; 
@@ -440,14 +440,14 @@ pub async fn test_workflow(
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
-        flow_version_name: "derp".to_string(),
+        action_label: workflow.actions[0].label.clone(),
         trigger_id: workflow.actions[0].node_id.clone(),
         trigger_session_id: trigger_session_id.clone(),
         trigger_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         flow_session_id: flow_session_id.clone(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         node_id: workflow.actions[0].node_id.clone(),
-        is_trigger: true, //TODO:
+        action_type: ActionType::Trigger,
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config), 
@@ -576,14 +576,14 @@ pub async fn test_action(
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
-        flow_version_name: "derp".to_string(),
+        action_label: workflow.actions[0].label.clone(),
         trigger_id: workflow.actions[0].node_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         node_id: workflow.actions[0].node_id.clone(),
-        is_trigger: true,
+        action_type: workflow.actions[0].action_type.clone(),
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(), 
         config: serde_json::json!(task_config), 

@@ -7,7 +7,7 @@ export interface Workflow {
 }
 
 //Guessing to what the total list of 
-export enum PluginType {
+export enum ActionType {
   Input = "input",
   Trigger = "trigger",
   Action = "action",
@@ -20,7 +20,7 @@ export enum PluginType {
 //Node Configuration needed to display and run a Node
 export interface Action {
   anything_action_version: string; //defines compatability so in future we can upgrade actions
-  type: PluginType;
+  type: ActionType;
   plugin_id: string;
   node_id: string; //unique id for react flow. probably generated based on action_id or plugin_id or slug of label
   plugin_version: string; //TODO: so we can manage upgrade of plugins

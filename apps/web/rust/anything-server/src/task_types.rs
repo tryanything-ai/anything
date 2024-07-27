@@ -64,6 +64,7 @@ impl FlowSessionStatus {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub enum TriggerSessionStatus {
     Pending,    // Trigger is created but not yet started
     Waiting,    // Trigger is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -82,6 +83,33 @@ impl TriggerSessionStatus {
             TriggerSessionStatus::Completed => "completed",
             TriggerSessionStatus::Failed => "failed",
             TriggerSessionStatus::Canceled => "canceled",
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum ActionType {
+    Input,      // Input action
+    Trigger,    // Trigger action
+    Action,     // General action
+    Loop,       // Loop action
+    Decision,   // Decision action
+    Filter,     // Filter action
+    Output      // Output action
+}
+
+impl ActionType {
+    pub fn as_str(&self) -> &str {
+        match self {
+            ActionType::Input => "input",
+            ActionType::Trigger => "trigger",
+            ActionType::Action => "action",
+            ActionType::Loop => "loop",
+            ActionType::Decision => "decision",
+            ActionType::Filter => "filter",
+            ActionType::Output => "output",
         }
     }
 }

@@ -5,6 +5,8 @@ use chrono::{DateTime, Timelike, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
+use crate::task_types::ActionType;
+
 use serde_with::{serde_as, DisplayFromStr};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -16,28 +18,9 @@ pub struct Workflow {
 
 #[derive(Serialize, Deserialize, Debug)]
 // #[serde(rename_all = "camelCase")]
-pub enum PluginType {
-    #[serde(rename = "input")]
-    Input,
-    #[serde(rename = "trigger")]
-    Trigger,
-    #[serde(rename = "action")]
-    Action,
-    #[serde(rename = "loop")]
-    Loop,
-    #[serde(rename = "decision")]
-    Decision,
-    #[serde(rename = "filter")]
-    Filter,
-    #[serde(rename = "output")]
-    Output,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-// #[serde(rename_all = "camelCase")]
 pub struct Action {
     pub anything_action_version: String,
-    pub r#type: PluginType,
+    pub action_type: ActionType,
     pub plugin_id: String,
     pub node_id: String,
     pub plugin_version: String,
@@ -105,14 +88,14 @@ pub struct CreateTaskInput {
     pub task_status: String,
     pub flow_id: String,
     pub flow_version_id: String,
-    pub flow_version_name: String,
+    pub action_label: String,
     pub trigger_id: String,
     pub trigger_session_id: String,
     pub trigger_session_status: String,
     pub flow_session_id: String,
     pub flow_session_status: String,
     pub node_id: String,
-    pub is_trigger: bool,
+    pub action_type: ActionType,
     pub plugin_id: String,
     pub stage: String,
     pub config: Value,
@@ -140,14 +123,14 @@ pub struct Task {
     pub task_status: String,
     pub flow_id: Uuid,
     pub flow_version_id: Uuid,
-    pub flow_version_name: Option<String>,
+    pub action_label: String,
     pub trigger_id: String,
     pub trigger_session_id: String,
     pub trigger_session_status: String,
     pub flow_session_id: String,
     pub flow_session_status: String,
     pub node_id: String,
-    pub is_trigger: bool,
+    pub action_type: String,
     pub plugin_id: Option<String>,
     pub stage: String,
     pub test_config: Option<Value>,

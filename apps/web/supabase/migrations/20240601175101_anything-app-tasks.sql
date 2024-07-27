@@ -10,14 +10,14 @@ CREATE TABLE IF NOT EXISTS anything.tasks
     task_status TEXT NOT NULL,
     flow_id uuid not null references anything.flows(flow_id), -- the flow that was running UUID ( root flow name and stuff)
     flow_version_id uuid not null references anything.flow_versions(flow_version_id), -- the version of the flow that was running UUID
-    flow_version_name TEXT, -- the name of the flow version that was running example 0.0.1
+    action_label TEXT, -- the name of the flow version that was running example 0.0.1
     trigger_id TEXT NOT NULL, -- the trigger that caused the task to run
     trigger_session_id TEXT NOT NULL, -- anything that is triggered by a single trigger including nested flow runs
     trigger_session_status TEXT NOT NULL, -- the status of the trigger session
     flow_session_id TEXT NOT NULL, -- a single instance of a flow running
     flow_session_status TEXT NOT NULL, -- the status of the flow session
     node_id TEXT NOT NULL, -- the node that defined this event
-    is_trigger BOOLEAN NOT NULL DEFAULT FALSE, -- if this event is a trigger event
+    action_type TEXT NOT NULL, -- if this event is a trigger, action, loop, input et
     plugin_id TEXT NOT NULL, -- the extension that processed this event
     stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
     test_config json, -- the config used to do special testing for flow and action

@@ -13,7 +13,7 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
         )}
       >
         <div className="pb-4">
-          <div className="text-xl">{task.processing_order + 1}:{" "}{task.node_id} </div>
+          <div className="text-xl">{task.processing_order + 1}:{" "}{task.action_label} </div>
         </div>
         <div>
           Start Time: {task.started_at}

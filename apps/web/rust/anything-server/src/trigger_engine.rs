@@ -1,5 +1,5 @@
 use tokio::time::{sleep, Duration};
-use chrono::{Utc, DateTime, Timelike};
+use chrono::{Utc, DateTime};
 use postgrest::Postgrest;
 
 use dotenv::dotenv;
@@ -7,7 +7,7 @@ use std::env;
 
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::AppState;
+use crate::{task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}, AppState};
 use std::collections::HashMap;
 
 use cron::Schedule;
@@ -27,6 +27,7 @@ pub struct InMemoryTrigger {
     pub node_id: String,
     pub trigger_id: String,
     pub flow_id: String,
+    pub action_label: String,
     pub flow_version_id: String,
     pub config: Value,
     pub last_fired: Option<DateTime<Utc>>,
@@ -161,6 +162,7 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                                 account_id: account_id.to_string(),
                                 trigger_id: trigger_id.to_string(),
                                 flow_id: flow_id.to_string(),
+                                action_label: action.get("label").and_then(|v| v.as_str()).unwrap_or("").to_string(),
                                 flow_version_id: flow_version_id.to_string(),
                                 config,
                                 last_fired: None,
@@ -265,19 +267,19 @@ async fn create_trigger_task(state: &AppState, trigger: &InMemoryTrigger) -> Res
 
     let input = CreateTaskInput {
         account_id: trigger.account_id.clone(),
-        task_status: "pending".to_string(),
+        task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: trigger.flow_id.clone(),
         flow_version_id: trigger.flow_version_id.clone(),
-        flow_version_name: "derp".to_string(),
+        action_label: trigger.action_label.clone(),
         trigger_id: trigger.trigger_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: "pending".to_string(),
+        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
-        flow_session_status: "pending".to_string(),
+        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         node_id: trigger.node_id.clone(),
-        is_trigger: true,
+        action_type: ActionType::Trigger, 
         plugin_id: trigger.trigger_id.clone(),
-        stage: "production".to_string(),
+        stage: Stage::Production.as_str().to_string(),
         config: serde_json::json!(task_config),
         test_config: None,
         processing_order: 0

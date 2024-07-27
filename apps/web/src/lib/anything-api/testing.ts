@@ -6,14 +6,14 @@ export interface TaskRow {
     task_status: string;
     flow_id: string;
     flow_version_id: string;
-    flow_version_name: string;
+    action_label: string;
     trigger_id: string;
     trigger_session_id: string;
     trigger_session_status: string;
     flow_session_id: string;
     flow_session_status: string;
     node_id: string;
-    is_trigger: boolean;
+    action_type: string;
     plugin_id: string;
     stage: string;
     test_config?: Record<string, any>;

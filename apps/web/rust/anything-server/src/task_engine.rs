@@ -11,8 +11,6 @@ use std::env;
 
 use reqwest::Client;
 
-use uuid::Uuid;
-
 use crate::AppState;
 use crate::workflow_types::Task;
 use crate::execution_planner::process_trigger_task;
@@ -20,57 +18,8 @@ use crate::bundler::bundle_context;
 
 use serde_json::Value;
 
-use crate::task_types::{Stage, TaskStatus, FlowSessionStatus, TriggerSessionStatus}; 
+use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}; 
 
-
-// pub async fn fetch_task(state: &AppState, stage: &Stage) -> Option<Task> {
-//     println!("[TASK_ENGINE] Looking for oldest pending task in stage {}", stage.as_str());
-
-//     dotenv().ok();
-//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-//     let response = match state.client
-//         .from("tasks")
-//         .auth(supabase_service_role_api_key.clone())
-//         .select("*")
-//         .eq("task_status", TaskStatus::Pending.as_str())
-//         .eq("flow_session_status", FlowSessionStatus::Pending.as_str())
-//         .eq("stage", stage.as_str())
-//         .order("created_at.asc")
-//         .limit(1)
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(e) => {
-//             println!("[TASK_ENGINE] Error executing request: {:?}", e);
-//             return None;
-//         },
-//     };
-
-//     if !response.status().is_success() {
-//         println!("[TASK_ENGINE] Request failed with status: {}", response.status());
-//         return None;
-//     }
-
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(e) => {
-//             println!("[TASK_ENGINE] Error reading response body: {:?}", e);
-//             return None;
-//         },
-//     };
-
-//     let tasks: Vec<Task> = match serde_json::from_str(&body) {
-//         Ok(tasks) => tasks,
-//         Err(e) => {
-//             println!("[TASK_ENGINE] Error parsing JSON: {:?}", e);
-//             return None;
-//         },
-//     };
-
-//     tasks.into_iter().next()
-// }
 pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
     println!("[TASK_ENGINE] Looking for oldest pending task in stage {}", stage.as_str());
 
@@ -297,7 +246,7 @@ pub async fn process_task(client: &Postgrest, task: &Task) -> Result<(), Box<dyn
     let result = async {
         let bundled_context = bundle_context(client, task).await?;
 
-        if task.is_trigger {
+        if task.action_type == ActionType::Trigger.as_str().to_string() {
             println!("[TASK_ENGINE] Processing trigger task {}", task.task_id);
             process_trigger_task(client, task).await?;
         } else {
@@ -400,19 +349,21 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
             let permit = semaphore.clone().acquire_owned().await.unwrap();
 
             task::spawn(async move {
-                //Mark flow_session as running
-                   // Update flow session status to "processing"
+                // Update flow session status to "running"
+                // Prevents other workers from picking up the same flow session ( maybe not perfect )
                 if let Err(e) = update_flow_session_status(&client, &task.flow_session_id, &FlowSessionStatus::Running, &TriggerSessionStatus::Running).await {
                     println!("[TASK_ENGINE] Error updating flow session status to processing: {}", e);
                     return;
                 }
+
                 // Process the trigger task if it is a trigger
-                if task.is_trigger {
+                if task.action_type == ActionType::Trigger.as_str().to_string() {
                     if let Err(e) = process_task(&client, &task).await {
                         println!("[TASK_ENGINE] Failed to process trigger task: {}", e);
                     }
                 }   
-        
+
+                //Process rest of flwo
                 process_flow_tasks(&client, &task.flow_session_id).await;
 
                 drop(permit);
