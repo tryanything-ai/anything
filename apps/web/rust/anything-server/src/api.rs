@@ -656,8 +656,10 @@ let client = &state.client;
 
     let all_completed = items.as_array().map_or(false, |tasks| {
         tasks.iter().all(|task| {
-            task.get("flow_session_status") == Some(&Value::String("completed".to_string())) &&
-            task.get("trigger_session_status") == Some(&Value::String("completed".to_string()))
+            let flow_status = task.get("flow_session_status");
+            let trigger_status = task.get("trigger_session_status");
+            (flow_status == Some(&Value::String("completed".to_string())) || flow_status == Some(&Value::String("failed".to_string()))) &&
+            (trigger_status == Some(&Value::String("completed".to_string())) || trigger_status == Some(&Value::String("failed".to_string())))
         })
     });
 

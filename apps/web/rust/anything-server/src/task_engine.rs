@@ -233,16 +233,19 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
                         );
                         all_tasks_completed = false;
 
-                        // Update remaining tasks to cancelled state
+                        // Update tasks with process_order > current task to cancelled state
+                        let current_process_order = task.processing_order; 
                         for remaining_task in &tasks {
-                            if remaining_task.task_status
-                                != TaskStatus::Completed.as_str().to_string()
+                            if remaining_task.processing_order > current_process_order
+                                && remaining_task.task_status != TaskStatus::Completed.as_str().to_string()
                             {
                                 if let Err(update_err) = update_task_status(
                                     client,
                                     remaining_task,
                                     &TaskStatus::Canceled,
-                                    None,
+                                    Some(serde_json::json!({
+                                        "error": format!("Cancelled due to error in previous task: {}", e)
+                                    })),
                                 )
                                 .await
                                 {
@@ -284,6 +287,75 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
         }
     }
 }
+
+// pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
+//     println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]");
+
+//     if let Some(tasks) = fetch_flow_tasks(client, flow_session_id).await {
+//         let mut all_tasks_completed = true;
+
+//         for task in &tasks {
+//             if task.task_status == TaskStatus::Pending.as_str().to_string() {
+//                 match process_task(client, task).await {
+//                     Ok(_) => {}
+//                     Err(e) => {
+//                         println!(
+//                             "[TASK_ENGINE] Error processing task {}: {}",
+//                             task.task_id, e
+//                         );
+//                         all_tasks_completed = false;
+
+//                         // Update remaining tasks to cancelled state
+//                         for remaining_task in &tasks {
+//                             if remaining_task.task_status
+//                                 != TaskStatus::Completed.as_str().to_string()
+//                             {
+//                                 if let Err(update_err) = update_task_status(
+//                                     client,
+//                                     remaining_task,
+//                                     &TaskStatus::Canceled,
+//                                     None,
+//                                 )
+//                                 .await
+//                                 {
+//                                     println!(
+//                                         "[TASK_ENGINE] Error updating task status: {}",
+//                                         update_err
+//                                     );
+//                                 }
+//                             }
+//                         }
+//                         break;
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Update flow session status
+//         let flow_session_status = if all_tasks_completed {
+//             FlowSessionStatus::Completed
+//         } else {
+//             FlowSessionStatus::Failed
+//         };
+
+//         let trigger_session_status = if all_tasks_completed {
+//             TriggerSessionStatus::Completed
+//         } else {
+//             TriggerSessionStatus::Failed
+//         };
+
+//         if let Err(e) = update_flow_session_status(
+//             client,
+//             flow_session_id,
+//             &flow_session_status,
+//             &trigger_session_status,
+//         )
+//         .await
+//         {
+//             println!("[TASK_ENGINE] Error updating flow session status: {}", e);
+//         }
+//     }
+// }
 // pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
 
 //     println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]");
