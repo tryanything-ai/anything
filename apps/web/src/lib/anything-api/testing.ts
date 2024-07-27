@@ -85,7 +85,7 @@ export const testWorkflow = async (workflow_id: string, workflow_version_id: str
 
 export type WorklfowTestSessionResult = {
     tasks: TaskRow[];
-    completed: boolean;
+    complete: boolean;
 } | undefined;
 
 

@@ -68,7 +68,7 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
                     setWorkflowTestingSessionTasks(result.tasks); 
                 } 
 
-                if (result?.completed) {  
+                if (result?.complete) {  
 
                     isComplete = true;
                     setTestingWorkflow(false);
@@ -76,7 +76,7 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
                     console.log("Workflow completed:", result.tasks);
                 } else {
                     // Wait before polling again
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
         }
