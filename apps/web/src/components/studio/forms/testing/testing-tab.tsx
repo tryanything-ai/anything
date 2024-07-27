@@ -21,21 +21,23 @@ export default function TestingTab() {
   return (
     <div className="flex flex-col h-full w-full">
       <div className="">
-        <Button onClick={runWorkflow} className="hover:bg-green-500">
-          Test Workflow
-          <Play size={16} className="ml-2" />
-        </Button>
-        {testing.testFinishedTime ? (
-          <span className="m-4 p-2 rounded-lg bg-green-400">
-            Run Time:{" "}
-            {formatDuration(
-              intervalToDuration({
-                start: testing.testStartedTime,
-                end: testing.testFinishedTime,
-              })
-            )}
-          </span>
-        ) : null}
+        <div className="flex flex-row gap-2">
+          <Button onClick={runWorkflow} className="hover:bg-green-500">
+            Test Workflow
+            <Play size={16} className="ml-2" />
+          </Button>
+          {testing.testFinishedTime ? (
+            <div className="p-2 rounded-lg bg-green-200">
+              Run Time:{" "}
+              {formatDuration(
+                intervalToDuration({
+                  start: testing.testStartedTime,
+                  end: testing.testFinishedTime,
+                })
+              )}
+            </div>
+          ) : null}
+        </div>
         {testing.worklowTestingSessionTasks.map((task, index) => (
           <TaskResult key={index} task={task} />
         ))}

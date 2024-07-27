@@ -19,9 +19,7 @@ export function formatTimeDifference(startTime: string, endTime: string): string
     // Format the difference
     let formattedDiff: string;
 
-    if (diffInMs < 1000) {
-        formattedDiff = `${diffInMs} ms`;
-    } else if (diffInMs < 60000) {
+    if (diffInMs < 60000) {
         const diffInSeconds = diffInMs / 1000;
         formattedDiff = `${diffInSeconds.toFixed(2)} seconds`;
     } else {
