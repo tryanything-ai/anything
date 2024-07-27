@@ -22,6 +22,55 @@ use serde_json::Value;
 
 use crate::task_types::{Stage, TaskStatus, FlowSessionStatus, TriggerSessionStatus}; 
 
+
+// pub async fn fetch_task(state: &AppState, stage: &Stage) -> Option<Task> {
+//     println!("[TASK_ENGINE] Looking for oldest pending task in stage {}", stage.as_str());
+
+//     dotenv().ok();
+//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+//     let response = match state.client
+//         .from("tasks")
+//         .auth(supabase_service_role_api_key.clone())
+//         .select("*")
+//         .eq("task_status", TaskStatus::Pending.as_str())
+//         .eq("flow_session_status", FlowSessionStatus::Pending.as_str())
+//         .eq("stage", stage.as_str())
+//         .order("created_at.asc")
+//         .limit(1)
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(e) => {
+//             println!("[TASK_ENGINE] Error executing request: {:?}", e);
+//             return None;
+//         },
+//     };
+
+//     if !response.status().is_success() {
+//         println!("[TASK_ENGINE] Request failed with status: {}", response.status());
+//         return None;
+//     }
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(e) => {
+//             println!("[TASK_ENGINE] Error reading response body: {:?}", e);
+//             return None;
+//         },
+//     };
+
+//     let tasks: Vec<Task> = match serde_json::from_str(&body) {
+//         Ok(tasks) => tasks,
+//         Err(e) => {
+//             println!("[TASK_ENGINE] Error parsing JSON: {:?}", e);
+//             return None;
+//         },
+//     };
+
+//     tasks.into_iter().next()
+// }
 pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
     println!("[TASK_ENGINE] Looking for oldest pending task in stage {}", stage.as_str());
 
@@ -32,7 +81,8 @@ pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
         .from("tasks")
         .auth(supabase_service_role_api_key.clone())
         .select("*")
-        .eq("task_status", "pending")
+        .eq("task_status", TaskStatus::Pending.as_str())
+        .eq("flow_session_status", FlowSessionStatus::Pending.as_str())
         .eq("stage", stage.as_str())
         .order("created_at.asc")
         .limit(1)
@@ -70,7 +120,7 @@ pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
     tasks.into_iter().next()
 }
 
-pub async fn fetch_flow_tasks(client: &Postgrest, flow_session_id: &Uuid) -> Option<Vec<Task>> {
+pub async fn fetch_flow_tasks(client: &Postgrest, flow_session_id: &String) -> Option<Vec<Task>> {
     println!("[TASK_ENGINE] Fetching tasks for flow_session_id {}", flow_session_id);
 
     dotenv().ok();
@@ -170,7 +220,7 @@ pub struct UpdateFlowSesssionInput {
     trigger_session_status: String
 }
 
-pub async fn update_flow_session_status(client: &Postgrest, flow_session_id: &Uuid, flow_session_status: &FlowSessionStatus, trigger_session_status: &TriggerSessionStatus) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn update_flow_session_status(client: &Postgrest, flow_session_id: &String, flow_session_status: &FlowSessionStatus, trigger_session_status: &TriggerSessionStatus) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
@@ -191,7 +241,10 @@ pub async fn update_flow_session_status(client: &Postgrest, flow_session_id: &Uu
     Ok(())
 }
 
-pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &Uuid) {
+pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
+
+    println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]"); 
+
     if let Some(tasks) = fetch_flow_tasks(client, flow_session_id).await {
         let mut all_tasks_completed = true;
 
@@ -232,32 +285,7 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &Uuid) {
         }
     }
 }
-// Process all tasks in a flow sequentially
-// pub async fn process_flow_tasks(client: &Postgrest, flow_id: &Uuid) {
-//     if let Some(tasks) = fetch_flow_tasks(client, flow_id).await {
-//         for task in &tasks {
-//             //Process tasks that are waiting. This also helps skip trigger if its in this list
-//             if task.task_status == TaskStatus::Pending.as_str().to_string() {
-//                 // Process each task in the flow sequentially
-//                 if let Err(e) = process_task(client, task).await {
-//                     println!("[TASK_ENGINE] Error processing task {}: {}", task.task_id, e);
-//                     // Update remaining tasks to error state
-//                     for remaining_task in &tasks {
-//                         if remaining_task.task_status != TaskStatus::Completed.as_str().to_string() {
-//                             if let Err(update_err) = update_task_status(client, remaining_task, "cancelled").await {
-//                                 println!("[TASK_ENGINE] Error updating task status: {}", update_err);
-//                             }
-//                         }
-//                     }
-//                     break;
-//                 }
-//             }
-//         }
 
-//         //TODO:  Update flow status to completed
-
-//     }
-// }
 
 // Update the process_task function to handle task status updates
 pub async fn process_task(client: &Postgrest, task: &Task) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -372,20 +400,21 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
             let permit = semaphore.clone().acquire_owned().await.unwrap();
 
             task::spawn(async move {
+                //Mark flow_session as running
+                   // Update flow session status to "processing"
+                if let Err(e) = update_flow_session_status(&client, &task.flow_session_id, &FlowSessionStatus::Running, &TriggerSessionStatus::Running).await {
+                    println!("[TASK_ENGINE] Error updating flow session status to processing: {}", e);
+                    return;
+                }
                 // Process the trigger task if it is a trigger
                 if task.is_trigger {
                     if let Err(e) = process_task(&client, &task).await {
                         println!("[TASK_ENGINE] Failed to process trigger task: {}", e);
                     }
-                }
+                }   
         
-                // Convert flow_session_id from String to Uuid
-                if let Ok(flow_session_id) = Uuid::parse_str(&task.flow_session_id) {
-                    // Fetch and process the rest of the tasks for the flow
-                    process_flow_tasks(&client, &flow_session_id).await;
-                } else {
-                    println!("[TASK_ENGINE] Invalid flow_session_id: {}", task.flow_session_id);
-                }
+                process_flow_tasks(&client, &task.flow_session_id).await;
+
                 drop(permit);
             });
         

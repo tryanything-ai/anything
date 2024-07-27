@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::auth::User;
+use crate::{auth::User, task_types::{FlowSessionStatus, TaskStatus, TriggerSessionStatus}};
 use crate::workflow_types::{Workflow, CreateTaskInput, TestConfig, TaskConfig};
 use crate::AppState; 
 use crate::task_types::Stage; 
@@ -437,17 +437,17 @@ pub async fn test_workflow(
 
     let input = CreateTaskInput {
         account_id: user.account_id.clone(),
-        task_status: "pending".to_string(),
+        task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
         flow_version_name: "derp".to_string(),
         trigger_id: workflow.actions[0].node_id.clone(),
         trigger_session_id: trigger_session_id.clone(),
-        trigger_session_status: "pending".to_string(),
+        trigger_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         flow_session_id: flow_session_id.clone(),
-        flow_session_status: "pending".to_string(),
+        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         node_id: workflow.actions[0].node_id.clone(),
-        is_trigger: true,
+        is_trigger: true, //TODO:
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config), 
@@ -573,15 +573,15 @@ pub async fn test_action(
 
     let input = CreateTaskInput {
         account_id: user.account_id.clone(),
-        task_status: "pending".to_string(),
+        task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
         flow_version_name: "derp".to_string(),
         trigger_id: workflow.actions[0].node_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: "pending".to_string(),
+        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
-        flow_session_status: "pending".to_string(),
+        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         node_id: workflow.actions[0].node_id.clone(),
         is_trigger: true,
         plugin_id: workflow.actions[0].plugin_id.clone(),

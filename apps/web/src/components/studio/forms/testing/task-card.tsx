@@ -13,8 +13,15 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
         )}
       >
         <div className="pb-4">
-          <div className="text-xl">{task.processing_order + 1}:{" "}{task.node_id} { task.started_at && task.ended_at && <span className="m-4 p-2 rounded-lg bg-green-400">Run Time: {formatDuration(intervalToDuration({start: task.started_at, end: task.ended_at}))}</span> }</div>
+          <div className="text-xl">{task.processing_order + 1}:{" "}{task.node_id} </div>
         </div>
+        <div>
+          Start Time: {task.started_at}
+        </div>
+        <div>
+          End Time: {task.ended_at}
+        </div>
+        { task.started_at && task.ended_at && <div className="m-4 p-2 rounded-lg bg-green-400">Run Time: {formatDuration(intervalToDuration({start: new Date(task.started_at), end: new Date(task.ended_at)}))}</div> }
         {/* {event.config && (
           <div className="">
             <div className="text-md">Action Config: </div>
