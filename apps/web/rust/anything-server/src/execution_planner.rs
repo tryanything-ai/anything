@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::collections::HashMap;
 use postgrest::Postgrest; 
+use serde_json::Value;
 
 use dotenv::dotenv;
 use std::env;
@@ -13,7 +14,7 @@ use crate::workflow_types::{Task, Workflow, Action, CreateTaskInput, FlowVersion
 pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     println!("[TASK_ENGINE] Processing trigger task");
 
     dotenv().ok();
@@ -66,7 +67,10 @@ pub async fn process_trigger_task(
         })?;
 
     println!("[TASK_ENGINE] Trigger task processed successfully");
-    Ok(())
+ 
+    Ok(serde_json::json!({
+        "message": format!("Trigger task {} processed successfully", task.task_id)
+    }))
 }
 
 
@@ -99,7 +103,7 @@ async fn create_execution_plan(
             task_status: TaskStatus::Pending.as_str().to_string(),
             flow_id: task.flow_id.to_string(),
             flow_version_id: task.flow_version_id.to_string(),
-            action_label: task.action_label.clone(),
+            action_label: action.label.clone(),
             trigger_id: task.trigger_id.clone(),
             trigger_session_id: task.trigger_session_id.clone(),
             trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),

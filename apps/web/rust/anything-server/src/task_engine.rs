@@ -5,7 +5,7 @@ use tokio::time::{sleep, Duration};
 
 use postgrest::Postgrest;
 use chrono::{DateTime, Utc};
-
+use std::collections::HashMap;
 use dotenv::dotenv;
 use std::env;
 
@@ -126,9 +126,11 @@ pub struct UpdateTaskInput {
     started_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     ended_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    result: Option<Value>,
 }
 
-pub async fn update_task_status(client: &Postgrest, task: &Task, status: &TaskStatus) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn update_task_status(client: &Postgrest, task: &Task, status: &TaskStatus, result: Option<Value>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
@@ -148,7 +150,8 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &TaskSt
         let input = UpdateTaskInput {
             task_status: status.as_str().to_string(),
             started_at,
-            ended_at
+            ended_at, 
+            result
         };
     
 
@@ -191,7 +194,6 @@ pub async fn update_flow_session_status(client: &Postgrest, flow_session_id: &St
 }
 
 pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
-
     println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]"); 
 
     if let Some(tasks) = fetch_flow_tasks(client, flow_session_id).await {
@@ -199,19 +201,22 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
 
         for task in &tasks {
             if task.task_status == TaskStatus::Pending.as_str().to_string() {
-                if let Err(e) = process_task(client, task).await {
-                    println!("[TASK_ENGINE] Error processing task {}: {}", task.task_id, e);
-                    all_tasks_completed = false;
+                match process_task(client, task).await {
+                    Ok(_) => {},
+                    Err(e) => {
+                        println!("[TASK_ENGINE] Error processing task {}: {}", task.task_id, e);
+                        all_tasks_completed = false;
 
-                    // Update remaining tasks to cancelled state
-                    for remaining_task in &tasks {
-                        if remaining_task.task_status != TaskStatus::Completed.as_str().to_string() {
-                            if let Err(update_err) = update_task_status(client, remaining_task, &TaskStatus::Canceled).await {
-                                println!("[TASK_ENGINE] Error updating task status: {}", update_err);
+                        // Update remaining tasks to cancelled state
+                        for remaining_task in &tasks {
+                            if remaining_task.task_status != TaskStatus::Completed.as_str().to_string() {
+                                if let Err(update_err) = update_task_status(client, remaining_task, &TaskStatus::Canceled, None).await {
+                                    println!("[TASK_ENGINE] Error updating task status: {}", update_err);
+                                }
                             }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -234,54 +239,148 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
         }
     }
 }
+// pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
+
+//     println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]"); 
+
+//     if let Some(tasks) = fetch_flow_tasks(client, flow_session_id).await {
+//         let mut all_tasks_completed = true;
+
+//         for task in &tasks {
+//             if task.task_status == TaskStatus::Pending.as_str().to_string() {
+//                 if let Err(e) = process_task(client, task).await {
+//                     println!("[TASK_ENGINE] Error processing task {}: {}", task.task_id, e);
+//                     all_tasks_completed = false;
+
+//                     // Update remaining tasks to cancelled state
+//                     for remaining_task in &tasks {
+//                         if remaining_task.task_status != TaskStatus::Completed.as_str().to_string() {
+//                             if let Err(update_err) = update_task_status(client, remaining_task, &TaskStatus::Canceled).await {
+//                                 println!("[TASK_ENGINE] Error updating task status: {}", update_err);
+//                             }
+//                         }
+//                     }
+//                     break;
+//                 }
+//             }
+//         }
+
+//         // Update flow session status
+//         let flow_session_status = if all_tasks_completed {
+//             FlowSessionStatus::Completed
+//         } else {
+//             FlowSessionStatus::Failed
+//         };
+
+//         let trigger_session_status = if all_tasks_completed {
+//             TriggerSessionStatus::Completed
+//         } else {
+//             TriggerSessionStatus::Failed
+//         };
+
+//         if let Err(e) = update_flow_session_status(client, flow_session_id, &flow_session_status, &trigger_session_status).await {
+//             println!("[TASK_ENGINE] Error updating flow session status: {}", e);
+//         }
+//     }
+// }
 
 
-// Update the process_task function to handle task status updates
-pub async fn process_task(client: &Postgrest, task: &Task) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     println!("[TASK_ENGINE] Processing task {}", task.task_id);
 
     // Update task status to "running"
-    update_task_status(client, task, &TaskStatus::Running).await?;
+    update_task_status(client, task, &TaskStatus::Running, None).await?;
 
-    let result = async {
+    let result: Result<Value, Box<dyn std::error::Error + Send + Sync>> = async {
         let bundled_context = bundle_context(client, task).await?;
 
-        if task.action_type == ActionType::Trigger.as_str().to_string() {
+        let task_result = if task.action_type == ActionType::Trigger.as_str().to_string() {
             println!("[TASK_ENGINE] Processing trigger task {}", task.task_id);
-            process_trigger_task(client, task).await?;
+            process_trigger_task(client, task).await?
         } else {
             println!("[TASK_ENGINE] Processing regular task {}", task.task_id);
             if let Some(plugin_id) = &task.plugin_id {
                 if plugin_id == "http" {
-                    process_http_task(&bundled_context).await?;
+                    process_http_task(&bundled_context).await?
                 } else {
-                    println!("[TASK_ENGINE] Processed task {} with plugin_id {}", task.task_id, plugin_id);
+                    serde_json::json!({
+                        "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
+                    })
                 }
             } else {
-                println!("[TASK_ENGINE] No plugin_id found for task {}", task.task_id);
+                serde_json::json!({
+                    "message": format!("No plugin_id found for task {}", task.task_id)
+                })
             }
-        }
+        };
 
-        Ok(())
+        Ok(task_result)
     }.await;
 
     match result {
-        Ok(_) => {
-            // Update task status to "completed"
-            update_task_status(client, task, &TaskStatus::Completed).await?;
+        Ok(task_result) => {
+            // Update task status to "completed" with the result
+            update_task_status(client, task, &TaskStatus::Completed, Some(task_result.clone())).await?;
             println!("[TASK_ENGINE] Task {} completed successfully", task.task_id);
-            Ok(())
+            Ok(task_result)
         }
         Err(e) => {
-            // Update task status to "error"
-            update_task_status(client, task, &TaskStatus::Failed).await?;
+            // Update task status to "error" with the error message
+            let error_result = serde_json::json!({
+                "error": e.to_string()
+            });
+            update_task_status(client, task, &TaskStatus::Failed, Some(error_result.clone())).await?;
             println!("[TASK_ENGINE] Task {} failed: {}", task.task_id, e);
             Err(e)
         }
     }
 }
+// Update the process_task function to handle task status updates
+// pub async fn process_task(client: &Postgrest, task: &Task) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+//     println!("[TASK_ENGINE] Processing task {}", task.task_id);
 
-async fn process_http_task(bundled_context: &Value) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+//     // Update task status to "running"
+//     update_task_status(client, task, &TaskStatus::Running).await?;
+
+//     let result = async {
+//         let bundled_context = bundle_context(client, task).await?;
+
+//         if task.action_type == ActionType::Trigger.as_str().to_string() {
+//             println!("[TASK_ENGINE] Processing trigger task {}", task.task_id);
+//             process_trigger_task(client, task).await?;
+//         } else {
+//             println!("[TASK_ENGINE] Processing regular task {}", task.task_id);
+//             if let Some(plugin_id) = &task.plugin_id {
+//                 if plugin_id == "http" {
+//                     process_http_task(&bundled_context).await?;
+//                 } else {
+//                     println!("[TASK_ENGINE] Processed task {} with plugin_id {}", task.task_id, plugin_id);
+//                 }
+//             } else {
+//                 println!("[TASK_ENGINE] No plugin_id found for task {}", task.task_id);
+//             }
+//         }
+
+//         Ok(())
+//     }.await;
+
+//     match result {
+//         Ok(_) => {
+//             // Update task status to "completed"
+//             update_task_status(client, task, &TaskStatus::Completed).await?;
+//             println!("[TASK_ENGINE] Task {} completed successfully", task.task_id);
+//             Ok(())
+//         }
+//         Err(e) => {
+//             // Update task status to "error"
+//             update_task_status(client, task, &TaskStatus::Failed).await?;
+//             println!("[TASK_ENGINE] Task {} failed: {}", task.task_id, e);
+//             Err(e)
+//         }
+//     }
+// }
+
+async fn process_http_task(bundled_context: &Value) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     if let (Some(method), Some(url)) = (
         bundled_context.get("method").and_then(Value::as_str),
         bundled_context.get("url").and_then(Value::as_str),
@@ -312,14 +411,62 @@ async fn process_http_task(bundled_context: &Value) -> Result<(), Box<dyn std::e
 
         let response = request_builder.send().await?;
         println!("[TASK_ENGINE] HTTP request response! {:?}", response);
+        let status = response.status();
+        let headers = response.headers().clone();
         let text = response.text().await?;
         println!("[TASK_ENGINE] HTTP request successful. Response: {}", text);
-    } else {
-        return Err("HTTP Missing required fields (method, url) in task context.".into());
-    }
 
-    Ok(())
+        Ok(serde_json::json!({
+            "status": status.as_u16(),
+            "headers": headers
+                .iter()
+                .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
+                .collect::<HashMap<String, String>>(),
+            "body": text
+        }))
+    } else {
+        Err("HTTP Missing required fields (method, url) in task context.".into())
+    }
 }
+// async fn process_http_task(bundled_context: &Value) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+//     if let (Some(method), Some(url)) = (
+//         bundled_context.get("method").and_then(Value::as_str),
+//         bundled_context.get("url").and_then(Value::as_str),
+//     ) {
+//         println!("[TASK_ENGINE] Processing HTTP task");
+//         let client = Client::new();
+//         let method = match method.to_uppercase().as_str() {
+//             "GET" => reqwest::Method::GET,
+//             "POST" => reqwest::Method::POST,
+//             "PUT" => reqwest::Method::PUT,
+//             "DELETE" => reqwest::Method::DELETE,
+//             _ => return Err(format!("Unsupported HTTP method: {}", method).into()),
+//         };
+
+//         let mut request_builder = client.request(method, url);
+
+//         if let Some(headers) = bundled_context.get("headers").and_then(Value::as_object) {
+//             for (key, value) in headers {
+//                 if let Some(value_str) = value.as_str() {
+//                     request_builder = request_builder.header(key.as_str(), value_str);
+//                 }
+//             }
+//         }
+
+//         if let Some(body) = bundled_context.get("body").and_then(Value::as_str) {
+//             request_builder = request_builder.body(body.to_string());
+//         }
+
+//         let response = request_builder.send().await?;
+//         println!("[TASK_ENGINE] HTTP request response! {:?}", response);
+//         let text = response.text().await?;
+//         println!("[TASK_ENGINE] HTTP request successful. Response: {}", text);
+//     } else {
+//         return Err("HTTP Missing required fields (method, url) in task context.".into());
+//     }
+
+//     Ok(())
+// }
 
 // The task processing loop function
 pub async fn task_processing_loop(state: Arc<AppState>) {

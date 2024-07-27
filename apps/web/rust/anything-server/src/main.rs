@@ -90,7 +90,7 @@ async fn main() {
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
-    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

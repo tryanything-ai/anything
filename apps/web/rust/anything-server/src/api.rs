@@ -418,14 +418,6 @@ pub async fn test_workflow(
         }
     };
 
-    // Use the `workflow` variable as needed
-    // println!("Workflow Definition {:#?}", workflow);
-
-    //PARSE RESPONSE. 
-    //db_version_def.flow_definition is the Workflow type
-
-    //TODO: call the engine
-    //OR just create a task with the correct type and data
 
     let task_config = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables), 
