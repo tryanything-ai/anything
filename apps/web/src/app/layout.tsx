@@ -19,7 +19,7 @@ export const metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode; 
 }) {
   return (
     <html lang="en" className={cn(
@@ -28,7 +28,7 @@ export default function RootLayout({
     )}>
       <body className="bg-background text-foreground">
         <AnythingProvider>
-          <main className="min-h-screen flex flex-col items-center">
+          <main className="min-h-screen">
             {children}
           </main>
         </AnythingProvider>

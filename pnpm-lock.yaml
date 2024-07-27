@@ -219,7 +219,7 @@ importers:
         version: 4.12.0(react@18.3.1)
       react-json-view:
         specifier: ^1.21.3
-        version: 1.21.3(@types/react@18.3.1)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.21.3(@types/react@18.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router-dom:
         specifier: ^6.14.1
         version: 6.23.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -404,6 +404,9 @@ importers:
       react-json-view:
         specifier: ^1.21.3
         version: 1.21.3(@types/react@18.2.48)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      react-resizable-panels:
+        specifier: ^2.0.22
+        version: 2.0.22(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       reactflow:
         specifier: ^11.11.3
         version: 11.11.3(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -4366,6 +4369,12 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-resizable-panels@2.0.22:
+    resolution: {integrity: sha512-G8x8o7wjQxCG+iF4x4ngKVBpe0CY+DAZ/SaiDoqBEt0yuKJe9OE/VVYMBMMugQ3GyQ65NnSJt23tujlaZZe75A==}
+    peerDependencies:
+      react: ^16.14.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.14.0 || ^17.0.0 || ^18.0.0
 
   react-router-dom@6.23.0:
     resolution: {integrity: sha512-Q9YaSYvubwgbal2c9DJKfx6hTNoBp3iJDsl+Duva/DwxoJH+OTXkxGpql4iUK2sla/8z4RpjAm6EWx1qUDuopQ==}
@@ -8421,7 +8430,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  flux@4.0.4(encoding@0.1.13)(react@18.3.1):
+  flux@4.0.4(react@18.3.1):
     dependencies:
       fbemitter: 3.0.0(encoding@0.1.13)
       fbjs: 3.0.5(encoding@0.1.13)
@@ -9415,9 +9424,9 @@ snapshots:
       - '@types/react'
       - encoding
 
-  react-json-view@1.21.3(@types/react@18.3.1)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-json-view@1.21.3(@types/react@18.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      flux: 4.0.4(encoding@0.1.13)(react@18.3.1)
+      flux: 4.0.4(react@18.3.1)
       react: 18.3.1
       react-base16-styling: 0.6.0
       react-dom: 18.3.1(react@18.3.1)
@@ -9460,6 +9469,11 @@ snapshots:
       use-sidecar: 1.1.2(@types/react@18.2.48)(react@18.2.0)
     optionalDependencies:
       '@types/react': 18.2.48
+
+  react-resizable-panels@2.0.22(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
 
   react-router-dom@6.23.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
