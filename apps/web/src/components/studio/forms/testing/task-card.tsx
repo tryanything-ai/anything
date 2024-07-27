@@ -13,7 +13,7 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
         )}
       >
         <div className="pb-4">
-          <div className="text-xl">{task.node_id}</div>
+          <div className="text-xl">{task.processing_order + 1}:{" "}{task.node_id}</div>
           {task.created_at ? (
             <div className="text-xs text-base-content">
               {formatDistanceToNow(new Date(task.created_at), {

@@ -28,6 +28,7 @@ export interface TaskRow {
     created_at?: string;
     updated_by?: string;
     created_by?: string;
+    processing_order: number;
 }
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL

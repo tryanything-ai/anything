@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS anything.tasks
     ended_at timestamp with time zone, --stats for action run time
     debug_result json, -- debug info, a place where we can store extra data if we want like intermediate steps in the flow
     result json, -- the result of the action
+    processing_order integer, -- the order in which the action should be processed
     archived boolean not null default false, 
 
     -- timestamps are useful for auditing

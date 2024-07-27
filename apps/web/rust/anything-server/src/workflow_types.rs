@@ -117,6 +117,7 @@ pub struct CreateTaskInput {
     pub stage: String,
     pub config: Value,
     pub test_config: Option<Value>, // context: Value,
+    pub processing_order: i32
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -180,3 +181,4 @@ pub struct FlowVersion {
     pub flow_definition: Value,
     // other fields as necessary
 }
+

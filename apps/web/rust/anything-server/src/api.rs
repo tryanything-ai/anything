@@ -11,6 +11,7 @@ use std::sync::Arc;
 use crate::auth::User;
 use crate::workflow_types::{Workflow, CreateTaskInput, TestConfig, TaskConfig};
 use crate::AppState; 
+use crate::task_types::Stage; 
 use uuid::Uuid;
 
 use dotenv::dotenv; 
@@ -192,7 +193,7 @@ pub async fn create_workflow(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to execute request").into_response(),
     };
 
-    let versionInput = BaseFlowVersionInput {
+    let version_input = BaseFlowVersionInput {
         account_id: user.account_id.clone(),
         flow_id: payload.flow_id.clone(),
         flow_version: "0.0.1".to_string(),
@@ -207,7 +208,7 @@ pub async fn create_workflow(
     let version_response = match client
         .from("flow_versions")
         .auth(user.jwt.clone())
-        .insert(serde_json::to_string(&versionInput).unwrap())
+        .insert(serde_json::to_string(&version_input).unwrap())
         .execute()
         .await
     {
@@ -426,7 +427,7 @@ pub async fn test_workflow(
     //TODO: call the engine
     //OR just create a task with the correct type and data
 
-    let taskConfig = TaskConfig {
+    let task_config = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables), 
         inputs: serde_json::json!(workflow.actions[0].input), 
     }; 
@@ -448,9 +449,10 @@ pub async fn test_workflow(
         node_id: workflow.actions[0].node_id.clone(),
         is_trigger: true,
         plugin_id: workflow.actions[0].plugin_id.clone(),
-        stage: "test".to_string(),
-        config: serde_json::json!(taskConfig), 
-        test_config: None
+        stage: Stage::Testing.as_str().to_string(),
+        config: serde_json::json!(task_config), 
+        test_config: None,
+        processing_order: 0,
     }; 
 
     // println!("Input: {:?}", input);
@@ -558,12 +560,12 @@ pub async fn test_action(
     // Use the `workflow` variable as needed
     // println!("Workflow Definition {:#?}", workflow);
 
-    let taskConfig = TaskConfig {
+    let task_config = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables), 
         inputs: serde_json::json!(workflow.actions[0].input), 
     }; 
 
-    let testConfig = TestConfig {
+    let test_config = TestConfig {
         action_id: Some(action_id.clone()),
         variables: serde_json::json!({}), //TODO: we should take this from like a body as a one time argument for the action
         inputs: serde_json::json!({}),
@@ -583,9 +585,10 @@ pub async fn test_action(
         node_id: workflow.actions[0].node_id.clone(),
         is_trigger: true,
         plugin_id: workflow.actions[0].plugin_id.clone(),
-        stage: "test".to_string(),
-        config: serde_json::json!(taskConfig), 
-        test_config: Some(serde_json::json!(testConfig))
+        stage: Stage::Testing.as_str().to_string(), 
+        config: serde_json::json!(task_config), 
+        test_config: Some(serde_json::json!(test_config)),
+        processing_order: 0
     }; 
 
     // println!("Input: {:?}", input);
@@ -641,6 +644,7 @@ let client = &state.client;
         .eq("flow_id", &workflow_id)
         .eq("flow_version_id", &workflow_version_id)
         .select("*")
+        .order("processing_order.asc")
         .execute()
         .await
     {

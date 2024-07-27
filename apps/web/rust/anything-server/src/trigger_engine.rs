@@ -280,6 +280,7 @@ async fn create_trigger_task(state: &AppState, trigger: &InMemoryTrigger) -> Res
         stage: "production".to_string(),
         config: serde_json::json!(task_config),
         test_config: None,
+        processing_order: 0
     };
 
     let response = client
