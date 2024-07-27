@@ -234,10 +234,11 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
                         all_tasks_completed = false;
 
                         // Update tasks with process_order > current task to cancelled state
-                        let current_process_order = task.processing_order; 
+                        let current_process_order = task.processing_order;
                         for remaining_task in &tasks {
                             if remaining_task.processing_order > current_process_order
-                                && remaining_task.task_status != TaskStatus::Completed.as_str().to_string()
+                                && remaining_task.task_status
+                                    != TaskStatus::Completed.as_str().to_string()
                             {
                                 if let Err(update_err) = update_task_status(
                                     client,
@@ -502,8 +503,32 @@ async fn process_http_task(
         println!("[TASK_ENGINE] HTTP request response! {:?}", response);
         let status = response.status();
         let headers = response.headers().clone();
-        let body: Value = response.json().await?;
-        println!("[TASK_ENGINE] HTTP request successful. Response: {}", body);
+
+        // Try to parse the response as JSON, if it fails, return the raw text
+        let body = match response.text().await {
+            Ok(text) => {
+                match serde_json::from_str::<Value>(&text) {
+                    Ok(json_value) => {
+                        println!(
+                            "[TASK_ENGINE] HTTP request successful. JSON Response: {:?}",
+                            json_value
+                        );
+                        json_value
+                    }
+                    Err(_) => {
+                        println!(
+                            "[TASK_ENGINE] HTTP request successful. Text Response: {}",
+                            text
+                        );  
+                        Value::String(text)
+                    }
+                }
+            }
+            Err(e) => {
+                println!("[TASK_ENGINE] Error reading response body: {:?}", e);
+                return Err(e.into());
+            }
+        };
 
         Ok(serde_json::json!({
             "status": status.as_u16(),
@@ -517,6 +542,56 @@ async fn process_http_task(
         Err("HTTP Missing required fields (method, url) in task context.".into())
     }
 }
+// async fn process_http_task(
+//     bundled_context: &Value,
+// ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+//     if let (Some(method), Some(url)) = (
+//         bundled_context.get("method").and_then(Value::as_str),
+//         bundled_context.get("url").and_then(Value::as_str),
+//     ) {
+//         println!("[TASK_ENGINE] Processing HTTP task");
+//         let client = Client::new();
+//         let method = match method.to_uppercase().as_str() {
+//             "GET" => reqwest::Method::GET,
+//             "POST" => reqwest::Method::POST,
+//             "PUT" => reqwest::Method::PUT,
+//             "DELETE" => reqwest::Method::DELETE,
+//             _ => return Err(format!("Unsupported HTTP method: {}", method).into()),
+//         };
+
+//         let mut request_builder = client.request(method, url);
+
+//         if let Some(headers) = bundled_context.get("headers").and_then(Value::as_object) {
+//             for (key, value) in headers {
+//                 if let Some(value_str) = value.as_str() {
+//                     request_builder = request_builder.header(key.as_str(), value_str);
+//                 }
+//             }
+//         }
+
+//         if let Some(body) = bundled_context.get("body").and_then(Value::as_str) {
+//             request_builder = request_builder.body(body.to_string());
+//         }
+
+//         let response = request_builder.send().await?;
+//         println!("[TASK_ENGINE] HTTP request response! {:?}", response);
+//         let status = response.status();
+//         let headers = response.headers().clone();
+//         let body: Value = response.json().await?;
+//         println!("[TASK_ENGINE] HTTP request successful. Response: {}", body);
+
+//         Ok(serde_json::json!({
+//             "status": status.as_u16(),
+//             "headers": headers
+//                 .iter()
+//                 .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
+//                 .collect::<HashMap<String, String>>(),
+//             "body": body
+//         }))
+//     } else {
+//         Err("HTTP Missing required fields (method, url) in task context.".into())
+//     }
+// }
 
 // The task processing loop function
 pub async fn task_processing_loop(state: Arc<AppState>) {

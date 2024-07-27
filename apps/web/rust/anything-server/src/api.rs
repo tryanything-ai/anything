@@ -658,8 +658,10 @@ let client = &state.client;
         tasks.iter().all(|task| {
             let flow_status = task.get("flow_session_status");
             let trigger_status = task.get("trigger_session_status");
+            let task_status = task.get("task_status");
             (flow_status == Some(&Value::String("completed".to_string())) || flow_status == Some(&Value::String("failed".to_string()))) &&
-            (trigger_status == Some(&Value::String("completed".to_string())) || trigger_status == Some(&Value::String("failed".to_string())))
+            (trigger_status == Some(&Value::String("completed".to_string())) || trigger_status == Some(&Value::String("failed".to_string()))) &&
+            (task_status == Some(&Value::String("completed".to_string())) || task_status == Some(&Value::String("canceled".to_string())) || task_status == Some(&Value::String("failed".to_string())))
         })
     });
 
