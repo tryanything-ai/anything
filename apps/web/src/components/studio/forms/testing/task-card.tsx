@@ -1,6 +1,6 @@
 import React from "react";
 import {cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDuration, intervalToDuration } from "date-fns";
 import ReactJson from "react-json-view";
 import { TaskRow } from "@/lib/anything-api/testing";
 
@@ -13,15 +13,7 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
         )}
       >
         <div className="pb-4">
-          <div className="text-xl">{task.processing_order + 1}:{" "}{task.node_id}</div>
-          {task.created_at ? (
-            <div className="text-xs text-base-content">
-              {formatDistanceToNow(new Date(task.created_at), {
-                includeSeconds: true,
-              })}{" "}
-              ago
-            </div>
-          ) : null}
+          <div className="text-xl">{task.processing_order + 1}:{" "}{task.node_id} { task.started_at && task.ended_at && <span className="m-4 p-2 rounded-lg bg-green-400">Run Time: {formatDuration(intervalToDuration({start: task.started_at, end: task.ended_at}))}</span> }</div>
         </div>
         {/* {event.config && (
           <div className="">

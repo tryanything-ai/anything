@@ -19,6 +19,8 @@ export interface WorkflowTestingContextInterface {
     testingAction: boolean;
     workflowTestingSessionId?: string;
     worklowTestingSessionTasks: TaskRow[];
+    testStartedTime: string;
+    testFinishedTime: string;
     testAction: (action_id: string) => Promise<void>;
     testingWorkflow: boolean;
     testWorkflow: () => Promise<void>;
@@ -27,6 +29,8 @@ export interface WorkflowTestingContextInterface {
 export const WorkflowTestingContext = createContext<WorkflowTestingContextInterface>({
     testingMode: TestingMode.ACTION,
     testingAction: false,
+    testStartedTime: "",
+    testFinishedTime: "",
     workflowTestingSessionId: "",
     worklowTestingSessionTasks: [],
     testAction: async () => { },
@@ -43,6 +47,8 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
     const [worklowTestingSessionTasks, setWorkflowTestingSessionTasks] = useState<TaskRow[]>([]);
     const [testingAction, setTestingAction] = useState<boolean>(false);
     const [testingWorkflow, setTestingWorkflow] = useState<boolean>(false);
+    const [testStartedTime, setTestStartedTime] = useState<string>("");
+    const [testFinishedTime, setTestFinishedTime] = useState<string>("");
 
     const resetState = () => {
         setTestingMode(TestingMode.ACTION);
@@ -50,6 +56,8 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
         setWorkflowTestingSessionTasks([]);
         setTestingAction(false);
         setTestingWorkflow(false);
+        setTestStartedTime("");
+        setTestFinishedTime("");
     }
 
     const pollForResults = async (flowId: string, versionId: string, workflow_session_id: string) => {
@@ -72,6 +80,7 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
 
                     isComplete = true;
                     setTestingWorkflow(false);
+                    setTestFinishedTime(new Date().toISOString());
                     // Handle completion (e.g., update state with results)
                     console.log("Workflow completed:", result.tasks);
                 } else {
@@ -87,6 +96,7 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
 
             resetState(); // Reset state before testing
 
+            setTestStartedTime(new Date().toISOString());
             if (!db_flow_id || !db_flow_version_id) {
                 console.log("No flow or version id to test workflow");
                 return;
@@ -136,6 +146,8 @@ export const WorkflowTestingProvider = ({ children }: { children: ReactNode }) =
             value={{
                 testingMode,
                 testingAction,
+                testStartedTime,
+                testFinishedTime, 
                 workflowTestingSessionId,
                 worklowTestingSessionTasks,
                 testingWorkflow,

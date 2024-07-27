@@ -4,6 +4,7 @@ use tokio::task;
 use tokio::time::{sleep, Duration};
 
 use postgrest::Postgrest;
+use chrono::{DateTime, Utc};
 
 use dotenv::dotenv;
 use std::env;
@@ -122,6 +123,10 @@ pub async fn fetch_flow_tasks(client: &Postgrest, flow_session_id: &Uuid) -> Opt
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateTaskInput {
     task_status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    started_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ended_at: Option<DateTime<Utc>>,
 }
 
 pub async fn update_task_status(client: &Postgrest, task: &Task, status: &TaskStatus) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -129,9 +134,24 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &TaskSt
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    let input = UpdateTaskInput {
-        task_status: status.as_str().to_string(),
-    };
+        let started_at = if status.as_str() == TaskStatus::Running.as_str() {
+            Some(Utc::now())
+        } else {
+            None
+        };
+
+        let ended_at = if status.as_str() != TaskStatus::Running.as_str() {
+            Some(Utc::now())
+        } else {
+            None
+        };
+    
+        let input = UpdateTaskInput {
+            task_status: status.as_str().to_string(),
+            started_at,
+            ended_at
+        };
+    
 
     client
         .from("tasks")
@@ -143,6 +163,7 @@ pub async fn update_task_status(client: &Postgrest, task: &Task, status: &TaskSt
 
     Ok(())
 }
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateFlowSesssionInput {
     flow_session_status: String,
@@ -242,7 +263,7 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &Uuid) {
 pub async fn process_task(client: &Postgrest, task: &Task) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[TASK_ENGINE] Processing task {}", task.task_id);
 
-    // Update task status to "processing"
+    // Update task status to "running"
     update_task_status(client, task, &TaskStatus::Running).await?;
 
     let result = async {
