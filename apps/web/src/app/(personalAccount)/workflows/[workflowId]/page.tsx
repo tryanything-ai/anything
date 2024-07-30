@@ -5,14 +5,20 @@ import { Separator } from "@/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DBWorkflow } from "@/context/WorkflowsProvider";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
+import { TaskRow } from "@/lib/anything-api/testing";
+import api from "@/lib/anything-api";
+import { Table } from "@/components/ui/table";
+import { TaskTable } from "@/components/tasks/task-table";
+import { TaskChart } from "@/components/tasks/task-chart";
+// import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export default function WorkflowManager() {
   const {
     workflows: { getWorkflowById, flows },
   } = useAnything();
-  const [workflow, setWorkflow] = useState<DBWorkflow | undefined>(undefined);
+  const [workflow, setWorkflow] = useState<any | undefined>(undefined);
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
   const params = useParams<{ workflowId: string }>();
 
   useEffect(() => {
@@ -24,6 +30,9 @@ export default function WorkflowManager() {
         if (flow && flow.length > 0) {
           setWorkflow(flow[0]);
         }
+        let tasks = await api.tasks.getTasksForWorkflow(params.workflowId);
+        console.log("tasks", tasks);
+        setTasks(tasks);
       }
     };
 
@@ -42,10 +51,12 @@ export default function WorkflowManager() {
           />
 
           <Separator />
+          <div className=" flex flex-col gap-y-4  h-full w-full  mx-auto text-center">
+            <TaskChart tasks={tasks} />
+          </div>
 
-          <div className="flex flex-col gap-y-4 py-12 h-full w-full items-center justify-center content-center max-w-screen-md mx-auto text-center">
-            <PartyPopper className="h-12 w-12 text-gray-400" />
-            <h1 className="text-2xl font-bold">A single Workflow</h1>
+          <div className="border rounded-md flex flex-col gap-y-4  h-full w-full items-center justify-center content-center mx-auto text-center">
+            <TaskTable tasks={tasks} />
           </div>
         </div>
       ) : null}
