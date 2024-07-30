@@ -77,6 +77,11 @@ async fn main() {
         //Tasks
         .route("/tasks", get(api::get_tasks))
         .route("/tasks/:workflow_id", get(api::get_task_by_workflow_id))
+        //Charts
+        .route(
+            "/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit",
+            get(api::get_task_status_counts_by_workflow_id),
+        )
         // Secrets
         .route("/secrets", get(secrets::get_decrypted_secrets))
         .route("/secret", post(secrets::create_secret))

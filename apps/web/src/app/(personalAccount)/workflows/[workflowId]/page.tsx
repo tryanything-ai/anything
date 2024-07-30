@@ -11,6 +11,7 @@ import api from "@/lib/anything-api";
 import { Table } from "@/components/ui/table";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
+import { TimeUnit } from "@/lib/anything-api/charts";
 // import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export default function WorkflowManager() {
@@ -19,6 +20,7 @@ export default function WorkflowManager() {
   } = useAnything();
   const [workflow, setWorkflow] = useState<any | undefined>(undefined);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [chartData, setChartData] = useState<any | undefined>(undefined);
   const params = useParams<{ workflowId: string }>();
 
   useEffect(() => {
@@ -33,6 +35,20 @@ export default function WorkflowManager() {
         let tasks = await api.tasks.getTasksForWorkflow(params.workflowId);
         console.log("tasks", tasks);
         setTasks(tasks);
+
+        const endDate = new Date().toISOString();
+        const startDate = new Date(
+          new Date().setDate(new Date().getDate() - 30)
+        ).toISOString();
+        let chardDataRes = await api.charts.getTasksChart(
+          params.workflowId,
+          startDate,
+          endDate,
+          TimeUnit.Day
+        );
+
+        console.log("chart data", chardDataRes);
+        setChartData(chardDataRes.chartData);
       }
     };
 
@@ -52,7 +68,7 @@ export default function WorkflowManager() {
 
           <Separator />
           <div className=" flex flex-col gap-y-4  h-full w-full  mx-auto text-center">
-            <TaskChart tasks={tasks} />
+            <TaskChart chartData={chartData} />
           </div>
 
           <div className="border rounded-md flex flex-col gap-y-4  h-full w-full items-center justify-center content-center mx-auto text-center">
