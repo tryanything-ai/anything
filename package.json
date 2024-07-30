@@ -1,4 +1,5 @@
 {
+  "name": "anything", 
   "private": true,
   "scripts": {
     "build": "turbo build",
