@@ -18,28 +18,29 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig = {
-  // views: {
-  //   label: "Completed",
-  // },
   pending: {
     label: "Pending",
-    color: "hsl(var(--chart-3))",
+    color: "hsl(var(--chart-1))",
   },
   waiting: {
     label: "Waiting",
-    color: "hsl(var(--chart-4))",
+    color: "hsl(var(--chart-2))",
   },
   running: {
     label: "Running",
-    color: "hsl(var(--chart-5))",
+    color: "hsl(var(--chart-3))",
   },
   completed: {
     label: "Completed",
-    color: "hsl(var(--chart-6))",
+    color: "rebeccapurple",
   },
   failed: {
     label: "Failed",
-    color: "hsl(var(--chart-7))",
+    color: "hsl(var(--failure))",
+  },
+  canceled: {
+    label: "Canceled",
+    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig;
 
@@ -131,11 +132,11 @@ export function TaskChart({ chartData }: { chartData: any }) {
                 });
               }}
             />
+            {/* <ChartTooltip content={<ChartTooltipContent hideLabel />} /> */}
             <ChartTooltip
               content={
                 <ChartTooltipContent
                   className="w-[150px]"
-                  nameKey="views"
                   labelFormatter={(value) => {
                     return new Date(value).toLocaleDateString("en-US", {
                       month: "short",

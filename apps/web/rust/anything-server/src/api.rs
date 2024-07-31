@@ -938,7 +938,7 @@ pub async fn get_task_by_workflow_id(
         .auth(user.jwt)
         .eq("flow_id", &workflow_id)
         .select("*")
-        .order("created_at.desc")
+        .order("created_at.desc,processing_order.desc")
         .execute()
         .await
     {

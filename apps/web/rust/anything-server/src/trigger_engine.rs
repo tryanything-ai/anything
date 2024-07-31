@@ -126,12 +126,12 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
         ) {
             if let Some(actions) = flow_definition.get("actions").and_then(|v| v.as_array()) {
                 for action in actions {
-                    if let (Some(trigger_id), Some(trigger_type), Some(node_id)) = (
+                    if let (Some(trigger_id), Some(action_type), Some(node_id)) = (
                         action.get("plugin_id").and_then(|v| v.as_str()),
                         action.get("type").and_then(|v| v.as_str()),
                         action.get("node_id").and_then(|v| v.as_str())
                     ) {
-                        if trigger_type == "trigger" {
+                        if action_type == "trigger" {
                             println!("[TRIGGER_ENGINE] Found trigger action of type trigger");
 
                             let input = action.get("input").cloned().unwrap_or_default();

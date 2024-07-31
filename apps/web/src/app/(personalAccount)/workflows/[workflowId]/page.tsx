@@ -67,7 +67,7 @@ export default function WorkflowManager() {
           />
 
           <Separator />
-          <div className=" flex flex-col gap-y-4  h-full w-full  mx-auto text-center">
+          <div className=" flex flex-col gap-y-4 w-full  mx-auto text-center">
             <TaskChart chartData={chartData} />
           </div>
 

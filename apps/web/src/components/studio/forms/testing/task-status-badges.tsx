@@ -2,7 +2,7 @@
 import React from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Clock } from "lucide-react";
+import { RefreshCw, Clock, Zap } from "lucide-react";
 import { formatTimeDifference } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
@@ -24,6 +24,20 @@ export const TaskStatusBadge = ({ status }: { status: string }) => {
       )}
       {status}
     </Badge>
+  );
+};
+
+export const TriggerBadge = ({ is_trigger }: { is_trigger: boolean }) => {
+  return (
+    <>
+      {is_trigger ? (
+        <div
+          className={`inline-flex items-center h-5 w-5 rounded-full bg-green-200 text-green-800 hover:bg-green-200 items-center justify-center`}
+        >
+          <Zap size={16} className="" />
+        </div>
+      ) : null}
+    </>
   );
 };
 
