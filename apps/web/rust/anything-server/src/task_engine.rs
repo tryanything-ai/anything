@@ -506,24 +506,22 @@ async fn process_http_task(
 
         // Try to parse the response as JSON, if it fails, return the raw text
         let body = match response.text().await {
-            Ok(text) => {
-                match serde_json::from_str::<Value>(&text) {
-                    Ok(json_value) => {
-                        println!(
-                            "[TASK_ENGINE] HTTP request successful. JSON Response: {:?}",
-                            json_value
-                        );
+            Ok(text) => match serde_json::from_str::<Value>(&text) {
+                Ok(json_value) => {
+                    println!(
+                        "[TASK_ENGINE] HTTP request successful. JSON Response: {:?}",
                         json_value
-                    }
-                    Err(_) => {
-                        println!(
-                            "[TASK_ENGINE] HTTP request successful. Text Response: {}",
-                            text
-                        );  
-                        Value::String(text)
-                    }
+                    );
+                    json_value
                 }
-            }
+                Err(_) => {
+                    println!(
+                        "[TASK_ENGINE] HTTP request successful. Text Response: {}",
+                        text
+                    );
+                    Value::String(text)
+                }
+            },
             Err(e) => {
                 println!("[TASK_ENGINE] Error reading response body: {:?}", e);
                 return Err(e.into());
@@ -597,7 +595,7 @@ async fn process_http_task(
 pub async fn task_processing_loop(state: Arc<AppState>) {
     // Receive info from other systems
     let mut task_signal_rx = state.task_signal.subscribe();
-    let client = state.client.clone();
+    let client = state.anything_client.clone();
     let semaphore = state.semaphore.clone();
     // To not hit db like crazy if no work to do
     let mut backoff = Duration::from_millis(200);

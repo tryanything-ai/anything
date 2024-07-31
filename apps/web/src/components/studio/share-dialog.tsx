@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShareIcon } from "lucide-react";
+import Link from "next/link";
 
 export function ShareDialog() {
   return (
@@ -29,13 +30,24 @@ export function ShareDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share link</DialogTitle>
-          <DialogDescription>
-            Anyone who has this link will be able to view this.
-          </DialogDescription>
+          <DialogTitle>Share workflow as template</DialogTitle>
+          <DialogDescription>Get credit for your creativity</DialogDescription>
         </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <div className="grid flex-1 gap-2">
+        <div className="flex flex-col space-x-2">
+          <div>
+            Other users will be able to install and use your template in their
+            business from the{" "}
+            <Link
+              href="https://tryanything.xyz/templates"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 underline"
+            >
+              Anything Marketplace
+            </Link>
+          </div>
+
+          {/* <div className="grid flex-1 gap-2">
             <Label htmlFor="link" className="sr-only">
               Link
             </Label>
@@ -48,14 +60,12 @@ export function ShareDialog() {
           <Button type="submit" size="sm" className="px-3">
             <span className="sr-only">Copy</span>
             <Copy className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
         <DialogFooter className="sm:justify-start">
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Close
-            </Button>
-          </DialogClose>
+          {/* <DialogClose asChild> */}
+          <Button className="mt-2">Publish To Anything Marketplace</Button>
+          {/* </DialogClose> */}
         </DialogFooter>
       </DialogContent>
     </Dialog>

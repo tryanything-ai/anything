@@ -61,7 +61,7 @@ pub async fn get_workflows(
 ) -> impl IntoResponse {
     println!("Handling a get_workflows");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("flows")
@@ -114,7 +114,7 @@ pub async fn get_workflow(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("flows")
@@ -160,7 +160,7 @@ pub async fn get_flow_versions(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("flow_versions")
@@ -209,7 +209,7 @@ pub async fn create_workflow(
 ) -> impl IntoResponse {
     println!("Handling a create_workflow");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let input = CreateWorkflowInput {
         flow_id: payload.flow_id.clone(),
@@ -286,7 +286,7 @@ pub async fn delete_workflow(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("flows")
@@ -328,7 +328,7 @@ pub async fn update_workflow(
     _headers: HeaderMap,
     Json(payload): Json<UpdateWorkflowInput>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("flows")
@@ -370,7 +370,7 @@ pub async fn update_workflow_version(
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
     // let payload_json = serde_json::to_string(&payload).unwrap();
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let update_json = serde_json::json!({
         "flow_definition": payload,
@@ -415,7 +415,7 @@ pub async fn get_actions(
 ) -> impl IntoResponse {
     println!("Handling a get_actions");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("action_templates")
@@ -462,7 +462,7 @@ pub async fn test_workflow(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     println!("Handling test workflow");
 
@@ -635,7 +635,7 @@ pub async fn test_action(
 ) -> impl IntoResponse {
     println!("Handling test workflow action");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     // GET the workflow_version
     let response = match client
@@ -808,7 +808,7 @@ pub async fn get_test_session_results(
 ) -> impl IntoResponse {
     println!("Handling a get_test_session_results");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("tasks")
@@ -879,7 +879,7 @@ pub async fn get_tasks(
 ) -> impl IntoResponse {
     println!("Handling a get_workflows");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("tasks")
@@ -931,7 +931,7 @@ pub async fn get_task_by_workflow_id(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .from("tasks")
@@ -992,7 +992,7 @@ pub async fn get_task_status_counts_by_workflow_id(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let start = parse_date_or_default(&start_date);
     let end = parse_date_or_default(&end_date);

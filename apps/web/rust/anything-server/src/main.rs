@@ -15,6 +15,7 @@ mod api;
 mod auth;
 mod bundler;
 mod execution_planner;
+mod marketplace;
 mod secrets;
 mod task_engine;
 mod task_types;
@@ -25,7 +26,8 @@ mod workflow_types;
 extern crate slugify;
 
 pub struct AppState {
-    client: Arc<Postgrest>,
+    anything_client: Arc<Postgrest>,
+    marketplace_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
     task_signal: watch::Sender<()>,
 }
@@ -36,9 +38,17 @@ async fn main() {
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
 
-    let client = Arc::new(
+    //Anything Schema for Application
+    let anything_client = Arc::new(
         Postgrest::new(supabase_url.clone())
             .schema("anything")
+            .insert_header("apikey", supabase_api_key.clone()),
+    );
+
+    //Marketplace Schema for Managing Templates etc
+    let marketplace_client = Arc::new(
+        Postgrest::new(supabase_url.clone())
+            .schema("marketplace")
             .insert_header("apikey", supabase_api_key.clone()),
     );
 
@@ -56,7 +66,8 @@ async fn main() {
     let (task_signal, _) = watch::channel(());
 
     let state = Arc::new(AppState {
-        client: client.clone(),
+        anything_client: anything_client.clone(),
+        marketplace_client: marketplace_client.clone(),
         semaphore: Arc::new(Semaphore::new(5)),
         task_signal,
     });
@@ -74,6 +85,11 @@ async fn main() {
         .route("/workflow/:id", delete(api::delete_workflow))
         .route("/workflow/:id", put(api::update_workflow))
         .route("/actions", get(api::get_actions))
+        //Marketplace
+        .route(
+            "/marketplace/:workflow_id/publish",
+            post(marketplace::publish_workflow_to_marketplace),
+        )
         //Tasks
         .route("/tasks", get(api::get_tasks))
         .route("/tasks/:workflow_id", get(api::get_task_by_workflow_id))

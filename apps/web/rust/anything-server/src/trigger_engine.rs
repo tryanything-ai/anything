@@ -37,7 +37,7 @@ pub struct InMemoryTrigger {
 pub async fn cron_job_loop(state: Arc<AppState>) {
     let trigger_state = Arc::new(RwLock::new(HashMap::new()));
 
-    let client = state.client.clone();
+    let client = state.anything_client.clone();
     hydrate_triggers(&client, &trigger_state).await;
 
     let refresh_interval = Duration::from_secs(60);
@@ -256,7 +256,7 @@ async fn update_trigger_last_run(
 async fn create_trigger_task(state: &AppState, trigger: &InMemoryTrigger) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-    let client = &state.client;
+    let client = &state.anything_client;
 
     println!("Handling create task from cron trigger");
 

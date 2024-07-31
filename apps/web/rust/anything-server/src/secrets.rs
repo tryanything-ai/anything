@@ -48,7 +48,7 @@ pub async fn create_secret(
     Json(payload): Json<CreateSecretPayload>,
 ) -> impl IntoResponse {
     
-    let client = &state.client;
+    let client = &state.anything_client;
 
     println!("create_secret Input?: {:?}", payload);
 
@@ -141,7 +141,7 @@ pub async fn get_decrypted_secrets(
 
     println!("get_decrypted_secrets rpc Input?: {:?}", input);
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     let response = match client
         .rpc("get_decrypted_secrets", serde_json::to_string(&input).unwrap())
@@ -206,7 +206,7 @@ pub async fn update_secret(
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     // Read Secret in Vault
     let response = match client
@@ -301,7 +301,7 @@ pub async fn delete_secret(
 
     println!("Delete Secret: {:?}", secret_id);
 
-    let client = &state.client;
+    let client = &state.anything_client;
 
     // Delete in DB
     let response = match client
