@@ -181,50 +181,29 @@ export const getFlow = async (flowId: string) => {
   }
 };
 
-export const getFlowByName = async (flowName: string) => {
-  // return await anything.getFlowByName(flowName);
-};
+export async function publishFlowVersion(flow_id: string, flow_version_id: string) {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
 
-export const getFlowVersions = async (flowId: string) => {
-  // return await invoke("get_flow_versions", { flowId });
-};
+    console.log('Deleting Workflow');
 
-export const executeFlow = async (flowId: string, flowVersionId: string, sessionId?: string, stage?: string) => {
-  // console.log(`executeFlow called with flowId in tauri_api: ${flowId}, flowVersionId: ${flowVersionId}, sessionId: ${sessionId}, stage: ${stage}`);
-  // return await anything.executeFlow(flowId, flowVersionId, sessionId, stage);
-};
+    if (session) {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}/version/${flow_version_id}/publish`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${session.access_token}`,
+        }
+      });
 
-export const fetchSessionEvents = async (sessionId: string) => {
-  // return await anything.fetchSessionEvents(sessionId);
-};
+      const data = await response.json();
+      console.log('Data from PUT /api/workflows/:id/version/:id/publish:', data);
+      return data;
+    }
 
-export const getEvent = async (eventId: string) => {
-  // return await anything.getEvent(eventId);
+  } catch (error) {
+    console.error('Error deleting Workflow:', error);
+  } finally {
+  }
 }
-
-export const getActions = async () => {
-  // let res = await anything.getActions<{ actions: Action[] }>();
-  // return res.actions;
-}
-
-export const saveAction = async (action: Action) => {
-  // let actionName = action.node_label;
-  // console.log("saveAction Label in flows.ts: ", actionName)
-  // return await anything.saveAction(action, actionName);
-}
-
-export const stopExecution = async () => {
-  // return await anything.stop();
-};
-// export const readToml = async (flow_id: string) => {
-//   return "";
-//   //TODO: debracated for now
-//   // return await anything.readToml(flowId);
-//   // return await invoke("read_toml", { flow_id });
-// };
-
-// export const writeToml = async (flowId: string, toml: string) => {
-//   return true;
-//   //TODO: debrected for now
-//   // return await anything.writeTomle(flowId, toml);
-// };

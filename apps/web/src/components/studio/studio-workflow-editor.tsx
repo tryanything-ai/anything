@@ -7,9 +7,6 @@ import BaseNode
 import { useAnything } from "@/context/AnythingContext";
 import CustomEdge from "./edges/workflow-edge";
 import { Button } from "../ui/button";
-// const edgeTypes = {
-//     'custom-edge': CustomEdge
-//   }
 
 const nodeTypes = {
     "anything": BaseNode,

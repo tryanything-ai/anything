@@ -81,6 +81,10 @@ async fn main() {
             "/workflow/:workflow_id/version/:workflow_version_id",
             put(api::update_workflow_version),
         )
+        .route(
+            "/workflow/:workflow_id/version/:workflow_version_id/publish",
+            put(api::publish_workflow_version),
+        )
         .route("/workflow", post(api::create_workflow))
         .route("/workflow/:id", delete(api::delete_workflow))
         .route("/workflow/:id", put(api::update_workflow))
@@ -137,7 +141,7 @@ async fn main() {
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
-    tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

@@ -407,6 +407,87 @@ pub async fn update_workflow_version(
     Json(body).into_response()
 }
 
+pub async fn publish_workflow_version(
+    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+    _headers: HeaderMap,
+) -> impl IntoResponse {
+    // let payload_json = serde_json::to_string(&payload).unwrap();
+    let client = &state.anything_client;
+
+    let unpublish_json = serde_json::json!({
+        "published": false,
+        "un_published": true,
+        "un_publshed_at": Utc::now().to_rfc3339(),
+    });
+
+    //This should fail because we can't change published workflows with a user JWT.
+    //We should need a service role key to do this
+    let unpublish_response = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .eq("flow_id", &workflow_id)
+        .eq("published", "true")
+        .update(unpublish_json.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to unpublish existing flow",
+            )
+                .into_response()
+        }
+    };
+
+    if unpublish_response.status() != 200 {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to unpublish existing flow",
+        )
+            .into_response();
+    }
+
+    let update_json = serde_json::json!({
+        "published": true,
+        "published_at": Utc::now().to_rfc3339(),
+    });
+
+    let response = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .eq("flow_version_id", &workflow_version_id)
+        .update(update_json.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    Json(body).into_response()
+}
+
 // Actions
 pub async fn get_actions(
     State(state): State<Arc<AppState>>,

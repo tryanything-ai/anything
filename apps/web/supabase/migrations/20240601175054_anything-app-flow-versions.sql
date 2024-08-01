@@ -8,13 +8,16 @@ CREATE TABLE IF NOT EXISTS anything.flow_versions
 
     -- ADD YOUR COLUMNS HERE
     flow_id uuid not null references anything.flows(flow_id),
-    flow_version TEXT NOT NULL, -- semver version
-    archived boolean not null default false, 
+    archived boolean not null default false,
     description TEXT,
-    checksum TEXT,
+    from_template BOOLEAN NOT NULL DEFAULT FALSE,
+    parent_flow_template_id uuid references marketplace.flow_templates(flow_template_id),
+    parent_flow_version_id uuid references anything.flow_versions(flow_version_id),
     published BOOLEAN NOT NULL DEFAULT FALSE,
+    published_at TIMESTAMP WITH TIME ZONE,
+    un_published BOOLEAN NOT NULL DEFAULT FALSE,
+    un_published_at TIMESTAMP WITH TIME ZONE,
     flow_definition json NOT NULL,
-    UNIQUE (flow_id, flow_version),
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these

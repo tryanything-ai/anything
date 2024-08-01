@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Send, XIcon } from "lucide-react";
 import { ShareDialog } from "@/components/studio/share-dialog";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function StudioHeader({
   flow_name,
@@ -13,6 +14,8 @@ export default function StudioHeader({
   savingStatus: string;
 }) {
   const router = useRouter();
+
+  const { workflow } = useAnything();
 
   const handleBack = () => {
     router.back();
@@ -38,14 +41,11 @@ export default function StudioHeader({
         </span>
       </h1>
 
-      {/* <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
-                <ShareIcon className="size-3.5" />
-                Share
-            </Button> */}
       <ShareDialog />
       <Button
         variant="outline"
         size="sm"
+        onClick={() => workflow.publishWorkflowVersion()}
         className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
       >
         <Send className="size-3.5" />

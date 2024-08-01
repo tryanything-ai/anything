@@ -158,7 +158,6 @@ pub struct Trigger {
 pub struct FlowVersion {
     pub flow_version_id: Uuid,
     pub flow_id: Uuid,
-    pub flow_version: String,
     pub flow_definition: Value,
 }
 
