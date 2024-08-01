@@ -21,7 +21,7 @@ use dotenv::dotenv;
 use std::env;
 
 use chrono::Timelike;
-use chrono::{DateTime, Datelike, Duration, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, Utc};
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -42,6 +42,7 @@ pub struct CreateWorkflowHandleInput {
 pub struct CreateWorkflowInput {
     flow_id: String,
     flow_name: String,
+    description: String,
     account_id: String,
 }
 
@@ -68,6 +69,7 @@ pub async fn get_workflows(
         .auth(&user.jwt) // Pass a reference to the JWT
         // .eq("archived", "false")
         .select("*,flow_versions(*)")
+        .eq("archived", "false")
         .execute()
         .await
     {
@@ -214,6 +216,7 @@ pub async fn create_workflow(
     let input = CreateWorkflowInput {
         flow_id: payload.flow_id.clone(),
         flow_name: payload.flow_name.clone(),
+        description: "New Default Flow".to_string(),
         account_id: user.account_id.clone(),
     };
 
@@ -241,16 +244,12 @@ pub async fn create_workflow(
     let version_input = BaseFlowVersionInput {
         account_id: user.account_id.clone(),
         flow_id: payload.flow_id.clone(),
-        flow_version: "0.0.1".to_string(),
-        flow_definition: serde_json::json!({
-            "actions": [],
-        }),
+        flow_version: "0.1.0".to_string(),
+        flow_definition: serde_json::json!(Workflow::default()),
     };
 
-    // let clonedUser = user.clone();
-
     //Create Flow Version
-    let version_response = match client
+    let _version_response = match client
         .from("flow_versions")
         .auth(user.jwt.clone())
         .insert(serde_json::to_string(&version_input).unwrap())

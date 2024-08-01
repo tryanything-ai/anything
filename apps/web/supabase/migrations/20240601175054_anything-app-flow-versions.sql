@@ -86,13 +86,13 @@ create policy "Account members can insert" on anything.flow_versions
     );
 
 ---------------
--- Users should be able to update records that are owned by an account they belong to
+-- Users should be able to update records that are owned by an account they belong to if not already published
 ---------------
 create policy "Account members can update" on anything.flow_versions
     for update
     to authenticated
     using (
-    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    (account_id IN ( SELECT basejump.get_accounts_with_role())) AND (published = false)
     );
 
 ----------------
