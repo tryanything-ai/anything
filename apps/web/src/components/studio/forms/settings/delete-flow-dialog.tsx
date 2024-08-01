@@ -21,7 +21,7 @@ export default function DeleteFlowDialog({ workflowId }: { workflowId: string })
         try {
             console.log("Deleting Flow in DeleteFlowDialog");
             await workflows.deleteWorkflow(workflowId);
-            navigate.back();
+            navigate.push('/workflows');
         } catch (error) {
             console.error(error);
         }
