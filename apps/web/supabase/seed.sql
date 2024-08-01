@@ -139,7 +139,7 @@ INSERT INTO anything.flow_versions (
     flow_version_id, account_id, flow_id, description, published, flow_definition, updated_at, created_at, updated_by, created_by
 ) VALUES
 -- FLOW WITH INPUTS AND OUTPUTS
-    ('11111111-1111-1111-1111-111111111111', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Initial version of Flow 1', true, 
+    ('11111111-1111-1111-1111-111111111111', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Initial version of Flow 1', false, 
     '{
       "edges": [
    {
@@ -469,7 +469,7 @@ INSERT INTO anything.flow_versions (
   ]
 }', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
 -- FLOW WITH TRIGGER
-('11111111-1111-1111-1111-111111111112', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Initial version of Flow 1', true, 
+('11111111-1111-1111-1111-111111111112', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Initial version of Flow 1', false, 
     '{
       "edges": [
    {
@@ -738,7 +738,7 @@ INSERT INTO anything.flow_versions (
     }
   ]
 }', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
-    ('22222222-2222-2222-2222-222222222222', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Initial version of Flow 2', true,  '{
+    ('22222222-2222-2222-2222-222222222222', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Initial version of Flow 2', false,  '{
     "actions": [
     {
       "anything_action_version": "1.0.0",
@@ -910,7 +910,7 @@ INSERT INTO anything.flow_versions (
     }
   ]
 }', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
-    ('33333333-3333-3333-3333-333333333333', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Initial version of Flow 3', true,  '{
+    ('33333333-3333-3333-3333-333333333333', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Initial version of Flow 3', false,  '{
     "actions": [
     {
       "anything_action_version": "1.0.0",

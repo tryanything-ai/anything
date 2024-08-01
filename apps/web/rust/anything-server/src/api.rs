@@ -412,44 +412,48 @@ pub async fn publish_workflow_version(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     _headers: HeaderMap,
+    Json(_payload): Json<Value>,
 ) -> impl IntoResponse {
+    println!("Handling publish workflow version");
+
     // let payload_json = serde_json::to_string(&payload).unwrap();
     let client = &state.anything_client;
 
-    let unpublish_json = serde_json::json!({
-        "published": false,
-        "un_published": true,
-        "un_publshed_at": Utc::now().to_rfc3339(),
-    });
+    // let unpublish_json = serde_json::json!({
+    //     "published": false,
+    //     "un_published": true,
+    //     "un_publshed_at": Utc::now().to_rfc3339(),
+    // });
 
     //This should fail because we can't change published workflows with a user JWT.
     //We should need a service role key to do this
-    let unpublish_response = match client
-        .from("flow_versions")
-        .auth(user.jwt.clone())
-        .eq("flow_id", &workflow_id)
-        .eq("published", "true")
-        .update(unpublish_json.to_string())
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to unpublish existing flow",
-            )
-                .into_response()
-        }
-    };
+    // let unpublish_response = match client
+    //     .from("flow_versions")
+    //     .auth(user.jwt.clone())
+    //     .eq("flow_id", &workflow_id)
+    //     .eq("published", "true")
+    //     .update(unpublish_json.to_string())
+    //     .execute()
+    //     .await
+    // {
+    //     Ok(response) => response,
+    //     Err(err) => {
+    //         eprintln!("Error: {:?}", err);
+    //         return (
+    //             StatusCode::INTERNAL_SERVER_ERROR,
+    //             "Failed to unpublish existing flow",
+    //         )
+    //             .into_response();
+    //     }
+    // };
 
-    if unpublish_response.status() != 200 {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to unpublish existing flow",
-        )
-            .into_response();
-    }
+    // if unpublish_response.status() != 200 {
+    //     return (
+    //         StatusCode::INTERNAL_SERVER_ERROR,
+    //         "Failed to unpublish existing flow",
+    //     )
+    //         .into_response();
+    // }
 
     let update_json = serde_json::json!({
         "published": true,
@@ -465,7 +469,8 @@ pub async fn publish_workflow_version(
         .await
     {
         Ok(response) => response,
-        Err(_) => {
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",

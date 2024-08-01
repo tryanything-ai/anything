@@ -186,7 +186,7 @@ export async function publishFlowVersion(flow_id: string, flow_version_id: strin
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
-    console.log('Deleting Workflow');
+    console.log('Publishing Workflow');
 
     if (session) {
       const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}/version/${flow_version_id}/publish`, {
@@ -194,7 +194,8 @@ export async function publishFlowVersion(flow_id: string, flow_version_id: strin
         headers: {
           'Content-Type': 'application/json',
           Authorization: `${session.access_token}`,
-        }
+        }, 
+        body: JSON.stringify({"derp": true}),
       });
 
       const data = await response.json();
@@ -203,7 +204,6 @@ export async function publishFlowVersion(flow_id: string, flow_version_id: strin
     }
 
   } catch (error) {
-    console.error('Error deleting Workflow:', error);
-  } finally {
-  }
+    console.error('Error publishing Workflow:', error);
+  } 
 }

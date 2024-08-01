@@ -77,7 +77,6 @@ create policy "Account members can select" on anything.flow_versions
     (account_id IN ( SELECT basejump.get_accounts_with_role()))
     );
 
-
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
@@ -91,22 +90,46 @@ create policy "Account members can insert" on anything.flow_versions
 ---------------
 -- Users should be able to update records that are owned by an account they belong to if not already published
 ---------------
-create policy "Account members can update" on anything.flow_versions
-    for update
-    to authenticated
-    using (
-    (account_id IN ( SELECT basejump.get_accounts_with_role())) AND (published = false)
+-- create policy "Account members can update until published" on anything.flow_versions
+--     for update
+--     to authenticated
+--     using (
+--     (account_id IN ( SELECT basejump.get_accounts_with_role()))
+-- );
+
+-- Modified update policy to allow updates only when not published
+CREATE POLICY "Account members can update until published" ON anything.flow_versions
+    FOR UPDATE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+        AND
+        NOT published
+    );
+
+-- Corrected policy to allow setting the 'published' flag to true
+DROP POLICY IF EXISTS "Account members can publish" ON anything.flow_versions;
+CREATE POLICY "Account members can publish" ON anything.flow_versions
+    FOR UPDATE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+        AND
+        NOT published
+    )
+    WITH CHECK (
+        published = true
     );
 
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
-create policy "Account members can delete" on anything.flow_versions
-    for delete
-    to authenticated
-    using (
-    (account_id IN ( SELECT basejump.get_accounts_with_role()))
-    );
+-- create policy "Account members can delete" on anything.flow_versions
+--     for delete
+--     to authenticated
+--     using (
+--     (account_id IN ( SELECT basejump.get_accounts_with_role()))
+--     );
 
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to
