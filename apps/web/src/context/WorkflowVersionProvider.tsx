@@ -565,17 +565,35 @@ export const WorkflowVersionProvider = ({
 
   const _saveFlowVersion = async (workflow: Workflow) => {
     try {
-      const res = await api.flows.updateFlowVersion(
+      const res: any = await api.flows.updateFlowVersion(
         dbFlowId,
         dbFlowVersionId,
         workflow
       );
-      console.log("Flow Saved!", JSON.stringify(res, null, 3));
+
+      console.log("Flow Version Saved!", JSON.stringify(res, null, 3));
+
+      let returned_flow = JSON.parse(res)[0];
+
+      console.log("Returned Flow", returned_flow);
+
+      if (returned_flow.flow_version_id !== dbFlowVersionId) {
+        console.log("Flow Version Ids DO NOT match.");
+        console.log("Update on published flow generated a NEW DRAFT version");
+
+        setDbFlowVersionId(returned_flow.flow_version_id);
+        setDbFlowVersion(returned_flow);
+        setFlowVersionDefinition(returned_flow.flow_definition);
+      } else {
+        // console.log("Flow Version Ids match.");
+        console.log("Updated existing draft flow version");
+      }
+
       setSavingStatus(SavingStatus.SAVED);
       setTimeout(() => setSavingStatus(SavingStatus.NONE), 1500); // Clear the status after 2 seconds
       // NOTES:
       // await hydrateFlow(); //This means we would have to hand manage syncing of
-      //things like selected node and its dependences liek selected_node_data etc etc
+      //things like selected node and its dependences like selected_node_data etc etc
       //Maybe difficult!
     } catch (error) {
       console.log("error in saveFlowVersion", error);

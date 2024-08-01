@@ -28,7 +28,6 @@ use std::collections::HashMap;
 pub struct BaseFlowVersionInput {
     account_id: String,
     flow_id: String,
-    flow_version: String,
     flow_definition: Value,
 }
 
@@ -244,7 +243,6 @@ pub async fn create_workflow(
     let version_input = BaseFlowVersionInput {
         account_id: user.account_id.clone(),
         flow_id: payload.flow_id.clone(),
-        flow_version: "0.1.0".to_string(),
         flow_definition: serde_json::json!(Workflow::default()),
     };
 
@@ -368,8 +366,134 @@ pub async fn update_workflow_version(
     _headers: HeaderMap,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    // let payload_json = serde_json::to_string(&payload).unwrap();
     let client = &state.anything_client;
+
+    // Check if the flow_version is published
+    let is_flow_version_published_resopnse = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .eq("flow_version_id", &workflow_version_id)
+        .select("published")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to check if flow_version is published",
+            )
+                .into_response()
+        }
+    };
+
+    let check_body = match is_flow_version_published_resopnse.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read check response body",
+            )
+                .into_response()
+        }
+    };
+
+    let is_published: bool = match serde_json::from_str::<Value>(&check_body) {
+        Ok(value) => value[0]["published"].as_bool().unwrap_or(false),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse check response JSON",
+            )
+                .into_response()
+        }
+    };
+
+    //If it is published we need to create a new version to be the draft
+    if is_published {
+        // Create a new flow_version as a copy of the published one
+        let copy_response = match client
+            .from("flow_versions")
+            .auth(user.jwt.clone())
+            .eq("flow_version_id", &workflow_version_id)
+            .select("*")
+            .execute()
+            .await
+        {
+            Ok(response) => response,
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to fetch published flow_version",
+                )
+                    .into_response()
+            }
+        };
+
+        let copy_body = match copy_response.text().await {
+            Ok(body) => body,
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to read copy response body",
+                )
+                    .into_response()
+            }
+        };
+
+        let mut new_flow_version: Value = match serde_json::from_str::<Vec<Value>>(&copy_body) {
+            Ok(value) => value[0].clone(),
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse copy response JSON",
+                )
+                    .into_response()
+            }
+        };
+
+        // Update the new flow_version with the new payload and reset necessary fields
+        new_flow_version["flow_version_id"] = serde_json::json!(Uuid::new_v4().to_string());
+        new_flow_version["flow_definition"] = payload;
+        new_flow_version["flow_id"] = serde_json::json!(workflow_id);
+        new_flow_version["published"] = serde_json::json!(false);
+        new_flow_version["published_at"] = serde_json::json!(null);
+        new_flow_version["un_published"] = serde_json::json!(false);
+        new_flow_version["un_published_at"] = serde_json::json!(null);
+        new_flow_version["parent_flow_version_id"] = serde_json::json!(workflow_version_id);
+
+        let insert_response = match client
+            .from("flow_versions")
+            .auth(user.jwt.clone())
+            .insert(new_flow_version.to_string())
+            .execute()
+            .await
+        {
+            Ok(response) => response,
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to insert new flow_version",
+                )
+                    .into_response()
+            }
+        };
+
+        let insert_body = match insert_response.text().await {
+            Ok(body) => body,
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to read insert response body",
+                )
+                    .into_response()
+            }
+        };
+
+        return Json(insert_body).into_response();
+    }
+
+    //If its not published do the normal thing
 
     let update_json = serde_json::json!({
         "flow_definition": payload,
@@ -411,12 +535,11 @@ pub async fn publish_workflow_version(
     Path((workflow_id, workflow_version_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    _headers: HeaderMap,
-    Json(_payload): Json<Value>,
 ) -> impl IntoResponse {
     println!("Handling publish workflow version");
+    println!("workflow id: {}", workflow_id);
+    println!("flow-version id: {}", workflow_version_id);
 
-    // let payload_json = serde_json::to_string(&payload).unwrap();
     let client = &state.anything_client;
 
     // let unpublish_json = serde_json::json!({
@@ -425,11 +548,18 @@ pub async fn publish_workflow_version(
     //     "un_publshed_at": Utc::now().to_rfc3339(),
     // });
 
+    // dotenv().ok();
+    // let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+    //     .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    // println!("workflow id: {:?}", workflow_id);
     //This should fail because we can't change published workflows with a user JWT.
     //We should need a service role key to do this
+    //TODO: update to service role key once we prove this fails
     // let unpublish_response = match client
     //     .from("flow_versions")
-    //     .auth(user.jwt.clone())
+    //     .auth(supabase_service_role_api_key.clone())
+    //     // .auth(user.jwt.clone())
     //     .eq("flow_id", &workflow_id)
     //     .eq("published", "true")
     //     .update(unpublish_json.to_string())
@@ -448,6 +578,10 @@ pub async fn publish_workflow_version(
     // };
 
     // if unpublish_response.status() != 200 {
+    //     println!(
+    //         "Error: Failed to unpublish existing flow with status: {}",
+    //         unpublish_response.status()
+    //     );
     //     return (
     //         StatusCode::INTERNAL_SERVER_ERROR,
     //         "Failed to unpublish existing flow",
@@ -475,7 +609,7 @@ pub async fn publish_workflow_version(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
