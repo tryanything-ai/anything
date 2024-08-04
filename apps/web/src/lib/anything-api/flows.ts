@@ -3,9 +3,8 @@ import { createClient } from "../supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
 export type UpdateFlowArgs = {
-  flow_name: string;
-  active: boolean;
-  version?: string;
+  flow_name?: string;
+  active?: boolean;
 };
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
@@ -76,7 +75,7 @@ export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
-    console.log('Updating Workflow');
+    console.log('Updating Workflow:', flow_id, "with args: ", args);
 
     if (session) {
       const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}`, {
@@ -85,7 +84,7 @@ export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
           'Content-Type': 'application/json',
           Authorization: `${session.access_token}`,
         },
-        body: JSON.stringify(args),
+        body: JSON.stringify({...args}),
       });
 
       const data = await response.json();

@@ -13,12 +13,11 @@ import {
 } from "@/components/ui/resizable";
 
 export default function StudioLayout() {
-  const { workflow } = useAnything();
+  // const { workflow } = useAnything();
   return (
     <div className="flex flex-col h-screen">
       <StudioHeader
-        flow_name={workflow?.db_flow.flow_name || ""}
-        savingStatus={workflow.savingStatus}
+       
       />
       <ResizablePanelGroup direction="horizontal" className="">
         <ResizablePanel defaultSize={60}>

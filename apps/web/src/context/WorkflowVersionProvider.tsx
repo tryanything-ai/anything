@@ -227,6 +227,8 @@ export const WorkflowVersionProvider = ({
     try {
       if (!dbFlowId) return;
 
+      console.log("Updating Workflow", args);
+
       //Save to cloud
       await api.flows.updateFlow(dbFlowId, args);
 

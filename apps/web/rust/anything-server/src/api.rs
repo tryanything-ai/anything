@@ -47,8 +47,12 @@ pub struct CreateWorkflowInput {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateWorkflowInput {
-    flow_id: String,
-    flow_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    flow_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    active: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
 }
 
 pub async fn root() -> &'static str {
@@ -325,23 +329,28 @@ pub async fn update_workflow(
     _headers: HeaderMap,
     Json(payload): Json<UpdateWorkflowInput>,
 ) -> impl IntoResponse {
+    println!("Handling a update_workflow");
+
+    print!("Payload: {:?}", payload);
+
     let client = &state.anything_client;
 
     let response = match client
         .from("flows")
         .auth(user.jwt)
-        .eq("id", &flow_id)
+        .eq("flow_id", &flow_id)
         .update(serde_json::to_string(&payload).unwrap())
         .execute()
         .await
     {
         Ok(response) => response,
-        Err(_) => {
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 

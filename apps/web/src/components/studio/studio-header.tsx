@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import { Send, XIcon } from "lucide-react";
 import { ShareDialog } from "@/components/studio/share-dialog";
 import { useAnything } from "@/context/AnythingContext";
+import WorkflowToggle from "../workflows/workflow-toggle";
 
-export default function StudioHeader({
-  flow_name,
-  savingStatus,
-}: {
-  flow_name: string;
-  savingStatus: string;
-}) {
+// flow_name={workflow?.db_flow.flow_name || ""}
+// savingStatus={workflow.savingStatus}
+
+export default function StudioHeader() {
   const router = useRouter();
 
   const { workflow } = useAnything();
@@ -34,13 +32,16 @@ export default function StudioHeader({
         </Button>
       </div>
       <h1 className="text-xl font-semibold inline">
-        {flow_name}{" "}
+        {workflow?.db_flow.flow_name || ""}{" "}
         <span className="text-sm font-normal">
           {"  "}
-          {savingStatus}
+          {workflow.savingStatus}
         </span>
       </h1>
-
+      <WorkflowToggle
+        active={workflow.db_flow.active}
+        workflow_id={workflow.db_flow_id}
+      />
       <ShareDialog />
       <Button
         variant="outline"
