@@ -542,52 +542,54 @@ pub async fn publish_workflow_version(
 
     let client = &state.anything_client;
 
-    // let unpublish_json = serde_json::json!({
-    //     "published": false,
-    //     "un_published": true,
-    //     "un_publshed_at": Utc::now().to_rfc3339(),
-    // });
+    let unpublish_json = serde_json::json!({
+        // "published": false,
+        "un_published": true,
+        "un_publshed_at": Utc::now().to_rfc3339(),
+    });
 
-    // dotenv().ok();
-    // let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-    //     .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    // println!("workflow id: {:?}", workflow_id);
-    //This should fail because we can't change published workflows with a user JWT.
-    //We should need a service role key to do this
-    //TODO: update to service role key once we prove this fails
-    // let unpublish_response = match client
-    //     .from("flow_versions")
-    //     .auth(supabase_service_role_api_key.clone())
-    //     // .auth(user.jwt.clone())
-    //     .eq("flow_id", &workflow_id)
-    //     .eq("published", "true")
-    //     .update(unpublish_json.to_string())
-    //     .execute()
-    //     .await
-    // {
-    //     Ok(response) => response,
-    //     Err(err) => {
-    //         eprintln!("Error: {:?}", err);
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to unpublish existing flow",
-    //         )
-    //             .into_response();
-    //     }
-    // };
+    println!("service_role_key: {:?}", &supabase_service_role_api_key);
 
-    // if unpublish_response.status() != 200 {
-    //     println!(
-    //         "Error: Failed to unpublish existing flow with status: {}",
-    //         unpublish_response.status()
-    //     );
-    //     return (
-    //         StatusCode::INTERNAL_SERVER_ERROR,
-    //         "Failed to unpublish existing flow",
-    //     )
-    //         .into_response();
-    // }
+    println!("workflow id: {:?}", &workflow_id);
+    // This should fail because we can't change published workflows with a user JWT.
+    // We should need a service role key to do this
+    // TODO: update to service role key once we prove this fails
+    let unpublish_response = match client
+        .from("flow_versions")
+        .auth(supabase_service_role_api_key.clone())
+        // .auth(user.jwt.clone())
+        .eq("flow_id", &workflow_id)
+        // .eq("published", "true")
+        .update(unpublish_json.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to unpublish existing flow",
+            )
+                .into_response();
+        }
+    };
+
+    if unpublish_response.status() != 200 {
+        println!(
+            "Error: Failed to unpublish existing flow with status: {}",
+            unpublish_response.status()
+        );
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to unpublish existing flow",
+        )
+            .into_response();
+    }
 
     let update_json = serde_json::json!({
         "published": true,

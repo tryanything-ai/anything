@@ -98,28 +98,28 @@ create policy "Account members can insert" on anything.flow_versions
 -- );
 
 -- Modified update policy to allow updates only when not published
-CREATE POLICY "Account members can update until published" ON anything.flow_versions
-    FOR UPDATE
-    TO authenticated
-    USING (
-        account_id IN (SELECT basejump.get_accounts_with_role())
-        AND
-        NOT published
-    );
-
--- Corrected policy to allow setting the 'published' flag to true
-DROP POLICY IF EXISTS "Account members can publish" ON anything.flow_versions;
-CREATE POLICY "Account members can publish" ON anything.flow_versions
-    FOR UPDATE
-    TO authenticated
-    USING (
-        account_id IN (SELECT basejump.get_accounts_with_role())
-        AND
-        NOT published
-    )
-    WITH CHECK (
-        published = true
-    );
+-- CREATE POLICY "Account members can update until published" ON anything.flow_versions
+--     FOR UPDATE
+--     TO authenticated
+--     USING (
+--         account_id IN (SELECT basejump.get_accounts_with_role())
+--         AND
+--         NOT published
+--     );
+-- //TODO: add both these back.
+-- -- Corrected policy to allow setting the 'published' flag to true
+-- DROP POLICY IF EXISTS "Account members can publish" ON anything.flow_versions;
+-- CREATE POLICY "Account members can publish" ON anything.flow_versions
+--     FOR UPDATE
+--     TO authenticated
+--     USING (
+--         account_id IN (SELECT basejump.get_accounts_with_role())
+--         AND
+--         NOT published
+--     )
+--     WITH CHECK (
+--         published = true
+--     );
 
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to

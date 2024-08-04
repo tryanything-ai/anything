@@ -12,6 +12,7 @@ import { BaseNodeIcon } from "../studio/nodes/node-icon";
 import { useAnything } from "@/context/AnythingContext";
 import { Edit } from "lucide-react";
 import { Button } from "../ui/button";
+import WorkflowStatusComponent from "./workflow-status";
 
 export default function ManageWorkflows() {
   let { workflows } = useAnything();
@@ -37,9 +38,9 @@ export default function ManageWorkflows() {
               key={flow.flow_id}
               className="mt-2 flex flex-row hover:border-green-500"
             >
-              <CardHeader className="">
-                <CardTitle>{flow.flow_name}</CardTitle>
-                <CardDescription>{flow.description}</CardDescription>
+              <CardHeader className="w-1/4">
+                <CardTitle className="truncate">{flow.flow_name}</CardTitle>
+                <CardDescription className="truncate">{flow.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
                 <div className="flex flex-row h-full items-end">
@@ -55,6 +56,10 @@ export default function ManageWorkflows() {
                   })}
 
                   <div className="flex-1" />
+                  <div className="mx-3">
+                    <WorkflowStatusComponent active={flow.active} />
+                  </div>
+
                   <Link
                     className="flex flex-col justify-end h-full"
                     href={`/workflows/${flow.flow_id}/${flow.flow_versions[0]?.flow_version_id}/editor`}
