@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS anything.flow_versions
     created_by uuid references auth.users(id)
 );
 
+-- Add a partial unique index to ensure only one published version per flow_id
+CREATE UNIQUE INDEX unique_published_flow_id ON anything.flow_versions (flow_id)
+WHERE published = TRUE;
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_flow_versions_timestamp
@@ -98,28 +101,28 @@ create policy "Account members can insert" on anything.flow_versions
 -- );
 
 -- Modified update policy to allow updates only when not published
--- CREATE POLICY "Account members can update until published" ON anything.flow_versions
---     FOR UPDATE
---     TO authenticated
---     USING (
---         account_id IN (SELECT basejump.get_accounts_with_role())
---         AND
---         NOT published
---     );
--- //TODO: add both these back.
+CREATE POLICY "Account members can update until published" ON anything.flow_versions
+    FOR UPDATE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+        AND
+        NOT published
+    );
+
 -- -- Corrected policy to allow setting the 'published' flag to true
 -- DROP POLICY IF EXISTS "Account members can publish" ON anything.flow_versions;
--- CREATE POLICY "Account members can publish" ON anything.flow_versions
---     FOR UPDATE
---     TO authenticated
---     USING (
---         account_id IN (SELECT basejump.get_accounts_with_role())
---         AND
---         NOT published
---     )
---     WITH CHECK (
---         published = true
---     );
+CREATE POLICY "Account members can publish" ON anything.flow_versions
+    FOR UPDATE
+    TO authenticated
+    USING (
+        account_id IN (SELECT basejump.get_accounts_with_role())
+        AND
+        NOT published
+    )
+    WITH CHECK (
+        published = true
+    );
 
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to

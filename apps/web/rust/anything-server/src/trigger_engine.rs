@@ -1,14 +1,17 @@
-use tokio::time::{sleep, Duration};
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 use postgrest::Postgrest;
+use tokio::time::{sleep, Duration};
 
 use dotenv::dotenv;
 use std::env;
 
+use crate::{
+    task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
+    AppState,
+};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::{task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}, AppState};
-use std::collections::HashMap;
 
 use cron::Schedule;
 use serde_json::Value;
@@ -17,9 +20,6 @@ use uuid::Uuid;
 
 use crate::workflow_types::{CreateTaskInput, TaskConfig};
 
-pub struct TriggerEngineState {
-    pub triggers: Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
-}
 
 #[derive(Debug, Clone)]
 pub struct InMemoryTrigger {
@@ -34,86 +34,137 @@ pub struct InMemoryTrigger {
     pub next_fire: Option<DateTime<Utc>>,
 }
 
+//Works but dropping for adding external signal
+// pub async fn cron_job_loop(state: Arc<AppState>) {
+//     let trigger_state = Arc::new(RwLock::new(HashMap::new()));
+
+//     // Receive info from other systems
+//     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
+//     let client = state.anything_client.clone();
+//     hydrate_triggers(&client, &trigger_state).await;
+
+//     let refresh_interval = Duration::from_secs(60);
+
+//     loop {
+//         println!("[TRIGGER_ENGINE] Starting trigger check loop");
+
+//         //find triggers to run
+//         let triggers_to_run = {
+//             let triggers = trigger_state.read().await;
+//             triggers
+//                 .iter()
+//                 .filter(|(_, trigger)| should_trigger_run(trigger))
+//                 .map(|(id, trigger)| (id.clone(), trigger.clone()))
+//                 .collect::<Vec<_>>()
+//         };
+
+//         //Create tasks for triggers that should run
+//         //Then udpate trigger to get next time to run in memory
+//         for (id, trigger) in triggers_to_run {
+//             println!(
+//                 "[TRIGGER_ENGINE] Trigger should run for trigger_id: {}",
+//                 trigger.trigger_id
+//             );
+//             if let Err(e) = create_trigger_task(&state, &trigger).await {
+//                 println!("[TRIGGER_ENGINE] Error creating trigger task: {:?}", e);
+//             } else {
+//                 if let Err(e) = update_trigger_last_run(&id, &trigger, &trigger_state).await {
+//                     println!("[TRIGGER_ENGINE] Error updating trigger last run: {:?}", e);
+//                 }
+//             }
+//             println!("[TRIGGER_ENGINE] Trigger Loop Successfully LOOPED");
+//         }
+
+//         println!("[TRIGGER_ENGINE] Sleeping for refresh interval");
+//         sleep(refresh_interval).await;
+
+//         println!("[TRIGGER_ENGINE] Hydrating triggers from the database");
+//         hydrate_triggers(&client, &trigger_state).await;
+//     }
+// }
+
 pub async fn cron_job_loop(state: Arc<AppState>) {
     let trigger_state = Arc::new(RwLock::new(HashMap::new()));
 
+    // Receive info from other systems
+    let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
     let client = state.anything_client.clone();
     hydrate_triggers(&client, &trigger_state).await;
 
     let refresh_interval = Duration::from_secs(60);
 
     loop {
-        println!("[TRIGGER_ENGINE] Starting trigger check loop");
+        tokio::select! {
+            _ = sleep(refresh_interval) => {
+                println!("[TRIGGER_ENGINE] Starting trigger check loop");
 
-        //find triggers to run
-        let triggers_to_run = {
-            let triggers = trigger_state.read().await;
-            triggers
-                .iter()
-                .filter(|(_, trigger)| should_trigger_run(trigger))
-                .map(|(id, trigger)| (id.clone(), trigger.clone()))
-                .collect::<Vec<_>>()
-        };
+                //find triggers to run
+                let triggers_to_run = {
+                    let triggers = trigger_state.read().await;
+                    triggers
+                        .iter()
+                        .filter(|(_, trigger)| should_trigger_run(trigger))
+                        .map(|(id, trigger)| (id.clone(), trigger.clone()))
+                        .collect::<Vec<_>>()
+                };
 
-        //Create tasks for triggers that should run
-        //Then udpate trigger to get next time to run in memory
-        for (id, trigger) in triggers_to_run {
-            println!("[TRIGGER_ENGINE] Trigger should run for trigger_id: {}", trigger.trigger_id);
-            if let Err(e) = create_trigger_task(&state, &trigger).await {
-                println!("[TRIGGER_ENGINE] Error creating trigger task: {:?}", e);
-            } else {
-                if let Err(e) = update_trigger_last_run(&id, &trigger, &trigger_state).await {
-                    println!("[TRIGGER_ENGINE] Error updating trigger last run: {:?}", e);
+                //Create tasks for triggers that should run
+                //Then update trigger to get next time to run in memory
+                for (id, trigger) in triggers_to_run {
+                    println!(
+                        "[TRIGGER_ENGINE] Trigger should run for trigger_id: {}",
+                        trigger.trigger_id
+                    );
+                    if let Err(e) = create_trigger_task(&state, &trigger).await {
+                        println!("[TRIGGER_ENGINE] Error creating trigger task: {:?}", e);
+                    } else {
+                        if let Err(e) = update_trigger_last_run(&id, &trigger, &trigger_state).await {
+                            println!("[TRIGGER_ENGINE] Error updating trigger last run: {:?}", e);
+                        }
+                    }
+                    println!("[TRIGGER_ENGINE] Trigger Loop Successfully LOOPED");
                 }
+
+                println!("[TRIGGER_ENGINE] Hydrating triggers from the database");
+                hydrate_triggers(&client, &trigger_state).await;
             }
-            println!("[TRIGGER_ENGINE] Trigger Loop Successfully LOOPED");
+            // _ = trigger_engine_signal_rx.changed() => {
+            //     let workflow_id = trigger_engine_signal_rx.borrow().clone();
+            //     println!("[TRIGGER_ENGINE] Received workflow_id: {}", workflow_id);
+            //     if let Err(e) = update_triggers_for_workflow(&client, &trigger_state, &workflow_id).await {
+            //         println!("[TRIGGER_ENGINE] Error updating triggers for workflow: {:?}", e);
+            //     }
+            // }
         }
-
-        println!("[TRIGGER_ENGINE] Sleeping for refresh interval");
-        sleep(refresh_interval).await;
-
-        println!("[TRIGGER_ENGINE] Hydrating triggers from the database");
-        hydrate_triggers(&client, &trigger_state).await;
     }
 }
 
-pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>) {
-    println!("[TRIGGER_ENGINE] Hydrating triggers from the database");
+//From Claude and very untested so far
+//Ment to lightly update triggers so we don't need to refresh the entire memory each time we update something
+async fn update_triggers_for_workflow(
+    client: &Postgrest,
+    triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
+    workflow_id: &String,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    println!(
+        "[TRIGGER_ENGINE] Updating triggers for workflow: {}",
+        workflow_id
+    );
 
     dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY").expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    let response = match client
+    let response = client
         .from("flow_versions")
         .auth(supabase_service_role_api_key.clone())
-        .select("flow_id, flow_version_id, flow_definition, account_id") // TODO: only fetch active flows
+        .select("flow_id, flow_version_id, flow_definition, account_id")
+        .eq("flow_id", workflow_id)
         .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(e) => {
-            println!("[TRIGGER_ENGINE] Error fetching flow versions: {:?}", e);
-            return;
-        },
-    };
+        .await?;
 
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(e) => {
-            println!("[TRIGGER_ENGINE] Error reading response body: {:?}", e);
-            return;
-        },
-    };
-
-    let flow_versions: Vec<Value> = match serde_json::from_str(&body) {
-        Ok(flow_versions) => flow_versions,
-        Err(e) => {
-            println!("[TRIGGER_ENGINE] Error parsing JSON: {:?}", e);
-            return;
-        },
-    };
-
-    println!("[TRIGGER_ENGINE] Found flow_versions vector: {}", flow_versions.len());
+    let body = response.text().await?;
+    let flow_versions: Vec<Value> = serde_json::from_str(&body)?;
 
     let mut new_triggers = HashMap::new();
 
@@ -122,14 +173,143 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
             flow_version.get("flow_id").and_then(|v| v.as_str()),
             flow_version.get("flow_version_id").and_then(|v| v.as_str()),
             flow_version.get("flow_definition"),
-            flow_version.get("account_id").and_then(|v| v.as_str())
+            flow_version.get("account_id").and_then(|v| v.as_str()),
         ) {
             if let Some(actions) = flow_definition.get("actions").and_then(|v| v.as_array()) {
                 for action in actions {
                     if let (Some(trigger_id), Some(action_type), Some(node_id)) = (
                         action.get("plugin_id").and_then(|v| v.as_str()),
                         action.get("type").and_then(|v| v.as_str()),
-                        action.get("node_id").and_then(|v| v.as_str())
+                        action.get("node_id").and_then(|v| v.as_str()),
+                    ) {
+                        if action_type == "trigger" {
+                            let input = action.get("input").cloned().unwrap_or_default();
+                            let variables = action.get("variables").cloned().unwrap_or_default();
+
+                            let config = serde_json::json!({
+                                "input": input,
+                                "variables": variables,
+                            });
+
+                            let cron_expression = config["input"]["cron_expression"]
+                                .as_str()
+                                .unwrap_or("* * * * *");
+
+                            let next_fire = match Schedule::from_str(cron_expression) {
+                                Ok(schedule) => schedule.upcoming(Utc).next(),
+                                Err(e) => {
+                                    println!(
+                                        "[TRIGGER_ENGINE] Error parsing cron expression: {}",
+                                        e
+                                    );
+                                    None
+                                }
+                            };
+
+                            let new_trigger = InMemoryTrigger {
+                                node_id: node_id.to_string(),
+                                account_id: account_id.to_string(),
+                                trigger_id: trigger_id.to_string(),
+                                flow_id: flow_id.to_string(),
+                                action_label: action
+                                    .get("label")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string(),
+                                flow_version_id: flow_version_id.to_string(),
+                                config,
+                                last_fired: None,
+                                next_fire,
+                            };
+
+                            new_triggers.insert(flow_version_id.to_string(), new_trigger);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut triggers = triggers.write().await;
+    for (id, trigger) in new_triggers.into_iter() {
+        triggers.insert(id, trigger);
+    }
+
+    println!(
+        "[TRIGGER_ENGINE] Successfully updated triggers for workflow: {}",
+        workflow_id
+    );
+    Ok(())
+}
+
+pub async fn hydrate_triggers(
+    client: &Postgrest,
+    triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
+) {
+    println!("[TRIGGER_ENGINE] Hydrating triggers from the database");
+
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let response = match client
+        .from("flow_versions")
+        .auth(supabase_service_role_api_key.clone())
+        .select("flow_id, flow_version_id, flow_definition, account_id, flows!inner(active)") // TODO: only fetch active flows
+        .eq("published", "true")
+        .eq("flows.active", "true")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            println!("[TRIGGER_ENGINE] Error fetching flow versions: {:?}", e);
+            return;
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => {
+            println!(
+                "[TRIGGER_ENGINE] Response body for active and published triggers: {}",
+                body
+            );
+            body
+        }
+        Err(e) => {
+            println!("[TRIGGER_ENGINE] Error reading response body: {:?}", e);
+            return;
+        }
+    };
+
+    let flow_versions: Vec<Value> = match serde_json::from_str(&body) {
+        Ok(flow_versions) => flow_versions,
+        Err(e) => {
+            println!("[TRIGGER_ENGINE] Error parsing JSON: {:?}", e);
+            return;
+        }
+    };
+
+    println!(
+        "[TRIGGER_ENGINE] Found flow_versions vector: {}",
+        flow_versions.len()
+    );
+
+    let mut new_triggers = HashMap::new();
+
+    for flow_version in flow_versions {
+        if let (Some(flow_id), Some(flow_version_id), Some(flow_definition), Some(account_id)) = (
+            flow_version.get("flow_id").and_then(|v| v.as_str()),
+            flow_version.get("flow_version_id").and_then(|v| v.as_str()),
+            flow_version.get("flow_definition"),
+            flow_version.get("account_id").and_then(|v| v.as_str()),
+        ) {
+            if let Some(actions) = flow_definition.get("actions").and_then(|v| v.as_array()) {
+                for action in actions {
+                    if let (Some(trigger_id), Some(action_type), Some(node_id)) = (
+                        action.get("plugin_id").and_then(|v| v.as_str()),
+                        action.get("type").and_then(|v| v.as_str()),
+                        action.get("node_id").and_then(|v| v.as_str()),
                     ) {
                         if action_type == "trigger" {
                             println!("[TRIGGER_ENGINE] Found trigger action of type trigger");
@@ -142,7 +322,10 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                                 "variables": variables,
                             });
 
-                            println!("[TRIGGER_ENGINE] Creating trigger with config: {:?}", config);
+                            println!(
+                                "[TRIGGER_ENGINE] Creating trigger with config: {:?}",
+                                config
+                            );
 
                             // Parse the cron expression and calculate the next fire time
                             let cron_expression = config["input"]["cron_expression"]
@@ -152,7 +335,10 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                             let next_fire = match Schedule::from_str(cron_expression) {
                                 Ok(schedule) => schedule.upcoming(Utc).next(),
                                 Err(e) => {
-                                    println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
+                                    println!(
+                                        "[TRIGGER_ENGINE] Error parsing cron expression: {}",
+                                        e
+                                    );
                                     None
                                 }
                             };
@@ -162,7 +348,11 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                                 account_id: account_id.to_string(),
                                 trigger_id: trigger_id.to_string(),
                                 flow_id: flow_id.to_string(),
-                                action_label: action.get("label").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                                action_label: action
+                                    .get("label")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string(),
                                 flow_version_id: flow_version_id.to_string(),
                                 config,
                                 last_fired: None,
@@ -173,13 +363,19 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                             let existing_triggers = triggers.read().await;
                             if let Some(existing_trigger) = existing_triggers.get(flow_version_id) {
                                 println!("[TRIGGER_ENGINE] Trigger already exists, preserving last_fired and next_fire values");
-                                new_triggers.insert(flow_version_id.to_string(), InMemoryTrigger {
-                                    last_fired: existing_trigger.last_fired,
-                                    next_fire: existing_trigger.next_fire,
-                                    ..new_trigger
-                                });
+                                new_triggers.insert(
+                                    flow_version_id.to_string(),
+                                    InMemoryTrigger {
+                                        last_fired: existing_trigger.last_fired,
+                                        next_fire: existing_trigger.next_fire,
+                                        ..new_trigger
+                                    },
+                                );
                             } else {
-                                println!("[TRIGGER_ENGINE] Adding new trigger to in-memory store: {:?}", new_trigger);
+                                println!(
+                                    "[TRIGGER_ENGINE] Adding new trigger to in-memory store: {:?}",
+                                    new_trigger
+                                );
                                 new_triggers.insert(flow_version_id.to_string(), new_trigger);
                             }
                         } else {
@@ -189,7 +385,10 @@ pub async fn hydrate_triggers(client: &Postgrest, triggers: &Arc<RwLock<HashMap<
                 }
             }
         } else {
-            println!("[TRIGGER_ENGINE] Missing required fields in flow_version: {:?}", flow_version);
+            println!(
+                "[TRIGGER_ENGINE] Missing required fields in flow_version: {:?}",
+                flow_version
+            );
         }
     }
 
@@ -225,13 +424,14 @@ async fn update_trigger_last_run(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[TRIGGER_ENGINE] Updating trigger last run and next_run time");
 
-    let new_next_fire = match Schedule::from_str(trigger.config["input"]["cron_expression"].as_str().unwrap()) {
-        Ok(schedule) => schedule.upcoming(Utc).next(),
-        Err(e) => {
-            println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
-            None
-        }
-    };
+    let new_next_fire =
+        match Schedule::from_str(trigger.config["input"]["cron_expression"].as_str().unwrap()) {
+            Ok(schedule) => schedule.upcoming(Utc).next(),
+            Err(e) => {
+                println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
+                None
+            }
+        };
 
     println!("[TRIGGER_ENGINE] New next fire time: {:?}", new_next_fire);
 
@@ -252,8 +452,10 @@ async fn update_trigger_last_run(
     Ok(())
 }
 
-
-async fn create_trigger_task(state: &AppState, trigger: &InMemoryTrigger) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn create_trigger_task(
+    state: &AppState,
+    trigger: &InMemoryTrigger,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
     let client = &state.anything_client;
@@ -277,12 +479,12 @@ async fn create_trigger_task(state: &AppState, trigger: &InMemoryTrigger) -> Res
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         node_id: trigger.node_id.clone(),
-        action_type: ActionType::Trigger, 
+        action_type: ActionType::Trigger,
         plugin_id: trigger.trigger_id.clone(),
         stage: Stage::Production.as_str().to_string(),
         config: serde_json::json!(task_config),
         test_config: None,
-        processing_order: 0
+        processing_order: 0,
     };
 
     let response = client
@@ -295,7 +497,7 @@ async fn create_trigger_task(state: &AppState, trigger: &InMemoryTrigger) -> Res
     let body = response.text().await?;
     let _items: Value = serde_json::from_str(&body)?;
 
-    if let Err(err) = state.task_signal.send(()) {
+    if let Err(err) = state.task_engine_signal.send(()) {
         println!("Failed to send task signal: {:?}", err);
     }
 

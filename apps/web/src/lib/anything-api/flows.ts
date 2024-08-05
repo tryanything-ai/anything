@@ -193,8 +193,7 @@ export async function publishFlowVersion(flow_id: string, flow_version_id: strin
         headers: {
           'Content-Type': 'application/json',
           Authorization: `${session.access_token}`,
-        }, 
-        body: JSON.stringify({"derp": true}),
+        }
       });
 
       const data = await response.json();

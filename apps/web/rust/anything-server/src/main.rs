@@ -29,7 +29,8 @@ pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
-    task_signal: watch::Sender<()>,
+    task_engine_signal: watch::Sender<()>,
+    trigger_engine_signal: watch::Sender<String>,
 }
 
 #[tokio::main]
@@ -63,13 +64,15 @@ async fn main() {
         ])
         .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE]);
 
-    let (task_signal, _) = watch::channel(());
+    let (task_engine_signal, _) = watch::channel(());
+    let (trigger_engine_signal, _) = watch::channel("".to_string());
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
         semaphore: Arc::new(Semaphore::new(5)),
-        task_signal,
+        task_engine_signal,
+        trigger_engine_signal,
     });
 
     let app = Router::new()
@@ -141,7 +144,7 @@ async fn main() {
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
-    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();

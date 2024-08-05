@@ -594,7 +594,7 @@ async fn process_http_task(
 // The task processing loop function
 pub async fn task_processing_loop(state: Arc<AppState>) {
     // Receive info from other systems
-    let mut task_signal_rx = state.task_signal.subscribe();
+    let mut task_signal_rx = state.task_engine_signal.subscribe();
     let client = state.anything_client.clone();
     let semaphore = state.semaphore.clone();
     // To not hit db like crazy if no work to do

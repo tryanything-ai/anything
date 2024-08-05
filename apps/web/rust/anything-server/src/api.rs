@@ -335,6 +335,62 @@ pub async fn update_workflow(
 
     let client = &state.anything_client;
 
+    let payload_json = serde_json::to_value(&payload).unwrap();
+
+    //If we are updating active we need to double check if their are any published worfklow versions
+    if payload_json.get("active").is_some() {
+        //TODO: we need to check if the flow has any published versions before we allow it to be made active
+        //If it has no published flow_versions we should make an error
+        let has_published_flow_version_resopnse = match client
+            .from("flow_versions")
+            .auth(user.jwt.clone())
+            .eq("flow_id", &flow_id)
+            .eq("published", "true")
+            .select("*")
+            .execute()
+            .await
+        {
+            Ok(response) => response,
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to check if flow_version is published",
+                )
+                    .into_response()
+            }
+        };
+
+        let check_body = match has_published_flow_version_resopnse.text().await {
+            Ok(body) => body,
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to read check response body",
+                )
+                    .into_response()
+            }
+        };
+
+        let has_published_flow_version: bool = match serde_json::from_str::<Value>(&check_body) {
+            Ok(value) => value.as_array().map_or(false, |arr| !arr.is_empty()),
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse check response JSON",
+                )
+                    .into_response()
+            }
+        };
+
+        if !has_published_flow_version {
+            return (
+                StatusCode::BAD_REQUEST,
+                "Cannot make flow active without published flow versions",
+            )
+                .into_response();
+        }
+    }
+
     let response = match client
         .from("flows")
         .auth(user.jwt)
@@ -364,6 +420,15 @@ pub async fn update_workflow(
                 .into_response()
         }
     };
+
+    //TODO: we continue to make it active or unactive we need to signal the trigger engine to let it know to update triggers
+    // Signal the task processing loop and write error if it can't
+    if payload_json.get("active").is_some() {
+        //TODO: this needs to be a "trigger signal not task signal"
+        // if let Err(err) = state.task_signal.send(()) {
+        //     println!("Failed to send task signal: {:?}", err);
+        // }
+    }
 
     Json(body).into_response()
 }
@@ -545,6 +610,10 @@ pub async fn publish_workflow_version(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     println!("Handling publish workflow version");
     println!("workflow id: {}", workflow_id);
     println!("flow-version id: {}", workflow_version_id);
@@ -552,59 +621,61 @@ pub async fn publish_workflow_version(
     let client = &state.anything_client;
 
     let unpublish_json = serde_json::json!({
-        // "published": false,
+        "published": false,
         "un_published": true,
-        "un_publshed_at": Utc::now().to_rfc3339(),
+        "un_published_at": Utc::now().to_rfc3339(),
     });
-
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     println!("service_role_key: {:?}", &supabase_service_role_api_key);
 
     println!("workflow id: {:?}", &workflow_id);
-    // This should fail because we can't change published workflows with a user JWT.
-    // We should need a service role key to do this
-    // TODO: update to service role key once we prove this fails
-    let unpublish_response = match client
+
+    //Need to exclude this flow_version_id so that it doesn't unpublish itself if it gets called twice
+    let un_publish_response = match client
         .from("flow_versions")
         .auth(supabase_service_role_api_key.clone())
-        // .auth(user.jwt.clone())
+        .eq("published", "true")
         .eq("flow_id", &workflow_id)
-        // .eq("published", "true")
+        .neq("flow_version_id", &workflow_version_id)
         .update(unpublish_json.to_string())
         .execute()
         .await
     {
-        Ok(response) => response,
+        Ok(response) => {
+            println!("Response for un_publish_old: {:?}", response);
+            response
+        }
         Err(err) => {
             eprintln!("Error: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to unpublish existing flow",
+                "Failed to execute request",
             )
                 .into_response();
         }
     };
 
-    if unpublish_response.status() != 200 {
-        println!(
-            "Error: Failed to unpublish existing flow with status: {}",
-            unpublish_response.status()
-        );
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to unpublish existing flow",
-        )
-            .into_response();
-    }
+    let body_2 = match un_publish_response.text().await {
+        Ok(body) => {
+            println!("Response body: {}", body);
+            body
+        }
+        Err(err) => {
+            eprintln!("Error reading response body: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
 
     let update_json = serde_json::json!({
         "published": true,
         "published_at": Utc::now().to_rfc3339(),
     });
 
+    //If called twice won't run because users are not allowed to make updates to flow_versions if published = true based on Database Permission Rules
     let response = match client
         .from("flow_versions")
         .auth(user.jwt.clone())
@@ -613,7 +684,10 @@ pub async fn publish_workflow_version(
         .execute()
         .await
     {
-        Ok(response) => response,
+        Ok(response) => {
+            println!("Response: {:?}", response);
+            response
+        }
         Err(err) => {
             eprintln!("Error: {:?}", err);
             return (
@@ -845,7 +919,7 @@ pub async fn test_workflow(
     };
 
     // Signal the task processing loop and write error if it can't
-    if let Err(err) = state.task_signal.send(()) {
+    if let Err(err) = state.task_engine_signal.send(()) {
         println!("Failed to send task signal: {:?}", err);
     }
 
@@ -1023,7 +1097,7 @@ pub async fn test_action(
 
     // Signal the task processing loop and write error if it can't
     // This is just a hint to the processing system. Processing is lazy sometimes to prevent using resources when not needed
-    if let Err(err) = state.task_signal.send(()) {
+    if let Err(err) = state.task_engine_signal.send(()) {
         println!("Failed to send task signal: {:?}", err);
     }
 
