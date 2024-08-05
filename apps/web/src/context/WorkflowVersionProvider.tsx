@@ -649,7 +649,7 @@ export const WorkflowVersionProvider = ({
           flow_version.flow_definition.actions.length !== 0
         ) {
           let _nodes: Node[] = flow_version.flow_definition.actions.map(
-            (action) => {
+            (action: any) => {
               let position = action.presentation?.position || { x: 0, y: 0 };
 
               return {
@@ -671,7 +671,7 @@ export const WorkflowVersionProvider = ({
           flow_version.flow_definition.edges.length !== 0
         ) {
           let _edges: Edge[] = flow_version.flow_definition.edges.map(
-            (edge) => {
+            (edge: any) => {
               return edge;
             }
           );
@@ -702,8 +702,8 @@ export const WorkflowVersionProvider = ({
     return () => {
       resetState();
     };
-    // }, [workflowId, workflowVersionId]);
-  }, []);
+    }, [workflowId, workflowVersionId]);
+  // }, []);
 
   return (
     <WorkflowVersionContext.Provider
