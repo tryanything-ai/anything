@@ -338,7 +338,11 @@ pub async fn update_workflow(
     let payload_json = serde_json::to_value(&payload).unwrap();
 
     //If we are updating active we need to double check if their are any published worfklow versions
-    if payload_json.get("active").is_some() {
+    //We don't allow people to make workflows active that do not have published versions.
+    //We will let them turn them to not active though. This shouldnt happen but just in case
+    if payload_json.get("active").is_some()
+        && payload_json.get("active").unwrap().as_bool() == Some(true)
+    {
         //TODO: we need to check if the flow has any published versions before we allow it to be made active
         //If it has no published flow_versions we should make an error
         let has_published_flow_version_resopnse = match client
