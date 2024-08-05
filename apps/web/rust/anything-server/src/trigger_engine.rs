@@ -9,6 +9,7 @@ use crate::{
     task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
     AppState,
 };
+
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -63,7 +64,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
                 //Then update trigger to get next time to run in memory
                 for (id, trigger) in triggers_to_run {
                     println!(
-                        "[TRIGGER_ENGINE] Trigger should run for trigger_id: {}",
+                        "[TRIGGER_ENGINE] Trigger should run for trigger_id ie workflow_id: {}",
                         trigger.trigger_id
                     );
                     if let Err(e) = create_trigger_task(&state, &trigger).await {
@@ -76,8 +77,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
                     println!("[TRIGGER_ENGINE] Trigger Loop Successfully LOOPED");
                 }
 
-                // println!("[TRIGGER_ENGINE] Hydrating triggers from the database");
-                // hydrate_triggers(&client, &trigger_state).await;
+                println!("[TRIGGER_ENGINE] Finished trigger check loop");
             }
             _ = trigger_engine_signal_rx.changed() => {
                 let workflow_id = trigger_engine_signal_rx.borrow().clone();
@@ -108,12 +108,18 @@ async fn update_triggers_for_workflow(
 
     //Get current published workflow version
     let response = client
-        .from("flow_versions")
+           .from("flow_versions")
         .auth(supabase_service_role_api_key.clone())
-        .select("flow_id, flow_version_id, flow_definition, account_id")
-        .eq("flow_id", workflow_id)
+        .select("flow_id, flow_version_id, flow_definition, account_id, flows!inner(active)") // TODO: only fetch active flows
         .eq("published", "true")
+        .eq("flows.active", "true")
         .execute()
+        // .from("flow_versions")
+        // .auth(supabase_service_role_api_key.clone())
+        // .select("flow_id, flow_version_id, flow_definition, account_id")
+        // .eq("flow_id", workflow_id)
+        // .eq("published", "true")
+        // .execute()
         .await?;
 
     let body = response.text().await?;
@@ -127,9 +133,23 @@ async fn update_triggers_for_workflow(
         new_triggers.extend(triggers_from_flow);
     }
 
+    //Delete Existing trigger for workflow_id from hashmap
+    //Can't just overwrite because the workflow update may have removed the trigger completely.
     let mut triggers = triggers.write().await;
+    let old_value = triggers.remove(workflow_id);
+    if let Some(old_trigger) = old_value {
+        println!("[TRIGGER_ENGINE] Removing old trigger: {:?}", old_trigger);
+    }
+    //Write new riggers in memory for workflow_id
+    // let mut triggers = triggers.write().await;
     for (id, trigger) in new_triggers.into_iter() {
-        triggers.insert(id, trigger);
+        //Write New Trigger
+        let old_value = triggers.insert(id, trigger);
+        if let Some(old_trigger) = old_value {
+            println!("[TRIGGER_ENGINE] Replaced old trigger: {:?}", old_trigger);
+        } else {
+            println!("[TRIGGER_ENGINE] Added new trigger");
+        }
     }
 
     println!(

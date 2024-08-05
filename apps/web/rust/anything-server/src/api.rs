@@ -290,6 +290,7 @@ pub async fn create_workflow(
     Json(body).into_response()
 }
 
+//TODO: we also need to set active to false
 pub async fn delete_workflow(
     Path(flow_id): Path<String>,
     State(state): State<Arc<AppState>>,
@@ -301,7 +302,7 @@ pub async fn delete_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
-        .update("{\"archived\": true}")
+        .update("{\"archived\": true, \"active\": false}")
         .execute()
         .await
     {
@@ -326,10 +327,14 @@ pub async fn delete_workflow(
         }
     };
 
+    //Let trigger system be aware we deleted a workflow
+    if let Err(err) = state.trigger_engine_signal.send(flow_id) {
+        println!("Failed to send trigger signal: {:?}", err);
+    }
+
     Json(body).into_response()
 }
 
-//TODO: validate schema. make sure its not a published flow
 pub async fn update_workflow(
     Path(flow_id): Path<String>,
     State(state): State<Arc<AppState>>,
@@ -433,13 +438,11 @@ pub async fn update_workflow(
         }
     };
 
-    //TODO: we continue to make it active or unactive we need to signal the trigger engine to let it know to update triggers
-    // Signal the task processing loop and write error if it can't
+    // Signal the trigger processing loop that it needs to hydrate and manage new triggers.
     if payload_json.get("active").is_some() {
-        //TODO: this needs to be a "trigger signal not task signal"
-        // if let Err(err) = state.task_signal.send(()) {
-        //     println!("Failed to send task signal: {:?}", err);
-        // }
+        if let Err(err) = state.trigger_engine_signal.send(flow_id) {
+            println!("Failed to send trigger signal: {:?}", err);
+        }
     }
 
     Json(body).into_response()
@@ -720,6 +723,11 @@ pub async fn publish_workflow_version(
                 .into_response()
         }
     };
+
+    // Signal the trigger processing loop that it needs to hydrate and manage new triggers.
+    if let Err(err) = state.trigger_engine_signal.send(workflow_id) {
+        println!("Failed to send trigger signal: {:?}", err);
+    }
 
     Json(body).into_response()
 }
@@ -1386,7 +1394,7 @@ pub async fn get_task_status_counts_by_workflow_id(
         current += interval;
     }
 
-    println!("Date Status Counts: {:?}", date_status_counts);
+    // println!("Date Status Counts: {:?}", date_status_counts);
 
     // Process tasks
     for task in tasks {
