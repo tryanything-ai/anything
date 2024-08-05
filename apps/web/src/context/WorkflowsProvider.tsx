@@ -18,10 +18,10 @@ export type UpdateWorklowArgs = {
 };
 
 export interface WorkflowsContextInterface {
-  flows: DB_WORKFLOWS_QUERY;
+  flows: any;
   createWorkflow: () => Promise<void>;
   getWorkflows: () => Promise<void>;
-  getWorkflowById: (flowId: string) => Promise<DB_WORKFLOWS_QUERY | undefined>;
+  getWorkflowById: (flowId: string) => Promise<any | undefined>;
   deleteWorkflow: (flowId: string) => Promise<void>;
   updateWorkflow: (flowId: string, args: UpdateWorklowArgs) => Promise<void>;
 }
@@ -80,7 +80,7 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
   const getWorkflows = async (): Promise<void> => {
     console.log("Getting Flows from API");
     try {
-      let res: DB_WORKFLOWS_QUERY = await api.flows.getFlows();
+      let res: any = await api.flows.getFlows();
       console.log("getFlows:", res);
       if (res.length > 0) {
         setFlows(res);

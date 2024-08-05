@@ -67,12 +67,20 @@ pub async fn get_workflows(
 
     let client = &state.anything_client;
 
+    //Orde_with_options docs
+    //https://github.com/supabase-community/postgrest-rs/blob/d740c1e739547d6c36482af61fc8673e23232fdd/src/builder.rs#L196
     let response = match client
         .from("flows")
         .auth(&user.jwt) // Pass a reference to the JWT
         // .eq("archived", "false")
-        .select("*,flow_versions(*)")
+        .select(
+            "*,draft_workflow_versions:flow_versions(*), published_workflow_versions:flow_versions(*)",
+        )
         .eq("archived", "false")
+        .eq("draft_workflow_versions.published", "false")
+        .order_with_options("created_at", Some("draft_workflow_versions"), false, true)
+        .foreign_table_limit(1, "draft_workflow_versions")
+        .eq("published_workflow_versions.published", "true")
         .execute()
         .await
     {
@@ -1185,7 +1193,7 @@ pub async fn get_tasks(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    println!("Handling a get_workflows");
+    println!("Handling a get_tasks");
 
     let client = &state.anything_client;
 

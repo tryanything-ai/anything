@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { cloneDeep, debounce } from "lodash";
 
 import {
@@ -126,6 +126,9 @@ export const WorkflowVersionProvider = ({
     workflowId: string;
     workflowVersionId: string;
   }>();
+
+  const router = useRouter();
+
   const { getWorkflowById } = useWorkflowsContext();
 
   //Easy Access State
@@ -583,9 +586,16 @@ export const WorkflowVersionProvider = ({
         console.log("Flow Version Ids DO NOT match.");
         console.log("Update on published flow generated a NEW DRAFT version");
 
-        setDbFlowVersionId(returned_flow.flow_version_id);
-        setDbFlowVersion(returned_flow);
-        setFlowVersionDefinition(returned_flow.flow_definition);
+        // setDbFlowVersionId(returned_flow.flow_version_id);
+        // setDbFlowVersion(returned_flow);
+        // setFlowVersionDefinition(returned_flow.flow_definition);
+
+        // Set Next.js rout e to workflows/workflow_id/version/version_id
+        // const newRoute = `/workflows/${dbFlowId}/version/${returned_flow.flow_version_id}`;
+        // window.history.pushState(null, '', newRoute);
+        router.replace(
+          `/workflows/${dbFlowId}/${returned_flow.flow_version_id}/editor`
+        );
       } else {
         // console.log("Flow Version Ids match.");
         console.log("Updated existing draft flow version");
@@ -692,7 +702,8 @@ export const WorkflowVersionProvider = ({
     return () => {
       resetState();
     };
-  }, [workflowId, workflowVersionId]);
+    // }, [workflowId, workflowVersionId]);
+  }, []);
 
   return (
     <WorkflowVersionContext.Provider
