@@ -548,8 +548,25 @@ INSERT INTO anything.flow_versions (
       "label": "Get Harry Potter",
       "description": "Get Character Details from DB",
       "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-wand\"><path d=\"M15 4V2\"/><path d=\"M15 16v-2\"/><path d=\"M8 9h2\"/><path d=\"M20 9h2\"/><path d=\"M17.8 11.8 19 13\"/><path d=\"M15 9h.01\"/><path d=\"M17.8 6.2 19 5\"/><path d=\"m3 21 9-9\"/><path d=\"M12.2 6.2 11 5\"/></svg>",
-      "variables": {},
-      "variables_schema": {},
+      "variables": {
+        "authentication": "accounts.airtable"
+      },
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "authentication": {
+              "title": "Airtable",
+              "description": "Login with Airtable",
+              "type": "string",
+              "x-jsf-presentation": {
+                  "inputType": "account",
+                  "provider": "airtable"
+              }
+            }
+        },
+        "x-jsf-order": ["authentication"],
+        "required": ["authentication"]
+      },
       "input": {
         "method": "GET",
         "url": "https://hp-api.onrender.com/api/character/9e3f7ce4-b9a7-4244-b709-dae5c1f1d4a8",
