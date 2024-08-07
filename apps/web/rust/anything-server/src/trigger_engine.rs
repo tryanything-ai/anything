@@ -108,18 +108,12 @@ async fn update_triggers_for_workflow(
 
     //Get current published workflow version
     let response = client
-           .from("flow_versions")
+        .from("flow_versions")
         .auth(supabase_service_role_api_key.clone())
         .select("flow_id, flow_version_id, flow_definition, account_id, flows!inner(active)") // TODO: only fetch active flows
         .eq("published", "true")
         .eq("flows.active", "true")
         .execute()
-        // .from("flow_versions")
-        // .auth(supabase_service_role_api_key.clone())
-        // .select("flow_id, flow_version_id, flow_definition, account_id")
-        // .eq("flow_id", workflow_id)
-        // .eq("published", "true")
-        // .execute()
         .await?;
 
     let body = response.text().await?;
