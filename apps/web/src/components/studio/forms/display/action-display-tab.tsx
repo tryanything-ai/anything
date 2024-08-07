@@ -1,7 +1,4 @@
 import { useAnything } from "@/context/AnythingContext";
-import ConfigurationForm from "../configuration-form";
-import { VariablesFormLayout } from "../variables/variables-form-layout";
-import { ArrowBigLeft } from "lucide-react";
 import ActionDisplayForm from "./action-display-form";
 import NoNodeSelected from "../no-node-selected";
 

@@ -12,7 +12,7 @@ use crate::task_types::Stage;
 use crate::workflow_types::{CreateTaskInput, TaskConfig, TestConfig, Workflow};
 use crate::AppState;
 use crate::{
-    auth::User,
+    supabase_auth_middleware::User,
     task_types::{ActionType, FlowSessionStatus, TaskStatus, TriggerSessionStatus},
 };
 use uuid::Uuid;

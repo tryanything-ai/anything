@@ -540,56 +540,6 @@ async fn process_http_task(
         Err("HTTP Missing required fields (method, url) in task context.".into())
     }
 }
-// async fn process_http_task(
-//     bundled_context: &Value,
-// ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-//     if let (Some(method), Some(url)) = (
-//         bundled_context.get("method").and_then(Value::as_str),
-//         bundled_context.get("url").and_then(Value::as_str),
-//     ) {
-//         println!("[TASK_ENGINE] Processing HTTP task");
-//         let client = Client::new();
-//         let method = match method.to_uppercase().as_str() {
-//             "GET" => reqwest::Method::GET,
-//             "POST" => reqwest::Method::POST,
-//             "PUT" => reqwest::Method::PUT,
-//             "DELETE" => reqwest::Method::DELETE,
-//             _ => return Err(format!("Unsupported HTTP method: {}", method).into()),
-//         };
-
-//         let mut request_builder = client.request(method, url);
-
-//         if let Some(headers) = bundled_context.get("headers").and_then(Value::as_object) {
-//             for (key, value) in headers {
-//                 if let Some(value_str) = value.as_str() {
-//                     request_builder = request_builder.header(key.as_str(), value_str);
-//                 }
-//             }
-//         }
-
-//         if let Some(body) = bundled_context.get("body").and_then(Value::as_str) {
-//             request_builder = request_builder.body(body.to_string());
-//         }
-
-//         let response = request_builder.send().await?;
-//         println!("[TASK_ENGINE] HTTP request response! {:?}", response);
-//         let status = response.status();
-//         let headers = response.headers().clone();
-//         let body: Value = response.json().await?;
-//         println!("[TASK_ENGINE] HTTP request successful. Response: {}", body);
-
-//         Ok(serde_json::json!({
-//             "status": status.as_u16(),
-//             "headers": headers
-//                 .iter()
-//                 .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
-//                 .collect::<HashMap<String, String>>(),
-//             "body": body
-//         }))
-//     } else {
-//         Err("HTTP Missing required fields (method, url) in task context.".into())
-//     }
-// }
 
 // The task processing loop function
 pub async fn task_processing_loop(state: Arc<AppState>) {

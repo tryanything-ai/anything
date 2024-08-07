@@ -12,7 +12,7 @@ use tokio::sync::{watch, Semaphore};
 use tower_http::cors::CorsLayer;
 
 mod api;
-mod auth;
+mod supabase_auth_middleware;
 mod bundler;
 mod execution_planner;
 mod marketplace;
@@ -125,7 +125,7 @@ async fn main() {
             "/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(api::test_action),
         )
-        .layer(middleware::from_fn(auth::middleware))
+        .layer(middleware::from_fn(supabase_auth_middleware::middleware))
         .layer(cors)
         .with_state(state.clone());
 

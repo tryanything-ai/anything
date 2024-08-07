@@ -11,7 +11,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use std::env;
 
-use crate::auth::User;
+use crate::supabase_auth_middleware::User;
 use crate::AppState; 
 
 use slugify::slugify;
