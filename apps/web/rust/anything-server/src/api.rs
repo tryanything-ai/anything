@@ -1297,6 +1297,60 @@ pub async fn get_task_by_workflow_id(
     Json(item).into_response()
 }
 
+pub async fn get_auth_provider_by_name(
+    Path(provider_name): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!(
+        "Handling a get_auth_provider_by_name for  {:?}",
+        provider_name
+    );
+
+    let client = &state.anything_client;
+
+    let response = match client
+        .from("auth_providers")
+        .auth(user.jwt)
+        .eq("provider_name", &provider_name)
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Response: {:?}", response);
+            response
+        },
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
+}
+
 #[derive(Serialize)]
 struct ChartDataPoint {
     date: String,

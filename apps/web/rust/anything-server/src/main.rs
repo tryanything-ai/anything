@@ -110,6 +110,8 @@ async fn main() {
         .route("/secret", post(secrets::create_secret))
         .route("/secret", put(secrets::update_secret))
         .route("/secret/:id", delete(secrets::delete_secret))
+        //Auth Providrs
+        .route("/auth/providers/:provider_name", get(api::get_auth_provider_by_name))
         // Users Testing Workflows
         //Test Workflows
         .route(

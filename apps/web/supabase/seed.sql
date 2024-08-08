@@ -132,8 +132,19 @@ INSERT INTO anything.auth_providers (
     (
         '1e2d3c4b-5a6d-7e8f-9a0b-1c2d3e4f5a6b',
         'airtable',
-        'Airtable',
-        '<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"197px\" height=\"165px\" style=\"shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><g><path style=\"opacity:0.975\" fill=\"#fbb400\" d=\"M 93.5,-0.5 C 96.5,-0.5 99.5,-0.5 102.5,-0.5C 129.591,10.1497 156.591,21.3164 183.5,33C 185.77,37.8896 184.437,41.2229 179.5,43C 156.754,51.8042 134.087,60.8042 111.5,70C 102.5,73.3333 93.5,73.3333 84.5,70C 60.2615,60.2959 36.0949,50.4626 12,40.5C 11.3333,38.1667 11.3333,35.8333 12,33.5C 38.9774,21.4595 66.144,10.1262 93.5,-0.5 Z\"/></g><g><path style=\"opacity:0.958\" fill=\"#ba1e45\" d=\"M 61.5,102.5 C 41.5,85.5 21.5,68.5 1.5,51.5C 3.45511,49.6742 5.78844,49.1742 8.5,50C 34.4205,60.5292 60.4205,70.8625 86.5,81C 89.3428,84.6187 89.0095,87.952 85.5,91C 77.352,94.5744 69.352,98.4077 61.5,102.5 Z\"/></g><g><path style=\"opacity:0.975\" fill=\"#18bfff\" d=\"M 196.5,52.5 C 196.5,78.1667 196.5,103.833 196.5,129.5C 194.99,130.836 193.323,132.003 191.5,133C 164.633,143.277 137.966,153.777 111.5,164.5C 110.167,164.5 108.833,164.5 107.5,164.5C 105.856,163.684 104.69,162.35 104,160.5C 103.028,134.438 103.361,108.438 105,82.5C 132.404,71.4754 159.904,60.642 187.5,50C 191.142,48.9302 194.142,49.7636 196.5,52.5 Z\"/></g><g><path style=\"opacity:0.971\" fill=\"#f72a5f\" d=\"M 1.5,51.5 C 21.5,68.5 41.5,85.5 61.5,102.5C 43.8597,110.986 26.193,119.486 8.5,128C 4.90027,129.073 1.90027,128.24 -0.5,125.5C -0.5,101.5 -0.5,77.5 -0.5,53.5C 0.166667,52.8333 0.833333,52.1667 1.5,51.5 Z\"/></g></svg>',
+        'Airtable', 
+        '<svg width="800px" height="800px" viewBox="0 -20.5 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid">
+          <g>
+            <path d="M114.25873,2.70101695 L18.8604023,42.1756384 C13.5552723,44.3711638 13.6102328,51.9065311 18.9486282,54.0225085 L114.746142,92.0117514 C123.163769,95.3498757 132.537419,95.3498757 140.9536,92.0117514 L236.75256,54.0225085 C242.08951,51.9065311 242.145916,44.3711638 236.83934,42.1756384 L141.442459,2.70101695 C132.738459,-0.900338983 122.961284,-0.900338983 114.25873,2.70101695" fill="#FFBF00">
+        </path>
+            <path d="M136.349071,112.756863 L136.349071,207.659101 C136.349071,212.173089 140.900664,215.263892 145.096461,213.600615 L251.844122,172.166219 C254.281184,171.200072 255.879376,168.845451 255.879376,166.224705 L255.879376,71.3224678 C255.879376,66.8084791 251.327783,63.7176768 247.131986,65.3809537 L140.384325,106.815349 C137.94871,107.781496 136.349071,110.136118 136.349071,112.756863" fill="#26B5F8">
+        </path>
+            <path d="M111.422771,117.65355 L79.742409,132.949912 L76.5257763,134.504714 L9.65047684,166.548104 C5.4112904,168.593211 0.000578531073,165.503855 0.000578531073,160.794612 L0.000578531073,71.7210757 C0.000578531073,70.0173017 0.874160452,68.5463864 2.04568588,67.4384994 C2.53454463,66.9481944 3.08848814,66.5446689 3.66412655,66.2250305 C5.26231864,65.2661153 7.54173107,65.0101153 9.47981017,65.7766689 L110.890522,105.957098 C116.045234,108.002206 116.450206,115.225166 111.422771,117.65355" fill="#ED3049">
+        </path>
+            <path d="M111.422771,117.65355 L79.742409,132.949912 L2.04568588,67.4384994 C2.53454463,66.9481944 3.08848814,66.5446689 3.66412655,66.2250305 C5.26231864,65.2661153 7.54173107,65.0101153 9.47981017,65.7766689 L110.890522,105.957098 C116.045234,108.002206 116.450206,115.225166 111.422771,117.65355" fill-opacity="0.25" fill="#000000">
+        </path>
+          </g>
+        </svg>',
         'Airtable provides an easy way to create and share relational databases.',
         'Refer to the Airtable API documentation for managing this connection.',
         'oauth2',
@@ -142,7 +153,7 @@ INSERT INTO anything.auth_providers (
         'YOUR_CLIENT_ID',
         'YOUR_CLIENT_SECRET',
         'data.records:read data.records:write',
-        false,
+        true,
         now(),
         now(),
         '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8',
@@ -153,7 +164,7 @@ INSERT INTO anything.auth_providers (
         '2e3d4c5b-6a7d-8e9f-0b1c-2d3e4f5a6b7c',
         'gmail',
         'Gmail',
-        '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\" width=\"64\" height=\"64\"><path fill=\"#EA4335\" d=\"M496 512H16A16 16 0 0 1 0 496V16A16 16 0 0 1 16 0h480a16 16 0 0 1 16 16v480a16 16 0 0 1-16 16z\"/><path fill=\"#FFF\" d=\"M44.8 131.2L256 294.8 467.2 131.2V93.6L256 257.2 44.8 93.6v37.6zm12.8 252.8V131.2L256 327.2l198.4-196v252.8H57.6z\"/></svg>',
+        '<svg width="800px" height="800px" viewBox="7.086 -169.483 1277.149 1277.149" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M1138.734 931.095h.283M1139.017 931.095h-.283"/><path d="M1179.439 7.087c57.543 0 104.627 47.083 104.627 104.626v30.331l-145.36 103.833-494.873 340.894L148.96 242.419v688.676h-37.247c-57.543 0-104.627-47.082-104.627-104.625V111.742C7.086 54.198 54.17 7.115 111.713 7.115l532.12 394.525L1179.41 7.115l.029-.028z" fill="#e75a4d"/><linearGradient id="a" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#a)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><path fill="#e7e4d7" d="M148.96 242.419v688.676h989.774V245.877L643.833 586.771z"/><path fill="#b8b7ae" d="M148.96 931.095l494.873-344.324-2.24-1.586L148.96 923.527z"/><path fill="#b7b6ad" d="M1138.734 245.877l.283 685.218-495.184-344.324z"/><path d="M1284.066 142.044l.17 684.51c-2.494 76.082-35.461 103.238-145.219 104.514l-.283-685.219 145.36-103.833-.028.028z" fill="#b2392f"/><linearGradient id="b" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#b)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#c)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="d" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#d)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="e" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#e)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="f" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#f)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#g)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="h" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#h)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><path fill="#f7f5ed" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/></svg>',
         'Gmail is a free email service developed by Google.',
         'Refer to the Gmail API documentation for managing this connection.',
         'oauth2',
@@ -162,7 +173,7 @@ INSERT INTO anything.auth_providers (
         'YOUR_CLIENT_ID',
         'YOUR_CLIENT_SECRET',
         'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
-        false,
+        true,
         now(),
         now(),
         '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f',

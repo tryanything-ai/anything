@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,10 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
+import api from "@/lib/anything-api";
+import { BaseNodeIcon } from "../nodes/node-icon";
+import { Button } from "@/components/ui/button";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldText,
@@ -262,13 +266,14 @@ function FieldAccount({
 }: any) {
   const [touched, setTouched] = useState(false);
   const [accountsForProvider, setAccountsForProvider] = useState([]);
+  const [providerDetails, setProviderDetails] = useState<any>(null);
 
-  //TODO:  
+  //TODO:
   //Load check if user has an account that matches the variable schema
   //If no matches show a "add an account button" for the user to do teh oauth flow
-  //If the user has an account select teh first one automatically. 
+  //If the user has an account select teh first one automatically.
 
-//   console.log("Props in account", props);
+  //   console.log("Props in account", props);
 
   if (!isVisible) return null;
 
@@ -277,22 +282,53 @@ function FieldAccount({
     onValueChange(e);
   }
 
+  const getProvider = async () => {
+    try {
+      let res = await api.auth.getProvider(provider);
+      console.log("res", res);
+      setProviderDetails(res[0]);
+    } catch (e) {
+      console.log("error in getProvider");
+    }
+  };
+
+  useEffect(() => {
+    console.log("provider", provider);
+    if (provider) {
+      getProvider();
+    }
+  }, []);
+
   return (
     <div className="grid gap-3 my-4">
-      <Label htmlFor={name}>{label}</Label>
-      <Select value={value} onValueChange={handleValueChange}>
-        <SelectTrigger>
+      {/* <Label htmlFor={name}>{label}</Label> */}
+      {providerDetails ? (
+        <div className="flex flex-row items-center border rounded-md p-2">
+          <BaseNodeIcon icon={providerDetails.provider_icon} />
+          <div className="text-xl ml-2">Connect your Airtable Account</div>
+          <div className="ml-auto">
+            <Button variant="outline">Connect</Button>
+          </div>
+        </div>
+      ) : null}
+      {/* <div>
+        <div>
+          <BaseNodeIcon icon={providerDetails.icon} />
+        </div>
+      </div> */}
+      {/* <Select value={value} onValueChange={handleValueChange}> */}
+      {/* <SelectTrigger>
           <SelectValue placeholder={description} />
         </SelectTrigger>
-        <SelectContent>
-          {/* TODO: hydrate options from user state */}
-          {/* {options.map((option: any) => (
+        <SelectContent> */}
+      {/* TODO: hydrate options from user state */}
+      {/* {options.map((option: any) => (
             <SelectItem key={option.label} value={option.value}>
               {option.label}
             </SelectItem>
           ))} */}
-        </SelectContent>
-      </Select>
+      {/* </SelectContent>
+      </Select> */}
       {(touched || submited) && error && (
         <div className="text-red-500" id={`${name}-error`}>
           {error}
