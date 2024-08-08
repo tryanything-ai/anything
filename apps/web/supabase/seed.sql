@@ -123,6 +123,53 @@ INSERT INTO marketplace.flow_template_tags (
 ---------------------------------------
 --- APPLICATION WORKFLOW MANAGEMENT ---
 ---------------------------------------
+-- Inserting sample OAuth providers into anything.auth_providers
+
+INSERT INTO anything.auth_providers (
+    oauth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
+) VALUES
+    -- Airtable Provider
+    (
+        '1e2d3c4b-5a6d-7e8f-9a0b-1c2d3e4f5a6b',
+        'airtable',
+        'Airtable',
+        '<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"197px\" height=\"165px\" style=\"shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><g><path style=\"opacity:0.975\" fill=\"#fbb400\" d=\"M 93.5,-0.5 C 96.5,-0.5 99.5,-0.5 102.5,-0.5C 129.591,10.1497 156.591,21.3164 183.5,33C 185.77,37.8896 184.437,41.2229 179.5,43C 156.754,51.8042 134.087,60.8042 111.5,70C 102.5,73.3333 93.5,73.3333 84.5,70C 60.2615,60.2959 36.0949,50.4626 12,40.5C 11.3333,38.1667 11.3333,35.8333 12,33.5C 38.9774,21.4595 66.144,10.1262 93.5,-0.5 Z\"/></g><g><path style=\"opacity:0.958\" fill=\"#ba1e45\" d=\"M 61.5,102.5 C 41.5,85.5 21.5,68.5 1.5,51.5C 3.45511,49.6742 5.78844,49.1742 8.5,50C 34.4205,60.5292 60.4205,70.8625 86.5,81C 89.3428,84.6187 89.0095,87.952 85.5,91C 77.352,94.5744 69.352,98.4077 61.5,102.5 Z\"/></g><g><path style=\"opacity:0.975\" fill=\"#18bfff\" d=\"M 196.5,52.5 C 196.5,78.1667 196.5,103.833 196.5,129.5C 194.99,130.836 193.323,132.003 191.5,133C 164.633,143.277 137.966,153.777 111.5,164.5C 110.167,164.5 108.833,164.5 107.5,164.5C 105.856,163.684 104.69,162.35 104,160.5C 103.028,134.438 103.361,108.438 105,82.5C 132.404,71.4754 159.904,60.642 187.5,50C 191.142,48.9302 194.142,49.7636 196.5,52.5 Z\"/></g><g><path style=\"opacity:0.971\" fill=\"#f72a5f\" d=\"M 1.5,51.5 C 21.5,68.5 41.5,85.5 61.5,102.5C 43.8597,110.986 26.193,119.486 8.5,128C 4.90027,129.073 1.90027,128.24 -0.5,125.5C -0.5,101.5 -0.5,77.5 -0.5,53.5C 0.166667,52.8333 0.833333,52.1667 1.5,51.5 Z\"/></g></svg>',
+        'Airtable provides an easy way to create and share relational databases.',
+        'Refer to the Airtable API documentation for managing this connection.',
+        'oauth2',
+        'https://airtable.com/oauth2/authorize',
+        'https://airtable.com/oauth2/token',
+        'YOUR_CLIENT_ID',
+        'YOUR_CLIENT_SECRET',
+        'data.records:read data.records:write',
+        false,
+        now(),
+        now(),
+        '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8',
+        '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'
+    ),
+    -- Gmail Provider
+    (
+        '2e3d4c5b-6a7d-8e9f-0b1c-2d3e4f5a6b7c',
+        'gmail',
+        'Gmail',
+        '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\" width=\"64\" height=\"64\"><path fill=\"#EA4335\" d=\"M496 512H16A16 16 0 0 1 0 496V16A16 16 0 0 1 16 0h480a16 16 0 0 1 16 16v480a16 16 0 0 1-16 16z\"/><path fill=\"#FFF\" d=\"M44.8 131.2L256 294.8 467.2 131.2V93.6L256 257.2 44.8 93.6v37.6zm12.8 252.8V131.2L256 327.2l198.4-196v252.8H57.6z\"/></svg>',
+        'Gmail is a free email service developed by Google.',
+        'Refer to the Gmail API documentation for managing this connection.',
+        'oauth2',
+        'https://accounts.google.com/o/oauth2/auth',
+        'https://oauth2.googleapis.com/token',
+        'YOUR_CLIENT_ID',
+        'YOUR_CLIENT_SECRET',
+        'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
+        false,
+        now(),
+        now(),
+        '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f',
+        '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'
+    );
+
+
 -- Inserting sample flows into anything.flows
 INSERT INTO anything.flows (
     flow_id, account_id, flow_name, description, active, updated_at, created_at, updated_by, created_by

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS anything.auth_providers
     provider_name TEXT NOT NULL, -- name of the provider used in actions
     provider_label TEXT NOT NULL, -- label for the provider for UI
     provider_icon TEXT NOT NULL, -- icon for the provider
-    provider_dsecription TEXT NOT NULL, -- description of the provider for users
+    provider_description TEXT NOT NULL, -- description of the provider for users
     provider_readme TEXT NOT NULL, -- internal notes on managing this connection
     auth_type TEXT NOT NULL DEFAULT 'oauth2',
     auth_url TEXT NOT NULL,
