@@ -12,6 +12,7 @@ use tokio::sync::{watch, Semaphore};
 use tower_http::cors::CorsLayer;
 
 mod api;
+mod auth;
 mod bundler;
 mod execution_planner;
 mod marketplace;
@@ -120,6 +121,11 @@ async fn main() {
             "/auth/accounts/:provider_name",
             get(api::get_auth_accounts_for_provider_name),
         )
+        // .route(
+        //     "/auth/callback/:provider_name",
+        //     get(auth::handle_provider_callback),
+        // )
+        // .route("/auth/initiate/:provider_name", post(auth::initiate_auth_flow))
         // Users Testing Workflows
         //Test Workflows
         .route(
