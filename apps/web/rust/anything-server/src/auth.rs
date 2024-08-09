@@ -112,10 +112,20 @@ pub async fn handle_provider_callback(
     // TODO: Implement state verification
 
     // Exchange code for token
-    let token = exchange_code_for_token(&auth_provider, &params.code).await?;
+    let token = match exchange_code_for_token(&auth_provider, &params.code).await {
+        Ok(token) => token,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to exchange code for token").into_response()
+        }
+    };
 
     // Store token in the database
-    // store_token_in_db(pool, &user.id, &provider_name, &token).await?;
+    // match store_token_in_db(pool, &user.id, &provider_name, &token).await {
+    //     Ok(_) => (),
+    //     Err(_) => {
+    //         return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to store token in database").into_response()
+    //     }
+    // };
 
     // // Redirect user or return success message
     // (
@@ -173,32 +183,32 @@ async fn exchange_code_for_token(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-async fn store_token_in_db(
-    pool: &PgPool,
-    user_id: &Uuid,
-    provider: &str,
-    token: &OAuthToken,
-) -> Result<(), StatusCode> {
-    sqlx::query!(
-        r#"
-        INSERT INTO anything.account_auth_provider_accounts
-        (account_id, auth_provider_id, account_auth_provider_account_label, account_auth_provider_account_slug, access_token, refresh_token, expires_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        "#,
-        user_id,
-        provider,
-        format!("{} Account", provider),
-        provider.to_lowercase(),
-        token.access_token,
-        token.refresh_token,
-        token.expires_at,
-    )
-    .execute(pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+// async fn store_token_in_db(
+//     pool: &PgPool,
+//     user_id: &Uuid,
+//     provider: &str,
+//     token: &OAuthToken,
+// ) -> Result<(), StatusCode> {
+//     sqlx::query!(
+//         r#"
+//         INSERT INTO anything.account_auth_provider_accounts
+//         (account_id, auth_provider_id, account_auth_provider_account_label, account_auth_provider_account_slug, access_token, refresh_token, expires_at)
+//         VALUES ($1, $2, $3, $4, $5, $6, $7)
+//         "#,
+//         user_id,
+//         provider,
+//         format!("{} Account", provider),
+//         provider.to_lowercase(),
+//         token.access_token,
+//         token.refresh_token,
+//         token.expires_at,
+//     )
+//     .execute(pool)
+//     .await
+//     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 // async fn store_state_in_db(
 //     pool: &PgPool,

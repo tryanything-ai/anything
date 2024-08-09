@@ -1416,7 +1416,7 @@ pub async fn get_auth_accounts(
     let response = match client
         .from("account_auth_provider_accounts")
         .auth(user.jwt)
-        .select("*")
+        .select("*, auth_provider:auth_providers(*)")
         .execute()
         .await
     {

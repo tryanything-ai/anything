@@ -1,9 +1,6 @@
-import { Copy } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -11,17 +8,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ShareIcon } from "lucide-react";
 import Link from "next/link";
 
 export function ShareDialog() {
   return (
     <Dialog>
-      {/* <DialogTrigger asChild>
-        <Button variant="outline">Share</Button>
-      </DialogTrigger> */}
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
           <ShareIcon className="size-3.5" />
