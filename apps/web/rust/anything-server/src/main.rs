@@ -12,11 +12,11 @@ use tokio::sync::{watch, Semaphore};
 use tower_http::cors::CorsLayer;
 
 mod api;
-mod supabase_auth_middleware;
 mod bundler;
 mod execution_planner;
 mod marketplace;
 mod secrets;
+mod supabase_auth_middleware;
 mod task_engine;
 mod task_types;
 mod trigger_engine;
@@ -111,7 +111,15 @@ async fn main() {
         .route("/secret", put(secrets::update_secret))
         .route("/secret/:id", delete(secrets::delete_secret))
         //Auth Providrs
-        .route("/auth/providers/:provider_name", get(api::get_auth_provider_by_name))
+        .route(
+            "/auth/providers/:provider_name",
+            get(api::get_auth_provider_by_name),
+        )
+        .route("/auth/accounts", get(api::get_auth_accounts))
+        .route(
+            "/auth/accounts/:provider_name",
+            get(api::get_auth_accounts_for_provider_name),
+        )
         // Users Testing Workflows
         //Test Workflows
         .route(

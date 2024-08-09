@@ -5,11 +5,12 @@ CREATE TABLE IF NOT EXISTS anything.account_auth_provider_accounts
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
     account_id uuid not null references basejump.accounts(id),
-    auth_provider_id uuid not null references anything.auth_providers(oauth_provider_id),
+    auth_provider_id TEXT NOT NULL references anything.auth_providers(auth_provider_id),
 
     -- ADD YOUR COLUMNS HERE
     -- flow_name TEXT NOT NULL,
-    account_auth_provider_account_name TEXT NOT NULL,
+    account_auth_provider_account_label TEXT NOT NULL, -- what users see
+    account_auth_provider_account_slug TEXT NOT NULL, -- what bundler uses ( will standardize to airtable airtable_2, google google_2) etc
     access_token TEXT NOT NULL, -- figure out how to put these in the secrets table
     refresh_token TEXT, -- figure out how to put these in secrets table
     -- access_token_secrets_table_id
@@ -67,33 +68,33 @@ ALTER TABLE anything.account_auth_provider_accounts ENABLE ROW LEVEL SECURITY;
 -------------
 -- Users should be able to read records that are owned by an account they belong to
 --------------
--- create policy "Account members can select" on anything.account_auth_provider_accounts
---     for select
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can select" on anything.account_auth_provider_accounts
+    for select
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
--- create policy "Account members can insert" on anything.account_auth_provider_accounts
---     for insert
---     to authenticated
---     with check (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can insert" on anything.account_auth_provider_accounts
+    for insert
+    to authenticated
+    with check (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
--- create policy "Account members can update" on anything.account_auth_provider_accounts
---     for update
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can update" on anything.account_auth_provider_accounts
+    for update
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to

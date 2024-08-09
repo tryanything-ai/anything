@@ -126,11 +126,11 @@ INSERT INTO marketplace.flow_template_tags (
 -- Inserting sample OAuth providers into anything.auth_providers
 
 INSERT INTO anything.auth_providers (
-    oauth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
+    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
 ) VALUES
     -- Airtable Provider
     (
-        '1e2d3c4b-5a6d-7e8f-9a0b-1c2d3e4f5a6b',
+        'airtable',
         'airtable',
         'Airtable', 
         '<svg width="800px" height="800px" viewBox="0 -20.5 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid">
@@ -161,7 +161,7 @@ INSERT INTO anything.auth_providers (
     ),
     -- Gmail Provider
     (
-        '2e3d4c5b-6a7d-8e9f-0b1c-2d3e4f5a6b7c',
+        'gmail',
         'gmail',
         'Gmail',
         '<svg width="800px" height="800px" viewBox="7.086 -169.483 1277.149 1277.149" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M1138.734 931.095h.283M1139.017 931.095h-.283"/><path d="M1179.439 7.087c57.543 0 104.627 47.083 104.627 104.626v30.331l-145.36 103.833-494.873 340.894L148.96 242.419v688.676h-37.247c-57.543 0-104.627-47.082-104.627-104.625V111.742C7.086 54.198 54.17 7.115 111.713 7.115l532.12 394.525L1179.41 7.115l.029-.028z" fill="#e75a4d"/><linearGradient id="a" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#a)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><path fill="#e7e4d7" d="M148.96 242.419v688.676h989.774V245.877L643.833 586.771z"/><path fill="#b8b7ae" d="M148.96 931.095l494.873-344.324-2.24-1.586L148.96 923.527z"/><path fill="#b7b6ad" d="M1138.734 245.877l.283 685.218-495.184-344.324z"/><path d="M1284.066 142.044l.17 684.51c-2.494 76.082-35.461 103.238-145.219 104.514l-.283-685.219 145.36-103.833-.028.028z" fill="#b2392f"/><linearGradient id="b" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#b)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#c)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="d" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#d)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="e" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#e)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="f" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#f)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#g)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="h" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#h)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><path fill="#f7f5ed" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/></svg>',
@@ -180,6 +180,49 @@ INSERT INTO anything.auth_providers (
         '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'
     );
 
+-- Inserting sample OAuth providers for users into anything.account_auth_provider_accounts
+INSERT INTO anything.account_auth_provider_accounts (
+    account_auth_provider_account_id, 
+    account_id, 
+    auth_provider_id, 
+    account_auth_provider_account_label,
+    account_auth_provider_account_slug,  
+    access_token, 
+    refresh_token, 
+    expires_at, 
+    updated_at, 
+    created_at, 
+    updated_by, 
+    created_by
+) VALUES
+    (
+        'f1a9d7e5-9c8d-4a7f-b6b4-1d5c4e7a8b9d', -- Example UUID, replace with real UUID
+        'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', -- Account 1
+        'airtable', -- Airtable Provider
+        'Airtable Account 1', 
+        'airtable',
+        'EXAMPLE_ACCESS_TOKEN_1', 
+        'EXAMPLE_REFRESH_TOKEN_1', 
+        '2024-08-08 12:00:00+00', -- Example expiration timestamp
+        now(), 
+        now(), 
+        '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', -- user1
+        '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'  -- user1
+    ),
+    (
+        'b7c5f9e4-6a7b-4d8f-a1c9-2f6e3a4d7b8c', -- Example UUID, replace with real UUID
+        '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', -- Account 2
+        'gmail', -- Gmail Provider
+        'Gmail Account 2', 
+        'gmail', 
+        'EXAMPLE_ACCESS_TOKEN_2', 
+        'EXAMPLE_REFRESH_TOKEN_2', 
+        '2024-08-08 12:00:00+00', -- Example expiration timestamp
+        now(), 
+        now(), 
+        '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', -- user2
+        '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'  -- user2
+    );
 
 -- Inserting sample flows into anything.flows
 INSERT INTO anything.flows (
@@ -607,7 +650,7 @@ INSERT INTO anything.flow_versions (
       "description": "Get Character Details from DB",
       "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-wand\"><path d=\"M15 4V2\"/><path d=\"M15 16v-2\"/><path d=\"M8 9h2\"/><path d=\"M20 9h2\"/><path d=\"M17.8 11.8 19 13\"/><path d=\"M15 9h.01\"/><path d=\"M17.8 6.2 19 5\"/><path d=\"m3 21 9-9\"/><path d=\"M12.2 6.2 11 5\"/></svg>",
       "variables": {
-        "authentication": "accounts.airtable"
+        "authentication": "{{accounts.airtable}}"
       },
       "variables_schema": {
         "type": "object",

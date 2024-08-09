@@ -1320,7 +1320,110 @@ pub async fn get_auth_provider_by_name(
         Ok(response) => {
             println!("Response: {:?}", response);
             response
-        },
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
+}
+
+pub async fn get_auth_accounts_for_provider_name(
+    Path(provider_name): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!(
+        "Handling a get_auth_accounts_for_provider_name for  {:?}",
+        provider_name
+    );
+
+    let client = &state.anything_client;
+
+    let response = match client
+        .from("account_auth_provider_accounts")
+        .auth(user.jwt)
+        .eq("auth_provider_id", &provider_name)
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Response: {:?}", response);
+            response
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
+}
+
+pub async fn get_auth_accounts(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("Handling a get auth accounts");
+
+    let client = &state.anything_client;
+
+    let response = match client
+        .from("account_auth_provider_accounts")
+        .auth(user.jwt)
+        .select("*")
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Response: {:?}", response);
+            response
+        }
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,

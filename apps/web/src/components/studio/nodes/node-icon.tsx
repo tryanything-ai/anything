@@ -10,13 +10,13 @@ export function removeWidthHeight(svgString: string) {
     return "";
   }
 
-  console.log("svgString", svgString);
+  // console.log("svgString", svgString);
 
   let cleanedSvgString = svgString
     .replace(/\s*width="[^"]*"/, "")
     .replace(/\s*height="[^"]*"/, "");
 
-  console.log("cleanedSvgString", cleanedSvgString);
+  // console.log("cleanedSvgString", cleanedSvgString);
 
   // Ensure viewBox and preserveAspectRatio are properly set
   if (!cleanedSvgString.includes('preserveAspectRatio="')) {
@@ -72,6 +72,14 @@ export const BaseNodeIcon: React.FC<IconProps> = ({ icon, className }) => {
   return (
     <div className={`h-14 w-14 p-1 rounded-md bg-white bg-opacity-30`}>
       <SvgRenderer className={`${className} p-1 w-full h-full`} icon={icon} />
+    </div>
+  );
+};
+
+export const BaseSelectIcon: React.FC<IconProps> = ({ icon, className }) => {
+  return (
+    <div className={`h-9 w-9 p-1 rounded-md bg-white bg-opacity-30`}>
+      <SvgRenderer className={`${className} w-full h-full`} icon={icon} />
     </div>
   );
 };

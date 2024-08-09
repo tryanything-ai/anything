@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 
 import api from "@/lib/anything-api";
-import { BaseNodeIcon } from "../nodes/node-icon";
+import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
 import { Button } from "@/components/ui/button";
 
 export const fieldsMap: { [key: string]: any } = {
@@ -265,8 +265,9 @@ function FieldAccount({
   ...props
 }: any) {
   const [touched, setTouched] = useState(false);
-  const [accountsForProvider, setAccountsForProvider] = useState([]);
-  const [providerDetails, setProviderDetails] = useState<any>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [accountsForProvider, setAccountsForProvider] = useState<any[any]>([]);
+  const [providerDetails, setProviderDetails] = useState<any[any]>([]);
 
   //TODO:
   //Load check if user has an account that matches the variable schema
@@ -282,53 +283,106 @@ function FieldAccount({
     onValueChange(e);
   }
 
-  const getProvider = async () => {
+  const getProviderDetails = async () => {
     try {
       let res = await api.auth.getProvider(provider);
-      console.log("res", res);
+      console.log("res for getProviderDetails", res);
       setProviderDetails(res[0]);
     } catch (e) {
       console.log("error in getProvider");
     }
   };
 
+  const getUserAccountsForProvider = async () => {
+    try {
+      if (!provider) return;
+      let res = await api.auth.getAuthAccountsForProvider(provider);
+      console.log("res", res);
+      setAccountsForProvider(res);
+      setHydrated(true);
+    } catch (e) {
+      console.log("error in getUserAccounts");
+    }
+  };
+
+  const connect = async (e: any) => {
+    e.preventDefault();
+    try {
+      // let res = await api.auth.connectProvider(provider);
+      // console.log("res", res);
+    } catch (e) {
+      console.log("error in connect");
+    }
+  };
+
   useEffect(() => {
     console.log("provider", provider);
     if (provider) {
-      getProvider();
+      getProviderDetails();
+      getUserAccountsForProvider();
     }
   }, []);
 
   return (
     <div className="grid gap-3 my-4">
+      {!hydrated ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          {providerDetails && accountsForProvider.length === 0 ? (
+            <div className="flex flex-row items-center border rounded-md p-2">
+              <BaseNodeIcon icon={providerDetails.provider_icon} />
+              <div className="text-xl ml-2">Connect your Airtable Account</div>
+              <div className="ml-auto">
+                <Button onClick={connect} variant="outline">
+                  Connect
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Select value={value} onValueChange={handleValueChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={description} />
+              </SelectTrigger>
+              <SelectContent>
+                {accountsForProvider.map((option: any) => (
+                  <SelectItem
+                    key={option.account_auth_provider_account_slug}
+                    value={`{{accounts.${option.account_auth_provider_account_slug}}}`}
+                  >
+                    <div className="flex flex-row">
+                      <div className="mr-2">
+                        <BaseSelectIcon icon={providerDetails.provider_icon} />
+                      </div>
+
+                      <div className="text-lg flex items-center">
+                        {option.account_auth_provider_account_label}
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+                <div className="border-t my-2 mb-2" />
+                <div className="">
+                  <div className="flex flex-row">
+                    <div className="mr-2 ml-8">
+                      <BaseSelectIcon icon={providerDetails.provider_icon} />
+                    </div>
+
+                    <div className="text-lg flex items-center">
+                      Connnect New Account
+                    </div>
+                    <div className="ml-auto">
+                      <Button variant="outline">Add Account</Button>
+                    </div>
+                  </div>
+                </div>
+              </SelectContent>
+            </Select>
+          )}
+        </>
+      )}
       {/* <Label htmlFor={name}>{label}</Label> */}
-      {providerDetails ? (
-        <div className="flex flex-row items-center border rounded-md p-2">
-          <BaseNodeIcon icon={providerDetails.provider_icon} />
-          <div className="text-xl ml-2">Connect your Airtable Account</div>
-          <div className="ml-auto">
-            <Button variant="outline">Connect</Button>
-          </div>
-        </div>
-      ) : null}
-      {/* <div>
-        <div>
-          <BaseNodeIcon icon={providerDetails.icon} />
-        </div>
-      </div> */}
-      {/* <Select value={value} onValueChange={handleValueChange}> */}
-      {/* <SelectTrigger>
-          <SelectValue placeholder={description} />
-        </SelectTrigger>
-        <SelectContent> */}
-      {/* TODO: hydrate options from user state */}
-      {/* {options.map((option: any) => (
-            <SelectItem key={option.label} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))} */}
-      {/* </SelectContent>
-      </Select> */}
+
       {(touched || submited) && error && (
         <div className="text-red-500" id={`${name}-error`}>
           {error}

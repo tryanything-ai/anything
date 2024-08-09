@@ -1,7 +1,8 @@
 
 CREATE TABLE IF NOT EXISTS anything.auth_providers
-(
-    oauth_provider_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
+(   
+    auth_provider_id TEXT NOT NULL PRIMARY KEY, 
+    -- oauth_provider_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
     -- account_id uuid not null references basejump.accounts(id),
