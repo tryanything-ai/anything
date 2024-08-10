@@ -9,19 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+
 import api from "@/lib/anything-api";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
+import { format } from "date-fns";
+import NewAccountDialog from "@/components/secrets/new-account-dialog";
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -55,7 +47,7 @@ export default function AccountsPage() {
 
         <CardContent>
           <Table>
-            <TableBody>
+            <TableBody className="border border-gray-300">
               {accounts.map((account) => (
                 <TableRow
                   key={account.acount_id}
@@ -68,7 +60,11 @@ export default function AccountsPage() {
                   <TableCell>
                     {account.account_auth_provider_account_label}
                   </TableCell>
-                  <TableCell>{account.created_at}</TableCell>
+                  <TableCell>
+                    {account.created_at
+                      ? format(new Date(account.created_at), "Pp")
+                      : "N/A"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -78,47 +74,3 @@ export default function AccountsPage() {
     </>
   );
 }
-
-const NewAccountDialog = () => {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>Add New Account</Button>
-      </DialogTrigger>
-      {/* <DialogContent className="sm:max-w-[425px]"> */}
-      <DialogContent className="max-w-5xl h-2/3">
-        <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
-          <DialogDescription>
-            Make changes to your profile here. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            {/* <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input
-              id="name"
-              defaultValue="Pedro Duarte"
-              className="col-span-3"
-            /> */}
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            {/* <Label htmlFor="username" className="text-right">
-              Username
-            </Label>
-            <Input
-              id="username"
-              defaultValue="@peduarte"
-              className="col-span-3"
-            /> */}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Save changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};

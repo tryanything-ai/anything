@@ -121,6 +121,7 @@ async fn main() {
             "/auth/accounts/:provider_name",
             get(api::get_auth_accounts_for_provider_name),
         )
+        .route("/auth/providers", get(api::get_auth_providers))
         // .route(
         //     "/auth/callback/:provider_name",
         //     get(auth::handle_provider_callback),

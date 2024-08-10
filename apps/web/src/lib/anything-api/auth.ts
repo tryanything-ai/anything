@@ -77,3 +77,27 @@ export const getAuthAccountsForProvider = async (provider_name: string) => {
         console.error('Error fetching auth accounts for provider:', error);
     } 
 }
+
+export const getProviders = async () => {
+    try {
+        // Get JWT from supabase to pass to the API
+        // API conforms to RLS policies on behalf of users for external API
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/auth/providers`, {
+                headers: {
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Data from /api/auth/providers', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching auth providers', error);
+    } 
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit2 } from "lucide-react";
 import api from "@/lib/anything-api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -138,22 +138,48 @@ export default function AccountsPage() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableBody>
+            <TableBody className="border border-gray-300">
               {showNewSecretEditor && (
                 <div className="w-full">
                   <CreateNewSecret cancel={cancel} saveSecret={saveNewSecret} />
                 </div>
               )}
-              <div className="w-full">
-                {secrets.map((secret: any, index) => (
-                  <EditSecret
-                    key={index}
-                    secret={secret}
-                    deleteSecret={openDialog}
-                    updateSecret={updateSecret}
-                  />
-                ))}
-              </div>
+              {/* <div className="w-full"> */}
+              {secrets.map((secret: any, index) => (
+                <TableRow className="">
+                  {/* {secret && !editing ? (
+                      <> */}
+                  <TableCell>{secret.secret_name}</TableCell>
+                  <TableCell>{secret.secret_description}</TableCell>
+                  <TableCell>{secret.secret_value}</TableCell>
+
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-2"
+                      // onClick={() => setEditing(!editing)}
+                    >
+                      <Edit2 className="size-5" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-2"
+                      onClick={() => deleteSecret(secret)}
+                    >
+                      <Trash2 className="size-5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                // <EditSecret
+                //   key={index}
+                //   secret={secret}
+                //   deleteSecret={openDialog}
+                //   updateSecret={updateSecret}
+                // />
+              ))}
+              {/* </div> */}
               {/* {teams.map((team) => (
                               <TableRow key={team.account_id}>
                                   <TableCell>

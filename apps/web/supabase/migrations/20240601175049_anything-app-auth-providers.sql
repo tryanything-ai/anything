@@ -57,7 +57,7 @@ ALTER TABLE anything.auth_providers ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all records regardless of account
 ----------------
-create policy "All logged in users can select public providers" on anything.auth_providers
+create policy "All logged in users can select providers" on anything.auth_providers
     for select
     to authenticated
     using (true);
