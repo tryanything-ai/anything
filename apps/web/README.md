@@ -15,13 +15,17 @@ supabase db reset
 ```
 
 # Supabase guide on local development
+
 https://supabase.com/docs/guides/cli/local-development
 
 Supabase CLI Reference
 https://supabase.com/docs/reference/cli/supabase-stop?queryGroups=example&example=supabase-stop-clean-up
 
-
 Supabase Local Dashboard URL
 http://127.0.0.1:54323/project/default
 
+# How we dev migrations for DB.
 
+-> Locally. We do Supabase DB Reset on Dev Locally a bunch
+-> When ready -> Staging -> Github actions deploy DB migrations
+-> When good -> Main -> Github actions deploy db migrations again to main project
