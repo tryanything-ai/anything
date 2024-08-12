@@ -6,9 +6,9 @@ const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
 export default async function TeamBillingPage({params: {accountSlug}}: {params: {accountSlug: string}}) {
     const supabaseClient = createClient();
-    const {data: teamAccount} = await supabaseClient.rpc('get_account_by_slug', {
+    const {data: teamAccount}: any = await supabaseClient.rpc('get_account_by_slug', {
         slug: accountSlug
-    });
+    } as any);
 
     if (teamAccount.account_role !== 'owner') {
         return (

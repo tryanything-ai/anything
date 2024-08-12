@@ -11,10 +11,10 @@ export async function removeTeamMember(prevState: any, formData: FormData) {
     const returnUrl = formData.get("returnUrl") as string;
     const supabase = createClient();
 
-    const { error } = await supabase.rpc('remove_account_member', {
+    const { error }: any = await supabase.rpc('remove_account_member', {
         user_id: userId,
         account_id: accountId
-    });
+    } as any);
 
     if (error) {
         return {
@@ -37,12 +37,12 @@ export async function updateTeamMemberRole(prevState: any, formData: FormData) {
 
     const supabase = createClient();
 
-    const { error } = await supabase.rpc('update_account_user_role', {
+    const { error }: any = await supabase.rpc('update_account_user_role', {
         user_id: userId,
         account_id: accountId,
         new_account_role: newAccountRole,
         make_primary_owner: makePrimaryOwner
-    });
+    } as any);
 
     if (error) {
         return {

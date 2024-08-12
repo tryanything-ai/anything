@@ -425,7 +425,7 @@ export const WorkflowVersionProvider = ({
     // get the id of the node with selected = true
     if (selectionChanges.length > 0) {
       console.log("selectionChanges", selectionChanges);
-      let selectedNode = selectionChanges.find(
+      let selectedNode: any = selectionChanges.find(
         (nodeChange: NodeSelectionChange) => nodeChange.selected
       );
 

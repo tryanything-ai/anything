@@ -9,7 +9,7 @@ import {
 } from "react";
 
 import api from "@/lib/anything-api";
-import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
+// import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export type UpdateWorklowArgs = {
   flow_name?: string;
@@ -38,7 +38,7 @@ export const WorkflowsContext = createContext<WorkflowsContextInterface>({
 export const useWorkflowsContext = () => useContext(WorkflowsContext);
 
 export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
-  const [flows, setFlows] = useState<DB_WORKFLOWS_QUERY>([]);
+  const [flows, setFlows] = useState<any>([]);
 
   const createWorkflow = async (): Promise<void> => {
     try {
@@ -94,7 +94,7 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
 
   const getWorkflowById = async (
     flowId: string
-  ): Promise<DB_WORKFLOWS_QUERY | undefined> => {
+  ): Promise<any | undefined> => {
     console.log("[WORKFLOWSPROVIDER]: Getting Flow by ID from State");
     return await api.flows.getFlow(flowId);
   };

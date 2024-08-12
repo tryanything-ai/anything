@@ -15,7 +15,7 @@ import {redirect} from "next/navigation";
 
 export default async function UserAccountButton() {
     const supabaseClient = createClient();
-    const {data: personalAccount} = await supabaseClient.rpc('get_personal_account');
+    const {data: personalAccount}: any = await supabaseClient.rpc('get_personal_account');
 
     const signOut = async () => {
         'use server'

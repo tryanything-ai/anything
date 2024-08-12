@@ -5,7 +5,7 @@ const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
 export default async function PersonalAccountBillingPage() {
     const supabaseClient = createClient();
-    const {data: personalAccount} = await supabaseClient.rpc('get_personal_account');
+    const {data: personalAccount}: any = await supabaseClient.rpc('get_personal_account');
 
 
     return (

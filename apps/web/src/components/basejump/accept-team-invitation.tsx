@@ -9,9 +9,9 @@ type Props = {
 }
 export default async function AcceptTeamInvitation({ token }: Props) {
     const supabaseClient = createClient();
-    const { data: invitation } = await supabaseClient.rpc('lookup_invitation', {
+    const { data: invitation }: any = await supabaseClient.rpc('lookup_invitation', {
         lookup_invitation_token: token
-    });
+    } as any);
 
     return (
         <Card>

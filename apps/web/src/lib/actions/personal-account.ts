@@ -7,10 +7,10 @@ export async function editPersonalAccountName(prevState: any, formData: FormData
     const accountId = formData.get("accountId") as string;
     const supabase = createClient();
 
-    const { error } = await supabase.rpc('update_account', {
+    const { error }: any = await supabase.rpc('update_account', {
         name,
         account_id: accountId
-    });
+    } as any);
 
     if (error) {
         return {

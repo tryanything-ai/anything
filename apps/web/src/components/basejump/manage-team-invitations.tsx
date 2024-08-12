@@ -13,9 +13,9 @@ type Props = {
 export default async function ManageTeamInvitations({ accountId }: Props) {
     const supabaseClient = createClient();
 
-    const { data: invitations } = await supabaseClient.rpc('get_account_invitations', {
+    const { data: invitations }: any = await supabaseClient.rpc('get_account_invitations', {
         account_id: accountId
-    });
+    } as any);
 
     return (
         <Card>

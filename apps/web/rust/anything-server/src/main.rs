@@ -36,9 +36,11 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
+    dotenv().ok(); 
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
+    let cors_origin = env::var("ANYTHING_BASE_URL").expect("CORS_ORIGIN must be set");
+    let bind_address = env::var("BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:3001".to_string());
 
     //Anything Schema for Application
     let anything_client = Arc::new(
@@ -55,7 +57,7 @@ async fn main() {
     );
 
     let cors = CorsLayer::new()
-        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_origin(cors_origin.parse::<HeaderValue>().unwrap())
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -164,6 +166,6 @@ async fn main() {
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     // Run the API server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

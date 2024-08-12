@@ -13,11 +13,11 @@ export async function createInvitation(prevState: any, formData: FormData): Prom
 
     const supabase = createClient();
 
-    const { data, error } = await supabase.rpc('create_invitation', {
+    const { data, error }: any = await supabase.rpc('create_invitation', {
         account_id: accountId,
         invitation_type: invitationType,
         account_role: accountRole
-    });
+    } as any);
 
     if (error) {
         return {
@@ -40,9 +40,9 @@ export async function deleteInvitation(prevState: any, formData: FormData) {
 
     const supabase = createClient();
 
-    const { error } = await supabase.rpc('delete_invitation', {
+    const { error }: any = await supabase.rpc('delete_invitation', {
         invitation_id: invitationId
-    });
+    } as any);
 
     if (error) {
         return {
@@ -60,9 +60,9 @@ export async function acceptInvitation(prevState: any, formData: FormData) {
 
     const supabase = createClient();
 
-    const { error, data } = await supabase.rpc('accept_invitation', {
+    const { error, data }: any = await supabase.rpc('accept_invitation', {
         lookup_invitation_token: token
-    });
+    } as any);
 
     if (error) {
         return {
