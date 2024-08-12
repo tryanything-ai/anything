@@ -1,2 +1,0 @@
-[dependencies]
-openssl = { system = "apt", packages = ["libssl-dev"] }
