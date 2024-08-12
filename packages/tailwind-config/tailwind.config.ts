@@ -5,7 +5,7 @@ const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   // https://github.com/vercel/turbo/tree/main/examples/with-tailwind
   daisyui: {
-    themes: ["dark"],
+    themes: ["light", "dark"],
   },
   theme: {
     fontSize: {

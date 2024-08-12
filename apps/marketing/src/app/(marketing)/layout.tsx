@@ -28,10 +28,10 @@ export default async function MarketingLayout({
   const stargazers_count: number = data.stargazers_count;
 
   return (
-    <>
+    <div>
       <Header stargazers_count={stargazers_count} />
       <main>{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }

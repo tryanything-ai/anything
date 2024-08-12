@@ -18,9 +18,10 @@ pub fn register() -> FnResult<AnythingPlugin> {
     //Used to let UI and users know how to configure
     let plugin: AnythingPlugin = AnythingPlugin::builder()
         .trigger(false)
+        .plugin_id("example_plugin".to_string())
         .label("Example Plugin".to_string())
-        .icon("<svg></svg>".to_string())
         .description("This is an example plugin".to_string())
+        .icon("<svg></svg>".to_string())
         .variables(vec![])
         .input(serde_json::json!({
             "method": "GET",
@@ -48,7 +49,6 @@ pub fn register() -> FnResult<AnythingPlugin> {
             "required": ["method", "url"],
             "additionalProperties": false
         }))
-        .plugin_id("example_plugin".to_string())
         .build();
 
     Ok(plugin)
