@@ -57,6 +57,8 @@ pnpm dev
 - [x] Drag and Drop Editor via [ReactFlow](https://reactflow.dev/)
 - [x] Action Configuration via [json-schema-form](https://github.com/remoteoss/json-schema-form)
 - [x] UI via [TailwindCSS](https://tailwindcss.com/) and [ShadCN](https://ui.shadcn.com/)
+- [x] Workflow Testing Management
+- [ ] Single Action Testing
 - [ ] Action Templates Management
 - [ ] Workflow Templates Management
 
@@ -80,7 +82,7 @@ Love Anything? Give us a star ⭐️!
 
 - Each Action Type is defined by a Plugin.
 - Think of Plugins the same as in VSCode but they execute tasks.
-- You can <ins>author your own extensions</ins> or grab them from the community.
+- You can <ins>author your own plugins</ins> or grab them from the community.
 - Plugins are WASM and can be written in any language that can compile to it.
 
 #### User Interface Opinions
