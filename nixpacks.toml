@@ -1,2 +1,2 @@
-[build.nixpacksPlan.phases.install]
+[phases.install]
 cmds = ["pnpm i"]
