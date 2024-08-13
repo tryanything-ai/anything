@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import AccountSelector from "@/components/basejump/account-selector";
+// import AccountSelector from "@/components/basejump/account-selector";
 
 interface Props {
   accountId: string;
