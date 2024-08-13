@@ -30,7 +30,7 @@ http://127.0.0.1:54323/project/default
 -> When ready -> Staging -> Github actions deploy DB migrations
 -> When good -> Main -> Github actions deploy db migrations again to main project
 
-
 # Vercel Setup
+
 Previews all run with "Staging Supabase Variables"
 Production runs with "Real Supabase Variables" and Railway Server Prod also
