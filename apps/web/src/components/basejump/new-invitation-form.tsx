@@ -9,7 +9,7 @@ import {
   SelectGroup,
   SelectLabel,
   SelectItem,
-} from "@/components/ui/select";
+} from "@repo/ui/select";
 import { createInvitation } from "@/lib/actions/invitations";
 // @ts-expect-error
 import { useFormState } from "react-dom";

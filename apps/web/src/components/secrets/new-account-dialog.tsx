@@ -6,10 +6,10 @@ import {
   DialogTitle,
   DialogHeader,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@repo/ui/dialog";
+import { Button } from "@repo/ui/button";
 import api from "@/lib/anything-api";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@repo/ui/table";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 
 const NewAccountDialog = () => {

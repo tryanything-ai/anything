@@ -1,22 +1,22 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { Handle, HandleProps } from "reactflow";
-import { Action } from "@/types/workflows"
-import { Badge } from "@/components/ui/badge";
+import { Action } from "@/types/workflows";
+import { Badge } from "@repo/ui/badge";
 import { EllipsisVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
+import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@repo/ui/dropdown-menu";
 import { useAnything } from "@/context/AnythingContext";
 
-type Checked = DropdownMenuCheckboxItemProps["checked"]
+type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export default function BaseNode({
   id,
@@ -27,8 +27,9 @@ export default function BaseNode({
   data: Action;
   selected: boolean;
 }) {
-
-  const { workflow: { deleteNode, detailedMode } } = useAnything();
+  const {
+    workflow: { deleteNode, detailedMode },
+  } = useAnything();
 
   // const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
   //   useFlowNavigationContext();
@@ -44,7 +45,7 @@ export default function BaseNode({
   const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     // Handle button click logic here
-  }
+  };
 
   // const createReusableAction = (event: React.MouseEvent<HTMLDivElement>) => {
   //   event.stopPropagation();
@@ -53,15 +54,14 @@ export default function BaseNode({
 
   const duplicateAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    console.log("TODO: Make duplicate action")
-  }
+    console.log("TODO: Make duplicate action");
+  };
 
   const deleteAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    console.log("TODO: Delete Action")
-    deleteNode(id)
-  }
-
+    console.log("TODO: Delete Action");
+    deleteNode(id);
+  };
 
   return (
     <>
@@ -72,18 +72,20 @@ export default function BaseNode({
             "bg-white border border-gray-300 text-primary-content flex h-20 w-90 flex-row rounded-md text-xl hover:bg-gray-50",
             selected ? "border-pink-700" : "",
           )}
-        // className=""
+          // className=""
         >
-          {data.handles ? data.handles.map((handle: HandleProps) => {
-            return (
-              <Handle
-                key={handle.id}
-                type={handle.type}
-                position={handle.position}
-                id={handle.id}
-              />
-            );
-          }) : null}
+          {data.handles
+            ? data.handles.map((handle: HandleProps) => {
+                return (
+                  <Handle
+                    key={handle.id}
+                    type={handle.type}
+                    position={handle.position}
+                    id={handle.id}
+                  />
+                );
+              })
+            : null}
 
           {/* Container */}
           <div className="flex h-full w-full flex-row items-center p-3">
@@ -91,12 +93,18 @@ export default function BaseNode({
             <div className="flex flex-col">
               <div className="px-4">{data.label}</div>
               {/* {detailedMode && data.description && (<div className="text-sm">{data.description}</div>)} */}
-              {detailedMode && data.node_id && (<div className=" px-4 text-sm font-light">{data.node_id}</div>)}
+              {detailedMode && data.node_id && (
+                <div className=" px-4 text-sm font-light">{data.node_id}</div>
+              )}
             </div>
           </div>
           <div className="flex h-full flex-row items-center pr-3">
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="p-2" onClick={handleButtonClick}>
+              <Button
+                variant="outline"
+                className="p-2"
+                onClick={handleButtonClick}
+              >
                 <EllipsisVertical className="w-4" />
               </Button>
             </DropdownMenuTrigger>

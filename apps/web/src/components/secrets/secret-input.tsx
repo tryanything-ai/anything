@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Form,
   FormControl,
@@ -13,8 +13,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@repo/ui/form";
+import { Input } from "@repo/ui/input";
 
 import { useState } from "react";
 import { Edit2, Trash2 } from "lucide-react";
@@ -49,7 +49,7 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
     await saveSecret(
       values.secret_name,
       values.secret_value,
-      values.secret_description
+      values.secret_description,
     );
     form.reset();
     cancel();
@@ -149,7 +149,7 @@ export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
       secret.secret_id,
       values.secret_name,
       values.secret_value,
-      values.secret_description
+      values.secret_description,
     );
     setEditing(false);
   }

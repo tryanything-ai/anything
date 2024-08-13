@@ -9,13 +9,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@repo/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@repo/ui/chart";
 
 const chartConfig = {
   pending: {
@@ -69,7 +69,7 @@ export function TaskChart({ chartData }: { chartData: any }) {
       canceled:
         chartData?.reduce((acc: any, curr: any) => acc + curr.canceled, 0) || 0,
     }),
-    [chartData]
+    [chartData],
   );
 
   if (loading) {
@@ -100,7 +100,7 @@ export function TaskChart({ chartData }: { chartData: any }) {
                   </span>
                 </button>
               );
-            }
+            },
           )}
         </div>
       </CardHeader>

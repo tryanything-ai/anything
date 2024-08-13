@@ -3,7 +3,7 @@
 import type { VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
 
-import { Button, buttonVariants } from "@/components/ui/Button";
+import { Button, buttonVariants } from "@repo/ui/Button";
 
 export function SignUpButton({
   type,

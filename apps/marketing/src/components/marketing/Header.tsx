@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { VscClose, VscMenu } from "react-icons/vsc";
 import { FaDiscord } from "react-icons/fa";
-import { Stargazer } from "@/components/ui/Stargazer";
+import { Stargazer } from "@repo/ui/Stargazer";
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,7 +29,11 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           </Link>
           <Stargazer count={stargazers_count} />
 
-          <Link href="/platform" className="-m-1.5 p-1.5 lg:flex hidden" onClick={handleLinkClick}>
+          <Link
+            href="/platform"
+            className="-m-1.5 p-1.5 lg:flex hidden"
+            onClick={handleLinkClick}
+          >
             <span className="sr-only">Platform</span>
             <div className="flex gap-2 ml-4">
               <span className="">Platform</span>
@@ -45,7 +49,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             role="button" // Add role
             tabIndex={0} // Make it focusable
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if (e.key === "Enter" || e.key === " ") {
                 window.location.href = "https://discord.gg/VRBKaqjprE";
               }
             }} // Handle keyboard events
@@ -61,7 +65,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           tabIndex={0} // Make it focusable
           onClick={() => setMobileMenuOpen(true)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            if (e.key === "Enter" || e.key === " ") {
               setMobileMenuOpen(true);
             }
           }} // Handle keyboard events
@@ -91,7 +95,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               className="-m-2.5 rounded-md p-2.5 text-slate-11"
               onClick={() => setMobileMenuOpen(false)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   setMobileMenuOpen(false);
                 }
               }} // Handle keyboard events
@@ -101,7 +105,11 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             </button>
           </div>
           <div className="flex items-center justify-between mt-10">
-            <Link href="/platform" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
+            <Link
+              href="/platform"
+              className="-m-1.5 p-1.5"
+              onClick={handleLinkClick}
+            >
               <span className="sr-only">Platform</span>
               <div className="flex gap-2">
                 <span className="body-semibold">Platform</span>
@@ -109,7 +117,11 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             </Link>
           </div>
           <div className="flex items-center justify-between mt-10">
-            <Link href="/local" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
+            <Link
+              href="/local"
+              className="-m-1.5 p-1.5"
+              onClick={handleLinkClick}
+            >
               <span className="sr-only">Local AI (legacy)</span>
               <div className="flex gap-2">
                 <span className="body-semibold">Local AI (legacy)</span>
@@ -123,7 +135,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               role="button" // Add role
               tabIndex={0} // Make it focusable
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   window.location.href = "https://discord.gg/VRBKaqjprE";
                 }
               }} // Handle keyboard events

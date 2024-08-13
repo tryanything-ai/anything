@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Play } from "lucide-react";
 import { TaskResult } from "./task-card";
@@ -33,7 +33,7 @@ export default function TestingTab() {
                 intervalToDuration({
                   start: testing.testStartedTime,
                   end: testing.testFinishedTime,
-                })
+                }),
               )}
             </div>
           ) : null}

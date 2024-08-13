@@ -5,7 +5,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@repo/ui/table";
 import { TaskRow } from "@/lib/anything-api/testing";
 import { format } from "date-fns";
 import {

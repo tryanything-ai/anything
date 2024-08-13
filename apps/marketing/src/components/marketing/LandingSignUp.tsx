@@ -2,7 +2,7 @@
 
 // import { signIn } from "next-auth/react";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@repo/ui/Button";
 
 export function SignUpButton({ className }: { className: string }) {
   async function handleGithub() {

@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@repo/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,14 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import NewInvitationForm from "./new-invitation-form"
+} from "@repo/ui/dialog";
+import NewInvitationForm from "./new-invitation-form";
 
 type Props = {
-    accountId: string
-}
+  accountId: string;
+};
 
-export default function CreateTeamInvitationButton({accountId}: Props) {
+export default function CreateTeamInvitationButton({ accountId }: Props) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -31,5 +31,5 @@ export default function CreateTeamInvitationButton({accountId}: Props) {
         <NewInvitationForm accountId={accountId} />
       </DialogContent>
     </Dialog>
-  )
+  );
 }

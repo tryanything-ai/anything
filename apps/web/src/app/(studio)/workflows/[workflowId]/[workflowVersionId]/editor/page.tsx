@@ -10,15 +10,13 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
+} from "@repo/ui/resizable";
 
 export default function StudioLayout() {
   // const { workflow } = useAnything();
   return (
     <div className="flex flex-col h-screen">
-      <StudioHeader
-       
-      />
+      <StudioHeader />
       <ResizablePanelGroup direction="horizontal" className="">
         <ResizablePanel defaultSize={60}>
           <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-2 lg:col-span-2">

@@ -1,6 +1,6 @@
 import SettingsNavigation from "@/components/dashboard/settings-navigation";
 import DashboardTitle from "@/components/dashboard/dashboard-title";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@repo/ui/separator";
 
 export default function AuthAndSecretsPage({
   children,
@@ -11,7 +11,7 @@ export default function AuthAndSecretsPage({
     { name: "Accounts", href: "/accounts" },
     { name: "Secrets", href: "/accounts/secrets" },
   ];
-  
+
   return (
     <div className="space-y-6 w-full">
       <DashboardTitle

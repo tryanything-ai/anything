@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import AccountBillingStatus from "@/components/basejump/account-billing-status";
-import { Alert } from "@/components/ui/alert";
+import { Alert } from "@repo/ui/alert";
 
 const returnUrl: string =
   process.env.NODE_ENV === "production"
@@ -17,7 +17,7 @@ export default async function TeamBillingPage({
     "get_account_by_slug",
     {
       slug: accountSlug,
-    } as any
+    } as any,
   );
 
   if (teamAccount.account_role !== "owner") {

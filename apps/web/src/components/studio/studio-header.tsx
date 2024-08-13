@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
 import { Send, XIcon } from "lucide-react";
 import { ShareDialog } from "@/components/studio/share-dialog";

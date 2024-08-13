@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { Trash2, Edit2 } from "lucide-react";
 import api from "@/lib/anything-api";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@repo/ui/input";
+import { Button } from "@repo/ui/button";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@repo/ui/separator";
 
 import {
   AlertDialog,
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@repo/ui/alert-dialog";
 import { EditSecret, CreateNewSecret } from "@/components/secrets/secret-input";
 
 import {
@@ -27,8 +27,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Table, TableRow, TableBody, TableCell } from "@/components/ui/table";
+} from "@repo/ui/card";
+import { Table, TableRow, TableBody, TableCell } from "@repo/ui/table";
 
 export default function AccountsPage() {
   const [secrets, setSecrets] = useState<any[]>([]);
@@ -57,14 +57,14 @@ export default function AccountsPage() {
     secret_id: string,
     secret_name: string,
     secret_value: string,
-    secret_description: string
+    secret_description: string,
   ) => {
     try {
       await api.secrets.updateSecret(
         secret_id,
         secret_name,
         secret_value,
-        secret_description
+        secret_description,
       );
       fetchSecrets();
     } catch (error) {
@@ -87,13 +87,13 @@ export default function AccountsPage() {
   const saveNewSecret = async (
     secret_name: string,
     secret_value: string,
-    secret_description: string
+    secret_description: string,
   ) => {
     try {
       await api.secrets.createSecret(
         secret_name,
         secret_value,
-        secret_description
+        secret_description,
       );
       fetchSecrets();
     } catch (error) {
