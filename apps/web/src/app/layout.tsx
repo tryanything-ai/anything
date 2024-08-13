@@ -3,8 +3,10 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AnythingProvider } from "@/context/AnythingContext";
 
-const defaultUrl =
-  (process.env.NEXT_PUBLIC_URL as string) || "http://localhost:3000";
+const defaultUrl: string = process.env.NODE_ENV === 'production' 
+  ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` 
+  : `http://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+
 
 const fontSans = FontSans({
   subsets: ["latin"],
