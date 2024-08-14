@@ -1,5 +1,5 @@
-import { ProfileLinks } from "@repo/ui/components/ProfileLinks";
-import { TemplateGrid } from "@repo/ui/components/TemplateGrid";
+import { ProfileLinks } from "@repo/ui/components/profileLinks";
+import { TemplateGrid } from "@repo/ui/components/templateGrid";
 import {
   fetchProfile,
   fetchProfiles,

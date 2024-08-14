@@ -1,4 +1,4 @@
-import { TemplateView } from "@repo/ui/components/TemplateView";
+import { TemplateView } from "@repo/ui/components/templateView";
 import {
   fetchProfile,
   fetchTemplateBySlug,

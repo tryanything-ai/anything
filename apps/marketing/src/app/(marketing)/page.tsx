@@ -1,9 +1,8 @@
 import { headers } from "next/headers";
 
-// import { BgPattern } from "@repo/ui/components/ui/Bgpattern";
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import Image from "next/image";
-import { Button } from "@repo/ui/components/ui/Button";
+import { Button } from "@repo/ui/components/ui/button";
 import Llama from "../../../public/llamascreenshot.png";
 import Features from "@/components/LocalFeatures";
 import Faq from "@/components/LocalFaq";

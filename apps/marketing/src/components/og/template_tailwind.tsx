@@ -1,6 +1,6 @@
 import { BaseNodeIcon } from "@repo/ui/components/baseNodeIcons";
-import { BaseNodeWeb } from "@repo/ui/components/BaseNodeWeb";
-import { AvatarAndUsername } from "@repo/ui/components/AvatarAndUsername";
+import { BaseNodeWeb } from "@repo/ui/components/baseNodeWeb";
+import { AvatarAndUsername } from "@repo/ui/components/avatarAndUsername";
 import { Node } from "@/types/flow";
 import Image from "next/image";
 import Link from "next/link";
