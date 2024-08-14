@@ -1,6 +1,6 @@
 "use client";
-import { SubmitButton } from "../ui/submit-button";
-import { Label } from "../ui/label";
+import { SubmitButton } from "@/components/submit-button";
+import { Label } from "@repo/ui/components/ui//label";
 import {
   Select,
   SelectTrigger,
@@ -9,9 +9,8 @@ import {
   SelectGroup,
   SelectLabel,
   SelectItem,
-} from "@repo/ui/select";
+} from "@repo/ui/components/ui//select";
 import { createInvitation } from "@/lib/actions/invitations";
-// @ts-expect-error
 import { useFormState } from "react-dom";
 import fullInvitationUrl from "@/lib/full-invitation-url";
 

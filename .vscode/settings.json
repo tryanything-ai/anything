@@ -1,8 +1,3 @@
 {
-  "eslint.workingDirectories": [
-    {
-      "mode": "auto"
-    }
-  ],
   "rust-analyzer.linkedProjects": ["apps/web/rust/anything-server/Cargo.toml", "core/Cargo.toml"],
 }

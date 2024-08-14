@@ -21,12 +21,31 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@radix-ui/react-slot": "^1.0.2",
+    "@hookform/resolvers": "^3.9.0",
+    "@radix-ui/react-alert-dialog": "^1.0.5",
+    "@radix-ui/react-checkbox": "^1.0.4",
+    "@radix-ui/react-collapsible": "^1.1.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-scroll-area": "^1.0.5",
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-separator": "^1.0.3",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-tooltip": "^1.0.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "cmdk": "1.0.0",
     "lucide-react": "^0.395.0",
+    "react-hook-form": "^7.45.4",
+    "react-resizable-panels": "^2.0.22",
+    "recharts": "^2.12.7",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.22.4"
   },
   "exports": {
     "./globals.css": "./src/globals.css",

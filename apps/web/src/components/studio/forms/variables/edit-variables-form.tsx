@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui//button";
 import { Edit2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";

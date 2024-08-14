@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui//button";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui/dialog";
+} from "@repo/ui/components/ui//dialog";
 import { useState } from "react";
 import { Trash } from "lucide-react";
-import { SubmitButton } from "../ui/submit-button";
+import { SubmitButton } from "@/components/submit-button";
 import { deleteInvitation } from "@/lib/actions/invitations";
 import { usePathname } from "next/navigation";
 

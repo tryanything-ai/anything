@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { Trash2, Edit2 } from "lucide-react";
 import api from "@/lib/anything-api";
-import { Input } from "@repo/ui/input";
-import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/components/ui//input";
+import { Button } from "@repo/ui/components/ui//button";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@repo/ui/separator";
+import { Separator } from "@repo/ui/components/ui//separator";
 
 import {
   AlertDialog,
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@repo/ui/alert-dialog";
+} from "@repo/ui/components/ui//alert-dialog";
 import { EditSecret, CreateNewSecret } from "@/components/secrets/secret-input";
 
 import {
@@ -27,8 +27,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/card";
-import { Table, TableRow, TableBody, TableCell } from "@repo/ui/table";
+} from "@repo/ui/components/ui//card";
+import {
+  Table,
+  TableRow,
+  TableBody,
+  TableCell,
+} from "@repo/ui/components/ui//table";
 
 export default function AccountsPage() {
   const [secrets, setSecrets] = useState<any[]>([]);

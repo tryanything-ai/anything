@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAnything } from "@/context/AnythingContext";
-import { Switch } from "../ui/switch";
-import { Label } from "@repo/ui/label";
+import { Switch } from "@repo/ui/components/ui//switch";
+import { Label } from "@repo/ui/components/ui//label";
 
 const WorkflowToggle = ({
   active,

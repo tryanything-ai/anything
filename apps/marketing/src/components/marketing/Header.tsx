@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { VscClose, VscMenu } from "react-icons/vsc";
 import { FaDiscord } from "react-icons/fa";
-import { Stargazer } from "@repo/ui/Stargazer";
+import { Stargazer } from "@repo/ui/components/ui/Stargazer";
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

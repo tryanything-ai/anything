@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Package, ShoppingCart, Home, Users, LineChart } from "lucide-react";
-import { Badge } from "@repo/ui/badge";
+import { Badge } from "@repo/ui/components/ui//badge";
 
 export function ActionPanelLeftPanelNavigation() {
   return (

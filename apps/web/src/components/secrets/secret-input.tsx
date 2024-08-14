@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui//button";
 import {
   Form,
   FormControl,
@@ -13,12 +13,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/ui/form";
-import { Input } from "@repo/ui/input";
+} from "@repo/ui/components/ui//form";
+import { Input } from "@repo/ui/components/ui//input";
 
 import { useState } from "react";
 import { Edit2, Trash2 } from "lucide-react";
-import { TableCell, TableRow } from "../ui/table";
+import { TableCell, TableRow } from "@repo/ui/components/ui//table";
 
 //Use same schema for both
 const formSchema = z.object({

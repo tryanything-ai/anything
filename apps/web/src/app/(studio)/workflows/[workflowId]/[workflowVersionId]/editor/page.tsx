@@ -10,7 +10,7 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@repo/ui/resizable";
+} from "@repo/ui/components/ui//resizable";
 
 export default function StudioLayout() {
   // const { workflow } = useAnything();

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useAnything } from "@/context/AnythingContext";
-import { Label } from "@repo/ui/label";
-import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/components/ui//label";
+import { Input } from "@repo/ui/components/ui//input";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import DeleteFlowDialog from "./delete-flow-dialog";
-import { Switch } from "@repo/ui/switch";
+import { Switch } from "@repo/ui/components/ui//switch";
 import WorkflowSettingsForm from "./workflow-settings-form";
 
 type Inputs = {

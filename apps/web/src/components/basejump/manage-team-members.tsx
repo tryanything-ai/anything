@@ -4,11 +4,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+} from "@repo/ui/components/ui//card";
 import { createClient } from "@/lib/supabase/server";
-import { Table, TableRow, TableBody, TableCell } from "../ui/table";
+import {
+  Table,
+  TableRow,
+  TableBody,
+  TableCell,
+} from "@repo/ui/components/ui//table";
 
-import { Badge } from "../ui/badge";
+import { Badge } from "@repo/ui/components/ui//badge";
 import TeamMemberOptions from "./team-member-options";
 
 type Props = {
@@ -22,12 +27,12 @@ export default async function ManageTeamMembers({ accountId }: Props) {
     "get_account_members",
     {
       account_id: accountId,
-    } as any
+    } as any,
   );
 
   const { data } = await supabaseClient.auth.getUser();
   const isPrimaryOwner = members?.find(
-    (member: any) => member.user_id === data?.user?.id
+    (member: any) => member.user_id === data?.user?.id,
   )?.is_primary_owner;
 
   return (

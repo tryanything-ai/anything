@@ -2,9 +2,9 @@ import { cn } from "@/lib/utils";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { Handle, HandleProps } from "reactflow";
 import { Action } from "@/types/workflows";
-import { Badge } from "@repo/ui/badge";
+import { Badge } from "@repo/ui/components/ui//badge";
 import { EllipsisVertical } from "lucide-react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui//button";
 
 import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 
@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
+} from "@repo/ui/components/ui//dropdown-menu";
 import { useAnything } from "@/context/AnythingContext";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];

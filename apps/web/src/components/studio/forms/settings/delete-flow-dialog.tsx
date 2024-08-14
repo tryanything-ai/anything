@@ -8,8 +8,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@repo/ui/alert-dialog";
-import { Button } from "@repo/ui/button";
+} from "@repo/ui/components/ui//alert-dialog";
+import { Button } from "@repo/ui/components/ui//button";
 import { useAnything } from "@/context/AnythingContext";
 import { useRouter } from "next/navigation";
 

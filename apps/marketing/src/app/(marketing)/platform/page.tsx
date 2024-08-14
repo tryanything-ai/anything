@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 
-// import { BgPattern } from "@repo/ui/Bgpattern";
+// import { BgPattern } from "@repo/ui/components/ui/Bgpattern";
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import Image from "next/image";
-import { Button } from "@repo/ui/Button";
+import { Button } from "@repo/ui/components/ui/Button";
 import AnythingWeb from "../../../../public/anything_web.png";
 import PlatformFeatures from "@/components/PlatformFeatures";
 import PlatformFaq from "@/components/PlatformFaq";

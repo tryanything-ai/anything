@@ -1,7 +1,7 @@
-import { Input } from "@repo/ui/input";
-import { SubmitButton } from "../ui/submit-button";
+import { Input } from "@repo/ui/components/ui//input";
+import { SubmitButton } from "@/components/submit-button";
 import { editTeamName } from "@/lib/actions/teams";
-import { Label } from "../ui/label";
+import { Label } from "@repo/ui/components/ui//label";
 import { GetAccountResponse } from "@usebasejump/shared";
 import {
   Card,
@@ -10,7 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+} from "@repo/ui/components/ui//card";
 
 type Props = {
   account: GetAccountResponse;

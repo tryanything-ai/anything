@@ -3,7 +3,7 @@ import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
 import EditVariableForm from "./edit-variable-form";
 import EditVariablesForm from "./edit-variables-form";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui//button";
 import { ActionType } from "@/types/workflows";
 
 export function VariablesFormLayout() {

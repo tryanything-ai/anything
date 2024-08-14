@@ -1,18 +1,18 @@
 "use client";
 
-import { SubmitButton } from "../ui/submit-button";
-import { Label } from "../ui/label";
+import { SubmitButton } from "@/components/submit-button";
+import { Label } from "@repo/ui/components/ui//label";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@repo/ui/select";
+} from "@repo/ui/components/ui//select";
 import { updateTeamMemberRole } from "@/lib/actions/members";
 import { GetAccountMembersResponse } from "@usebasejump/shared";
 import { useState } from "react";
-import { Checkbox } from "../ui/checkbox";
+import { Checkbox } from "@repo/ui/components/ui//checkbox";
 import { usePathname } from "next/navigation";
 
 type Props = {

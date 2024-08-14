@@ -8,8 +8,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Button } from "../ui/button";
+} from "@repo/ui/components/ui//dropdown-menu";
+import { Button } from "@repo/ui/components/ui//button";
 import { GetAccountMembersResponse } from "@usebasejump/shared";
 import { useEffect, useState } from "react";
 import {
@@ -21,9 +21,9 @@ import {
   DialogTrigger,
   DialogPortal,
   DialogOverlay,
-} from "@repo/ui/dialog";
+} from "@repo/ui/components/ui//dialog";
 import EditTeamMemberRoleForm from "./edit-team-member-role-form";
-import { SubmitButton } from "../ui/submit-button";
+import { SubmitButton } from "@/components/submit-button";
 import { removeTeamMember as removeTeamMemberAction } from "@/lib/actions/members";
 import DeleteTeamMemberForm from "./delete-team-member-form";
 

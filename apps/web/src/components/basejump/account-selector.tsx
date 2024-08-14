@@ -4,17 +4,16 @@ import { ComponentPropsWithoutRef, useMemo, useState } from "react";
 import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui//button";
 import {
-  // Command,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@repo/ui/command";
-import { Command } from "cmdk";
+} from "@repo/ui/components/ui//command";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
+} from "@repo/ui/components/ui//dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui//popover";
 import NewTeamForm from "@/components/basejump/new-team-form";
 import { useAccounts } from "@/lib/hooks/use-accounts";
 

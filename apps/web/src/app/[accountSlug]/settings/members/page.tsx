@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ManageTeamMembers from "@/components/basejump/manage-team-members";
 import ManageTeamInvitations from "@/components/basejump/manage-team-invitations";
-import { Alert } from "@repo/ui/alert";
+import { Alert } from "@repo/ui/components/ui//alert";
 
 export default async function TeamMembersPage({
   params: { accountSlug },

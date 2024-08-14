@@ -2,7 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { type ComponentProps } from "react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import { Alert, AlertDescription } from "./alert";
 import { AlertTriangle } from "lucide-react";
 

@@ -5,7 +5,7 @@ import ReactJson from "react-json-view";
 import { TaskRow } from "@/lib/anything-api/testing";
 import TaskStatus from "./task-status";
 import { Clock } from "lucide-react";
-import { Badge } from "@repo/ui/badge";
+import { Badge } from "@repo/ui/components/ui//badge";
 
 export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
   return (
