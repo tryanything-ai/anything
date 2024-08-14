@@ -32,7 +32,7 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
         fontSans.variable,
       )}
     >
-      <body className="bg-background text-foreground bg-pink-200">
+      <body className="bg-background text-foreground">
         <AnythingProvider>
           <main className="min-h-screen">{children}</main>
         </AnythingProvider>

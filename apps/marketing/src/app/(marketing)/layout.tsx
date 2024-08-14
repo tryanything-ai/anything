@@ -16,16 +16,24 @@ export const metadata: Metadata = {
 export default async function MarketingLayout({
   children,
 }: MarketingLayoutProps) {
-  const res = await fetch(
-    "https://api.github.com/repos/tryanything-ai/anything",
-    {
-      method: "GET",
-      next: { revalidate: 60 },
-    }
-  );
-  const data = await res.json();
+  let stargazers_count: number = 0;
 
-  const stargazers_count: number = data.stargazers_count;
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/tryanything-ai/anything",
+      {
+        method: "GET",
+        next: { revalidate: 60 },
+      }
+    );
+    const data = await res.json();
+
+    if (data && typeof data.stargazers_count === 'number') {
+      stargazers_count = data.stargazers_count;
+    }
+  } catch (error) {
+    console.error("Failed to fetch stargazers count:", error);
+  }
 
   return (
     <div>

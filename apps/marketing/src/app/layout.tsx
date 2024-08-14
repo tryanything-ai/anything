@@ -1,11 +1,17 @@
-// import "./globals.css";
-// import "@repo/ui/globals.css";
+import { Inter as FontSans } from "next/font/google";
+import "@repo/ui/globals.css";
 
 import type { Metadata } from "next";
 import { ReactNode, Suspense, JSX } from "react";
 import { siteConfig } from "../config/site";
-import { dm_sans, inter } from "../lib/fonts";
+import { cn } from "@/lib/utils";
+// import { dm_sans, inter } from "../lib/fonts";
 import { PHProvider, PostHogPageview } from "./providers";
+
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -54,20 +60,21 @@ export default function RootLayout({
 }): JSX.Element {
   return (
     <html
-      // data-theme="light"
-      className={` ${inter.variable} ${dm_sans.variable}`}
       lang="en"
+      className={cn(
+        "min-h-screen bg-background font-sans antialiased",
+        fontSans.variable,
+      )}
       suppressHydrationWarning
     >
-      <head />
       <Suspense>
         <PostHogPageview />
       </Suspense>
-      <PHProvider>
-        <body data-theme="dark" className="text-slate-12 font-sans">
-          {children}
-        </body>
-      </PHProvider>
+      <body className="bg-background text-foreground">
+        <PHProvider>
+          <main className="min-h-screen">{children}</main>
+        </PHProvider>
+      </body>
     </html>
   );
 }

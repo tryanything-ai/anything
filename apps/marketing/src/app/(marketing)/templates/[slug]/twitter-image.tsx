@@ -3,7 +3,7 @@ import {
     fetchTemplateBySlug,
   } from "@/lib/supabase/fetchSupabase";
   import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
-  import { ImageResponse } from "next/server";
+  import { ImageResponse } from "next/og";
   import { FlowTemplateOgImage } from "@/components/og/template_css";
   import { FlowTemplate } from "@/types/flow";
   
@@ -26,7 +26,7 @@ import {
     params,
   }: {
     params: { slug: string };
-  }): Promise<ImageResponse> {
+  }) {
     console.log(
       "params in TemplatePageOgImage Generation",
       JSON.stringify(params)

@@ -3,7 +3,7 @@ import {
   fetchTemplateBySlug,
 } from "@/lib/supabase/fetchSupabase";
 import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
-import { ImageResponse } from "next/server";
+import { ImageResponse } from "next/og";
 import { FlowTemplateOgImage } from "@/components/og/template_css";
 import { FlowTemplate } from "@/types/flow";
 
@@ -22,21 +22,17 @@ export const size = {
 export const contentType = "image/png";
 
 // Image generation
-export default async function Image({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<ImageResponse> {
+export default async function Image({ params }: { params: { slug: string } }) {
   console.log(
     "params in TemplatePageOgImage Generation",
-    JSON.stringify(params)
+    JSON.stringify(params),
   );
   const templateResponse = await fetchTemplateBySlug(params.slug);
 
   if (!templateResponse) {
     console.log(
       "templateResponse in TemplatePage",
-      JSON.stringify(templateResponse, null, 3)
+      JSON.stringify(templateResponse, null, 3),
     );
     throw new Error("Template not found");
   }
@@ -52,11 +48,11 @@ export default async function Image({
 
   console.log(
     "params in TemplatePageOgImage Generation",
-    JSON.stringify(params)
+    JSON.stringify(params),
   );
 
   const boldFontData = await fetch(
-    this_url + "/fonts/DMSans-SemiBold.ttf"
+    this_url + "/fonts/DMSans-SemiBold.ttf",
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
@@ -90,6 +86,6 @@ export default async function Image({
           weight: 700,
         },
       ],
-    }
+    },
   );
 }

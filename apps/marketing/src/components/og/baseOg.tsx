@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ImageResponse } from "next/server";
+import { ImageResponse } from "next/og";
 
 const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
 
@@ -31,18 +31,14 @@ export const OgDiv: React.FC<{
 };
 
 // Image generation
-export default async function Image({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<ImageResponse> {
+export default async function Image({ params }: { params: { slug: string } }) {
   console.log(
     "params in TemplatePageOgImage Generation",
-    JSON.stringify(params)
+    JSON.stringify(params),
   );
 
   const boldFontData = await fetch(
-    this_url + "/fonts/DMSans-SemiBold.ttf"
+    this_url + "/fonts/DMSans-SemiBold.ttf",
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
@@ -68,6 +64,6 @@ export default async function Image({
           weight: 700,
         },
       ],
-    }
+    },
   );
 }
