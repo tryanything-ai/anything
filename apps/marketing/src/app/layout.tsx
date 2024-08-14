@@ -1,4 +1,4 @@
-import "./globals.css";
+// import "./globals.css";
 import "@repo/ui/globals.css";
 
 import type { Metadata } from "next";
@@ -47,11 +47,11 @@ export const metadata: Metadata = {
   manifest: `${siteConfig.url}/favicons/site.webmanifest`,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: ReactNode;
-}): Promise<JSX.Element> {
+}): JSX.Element {
   return (
     <html
       // data-theme="light"
@@ -64,7 +64,9 @@ export default async function RootLayout({
         <PostHogPageview />
       </Suspense>
       <PHProvider>
-        <body data-theme="dark" className="text-slate-12 font-sans">{children}</body>
+        <body data-theme="dark" className="text-slate-12 font-sans">
+          {children}
+        </body>
       </PHProvider>
     </html>
   );

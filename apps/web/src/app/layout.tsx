@@ -1,5 +1,4 @@
 import { Inter as FontSans } from "next/font/google";
-import "./globals.css";
 import "@repo/ui/globals.css";
 import { cn } from "@/lib/utils";
 import { AnythingProvider } from "@/context/AnythingContext";
