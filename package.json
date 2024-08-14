@@ -10,7 +10,6 @@
     "ui:add": "pnpm --filter @repo/ui ui:add"
   },
   "devDependencies": {
-    "prettier-plugin-tailwindcss": "^0.5.3",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "prettier": "^3.3.2",
