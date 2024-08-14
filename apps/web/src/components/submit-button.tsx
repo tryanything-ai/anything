@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useState } from "react";
 import { type ComponentProps } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
@@ -22,14 +22,26 @@ export function SubmitButton({
   errorMessage,
   pendingText = "Submitting...",
   ...props
-}: Props) {
-  const { pending, action } = useFormStatus();
-  const [state, internalFormAction] = useFormState(formAction, initialState);
+}: Props): JSX.Element {
+  const [state, setState] = useState(initialState);
+  const [isPending, setIsPending] = useState(false);
 
-  const isPending = pending && action === internalFormAction;
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsPending(true);
+    const formData = new FormData(event.currentTarget);
+    try {
+      const result = await formAction(state, formData);
+      setState(result);
+    } catch (error: any) {
+      setState({ message: error.message });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-y-4 w-full">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-y-4 w-full">
       {Boolean(errorMessage || state?.message) && (
         <Alert variant="destructive" className="w-full">
           <AlertTriangle className="h-4 w-4" />
@@ -40,12 +52,11 @@ export function SubmitButton({
         <Button
           {...props}
           type="submit"
-          aria-disabled={pending}
-          formAction={internalFormAction}
+          aria-disabled={isPending}
         >
           {isPending ? pendingText : children}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

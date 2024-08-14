@@ -15,7 +15,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
 import { AnyAaaaRecord } from "dns";
 
-export default function ManageWorkflows() {
+export default function ManageWorkflows(): JSX.Element {
   let { workflows } = useAnything();
 
   console.log("flows in component", workflows.flows);

@@ -137,6 +137,7 @@ export function TaskChart({ chartData }: { chartData: any }) {
               content={
                 <ChartTooltipContent
                   className="w-[150px]"
+                  // @ts-ignore
                   labelFormatter={(value) => {
                     return new Date(value).toLocaleDateString("en-US", {
                       month: "short",

@@ -2,7 +2,7 @@
 import { useAnything } from "@/context/AnythingContext";
 
 
-export default function WorkflowTestingWizard() {
+export default function WorkflowTestingWizard(): JSX.Element {
     const { workflow } = useAnything();
 
     return (

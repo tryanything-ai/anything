@@ -35,7 +35,7 @@ import {
   TableCell,
 } from "@repo/ui/components/ui/table";
 
-export default function AccountsPage() {
+export default function AccountsPage(): JSX.Element {
   const [secrets, setSecrets] = useState<any[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [secretToDelete, setSecretToDelete] = useState<any>({});

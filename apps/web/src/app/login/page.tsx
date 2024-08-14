@@ -9,7 +9,7 @@ export default function Login({
   searchParams,
 }: {
   searchParams: { message: string; returnUrl?: string };
-}) {
+}): JSX.Element {
   const signIn = async (_prevState: any, formData: FormData) => {
     "use server";
 

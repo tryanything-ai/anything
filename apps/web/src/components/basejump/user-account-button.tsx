@@ -13,7 +13,7 @@ import { UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-export default async function UserAccountButton() {
+export default async function UserAccountButton(): Promise<JSX.Element> {
   const supabaseClient = createClient();
   const { data: personalAccount }: any = await supabaseClient.rpc(
     "get_personal_account",

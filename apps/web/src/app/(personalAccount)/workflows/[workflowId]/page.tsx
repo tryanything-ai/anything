@@ -14,7 +14,7 @@ import { TaskChart } from "@/components/tasks/task-chart";
 import { TimeUnit } from "@/lib/anything-api/charts";
 // import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
-export default function WorkflowManager() {
+export default function WorkflowManager(): JSX.Element {
   const {
     workflows: { getWorkflowById, flows },
   } = useAnything();

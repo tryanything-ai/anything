@@ -4,7 +4,7 @@ import { Play } from "lucide-react";
 import { TaskResult } from "./task-card";
 import { formatDuration, intervalToDuration } from "date-fns";
 
-export default function TestingTab() {
+export default function TestingTab(): JSX.Element {
   const { workflow, testing } = useAnything();
 
   const runWorkflow = async () => {

@@ -17,7 +17,7 @@ import {
 } from "@repo/ui/components/ui/table";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 
-const NewAccountDialog = () => {
+const NewAccountDialog = (): JSX.Element => {
   const [providers, setProviders] = useState<any[]>([]);
 
   const fetchAccounts = async () => {

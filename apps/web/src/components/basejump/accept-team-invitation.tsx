@@ -7,10 +7,13 @@ import { SubmitButton } from "@/components/submit-button";
 type Props = {
   token: string;
 };
-export default async function AcceptTeamInvitation({ token }: Props) {
+export default async function AcceptTeamInvitation({
+  token,
+}: Props): Promise<JSX.Element> {
   const supabaseClient = createClient();
   const { data: invitation }: any = await supabaseClient.rpc(
     "lookup_invitation",
+     // @ts-ignore
     {
       lookup_invitation_token: token,
     } as any,

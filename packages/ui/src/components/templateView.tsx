@@ -69,7 +69,7 @@ export const TemplateView= ({
       {profile ? (
         <>
           <div className="mb-2 mt-8 font-semibold">About the creator</div>
-          <ProfileLinks profile={profile} Link={Link} />
+          <ProfileLinks profile={profile} Link={Link as any} />
         </>
       ) : null}
     </>

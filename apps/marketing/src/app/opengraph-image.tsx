@@ -21,15 +21,15 @@ export const contentType = "image/png";
 export default async function Image({
   params,
 }: {
-  params;
+  params: any;
 }): Promise<ImageResponse> {
   console.log(
     "params in TemplatePageOgImage Generation",
-    JSON.stringify(params)
+    JSON.stringify(params),
   );
 
   const boldFontData = await fetch(
-    this_url + "/fonts/DMSans-SemiBold.ttf"
+    this_url + "/fonts/DMSans-SemiBold.ttf",
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
@@ -95,6 +95,6 @@ export default async function Image({
           weight: 700,
         },
       ],
-    }
+    },
   );
 }

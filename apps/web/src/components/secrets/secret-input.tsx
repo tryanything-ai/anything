@@ -32,7 +32,7 @@ const formSchema = z.object({
   secret_description: z.string().min(2).max(50),
 });
 
-export function CreateNewSecret({ cancel, saveSecret }: any) {
+export function CreateNewSecret({ cancel, saveSecret }: any): JSX.Element {
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,7 +127,11 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
   );
 }
 
-export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
+export function EditSecret({
+  secret,
+  deleteSecret,
+  updateSecret,
+}: any): JSX.Element {
   const [editing, setEditing] = useState(false);
 
   // 1. Define your form.

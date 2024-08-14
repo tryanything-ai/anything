@@ -16,7 +16,7 @@ type Props = {
   account: GetAccountResponse;
 };
 
-export default function EditTeamName({ account }: Props) {
+export default function EditTeamName({ account }: Props): JSX.Element {
   return (
     <Card>
       <CardHeader>

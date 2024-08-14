@@ -19,7 +19,7 @@ interface Props {
     href: string;
   }[];
 }
-export default function DashboardHeader({ accountId, navigation = [] }: Props) {
+export default function DashboardHeader({ accountId, navigation = [] }: Props): JSX.Element {
   return (
     <nav className="w-full p-4 flex justify-between items-center border-b">
       <div className="justify-start items-center gap-x-4 lg:gap-x-6 hidden md:flex">

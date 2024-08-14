@@ -20,11 +20,11 @@ export const metadata = {
   description: "Use tomorrows AI in your business today",
 };
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
   return (
     <html
       lang="en"

@@ -4,7 +4,7 @@ import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
 import DeleteVariableDialog from "./delete-variable-dialog";
 
-export default function EditVariablesForm() {
+export default function EditVariablesForm(): JSX.Element {
   const {
     variables,
     workflow: { selected_node_variables_schema },

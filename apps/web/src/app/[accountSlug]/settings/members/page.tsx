@@ -7,10 +7,11 @@ export default async function TeamMembersPage({
   params: { accountSlug },
 }: {
   params: { accountSlug: string };
-}) {
+}): Promise<JSX.Element> {
   const supabaseClient = createClient();
   const { data: teamAccount }: any = await supabaseClient.rpc(
     "get_account_by_slug",
+     // @ts-ignore
     {
       slug: accountSlug,
     } as any,

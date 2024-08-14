@@ -30,7 +30,7 @@ export default function EditTeamMemberRoleForm({
   accountId,
   teamMember,
   isPrimaryOwner,
-}: Props) {
+}: Props): JSX.Element {
   const [teamRole, setTeamRole] = useState(teamMember.account_role as string);
   const pathName = usePathname();
 

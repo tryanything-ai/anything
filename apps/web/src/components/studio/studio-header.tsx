@@ -10,7 +10,7 @@ import WorkflowToggle from "../workflows/workflow-toggle";
 // flow_name={workflow?.db_flow.flow_name || ""}
 // savingStatus={workflow.savingStatus}
 
-export default function StudioHeader() {
+export default function StudioHeader(): JSX.Element {
   const router = useRouter();
 
   const { workflow } = useAnything();

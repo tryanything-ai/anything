@@ -15,7 +15,7 @@ type Props = {
   accountId: string;
 };
 
-export default function CreateTeamInvitationButton({ accountId }: Props) {
+export default function CreateTeamInvitationButton({ accountId }: Props): JSX.Element {
   return (
     <Dialog>
       <DialogTrigger asChild>

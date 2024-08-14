@@ -10,7 +10,9 @@ export async function createTeam(prevState: any, formData: FormData) {
     const slug = formData.get("slug") as string;
     const supabase = createClient();
 
-    const { data, error }: any = await supabase.rpc('create_account', {
+    const { data, error }: any = await supabase.rpc('create_account',
+         // @ts-ignore
+        {
         name,
         slug,
     } as any);
@@ -32,7 +34,9 @@ export async function editTeamName(prevState: any, formData: FormData) {
     const accountId = formData.get("accountId") as string;
     const supabase = createClient();
 
-    const { error }: any = await supabase.rpc('update_account', {
+    const { error }: any = await supabase.rpc('update_account', 
+         // @ts-ignore
+        {
         name,
         account_id: accountId
     } as any);
@@ -51,7 +55,9 @@ export async function editTeamSlug(prevState: any, formData: FormData) {
     const accountId = formData.get("accountId") as string;
     const supabase = createClient();
 
-    const { data, error }: any = await supabase.rpc('update_account', {
+    const { data, error }: any = await supabase.rpc('update_account', 
+         // @ts-ignore
+        {
         slug,
         account_id: accountId
     } as any);

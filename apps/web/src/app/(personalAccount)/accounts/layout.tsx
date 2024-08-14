@@ -6,7 +6,7 @@ export default function AuthAndSecretsPage({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): JSX.Element {
   const items = [
     { name: "Accounts", href: "/accounts" },
     { name: "Secrets", href: "/accounts/secrets" },

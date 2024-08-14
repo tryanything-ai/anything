@@ -13,7 +13,7 @@ export function JsonSchemaForm({
   initialValues,
   handleValidation,
   onSubmit,
-}: any) {
+}: any): JSX.Element {
   const [values, setValues] = useState<{ [key: string]: any }>(() =>
     getDefaultValuesFromFields(fields, initialValues),
   );

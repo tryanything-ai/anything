@@ -11,7 +11,7 @@ export function SignInButton({ className }: { className: string }) {
 
   return (
     <div className="flex flex-col items-center gap-2 md:flex-row md:gap-4">
-      <Button
+      {/* <Button
         type="button"
         variant="text"
         className={className}
@@ -20,7 +20,7 @@ export function SignInButton({ className }: { className: string }) {
         }}
       >
         Login
-      </Button>
+      </Button> */}
     </div>
   );
 }

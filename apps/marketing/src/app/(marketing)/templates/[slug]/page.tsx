@@ -118,7 +118,7 @@ export default async function Template({
       <TemplateView
         ActionComponent={Action}
         Avatar={Avatar}
-        Link={Link}
+        Link={Link as any}
         profile={profile}
         template={template}
       />

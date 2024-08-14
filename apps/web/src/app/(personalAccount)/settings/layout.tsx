@@ -6,7 +6,7 @@ export default function PersonalAccountSettingsPage({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): JSX.Element {
   const items = [
     { name: "Profile", href: "/settings" },
     { name: "Teams", href: "/settings/teams" },

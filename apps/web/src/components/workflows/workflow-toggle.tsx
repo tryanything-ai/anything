@@ -9,7 +9,7 @@ const WorkflowToggle = ({
 }: {
   active: boolean;
   workflow_id: string;
-}) => {
+}): JSX.Element => {
   const { workflow } = useAnything();
 
   const updateActive = async () => {

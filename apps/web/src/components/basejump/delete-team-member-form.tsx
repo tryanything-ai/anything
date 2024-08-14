@@ -8,7 +8,10 @@ type Props = {
   teamMember: GetAccountMembersResponse[0];
 };
 
-export default function DeleteTeamMemberForm({ accountId, teamMember }: Props) {
+export default function DeleteTeamMemberForm({
+  accountId,
+  teamMember,
+}: Props): JSX.Element {
   const pathName = usePathname();
 
   return (

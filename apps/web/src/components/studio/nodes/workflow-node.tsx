@@ -26,7 +26,7 @@ export default function BaseNode({
   id: string;
   data: Action;
   selected: boolean;
-}) {
+}): JSX.Element {
   const {
     workflow: { deleteNode, detailedMode },
   } = useAnything();

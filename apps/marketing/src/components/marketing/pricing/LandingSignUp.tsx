@@ -10,7 +10,7 @@ export function SignUpButton({
   children,
 }: {
   type: VariantProps<typeof buttonVariants>["variant"];
-  children: ReactNode;
+  children: any;
 }) {
   async function handleGithub() {
     // signIn("github", { callbackUrl: "/billing" });

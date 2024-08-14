@@ -11,7 +11,7 @@ import ActionDisplayTab from "./display/action-display-tab";
 import TestingTab from "./testing/testing-tab";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
-export default function RightPanelFormEditor() {
+export default function RightPanelFormEditor(): JSX.Element {
   const { workflow } = useAnything();
 
   return (

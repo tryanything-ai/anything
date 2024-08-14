@@ -70,7 +70,7 @@ export const ProfileLinks = ({
             {/* <FaGlobe className="mr-2 h-6 w-3" /> */}
             <Link
               href={profile.website}
-              to={profile.website}  
+              to={profile.website}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm"

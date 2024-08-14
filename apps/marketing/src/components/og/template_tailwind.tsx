@@ -42,7 +42,7 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
               AvatarComponent={() =>
                 Avatar({ avatar_url: profileImage, profile_name: profileName })
               }
-              Link={Link}
+              Link={Link as any}
               link={false}
               profile_name={profileName}
               username={username}

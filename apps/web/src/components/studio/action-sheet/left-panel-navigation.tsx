@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Package, ShoppingCart, Home, Users, LineChart } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 
-export function ActionPanelLeftPanelNavigation() {
+export function ActionPanelLeftPanelNavigation(): JSX.Element {
   return (
     <div className="w-40 h-full">
       <nav className="grid items-start px-2 text-sm font-medium lg:px-4">

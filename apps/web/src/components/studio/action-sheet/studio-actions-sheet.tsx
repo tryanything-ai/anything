@@ -17,7 +17,7 @@ import { Action } from "@/types/workflows";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 
-export function StudioActionsSheet() {
+export function StudioActionsSheet(): JSX.Element {
   const { workflow } = useAnything();
   const [actions, setActions] = useState<any>([]);
 

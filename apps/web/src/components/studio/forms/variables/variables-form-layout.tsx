@@ -6,7 +6,7 @@ import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@repo/ui/components/ui/button";
 import { ActionType } from "@/types/workflows";
 
-export function VariablesFormLayout() {
+export function VariablesFormLayout(): JSX.Element {
   const { variables, workflow } = useAnything();
 
   const Header = () => {

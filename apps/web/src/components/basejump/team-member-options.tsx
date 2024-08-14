@@ -37,7 +37,7 @@ export default function TeamMemberOptions({
   teamMember,
   accountId,
   isPrimaryOwner,
-}: Props) {
+}: Props): JSX.Element {
   const [updateTeamRole, toggleUpdateTeamRole] = useState(false);
   const [removeTeamMember, toggleRemoveTeamMember] = useState(false);
 

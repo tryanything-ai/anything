@@ -4,7 +4,7 @@ import DashboardTitleWithAction from "@/components/workflows/dashboard-title-wit
 import { Separator } from "@repo/ui/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
 
-export default function Workflows() {
+export default function Workflows(): JSX.Element {
   const { workflows } = useAnything();
 
   const createWorkflow = async () => {

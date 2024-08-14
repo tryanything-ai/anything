@@ -32,12 +32,16 @@ export const WorkflowsContext = createContext<WorkflowsContextInterface>({
   getWorkflows: async () => {},
   getWorkflowById: async () => undefined,
   deleteWorkflow: async () => {},
-  updateWorkflow: async () => {}
+  updateWorkflow: async () => {},
 });
 
 export const useWorkflowsContext = () => useContext(WorkflowsContext);
 
-export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
+export const WorkflowsProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element => {
   const [flows, setFlows] = useState<any>([]);
 
   const createWorkflow = async (): Promise<void> => {
@@ -66,7 +70,7 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
 
   const updateWorkflow = async (
     flowId: string,
-    args: UpdateWorklowArgs
+    args: UpdateWorklowArgs,
   ): Promise<void> => {
     try {
       await api.flows.updateFlow(flowId, args);
@@ -92,9 +96,7 @@ export const WorkflowsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const getWorkflowById = async (
-    flowId: string
-  ): Promise<any | undefined> => {
+  const getWorkflowById = async (flowId: string): Promise<any | undefined> => {
     console.log("[WORKFLOWSPROVIDER]: Getting Flow by ID from State");
     return await api.flows.getFlow(flowId);
   };

@@ -35,7 +35,7 @@ export default async function TemplatePage() {
       <div className="my-16 flex flex-col items-center">
         <TemplateGrid
           AvatarComponent={Avatar}
-          LinkComponent={Link}
+          LinkComponent={Link as any}
           templates={templates}
         />
       </div>

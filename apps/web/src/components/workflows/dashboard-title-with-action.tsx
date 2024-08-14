@@ -9,7 +9,7 @@ export default function DashboardTitleWithAction({
   title,
   description,
   action,
-}: Props) {
+}: Props): JSX.Element {
   return (
     <div className="max-w-screen-xl mx-auto flex flex-row justify-between">
       <div className="flex flex-row items-end">

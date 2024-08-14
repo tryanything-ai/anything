@@ -5,7 +5,7 @@ import { Play } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import NoNodeSelected from "./no-node-selected";
 
-export default function ActionSettingsForm() {
+export default function ActionSettingsForm(): JSX.Element {
   const { workflow, testing } = useAnything();
 
   const testAction = async (action_id: string) => {

@@ -19,7 +19,9 @@ type Props = {
   invitationId: string;
 };
 
-export default function DeleteTeamInvitationButton({ invitationId }: Props) {
+export default function DeleteTeamInvitationButton({
+  invitationId,
+}: Props): JSX.Element {
   const [open, setOpen] = useState(false);
   const returnPath = usePathname();
   return (

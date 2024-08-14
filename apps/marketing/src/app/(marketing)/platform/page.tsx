@@ -48,14 +48,14 @@ export default function IndexPage() {
         <div className="flex flex-col w-full px-4 items-center justify-center md:flex-row gap-4">
           {/* <SignUpButton className="block" />
            */}
-          <Button
+          {/* <Button
             href={`https://cal.com/carllippert/anything-ai-platform-intro-call`}
             rel="noopener noreferrer"
             target="_blank"
             variant="daisy_primary"
           >
             Get In Touch
-          </Button>
+          </Button> */}
           {/* <Button
             href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             rel="noopener noreferrer"

@@ -18,7 +18,7 @@ export default function DeleteVariableDialog({
   variable,
 }: {
   variable: VariableProperty;
-}) {
+}): JSX.Element {
   const { variables } = useAnything();
 
   const handleDelete = async () => {

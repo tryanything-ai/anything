@@ -12,7 +12,7 @@ type Inputs = {
   flow_name: string;
 };
 
-export default function WorkflowSettingsTab() {
+export default function WorkflowSettingsTab(): JSX.Element {
   const { workflow } = useAnything();
   const [loading, setLoading] = useState(false);
   const navigate = useRouter();

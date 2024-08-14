@@ -19,7 +19,7 @@ function extractObjectValues(obj: Record<string, any> | null, keys: string[]): R
 }
 
 // Edit a single variable
-export default function EditVariableForm() {
+export default function EditVariableForm(): JSX.Element {
 
     const { workflow, variables } = useAnything();
 

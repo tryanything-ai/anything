@@ -15,7 +15,7 @@ const edgeTypes = {
   anything: CustomEdge,
 };
 
-export default function StudioWorkflowEditor() {
+export default function StudioWorkflowEditor(): JSX.Element {
   const { workflow } = useAnything();
 
   return (

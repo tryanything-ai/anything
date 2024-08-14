@@ -8,7 +8,7 @@ export default function TeamSettingsPage({
 }: {
   children: React.ReactNode;
   params: { accountSlug: string };
-}) {
+}): JSX.Element {
   const items = [
     { name: "Account", href: `/dashboard/${accountSlug}/settings` },
     { name: "Members", href: `/dashboard/${accountSlug}/settings/members` },

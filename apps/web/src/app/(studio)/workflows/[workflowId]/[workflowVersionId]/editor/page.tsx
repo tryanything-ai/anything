@@ -12,7 +12,7 @@ import {
   ResizablePanelGroup,
 } from "@repo/ui/components/ui/resizable";
 
-export default function StudioLayout() {
+export default function StudioLayout(): JSX.Element {
   // const { workflow } = useAnything();
   return (
     <div className="flex flex-col h-screen">

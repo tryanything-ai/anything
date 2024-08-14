@@ -22,7 +22,7 @@ type Props = {
 export default async function AccountBillingStatus({
   accountId,
   returnUrl,
-}: Props) {
+}: Props): Promise<JSX.Element> {
   const supabaseClient = createClient();
 
   const { data, error } = await supabaseClient.functions.invoke(

@@ -11,7 +11,7 @@ import {
 import { ShareIcon } from "lucide-react";
 import Link from "next/link";
 
-export function ShareDialog() {
+export function ShareDialog(): JSX.Element {
   return (
     <Dialog>
       <DialogTrigger asChild>

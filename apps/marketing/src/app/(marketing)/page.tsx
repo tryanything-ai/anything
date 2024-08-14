@@ -36,14 +36,14 @@ export default function IndexPage() {
         <div className="flex flex-col w-full px-4 items-center justify-center md:flex-row gap-4">
           {/* <SignUpButton className="block" />
            */}
-          <Button
+          {/* <Button
             href={`https://airtable.com/app4pkbS50GcnTaeA/pagg9ciOWMGFeh6BN/form?prefill_fldVLaD0gtTpY1jxP=anything_web&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             rel="noopener noreferrer"
             target="_blank"
             variant="daisy_primary"
           >
             Get Early Access
-          </Button>
+          </Button> */}
           {/* <Button
             href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             rel="noopener noreferrer"

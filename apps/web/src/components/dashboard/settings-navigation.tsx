@@ -17,7 +17,7 @@ export default function SettingsNavigation({
   className,
   items,
   ...props
-}: SidebarNavProps) {
+}: SidebarNavProps): JSX.Element {
   const pathname = usePathname();
 
   return (

@@ -17,7 +17,7 @@ export default function DeleteFlowDialog({
   workflowId,
 }: {
   workflowId: string;
-}) {
+}): JSX.Element {
   const navigate = useRouter();
   const { workflows } = useAnything();
 

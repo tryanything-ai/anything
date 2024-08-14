@@ -16,7 +16,9 @@ type Props = {
   account: GetAccountResponse;
 };
 
-export default function EditPersonalAccountName({ account }: Props) {
+export default function EditPersonalAccountName({
+  account,
+}: Props): JSX.Element {
   return (
     <Card>
       <CardHeader>

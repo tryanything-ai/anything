@@ -15,7 +15,7 @@ import {
 } from "../studio/forms/testing/task-status-badges";
 import { ActionType } from "@/types/workflows";
 
-export function TaskTable({ tasks }: { tasks: TaskRow[] }) {
+export function TaskTable({ tasks }: { tasks: TaskRow[] }): JSX.Element {
   return (
     <Table>
       <TableHeader>

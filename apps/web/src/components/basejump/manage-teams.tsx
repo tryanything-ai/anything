@@ -16,7 +16,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
 
-export default async function ManageTeams() {
+export default async function ManageTeams(): Promise<JSX.Element> {
   const supabaseClient = createClient();
 
   const { data }: any = await supabaseClient.rpc("get_accounts");
