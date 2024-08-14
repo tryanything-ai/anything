@@ -31,7 +31,6 @@
   "devDependencies": {
     "@next/eslint-plugin-next": "14.2.4",
     "@repo/eslint-config": "workspace:*",
-    "@repo/tailwind-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^18.11.17",
     "@types/react": "^18.2.0",
