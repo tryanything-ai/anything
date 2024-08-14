@@ -1,5 +1,5 @@
 // import "./globals.css";
-import "@repo/ui/globals.css";
+// import "@repo/ui/globals.css";
 
 import type { Metadata } from "next";
 import { ReactNode, Suspense, JSX } from "react";
@@ -55,7 +55,7 @@ export default function RootLayout({
   return (
     <html
       // data-theme="light"
-      className={`${inter.variable} ${dm_sans.variable}`}
+      className={`bg-pink-200 ${inter.variable} ${dm_sans.variable}`}
       lang="en"
       suppressHydrationWarning
     >
@@ -64,7 +64,7 @@ export default function RootLayout({
         <PostHogPageview />
       </Suspense>
       <PHProvider>
-        <body data-theme="dark" className="text-slate-12 font-sans">
+        <body data-theme="dark" className="bg-pink-200 text-slate-12 font-sans">
           {children}
         </body>
       </PHProvider>
