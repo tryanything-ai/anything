@@ -2,8 +2,8 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { type ComponentProps } from "react";
-import { Button } from "@repo/ui/components/ui//button";
-import { Alert, AlertDescription } from "@repo/ui/components/ui//alert";
+import { Button } from "@repo/ui/components/ui/button";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 
 type Props = Omit<ComponentProps<typeof Button>, "formAction"> & {

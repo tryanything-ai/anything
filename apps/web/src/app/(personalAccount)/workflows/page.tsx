@@ -1,7 +1,7 @@
 "use client";
 import ManageWorkflows from "@/components/workflows/manage-workflows";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@repo/ui/components/ui//separator";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
 
 export default function Workflows() {

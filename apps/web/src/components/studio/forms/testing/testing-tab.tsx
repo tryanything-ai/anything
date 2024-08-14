@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/components/ui//button";
+import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Play } from "lucide-react";
 import { TaskResult } from "./task-card";

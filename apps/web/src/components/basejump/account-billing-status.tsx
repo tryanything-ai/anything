@@ -5,8 +5,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/ui//card";
-import { Alert, AlertDescription } from "@repo/ui/components/ui//alert";
+} from "@repo/ui/components/ui/card";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import {

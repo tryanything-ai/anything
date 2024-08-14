@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@repo/ui/components/ui//button";
+import { Button } from "@repo/ui/components/ui/button";
 
 interface Props {
   title: string;

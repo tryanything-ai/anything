@@ -4,16 +4,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/ui//card";
+} from "@repo/ui/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import {
   Table,
   TableRow,
   TableBody,
   TableCell,
-} from "@repo/ui/components/ui//table";
+} from "@repo/ui/components/ui/table";
 
-import { Badge } from "@repo/ui/components/ui//badge";
+import { Badge } from "@repo/ui/components/ui/badge";
 import TeamMemberOptions from "./team-member-options";
 
 type Props = {

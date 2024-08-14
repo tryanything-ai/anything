@@ -1,4 +1,4 @@
-import { Node } from "utils";
+import { Node } from "../types/flow";
 
 import { BaseNodeIcon } from "./baseNodeIcons";
 

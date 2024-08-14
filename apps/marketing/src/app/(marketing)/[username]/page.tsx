@@ -1,6 +1,7 @@
-import { ProfileLinks, TemplateGrid } from "ui";
-import { fetchProfile, fetchProfiles, fetchProfileTemplates } from "utils";
-import Image from "next/image";
+import { ProfileLinks, } from "@repo/ui/components/ProfileLinks";
+import {  TemplateGrid } from "@repo/ui/components/TemplateGrid";
+import { fetchProfile, fetchProfiles, fetchProfileTemplates } from "@/lib/supabase/fetchSupabase";
+import Image from "next/image"; 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

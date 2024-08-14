@@ -2,7 +2,7 @@ import { useAnything } from "@/context/AnythingContext";
 import ConfigurationForm from "./configuration-form";
 import { VariablesFormLayout } from "./variables/variables-form-layout";
 import { Play } from "lucide-react";
-import { Button } from "@repo/ui/components/ui//button";
+import { Button } from "@repo/ui/components/ui/button";
 import NoNodeSelected from "./no-node-selected";
 
 export default function ActionSettingsForm() {

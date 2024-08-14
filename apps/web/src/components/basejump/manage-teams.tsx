@@ -4,17 +4,17 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/ui//card";
+} from "@repo/ui/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import {
   Table,
   TableRow,
   TableBody,
   TableCell,
-} from "@repo/ui/components/ui//table";
-import { Button } from "@repo/ui/components/ui//button";
+} from "@repo/ui/components/ui/table";
+import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
-import { Badge } from "@repo/ui/components/ui//badge";
+import { Badge } from "@repo/ui/components/ui/badge";
 
 export default async function ManageTeams() {
   const supabaseClient = createClient();

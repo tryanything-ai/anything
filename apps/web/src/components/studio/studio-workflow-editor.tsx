@@ -5,7 +5,7 @@ import "reactflow/dist/style.css";
 import BaseNode from "./nodes/workflow-node";
 import { useAnything } from "@/context/AnythingContext";
 import CustomEdge from "./edges/workflow-edge";
-import { Button } from "@repo/ui/components/ui//button";
+import { Button } from "@repo/ui/components/ui/button";
 
 const nodeTypes = {
   anything: BaseNode,

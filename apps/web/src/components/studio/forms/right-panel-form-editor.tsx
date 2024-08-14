@@ -3,13 +3,13 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@repo/ui/components/ui//tabs";
+} from "@repo/ui/components/ui/tabs";
 import SettingsForm from "./settings/flow-settings-tab";
 import ActionSettingsForm from "./action-settings-form";
 import { useAnything } from "@/context/AnythingContext";
 import ActionDisplayTab from "./display/action-display-tab";
 import TestingTab from "./testing/testing-tab";
-import { ScrollArea } from "@repo/ui/components/ui//scroll-area";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 export default function RightPanelFormEditor() {
   const { workflow } = useAnything();

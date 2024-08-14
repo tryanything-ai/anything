@@ -1,6 +1,6 @@
-import type { FlowTemplate, Json } from "utils";
+// import type { FlowTemplate, Json } from "utils";
 import React from "react";
-import { VscArrowSmallRight } from "react-icons/vsc";
+// import { VscArrowSmallRight } from "react-icons/vsc";
 import { AvatarAndUsername } from "./avatarAndUsername";
 import { BaseNodeIcon } from "./baseNodeIcons";
 
@@ -11,7 +11,7 @@ export interface TemplateCardProps {
   profile: boolean;
   username: string;
   flowName: string;
-  flowTemplateJson: Json;
+  flowTemplateJson: any;
   Link: React.ComponentType<any>;
   AvatarComponent: React.ComponentType;
 }
@@ -73,7 +73,7 @@ const TemplateCard = ({
 
 export default TemplateCard;
 
-const NodeArray = ({ flow }: { flow: FlowTemplate }) => {
+const NodeArray = ({ flow }: { flow: any }) => {
   //Loop through trigger and all actions to create icons
   const actions = [...flow.actions.map((action: any) => action.icon)];
   const visibleActions = actions.slice(0, 4);
@@ -83,7 +83,7 @@ const NodeArray = ({ flow }: { flow: FlowTemplate }) => {
     <div className="flex h-full flex-row gap-2">
       <BaseNodeIcon className="text-pink-500" icon={flow.trigger.icon} />
       <div className="flex h-14 items-center justify-center font-bold">
-        <VscArrowSmallRight className="w-6 text-3xl" />
+        {/* <VscArrowSmallRight className="w-6 text-3xl" /> */}
       </div>
       {visibleActions.map((icon, index) => {
         if (index === 3 && hiddenIconsCount > 0) {

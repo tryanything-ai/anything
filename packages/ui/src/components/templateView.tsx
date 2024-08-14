@@ -1,4 +1,4 @@
-import { BigFlow, flowJsonFromBigFlow, FlowTemplate, Profile } from "utils";
+import { flowJsonFromBigFlow } from "../helpers/helpers";
 import type { ComponentType } from "react";
 import type { CommonProps } from "./commonTypes";
 import { AvatarAndUsername } from "./avatarAndUsername";
@@ -8,7 +8,7 @@ import { Tags } from "./tags";
 
 interface TemplateViewProps extends CommonProps {
   template: any;
-  profile: Profile | undefined;
+  profile: any | undefined;
   ActionComponent: ComponentType<any>;
 }
 

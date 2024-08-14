@@ -1,5 +1,5 @@
-import type { BigFlow} from "utils";
-import { flowJsonFromBigFlow } from "utils";
+// import type { BigFlow} from "utils";
+import { flowJsonFromBigFlow } from "../helpers/helpers";
 import type { ComponentType, JSX } from "react";
 import TemplateCard from "./templateCard";
 
@@ -9,7 +9,7 @@ export const TemplateGrid = ({
   LinkComponent,
   profile = true,
 }: {
-  templates: BigFlow;
+  templates: any;
   AvatarComponent: (props: {
     avatar_url: string;
     profile_name: string;

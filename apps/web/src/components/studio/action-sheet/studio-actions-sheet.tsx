@@ -10,11 +10,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@repo/ui/components/ui//sheet";
+} from "@repo/ui/components/ui/sheet";
 import { useAnything } from "@/context/AnythingContext";
 import api from "@/lib/anything-api";
 import { Action } from "@/types/workflows";
-import { ScrollArea } from "@repo/ui/components/ui//scroll-area";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 
 export function StudioActionsSheet() {

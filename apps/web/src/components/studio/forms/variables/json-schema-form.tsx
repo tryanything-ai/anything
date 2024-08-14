@@ -4,7 +4,7 @@ import {
   formValuesToJsonValues,
   getDefaultValuesFromFields,
 } from "@/lib/json-schema-utils";
-import { Button } from "@repo/ui/components/ui//button";
+import { Button } from "@repo/ui/components/ui/button";
 import { fieldsMap } from "../form-fields";
 
 export function JsonSchemaForm({

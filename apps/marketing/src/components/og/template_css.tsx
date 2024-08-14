@@ -1,4 +1,4 @@
-import { Node } from "utils";
+import { Node } from "@/types/flow";
 import React from "react";
 import { OgDiv } from "./baseOg";
 

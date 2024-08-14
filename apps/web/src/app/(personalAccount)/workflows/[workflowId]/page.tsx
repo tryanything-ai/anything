@@ -1,14 +1,14 @@
 "use client";
 import { PartyPopper } from "lucide-react";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@repo/ui/components/ui//separator";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
 import { TaskRow } from "@/lib/anything-api/testing";
 import api from "@/lib/anything-api";
-import { Table } from "@repo/ui/components/ui//table";
+import { Table } from "@repo/ui/components/ui/table";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { TimeUnit } from "@/lib/anything-api/charts";

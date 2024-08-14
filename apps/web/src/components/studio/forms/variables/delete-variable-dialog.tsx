@@ -8,8 +8,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@repo/ui/components/ui//alert-dialog";
-import { Button } from "@repo/ui/components/ui//button";
+} from "@repo/ui/components/ui/alert-dialog";
+import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Trash2 } from "lucide-react";
 import { VariableProperty } from "./edit-variable-schema";

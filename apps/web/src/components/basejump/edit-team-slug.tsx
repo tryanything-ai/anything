@@ -1,9 +1,9 @@
 "use client";
 
-import { Input } from "@repo/ui/components/ui//input";
+import { Input } from "@repo/ui/components/ui/input";
 import { SubmitButton } from "@/components/submit-button";
 import { editTeamSlug } from "@/lib/actions/teams";
-import { Label } from "@repo/ui/components/ui//label";
+import { Label } from "@repo/ui/components/ui/label";
 import { GetAccountResponse } from "@usebasejump/shared";
 import {
   Card,
@@ -12,7 +12,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/ui//card";
+} from "@repo/ui/components/ui/card";
 
 type Props = {
   account: GetAccountResponse;

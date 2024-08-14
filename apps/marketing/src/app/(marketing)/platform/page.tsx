@@ -9,7 +9,7 @@ import PlatformFeatures from "@/components/PlatformFeatures";
 import PlatformFaq from "@/components/PlatformFaq";
 
 export default function IndexPage() {
-  // const headerList = headers();
+  // const headerList = headers();`
   // const referringDomain = headerList.get("referer");
 
   return (

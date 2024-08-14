@@ -1,9 +1,8 @@
 import {
   fetchProfile,
   fetchTemplateBySlug,
-  flowJsonFromBigFlow,
-  Profile,
-} from "utils";
+} from "@/lib/supabase/fetchSupabase";
+import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
 import { ImageResponse } from "next/server";
 import { FlowTemplateOgImage } from "@/components/og/template_css";
 import { FlowTemplate } from "@/types/flow";

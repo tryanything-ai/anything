@@ -9,7 +9,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@repo/ui/components/ui//sheet";
+} from "@repo/ui/components/ui/sheet";
 import { Menu } from "lucide-react";
 
 interface Props {

@@ -7,13 +7,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/ui//card";
+} from "@repo/ui/components/ui/card";
 import {
   Table,
   TableBody,
   TableCell,
   TableRow,
-} from "@repo/ui/components/ui//table";
+} from "@repo/ui/components/ui/table";
 
 import api from "@/lib/anything-api";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";

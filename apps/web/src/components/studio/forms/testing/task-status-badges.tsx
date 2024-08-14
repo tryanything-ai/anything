@@ -1,7 +1,7 @@
 // TaskStatus.tsx
 import React from "react";
 
-import { Badge } from "@repo/ui/components/ui//badge";
+import { Badge } from "@repo/ui/components/ui/badge";
 import { RefreshCw, Clock, Zap } from "lucide-react";
 import { formatTimeDifference } from "@/lib/utils";
 

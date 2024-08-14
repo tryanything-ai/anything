@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
+    "@repo/ui": "workspace:*",
     "@sentry/nextjs": "^7.75.0",
     "@supabase/auth-helpers-nextjs": "^0.8.1",
     "@supabase/supabase-js": "^2.38.4",
@@ -23,15 +24,15 @@
     "react-dom": "^18.2.0",
     "react-icons": "^4.11.0",
     "sharp": "^0.32.6",
+    "slugify": "^1.6.6",
     "tailwind-merge": "^1.14.0",
-    "@repo/ui": "workspace:*",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "14.2.4",
     "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
     "@repo/tailwind-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^18.11.17",
     "@types/react": "^18.2.5",
     "@types/react-dom": "^18.2.4",

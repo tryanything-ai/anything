@@ -1,4 +1,4 @@
-import { BigFlow, Profile } from "utils";
+// import { BigFlow, Profile } from "../types/flow";
 
 import type { CommonProps } from "./commonTypes";
 import { ProfileLinks } from "./profileLinks";
@@ -6,8 +6,8 @@ import { ProfileLinks } from "./profileLinks";
 import { TemplateGrid } from "./templateGrid";
 
 interface ProfileViewProps extends CommonProps {
-  templates: BigFlow;
-  profile: Profile;
+  templates: any;
+  profile: any;
 }
 
 export const ProfileView = ({

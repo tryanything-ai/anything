@@ -1,7 +1,7 @@
 import { acceptInvitation } from "@/lib/actions/invitations";
 import { createClient } from "@/lib/supabase/server";
-import { Alert } from "@repo/ui/components/ui//alert";
-import { Card, CardContent } from "@repo/ui/components/ui//card";
+import { Alert } from "@repo/ui/components/ui/alert";
+import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { SubmitButton } from "@/components/submit-button";
 
 type Props = {

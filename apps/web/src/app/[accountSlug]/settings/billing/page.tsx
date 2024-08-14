@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import AccountBillingStatus from "@/components/basejump/account-billing-status";
-import { Alert } from "@repo/ui/components/ui//alert";
+import { Alert } from "@repo/ui/components/ui/alert";
 
 const returnUrl: string =
   process.env.NODE_ENV === "production"
