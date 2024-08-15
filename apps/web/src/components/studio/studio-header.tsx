@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Send, XIcon } from "lucide-react";
 import { ShareDialog } from "@/components/studio/share-dialog";
@@ -10,7 +10,7 @@ import WorkflowToggle from "../workflows/workflow-toggle";
 // flow_name={workflow?.db_flow.flow_name || ""}
 // savingStatus={workflow.savingStatus}
 
-export default function StudioHeader() {
+export default function StudioHeader(): JSX.Element {
   const router = useRouter();
 
   const { workflow } = useAnything();

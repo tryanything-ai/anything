@@ -6,13 +6,18 @@ import {
   DialogTitle,
   DialogHeader,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
 import api from "@/lib/anything-api";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from "@repo/ui/components/ui/table";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 
-const NewAccountDialog = () => {
+const NewAccountDialog = (): JSX.Element => {
   const [providers, setProviders] = useState<any[]>([]);
 
   const fetchAccounts = async () => {

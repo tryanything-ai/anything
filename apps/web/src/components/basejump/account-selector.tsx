@@ -4,17 +4,16 @@ import { ComponentPropsWithoutRef, useMemo, useState } from "react";
 import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
-  // Command,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
-import { Command } from "cmdk";
+} from "@repo/ui/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -22,12 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@repo/ui/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@repo/ui/components/ui/popover";
 import NewTeamForm from "@/components/basejump/new-team-form";
 import { useAccounts } from "@/lib/hooks/use-accounts";
 
@@ -46,7 +45,7 @@ export default function AccountSelector({
   accountId,
   onAccountSelected,
   placeholder = "Select an account...",
-}: AccountSelectorProps) {
+}: AccountSelectorProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
 
@@ -54,13 +53,13 @@ export default function AccountSelector({
 
   const { teamAccounts, personalAccount, selectedAccount } = useMemo(() => {
     const personalAccount = accounts?.find(
-      (account) => account.personal_account
+      (account) => account.personal_account,
     );
     const teamAccounts = accounts?.filter(
-      (account) => !account.personal_account
+      (account) => !account.personal_account,
     );
     const selectedAccount = accounts?.find(
-      (account) => account.account_id === accountId
+      (account) => account.account_id === accountId,
     );
 
     return {
@@ -108,7 +107,7 @@ export default function AccountSelector({
                       selectedAccount?.account_id ===
                         personalAccount?.account_id
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>
@@ -133,7 +132,7 @@ export default function AccountSelector({
                           "ml-auto h-4 w-4",
                           selectedAccount?.account_id === team.account_id
                             ? "opacity-100"
-                            : "opacity-0"
+                            : "opacity-0",
                         )}
                       />
                     </CommandItem>

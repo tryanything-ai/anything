@@ -1,20 +1,20 @@
 "use client";
 import { PartyPopper } from "lucide-react";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
 import { TaskRow } from "@/lib/anything-api/testing";
 import api from "@/lib/anything-api";
-import { Table } from "@/components/ui/table";
+import { Table } from "@repo/ui/components/ui/table";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { TimeUnit } from "@/lib/anything-api/charts";
 // import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
-export default function WorkflowManager() {
+export default function WorkflowManager(): JSX.Element {
   const {
     workflows: { getWorkflowById, flows },
   } = useAnything();
@@ -38,13 +38,13 @@ export default function WorkflowManager() {
 
         const endDate = new Date().toISOString();
         const startDate = new Date(
-          new Date().setDate(new Date().getDate() - 30)
+          new Date().setDate(new Date().getDate() - 30),
         ).toISOString();
         let chardDataRes = await api.charts.getTasksChart(
           params.workflowId,
           startDate,
           endDate,
-          TimeUnit.Day
+          TimeUnit.Day,
         );
 
         console.log("chart data", chardDataRes);

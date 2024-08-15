@@ -2,11 +2,9 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { parseISO, differenceInMilliseconds, formatDuration, intervalToDuration } from 'date-fns';
 
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-
 
 export function formatTimeDifference(startTime: string, endTime: string): string {
     // Parse the timestamps

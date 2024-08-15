@@ -2,7 +2,7 @@ import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "./json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 
-export default function InputVariablesForm() {
+export default function InputVariablesForm(): JSX.Element {
 
     const { workflow: { selected_node_variables, selected_node_variables_schema, updateNodeData } } = useAnything();
 

@@ -1,5 +1,7 @@
-import { AvatarAndUsername, BaseNodeIcon, BaseNodeWeb } from "ui";
-import { Node } from "utils";
+import { BaseNodeIcon } from "@repo/ui/components/baseNodeIcons";
+import { BaseNodeWeb } from "@repo/ui/components/baseNodeWeb";
+import { AvatarAndUsername } from "@repo/ui/components/avatarAndUsername";
+import { Node } from "@/types/flow";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -40,7 +42,7 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
               AvatarComponent={() =>
                 Avatar({ avatar_url: profileImage, profile_name: profileName })
               }
-              Link={Link}
+              Link={Link as any}
               link={false}
               profile_name={profileName}
               username={username}

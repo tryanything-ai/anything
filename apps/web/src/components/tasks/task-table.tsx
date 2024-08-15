@@ -5,7 +5,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@repo/ui/components/ui/table";
 import { TaskRow } from "@/lib/anything-api/testing";
 import { format } from "date-fns";
 import {
@@ -15,7 +15,7 @@ import {
 } from "../studio/forms/testing/task-status-badges";
 import { ActionType } from "@/types/workflows";
 
-export function TaskTable({ tasks }: { tasks: TaskRow[] }) {
+export function TaskTable({ tasks }: { tasks: TaskRow[] }): JSX.Element {
   return (
     <Table>
       <TableHeader>

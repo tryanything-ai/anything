@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import Image from "next/image";
-import {cn} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type Props = {
   size?: "sm" | "lg";
@@ -8,43 +8,48 @@ type Props = {
   logoOnly?: boolean;
 };
 
-const Logo = ({ size = "sm", className, logoOnly = false }: Props) => {
+const Logo = ({
+  size = "sm",
+  className,
+  logoOnly = false,
+}: Props): JSX.Element => {
   const height = size === "sm" ? 40 : 150;
   const width = size === "sm" ? 40 : 150;
   return (
+    <div
+      className={cn(
+        "flex items-center justify-center",
+        {
+          "gap-x-3 md:gap-x-4": size === "lg",
+          "gap-x-1 md:gap-x-2": size === "sm",
+        },
+        className,
+      )}
+    >
       <div
-          className={cn(
-              "flex items-center justify-center",
-              {
-                "gap-x-3 md:gap-x-4": size === "lg",
-                "gap-x-1 md:gap-x-2": size === "sm",
-              },
-              className
-          )}
+        className={cn({
+          "w-24 md:w-auto": size === "lg",
+          "w-14 md:w-auto": size === "sm",
+        })}
       >
-        <div
-            className={cn({
-              "w-24 md:w-auto": size === "lg",
-              "w-14 md:w-auto": size === "sm",
-            })}
-        >
-          <Image
-              src={"/images/icon.png"}
-              height={height}
-              width={width}
-              alt="Anything Logo"
-          />
-        </div>
-          {!logoOnly && (
+        <Image
+          src={"/images/icon.png"}
+          height={height}
+          width={width}
+          alt="Anything Logo"
+        />
+      </div>
+      {!logoOnly && (
         <h1
-            className={cn("font-black", {
-              "text-3xl md:text-8xl": size === "lg",
-              "text-2xl": size === "sm",
-            })}
+          className={cn("font-black", {
+            "text-3xl md:text-8xl": size === "lg",
+            "text-2xl": size === "sm",
+          })}
         >
           Anything
-        </h1>)}
-      </div>
+        </h1>
+      )}
+    </div>
   );
 };
 

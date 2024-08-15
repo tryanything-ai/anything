@@ -2,7 +2,7 @@ import { useAnything } from "@/context/AnythingContext";
 import ActionDisplayForm from "./action-display-form";
 import NoNodeSelected from "../no-node-selected";
 
-export default function ActionDisplayTab() {
+export default function ActionDisplayTab(): JSX.Element {
   const { workflow } = useAnything();
 
   return (

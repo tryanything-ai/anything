@@ -7,15 +7,20 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+} from "@repo/ui/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from "@repo/ui/components/ui/table";
 
 import api from "@/lib/anything-api";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { format } from "date-fns";
 import NewAccountDialog from "@/components/secrets/new-account-dialog";
 
-export default function AccountsPage() {
+export default function AccountsPage(): JSX.Element {
   const [accounts, setAccounts] = useState<any[]>([]);
 
   const fetchAccounts = async () => {

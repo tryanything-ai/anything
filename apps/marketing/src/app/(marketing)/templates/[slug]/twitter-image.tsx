@@ -1,10 +1,9 @@
 import {
     fetchProfile,
     fetchTemplateBySlug,
-    flowJsonFromBigFlow,
-    Profile,
-  } from "utils";
-  import { ImageResponse } from "next/server";
+  } from "@/lib/supabase/fetchSupabase";
+  import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
+  import { ImageResponse } from "next/og";
   import { FlowTemplateOgImage } from "@/components/og/template_css";
   import { FlowTemplate } from "@/types/flow";
   
@@ -27,7 +26,7 @@ import {
     params,
   }: {
     params: { slug: string };
-  }): Promise<ImageResponse> {
+  }) {
     console.log(
       "params in TemplatePageOgImage Generation",
       JSON.stringify(params)
@@ -45,7 +44,7 @@ import {
     const template = templateResponse[0];
     console.log("template in TemplatePage", JSON.stringify(template, null, 3));
   
-    const profile: Profile | undefined = template?.profiles?.username
+    const profile: any | undefined = template?.profiles?.username
       ? await fetchProfile(template.profiles.username)
       : undefined;
   

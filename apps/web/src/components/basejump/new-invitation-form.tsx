@@ -1,6 +1,7 @@
 "use client";
-import { SubmitButton } from "../ui/submit-button";
-import { Label } from "../ui/label";
+import { useState } from "react";
+import { SubmitButton } from "@/components/submit-button";
+import { Label } from "@repo/ui/components/ui/label";
 import {
   Select,
   SelectTrigger,
@@ -9,10 +10,8 @@ import {
   SelectGroup,
   SelectLabel,
   SelectItem,
-} from "@/components/ui/select";
+} from "@repo/ui/components/ui/select";
 import { createInvitation } from "@/lib/actions/invitations";
-// @ts-expect-error
-import { useFormState } from "react-dom";
 import fullInvitationUrl from "@/lib/full-invitation-url";
 
 type Props = {
@@ -34,8 +33,21 @@ const initialState = {
   token: "",
 };
 
-export default function NewInvitationForm({ accountId }: Props) {
-  const [state, formAction] = useFormState(createInvitation, initialState);
+export default function NewInvitationForm({ accountId }: Props): JSX.Element {
+  const [state, setState] = useState(initialState);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleFormAction = async (formData: FormData) => {
+    setIsPending(true);
+    try {
+      const result: any = await createInvitation(state, formData);
+      setState(result);
+    } catch (error: any) {
+      setState({ message: error.message, token: "" });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return (
     <form className="animate-in flex-1 flex flex-col w-full justify-center gap-y-6 text-foreground">
@@ -76,12 +88,13 @@ export default function NewInvitationForm({ accountId }: Props) {
           </div>
           <SubmitButton
             formAction={async (prevState: any, formData: FormData) =>
-              formAction(formData)
+              handleFormAction(formData)
             }
             errorMessage={state?.message}
             pendingText="Creating..."
+            aria-disabled={isPending}
           >
-            Create invitation
+            {isPending ? "Creating..." : "Create invitation"}
           </SubmitButton>
         </>
       )}

@@ -1,5 +1,10 @@
-import { ProfileLinks, TemplateGrid } from "ui";
-import { fetchProfile, fetchProfiles, fetchProfileTemplates } from "utils";
+import { ProfileLinks } from "@repo/ui/components/profileLinks";
+import { TemplateGrid } from "@repo/ui/components/templateGrid";
+import {
+  fetchProfile,
+  fetchProfiles,
+  fetchProfileTemplates,
+} from "@/lib/supabase/fetchSupabase";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,14 +59,14 @@ export default async function Profile({
         <div className="text-3xl">{profile.full_name}</div>
         <div className="mt-2 opacity-70">@{profile.username}</div>
         <div className="mt-2">{profile.bio}</div>
-        <ProfileLinks profile={profile} Link={Link} />
+        <ProfileLinks profile={profile} Link={Link as any} />
       </div>
       {/* Right Column */}
       <div className="flex flex-col p-2 md:pl-5">
         <div className="pb-4 pl-2 text-2xl">Templates</div>
         <div className="items-center">
           <TemplateGrid
-            LinkComponent={Link}
+            LinkComponent={Link as any}
             AvatarComponent={Avatar}
             templates={templates}
             profile={false}

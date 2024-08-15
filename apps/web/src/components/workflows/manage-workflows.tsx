@@ -6,16 +6,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+} from "@repo/ui/components/ui/card";
 import Link from "next/link";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 import { useAnything } from "@/context/AnythingContext";
 import { Edit } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
 import { AnyAaaaRecord } from "dns";
 
-export default function ManageWorkflows() {
+export default function ManageWorkflows(): JSX.Element {
   let { workflows } = useAnything();
 
   console.log("flows in component", workflows.flows);

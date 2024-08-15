@@ -5,14 +5,14 @@ import ReactJson from "react-json-view";
 import { TaskRow } from "@/lib/anything-api/testing";
 import TaskStatus from "./task-status";
 import { Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@repo/ui/components/ui/badge";
 
 export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
   return (
     <div
       key={task.task_id}
       className={cn(
-        "h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content"
+        "h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content",
       )}
     >
       <div className="pb-4">

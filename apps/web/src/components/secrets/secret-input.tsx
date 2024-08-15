@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,12 +13,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
 
 import { useState } from "react";
 import { Edit2, Trash2 } from "lucide-react";
-import { TableCell, TableRow } from "../ui/table";
+import { TableCell, TableRow } from "@repo/ui/components/ui/table";
 
 //Use same schema for both
 const formSchema = z.object({
@@ -32,7 +32,7 @@ const formSchema = z.object({
   secret_description: z.string().min(2).max(50),
 });
 
-export function CreateNewSecret({ cancel, saveSecret }: any) {
+export function CreateNewSecret({ cancel, saveSecret }: any): JSX.Element {
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,7 +49,7 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
     await saveSecret(
       values.secret_name,
       values.secret_value,
-      values.secret_description
+      values.secret_description,
     );
     form.reset();
     cancel();
@@ -127,7 +127,11 @@ export function CreateNewSecret({ cancel, saveSecret }: any) {
   );
 }
 
-export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
+export function EditSecret({
+  secret,
+  deleteSecret,
+  updateSecret,
+}: any): JSX.Element {
   const [editing, setEditing] = useState(false);
 
   // 1. Define your form.
@@ -149,7 +153,7 @@ export function EditSecret({ secret, deleteSecret, updateSecret }: any) {
       secret.secret_id,
       values.secret_name,
       values.secret_value,
-      values.secret_description
+      values.secret_description,
     );
     setEditing(false);
   }

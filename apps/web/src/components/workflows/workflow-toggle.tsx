@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAnything } from "@/context/AnythingContext";
-import { Switch } from "../ui/switch";
-import { Label } from "@/components/ui/label";
+import { Switch } from "@repo/ui/components/ui/switch";
+import { Label } from "@repo/ui/components/ui/label";
 
 const WorkflowToggle = ({
   active,
@@ -9,7 +9,7 @@ const WorkflowToggle = ({
 }: {
   active: boolean;
   workflow_id: string;
-}) => {
+}): JSX.Element => {
   const { workflow } = useAnything();
 
   const updateActive = async () => {

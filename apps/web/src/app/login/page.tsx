@@ -2,14 +2,14 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@repo/ui/components/ui/input";
 
 export default function Login({
   searchParams,
 }: {
   searchParams: { message: string; returnUrl?: string };
-}) {
+}): JSX.Element {
   const signIn = async (_prevState: any, formData: FormData) => {
     "use server";
 
@@ -24,7 +24,7 @@ export default function Login({
 
     if (error) {
       return redirect(
-        `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`
+        `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`,
       );
     }
 
@@ -49,12 +49,12 @@ export default function Login({
 
     if (error) {
       return redirect(
-        `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`
+        `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`,
       );
     }
 
     return redirect(
-      `/login?message=Check email to continue sign in process&returnUrl=${searchParams.returnUrl}`
+      `/login?message=Check email to continue sign in process&returnUrl=${searchParams.returnUrl}`,
     );
   };
 

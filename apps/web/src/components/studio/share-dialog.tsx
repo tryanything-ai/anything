@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@repo/ui/components/ui/dialog";
 import { ShareIcon } from "lucide-react";
 import Link from "next/link";
 
-export function ShareDialog() {
+export function ShareDialog(): JSX.Element {
   return (
     <Dialog>
       <DialogTrigger asChild>

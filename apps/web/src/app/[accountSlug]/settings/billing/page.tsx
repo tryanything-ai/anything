@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import AccountBillingStatus from "@/components/basejump/account-billing-status";
-import { Alert } from "@/components/ui/alert";
+import { Alert } from "@repo/ui/components/ui/alert";
 
 const returnUrl: string =
   process.env.NODE_ENV === "production"
@@ -11,13 +11,14 @@ export default async function TeamBillingPage({
   params: { accountSlug },
 }: {
   params: { accountSlug: string };
-}) {
+}): Promise<JSX.Element> {
   const supabaseClient = createClient();
   const { data: teamAccount }: any = await supabaseClient.rpc(
     "get_account_by_slug",
+    // @ts-ignore
     {
       slug: accountSlug,
-    } as any
+    },
   );
 
   if (teamAccount.account_role !== "owner") {

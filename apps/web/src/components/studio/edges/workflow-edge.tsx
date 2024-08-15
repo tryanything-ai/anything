@@ -1,4 +1,4 @@
-import { useAnything } from '@/context/AnythingContext';
+import { useAnything } from "@/context/AnythingContext";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -8,9 +8,15 @@ import {
   useReactFlow,
   Edge,
   EdgeProps,
-} from 'reactflow';
+} from "reactflow";
 
-export default function CustomEdge({ id, sourceX, sourceY, targetX, targetY }: EdgeProps) {
+export default function CustomEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+}: EdgeProps): JSX.Element {
   const { setEdges } = useReactFlow();
   const { workflow } = useAnything();
 
@@ -27,11 +33,10 @@ export default function CustomEdge({ id, sourceX, sourceY, targetX, targetY }: E
       <EdgeLabelRenderer>
         <button
           style={{
-            position: 'absolute',
+            position: "absolute",
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
+            pointerEvents: "all",
           }}
-
           className="nodrag nopan h-6 w-6 hover:bg-green-500 bg-gray-300 rounded-xl text-white font-bold text-md"
           onClick={() => {
             // setEdges((es) => es.filter((e) => e.id !== id));

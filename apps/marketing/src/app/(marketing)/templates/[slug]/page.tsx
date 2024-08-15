@@ -1,12 +1,10 @@
-import { TemplateView } from "ui";
+import { TemplateView } from "@repo/ui/components/templateView";
 import {
-  BigFlow,
   fetchProfile,
   fetchTemplateBySlug,
   fetchTemplates,
-  getAProfileLink,
-  Profile,
-} from "utils";
+} from "@/lib/supabase/fetchSupabase";
+import { getAProfileLink } from "@repo/ui/helpers/helpers";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -19,7 +17,7 @@ type Props = {
 
 export async function generateMetadata(
   { params }: Props,
-  parent: ResolvingMetadata
+  parent: ResolvingMetadata,
 ): Promise<Metadata> {
   let Metadata: Metadata = {};
 
@@ -29,7 +27,7 @@ export async function generateMetadata(
   if (templateResponse) {
     const template = templateResponse[0];
 
-    const profile: Profile | undefined = template?.profiles?.username
+    const profile: any | undefined = template?.profiles?.username
       ? await fetchProfile(template.profiles.username)
       : undefined;
 
@@ -54,7 +52,7 @@ export async function generateMetadata(
   return Metadata;
 }
 
-export const generateStaticParams = async (): Promise<BigFlow> => {
+export const generateStaticParams = async (): Promise<any> => {
   const templates = await fetchTemplates();
   // has "slug" key to populate route
   if (!templates) return [];
@@ -96,7 +94,7 @@ const Action = ({ template, profile }: any): JSX.Element => {
       </a>
     </div>
   );
-}
+};
 
 export default async function Template({
   params,
@@ -111,7 +109,7 @@ export default async function Template({
   const template = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 
-  const profile: Profile | undefined = template?.profiles?.username
+  const profile: any | undefined = template?.profiles?.username
     ? await fetchProfile(template.profiles.username)
     : undefined;
 
@@ -120,7 +118,7 @@ export default async function Template({
       <TemplateView
         ActionComponent={Action}
         Avatar={Avatar}
-        Link={Link}
+        Link={Link as any}
         profile={profile}
         template={template}
       />

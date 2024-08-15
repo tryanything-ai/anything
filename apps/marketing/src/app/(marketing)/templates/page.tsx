@@ -1,9 +1,9 @@
-import { TemplateGrid } from "ui";
-import { fetchTemplates } from "utils";
+import { TemplateGrid } from "@repo/ui/components/templateGrid";
+import { fetchTemplates } from "@/lib/supabase/fetchSupabase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Avatar } from "../../../components/avatar";
+import { Avatar } from "@/components/avatar";
 
 import type { Metadata } from "next";
 
@@ -35,7 +35,7 @@ export default async function TemplatePage() {
       <div className="my-16 flex flex-col items-center">
         <TemplateGrid
           AvatarComponent={Avatar}
-          LinkComponent={Link}
+          LinkComponent={Link as any}
           templates={templates}
         />
       </div>

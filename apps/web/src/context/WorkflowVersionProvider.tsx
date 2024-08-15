@@ -121,7 +121,7 @@ export const WorkflowVersionProvider = ({
   children,
 }: {
   children: ReactNode;
-}) => {
+}): JSX.Element => {
   const { workflowId, workflowVersionId } = useParams<{
     workflowId: string;
     workflowVersionId: string;
@@ -141,7 +141,7 @@ export const WorkflowVersionProvider = ({
   const [dbFlowId, setDbFlowId] = useState<string>("");
   const [selectedNodeId, setSelectedNodeId] = useState<string>("");
   const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(
-    undefined
+    undefined,
   );
   const [selectedNodeVariables, setSelectedNodeVariables] = useState<any>({});
   const [selectedNodeVariablesSchema, setSelectedNodeVariablesSchema] =
@@ -342,7 +342,7 @@ export const WorkflowVersionProvider = ({
     const connectedEdges = getConnectedEdges([node], new_edges);
 
     const remainingEdges = new_edges.filter(
-      (edge) => !connectedEdges.includes(edge)
+      (edge) => !connectedEdges.includes(edge),
     );
 
     const createdEdges = incomers.flatMap(({ id: source }) =>
@@ -353,7 +353,7 @@ export const WorkflowVersionProvider = ({
         targetHandle: "a",
         target,
         type: "anything", // Ensure new edges have the correct type
-      }))
+      })),
     );
 
     new_nodes = new_nodes.filter((node) => node.id !== id);
@@ -418,7 +418,7 @@ export const WorkflowVersionProvider = ({
 
     //find the node with selected = true
     let selectionChanges: NodeSelectionChange[] = nodeChanges.filter(
-      (nodeChange) => nodeChange.type === "select"
+      (nodeChange) => nodeChange.type === "select",
     ) as NodeSelectionChange[];
 
     // let nonDimmensionChanges = nodeChanges.filter((nodeChange) => nodeChange.type !== "dimensions") as NodeSelectionChange[];
@@ -426,13 +426,13 @@ export const WorkflowVersionProvider = ({
     if (selectionChanges.length > 0) {
       console.log("selectionChanges", selectionChanges);
       let selectedNode: any = selectionChanges.find(
-        (nodeChange: NodeSelectionChange) => nodeChange.selected
+        (nodeChange: NodeSelectionChange) => nodeChange.selected,
       );
 
       if (selectedNode) {
         //Set node and node data for easy access
         let selectedNodeObj: any = nodes.find(
-          (node) => node.id === selectedNode.id
+          (node) => node.id === selectedNode.id,
         );
         fanOutLocalSelectedNodeData(selectedNodeObj);
         setPanelTab(PanelTab.CONFIG);
@@ -446,12 +446,12 @@ export const WorkflowVersionProvider = ({
 
     let unPersistedChanges: NodeSelectionChange[] = nodeChanges.filter(
       (nodeChange) =>
-        nodeChange.type === "dimensions" || nodeChange.type === "select"
+        nodeChange.type === "dimensions" || nodeChange.type === "select",
     ) as NodeSelectionChange[];
 
     if (unPersistedChanges.length === 0) {
       console.log(
-        "Saving Node Update because not dimmension or select changes"
+        "Saving Node Update because not dimmension or select changes",
       );
       saveFlowVersionDebounced(new_nodes, edges);
     } else {
@@ -468,7 +468,7 @@ export const WorkflowVersionProvider = ({
 
     //find the node with selected = true
     let selectionChanges: EdgeSelectionChange[] = edgeChanges.filter(
-      (edgeChange) => edgeChange.type === "select"
+      (edgeChange) => edgeChange.type === "select",
     ) as EdgeSelectionChange[];
 
     if (selectionChanges.length === 0) {
@@ -497,7 +497,7 @@ export const WorkflowVersionProvider = ({
 
   const updateNodeData = async (
     update_key: string[],
-    data: any[]
+    data: any[],
   ): Promise<boolean> => {
     try {
       console.log("updateNodeData:", update_key, data);
@@ -510,7 +510,7 @@ export const WorkflowVersionProvider = ({
           update_key.forEach((key, index) => {
             console.log(
               `Updating Node Data in updateNodeData for ${node.id}:${key} with:`,
-              data[index]
+              data[index],
             );
             node.data[key] = data[index];
           });
@@ -532,7 +532,7 @@ export const WorkflowVersionProvider = ({
     } catch (error) {
       console.log(
         "error writing node config in WorkflowVersionProvider",
-        error
+        error,
       );
       return false;
     }
@@ -573,7 +573,7 @@ export const WorkflowVersionProvider = ({
       const res: any = await api.flows.updateFlowVersion(
         dbFlowId,
         dbFlowVersionId,
-        workflow
+        workflow,
       );
 
       console.log("Flow Version Saved!", JSON.stringify(res, null, 3));
@@ -594,7 +594,7 @@ export const WorkflowVersionProvider = ({
         // const newRoute = `/workflows/${dbFlowId}/version/${returned_flow.flow_version_id}`;
         // window.history.pushState(null, '', newRoute);
         router.replace(
-          `/workflows/${dbFlowId}/${returned_flow.flow_version_id}/editor`
+          `/workflows/${dbFlowId}/${returned_flow.flow_version_id}/editor`,
         );
       } else {
         // console.log("Flow Version Ids match.");
@@ -620,7 +620,7 @@ export const WorkflowVersionProvider = ({
         console.log("error in saveFlowVersion", error);
       }
     }, 1000),
-    [dbFlowId, dbFlowVersionId]
+    [dbFlowId, dbFlowVersionId],
   );
 
   const hydrateFlow = async () => {
@@ -636,7 +636,7 @@ export const WorkflowVersionProvider = ({
       console.log("Version in New Hydrate Flow", flow_version);
       console.log(
         "Flow Definition in New Hydrate Flow",
-        flow_version.flow_definition
+        flow_version.flow_definition,
       );
 
       setDbFlow(flow);
@@ -658,7 +658,7 @@ export const WorkflowVersionProvider = ({
                 id: action.node_id,
                 type: "anything",
               };
-            }
+            },
           );
           console.log("Nodes in hydrate flow", _nodes);
           setNodes(_nodes);
@@ -673,7 +673,7 @@ export const WorkflowVersionProvider = ({
           let _edges: Edge[] = flow_version.flow_definition.edges.map(
             (edge: any) => {
               return edge;
-            }
+            },
           );
           console.log("Edges in hydrate flow", _edges);
           setEdges(_edges);
@@ -702,7 +702,7 @@ export const WorkflowVersionProvider = ({
     return () => {
       resetState();
     };
-    }, [workflowId, workflowVersionId]);
+  }, [workflowId, workflowVersionId]);
   // }, []);
 
   return (

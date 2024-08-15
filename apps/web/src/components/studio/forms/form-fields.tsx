@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@repo/ui/components/ui/label";
+import { Input } from "@repo/ui/components/ui/input";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
+} from "@repo/ui/components/ui/select";
 
 import api from "@/lib/anything-api";
 import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldText,
