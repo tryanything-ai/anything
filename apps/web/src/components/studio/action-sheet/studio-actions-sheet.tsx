@@ -18,7 +18,9 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 
 export function StudioActionsSheet(): JSX.Element {
-  const { workflow } = useAnything();
+  const {
+    workflow: { showingActionSheet, setShowingActionSheet, addNode },
+  } = useAnything();
   const [actions, setActions] = useState<any>([]);
 
   const fetchActions = async () => {
@@ -34,10 +36,18 @@ export function StudioActionsSheet(): JSX.Element {
     fetchActions();
   }, []);
 
+  useEffect(() => {
+    if (showingActionSheet) {
+      console.log("should be showing action sheet");
+    } else {
+      console.log("should not be showing action sheet");
+    }
+  }, []);
+
   return (
     <Sheet
-      open={workflow.showingActionSheet}
-      onOpenChange={(open) => workflow.setShowingActionSheet(open)}
+      open={showingActionSheet}
+      onOpenChange={(open) => setShowingActionSheet(open)}
     >
       <SheetContent side={"bottom"} className="h-4/5">
         <SheetHeader>
@@ -57,8 +67,8 @@ export function StudioActionsSheet(): JSX.Element {
                   <div
                     key={db_action.action_template_id}
                     onClick={() => {
-                      workflow.addNode(action, { x: 100, y: 300 });
-                      workflow.setShowingActionSheet(false);
+                      addNode(action, { x: 100, y: 300 });
+                      setShowingActionSheet(false);
                     }}
                     className="flex flex-row justify-between items-center p-4 m-1 border rounded-md border-black cursor-pointer hover:bg-gray-50"
                   >
@@ -76,9 +86,6 @@ export function StudioActionsSheet(): JSX.Element {
                         </div>
                       </div>
                     </div>
-                    {/* <div>
-                                        <Button variant="primary" size="sm">Add</Button>
-                                    </div> */}
                   </div>
                 );
               })}

@@ -6,6 +6,7 @@ import BaseNode from "./nodes/workflow-node";
 import { useAnything } from "@/context/AnythingContext";
 import CustomEdge from "./edges/workflow-edge";
 import { Button } from "@repo/ui/components/ui/button";
+import { StudioActionsSheet } from "./action-sheet/studio-actions-sheet";
 
 const nodeTypes = {
   anything: BaseNode,
@@ -50,6 +51,7 @@ export default function StudioWorkflowEditor(): JSX.Element {
         >
           Add Node
         </Button>
+        <StudioActionsSheet />
       </ReactFlow>
     </div>
   );
