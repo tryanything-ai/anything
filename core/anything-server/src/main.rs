@@ -59,20 +59,22 @@ async fn main() {
 
     let cors_origin = Arc::new(cors_origin);
 
-   // Create a regex to match subdomains and localhost
-   let protocol = if cors_origin.starts_with("https") { "https" } else { "http" };
-   let cors_origin_regex = if cors_origin.contains("localhost") {
-       Regex::new(&format!(
-           r"^{}://localhost(:\d+)?$",
-           protocol
-       ))
-   } else {
-       Regex::new(&format!(
-           r"^{}://(?:[a-zA-Z0-9-]+\.)?{}$",
-           protocol,
-           regex::escape(&cors_origin)
-       ))
-   }.unwrap();
+    // Create a regex to match subdomains and localhost
+    let protocol = if cors_origin.starts_with("https") {
+        "https"
+    } else {
+        "http"
+    };
+    let cors_origin_regex = if cors_origin.contains("localhost") {
+        Regex::new(&format!(r"^{}://localhost(:\d+)?$", protocol))
+    } else {
+        Regex::new(&format!(
+            r"^{}://(?:[a-zA-Z0-9-]+\.)?{}$",
+            protocol,
+            regex::escape(&cors_origin)
+        ))
+    }
+    .unwrap();
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::predicate(
@@ -88,7 +90,9 @@ async fn main() {
             Method::PUT,
             Method::OPTIONS,
         ])
-        .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE]);
+        .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE])
+        .allow_credentials(true) // Allow credentials if needed
+        .max_age(std::time::Duration::from_secs(86400)); // Cache preflight response
 
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
