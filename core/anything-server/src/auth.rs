@@ -35,20 +35,20 @@ struct AuthProvider {
 }
 
 #[derive(Deserialize)]
-struct OAuthCallback {
+pub struct OAuthCallback {
     code: String,
     state: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct OAuthToken {
+pub struct OAuthToken {
     access_token: String,
     refresh_token: Option<String>,
     expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Deserialize)]
-struct InitiateAuthFlow {
+pub struct InitiateAuthFlow {
     redirect_uri: String,
 }
 
@@ -115,7 +115,11 @@ pub async fn handle_provider_callback(
     let token = match exchange_code_for_token(&auth_provider, &params.code).await {
         Ok(token) => token,
         Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to exchange code for token").into_response()
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to exchange code for token",
+            )
+                .into_response()
         }
     };
 

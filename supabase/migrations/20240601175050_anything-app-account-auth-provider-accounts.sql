@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS anything.account_auth_provider_accounts
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,
-    created_at timestamp with time zone,
+    created_at timestamp with time zon  e,
     -- Useful for tracking who made changes to a record
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_by uuid references auth.users(id),
