@@ -7,9 +7,9 @@ const PrivacyPolicy = () => {
       <p className="mb-4">Last updated: August 19, 2024</p>
 
       <p className="mb-4">
-        Welcome to [Your Company Name] ("Company", "we", "our", "us"). This
-        Privacy Policy explains how we collect, use, disclose, and safeguard
-        your information when you use our web application [Your App Name] (the
+        Welcome to Anything AI ("Company", "we", "our", "us"). This Privacy
+        Policy explains how we collect, use, disclose, and safeguard your
+        information when you use our web application [Your App Name] (the
         "Service"). Please read this policy carefully. If you do not agree with
         the terms of this privacy policy, please do not access the Service.
       </p>
@@ -110,7 +110,7 @@ const PrivacyPolicy = () => {
         </li>
       </ul>
       <p className="mb-4">
-        To exercise these rights, please contact us at [Your Contact Email].
+        To exercise these rights, please contact us at support@tryanything.xyz.
       </p>
 
       <h2 className="text-2xl font-semibold mt-6 mb-2">
@@ -130,8 +130,7 @@ const PrivacyPolicy = () => {
         at:
       </p>
       <ul className="list-disc ml-6 mb-4">
-        <li className="mb-2">Email: [Your Contact Email]</li>
-        <li className="mb-2">Address: [Your Company Address]</li>
+        <li className="mb-2">Email: support@tryanything.xyz</li>
       </ul>
     </div>
   );

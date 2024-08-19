@@ -7,7 +7,7 @@ const TermsOfService = () => {
       <p className="text-gray-700 mb-4">Effective Date: August 2024</p>
 
       <p className="text-gray-700 mb-4">
-        Welcome to Anything AI, operated by Kernel Labs LLC ("we", "us", "our").
+        Welcome to Anything AI ("we", "us", "our").
         By accessing or using our app, you agree to comply with and be bound by
         these Terms of Service. Please read them carefully.
       </p>
@@ -46,7 +46,7 @@ const TermsOfService = () => {
       <h2 className="text-2xl font-semibold mb-2">4. Intellectual Property</h2>
       <p className="text-gray-700 mb-4">
         All content and materials provided through Anything AI are the property
-        of Kernel Labs LLC or its licensors and are protected by intellectual
+        of Anything AI or its licensors and are protected by intellectual
         property laws. You may not reproduce, distribute, or create derivative
         works without our explicit permission.
       </p>
@@ -72,7 +72,7 @@ const TermsOfService = () => {
 
       <h2 className="text-2xl font-semibold mb-2">7. Indemnification</h2>
       <p className="text-gray-700 mb-4">
-        You agree to indemnify and hold harmless Kernel Labs LLC and its
+        You agree to indemnify and hold harmless Anything AI and its
         affiliates from any claims, liabilities, damages, losses, or expenses
         arising out of your use of the app or violation of these Terms of
         Service.
@@ -98,11 +98,7 @@ const TermsOfService = () => {
         us at:
       </p>
       <p className="text-gray-700 mb-4">
-        <strong>Email:</strong> support@kernel-labs.com
-      </p>
-      <p className="text-gray-700">
-        <strong>Address:</strong> Kernel Labs LLC, [Insert Address], Wisconsin,
-        USA
+        <strong>Email:</strong> support@tryanything.xyz
       </p>
 
       <p className="text-gray-700 mt-6">Thank you for using Anything AI!</p>
