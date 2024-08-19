@@ -1,5 +1,5 @@
 use axum::{
-    http::{HeaderValue, Method},
+    http::{request::Parts as RequestParts, HeaderValue, Method},
     middleware::{self},
     routing::{delete, get, post, put},
     Router,
@@ -9,7 +9,7 @@ use postgrest::Postgrest;
 use std::env;
 use std::sync::Arc;
 use tokio::sync::{watch, Semaphore};
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod api;
 mod auth;
@@ -22,6 +22,7 @@ mod task_engine;
 mod task_types;
 mod trigger_engine;
 mod workflow_types;
+use regex::Regex;
 
 #[macro_use]
 extern crate slugify;
@@ -36,7 +37,7 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok(); 
+    dotenv().ok();
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
@@ -56,8 +57,22 @@ async fn main() {
             .insert_header("apikey", supabase_api_key.clone()),
     );
 
+    let cors_origin = Arc::new(cors_origin);
+
+    // Create a regex to match subdomains
+    let cors_origin_regex = Regex::new(&format!(
+        r"^https?://(?:[a-zA-Z0-9-]+\.)?{}$",
+        regex::escape(&cors_origin)
+    ))
+    .unwrap();
+
     let cors = CorsLayer::new()
-        .allow_origin(cors_origin.parse::<HeaderValue>().unwrap())
+        .allow_origin(AllowOrigin::predicate(
+            move |origin: &HeaderValue, _request_parts: &RequestParts| {
+                let origin_str = origin.to_str().unwrap_or("");
+                cors_origin_regex.is_match(origin_str)
+            },
+        ))
         .allow_methods([
             Method::GET,
             Method::POST,
