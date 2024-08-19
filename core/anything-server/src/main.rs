@@ -1,5 +1,7 @@
 use axum::{
-    http::{request::Parts as RequestParts, HeaderValue, Method},
+    http::{
+        header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
+    },
     middleware::{self},
     routing::{delete, get, post, put},
     Router,
@@ -10,6 +12,8 @@ use std::env;
 use std::sync::Arc;
 use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::set_header::SetResponseHeaderLayer;
+// use tower_http::set_header::response::SetResponseHeaderLayer;
 
 mod api;
 mod auth;
@@ -76,6 +80,11 @@ async fn main() {
     }
     .unwrap();
 
+    let preflightlayer = SetResponseHeaderLayer::if_not_present(
+        ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("*"),
+    );
+
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::predicate(
             move |origin: &HeaderValue, _request_parts: &RequestParts| {
@@ -90,9 +99,7 @@ async fn main() {
             Method::PUT,
             Method::OPTIONS,
         ])
-        .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE])
-        .allow_credentials(true) // Allow credentials if needed
-        .max_age(std::time::Duration::from_secs(86400)); // Cache preflight response
+        .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE]);
 
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
@@ -173,6 +180,7 @@ async fn main() {
         )
         .layer(middleware::from_fn(supabase_auth_middleware::middleware))
         .layer(cors)
+        .layer(preflightlayer)
         .with_state(state.clone());
 
     // let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
