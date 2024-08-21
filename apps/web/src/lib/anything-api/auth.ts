@@ -101,3 +101,33 @@ export const getProviders = async () => {
         console.error('Error fetching auth providers', error);
     } 
 }
+
+export const handleCallbackForProvider = async ({provider_name, code, state, }: {provider_name: string, code: any, state: any}) => {
+    try {
+        // Get JWT from supabase to pass to the API
+        // API conforms to RLS policies on behalf of users for external API
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/auth/${provider_name}/callback`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  code,
+                  state
+                }),
+            });
+            const data = await response.json();
+            console.log('Data from /api/auth/:provider_name/callback', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching auth providers', error);
+    } 
+}

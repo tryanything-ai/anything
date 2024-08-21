@@ -1,29 +1,42 @@
 "use client";
 
 import { useEffect } from "react";
-// import { useRouter } from "next/router";
-import { useParams } from "next/navigation";
-// import { createClient } from "@/lib/supabase/client";
+import { useParams, useRouter } from "next/navigation";
+import api from "@/lib/anything-api"; // Adjust this import according to your API setup
 
 const OAuthCallbackPage = () => {
-  const { code, state } = useParams<{ code: string; state: string }>();
-  // const { code, state } = router.query;
+  const router = useRouter();
+  const { code, state, provider } = useParams<{
+    code: string;
+    state: string;
+    provider: string;
+  }>();
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      if (code) {
-        console.log("code:", code);
-        console.log("state:", state);
-        // const supabase = createClient();
-        // const { error } = await supabase.auth.exchangeCodeForSession(code as string);
+      if (code && state) {
+        console.log("Code:", code);
+        console.log("State:", state);
 
-        // if (error) {
-        //   console.error('Error exchanging code for session:', error);
-        //   // Handle error appropriately, e.g., show a notification or redirect to an error page
-        // } else {
-        //   // Redirect to the dashboard or another page after successful authentication
-        //   router.push('/dashboard');
-        // }
+        try {
+          // Send the code and state to your server for further processing
+          const response = await api.auth.handleCallbackForProvider({
+            provider_name: provider,
+            code,
+            state,
+          });
+
+          if (response.error) {
+            console.error("Error handling OAuth callback:", response.error);
+            // Handle error appropriately, e.g., show a notification or redirect to an error page
+          } else {
+            // Redirect to the dashboard or another page after successful authentication
+            router.push("/dashboard");
+          }
+        } catch (error) {
+          console.error("Error handling OAuth callback:", error);
+          // Handle error appropriately
+        }
       }
     };
 

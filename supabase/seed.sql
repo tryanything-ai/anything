@@ -126,13 +126,13 @@ INSERT INTO marketplace.flow_template_tags (
 -- Inserting sample OAuth providers into anything.auth_providers
 
 INSERT INTO anything.auth_providers (
-    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
+    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, redirect_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
 ) VALUES
     -- Airtable Provider
     (
         'airtable',
         'airtable',
-        'Airtable', 
+        'Airtable',
         '<svg width="800px" height="800px" viewBox="0 -20.5 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid">
           <g>
             <path d="M114.25873,2.70101695 L18.8604023,42.1756384 C13.5552723,44.3711638 13.6102328,51.9065311 18.9486282,54.0225085 L114.746142,92.0117514 C123.163769,95.3498757 132.537419,95.3498757 140.9536,92.0117514 L236.75256,54.0225085 C242.08951,51.9065311 242.145916,44.3711638 236.83934,42.1756384 L141.442459,2.70101695 C132.738459,-0.900338983 122.961284,-0.900338983 114.25873,2.70101695" fill="#FFBF00">
@@ -148,8 +148,9 @@ INSERT INTO anything.auth_providers (
         'Airtable provides an easy way to create and share relational databases.',
         'Refer to the Airtable API documentation for managing this connection.',
         'oauth2',
-        'https://airtable.com/oauth2/authorize',
-        'https://airtable.com/oauth2/token',
+        'https://airtable.com/oauth2/v1/authorize',
+        'https://airtable.com/oauth2/v1/token',
+        'https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback',
         'YOUR_CLIENT_ID',
         'YOUR_CLIENT_SECRET',
         'data.records:read data.records:write',
@@ -170,6 +171,7 @@ INSERT INTO anything.auth_providers (
         'oauth2',
         'https://accounts.google.com/o/oauth2/auth',
         'https://oauth2.googleapis.com/token',
+        'https://anythingapp-git-dev-tryanything.vercel.app/auth/google/callback',
         'YOUR_CLIENT_ID',
         'YOUR_CLIENT_SECRET',
         'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',

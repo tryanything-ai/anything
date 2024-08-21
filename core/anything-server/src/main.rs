@@ -158,10 +158,10 @@ async fn main() {
             get(api::get_auth_accounts_for_provider_name),
         )
         .route("/auth/providers", get(api::get_auth_providers))
-        // .route(
-        //     "/auth/callback/:provider_name",
-        //     get(auth::handle_provider_callback),
-        // )
+        .route(
+            "/auth/:provider_name/callback",
+            post(auth::handle_provider_callback),
+        )
         // .route("/auth/initiate/:provider_name", post(auth::initiate_auth_flow))
         // Users Testing Workflows
         //Test Workflows

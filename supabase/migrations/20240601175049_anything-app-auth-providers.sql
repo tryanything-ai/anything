@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS anything.auth_providers
     auth_type TEXT NOT NULL DEFAULT 'oauth2',
     auth_url TEXT NOT NULL,
     token_url TEXT NOT NULL,
+    redirect_url TEXT NOT NULL,
     client_id TEXT NOT NULL,
     client_secret TEXT NOT NULL,
     scopes TEXT NOT NULL,
