@@ -14,6 +14,7 @@ import {
 import api from "@/lib/anything-api";
 import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
 import { Button } from "@repo/ui/components/ui/button";
+import Link from "next/link";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldText,
@@ -367,12 +368,13 @@ function FieldAccount({
                     <div className="mr-2 ml-8">
                       <BaseSelectIcon icon={providerDetails.provider_icon} />
                     </div>
-
                     <div className="text-lg flex items-center">
                       Connnect New Account
                     </div>
                     <div className="ml-auto">
-                      <Button variant="outline">Add Account</Button>
+                      <Link href="/accounts">
+                        <Button variant="outline">Add Account</Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
