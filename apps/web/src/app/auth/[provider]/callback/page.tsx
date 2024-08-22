@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/anything-api"; // Adjust this import according to your API setup
