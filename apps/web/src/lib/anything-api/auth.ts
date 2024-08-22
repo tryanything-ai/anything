@@ -112,6 +112,7 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
         console.log('Session:', session);
 
         if (session) {
+            console.log("calling /api/auth/:provider_name/callback");
             const response = await fetch(`${ANYTHING_API_URL}/auth/${provider_name}/callback`, {
                 method: 'POST',
                 headers: {
@@ -126,6 +127,8 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
             const data = await response.json();
             console.log('Data from /api/auth/:provider_name/callback', data);
             return data;
+        } else {
+            console.error('No session found in handleCallbackForProvider');
         }
     } catch (error) {
         console.error('Error fetching auth providers', error);

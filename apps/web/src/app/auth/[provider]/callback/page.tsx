@@ -25,6 +25,7 @@ const OAuthCallbackPage = () => {
         console.log("State:", state);
 
         try {
+          console.log("Calling Auth API for:", provider);
           // Send the code and state to your server for further processing
           //TODO: in future we probably just push all params to the server and template them in the server
           const response = await api.auth.handleCallbackForProvider({
@@ -37,6 +38,7 @@ const OAuthCallbackPage = () => {
             console.error("Error handling OAuth callback:", response.error);
             // Handle error appropriately, e.g., show a notification or redirect to an error page
           } else {
+            console.log("Successfully handled OAuth callback:", response);
             // Redirect to the dashboard or another page after successful authentication
             router.push("/dashboard");
           }
