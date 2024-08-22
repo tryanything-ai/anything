@@ -1,8 +1,10 @@
 import { type NextRequest } from "next/server";
-import { validateSession } from "@/lib/supabase/middleware";
+// import { validateSession } from "@/lib/supabase/middleware";
+import { updateSession } from "./lib/supabase/new_middleware";
 
 export async function middleware(request: NextRequest) {
-  return await validateSession(request);
+  // return await validateSession(request);
+  return await updateSession(request);
 }
 
 export const config = {
@@ -15,7 +17,6 @@ export const config = {
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      * Feel free to modify this pattern to include more paths.
      */
-    // "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|auth/[^/]+/callback).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
