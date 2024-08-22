@@ -12,6 +12,7 @@ function forceLoginWithReturn(request: NextRequest) {
 export const validateSession = async (request: NextRequest) => {
   // This `try/catch` block is only here for the interactive tutorial.
   // Feel free to remove once you have Supabase connected.
+  console.log("validateSession: ", request);
   try {
     // Create an unmodified response
     let response = NextResponse.next({
