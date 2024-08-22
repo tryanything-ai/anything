@@ -71,7 +71,7 @@ const NewAccountDialog = (): JSX.Element => {
       const code_challenge_method = "S256";
 
       const authUrl = `${provider.auth_url}?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}&code_challenge=${code_challenge}&code_challenge_method=${code_challenge_method}`;
-      window.open(authUrl, "_blank");
+      window.location.href = authUrl;
       //Redirect back to ?
     } catch (error) {
       console.error("Error adding connection:", error);
