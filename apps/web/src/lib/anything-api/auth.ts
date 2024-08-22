@@ -107,9 +107,10 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
         const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         console.log('Session:', session);
+        console.log('Error:', error);
 
         if (session) {
             console.log("calling /api/auth/:provider_name/callback");
@@ -131,6 +132,6 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
             console.error('No session found in handleCallbackForProvider');
         }
     } catch (error) {
-        console.error('Error fetching auth providers', error);
+        console.error('Error handling callback', error);
     } 
 }
