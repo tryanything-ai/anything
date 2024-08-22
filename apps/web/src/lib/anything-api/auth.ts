@@ -104,8 +104,7 @@ export const getProviders = async () => {
 
 export const handleCallbackForProvider = async ({provider_name, code, state, }: {provider_name: string, code: any, state: any}) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
+       
         const supabase = createClient();
         const { data: { session }, error } = await supabase.auth.getSession();
 
