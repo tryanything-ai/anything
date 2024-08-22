@@ -106,6 +106,9 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
     try {
        
         const supabase = createClient();
+        const userData = await supabase.auth.getUser(); 
+        console.log('User Data:', userData);
+
         const { data: { session }, error } = await supabase.auth.getSession();
 
         console.log('Session:', session);
