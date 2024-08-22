@@ -11,6 +11,7 @@ export async function GET(request: Request) {
   const origin = requestUrl.origin;
 
   if (code) {
+    console.log("We have code in exchangeCodeForSession for Supabas Auth"); 
     const supabase = createClient();
     await supabase.auth.exchangeCodeForSession(code);
   }

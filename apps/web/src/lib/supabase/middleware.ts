@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 function forceLoginWithReturn(request: NextRequest) {
+  console.log("forceLoginWithReturn");
   const originalUrl = new URL(request.url);
   const path = originalUrl.pathname;
   const query = originalUrl.searchParams.toString();
