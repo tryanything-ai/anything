@@ -1,25 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/anything-api"; // Adjust this import according to your API setup
 
 const OAuthCallbackPage = () => {
   const router = useRouter();
-
   const searchParams = useSearchParams();
 
-  // Convert the URLSearchParams object to a plain object
-  const paramsObject = Object.fromEntries(searchParams.entries());
+  // State to store the parameters
+  const [params, setParams] = useState<{ code?: string; state?: string }>({});
+  const { provider } = useParams<{ provider: string }>();
 
-  const { code, state } = paramsObject;
+  useEffect(() => {
+    // Convert the URLSearchParams object to a plain object
+    const paramsObject = Object.fromEntries(searchParams.entries());
+    const { code, state } = paramsObject;
 
-  const { provider } = useParams<{
-    provider: string;
-  }>();
+    if (code && state) {
+      setParams({ code, state });
+
+      // Remove query parameters from the URL
+      router.replace(window.location.pathname);
+    } else {
+      console.error("Missing code or state in the query parameters");
+      // Handle error appropriately
+    }
+  }, []);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
+      const { code, state } = params;
+
       if (code && state) {
         console.log("Code:", code);
         console.log("State:", state);
@@ -27,7 +39,6 @@ const OAuthCallbackPage = () => {
         try {
           console.log("Calling Auth API for:", provider);
           // Send the code and state to your server for further processing
-          //TODO: in future we probably just push all params to the server and template them in the server
           const response = await api.auth.handleCallbackForProvider({
             provider_name: provider,
             code,
@@ -46,22 +57,21 @@ const OAuthCallbackPage = () => {
           console.error("Error handling OAuth callback:", error);
           // Handle error appropriately
         }
-      } else {
-        console.error("Missing code or state in the query parameters");
-        // Handle error appropriately
       }
     };
 
-    handleOAuthCallback();
-  }, [code, state]);
+    if (params.code && params.state) {
+      handleOAuthCallback();
+    }
+  }, [params]);
 
   return (
     <div>
       <h1>Processing OAuth Callback...</h1>
       <p>Please wait while we complete the authentication process.</p>
       <div>
-        <p>Code: {code}</p>
-        <p>State: {state}</p>
+        <p>Code: {params.code}</p>
+        <p>State: {params.state}</p>
         <p>Provider: {provider}</p>
       </div>
     </div>
