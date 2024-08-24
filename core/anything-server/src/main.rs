@@ -160,7 +160,7 @@ async fn main() {
         .route("/auth/providers", get(api::get_auth_providers))
         .route(
             "/auth/:provider_name/callback",
-            post(auth::handle_provider_callback),
+            get(auth::handle_provider_callback),
         )
         // .route("/auth/initiate/:provider_name", post(auth::initiate_auth_flow))
         // Users Testing Workflows
