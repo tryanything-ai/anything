@@ -18,6 +18,7 @@
     "@repo/ui": "workspace:*",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@supabase/auth-js": "github:tryanything-ai/auth-js",
     "@usebasejump/shared": "^0.0.3",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
