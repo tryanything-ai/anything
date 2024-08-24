@@ -67,7 +67,8 @@ const NewAccountDialog = (): JSX.Element => {
       // window.open(provider.auth_url, "_blank", "noopener,noreferrer");
       const client_id = provider.client_id; // Replace with your actual client_id
       const redirect_uri =
-        "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
+        "https://workflow-engine-axum-dev.up.railway.app/auth/airtable/callback";
+      // "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
       const scope = "data.records:read data.records:write"; // Replace with your actual scopes
       const state = generateState();
       const code_challenge_method = "S256";
