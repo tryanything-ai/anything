@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@supabase/auth-js': github:tryanything-ai/auth-js
+
 importers:
 
   .:
