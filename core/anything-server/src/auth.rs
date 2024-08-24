@@ -1,9 +1,9 @@
 use crate::supabase_auth_middleware::User;
 use crate::AppState;
 use axum::{
-    extract::{Extension, Path, Query, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
-    response::{IntoResponse, Redirect},
+    response::IntoResponse,
     Json,
 };
 
@@ -76,215 +76,107 @@ pub async fn handle_provider_callback(
     Path(provider_name): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    Query(params): Query<OAuthCallbackParams>, // Use the struct here
+    Json(payload): Json<OAuthCallback>,
 ) -> impl IntoResponse {
     println!("Handling auth callback for provider: {:?}", provider_name);
-    println!("OAuthCallbackParams: {:?}", params);
 
-    // let client = &state.anything_client;
-
-    // Extract OAuth parameters from the struct
-    let code = params.code;
-    let state_param = params.state;
-    let code_challenge = params.code_challenge;
-    let code_challenge_method = params.code_challenge_method;
+    let client = &state.anything_client;
 
     // Get Provider details
-    // let response = match client
-    //     .from("auth_providers")
-    //     .auth(user.jwt.clone())
-    //     .eq("provider_name", &provider_name)
-    //     .select("*")
-    //     .single()
-    //     .execute()
-    //     .await
-    // {
-    //     Ok(response) => response,
-    //     Err(_) => {
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to execute request",
-    //         )
-    //             .into_response()
-    //     }
-    // };
+    let response = match client
+        .from("auth_providers")
+        .auth(user.jwt.clone())
+        .eq("provider_name", &provider_name)
+        .select("*")
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
 
-    // println!("Response: {:?}", response);
+    println!("Response: {:?}", response);
 
-    // let body = match response.text().await {
-    //     Ok(body) => body,
-    //     Err(_) => {
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to read response body",
-    //         )
-    //             .into_response()
-    //     }
-    // };
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
 
-    // let auth_provider: AuthProvider = match serde_json::from_str(&body) {
-    //     Ok(auth_provider) => auth_provider,
-    //     Err(_) => {
-    //         return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
-    //     }
-    // };
+    let auth_provider: AuthProvider = match serde_json::from_str(&body) {
+        Ok(auth_provider) => auth_provider,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
 
-    // Verify state from the database (implement verification if needed)
+    // Verify state from the database
     // TODO: Implement state verification
 
     // Exchange code for token
-    // let token = match exchange_code_for_token(&auth_provider, &code).await {
-    //     Ok(token) => token,
-    //     Err(_) => {
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to exchange code for token",
-    //         )
-    //             .into_response()
-    //     }
-    // };
+    // let code_verifier = "your_code_verifier"; // You need to retrieve this value appropriately
+    let token = match exchange_code_for_token(&auth_provider, &payload.code).await {
+        Ok(token) => token,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to exchange code for token",
+            )
+                .into_response()
+        }
+    };
 
-    // println!("Token: {:?}", token);
+    println!("Token: {:?}", token);
 
-    // let input = CreateAccountAuthProviderAccount {
-    //     account_id: user.account_id.clone(),
-    //     auth_provider_id: auth_provider.auth_provider_id.clone(),
-    //     account_auth_provider_account_label: auth_provider.provider_label.clone(), // TODO: update this to the real thing
-    //     account_auth_provider_account_slug: auth_provider.provider_name.clone(), // TODO: update this to the real thing
-    //     access_token: token.access_token.clone(),
-    //     refresh_token: token.refresh_token.unwrap_or_default(),
-    //     expires_at: token.expires_at.unwrap_or_default(),
-    // };
+    let input = CreateAccountAuthProviderAccount {
+        account_id: user.account_id.clone(),
+        auth_provider_id: auth_provider.auth_provider_id.clone(),
+        account_auth_provider_account_label: auth_provider.provider_label.clone(), //TODO: update this to the real thing
+        account_auth_provider_account_slug: auth_provider.provider_name.clone(), //TODO: update this to the real thing
+        access_token: token.access_token.clone(),
+        refresh_token: token.refresh_token.unwrap_or_default(),
+        expires_at: token.expires_at.unwrap_or_default(),
+    };
 
     // Store token in the database
-    // let create_account_response = match client
-    //     .from("account_auth_provider_accounts")
-    //     .auth(user.jwt)
-    //     .insert(serde_json::to_string(&input).unwrap())
-    //     .execute()
-    //     .await
-    // {
-    //     Ok(response) => response,
-    //     Err(_) => {
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to execute request",
-    //         )
-    //             .into_response()
-    //     }
-    // };
+    // TODO: Implement token storage and account creation
+    let create_account_response = match client
+        .from("account_auth_provider_accounts")
+        .auth(user.jwt)
+        .insert(serde_json::to_string(&input).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
 
-    // println!("Create Account Response: {:?}", create_account_response);
-
-    // Redirect the user to the dashboard or another page
-    Redirect::to("/dashboard")
+    println!("Create Account Response: {:?}", create_account_response);
+    // Return success response
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({"status": "success"})),
+    )
+        .into_response()
 }
-
-// pub async fn handle_provider_callback(
-//     Path(provider_name): Path<String>,
-//     State(state): State<Arc<AppState>>,
-//     Extension(user): Extension<User>,
-
-// ) -> impl IntoResponse {
-//     println!("Handling auth callback for provider: {:?}", provider_name);
-
-//     let client = &state.anything_client;
-
-//     // Get Provider details
-//     let response = match client
-//         .from("auth_providers")
-//         .auth(user.jwt.clone())
-//         .eq("provider_name", &provider_name)
-//         .select("*")
-//         .single()
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(_) => {
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to execute request",
-//             )
-//                 .into_response()
-//         }
-//     };
-
-//     println!("Response: {:?}", response);
-
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(_) => {
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to read response body",
-//             )
-//                 .into_response()
-//         }
-//     };
-
-//     let auth_provider: AuthProvider = match serde_json::from_str(&body) {
-//         Ok(auth_provider) => auth_provider,
-//         Err(_) => {
-//             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
-//         }
-//     };
-
-//     // Verify state from the database
-//     // TODO: Implement state verification
-
-//     // Exchange code for token
-//     // let code_verifier = "your_code_verifier"; // You need to retrieve this value appropriately
-//     let token = match exchange_code_for_token(&auth_provider, &payload.code).await {
-//         Ok(token) => token,
-//         Err(_) => {
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to exchange code for token",
-//             )
-//                 .into_response()
-//         }
-//     };
-
-//     println!("Token: {:?}", token);
-
-//     let input = CreateAccountAuthProviderAccount {
-//         account_id: user.account_id.clone(),
-//         auth_provider_id: auth_provider.auth_provider_id.clone(),
-//         account_auth_provider_account_label: auth_provider.provider_label.clone(), //TODO: update this to the real thing
-//         account_auth_provider_account_slug: auth_provider.provider_name.clone(), //TODO: update this to the real thing
-//         access_token: token.access_token.clone(),
-//         refresh_token: token.refresh_token.unwrap_or_default(),
-//         expires_at: token.expires_at.unwrap_or_default(),
-//     };
-
-//     // Store token in the database
-//     // TODO: Implement token storage and account creation
-//     let create_account_response = match client
-//         .from("account_auth_provider_accounts")
-//         .auth(user.jwt)
-//         .insert(serde_json::to_string(&input).unwrap())
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(_) => {
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to execute request",
-//             )
-//                 .into_response()
-//         }
-//     };
-
-//     println!("Create Account Response: {:?}", create_account_response);
-//     // Return success response
-//     (
-//         StatusCode::OK,
-//         Json(serde_json::json!({"status": "success"})),
-//     )
-//         .into_response()
-// }
 
 pub async fn exchange_code_for_token(
     provider: &AuthProvider,

@@ -104,7 +104,8 @@ export const getProviders = async () => {
 
 export const handleCallbackForProvider = async ({provider_name, code, state, }: {provider_name: string, code: any, state: any}) => {
     try {
-       
+        
+        console.log('handling callback for provider: ', provider_name);
         const supabase = createClient();
         const userData = await supabase.auth.getUser(); 
         console.log('User Data:', userData);
