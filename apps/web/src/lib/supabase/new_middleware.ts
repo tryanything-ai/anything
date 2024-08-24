@@ -18,6 +18,7 @@ export async function updateSession(request: NextRequest) {
         autoRefreshToken: false,
         persistSession: false,
         detectSessionInUrl: false,
+        flowType: "implicit", 
       },
       cookies: {
         getAll() {

@@ -9,6 +9,7 @@ export const createClient = () =>
       autoRefreshToken: false,
       persistSession: false,
       detectSessionInUrl: false,
+      flowType: "implicit", 
     }
   }
   );

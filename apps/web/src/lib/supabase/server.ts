@@ -12,6 +12,7 @@ export function createClient() {
       autoRefreshToken: false,
       persistSession: false,
       detectSessionInUrl: false,
+      flowType: "implicit", 
     },
       cookies: {
         getAll() {
