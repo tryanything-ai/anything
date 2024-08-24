@@ -1,9 +1,16 @@
 import { type NextRequest } from "next/server";
 // import { validateSession } from "@/lib/supabase/middleware";
 import { updateSession } from "./lib/supabase/new_middleware";
+import { NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   // return await validateSession(request);
+  //Skip if the request is for the oauth integrations callbacks
+  if (request.nextUrl.pathname.match(/^\/auth\/[^\/]+\/callback$/)) {
+    const res = NextResponse.next()
+    return res; 
+  }
+
   return await updateSession(request);
 }
 

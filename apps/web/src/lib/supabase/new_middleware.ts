@@ -7,6 +7,7 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
+
   console.log('Initial supabaseResponse:', supabaseResponse)
 
   const supabase = createServerClient(
