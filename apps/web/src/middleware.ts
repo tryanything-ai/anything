@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
   // return await validateSession(request);
   //Skip if the request is for the oauth integrations callbacks
   if (request.nextUrl.pathname.match(/^\/auth\/[^\/]+\/callback$/)) {
+    console.log('Skipping middleware for oauth callback for integrations')
     const res = NextResponse.next()
     return res; 
   }

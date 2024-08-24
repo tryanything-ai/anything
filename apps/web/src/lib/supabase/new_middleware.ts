@@ -14,6 +14,11 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
       cookies: {
         getAll() {
           const allCookies = request.cookies.getAll()
@@ -51,8 +56,9 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !request.nextUrl.pathname.startsWith('/login') 
+    // &&
+    // !request.nextUrl.pathname.startsWith('/auth') 
   ) {
     console.log('No user found and not on login/auth page, redirecting to /login')
     // no user, potentially respond by redirecting the user to the login page
