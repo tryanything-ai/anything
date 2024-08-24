@@ -13,6 +13,7 @@ export function createClient() {
       persistSession: false,
       detectSessionInUrl: false,
       flowType: "implicit", 
+      debug: true,
     },
       cookies: {
         getAll() {

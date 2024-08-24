@@ -10,6 +10,7 @@ export const createClient = () =>
       persistSession: false,
       detectSessionInUrl: false,
       flowType: "implicit", 
+      debug: true,
     }
   }
   );

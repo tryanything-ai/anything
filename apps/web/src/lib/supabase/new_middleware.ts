@@ -19,6 +19,7 @@ export async function updateSession(request: NextRequest) {
         persistSession: false,
         detectSessionInUrl: false,
         flowType: "implicit", 
+        debug: true,
       },
       cookies: {
         getAll() {
