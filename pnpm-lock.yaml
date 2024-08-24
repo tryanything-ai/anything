@@ -123,6 +123,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@supabase/auth-js':
+        specifier: github:tryanything-ai/auth-js
+        version: https://codeload.github.com/tryanything-ai/auth-js/tar.gz/e1f5da85e7833447910663a32fa9a463723019d4
       '@supabase/ssr':
         specifier: latest
         version: 0.5.0(@supabase/supabase-js@2.45.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))
@@ -1341,6 +1344,10 @@ packages:
 
   '@supabase/auth-js@2.64.4':
     resolution: {integrity: sha512-9ITagy4WP4FLl+mke1rchapOH0RQpf++DI+WSG2sO1OFOZ0rW3cwAM0nCrMOxu+Zw4vJ4zObc08uvQrXx590Tg==}
+
+  '@supabase/auth-js@https://codeload.github.com/tryanything-ai/auth-js/tar.gz/e1f5da85e7833447910663a32fa9a463723019d4':
+    resolution: {tarball: https://codeload.github.com/tryanything-ai/auth-js/tar.gz/e1f5da85e7833447910663a32fa9a463723019d4}
+    version: 0.0.0
 
   '@supabase/functions-js@2.3.1':
     resolution: {integrity: sha512-QyzNle/rVzlOi4BbVqxLSH828VdGY1RElqGFAj+XeVypj6+PVtMlD21G8SDnsPQDtlqqTtoGRgdMlQZih5hTuw==}
@@ -5420,6 +5427,10 @@ snapshots:
       '@supabase/node-fetch': 2.6.15
 
   '@supabase/auth-js@2.64.4':
+    dependencies:
+      '@supabase/node-fetch': 2.6.15
+
+  '@supabase/auth-js@https://codeload.github.com/tryanything-ai/auth-js/tar.gz/e1f5da85e7833447910663a32fa9a463723019d4':
     dependencies:
       '@supabase/node-fetch': 2.6.15
 
