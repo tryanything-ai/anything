@@ -1,3 +1,3 @@
   module.exports = {
-    transpilePackages: ["@repo/ui"],
+    transpilePackages: ["@repo/ui", "@supabase/auth-js"],
   };

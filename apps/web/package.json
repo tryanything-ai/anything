@@ -42,6 +42,9 @@
     "uuid": "^9.0.0",
     "zod": "^3.22.4"
   },
+  "peerDependencies": {
+    "@supabase/auth-js": "github:tryanything-ai/auth-js"
+  },
   "devDependencies": {
     "@next/eslint-plugin-next": "14.2.4",
     "@repo/eslint-config": "workspace:*",
@@ -55,10 +58,5 @@
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.4.5"
-  },
-  "pnpm": {
-    "overrides": {
-     "@supabase/auth-js": "github:tryanything-ai/auth-js"
-    }
   }
 }
