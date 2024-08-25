@@ -112,7 +112,18 @@ async fn main() {
         trigger_engine_signal,
     });
 
-    let app = Router::new()
+    // Define routes that are public
+    let public_routes = Router::new()
+        //  .route("/auth/providers/:provider_name", get(api::get_auth_provider_by_name))
+        //  .route("/auth/accounts", get(api::get_auth_accounts))
+        //  .route("/auth/accounts/:provider_name", get(api::get_auth_accounts_for_provider_name))
+        //  .route("/auth/providers", get(api::get_auth_providers))
+        .route(
+            "/auth/:provider_name/callback",
+            get(auth::handle_provider_callback),
+        );
+
+    let protected_routes = Router::new()
         .route("/", get(api::root))
         .route("/workflows", get(api::get_workflows))
         .route("/workflow/:id", get(api::get_workflow))
@@ -158,10 +169,10 @@ async fn main() {
             get(api::get_auth_accounts_for_provider_name),
         )
         .route("/auth/providers", get(api::get_auth_providers))
-        .route(
-            "/auth/:provider_name/callback",
-            get(auth::handle_provider_callback),
-        )
+        // .route(
+        //     "/auth/:provider_name/callback",
+        //     get(auth::handle_provider_callback),
+        // )
         // .route("/auth/initiate/:provider_name", post(auth::initiate_auth_flow))
         // Users Testing Workflows
         //Test Workflows
@@ -178,11 +189,17 @@ async fn main() {
             "/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(api::test_action),
         )
-        .layer(middleware::from_fn(supabase_auth_middleware::middleware))
+        .layer(middleware::from_fn(supabase_auth_middleware::middleware)); 
+        // .layer(cors)
+        // .layer(preflightlayer)
+        // .with_state(state.clone());
+
+        let app = Router::new()
+        .merge(public_routes) // Public routes
+        .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)
         .with_state(state.clone());
-
     // let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
     // let manifest = Manifest::new([url]);
     // let plugin = Arc::new(Mutex::new(

@@ -81,6 +81,7 @@ pub async fn handle_provider_callback(
     println!("Handling auth callback for provider: {:?}", provider_name);
     println!("Params: {:?}", params);
 
+    //TODO: Implement state verification
     let client = &state.anything_client;
 
     // Get Provider details
