@@ -69,7 +69,8 @@ const NewAccountDialog = (): JSX.Element => {
     try {
       const clientId = provider.client_id; // Replace with your actual client_id
       const redirectUri =
-        "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
+        "https://workflow-engine-axum-dev.up.railway.app/auth/airtable/callback";
+      // "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
       const scope = "data.records:read data.records:write"; // Replace with your actual scopes
       const state = generateState(); // Generate state for CSRF protection
 
