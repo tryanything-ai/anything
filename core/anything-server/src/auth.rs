@@ -1,7 +1,7 @@
 use crate::supabase_auth_middleware::User;
 use crate::AppState;
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -76,9 +76,10 @@ pub async fn handle_provider_callback(
     Path(provider_name): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    Json(payload): Json<OAuthCallback>,
+    Query(params): Query<OAuthCallbackParams>,
 ) -> impl IntoResponse {
     println!("Handling auth callback for provider: {:?}", provider_name);
+    println!("Params: {:?}", params);
 
     let client = &state.anything_client;
 
@@ -127,7 +128,7 @@ pub async fn handle_provider_callback(
 
     // Exchange code for token
     // let code_verifier = "your_code_verifier"; // You need to retrieve this value appropriately
-    let token = match exchange_code_for_token(&auth_provider, &payload.code).await {
+    let token = match exchange_code_for_token(&auth_provider, &params.code).await {
         Ok(token) => token,
         Err(_) => {
             return (
