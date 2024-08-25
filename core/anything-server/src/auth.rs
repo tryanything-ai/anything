@@ -75,7 +75,7 @@ pub struct OAuthCallbackParams {
 pub async fn handle_provider_callback(
     Path(provider_name): Path<String>,
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
+    // Extension(user): Extension<User>,
     Query(params): Query<OAuthCallbackParams>,
 ) -> impl IntoResponse {
     println!("Handling auth callback for provider: {:?}", provider_name);
@@ -87,7 +87,7 @@ pub async fn handle_provider_callback(
     // Get Provider details
     let response = match client
         .from("auth_providers")
-        .auth(user.jwt.clone())
+        // .auth(user.jwt.clone())
         .eq("provider_name", &provider_name)
         .select("*")
         .single()
@@ -143,7 +143,7 @@ pub async fn handle_provider_callback(
     println!("Token: {:?}", token);
 
     let input = CreateAccountAuthProviderAccount {
-        account_id: user.account_id.clone(),
+        account_id: "".to_string(), //TODO: update this to the real thing
         auth_provider_id: auth_provider.auth_provider_id.clone(),
         account_auth_provider_account_label: auth_provider.provider_label.clone(), //TODO: update this to the real thing
         account_auth_provider_account_slug: auth_provider.provider_name.clone(), //TODO: update this to the real thing
@@ -156,7 +156,7 @@ pub async fn handle_provider_callback(
     // TODO: Implement token storage and account creation
     let create_account_response = match client
         .from("account_auth_provider_accounts")
-        .auth(user.jwt)
+        // .auth(user.jwt)
         .insert(serde_json::to_string(&input).unwrap())
         .execute()
         .await
