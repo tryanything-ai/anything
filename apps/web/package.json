@@ -17,7 +17,7 @@
     "@remoteoss/json-schema-form": "0.9.1-beta.0",
     "@repo/ui": "workspace:*",
     "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "github:tryanything-ai/supabase-js",
+    "@supabase/supabase-js": "latest",
     "@usebasejump/shared": "^0.0.3",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

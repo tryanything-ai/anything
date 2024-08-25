@@ -11,6 +11,10 @@ export async function middleware(request: NextRequest) {
   //   const res = NextResponse.next()
   //   return res; 
   // }
+  if (request.nextUrl.pathname.startsWith('/auth/') && request.nextUrl.pathname.endsWith('/callback')) {
+    console.log('Skipping session update for auth callback route');
+    return NextResponse.next();
+  }
 
   return await updateSession(request);
 }
@@ -25,7 +29,7 @@ export const config = {
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      * Feel free to modify this pattern to include more paths.
      */
-    '/auth/:path*/callback',
+    // '/auth/:path*/callback',
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
