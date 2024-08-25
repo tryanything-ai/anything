@@ -123,15 +123,12 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@supabase/auth-js':
-        specifier: github:tryanything-ai/auth-js
-        version: https://codeload.github.com/tryanything-ai/auth-js/tar.gz/00f2a0e87a60464ea645e209670597834701e8f0
       '@supabase/ssr':
         specifier: latest
-        version: 0.5.0(@supabase/supabase-js@2.45.2)
+        version: 0.5.0(@supabase/supabase-js@https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2)
       '@supabase/supabase-js':
-        specifier: latest
-        version: 2.45.2
+        specifier: github:tryanything-ai/supabase-js
+        version: https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2
       '@usebasejump/shared':
         specifier: ^0.0.3
         version: 0.0.3
@@ -1397,6 +1394,7 @@ packages:
 
   '@supabase/ssr@0.5.0':
     resolution: {integrity: sha512-5E0NmPpfXBzfATgYhg7o/nPkVu+38mx7pO5vlhxnk/5sYGnIZcpMHJs3jONb7Jx5IJN2kTPb59luEw66MOOTaA==}
+    version: 0.5.0
     peerDependencies:
       '@supabase/supabase-js': ^2.43.4
 
@@ -1405,6 +1403,10 @@ packages:
 
   '@supabase/supabase-js@2.45.2':
     resolution: {integrity: sha512-kJKY3ISFusVKQWCP8Kqo20Ebxy2WLp6Ry/Suco0aQsPXH7bvn7clswsdhcfcH/5Tr0MYz/jcCjF0n/27SetiCw==}
+
+  '@supabase/supabase-js@https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2':
+    resolution: {tarball: https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2}
+    version: 0.0.0-automated
 
   '@swc/counter@0.1.3':
     resolution: {integrity: sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ==}
@@ -5275,9 +5277,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@supabase/ssr@0.5.0(@supabase/supabase-js@2.45.2)':
+  '@supabase/ssr@0.5.0(@supabase/supabase-js@https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2)':
     dependencies:
-      '@supabase/supabase-js': 2.45.2
+      '@supabase/supabase-js': https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2
       cookie: 0.6.0
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu': 4.21.0
@@ -5289,6 +5291,18 @@ snapshots:
   '@supabase/supabase-js@2.45.2':
     dependencies:
       '@supabase/auth-js': 2.64.4
+      '@supabase/functions-js': 2.4.1
+      '@supabase/node-fetch': 2.6.15
+      '@supabase/postgrest-js': 1.15.8
+      '@supabase/realtime-js': 2.10.2
+      '@supabase/storage-js': 2.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@supabase/supabase-js@https://codeload.github.com/tryanything-ai/supabase-js/tar.gz/498d6590fab6d1dffdba959aae3bd4b02a6a8ef2':
+    dependencies:
+      '@supabase/auth-js': https://codeload.github.com/tryanything-ai/auth-js/tar.gz/00f2a0e87a60464ea645e209670597834701e8f0
       '@supabase/functions-js': 2.4.1
       '@supabase/node-fetch': 2.6.15
       '@supabase/postgrest-js': 1.15.8
