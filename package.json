@@ -15,10 +15,13 @@
     "prettier": "^3.3.2",
     "turbo": "2.0.6"
   },
+  "dependencies": {
+      "@supabase/auth-js": "github:tryanything-ai/auth-js"
+  },
   "packageManager": "pnpm@8.9.0",
   "pnpm": {
     "overrides": {
-      "@supabase/auth-js": "github:tryanything-ai/auth-js"
+      "@supabase/auth-js": "$@supabase/auth-js"
     }
   },
   "engines": {
