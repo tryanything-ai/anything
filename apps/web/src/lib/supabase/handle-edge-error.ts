@@ -1,3 +1,4 @@
+// @ts-ignore
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from "@supabase/supabase-js"
 
 export default async function handleEdgeFunctionError(error: any) {
