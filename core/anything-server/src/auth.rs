@@ -12,7 +12,7 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 use chrono::{DateTime, Utc};
 use rand::Rng;
-use reqwest::Client;
+use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
@@ -42,7 +42,7 @@ pub struct AuthProvider {
     auth_type: String,
     auth_url: String,
     token_url: String,
-    redirect_url: String, //TODO: add once we have it in the db
+    redirect_url: String,
     client_id: String,
     client_secret: String,
     scopes: String,
@@ -141,11 +141,17 @@ pub async fn handle_provider_callback(
     };
 
     // Verify state from the database
-    // TODO: Implement state verification
+    // TODO: Implement state verification?
 
     // Exchange code for token
-    // let code_verifier = "your_code_verifier"; // You need to retrieve this value appropriately
-    let token = match exchange_code_for_token(&auth_provider, &params.code.unwrap()).await {
+    let token = match exchange_code_for_token(
+        &auth_provider,
+        &params.code.as_deref().unwrap_or(""),
+        &auth_provider.redirect_url,
+        &params.state.as_deref().unwrap_or(""),
+    )
+    .await
+    {
         Ok(token) => token,
         Err(_) => {
             return (
@@ -196,28 +202,79 @@ pub async fn handle_provider_callback(
         .into_response()
 }
 
+#[derive(Deserialize)]
+struct ErrorResponse {
+    error: String,
+    error_description: String,
+}
+
 pub async fn exchange_code_for_token(
     provider: &AuthProvider,
     code: &str,
-) -> Result<OAuthToken, StatusCode> {
+    redirect_uri: &str,
+    code_verifier: &str,
+) -> Result<OAuthToken, (StatusCode, String)> {
     let client = Client::new();
 
-    let response = client
-        .post(&provider.token_url)
-        .form(&[
-            ("client_id", &provider.client_id),
-            ("client_secret", &provider.client_secret),
-            ("code", &code.to_string()),
-            ("grant_type", &"authorization_code".to_string()),
-        ])
+    let request = client
+        .post(provider.token_url.clone())
+        .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
+
+    // // Add Authorization header if client_secret is present
+    // if let Some(client_secret) = &provider.client_secret {
+    //     let credentials = format!("{}:{}", provider.client_id, client_secret);
+    //     let encoded_credentials = URL_SAFE_NO_PAD.encode(credentials);
+    //     request = request.header(
+    //         header::AUTHORIZATION,
+    //         format!("Basic {}", encoded_credentials),
+    //     );
+    // }
+
+    let form_params = [
+        ("code", code),
+        ("client_id", &provider.client_id),
+        ("redirect_uri", redirect_uri),
+        ("grant_type", "authorization_code"),
+        ("code_verifier", code_verifier),
+    ];
+
+    println!("token exchange form_params: {:?}", form_params);
+
+    let response = request
+        .form(&form_params)
         .send()
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    response
-        .json::<OAuthToken>()
+    let status = response.status();
+    let body = response
+        .text()
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if status.is_success() {
+        serde_json::from_str::<OAuthToken>(&body).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to parse token response: {}", e),
+            )
+        })
+    } else {
+        let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to parse error response: {}", e),
+            )
+        })?;
+
+        let status_code = if error.error == "invalid_client" {
+            StatusCode::UNAUTHORIZED
+        } else {
+            StatusCode::BAD_REQUEST
+        };
+
+        Err((status_code, error.error_description))
+    }
 }
 
 pub async fn initiate_auth(
@@ -315,7 +372,7 @@ pub async fn initiate_auth(
 
 async fn generate_code_challenge(code_verifier: &str) -> String {
     let hash = Sha256::digest(code_verifier.as_bytes());
-    URL_SAFE_NO_PAD.encode(&hash) // Update this line
+    URL_SAFE_NO_PAD.encode(&hash) //TODO: Update this line ( buy  why? gpt wrote this)
 }
 
 // Helper function to generate a random string
