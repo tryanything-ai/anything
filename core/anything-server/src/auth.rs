@@ -247,13 +247,17 @@ pub async fn exchange_code_for_token(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let status = response.status();
-    let body = response
-        .text()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    println!("Response status: {:?}", status);
+
+    let body = response.text().await.map_err(|e| {
+        println!("Error reading response body: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    println!("Response body: {:?}", body);
 
     if status.is_success() {
         serde_json::from_str::<OAuthToken>(&body).map_err(|e| {
+            println!("Failed to parse token response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse token response: {}", e),
@@ -261,11 +265,13 @@ pub async fn exchange_code_for_token(
         })
     } else {
         let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
+            println!("Failed to parse error response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse error response: {}", e),
             )
         })?;
+        // println!("Parsed error response: {:?}", error);
 
         let status_code = if error.error == "invalid_client" {
             StatusCode::UNAUTHORIZED
@@ -273,8 +279,31 @@ pub async fn exchange_code_for_token(
             StatusCode::BAD_REQUEST
         };
 
+        println!(
+            "Returning error with status code: {:?}, description: {:?}",
+            status_code, error.error_description
+        );
         Err((status_code, error.error_description))
     }
+}
+
+async fn generate_code_challenge(code_verifier: &str) -> String {
+    let hash = Sha256::digest(code_verifier.as_bytes());
+    URL_SAFE_NO_PAD.encode(&hash) //TODO: Update this line ( buy  why? gpt wrote this)
+}
+
+// Helper function to generate a random string
+fn generate_random_string(length: usize) -> String {
+    let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let mut rng = rand::thread_rng();
+    (0..length)
+        .map(|_| {
+            charset
+                .chars()
+                .nth(rng.gen_range(0..charset.len()))
+                .unwrap()
+        })
+        .collect()
 }
 
 pub async fn initiate_auth(
@@ -368,23 +397,4 @@ pub async fn initiate_auth(
     println!("Auth URL: {}", auth_url);
 
     Json(OAuthResponse { url: auth_url }).into_response()
-}
-
-async fn generate_code_challenge(code_verifier: &str) -> String {
-    let hash = Sha256::digest(code_verifier.as_bytes());
-    URL_SAFE_NO_PAD.encode(&hash) //TODO: Update this line ( buy  why? gpt wrote this)
-}
-
-// Helper function to generate a random string
-fn generate_random_string(length: usize) -> String {
-    let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let mut rng = rand::thread_rng();
-    (0..length)
-        .map(|_| {
-            charset
-                .chars()
-                .nth(rng.gen_range(0..charset.len()))
-                .unwrap()
-        })
-        .collect()
 }
