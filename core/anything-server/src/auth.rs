@@ -42,7 +42,7 @@ pub struct AuthProvider {
     auth_type: String,
     auth_url: String,
     token_url: String,
-    // redirect_url: String, //TODO: add once we have it in the db
+    redirect_url: String, //TODO: add once we have it in the db
     client_id: String,
     client_secret: String,
     scopes: String,
