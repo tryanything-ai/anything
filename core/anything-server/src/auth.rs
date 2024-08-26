@@ -280,12 +280,18 @@ pub async fn initiate_auth(
         }
     };
 
+    println!("Body: {:?}", body);
+
+
     let auth_provider: AuthProvider = match serde_json::from_str(&body) {
         Ok(auth_provider) => auth_provider,
         Err(_) => {
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
         }
     };
+
+
+    println!("AuthProvider: {:?}", auth_provider);
 
     // Build the OAuth URL
     let client_id = auth_provider.client_id.clone();
@@ -303,6 +309,8 @@ pub async fn initiate_auth(
         urlencoding::encode(&state_string),
         urlencoding::encode(&code_challenge)
     );
+
+    println!("Auth URL: {}", auth_url);
 
     Json(OAuthResponse { url: auth_url }).into_response()
 }
