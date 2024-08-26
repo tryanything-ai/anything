@@ -36,7 +36,7 @@ pub struct InMemoryTrigger {
 
 pub async fn cron_job_loop(state: Arc<AppState>) {
     //worfklow_id => trigger
-    let trigger_state = Arc::new(RwLock::new(HashMap::new()));
+    let trigger_state: Arc<RwLock<HashMap<String, InMemoryTrigger>>> = Arc::new(RwLock::new(HashMap::new()));
 
     // Receive info from other systems
     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();

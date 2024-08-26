@@ -138,3 +138,28 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
         console.error('Error handling callback', error);
     } 
 }
+
+export const initiateProviderAuth = async (provider_name: string) => {
+    try {
+        // Get JWT from supabase to pass to the API
+        // API conforms to RLS policies on behalf of users for external API
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/auth/${provider_name}/initiate`, {
+                headers: {
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Data from /api/auth/:provider_name/initate', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching auth providers', error);
+    } 
+}
+

@@ -34,3 +34,9 @@ http://127.0.0.1:54323/project/default
 
 Previews all run with "Staging Supabase Variables"
 Production runs with "Real Supabase Variables" and Railway Server Prod also
+
+# Reset Supabase Staging DB Command
+
+```bash
+npx supabase db reset --linked
+```

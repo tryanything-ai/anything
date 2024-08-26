@@ -67,30 +67,31 @@ const NewAccountDialog = (): JSX.Element => {
 
   const addConnection = async (provider: any) => {
     try {
-      const clientId = provider.client_id; // Replace with your actual client_id
-      const redirectUri =
-        "https://workflow-engine-axum-dev.up.railway.app/auth/airtable/callback";
-      // "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
-      const scope = "data.records:read data.records:write"; // Replace with your actual scopes
-      const state = generateState(); // Generate state for CSRF protection
+      
+      let { url } = await api.auth.initiateProviderAuth(provider.provider_name);
 
-      const authUrl = `${provider.auth_url}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      console.log("url", url);
+      //TODO: Add api route to "auth/airtable/initiate" to get the url with all the state in it
+      // const clientId = provider.client_id; // Replace with your actual client_id
+      // const redirectUri =
+      //   "https://workflow-engine-axum-dev.up.railway.app/auth/airtable/callback";
+      // // "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
+      // const scope = "data.records:read data.records:write"; // Replace with your actual scopes
+      // const state = generateState(); // Generate state for CSRF protection
+
+      // const authUrl = `${provider.auth_url}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
       // Open the auth URL in a popup window
-      window.open(
-        authUrl,
-        "_blank",
-        "noopener,noreferrer,width=600,height=600",
-      );
+      window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
     } catch (error) {
       console.error("Error adding connection:", error);
     }
   };
 
   // Helper function to generate a secure state (use a more secure implementation for production)
-  const generateState = () => {
-    return btoa(generateRandomString(16));
-  };
+  // const generateState = () => {
+  //   return btoa(generateRandomString(16));
+  // };
 
   return (
     <Dialog>

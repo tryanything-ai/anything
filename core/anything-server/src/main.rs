@@ -1,3 +1,4 @@
+use auth::AuthState;
 use axum::{
     http::{
         header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
@@ -8,12 +9,13 @@ use axum::{
 };
 use dotenv::dotenv;
 use postgrest::Postgrest;
+use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
-// use tower_http::set_header::response::SetResponseHeaderLayer;
 
 mod api;
 mod auth;
@@ -35,6 +37,7 @@ pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
+    auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
 }
@@ -107,6 +110,7 @@ async fn main() {
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
+        auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,
         trigger_engine_signal,
@@ -164,6 +168,7 @@ async fn main() {
             get(api::get_auth_accounts_for_provider_name),
         )
         .route("/auth/providers", get(api::get_auth_providers))
+        .route("/auth/:provdier_name/initiate", get(auth::initiate_auth))
         // Users Testing Workflows
         //Test Workflows
         .route(
