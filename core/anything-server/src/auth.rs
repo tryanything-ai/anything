@@ -42,7 +42,7 @@ pub struct AuthProvider {
     auth_type: String,
     auth_url: String,
     token_url: String,
-    redirect_url: String,
+    // redirect_url: String, //TODO: add once we have it in the db
     client_id: String,
     client_secret: String,
     scopes: String,
@@ -282,14 +282,12 @@ pub async fn initiate_auth(
 
     println!("Body: {:?}", body);
 
-
     let auth_provider: AuthProvider = match serde_json::from_str(&body) {
         Ok(auth_provider) => auth_provider,
         Err(_) => {
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
         }
     };
-
 
     println!("AuthProvider: {:?}", auth_provider);
 
