@@ -168,7 +168,7 @@ async fn main() {
             get(api::get_auth_accounts_for_provider_name),
         )
         .route("/auth/providers", get(api::get_auth_providers))
-        .route("/auth/:provdier_name/initiate", get(auth::initiate_auth))
+        .route("/auth/:provider_name/initiate", get(auth::initiate_auth))
         // Users Testing Workflows
         //Test Workflows
         .route(

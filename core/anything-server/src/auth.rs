@@ -238,6 +238,8 @@ pub async fn initiate_auth(
         created_at: Utc::now(),
     };
 
+    println!("Auth State: {:?}", auth_state);
+
     // Store the state in memory
     let mut auth_states_lock = auth_states.write().await;
     auth_states_lock.insert(state_string.clone(), auth_state);
