@@ -473,11 +473,17 @@ async fn generate_unique_account_slug(
     let mut counter = 1;
 
     dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    let supabase_service_role_api_key = match env::var("SUPABASE_SERVICE_ROLE_API_KEY") {
+        Ok(key) => key,
+        Err(e) => {
+            eprintln!("Error fetching SUPABASE_SERVICE_ROLE_API_KEY: {}", e);
+            return (slug.clone(), base_slug.to_string());
+        }
+    };
 
     //never go over 100. just like sanity check.
     for _ in 0..100 {
+        println!("Attempting to fetch existing slugs for slug: {} and account_id: {}", slug, account_id);
         let response = match client
             .from("account_auth_provider_accounts")
             .auth(supabase_service_role_api_key.clone())
@@ -487,18 +493,36 @@ async fn generate_unique_account_slug(
             .execute()
             .await
         {
-            Ok(response) => response,
-            Err(_) => return (slug.clone(), base_slug.to_string()), // If there's an error, assume the slug is unique
+            Ok(response) => {
+                println!("Received response for slug check: {:?}", response);
+                response
+            },
+            Err(e) => {
+                eprintln!("Error executing request to fetch slugs: {}", e);
+                return (slug.clone(), base_slug.to_string());
+            }
         };
 
         let body = match response.text().await {
-            Ok(body) => body,
-            Err(_) => return (slug.clone(), base_slug.to_string()), // If there's an error reading the body, assume the slug is unique
+            Ok(body) => {
+                println!("Received body for slug check: {}", body);
+                body
+            },
+            Err(e) => {
+                eprintln!("Error reading response body: {}", e);
+                return (slug.clone(), base_slug.to_string());
+            }
         };
 
         let existing_slugs: Vec<Value> = match serde_json::from_str(&body) {
-            Ok(items) => items,
-            Err(_) => return (slug.clone(), base_slug.to_string()), // If there's an error parsing the JSON, assume the slug is unique
+            Ok(items) => {
+                println!("Parsed existing slugs: {:?}", items);
+                items
+            },
+            Err(e) => {
+                eprintln!("Error parsing JSON response: {}", e);
+                return (slug.clone(), base_slug.to_string());
+            }
         };
 
         if existing_slugs.is_empty() {
@@ -529,6 +553,8 @@ async fn generate_unique_account_slug(
         })
         .collect::<Vec<String>>()
         .join(" ");
+
+    println!("Final slug: {}, Human readable slug: {}", slug, human_readable_slug);
 
     (slug, human_readable_slug)
 }
