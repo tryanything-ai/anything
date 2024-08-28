@@ -11,10 +11,12 @@ use crate::supabase_auth_middleware::User;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 use chrono::{DateTime, Utc};
+use dotenv::dotenv;
 use rand::Rng;
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::env;
 use std::sync::Arc;
 use urlencoding;
 use uuid::Uuid;
@@ -22,6 +24,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub struct AuthState {
     pub state: String,
+    pub code_verifier: String,
     pub account_id: String,
     pub created_at: DateTime<Utc>,
 }
@@ -98,8 +101,8 @@ pub async fn handle_provider_callback(
     println!("Handling auth callback for provider: {:?}", provider_name);
     println!("Params: {:?}", params);
 
-    //TODO: Implement state verification
     let client = &state.anything_client;
+    let auth_states = &state.auth_states;
 
     // Get Provider details
     let response = match client
@@ -141,14 +144,25 @@ pub async fn handle_provider_callback(
     };
 
     // Verify state from the database
-    // TODO: Implement state verification?
+    // Retrieve the stored AuthState using the received state
+    let auth_state = auth_states
+        .read()
+        .await
+        .get(&params.state.unwrap())
+        .cloned();
+
+    let auth_state = match auth_state {
+        Some(state) => state,
+        None => return (StatusCode::BAD_REQUEST, "Invalid state").into_response(),
+    };
 
     // Exchange code for token
+    // Use the stored code_verifier in the token exchange
     let token = match exchange_code_for_token(
         &auth_provider,
         &params.code.as_deref().unwrap_or(""),
         &auth_provider.redirect_url,
-        &params.state.as_deref().unwrap_or(""),
+        &auth_state.code_verifier, // Use the stored code_verifier here
     )
     .await
     {
@@ -165,7 +179,7 @@ pub async fn handle_provider_callback(
     println!("Token: {:?}", token);
 
     let input = CreateAccountAuthProviderAccount {
-        account_id: "".to_string(), //TODO: update this to the real thing
+        account_id: auth_state.account_id.clone(),
         auth_provider_id: auth_provider.auth_provider_id.clone(),
         account_auth_provider_account_label: auth_provider.provider_label.clone(), //TODO: update this to the real thing
         account_auth_provider_account_slug: auth_provider.provider_name.clone(), //TODO: update this to the real thing
@@ -174,11 +188,15 @@ pub async fn handle_provider_callback(
         expires_at: token.expires_at.unwrap_or_default(),
     };
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     // Store token in the database
     // TODO: Implement token storage and account creation
     let create_account_response = match client
         .from("account_auth_provider_accounts")
-        // .auth(user.jwt)
+        .auth(supabase_service_role_api_key.clone())
         .insert(serde_json::to_string(&input).unwrap())
         .execute()
         .await
@@ -289,7 +307,7 @@ pub async fn exchange_code_for_token(
 
 async fn generate_code_challenge(code_verifier: &str) -> String {
     let hash = Sha256::digest(code_verifier.as_bytes());
-    URL_SAFE_NO_PAD.encode(&hash) //TODO: Update this line ( buy  why? gpt wrote this)
+    URL_SAFE_NO_PAD.encode(&hash)
 }
 
 // Helper function to generate a random string
@@ -306,6 +324,10 @@ fn generate_random_string(length: usize) -> String {
         .collect()
 }
 
+fn generate_code_verifier() -> String {
+    generate_random_string(43) // Between 43-128 characters
+}
+
 pub async fn initiate_auth(
     Path(provider_name): Path<String>,
     State(state): State<Arc<AppState>>,
@@ -314,12 +336,13 @@ pub async fn initiate_auth(
     let auth_states = &state.auth_states;
     // Generate a unique state parameter
     let state_string = generate_random_string(32);
-
+    let code_verifier = generate_code_verifier();
     // Replace with actual user ID or relevant data
     let account_id = user.account_id.clone();
 
     let auth_state = AuthState {
         state: state_string.clone(),
+        code_verifier: code_verifier.clone(),
         account_id: account_id.clone(),
         created_at: Utc::now(),
     };
@@ -330,7 +353,6 @@ pub async fn initiate_auth(
     let mut auth_states_lock = auth_states.write().await;
     auth_states_lock.insert(state_string.clone(), auth_state);
 
-    //TODO: Implement state verification
     let client = &state.anything_client;
 
     // Get Provider details
@@ -382,7 +404,7 @@ pub async fn initiate_auth(
     let redirect_uri = auth_provider.redirect_url.clone();
     let auth_url = auth_provider.auth_url.clone();
     let scope = "data.records:read data.records:write"; //TODO: Replace with your actual scopes
-    let code_challenge = generate_code_challenge(&state_string).await; // Assuming you have a function to generate code challenge
+    let code_challenge = generate_code_challenge(&code_verifier).await; // Assuming you have a function to generate code challenge
 
     let auth_url = format!(
         "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}&code_challenge={}&code_challenge_method=S256",
