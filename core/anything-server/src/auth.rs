@@ -213,7 +213,6 @@ pub async fn handle_provider_callback(
     println!("Create Account Response: {:?}", create_account_response);
 
     // Return success response
-    // Check if the account creation was successful
     if create_account_response.status().is_success() {
         // Successful response
         let html = r#"

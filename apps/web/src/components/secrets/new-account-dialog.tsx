@@ -97,17 +97,24 @@ const NewAccountDialog = (): JSX.Element => {
 
       // Open the auth URL in a popup window
       // window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
-      const authWindow = window.open(url, "Auth", "width=500,height=600");
+      const authWindow = window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer,width=600,height=600",
+      );
 
-          window.addEventListener('message', function(event) {
-              if (event.data === 'auth_success') {
-                  // Authentication was successful
-                  console.log('Authentication successful!');
-                  // You might want to refresh the page or update the UI here
-                  location.reload();
-              }
-          }, false);
-
+      window.addEventListener(
+        "message",
+        function (event) {
+          if (event.data === "auth_success") {
+            // Authentication was successful
+            console.log("Authentication successful!");
+            // You might want to refresh the page or update the UI here
+            location.reload();
+          }
+        },
+        false,
+      );
     } catch (error) {
       console.error("Error adding connection:", error);
     }
