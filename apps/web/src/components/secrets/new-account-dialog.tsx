@@ -97,11 +97,7 @@ const NewAccountDialog = (): JSX.Element => {
 
       // Open the auth URL in a popup window
       // window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
-      const authWindow = window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer,width=600,height=600",
-      );
+      const authWindow = window.open(url, "_blank", "width=600,height=600");
 
       window.addEventListener(
         "message",
