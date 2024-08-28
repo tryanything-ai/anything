@@ -2,7 +2,7 @@ use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{Html, IntoResponse},
     Json,
 };
 
@@ -193,7 +193,6 @@ pub async fn handle_provider_callback(
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     // Store token in the database
-    // TODO: Implement token storage and account creation
     let create_account_response = match client
         .from("account_auth_provider_accounts")
         .auth(supabase_service_role_api_key.clone())
@@ -212,12 +211,45 @@ pub async fn handle_provider_callback(
     };
 
     println!("Create Account Response: {:?}", create_account_response);
+
     // Return success response
-    (
-        StatusCode::OK,
-        Json(serde_json::json!({"status": "success"})),
-    )
-        .into_response()
+    // Check if the account creation was successful
+    if create_account_response.status().is_success() {
+        // Successful response
+        let html = r#"
+        <html>
+        <body>
+            <script>
+            if (window.opener) {
+                window.opener.postMessage('auth_success', '*');
+                window.close();
+            } else {
+                document.body.innerHTML = 'Authentication successful. You can close this window.';
+            }
+            </script>
+        </body>
+        </html>
+        "#;
+
+        Html(html).into_response()
+    } else {
+        // Error response
+        let html = r#"
+        <html>
+        <body>
+            <h1>Authentication Failed</h1>
+            <p>There was an error during authentication. Please try again.</p>
+            <script>
+            if (window.opener) {
+                window.opener.postMessage('auth_failed', '*');
+            }
+            </script>
+        </body>
+        </html>
+        "#;
+
+        (StatusCode::INTERNAL_SERVER_ERROR, Html(html)).into_response()
+    }
 }
 
 #[derive(Deserialize)]

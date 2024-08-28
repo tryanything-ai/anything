@@ -65,9 +65,23 @@ const NewAccountDialog = (): JSX.Element => {
       .replace(/=+$/, "");
   };
 
+  // fetch(`/api/auth/${providerName}/initiate`)
+  // .then(response => response.json())
+  // .then(data => {
+  //     const authWindow = window.open(data.url, 'Auth', 'width=500,height=600');
+
+  //     window.addEventListener('message', function(event) {
+  //         if (event.data === 'auth_success') {
+  //             // Authentication was successful
+  //             console.log('Authentication successful!');
+  //             // You might want to refresh the page or update the UI here
+  //             location.reload();
+  //         }
+  //     }, false);
+  // });
+
   const addConnection = async (provider: any) => {
     try {
-      
       let { url } = await api.auth.initiateProviderAuth(provider.provider_name);
 
       console.log("url", url);
@@ -82,7 +96,18 @@ const NewAccountDialog = (): JSX.Element => {
       // const authUrl = `${provider.auth_url}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
       // Open the auth URL in a popup window
-      window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
+      // window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
+      const authWindow = window.open(url, "Auth", "width=500,height=600");
+
+          window.addEventListener('message', function(event) {
+              if (event.data === 'auth_success') {
+                  // Authentication was successful
+                  console.log('Authentication successful!');
+                  // You might want to refresh the page or update the UI here
+                  location.reload();
+              }
+          }, false);
+
     } catch (error) {
       console.error("Error adding connection:", error);
     }
