@@ -65,38 +65,12 @@ const NewAccountDialog = (): JSX.Element => {
       .replace(/=+$/, "");
   };
 
-  // fetch(`/api/auth/${providerName}/initiate`)
-  // .then(response => response.json())
-  // .then(data => {
-  //     const authWindow = window.open(data.url, 'Auth', 'width=500,height=600');
-
-  //     window.addEventListener('message', function(event) {
-  //         if (event.data === 'auth_success') {
-  //             // Authentication was successful
-  //             console.log('Authentication successful!');
-  //             // You might want to refresh the page or update the UI here
-  //             location.reload();
-  //         }
-  //     }, false);
-  // });
-
   const addConnection = async (provider: any) => {
     try {
       let { url } = await api.auth.initiateProviderAuth(provider.provider_name);
 
       console.log("url", url);
-      //TODO: Add api route to "auth/airtable/initiate" to get the url with all the state in it
-      // const clientId = provider.client_id; // Replace with your actual client_id
-      // const redirectUri =
-      //   "https://workflow-engine-axum-dev.up.railway.app/auth/airtable/callback";
-      // // "https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback"; // Replace with your actual redirect_uri
-      // const scope = "data.records:read data.records:write"; // Replace with your actual scopes
-      // const state = generateState(); // Generate state for CSRF protection
-
-      // const authUrl = `${provider.auth_url}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
-
       // Open the auth URL in a popup window
-      // window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
       const authWindow = window.open(url, "_blank", "width=600,height=600");
 
       window.addEventListener(
@@ -115,11 +89,6 @@ const NewAccountDialog = (): JSX.Element => {
       console.error("Error adding connection:", error);
     }
   };
-
-  // Helper function to generate a secure state (use a more secure implementation for production)
-  // const generateState = () => {
-  //   return btoa(generateRandomString(16));
-  // };
 
   return (
     <Dialog>

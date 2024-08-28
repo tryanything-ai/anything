@@ -5,6 +5,9 @@ use axum::{
     response::{Html, IntoResponse},
     Json,
 };
+use postgrest::Postgrest;
+use serde_json::Value;
+use slugify::slugify;
 
 use crate::supabase_auth_middleware::User;
 
@@ -178,11 +181,18 @@ pub async fn handle_provider_callback(
 
     println!("Token: {:?}", token);
 
+    let (account_slug, account_label) = geneate_unique_account_slug(
+        client,
+        auth_provider.provider_label.as_str(),
+        auth_state.account_id.as_str(),
+    )
+    .await;
+
     let input = CreateAccountAuthProviderAccount {
         account_id: auth_state.account_id.clone(),
         auth_provider_id: auth_provider.auth_provider_id.clone(),
-        account_auth_provider_account_label: auth_provider.provider_label.clone(), //TODO: update this to the real thing
-        account_auth_provider_account_slug: auth_provider.provider_name.clone(), //TODO: update this to the real thing
+        account_auth_provider_account_label: account_label,
+        account_auth_provider_account_slug: account_slug,
         access_token: token.access_token.clone(),
         refresh_token: token.refresh_token.unwrap_or_default(),
         expires_at: token.expires_at.unwrap_or_default(),
@@ -450,4 +460,68 @@ pub async fn initiate_auth(
     println!("Auth URL: {}", auth_url);
 
     Json(OAuthResponse { url: auth_url }).into_response()
+}
+
+async fn geneate_unique_account_slug(
+    client: &Postgrest,
+    base_slug: &str,
+    account_id: &str,
+) -> (String, String) {
+    let mut slug = slugify!(base_slug, separator = "_").to_uppercase();
+    let mut counter = 1;
+
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    //never go over 100. just like sanity check.
+    for _ in 0..100 {
+        let response = match client
+            .from("account_auth_provider_accounts")
+            .auth(supabase_service_role_api_key.clone())
+            .select("account_auth_provider_account_slug")
+            .eq("slug", &slug)
+            .eq("account_id", account_id)
+            .execute()
+            .await
+        {
+            Ok(response) => response,
+            Err(_) => return (slug.clone(), base_slug.to_string()), // If there's an error, assume the slug is unique
+        };
+
+        let body = match response.text().await {
+            Ok(body) => body,
+            Err(_) => return (slug.clone(), base_slug.to_string()), // If there's an error reading the body, assume the slug is unique
+        };
+
+        let existing_slugs: Vec<Value> = match serde_json::from_str(&body) {
+            Ok(items) => items,
+            Err(_) => return (slug.clone(), base_slug.to_string()), // If there's an error parsing the JSON, assume the slug is unique
+        };
+
+        if existing_slugs.is_empty() {
+            println!("Using Unique slug generated: {}", slug);
+            break;
+        }
+
+        slug = slugify!(format!("{}_{}", base_slug, counter).as_str()).to_uppercase();
+        println!("Trying another slug: {}", slug);
+        counter += 1;
+    }
+
+    let human_readable_slug = slug
+        .replace('_', " ")
+        .to_lowercase()
+        .split_whitespace()
+        .map(|word| {
+            let mut c = word.chars();
+            match c.next() {
+                None => String::new(),
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(" ");
+
+    (slug, human_readable_slug)
 }
