@@ -181,7 +181,7 @@ pub async fn handle_provider_callback(
 
     println!("Token: {:?}", token);
 
-    let (account_slug, account_label) = geneate_unique_account_slug(
+    let (account_slug, account_label) = generate_unique_account_slug(
         client,
         auth_provider.provider_label.as_str(),
         auth_state.account_id.as_str(),
@@ -462,12 +462,14 @@ pub async fn initiate_auth(
     Json(OAuthResponse { url: auth_url }).into_response()
 }
 
-async fn geneate_unique_account_slug(
+async fn generate_unique_account_slug(
     client: &Postgrest,
     base_slug: &str,
     account_id: &str,
 ) -> (String, String) {
     let mut slug = slugify!(base_slug, separator = "_").to_uppercase();
+
+    println!("Base slug at start: {}", slug);
     let mut counter = 1;
 
     dotenv().ok();
@@ -513,11 +515,16 @@ async fn geneate_unique_account_slug(
         .replace('_', " ")
         .to_lowercase()
         .split_whitespace()
-        .map(|word| {
-            let mut c = word.chars();
-            match c.next() {
-                None => String::new(),
-                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        .enumerate()
+        .map(|(i, word)| {
+            if i == 1 && word.chars().all(char::is_numeric) {
+                word.to_string()
+            } else {
+                let mut c = word.chars();
+                match c.next() {
+                    None => String::new(),
+                    Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                }
             }
         })
         .collect::<Vec<String>>()
