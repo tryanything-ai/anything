@@ -533,7 +533,11 @@ async fn generate_unique_account_slug(
             break;
         }
 
-        slug = slugify!(format!("{}_{}", base_slug, counter).as_str()).to_uppercase();
+        slug = slugify!(
+            format!("{}_{}", base_slug, counter).as_str(),
+            separator = "_"
+        )
+        .to_uppercase();
         println!("Trying another slug: {}", slug);
         counter += 1;
     }
