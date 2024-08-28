@@ -483,12 +483,15 @@ async fn generate_unique_account_slug(
 
     //never go over 100. just like sanity check.
     for _ in 0..100 {
-        println!("Attempting to fetch existing slugs for slug: {} and account_id: {}", slug, account_id);
+        println!(
+            "Attempting to fetch existing slugs for slug: {} and account_id: {}",
+            slug, account_id
+        );
         let response = match client
             .from("account_auth_provider_accounts")
             .auth(supabase_service_role_api_key.clone())
             .select("account_auth_provider_account_slug")
-            .eq("slug", &slug)
+            .eq("account_auth_provider_account_slug", &slug)
             .eq("account_id", account_id)
             .execute()
             .await
@@ -496,7 +499,7 @@ async fn generate_unique_account_slug(
             Ok(response) => {
                 println!("Received response for slug check: {:?}", response);
                 response
-            },
+            }
             Err(e) => {
                 eprintln!("Error executing request to fetch slugs: {}", e);
                 return (slug.clone(), base_slug.to_string());
@@ -507,7 +510,7 @@ async fn generate_unique_account_slug(
             Ok(body) => {
                 println!("Received body for slug check: {}", body);
                 body
-            },
+            }
             Err(e) => {
                 eprintln!("Error reading response body: {}", e);
                 return (slug.clone(), base_slug.to_string());
@@ -518,7 +521,7 @@ async fn generate_unique_account_slug(
             Ok(items) => {
                 println!("Parsed existing slugs: {:?}", items);
                 items
-            },
+            }
             Err(e) => {
                 eprintln!("Error parsing JSON response: {}", e);
                 return (slug.clone(), base_slug.to_string());
@@ -554,7 +557,10 @@ async fn generate_unique_account_slug(
         .collect::<Vec<String>>()
         .join(" ");
 
-    println!("Final slug: {}, Human readable slug: {}", slug, human_readable_slug);
+    println!(
+        "Final slug: {}, Human readable slug: {}",
+        slug, human_readable_slug
+    );
 
     (slug, human_readable_slug)
 }
