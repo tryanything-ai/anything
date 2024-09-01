@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+
 use hyper::header::AUTHORIZATION;
 use postgrest::Postgrest;
 use serde::{Deserialize, Serialize};

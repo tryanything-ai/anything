@@ -6,17 +6,15 @@ CREATE TABLE IF NOT EXISTS anything.account_auth_provider_accounts
     -- referencing the account table. Make sure you also set permissions appropriately
     account_id uuid not null references basejump.accounts(id),
     auth_provider_id TEXT NOT NULL references anything.auth_providers(auth_provider_id),
-
     -- ADD YOUR COLUMNS HERE
     -- flow_name TEXT NOT NULL,
     account_auth_provider_account_label TEXT NOT NULL, -- what users see
     account_auth_provider_account_slug TEXT NOT NULL, -- what bundler uses ( will standardize to airtable airtable_2, google google_2) etc
+    account_data jsonb,
     access_token TEXT NOT NULL, -- figure out how to put these in the secrets table
+    access_token_expires_at TIMESTAMP WITH TIME ZONE,
     refresh_token TEXT, -- figure out how to put these in secrets table
-    -- access_token_secrets_table_id
-    -- refresh_token_secrets_table_id
-    expires_at TIMESTAMP WITH TIME ZONE,
-
+    refresh_token_expires_at TIMESTAMP WITH TIME ZONE,
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,

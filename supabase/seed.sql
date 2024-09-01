@@ -191,7 +191,8 @@ INSERT INTO anything.account_auth_provider_accounts (
     account_auth_provider_account_slug,  
     access_token, 
     refresh_token, 
-    expires_at, 
+    access_token_expires_at,
+    refresh_token_expires_at,
     updated_at, 
     created_at, 
     updated_by, 
@@ -206,6 +207,7 @@ INSERT INTO anything.account_auth_provider_accounts (
         'EXAMPLE_ACCESS_TOKEN_1', 
         'EXAMPLE_REFRESH_TOKEN_1', 
         '2024-08-08 12:00:00+00', -- Example expiration timestamp
+         '2024-08-08 12:00:00+00',
         now(), 
         now(), 
         '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', -- user1
@@ -220,6 +222,7 @@ INSERT INTO anything.account_auth_provider_accounts (
         'EXAMPLE_ACCESS_TOKEN_2', 
         'EXAMPLE_REFRESH_TOKEN_2', 
         '2024-08-08 12:00:00+00', -- Example expiration timestamp
+         '2024-08-08 12:00:00+00',
         now(), 
         now(), 
         '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', -- user2
@@ -1482,7 +1485,8 @@ INSERT INTO vault.secrets (
     ('123e4567-e89b-12d3-a456-426614174001', 'API_KEY_2', 'silly description', 'SUPER_SECRET_KEY_2'),
     ('123e4567-e89b-12d3-a456-426614174002', 'API_KEY_3', 'silly description', 'SUPER_SECRET_KEY_3'),
     ('123e4567-e89b-12d3-a456-426614174003', 'API_KEY_4', 'silly description', 'SUPER_SECRET_KEY_4'),
-    ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5');
+    ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5')
+    ON CONFLICT (id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
 
    -- Inserting sample secrets into anything.secrets
 INSERT INTO anything.secrets (
@@ -1492,7 +1496,8 @@ INSERT INTO anything.secrets (
     ('123e4567-e89b-12d3-a456-426614174001', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_2', '123e4567-e89b-12d3-a456-426614174001', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
     ('123e4567-e89b-12d3-a456-426614174002', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_3', '123e4567-e89b-12d3-a456-426614174002', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
     ('123e4567-e89b-12d3-a456-426614174003', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_4', '123e4567-e89b-12d3-a456-426614174003', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
-    ('123e4567-e89b-12d3-a456-426614174004', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_5', '123e4567-e89b-12d3-a456-426614174004', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d');
+    ('123e4567-e89b-12d3-a456-426614174004', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_5', '123e4567-e89b-12d3-a456-426614174004', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d')
+    ON CONFLICT (secret_id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
 
 
     -- Inserting sample action-templates into anyting.action_templates

@@ -1,26 +1,30 @@
 use serde_json::Value;
 use std::collections::HashMap;
-use tera::{Context, Tera};
 use std::io::{self, BufRead, BufReader};
+use tera::{Context, Tera};
 // use std::fs::File;
-use uuid::Uuid;
-use postgrest::Postgrest;
-use dotenv::dotenv;
-use std::env;
-use serde_with::{serde_as, DisplayFromStr};
-use std::fmt;
-use std::error::Error;
-use crate::workflow_types::Task;
 use crate::secrets::GetDecryptedSecretsInput;
+use crate::workflow_types::Task;
+use dotenv::dotenv;
+use postgrest::Postgrest;
+use serde_with::{serde_as, DisplayFromStr};
+use std::env;
+use std::error::Error;
+use std::fmt;
+use uuid::Uuid;
 
 // Secrets for building context with API KEYS
-pub async fn get_decrypted_secrets(client: &Postgrest, account_id: Uuid) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn get_decrypted_secrets(
+    client: &Postgrest,
+    account_id: Uuid,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-    
+
     let input = serde_json::json!({
         "user_account_id": account_id.to_string()
-    }).to_string();
+    })
+    .to_string();
 
     let response = client
         .rpc("get_decrypted_secrets", &input)
@@ -34,7 +38,10 @@ pub async fn get_decrypted_secrets(client: &Postgrest, account_id: Uuid) -> Resu
     Ok(items)
 }
 
-pub async fn get_completed_tasks_for_session(client: &Postgrest, session_id: &str) -> Result<Vec<Task>, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn get_completed_tasks_for_session(
+    client: &Postgrest,
+    session_id: &str,
+) -> Result<Vec<Task>, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
 
@@ -63,7 +70,10 @@ impl fmt::Display for CustomError {
 
 impl Error for CustomError {}
 
-pub async fn bundle_context(client: &Postgrest, task: &Task) -> Result<Value, Box<dyn Error + Send + Sync>> {
+pub async fn bundle_context(
+    client: &Postgrest,
+    task: &Task,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
     let mut context = Context::new();
 
     // Fetch decrypted secrets for account_id
@@ -83,14 +93,18 @@ pub async fn bundle_context(client: &Postgrest, task: &Task) -> Result<Value, Bo
     // Prepare the Tera template engine
     let mut tera = Tera::default();
 
+    //TODO: add secrets.SECRET_SLUG functionality
+    //TODO: add accounts.ACCOUNT_SLUG functionality
+
     // Add variables to Tera template engine if present
     if let Some(variables) = task.config.get("variables") {
         let variables_str = variables.to_string();
 
-        tera.add_raw_template("variables", &variables_str).map_err(|e| {
-            println!("Failed to add raw template for variables to Tera: {}", e);
-            Box::new(CustomError(e.to_string()))
-        })?;
+        tera.add_raw_template("variables", &variables_str)
+            .map_err(|e| {
+                println!("Failed to add raw template for variables to Tera: {}", e);
+                Box::new(CustomError(e.to_string()))
+            })?;
 
         let rendered_variables = tera.render("variables", &context).map_err(|e| {
             println!("Failed to render variables with Tera: {}", e);
@@ -116,16 +130,20 @@ pub async fn bundle_context(client: &Postgrest, task: &Task) -> Result<Value, Bo
             Box::new(CustomError(e.to_string()))
         })?;
 
-        let rendered_context = serde_json::from_str::<Value>(&rendered_context_str).map_err(|e| {
-            println!("Failed to convert rendered config to Value: {}", e);
-            Box::new(CustomError(e.to_string()))
-        })?;
+        let rendered_context =
+            serde_json::from_str::<Value>(&rendered_context_str).map_err(|e| {
+                println!("Failed to convert rendered config to Value: {}", e);
+                Box::new(CustomError(e.to_string()))
+            })?;
 
         println!("Rendered context: {:?}", rendered_context);
 
         Ok(rendered_context)
     } else {
         println!("No inputs found in task config");
-        return Err(Box::new(CustomError("No inputs found in task config".to_string())) as Box<dyn Error + Send + Sync>);
+        return Err(
+            Box::new(CustomError("No inputs found in task config".to_string()))
+                as Box<dyn Error + Send + Sync>,
+        );
     }
 }

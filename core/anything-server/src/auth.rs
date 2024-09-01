@@ -8,7 +8,6 @@ use axum::{
 use postgrest::Postgrest;
 use serde_json::Value;
 use slugify::slugify;
-
 use crate::supabase_auth_middleware::User;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
@@ -203,6 +202,7 @@ pub async fn handle_provider_callback(
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     // Store token in the database
+    //TODO: store tokens in supabse VAULT
     let create_account_response = match client
         .from("account_auth_provider_accounts")
         .auth(supabase_service_role_api_key.clone())
@@ -567,4 +567,89 @@ async fn generate_unique_account_slug(
     );
 
     (slug, human_readable_slug)
+}
+
+pub async fn refresh_access_token(
+    client: &Client,
+    auth_provider: &AuthProvider,
+    refresh_token: &str,
+) -> Result<OAuthToken, (StatusCode, String)> {
+    let request = client
+        .post(&auth_provider.token_url)
+        .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
+
+    // Add Authorization header if client_secret is present
+    // if let Some(client_secret) = &auth_provider.client_secret {
+    //     let credentials = format!("{}:{}", auth_provider.client_id, client_secret);
+    //     let encoded_credentials =
+    //         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(credentials);
+    //     request = request.header(
+    //         header::AUTHORIZATION,
+    //         format!("Basic {}", encoded_credentials),
+    //     );
+    // }
+
+    let form_params = [
+        ("grant_type", "refresh_token"),
+        ("refresh_token", refresh_token),
+        ("client_id", &auth_provider.client_id),
+    ];
+
+    println!("Refresh token exchange form_params: {:?}", form_params);
+
+    let response = request
+        .form(&form_params)
+        .send()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let status = response.status();
+    println!("Refresh token response status: {:?}", status);
+
+    let body = response.text().await.map_err(|e| {
+        println!("Error reading refresh token response body: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    println!("Refresh token response body: {:?}", body);
+
+    if status.is_success() {
+        let token: Value = serde_json::from_str(&body).map_err(|e| {
+            println!("Failed to parse refresh token response: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to parse refresh token response: {}", e),
+            )
+        })?;
+
+        let access_token = token["access_token"].as_str().unwrap_or("").to_string();
+        let refresh_token = token["refresh_token"].as_str().map(|s| s.to_string());
+        let expires_in = token["expires_in"].as_i64().unwrap_or(3600);
+        let expires_at = Utc::now() + chrono::Duration::seconds(expires_in);
+
+        Ok(OAuthToken {
+            access_token,
+            refresh_token,
+            expires_at: Some(expires_at),
+        })
+    } else {
+        let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
+            println!("Failed to parse refresh token error response: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to parse refresh token error response: {}", e),
+            )
+        })?;
+
+        let status_code = if error.error == "invalid_client" {
+            StatusCode::UNAUTHORIZED
+        } else {
+            StatusCode::BAD_REQUEST
+        };
+
+        println!(
+            "Returning refresh token error with status code: {:?}, description: {:?}",
+            status_code, error.error_description
+        );
+        Err((status_code, error.error_description))
+    }
 }
