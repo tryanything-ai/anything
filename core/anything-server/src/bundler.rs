@@ -1,3 +1,4 @@
+use crate::auth::{self, AccountAuthProviderAccount};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader};
@@ -59,6 +60,37 @@ pub async fn get_completed_tasks_for_session(
     Ok(tasks)
 }
 
+// pub async fn get_auth_accounts(
+//     client: &Postgrest,
+//     account_id: &str,
+// ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
+//     dotenv().ok();
+//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
+
+//     let response = client
+//         .from("account_auth_provider_accounts")
+//         .auth(supabase_service_role_api_key.clone())
+//         .select("*")
+//         .eq("account_id", account_id)
+//         .execute()
+//         .await?;
+
+//     let body = response.text().await?;
+//     let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
+
+//     Ok(accounts)
+// }
+
+pub async fn get_refreshed_auth_accounts(
+    client: &Postgrest,
+    account_id: &str,
+) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
+
+    let accounts = auth::refresh_accounts(client, account_id).await?;
+
+    Ok(accounts)
+}
+
 #[derive(Debug)]
 struct CustomError(String);
 
@@ -77,8 +109,16 @@ pub async fn bundle_context(
     let mut context = Context::new();
 
     // Fetch decrypted secrets for account_id
+    //TODO: add secrets.SECRET_SLUG functionality?? maybe its already heare
+    // let secrets = get_decrypted_secrets(client, task.account_id).await?;
+    // context.insert("secrets", &secrets);
     let secrets = get_decrypted_secrets(client, task.account_id).await?;
-    context.insert("secrets", &secrets);
+
+    if let Some(secrets_map) = secrets.as_object() {
+        for (key, value) in secrets_map {
+            context.insert(&format!("secrets.{}", key), value);
+        }
+    }
 
     // Retrieve completed events for the session to use results
     let complete_tasks = get_completed_tasks_for_session(client, &task.flow_session_id).await?;
@@ -90,11 +130,19 @@ pub async fn bundle_context(
         }
     }
 
+    //TODO: add accounts.ACCOUNT_SLUG functionality
+    let auth_provider_accounts =
+        get_refreshed_auth_accounts(client, &task.account_id.to_string()).await?;
+
+    for account in auth_provider_accounts {
+        context.insert(
+            &format!("accounts.{}", account.account_auth_provider_account_slug),
+            &account,
+        );
+    }
+
     // Prepare the Tera template engine
     let mut tera = Tera::default();
-
-    //TODO: add secrets.SECRET_SLUG functionality
-    //TODO: add accounts.ACCOUNT_SLUG functionality
 
     // Add variables to Tera template engine if present
     if let Some(variables) = task.config.get("variables") {

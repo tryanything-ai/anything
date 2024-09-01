@@ -1,3 +1,4 @@
+use crate::supabase_auth_middleware::User;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -8,7 +9,6 @@ use axum::{
 use postgrest::Postgrest;
 use serde_json::Value;
 use slugify::slugify;
-use crate::supabase_auth_middleware::User;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
@@ -22,6 +22,25 @@ use std::env;
 use std::sync::Arc;
 use urlencoding;
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AccountAuthProviderAccount {
+    pub account_auth_provider_account_id: Uuid,
+    pub account_id: Uuid,
+    pub auth_provider_id: String,
+    pub auth_provider: Option<Value>,
+    pub account_auth_provider_account_label: String,
+    pub account_auth_provider_account_slug: String,
+    pub account_data: Option<Value>,
+    pub access_token: String,
+    pub access_token_expires_at: Option<DateTime<Utc>>,
+    pub refresh_token: Option<String>,
+    pub refresh_token_expires_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_by: Option<Uuid>,
+    pub created_by: Option<Uuid>,
+}
 
 #[derive(Debug, Clone)]
 pub struct AuthState {
@@ -48,6 +67,8 @@ pub struct AuthProvider {
     auth_url: String,
     token_url: String,
     redirect_url: String,
+    access_token_lifetime_secods: Option<i64>,
+    refresh_token_lifetime_seconds: Option<i64>,
     client_id: String,
     client_secret: String,
     scopes: String,
@@ -69,11 +90,6 @@ pub struct OAuthToken {
     access_token: String,
     refresh_token: Option<String>,
     expires_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Deserialize)]
-pub struct InitiateAuthFlow {
-    redirect_uri: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -569,11 +585,136 @@ async fn generate_unique_account_slug(
     (slug, human_readable_slug)
 }
 
+pub async fn refresh_accounts(
+    client: &Postgrest,
+    account_id: &str,
+) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    println!("[AUTH REFRESH] Starting refresh_accounts for account_id: {}", account_id);
+
+    let response = client
+        .from("account_auth_provider_accounts")
+        .auth(supabase_service_role_api_key.clone())
+        .select("*, auth_provider:auth_providers(*)")
+        .eq("account_id", account_id)
+        .execute()
+        .await?;
+
+    println!("[AUTH REFRESH] Received response from database");
+
+    let body = response.text().await?;
+    println!("[AUTH REFRESH] Response body: {}", body);
+
+    let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
+    println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
+
+    for account in &accounts {
+        println!("[AUTH REFRESH] Processing account: {:?}", account);
+
+        let auth_provider: AuthProvider = match &account.auth_provider {
+            Some(value) => serde_json::from_value(value.clone())?,
+            None => {
+                println!("[AUTH REFRESH] No auth_provider found for account: {:?}", account);
+                continue; // or handle the None case appropriately
+            }
+        };
+
+        if let Some(expires_at) = account.access_token_expires_at {
+            let now = Utc::now();
+            let expiry_threshold = now + chrono::Duration::minutes(5);
+
+            println!("[AUTH REFRESH] Current time: {}, Token expiry time: {}, Threshold: {}", now, expires_at, expiry_threshold);
+
+            if expires_at < expiry_threshold {
+                println!("[AUTH REFRESH] Token is about to expire or has expired for account: {:?}", account);
+
+                match refresh_access_token(
+                    &auth_provider,
+                    &account.refresh_token.clone().unwrap_or_default(),
+                )
+                .await
+                {
+                    Ok(new_token) => {
+                        println!("[AUTH REFRESH] Successfully refreshed token: {:?}", new_token);
+
+                        let mut new_account = account.clone();
+                        new_account.access_token = new_token.access_token;
+                        new_account.refresh_token = new_token.refresh_token;
+
+                        if let Some(access_token_lifespan) =
+                            auth_provider.access_token_lifetime_secods
+                        {
+                            new_account.access_token_expires_at =
+                                Some(Utc::now() + chrono::Duration::seconds(access_token_lifespan));
+                            println!("[AUTH REFRESH] Updated access_token_expires_at: {:?}", new_account.access_token_expires_at);
+                        }
+
+                        if let Some(refresh_token_lifespan) =
+                            auth_provider.refresh_token_lifetime_seconds
+                        {
+                            new_account.refresh_token_expires_at = Some(
+                                Utc::now() + chrono::Duration::seconds(refresh_token_lifespan),
+                            );
+                            println!("[AUTH REFRESH] Updated refresh_token_expires_at: {:?}", new_account.refresh_token_expires_at);
+                        }
+
+                        // Optionally, update the account in the database
+                        let update_response = client
+                            .from("account_auth_provider_accounts")
+                            .auth(supabase_service_role_api_key.clone())
+                            .update(serde_json::to_string(&account).unwrap())
+                            .eq(
+                                "account_auth_provider_account_id",
+                                account.account_auth_provider_account_id.to_string(),
+                            )
+                            .execute()
+                            .await;
+
+                        if let Err(e) = update_response {
+                            println!("[AUTH REFRESH] Failed to update account with new token: {:?}", e);
+                        } else {
+                            println!("[AUTH REFRESH] Successfully updated account with new token");
+                        }
+                    }
+                    Err((status, msg)) => {
+                        println!(
+                            "[AUTH REFRESH] Failed to refresh access token: Status: {:?}, Message: {:?}",
+                            status, msg
+                        );
+                    }
+                }
+            } else {
+                println!("[AUTH REFRESH] Token is still valid for account: {:?}", account);
+            }
+        } else {
+            println!("[AUTH REFRESH] No access_token_expires_at found for account: {:?}", account);
+        }
+    }
+    //TODO: if any accounts refresh fails it will kill all the automations in the whole system
+    //fetch all the newly refreshed accounts
+    let new_response = client
+        .from("account_auth_provider_accounts")
+        .auth(supabase_service_role_api_key.clone())
+        .select("*, auth_provider:auth_providers(*)")
+        .eq("account_id", account_id)
+        .execute()
+        .await?;
+
+    let new_body = new_response.text().await?;
+    let new_accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&new_body)?;
+
+    Ok(new_accounts)
+}
+
 pub async fn refresh_access_token(
-    client: &Client,
     auth_provider: &AuthProvider,
     refresh_token: &str,
 ) -> Result<OAuthToken, (StatusCode, String)> {
+    let client = Client::new();
+
     let request = client
         .post(&auth_provider.token_url)
         .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
