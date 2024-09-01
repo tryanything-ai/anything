@@ -126,7 +126,7 @@ INSERT INTO marketplace.flow_template_tags (
 -- Inserting sample OAuth providers into anything.auth_providers
 
 INSERT INTO anything.auth_providers (
-    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, redirect_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
+    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, redirect_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
 ) VALUES
     -- Airtable Provider
     (
@@ -150,6 +150,8 @@ INSERT INTO anything.auth_providers (
         'oauth2',
         'https://airtable.com/oauth2/v1/authorize',
         'https://airtable.com/oauth2/v1/token',
+        '3600',
+        '5184000',
         'https://anythingapp-git-dev-tryanything.vercel.app/auth/airtable/callback',
         'YOUR_CLIENT_ID',
         'YOUR_CLIENT_SECRET',
@@ -171,6 +173,8 @@ INSERT INTO anything.auth_providers (
         'oauth2',
         'https://accounts.google.com/o/oauth2/auth',
         'https://oauth2.googleapis.com/token',
+        '3600',
+        '5184000',
         'https://anythingapp-git-dev-tryanything.vercel.app/auth/google/callback',
         'YOUR_CLIENT_ID',
         'YOUR_CLIENT_SECRET',
