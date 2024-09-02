@@ -856,61 +856,12 @@ pub async fn get_actions(
     if let Some(db_array) = db_items.as_array_mut() {
         if let Some(json_array) = json_items.as_array() {
             db_array.extend(json_array.clone());
-            println!("Combined items: {:?}", db_array);
         }
     }
-
-    println!("Final db_items: {:?}", db_items);
 
     Json(db_items).into_response()
 }
 
-// pub async fn get_actions(
-//     State(state): State<Arc<AppState>>,
-//     Extension(user): Extension<User>,
-// ) -> impl IntoResponse {
-//     println!("Handling a get_actions");
-
-//     let client = &state.anything_client;
-
-//     let response = match client
-//         .from("action_templates")
-//         .auth(user.jwt)
-//         .eq("archived", "false")
-//         .select("*")
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(_) => {
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to execute request",
-//             )
-//                 .into_response()
-//         }
-//     };
-
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(_) => {
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to read response body",
-//             )
-//                 .into_response()
-//         }
-//     };
-
-//     let items: Value = match serde_json::from_str(&body) {
-//         Ok(items) => items,
-//         Err(_) => {
-//             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
-//         }
-//     };
-
-//     Json(items).into_response()
-// }
 
 // Testing a workflow
 pub async fn test_workflow(

@@ -576,7 +576,7 @@ export const WorkflowVersionProvider = ({
         workflow,
       );
 
-      console.log("Flow Version Saved!", JSON.stringify(res, null, 3));
+      console.log("Flow Version Saved!");
 
       let returned_flow = JSON.parse(res)[0];
 

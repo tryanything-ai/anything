@@ -4,7 +4,10 @@ import { createContext, ReactNode, useEffect, useState } from "react";
 import { cloneDeep } from "lodash";
 import slugify from "slugify";
 import { useWorkflowVersionContext } from "./WorkflowVersionProvider";
-import { DEFAULT_VARIABLES_SCHEMA } from "@/components/studio/forms/variables/edit-variable-schema";
+import {
+  DEFAULT_VARIABLES_SCHEMA,
+  isValidVariablesSchema,
+} from "@/components/studio/forms/variables/edit-variable-schema";
 export enum EditVariableFormMode {
   INPUT = "input",
   DELETE = "delete",
@@ -47,7 +50,10 @@ export const VariablesProvider = ({
 
   const updateVariablesProperty = async (form_data: any) => {
     try {
-      console.log("Selected property -> ", selectedProperty);
+      console.log(
+        "[VARIABLES CONTEXT] Selected property -> ",
+        selectedProperty,
+      );
 
       if (selectedProperty) {
         console.log("Updating existing property");
@@ -57,53 +63,96 @@ export const VariablesProvider = ({
 
         let new_schema = cloneDeep(selected_node_variables_schema);
 
+        console.log("Current Variables Schema to update: ", new_schema);
+
         //Merge incoming data with existing property
         new_schema.properties[selectedProperty.key] = {
           ...new_schema.properties[selectedProperty.key],
           ...form_data,
         };
 
-        console.log(
-          "Updating variables property -> New Variables Schema: ",
-          new_schema,
-        );
+        if (form_data.inputType !== "account") {
+          delete new_schema.properties[selectedProperty.key][
+            "x-jsf-presentation"
+          ]["provider"];
+        }
+
+        console.log("Updated Variables Schema: ", new_schema);
 
         //update to Anyting Context and Db
         await updateNodeData(["variables_schema"], [new_schema]);
       } else {
-        console.log("Creating new property");
+        console.log("[VARIABLES CONTEXT] Creating new property");
 
-        //Use variable schema or create one if necessary
-        let variables_schema =
-          selected_node_variables_schema || cloneDeep(DEFAULT_VARIABLES_SCHEMA);
+        // Use variable schema or create one if necessary
+        let variables_schema = isValidVariablesSchema(
+          selected_node_variables_schema,
+        )
+          ? selected_node_variables_schema
+          : cloneDeep(DEFAULT_VARIABLES_SCHEMA);
+        console.log(
+          "Variables schema after checking existing schema or creating new one: ",
+          variables_schema,
+        );
 
         let key = slugify(form_data.title, {
           replacement: "_", // replace spaces with replacement character, defaults to `-`
           lower: true, // convert to lower case, defaults to `false`
         });
+        console.log("Generated key for new property: ", key);
 
-        //Create new property
-        variables_schema.properties[key] = form_data;
+        console.log("[VARIABLES PROIVDER] Form Data: ", form_data);
+        // Create new property
+        variables_schema.properties[key] = {
+          title: form_data.title,
+          description: form_data.description,
+          type: form_data.type,
+        };
 
-        //Make sure we add to order and required
+        console.log(
+          "Variables schema after adding new property: ",
+          variables_schema,
+        );
+
+        // Make sure we add to order and required
         variables_schema["x-jsf-order"].push(key);
         variables_schema.required.push(key);
+        console.log(
+          "Variables schema after updating order and required fields: ",
+          variables_schema,
+        );
 
-        //Need to add empty version to variables also
+        //Add input type to let users select Accounts for example
+        variables_schema.properties[key]["x-jsf-presentation"] = {
+          inputType: form_data.type,
+        };
+
+        if (form_data.type === "account") {
+          console.log("Adding provider to x-jsf-presentation");
+          variables_schema.properties[key]["x-jsf-presentation"]["provider"] =
+            form_data.provider;
+        }
+
+        // Need to add empty version to variables also
         let new_variables: any = {};
-        //If we alerady have variables add to them.
+        // If we already have variables add to them.
         if (selected_node_variables) {
           new_variables = cloneDeep(selected_node_variables);
+          console.log("Cloned existing variables: ", new_variables);
         }
 
         new_variables[key] = "";
-        // new_variables[key] = form_data.type === "number" ? 0 : "";
+        console.log("New variables after adding new key: ", new_variables);
 
-        //update to Anyting Context and Db
+        // Update to Anything Context and Db
+        console.log(
+          "Updating node data with new variables schema and variables",
+        );
         await updateNodeData(
           ["variables_schema", "variables"],
           [variables_schema, new_variables],
         );
+        console.log("Node data updated successfully");
       }
     } catch (e) {
       console.log("Error updating variables property: ", e);

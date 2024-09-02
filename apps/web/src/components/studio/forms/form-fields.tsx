@@ -286,6 +286,7 @@ function FieldAccount({
 
   const getProviderDetails = async () => {
     try {
+      console.log("provider in form field", provider);
       let res = await api.auth.getProvider(provider);
       console.log("res for getProviderDetails", res);
       setProviderDetails(res[0]);
@@ -326,6 +327,7 @@ function FieldAccount({
 
   return (
     <div className="grid gap-3 my-4">
+      <Label htmlFor={name}>{label}</Label>
       {!hydrated ? (
         <div>Loading...</div>
       ) : (
