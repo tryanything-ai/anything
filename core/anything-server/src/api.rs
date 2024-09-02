@@ -24,6 +24,9 @@ use chrono::Timelike;
 use chrono::{DateTime, Datelike, Duration, Utc};
 use std::collections::HashMap;
 
+use std::fs::File;
+use std::io::BufReader;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
     account_id: String,
@@ -741,6 +744,8 @@ pub async fn get_actions(
 
     let client = &state.anything_client;
 
+    // Fetch data from the database
+    println!("Fetching data from the database");
     let response = match client
         .from("action_templates")
         .auth(user.jwt)
@@ -749,36 +754,163 @@ pub async fn get_actions(
         .execute()
         .await
     {
-        Ok(response) => response,
-        Err(_) => {
+        Ok(response) => {
+            println!(
+                "Successfully fetched data from the database: {:?}",
+                response
+            );
+            response
+        }
+        Err(err) => {
+            eprintln!("Failed to execute request: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
+    println!("Reading response body");
     let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
+        Ok(body) => {
+            println!("Successfully read response body");
+            body
+        }
+        Err(err) => {
+            eprintln!("Failed to read response body: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+    println!("Parsing response body as JSON");
+    let mut db_items: Value = match serde_json::from_str(&body) {
+        Ok(items) => {
+            println!("Successfully parsed JSON: {:?}", items);
+            items
+        }
+        Err(err) => {
+            eprintln!("Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
-    Json(items).into_response()
+    // Log the current working directory
+    println!("Logging the current working directory");
+    let current_dir = match env::current_dir() {
+        Ok(path) => {
+            println!("Current directory: {}", path.display());
+            path
+        }
+        Err(e) => {
+            println!("Failed to get current directory: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get current directory",
+            )
+                .into_response();
+        }
+    };
+
+    // Load data from the JSON file
+    let json_file_path = current_dir.join("action_db/action_templates.json");
+    println!("Loading data from the JSON file at {:?}", json_file_path);
+    let file = match File::open(&json_file_path) {
+        Ok(file) => {
+            println!("Successfully opened JSON file");
+            file
+        }
+        Err(err) => {
+            eprintln!("Failed to open JSON file: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to open JSON file",
+            )
+                .into_response();
+        }
+    };
+
+    println!("Reading JSON file");
+    let reader = BufReader::new(file);
+    let json_items: Value = match serde_json::from_reader(reader) {
+        Ok(items) => {
+            println!("Successfully parsed JSON file: {:?}", items);
+            items
+        }
+        Err(err) => {
+            eprintln!("Failed to parse JSON file: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse JSON file",
+            )
+                .into_response();
+        }
+    };
+
+    // Combine both database and JSON file items into a single array
+    println!("Combining database and JSON file items");
+    if let Some(db_array) = db_items.as_array_mut() {
+        if let Some(json_array) = json_items.as_array() {
+            db_array.extend(json_array.clone());
+            println!("Combined items: {:?}", db_array);
+        }
+    }
+
+    println!("Final db_items: {:?}", db_items);
+
+    Json(db_items).into_response()
 }
+
+// pub async fn get_actions(
+//     State(state): State<Arc<AppState>>,
+//     Extension(user): Extension<User>,
+// ) -> impl IntoResponse {
+//     println!("Handling a get_actions");
+
+//     let client = &state.anything_client;
+
+//     let response = match client
+//         .from("action_templates")
+//         .auth(user.jwt)
+//         .eq("archived", "false")
+//         .select("*")
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(_) => {
+//             return (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 "Failed to execute request",
+//             )
+//                 .into_response()
+//         }
+//     };
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(_) => {
+//             return (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 "Failed to read response body",
+//             )
+//                 .into_response()
+//         }
+//     };
+
+//     let items: Value = match serde_json::from_str(&body) {
+//         Ok(items) => items,
+//         Err(_) => {
+//             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+//         }
+//     };
+
+//     Json(items).into_response()
+// }
 
 // Testing a workflow
 pub async fn test_workflow(

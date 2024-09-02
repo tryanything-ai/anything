@@ -127,8 +127,8 @@ pub struct Task {
     pub flow_session_id: String,
     pub flow_session_status: String,
     pub node_id: String,
-    pub action_type: String,
-    pub plugin_id: Option<String>,
+    pub action_type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
+    pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
     pub stage: String,
     pub test_config: Option<Value>,
     pub config: Value,

@@ -26,6 +26,7 @@ export function StudioActionsSheet(): JSX.Element {
   const fetchActions = async () => {
     try {
       const res = await api.action_templates.getActionTemplates();
+      console.log("action sheet templates res:", res);
       setActions(res);
     } catch (error) {
       console.error("Error fetching actions:", error);
