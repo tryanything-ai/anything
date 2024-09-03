@@ -67,7 +67,7 @@ pub struct AuthProvider {
     auth_url: String,
     token_url: String,
     redirect_url: String,
-    access_token_lifetime_secods: Option<String>,
+    access_token_lifetime_seconds: Option<String>,
     refresh_token_lifetime_seconds: Option<String>,
     client_id: String,
     client_secret: String,
@@ -214,7 +214,7 @@ pub async fn handle_provider_callback(
     };
 
     let access_token_expires_at = if let Some(access_token_lifetime) =
-        auth_provider.access_token_lifetime_secods.as_deref()
+        auth_provider.access_token_lifetime_seconds.as_deref()
     {
         let access_token_lifetime: i64 = access_token_lifetime.parse().unwrap_or(0);
         Some(Utc::now() + chrono::Duration::seconds(access_token_lifetime))
@@ -686,7 +686,7 @@ pub async fn refresh_accounts(
                         new_account.refresh_token = new_token.refresh_token;
 
                         if let Some(access_token_lifespan) =
-                            auth_provider.access_token_lifetime_secods
+                            auth_provider.access_token_lifetime_seconds
                         {
                             let access_token_lifespan: i64 =
                                 access_token_lifespan.parse().unwrap_or(0);
