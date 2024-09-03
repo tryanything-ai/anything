@@ -337,9 +337,12 @@ function FieldAccount({
               <BaseNodeIcon icon={providerDetails.provider_icon} />
               <div className="text-xl ml-2">Connect your Airtable Account</div>
               <div className="ml-auto">
-                <Button onClick={connect} variant="outline">
+                <Link href="/accounts">
+                  <Button variant="outline">Add Account</Button>
+                </Link>
+                {/* <Button onClick={connect} variant="outline">
                   Connect
-                </Button>
+                </Button> */}
               </div>
             </div>
           ) : (

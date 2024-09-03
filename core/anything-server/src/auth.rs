@@ -67,8 +67,8 @@ pub struct AuthProvider {
     auth_url: String,
     token_url: String,
     redirect_url: String,
-    access_token_lifetime_secods: Option<i64>,
-    refresh_token_lifetime_seconds: Option<i64>,
+    access_token_lifetime_secods: Option<String>,
+    refresh_token_lifetime_seconds: Option<String>,
     client_id: String,
     client_secret: String,
     scopes: String,
@@ -593,7 +593,10 @@ pub async fn refresh_accounts(
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    println!("[AUTH REFRESH] Starting refresh_accounts for account_id: {}", account_id);
+    println!(
+        "[AUTH REFRESH] Starting refresh_accounts for account_id: {}",
+        account_id
+    );
 
     let response = client
         .from("account_auth_provider_accounts")
@@ -617,7 +620,10 @@ pub async fn refresh_accounts(
         let auth_provider: AuthProvider = match &account.auth_provider {
             Some(value) => serde_json::from_value(value.clone())?,
             None => {
-                println!("[AUTH REFRESH] No auth_provider found for account: {:?}", account);
+                println!(
+                    "[AUTH REFRESH] No auth_provider found for account: {:?}",
+                    account
+                );
                 continue; // or handle the None case appropriately
             }
         };
@@ -626,10 +632,16 @@ pub async fn refresh_accounts(
             let now = Utc::now();
             let expiry_threshold = now + chrono::Duration::minutes(5);
 
-            println!("[AUTH REFRESH] Current time: {}, Token expiry time: {}, Threshold: {}", now, expires_at, expiry_threshold);
+            println!(
+                "[AUTH REFRESH] Current time: {}, Token expiry time: {}, Threshold: {}",
+                now, expires_at, expiry_threshold
+            );
 
             if expires_at < expiry_threshold {
-                println!("[AUTH REFRESH] Token is about to expire or has expired for account: {:?}", account);
+                println!(
+                    "[AUTH REFRESH] Token is about to expire or has expired for account: {:?}",
+                    account
+                );
 
                 match refresh_access_token(
                     &auth_provider,
@@ -638,7 +650,10 @@ pub async fn refresh_accounts(
                 .await
                 {
                     Ok(new_token) => {
-                        println!("[AUTH REFRESH] Successfully refreshed token: {:?}", new_token);
+                        println!(
+                            "[AUTH REFRESH] Successfully refreshed token: {:?}",
+                            new_token
+                        );
 
                         let mut new_account = account.clone();
                         new_account.access_token = new_token.access_token;
@@ -647,18 +662,28 @@ pub async fn refresh_accounts(
                         if let Some(access_token_lifespan) =
                             auth_provider.access_token_lifetime_secods
                         {
+                            let access_token_lifespan: i64 =
+                                access_token_lifespan.parse().unwrap_or(0);
                             new_account.access_token_expires_at =
                                 Some(Utc::now() + chrono::Duration::seconds(access_token_lifespan));
-                            println!("[AUTH REFRESH] Updated access_token_expires_at: {:?}", new_account.access_token_expires_at);
+                            println!(
+                                "[AUTH REFRESH] Updated access_token_expires_at: {:?}",
+                                new_account.access_token_expires_at
+                            );
                         }
 
                         if let Some(refresh_token_lifespan) =
                             auth_provider.refresh_token_lifetime_seconds
                         {
+                            let refresh_token_lifespan: i64 =
+                                refresh_token_lifespan.parse().unwrap_or(0);
                             new_account.refresh_token_expires_at = Some(
                                 Utc::now() + chrono::Duration::seconds(refresh_token_lifespan),
                             );
-                            println!("[AUTH REFRESH] Updated refresh_token_expires_at: {:?}", new_account.refresh_token_expires_at);
+                            println!(
+                                "[AUTH REFRESH] Updated refresh_token_expires_at: {:?}",
+                                new_account.refresh_token_expires_at
+                            );
                         }
 
                         // Optionally, update the account in the database
@@ -674,7 +699,10 @@ pub async fn refresh_accounts(
                             .await;
 
                         if let Err(e) = update_response {
-                            println!("[AUTH REFRESH] Failed to update account with new token: {:?}", e);
+                            println!(
+                                "[AUTH REFRESH] Failed to update account with new token: {:?}",
+                                e
+                            );
                         } else {
                             println!("[AUTH REFRESH] Successfully updated account with new token");
                         }
@@ -687,10 +715,16 @@ pub async fn refresh_accounts(
                     }
                 }
             } else {
-                println!("[AUTH REFRESH] Token is still valid for account: {:?}", account);
+                println!(
+                    "[AUTH REFRESH] Token is still valid for account: {:?}",
+                    account
+                );
             }
         } else {
-            println!("[AUTH REFRESH] No access_token_expires_at found for account: {:?}", account);
+            println!(
+                "[AUTH REFRESH] No access_token_expires_at found for account: {:?}",
+                account
+            );
         }
     }
     //TODO: if any accounts refresh fails it will kill all the automations in the whole system
