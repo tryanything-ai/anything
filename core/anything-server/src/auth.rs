@@ -716,7 +716,7 @@ pub async fn refresh_accounts(
                         let update_response = client
                             .from("account_auth_provider_accounts")
                             .auth(supabase_service_role_api_key.clone())
-                            .update(serde_json::to_string(&account).unwrap())
+                            .update(serde_json::to_string(&new_account).unwrap())
                             .eq(
                                 "account_auth_provider_account_id",
                                 account.account_auth_provider_account_id.to_string(),
