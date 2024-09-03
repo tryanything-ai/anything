@@ -666,7 +666,7 @@ pub async fn refresh_accounts(
             if expires_at < expiry_threshold {
                 println!(
                     "[AUTH REFRESH] Token is about to expire or has expired for account: {:?}",
-                    account
+                    account.account_id
                 );
 
                 match refresh_access_token(
@@ -743,13 +743,13 @@ pub async fn refresh_accounts(
             } else {
                 println!(
                     "[AUTH REFRESH] Token is still valid for account: {:?}",
-                    account
+                    account.auth_provider_id
                 );
             }
         } else {
             println!(
                 "[AUTH REFRESH] No access_token_expires_at found for account: {:?}",
-                account
+                account.auth_provider_id
             );
         }
     }
