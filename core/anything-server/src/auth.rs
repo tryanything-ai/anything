@@ -659,7 +659,7 @@ pub async fn refresh_accounts(
             let expiry_threshold = now + chrono::Duration::minutes(5);
 
             println!(
-                "[AUTH REFRESH] Current time: {}, Token expiry time: {}, Threshold: {}",
+                "[AUTH REFRESH] Current time: {}, ACCESS_TOKEN expiry time: {}, Threshold: {}",
                 now, expires_at, expiry_threshold
             );
 
@@ -711,6 +711,11 @@ pub async fn refresh_accounts(
                                 new_account.refresh_token_expires_at
                             );
                         }
+
+                        println!(
+                            "[AUTH REFRESH] Updated account with new token: {:?}",
+                            new_account
+                        );
 
                         // Optionally, update the account in the database
                         let update_response = client
