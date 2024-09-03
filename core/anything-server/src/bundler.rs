@@ -134,11 +134,11 @@ pub async fn bundle_context(
         get_refreshed_auth_accounts(client, &task.account_id.to_string()).await?;
 
     for account in auth_provider_accounts {
+        println!("Account: {:?}", account);
         let slug = &account.account_auth_provider_account_slug;
         println!("Inserting account with slug: {} at accounts.{}", slug, slug);
         context.insert(&format!("accounts.{}", slug), &account);
     }
-
     // Prepare the Tera template engine
     let mut tera = Tera::default();
 
