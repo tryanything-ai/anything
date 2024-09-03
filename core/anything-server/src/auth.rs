@@ -100,7 +100,8 @@ pub struct CreateAccountAuthProviderAccount {
     account_auth_provider_account_slug: String,
     access_token: String,
     refresh_token: String,
-    expires_at: DateTime<Utc>,
+    access_token_expires_at: DateTime<Utc>,
+    refresh_token_expires_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -203,15 +204,36 @@ pub async fn handle_provider_callback(
     )
     .await;
 
+    let refresh_token_expires_at = if let Some(refresh_token_lifetime) =
+        auth_provider.refresh_token_lifetime_seconds.as_deref()
+    {
+        let refresh_token_lifetime: i64 = refresh_token_lifetime.parse().unwrap_or(0);
+        Some(Utc::now() + chrono::Duration::seconds(refresh_token_lifetime))
+    } else {
+        None
+    };
+
+    let access_token_expires_at = if let Some(access_token_lifetime) =
+        auth_provider.access_token_lifetime_secods.as_deref()
+    {
+        let access_token_lifetime: i64 = access_token_lifetime.parse().unwrap_or(0);
+        Some(Utc::now() + chrono::Duration::seconds(access_token_lifetime))
+    } else {
+        None
+    };
+
     let input = CreateAccountAuthProviderAccount {
         account_id: auth_state.account_id.clone(),
         auth_provider_id: auth_provider.auth_provider_id.clone(),
         account_auth_provider_account_label: account_label,
         account_auth_provider_account_slug: account_slug,
         access_token: token.access_token.clone(),
+        access_token_expires_at: access_token_expires_at.unwrap_or_else(Utc::now),
         refresh_token: token.refresh_token.unwrap_or_default(),
-        expires_at: token.expires_at.unwrap_or_default(),
+        refresh_token_expires_at: refresh_token_expires_at.unwrap_or_else(Utc::now),
     };
+
+    println!("Create Account Input: {:?}", input);
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -450,7 +472,11 @@ pub async fn initiate_auth(
     let auth_provider: AuthProvider = match serde_json::from_str(&body) {
         Ok(auth_provider) => auth_provider,
         Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse JSON for auth_provider",
+            )
+                .into_response()
         }
     };
 
