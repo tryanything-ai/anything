@@ -85,7 +85,6 @@ pub async fn get_refreshed_auth_accounts(
     client: &Postgrest,
     account_id: &str,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-
     let accounts = auth::refresh_accounts(client, account_id).await?;
 
     Ok(accounts)
@@ -135,10 +134,9 @@ pub async fn bundle_context(
         get_refreshed_auth_accounts(client, &task.account_id.to_string()).await?;
 
     for account in auth_provider_accounts {
-        context.insert(
-            &format!("accounts.{}", account.account_auth_provider_account_slug),
-            &account,
-        );
+        let slug = &account.account_auth_provider_account_slug;
+        println!("Inserting account with slug: {} at accounts.{}", slug, slug);
+        context.insert(&format!("accounts.{}", slug), &account);
     }
 
     // Prepare the Tera template engine
@@ -146,7 +144,9 @@ pub async fn bundle_context(
 
     // Add variables to Tera template engine if present
     if let Some(variables) = task.config.get("variables") {
+        println!("Found variables in task config: {:?}", variables);
         let variables_str = variables.to_string();
+        println!("Variables as string: {}", variables_str);
 
         tera.add_raw_template("variables", &variables_str)
             .map_err(|e| {
@@ -154,14 +154,20 @@ pub async fn bundle_context(
                 Box::new(CustomError(e.to_string()))
             })?;
 
+        println!("Successfully added raw template for variables to Tera");
+
         let rendered_variables = tera.render("variables", &context).map_err(|e| {
             println!("Failed to render variables with Tera: {}", e);
             Box::new(CustomError(e.to_string()))
         })?;
 
+        println!("Successfully rendered variables with Tera");
+
         // Add rendered variables to context
         println!("Rendered variables: {}", rendered_variables);
         context.insert("variables", &rendered_variables);
+    } else {
+        println!("No variables found in task config");
     }
 
     // Add inputs to Tera template engine if present
