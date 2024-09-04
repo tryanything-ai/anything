@@ -12,6 +12,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { useRouter } from "next/navigation";
+import api from "@/lib/anything-api";
 
 export default function DeleteFlowDialog({
   workflowId,
@@ -19,12 +20,11 @@ export default function DeleteFlowDialog({
   workflowId: string;
 }): JSX.Element {
   const navigate = useRouter();
-  const { workflows } = useAnything();
 
   const handleDelete = async () => {
     try {
       console.log("Deleting Flow in DeleteFlowDialog");
-      await workflows.deleteWorkflow(workflowId);
+      await api.flows.deleteFlow(workflowId);
       navigate.push("/workflows");
     } catch (error) {
       console.error(error);

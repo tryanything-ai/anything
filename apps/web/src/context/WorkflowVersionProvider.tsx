@@ -129,7 +129,7 @@ export const WorkflowVersionProvider = ({
 
   const router = useRouter();
 
-  const { getWorkflowById } = useWorkflowsContext();
+  // const { getWorkflowById } = useWorkflowsContext();
 
   //Easy Access State
   const [dbFlow, setDbFlow] = useState<any>({});
@@ -627,7 +627,8 @@ export const WorkflowVersionProvider = ({
     try {
       console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
       if (!workflowId) return;
-      let workflow_response = await getWorkflowById(workflowId);
+      let workflow_response = await api.flows.getFlow(workflowId);
+      // let workflow_response = await getWorkflowById(workflowId);
 
       if (!workflow_response) return;
       let flow = workflow_response[0];

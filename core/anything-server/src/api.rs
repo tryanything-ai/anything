@@ -37,7 +37,6 @@ pub struct BaseFlowVersionInput {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateWorkflowHandleInput {
     flow_id: String,
-    flow_name: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -229,7 +228,7 @@ pub async fn create_workflow(
 
     let input = CreateWorkflowInput {
         flow_id: payload.flow_id.clone(),
-        flow_name: payload.flow_name.clone(),
+        flow_name: "New Default Flow".to_string(),
         description: "New Default Flow".to_string(),
         account_id: user.account_id.clone(),
     };
@@ -861,7 +860,6 @@ pub async fn get_actions(
 
     Json(db_items).into_response()
 }
-
 
 // Testing a workflow
 pub async fn test_workflow(

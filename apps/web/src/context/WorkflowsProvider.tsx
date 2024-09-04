@@ -46,10 +46,7 @@ export const WorkflowsProvider = ({
 
   const createWorkflow = async (): Promise<void> => {
     try {
-      //TODO Move to DB to fix collision problem
-      let flowName = "Flow" + " " + (flows.length + 1);
-      console.log("Creating new Flow in FlowsProvider");
-      await api.flows.createFlow(flowName);
+      await api.flows.createFlow();
     } catch (error) {
       console.log("error creating new flow in FlowsProvider", error);
       console.error(error);

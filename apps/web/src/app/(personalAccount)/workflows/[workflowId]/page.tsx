@@ -2,7 +2,6 @@
 import { PartyPopper } from "lucide-react";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { useAnything } from "@/context/AnythingContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
@@ -12,12 +11,9 @@ import { Table } from "@repo/ui/components/ui/table";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { TimeUnit } from "@/lib/anything-api/charts";
-// import { DB_WORKFLOWS_QUERY } from "@/types/supabase-anything";
 
 export default function WorkflowManager(): JSX.Element {
-  const {
-    workflows: { getWorkflowById, flows },
-  } = useAnything();
+
   const [workflow, setWorkflow] = useState<any | undefined>(undefined);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [chartData, setChartData] = useState<any | undefined>(undefined);
@@ -27,7 +23,8 @@ export default function WorkflowManager(): JSX.Element {
     const fetchData = async () => {
       console.log("params in useEffect", params);
       if (params.workflowId) {
-        let flow = await getWorkflowById(params.workflowId);
+        // let flow = await getWorkflowById(params.workflowId);
+        let flow = await api.flows.getFlow(params.workflowId);
         console.log("flow", flow);
         if (flow && flow.length > 0) {
           setWorkflow(flow[0]);
@@ -53,7 +50,7 @@ export default function WorkflowManager(): JSX.Element {
     };
 
     fetchData();
-  }, [params.workflowId, flows]);
+  }, [params.workflowId]);
 
   console.log("workflow", workflow);
   return (

@@ -34,7 +34,7 @@ export const getFlows = async () => {
   }
 }
 
-export const createFlow = async (flowName: string) => {
+export const createFlow = async () => {
   try {
     // Get JWT from supabase to pass to the API
     // API conforms to RLS policies on behalf of users for external API
@@ -52,8 +52,7 @@ export const createFlow = async (flowName: string) => {
           Authorization: `${session.access_token}`,
         },
         body: JSON.stringify({
-          flow_id,
-          flow_name: flowName
+          flow_id
         }),
       });
       const data = await response.json();

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,19 +10,38 @@ import {
 } from "@repo/ui/components/ui/card";
 import Link from "next/link";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
-import { useAnything } from "@/context/AnythingContext";
 import { Edit } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
-import { AnyAaaaRecord } from "dns";
+import api from "@/lib/anything-api";
 
 export default function ManageWorkflows(): JSX.Element {
-  let { workflows } = useAnything();
+  // let { workflows } = useAnything();
+  const [workflows, setWorkflows] = useState([]);
+  // console.log("flows in component", workflows.flows);
 
-  console.log("flows in component", workflows.flows);
+  const getWorkflows = async (): Promise<void> => {
+    console.log("Getting Flows from API");
+    try {
+      let res: any = await api.flows.getFlows();
+      console.log("getFlows:", res);
+      if (res.length > 0) {
+        setWorkflows(res);
+      } else {
+        setWorkflows([]);
+      }
+    } catch (error) {
+      console.error("Error getting flows", error);
+    }
+  };
+
+  useEffect(() => {
+    getWorkflows();
+  }, []);
+
   return (
     <div>
-      {workflows.flows.map((flow: any) => {
+      {workflows.map((flow: any) => {
         let icons: string[] = [];
 
         let flow_version: any;

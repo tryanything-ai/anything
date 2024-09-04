@@ -3,13 +3,14 @@ import ManageWorkflows from "@/components/workflows/manage-workflows";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { useAnything } from "@/context/AnythingContext";
+import api from "@/lib/anything-api";
 
 export default function Workflows(): JSX.Element {
-  const { workflows } = useAnything();
+  // const { workflows } = useAnything();
 
   const createWorkflow = async () => {
     try {
-      let res = await workflows.createWorkflow();
+      let res = await api.flows.createFlow();
       console.log("created workflow", res);
     } catch (error) {
       console.error("error creating workflow", error);
