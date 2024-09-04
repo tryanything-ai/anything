@@ -1,11 +1,7 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import {
-  WorkflowsContext,
-  WorkflowsProvider,
-  WorkflowsContextInterface,
-} from "./WorkflowsProvider";
+
 import {
   WorkflowVersionProvider,
   WorkflowVersionContext,
@@ -23,7 +19,6 @@ import {
 } from "./WorkflowTestingProvider";
 
 interface AnythingContextInterface {
-  // workflows: WorkflowsContextInterface;
   workflow: WorkflowVersionContextInterface;
   variables: VariablesContextInterface;
   testing: WorkflowTestingContextInterface;
@@ -39,40 +34,33 @@ export const AnythingProvider = ({
   children: React.ReactNode;
 }) => {
   return (
-    <WorkflowsProvider>
-      <WorkflowsContext.Consumer>
-        {(workflows) => (
-          <WorkflowVersionProvider>
-            <WorkflowVersionContext.Consumer>
-              {(workflow) => (
-                <VariablesProvider>
-                  <VariablesContext.Consumer>
-                    {(variables) => (
-                      <WorkflowTestingProvider>
-                        <WorkflowTestingContext.Consumer>
-                          {(testing) => (
-                            <AnythingContext.Provider
-                              value={{
-                                workflow,
-                                // workflows,
-                                variables,
-                                testing,
-                              }}
-                            >
-                              {children}
-                            </AnythingContext.Provider>
-                          )}
-                        </WorkflowTestingContext.Consumer>
-                      </WorkflowTestingProvider>
+    <WorkflowVersionProvider>
+      <WorkflowVersionContext.Consumer>
+        {(workflow) => (
+          <VariablesProvider>
+            <VariablesContext.Consumer>
+              {(variables) => (
+                <WorkflowTestingProvider>
+                  <WorkflowTestingContext.Consumer>
+                    {(testing) => (
+                      <AnythingContext.Provider
+                        value={{
+                          workflow,
+                          variables,
+                          testing,
+                        }}
+                      >
+                        {children}
+                      </AnythingContext.Provider>
                     )}
-                  </VariablesContext.Consumer>
-                </VariablesProvider>
+                  </WorkflowTestingContext.Consumer>
+                </WorkflowTestingProvider>
               )}
-            </WorkflowVersionContext.Consumer>
-          </WorkflowVersionProvider>
+            </VariablesContext.Consumer>
+          </VariablesProvider>
         )}
-      </WorkflowsContext.Consumer>
-    </WorkflowsProvider>
+      </WorkflowVersionContext.Consumer>
+    </WorkflowVersionProvider>
   );
 };
 
