@@ -49,14 +49,14 @@ pub async fn refresh_accounts(
     println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
 
     for account in &accounts {
-        println!("[AUTH REFRESH] Processing account: {:?}", account);
+        println!("[AUTH REFRESH] Processing account: {:?}", account.auth_provider_id);
 
         let auth_provider: AuthProvider = match &account.auth_provider {
             Some(value) => serde_json::from_value(value.clone())?,
             None => {
                 println!(
                     "[AUTH REFRESH] No auth_provider found for account: {:?}",
-                    account
+                    account.auth_provider_id
                 );
                 continue; // or handle the None case appropriately
             }
