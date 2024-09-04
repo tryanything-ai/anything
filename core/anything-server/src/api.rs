@@ -182,6 +182,7 @@ pub async fn get_flow_versions(
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
         .select("*")
+        .order("created_at.desc")
         .execute()
         .await
     {

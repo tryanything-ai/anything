@@ -6,17 +6,18 @@ import { Send, XIcon } from "lucide-react";
 import { ShareDialog } from "@/components/studio/share-dialog";
 import { useAnything } from "@/context/AnythingContext";
 import WorkflowToggle from "../workflows/workflow-toggle";
-
+import { useParams } from "next/navigation";
 // flow_name={workflow?.db_flow.flow_name || ""}
 // savingStatus={workflow.savingStatus}
 
 export default function StudioHeader(): JSX.Element {
   const router = useRouter();
+  const params = useParams<{ workflowVersionId: string; workflowId: string }>();
 
   const { workflow } = useAnything();
 
   const handleBack = () => {
-    router.back();
+    router.push(`/workflows/${params.workflowId}`);
   };
 
   return (
