@@ -1,4 +1,3 @@
-use auth::AuthState;
 use axum::{
     http::{
         header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
@@ -16,6 +15,8 @@ use tokio::sync::RwLock;
 use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
+
+use auth::init::AuthState;
 
 mod api;
 mod auth;
@@ -119,7 +120,7 @@ async fn main() {
     // Define routes that are public
     let public_routes = Router::new().route(
         "/auth/:provider_name/callback",
-        get(auth::handle_provider_callback),
+        get(auth::init::handle_provider_callback),
     );
 
     let protected_routes = Router::new()
@@ -168,7 +169,7 @@ async fn main() {
             get(api::get_auth_accounts_for_provider_name),
         )
         .route("/auth/providers", get(api::get_auth_providers))
-        .route("/auth/:provider_name/initiate", get(auth::initiate_auth))
+        .route("/auth/:provider_name/initiate", get(auth::init::initiate_auth))
         // Users Testing Workflows
         //Test Workflows
         .route(

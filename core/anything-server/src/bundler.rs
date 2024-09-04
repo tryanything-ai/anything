@@ -1,4 +1,4 @@
-use crate::auth::{self, AccountAuthProviderAccount};
+use crate::auth::init::{self, AccountAuthProviderAccount};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader};
@@ -85,7 +85,7 @@ pub async fn get_refreshed_auth_accounts(
     client: &Postgrest,
     account_id: &str,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    let accounts = auth::refresh_accounts(client, account_id).await?;
+    let accounts = auth::refresh::refresh_accounts(client, account_id).await?;
 
     Ok(accounts)
 }
