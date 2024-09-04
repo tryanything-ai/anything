@@ -32,10 +32,9 @@ import {
 } from "reactflow";
 
 import api from "@/lib/anything-api";
-import { Action, AnythingNodeProps, Workflow } from "@/types/workflows";
+import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
-import { UpdateWorklowArgs, useWorkflowsContext } from "./WorkflowsProvider";
 
 export enum PanelTab {
   SETTINGS = "settings",
@@ -48,6 +47,12 @@ export enum SavingStatus {
   SAVED = "saved!",
   NONE = "",
 }
+
+export type UpdateWorklowArgs = {
+  flow_name?: string;
+  description?: string;
+  active?: boolean;
+};
 
 export interface WorkflowVersionContextInterface {
   db_flow_version_id: string;
