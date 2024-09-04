@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader};
 use tera::{Context, Tera};
 // use std::fs::File;
+use crate::auth;
 use crate::secrets::GetDecryptedSecretsInput;
 use crate::workflow_types::Task;
 use dotenv::dotenv;
@@ -59,27 +60,6 @@ pub async fn get_completed_tasks_for_session(
 
     Ok(tasks)
 }
-
-// pub async fn get_auth_accounts(
-//     client: &Postgrest,
-//     account_id: &str,
-// ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-//     dotenv().ok();
-//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-
-//     let response = client
-//         .from("account_auth_provider_accounts")
-//         .auth(supabase_service_role_api_key.clone())
-//         .select("*")
-//         .eq("account_id", account_id)
-//         .execute()
-//         .await?;
-
-//     let body = response.text().await?;
-//     let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
-
-//     Ok(accounts)
-// }
 
 pub async fn get_refreshed_auth_accounts(
     client: &Postgrest,
