@@ -82,27 +82,28 @@ pub async fn bundle_context(
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     let mut context = Context::new();
 
+    println!("[BUNDLER] Initial context: {:?}", context);
     // Fetch decrypted secrets for account_id
     //TODO: add secrets.SECRET_SLUG functionality?? maybe its already heare
     // let secrets = get_decrypted_secrets(client, task.account_id).await?;
     // context.insert("secrets", &secrets);
-    let secrets = get_decrypted_secrets(client, task.account_id).await?;
+    // let secrets = get_decrypted_secrets(client, task.account_id).await?;
 
-    if let Some(secrets_map) = secrets.as_object() {
-        for (key, value) in secrets_map {
-            context.insert(&format!("secrets.{}", key), value);
-        }
-    }
+    // if let Some(secrets_map) = secrets.as_object() {
+    //     for (key, value) in secrets_map {
+    //         context.insert(&format!("secrets.{}", key), value);
+    //     }
+    // }
 
     // Retrieve completed events for the session to use results
-    let complete_tasks = get_completed_tasks_for_session(client, &task.flow_session_id).await?;
+    // let complete_tasks = get_completed_tasks_for_session(client, &task.flow_session_id).await?;
 
     // Add results to context by node_id
-    for event in complete_tasks {
-        if let Some(result) = event.result {
-            context.insert(&event.node_id, &result);
-        }
-    }
+    // for event in complete_tasks {
+    //     if let Some(result) = event.result {
+    //         context.insert(&event.node_id, &result);
+    //     }
+    // }
 
     //TODO: add accounts.ACCOUNT_SLUG functionality
     let auth_provider_accounts =
@@ -111,7 +112,10 @@ pub async fn bundle_context(
     for account in auth_provider_accounts {
         println!("[BUNDLER] Account: {:?}", account);
         let slug = &account.account_auth_provider_account_slug;
-        println!("[BUNDLER] Inserting account with slug: {} at accounts.{}", slug, slug);
+        println!(
+            "[BUNDLER] Inserting account with slug: {} at accounts.{}",
+            slug, slug
+        );
         context.insert(&format!("accounts.{}", slug), &account);
     }
     // Prepare the Tera template engine
@@ -126,7 +130,10 @@ pub async fn bundle_context(
         println!("[BUNDLER] Context: {:?}", context);
         tera.add_raw_template("variables", &variables_str)
             .map_err(|e| {
-                println!("[BUNDLER] Failed to add raw template for variables to Tera: {}", e);
+                println!(
+                    "[BUNDLER] Failed to add raw template for variables to Tera: {}",
+                    e
+                );
                 Box::new(CustomError(e.to_string()))
             })?;
 
@@ -150,7 +157,10 @@ pub async fn bundle_context(
     if let Some(inputs) = task.config.get("inputs") {
         let inputs_str = inputs.to_string();
         tera.add_raw_template("inputs", &inputs_str).map_err(|e| {
-            println!("[BUNDLER] Failed to add raw template for inputs to Tera: {}", e);
+            println!(
+                "[BUNDLER] Failed to add raw template for inputs to Tera: {}",
+                e
+            );
             Box::new(CustomError(e.to_string()))
         })?;
 
@@ -162,7 +172,10 @@ pub async fn bundle_context(
 
         let rendered_context =
             serde_json::from_str::<Value>(&rendered_context_str).map_err(|e| {
-                println!("[BUNDLER] Failed to convert rendered config to Value: {}", e);
+                println!(
+                    "[BUNDLER] Failed to convert rendered config to Value: {}",
+                    e
+                );
                 Box::new(CustomError(e.to_string()))
             })?;
 
@@ -171,9 +184,8 @@ pub async fn bundle_context(
         Ok(rendered_context)
     } else {
         println!("[BUNDLER] No inputs found in task config");
-        return Err(
-            Box::new(CustomError("[BUNDLER] No inputs found in task config".to_string()))
-                as Box<dyn Error + Send + Sync>,
-        );
+        return Err(Box::new(CustomError(
+            "[BUNDLER] No inputs found in task config".to_string(),
+        )) as Box<dyn Error + Send + Sync>);
     }
 }
