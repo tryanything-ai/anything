@@ -109,15 +109,28 @@ pub async fn bundle_context(
     let auth_provider_accounts =
         get_refreshed_auth_accounts(client, &task.account_id.to_string()).await?;
 
+    // for account in auth_provider_accounts {
+    //     println!("[BUNDLER] Account: {:?}", account);
+    //     let slug = &account.account_auth_provider_account_slug;
+    //     println!(
+    //         "[BUNDLER] Inserting account with slug: {} at accounts.{}",
+    //         slug, slug
+    //     );
+    //     context.insert(&format!("accounts.{}", slug), &account);
+    // }
+    let mut accounts_object = serde_json::Map::new();
     for account in auth_provider_accounts {
         println!("[BUNDLER] Account: {:?}", account);
-        let slug = &account.account_auth_provider_account_slug;
+        let slug = account.account_auth_provider_account_slug.clone();
         println!(
             "[BUNDLER] Inserting account with slug: {} at accounts.{}",
             slug, slug
         );
-        context.insert(&format!("accounts.{}", slug), &account);
+        accounts_object.insert(slug, serde_json::to_value(account)?);
     }
+
+    context.insert("accounts", &accounts_object);
+
     // Prepare the Tera template engine
     let mut tera = Tera::default();
 
