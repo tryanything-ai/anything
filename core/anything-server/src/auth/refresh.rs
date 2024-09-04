@@ -215,7 +215,7 @@ pub async fn refresh_access_token(
         ("client_id", &auth_provider.client_id),
     ];
 
-    println!("Refresh token exchange form_params: {:?}", form_params);
+    println!("[AUTH REFRESH] Refresh token exchange form_params: {:?}", form_params);
 
     let response = request
         .form(&form_params)
@@ -224,17 +224,17 @@ pub async fn refresh_access_token(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let status = response.status();
-    println!("Refresh token response status: {:?}", status);
+    println!("[AUTH REFRESH] Refresh token response status: {:?}", status);
 
     let body = response.text().await.map_err(|e| {
-        println!("Error reading refresh token response body: {:?}", e);
+        println!("[AUTH REFRESH] Error reading refresh token response body: {:?}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
-    println!("Refresh token response body: {:?}", body);
+    println!("[AUTH REFRESH] Refresh token response body: {:?}", body);
 
     if status.is_success() {
         let token: Value = serde_json::from_str(&body).map_err(|e| {
-            println!("Failed to parse refresh token response: {:?}", e);
+            println!("[AUTH REFRESH] Failed to parse refresh token response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse refresh token response: {}", e),
@@ -253,7 +253,7 @@ pub async fn refresh_access_token(
         })
     } else {
         let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
-            println!("Failed to parse refresh token error response: {:?}", e);
+            println!("[AUTH REFRESH] Failed to parse refresh token error response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse refresh token error response: {}", e),
@@ -267,7 +267,7 @@ pub async fn refresh_access_token(
         };
 
         println!(
-            "Returning refresh token error with status code: {:?}, description: {:?}",
+            "[AUTH REFRESH] Returning refresh token error with status code: {:?}, description: {:?}",
             status_code, error.error_description
         );
         Err((status_code, error.error_description))

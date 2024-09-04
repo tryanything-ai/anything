@@ -117,8 +117,8 @@ pub async fn handle_provider_callback(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OAuthCallbackParams>,
 ) -> impl IntoResponse {
-    println!("Handling auth callback for provider: {:?}", provider_name);
-    println!("Params: {:?}", params);
+    println!("[AUTH INIT] Handling auth callback for provider: {:?}", provider_name);
+    println!("[AUTH INIT] Params: {:?}", params);
 
     let client = &state.anything_client;
     let auth_states = &state.auth_states;
@@ -142,7 +142,7 @@ pub async fn handle_provider_callback(
         }
     };
 
-    println!("Response: {:?}", response);
+    println!("[AUTH INIT] Response: {:?}", response);
 
     let body = match response.text().await {
         Ok(body) => body,
@@ -195,7 +195,7 @@ pub async fn handle_provider_callback(
         }
     };
 
-    println!("Token: {:?}", token);
+    println!("[AUTH INIT] Token: {:?}", token);
 
     let (account_slug, account_label) = generate_unique_account_slug(
         client,
@@ -233,7 +233,7 @@ pub async fn handle_provider_callback(
         refresh_token_expires_at: refresh_token_expires_at.unwrap_or_else(Utc::now),
     };
 
-    println!("Create Account Input: {:?}", input);
+    println!("[AUTH INIT] Create Account Input: {:?}", input);
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -258,7 +258,7 @@ pub async fn handle_provider_callback(
         }
     };
 
-    println!("Create Account Response: {:?}", create_account_response);
+    println!("[AUTH INIT] Create Account Response: {:?}", create_account_response);
 
     // Return success response
     if create_account_response.status().is_success() {
@@ -335,7 +335,7 @@ pub async fn exchange_code_for_token(
         ("code_verifier", code_verifier),
     ];
 
-    println!("token exchange form_params: {:?}", form_params);
+    println!("[AUTH INIT] token exchange form_params: {:?}", form_params);
 
     let response = request
         .form(&form_params)
@@ -344,17 +344,17 @@ pub async fn exchange_code_for_token(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let status = response.status();
-    println!("Response status: {:?}", status);
+    println!("[AUTH INIT] Response status: {:?}", status);
 
     let body = response.text().await.map_err(|e| {
-        println!("Error reading response body: {:?}", e);
+        println!("[AUTH INIT] Error reading response body: {:?}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
-    println!("Response body: {:?}", body);
+    println!("[AUTH INIT] Response body: {:?}", body);
 
     if status.is_success() {
         serde_json::from_str::<OAuthToken>(&body).map_err(|e| {
-            println!("Failed to parse token response: {:?}", e);
+            println!("[AUTH INIT] Failed to parse token response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse token response: {}", e),
@@ -362,7 +362,7 @@ pub async fn exchange_code_for_token(
         })
     } else {
         let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
-            println!("Failed to parse error response: {:?}", e);
+            println!("[AUTH INIT] Failed to parse error response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse error response: {}", e),
@@ -377,7 +377,7 @@ pub async fn exchange_code_for_token(
         };
 
         println!(
-            "Returning error with status code: {:?}, description: {:?}",
+            "[AUTH INIT] Returning error with status code: {:?}, description: {:?}",
             status_code, error.error_description
         );
         Err((status_code, error.error_description))
@@ -403,7 +403,7 @@ pub async fn initiate_auth(
         created_at: Utc::now(),
     };
 
-    println!("Auth State: {:?}", auth_state);
+    println!("[AUTH INIT] Auth State: {:?}", auth_state);
 
     // Store the state in memory
     let mut auth_states_lock = auth_states.write().await;
@@ -431,7 +431,7 @@ pub async fn initiate_auth(
         }
     };
 
-    println!("Response: {:?}", response);
+    println!("[AUTH INIT] Response: {:?}", response);
 
     let body = match response.text().await {
         Ok(body) => body,
@@ -444,7 +444,7 @@ pub async fn initiate_auth(
         }
     };
 
-    println!("Body: {:?}", body);
+    println!("[AUTH INIT] Body: {:?}", body);
 
     let auth_provider: AuthProvider = match serde_json::from_str(&body) {
         Ok(auth_provider) => auth_provider,
@@ -457,7 +457,7 @@ pub async fn initiate_auth(
         }
     };
 
-    println!("AuthProvider: {:?}", auth_provider);
+    println!("[AUTH INIT] AuthProvider: {:?}", auth_provider);
 
     // Build the OAuth URL
     let client_id = auth_provider.client_id.clone();
@@ -476,7 +476,7 @@ pub async fn initiate_auth(
         urlencoding::encode(&code_challenge)
     );
 
-    println!("Auth URL: {}", auth_url);
+    println!("[AUTH INIT] Auth URL: {}", auth_url);
 
     Json(OAuthResponse { url: auth_url }).into_response()
 }
