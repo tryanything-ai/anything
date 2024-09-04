@@ -109,9 +109,9 @@ pub async fn bundle_context(
         get_refreshed_auth_accounts(client, &task.account_id.to_string()).await?;
 
     for account in auth_provider_accounts {
-        println!("Account: {:?}", account);
+        println!("[BUNDLER] Account: {:?}", account);
         let slug = &account.account_auth_provider_account_slug;
-        println!("Inserting account with slug: {} at accounts.{}", slug, slug);
+        println!("[BUNDLER] Inserting account with slug: {} at accounts.{}", slug, slug);
         context.insert(&format!("accounts.{}", slug), &account);
     }
     // Prepare the Tera template engine
@@ -119,59 +119,60 @@ pub async fn bundle_context(
 
     // Add variables to Tera template engine if present
     if let Some(variables) = task.config.get("variables") {
-        println!("Found variables in task config: {:?}", variables);
+        println!("[BUNDLER] Found variables in task config: {:?}", variables);
         let variables_str = variables.to_string();
-        println!("Variables as string: {}", variables_str);
+        println!("[BUNDLER] Variables as string: {}", variables_str);
 
+        println!("[BUNDLER] Context: {:?}", context);
         tera.add_raw_template("variables", &variables_str)
             .map_err(|e| {
-                println!("Failed to add raw template for variables to Tera: {}", e);
+                println!("[BUNDLER] Failed to add raw template for variables to Tera: {}", e);
                 Box::new(CustomError(e.to_string()))
             })?;
 
-        println!("Successfully added raw template for variables to Tera");
+        println!("[BUNDLER] Successfully added raw template for variables to Tera");
 
         let rendered_variables = tera.render("variables", &context).map_err(|e| {
-            println!("Failed to render variables with Tera: {}", e);
+            println!("[BUNDLER] Failed to render variables with Tera: {}", e);
             Box::new(CustomError(e.to_string()))
         })?;
 
-        println!("Successfully rendered variables with Tera");
+        println!("[BUNDLER] Successfully rendered variables with Tera");
 
         // Add rendered variables to context
-        println!("Rendered variables: {}", rendered_variables);
+        println!("[BUNDLER] Rendered variables: {}", rendered_variables);
         context.insert("variables", &rendered_variables);
     } else {
-        println!("No variables found in task config");
+        println!("[BUNDLER] No variables found in task config");
     }
 
     // Add inputs to Tera template engine if present
     if let Some(inputs) = task.config.get("inputs") {
         let inputs_str = inputs.to_string();
         tera.add_raw_template("inputs", &inputs_str).map_err(|e| {
-            println!("Failed to add raw template for inputs to Tera: {}", e);
+            println!("[BUNDLER] Failed to add raw template for inputs to Tera: {}", e);
             Box::new(CustomError(e.to_string()))
         })?;
 
         // Convert rendered inputs to Value
         let rendered_context_str = tera.render("inputs", &context).map_err(|e| {
-            println!("Failed to render config with Tera: {}", e);
+            println!("[BUNDLER] Failed to render config with Tera: {}", e);
             Box::new(CustomError(e.to_string()))
         })?;
 
         let rendered_context =
             serde_json::from_str::<Value>(&rendered_context_str).map_err(|e| {
-                println!("Failed to convert rendered config to Value: {}", e);
+                println!("[BUNDLER] Failed to convert rendered config to Value: {}", e);
                 Box::new(CustomError(e.to_string()))
             })?;
 
-        println!("Rendered context: {:?}", rendered_context);
+        println!("[BUNDLER] Rendered context: {:?}", rendered_context);
 
         Ok(rendered_context)
     } else {
-        println!("No inputs found in task config");
+        println!("[BUNDLER] No inputs found in task config");
         return Err(
-            Box::new(CustomError("No inputs found in task config".to_string()))
+            Box::new(CustomError("[BUNDLER] No inputs found in task config".to_string()))
                 as Box<dyn Error + Send + Sync>,
         );
     }
