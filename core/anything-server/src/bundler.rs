@@ -13,6 +13,51 @@ use std::hash::Hash;
 use crate::templater::Templater;
 use uuid::Uuid;
 
+// Fake account data for testing purposes
+pub async fn get_fake_account_auth_provider_account(
+) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
+    let fake_account = AccountAuthProviderAccount {
+        account_auth_provider_account_id: Uuid::new_v4(),
+        account_id: Uuid::new_v4(),
+        auth_provider: Some(serde_json::json!({
+            "auth_provider_id": "airtable",
+            "provider_name": "airtable",
+            "provider_label": "airtable",
+            "provider_icon": "<svg>...</svg>",
+            "provider_description": "Connect with your airtable account",
+            "provider_readme": "Internal notes for managing airtable connection",
+            "auth_type": "oauth2",
+            "auth_url": "https://accounts.airtable.com/o/oauth2/auth",
+            "token_url": "https://oauth2.airtableapis.com/token",
+            "provider_data": {},
+            "access_token_lifetime_seconds": "3600",
+            "refresh_token_lifetime_seconds": "2592000",
+            "redirect_url": "https://example.com/auth/callback",
+            "client_id": "your_client_id",
+            "client_secret": "your_client_secret",
+            "scopes": "email profile",
+            "public": false
+        })),
+        auth_provider_id: "airtable".to_string(),
+        account_auth_provider_account_label: "My airtable Account".to_string(),
+        account_auth_provider_account_slug: "airtable".to_string(),
+        account_data: Some(serde_json::json!({
+            "email": "user@example.com",
+            "name": "Test User"
+        })),
+        access_token: "fake_access_token".to_string(),
+        access_token_expires_at: Some(chrono::Utc::now() + chrono::Duration::hours(1)),
+        refresh_token: Some("fake_refresh_token".to_string()),
+        refresh_token_expires_at: Some(chrono::Utc::now() + chrono::Duration::days(30)),
+        updated_at: Some(chrono::Utc::now()),
+        created_at: Some(chrono::Utc::now()),
+        updated_by: Some(Uuid::new_v4()),
+        created_by: Some(Uuid::new_v4()),
+    };
+
+    Ok(vec![fake_account])
+}
+
 // Secrets for building context with API KEYS
 pub async fn get_decrypted_secrets(
     client: &Postgrest,
@@ -109,12 +154,13 @@ pub async fn bundle_context(
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context for task: {:?}", task);
 
-    let mut context: HashMap<String, Value> = HashMap::new();
+    let mut render_variables_context: HashMap<String, Value> = HashMap::new();
 
-    println!("[BUNDLER] Initial context: {:?}", context);
+    println!("[BUNDLER] Initial context: {:?}", render_variables_context);
 
     let mut accounts: HashMap<String, Value> = HashMap::new();
-    for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
+    // for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
+    for account in get_fake_account_auth_provider_account().await? {
         let slug = account.account_auth_provider_account_slug.clone();
         println!(
             "[BUNDLER] Inserting account with slug: {} at accounts.{}",
@@ -124,9 +170,12 @@ pub async fn bundle_context(
         accounts.insert(slug, serde_json::to_value(account)?);
     }
 
-    context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
+    render_variables_context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
 
-    println!("[BUNDLER] Context after adding accounts: {:?}", context);
+    println!(
+        "[BUNDLER] Context after adding accounts: {:?}",
+        render_variables_context
+    );
 
     // Create a new Templater instance
     let mut templater = Templater::new();
@@ -134,10 +183,7 @@ pub async fn bundle_context(
     // Add the task definition as a template
     if let Some(variables) = task.config.get("variables") {
         let variables_str = variables.to_string();
-        println!(
-            "[BUNDLER] Task variables definition: {}",
-            variables_str
-        );
+        println!("[BUNDLER] Task variables definition: {}", variables_str);
         templater.add_template("task_variables_definition", &variables_str);
     } else {
         println!("[BUNDLER] No variables found in task config");
@@ -152,23 +198,41 @@ pub async fn bundle_context(
         println!("  {}. {}", index + 1, variable);
     }
 
+    // Convert context HashMap to Value
+    let context_value = serde_json::to_value(render_variables_context.clone())?;
+
     // Render the task definition with the context
-    let rendered_definition = templater.render("task_variables_definition", &context)?;
+    let rendered_variables_definition =
+        templater.render("task_variables_definition", &context_value)?;
     println!(
-        "[BUNDLER] Rendered variables definition: {}",
-        rendered_definition
+        "[BUNDLER] Rendered variables output: {}",
+        rendered_variables_definition
     );
 
-    // Add the rendered definition to the context
-    context.insert(
-        "rendered_definition".to_string(),
-        Value::String(rendered_definition),
+    let mut render_input_context: HashMap<String, Value> = HashMap::new();
+
+    render_input_context.insert("variables".to_string(), rendered_variables_definition);
+
+    // println!("[BUNDLER] Final context: {:?}", render_variables_context);
+    // Convert context HashMap to Value
+    let iputs_context_value = serde_json::to_value(render_input_context.clone())?;
+
+    // Add the task definition as a template
+    if let Some(inputs) = task.config.get("inputs") {
+        let inputs_str = inputs.to_string();
+        println!("[BUNDLER] Task inputs definition: {}", inputs_str);
+        templater.add_template("task_inputs_definition", &inputs_str);
+    } else {
+        println!("[BUNDLER] No variables found in task config");
+    }
+
+    // Render the task definition with the context
+    let rendered_inputs_definition =
+        templater.render("task_inputs_definition", &iputs_context_value)?;
+    println!(
+        "[BUNDLER] Rendered inputs ouput: {}",
+        rendered_inputs_definition
     );
 
-    // Add the original variables to the context
-    context.insert("variables".to_string(), serde_json::to_value(variables)?);
-
-    println!("[BUNDLER] Final context: {:?}", context);
-
-    Ok(serde_json::to_value(context)?)
+    Ok(rendered_inputs_definition)
 }

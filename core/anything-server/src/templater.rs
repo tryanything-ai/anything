@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
+use serde_json::Value;
 
 #[derive(Debug)]
 pub struct TemplateError {
@@ -52,35 +53,48 @@ impl Templater {
 
         Ok(variables)
     }
+    fn get_value_from_path(context: &Value, path: &str) -> Option<Value> {
+        let mut current = context;
+        for key in path.split('.') {
+            match current {
+                Value::Object(map) => {
+                    current = map.get(key)?;
+                }
+                _ => return None,
+            }
+        }
+        Some(current.clone())
+    }
 
-    pub fn render(&self, template_name: &str, context: &HashMap<String, serde_json::Value>) -> Result<String, TemplateError> {
+    pub fn render(&self, template_name: &str, context: &Value) -> Result<Value, TemplateError> {
         let template = self.templates.get(template_name).ok_or_else(|| TemplateError {
             message: "Template not found".to_string(),
             variable: template_name.to_string(),
         })?;
 
-        let mut result = String::new();
+        let mut result = serde_json::Map::new();
         let mut start = 0;
         while let Some(open_idx) = template[start..].find("{{") {
             let open_idx = start + open_idx;
-            result.push_str(&template[start..open_idx]);
             let close_idx = template[open_idx..].find("}}").ok_or_else(|| TemplateError {
                 message: "Unclosed template variable".to_string(),
                 variable: template_name.to_string(),
             })?;
             let close_idx = open_idx + close_idx;
             let variable = template[open_idx + 2..close_idx].trim();
-            let value = context.get(variable).ok_or_else(|| TemplateError {
+            
+            let value_path = variable;
+            println!("Processing variable: {}", variable);
+            let value = Self::get_value_from_path(context, value_path).ok_or_else(|| TemplateError {
                 message: "Variable not found in context".to_string(),
-                variable: variable.to_string(),
+                variable: value_path.to_string(),
             })?;
-            result.push_str(&serde_json::to_string(value).map_err(|e| TemplateError {
-                message: e.to_string(),
-                variable: variable.to_string(),
-            })?);
+            
+            // Store the variable under the key it was found under
+            result.insert(value_path.to_string(), value);
+            
             start = close_idx + 2;
         }
-        result.push_str(&template[start..]);
-        Ok(result)
+        Ok(Value::Object(result))
     }
 }
