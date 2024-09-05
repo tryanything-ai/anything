@@ -21,6 +21,7 @@ use auth::init::AuthState;
 
 mod api;
 mod auth;
+mod templater;
 mod bundler;
 mod execution_planner;
 mod marketplace;
