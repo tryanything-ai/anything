@@ -21,13 +21,13 @@ export default async function PersonalAccountDashboard({
       name: "Workflows",
       href: "/workflows",
     },
-    {
-      name: "Templates",
-      href: "/templates",
-    },
+    // {
+    //   name: "Templates",
+    //   href: "/templates",
+    // },
     {
       name: "Connections",
-      href: "/accounts",
+      href: "/connections",
     },
     {
       name: "Settings",

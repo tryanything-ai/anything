@@ -67,29 +67,32 @@ export default function StudioHeader(): JSX.Element {
         active={workflow.db_flow.active}
         workflow_id={workflow.db_flow_id}
       />
-      <ShareDialog />
-      {version && version.published ? (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={true}
-          // onClick={() => workflow.publishWorkflowVersion()}
-          className="gap-1.5 text-sm bg-green-400 disabled:opacity-100"
-        >
-          <Send className="size-3.5" />
-          Published
-        </Button>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => workflow.publishWorkflowVersion()}
-          className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
-        >
-          <Send className="size-3.5" />
-          Publish
-        </Button>
-      )}
+      {/* <ShareDialog /> */}
+      {/* TODO:bring this back */}
+      <div className="ml-auto">
+        {version && version.published ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={true}
+            // onClick={() => workflow.publishWorkflowVersion()}
+            className="gap-1.5 text-sm bg-green-400 disabled:opacity-100"
+          >
+            <Send className="size-3.5" />
+            Published
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => workflow.publishWorkflowVersion()}
+            className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
+          >
+            <Send className="size-3.5" />
+            Publish
+          </Button>
+        )}
+      </div>
     </header>
   );
 }

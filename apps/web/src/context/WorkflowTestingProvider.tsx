@@ -24,6 +24,7 @@ export interface WorkflowTestingContextInterface {
   testAction: (action_id: string) => Promise<void>;
   testingWorkflow: boolean;
   testWorkflow: () => Promise<void>;
+  resetState: () => void;
 }
 
 export const WorkflowTestingContext =
@@ -37,6 +38,7 @@ export const WorkflowTestingContext =
     testAction: async () => {},
     testingWorkflow: false,
     testWorkflow: async () => {},
+    resetState: () => {},
   });
 
 export const WorkflowTestingProvider = ({
@@ -172,6 +174,7 @@ export const WorkflowTestingProvider = ({
         testingWorkflow,
         testWorkflow,
         testAction,
+        resetState,
       }}
     >
       {children}
