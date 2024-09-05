@@ -133,15 +133,12 @@ pub async fn bundle_context(
 
     // Add the task definition as a template
     if let Some(variables) = task.config.get("variables") {
-        if let Some(variables_definition) = variables.as_str() {
-            println!(
-                "[BUNDLER] Task variables definition: {}",
-                variables_definition
-            );
-            templater.add_template("task_variables_definition", variables_definition);
-        } else {
-            println!("[BUNDLER] Task variables definition is not a string");
-        }
+        let variables_str = variables.to_string();
+        println!(
+            "[BUNDLER] Task variables definition: {}",
+            variables_str
+        );
+        templater.add_template("task_variables_definition", &variables_str);
     } else {
         println!("[BUNDLER] No variables found in task config");
     }
