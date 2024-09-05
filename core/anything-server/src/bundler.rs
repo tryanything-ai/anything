@@ -9,6 +9,7 @@ use std::error::Error;
 use std::fmt;
 use tera::{Context, Tera};
 use uuid::Uuid;
+use std::collections::HashMap;
 
 // Secrets for building context with API KEYS
 pub async fn get_decrypted_secrets(
@@ -120,7 +121,8 @@ pub async fn bundle_context(
     //     context.insert(&format!("accounts.{}", slug), &account);
     // }
 
-    let mut accounts_object = serde_json::Map::new();
+    let mut accounts: HashMap<String, Value> = HashMap::new();
+    // let mut accounts_object = serde_json::Map::new();
     for account in auth_provider_accounts {
         println!("[BUNDLER] Account: {:?}", account);
         let slug = account.account_auth_provider_account_slug.clone();
@@ -128,10 +130,10 @@ pub async fn bundle_context(
             "[BUNDLER] Inserting account with slug: {} at accounts.{}",
             slug, slug
         );
-        accounts_object.insert(slug, serde_json::to_value(account)?);
+        accounts.insert(slug, serde_json::to_value(account)?);
     }
 
-    context.insert("accounts", &accounts_object);
+    context.insert("accounts", &accounts);
 
     // Prepare the Tera template engine
     let mut tera = Tera::default();
