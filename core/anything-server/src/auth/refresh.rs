@@ -43,10 +43,10 @@ pub async fn refresh_accounts(
     println!("[AUTH REFRESH] Received response from database");
 
     let body = response.text().await?;
-    println!("[AUTH REFRESH] Response body: {}", body);
+    // println!("[AUTH REFRESH] Response body: {}", body);
 
     let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
-    println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
+    // println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
 
     for account in &accounts {
         println!("[AUTH REFRESH] Processing account: {:?}", account.auth_provider_id);
