@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Send, XIcon } from "lucide-react";
@@ -7,6 +8,8 @@ import { ShareDialog } from "@/components/studio/share-dialog";
 import { useAnything } from "@/context/AnythingContext";
 import WorkflowToggle from "../workflows/workflow-toggle";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import api from "@/lib/anything-api";
 // flow_name={workflow?.db_flow.flow_name || ""}
 // savingStatus={workflow.savingStatus}
 
@@ -16,9 +19,30 @@ export default function StudioHeader(): JSX.Element {
 
   const { workflow } = useAnything();
 
+  const [version, setVersion] = useState<any>(null);
+
   const handleBack = () => {
     router.push(`/workflows/${params.workflowId}`);
   };
+
+  const fetchVersion = async () => {
+    try {
+      let version = await api.flows.getFlowVersionById(
+        params.workflowId,
+        params.workflowVersionId,
+      );
+      setVersion(version);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (params.workflowVersionId && params.workflowId) {
+      console.log("fetching version", params.workflowVersionId);
+      fetchVersion();
+    }
+  }, [params.workflowVersionId]);
 
   return (
     <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
@@ -44,15 +68,28 @@ export default function StudioHeader(): JSX.Element {
         workflow_id={workflow.db_flow_id}
       />
       <ShareDialog />
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => workflow.publishWorkflowVersion()}
-        className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
-      >
-        <Send className="size-3.5" />
-        Publish
-      </Button>
+      {version && version.published ? (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={true}
+          // onClick={() => workflow.publishWorkflowVersion()}
+          className="gap-1.5 text-sm bg-green-400 disabled:opacity-100"
+        >
+          <Send className="size-3.5" />
+          Published
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => workflow.publishWorkflowVersion()}
+          className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
+        >
+          <Send className="size-3.5" />
+          Publish
+        </Button>
+      )}
     </header>
   );
 }

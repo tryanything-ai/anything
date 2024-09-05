@@ -308,16 +308,19 @@ pub async fn create_workflow(
         flow_id: payload.flow_id.clone(),
         flow_definition: serde_json::json!(Workflow::default()),
     };
-
-    //Create Flow Version
-    let _version_response = match client
+    // Create Flow Version
+    let version_response = match client
         .from("flow_versions")
         .auth(user.jwt.clone())
         .insert(serde_json::to_string(&version_input).unwrap())
+        .single()
         .execute()
         .await
     {
-        Ok(response) => response,
+        Ok(response) => {
+            println!("Flow version creation response: {:?}", response);
+            response
+        },
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -327,8 +330,11 @@ pub async fn create_workflow(
         }
     };
 
-    let body = match response.text().await {
-        Ok(body) => body,
+    let body = match version_response.json::<serde_json::Value>().await {
+        Ok(body) => serde_json::json!({
+            "workflow_id": payload.flow_id,
+            "workflow_version_id": body["flow_version_id"].as_str().unwrap_or("")
+        }),
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
