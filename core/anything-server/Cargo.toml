@@ -21,7 +21,6 @@ slugify = "0.1.0"
 tokio = { version = "1.38.0", features = ["full"] }
 tower-http = { version = "0.5.0", features = ["cors", "set-header"] }
 reqwest = { version = "0.11", features = ["json"] }
-tera = "1.19.1"
 openssl = "0.10"
 openssl-sys = "0.9"
 regex = "1.10.6"

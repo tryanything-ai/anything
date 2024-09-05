@@ -8,8 +8,7 @@ use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fmt;
-use std::hash::Hash;
-// use tera::{Context, Tera};
+
 use crate::templater::Templater;
 use uuid::Uuid;
 
@@ -159,8 +158,8 @@ pub async fn bundle_context(
     println!("[BUNDLER] Initial context: {:?}", render_variables_context);
 
     let mut accounts: HashMap<String, Value> = HashMap::new();
-    // for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
-    for account in get_fake_account_auth_provider_account().await? {
+    for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
+    // for account in get_fake_account_auth_provider_account().await? {
         let slug = account.account_auth_provider_account_slug.clone();
         println!(
             "[BUNDLER] Inserting account with slug: {} at accounts.{}",
