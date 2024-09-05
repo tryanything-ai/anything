@@ -1,6 +1,6 @@
+use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
-use serde_json::Value;
 
 #[derive(Debug)]
 pub struct TemplateError {
@@ -10,14 +10,18 @@ pub struct TemplateError {
 
 impl std::fmt::Display for TemplateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Template error for variable '{}': {}", self.variable, self.message)
+        write!(
+            f,
+            "Template error for variable '{}': {}",
+            self.variable, self.message
+        )
     }
 }
 
 impl Error for TemplateError {}
 
 pub struct Templater {
-    templates: HashMap<String, String>,
+    templates: HashMap<String, Value>,
 }
 
 impl Templater {
@@ -27,32 +31,57 @@ impl Templater {
         }
     }
 
-    pub fn add_template(&mut self, name: &str, template: &str) {
-        self.templates.insert(name.to_string(), template.to_string());
+    pub fn add_template(&mut self, name: &str, template: Value) {
+        self.templates.insert(name.to_string(), template);
     }
 
-    pub fn get_template_variables(&self, template_name: &str) -> Result<Vec<String>, TemplateError> {
-        let template = self.templates.get(template_name).ok_or_else(|| TemplateError {
-            message: "Template not found".to_string(),
-            variable: template_name.to_string(),
-        })?;
-
-        let mut variables = Vec::new();
-        let mut start = 0;
-        while let Some(open_idx) = template[start..].find("{{") {
-            let open_idx = start + open_idx;
-            let close_idx = template[open_idx..].find("}}").ok_or_else(|| TemplateError {
-                message: "Unclosed template variable".to_string(),
+    pub fn get_template_variables(
+        &self,
+        template_name: &str,
+    ) -> Result<Vec<String>, TemplateError> {
+        let template = self
+            .templates
+            .get(template_name)
+            .ok_or_else(|| TemplateError {
+                message: "Template not found".to_string(),
                 variable: template_name.to_string(),
             })?;
-            let close_idx = open_idx + close_idx;
-            let variable = template[open_idx + 2..close_idx].trim().to_string();
-            variables.push(variable);
-            start = close_idx + 2;
-        }
 
+        self.extract_variables(template)
+    }
+
+    fn extract_variables(&self, value: &Value) -> Result<Vec<String>, TemplateError> {
+        let mut variables = Vec::new();
+        match value {
+            Value::Object(map) => {
+                for (_, v) in map {
+                    variables.extend(self.extract_variables(v)?);
+                }
+            }
+            Value::Array(arr) => {
+                for v in arr {
+                    variables.extend(self.extract_variables(v)?);
+                }
+            }
+            Value::String(s) => {
+                let mut start = 0;
+                while let Some(open_idx) = s[start..].find("{{") {
+                    let open_idx = start + open_idx;
+                    let close_idx = s[open_idx..].find("}}").ok_or_else(|| TemplateError {
+                        message: "Unclosed template variable".to_string(),
+                        variable: s.to_string(),
+                    })?;
+                    let close_idx = open_idx + close_idx;
+                    let variable = s[open_idx + 2..close_idx].trim().to_string();
+                    variables.push(variable);
+                    start = close_idx + 2;
+                }
+            }
+            _ => {}
+        }
         Ok(variables)
     }
+
     fn get_value_from_path(context: &Value, path: &str) -> Option<Value> {
         let mut current = context;
         for key in path.split('.') {
@@ -67,34 +96,150 @@ impl Templater {
     }
 
     pub fn render(&self, template_name: &str, context: &Value) -> Result<Value, TemplateError> {
-        let template = self.templates.get(template_name).ok_or_else(|| TemplateError {
-            message: "Template not found".to_string(),
-            variable: template_name.to_string(),
-        })?;
-
-        let mut result = serde_json::Map::new();
-        let mut start = 0;
-        while let Some(open_idx) = template[start..].find("{{") {
-            let open_idx = start + open_idx;
-            let close_idx = template[open_idx..].find("}}").ok_or_else(|| TemplateError {
-                message: "Unclosed template variable".to_string(),
+        let template = self
+            .templates
+            .get(template_name)
+            .ok_or_else(|| TemplateError {
+                message: "Template not found".to_string(),
                 variable: template_name.to_string(),
             })?;
-            let close_idx = open_idx + close_idx;
-            let variable = template[open_idx + 2..close_idx].trim();
-            
-            let value_path = variable;
-            println!("Processing variable: {}", variable);
-            let value = Self::get_value_from_path(context, value_path).ok_or_else(|| TemplateError {
-                message: "Variable not found in context".to_string(),
-                variable: value_path.to_string(),
-            })?;
-            
-            // Store the variable under the key it was found under
-            result.insert(value_path.to_string(), value);
-            
-            start = close_idx + 2;
-        }
-        Ok(Value::Object(result))
+
+        self.render_value(template, context)
     }
+
+    fn render_value(&self, value: &Value, context: &Value) -> Result<Value, TemplateError> {
+        match value {
+            Value::Object(map) => {
+                let mut result = serde_json::Map::new();
+                for (k, v) in map {
+                    result.insert(k.clone(), self.render_value(v, context)?);
+                }
+                Ok(Value::Object(result))
+            }
+            Value::Array(arr) => {
+                let mut result = Vec::new();
+                for v in arr {
+                    result.push(self.render_value(v, context)?);
+                }
+                Ok(Value::Array(result))
+            }
+            Value::String(s) => {
+                let mut result = s.clone();
+                let mut start = 0;
+
+                while let Some(open_idx) = result[start..].find("{{") {
+                    let open_idx = start + open_idx;
+                    let close_idx = result[open_idx..].find("}}").ok_or_else(|| TemplateError {
+                        message: "Unclosed template variable".to_string(),
+                        variable: result.clone(),
+                    })?;
+                    let close_idx = open_idx + close_idx;
+                    let variable = result[open_idx + 2..close_idx].trim();
+
+                    let value = Self::get_value_from_path(context, variable).ok_or_else(|| {
+                        TemplateError {
+                            message: "Variable not found in context".to_string(),
+                            variable: variable.to_string(),
+                        }
+                    })?;
+
+                    let replacement = match value {
+                        Value::String(s) => s.clone(),
+                        _ => value.to_string(),
+                    };
+                    result.replace_range(open_idx..close_idx + 2, &replacement);
+                    start = open_idx + replacement.len();
+                }
+
+                // Try to parse the result as JSON
+                match serde_json::from_str(&result) {
+                    Ok(json_value) => Ok(json_value),
+                    Err(_) => Ok(Value::String(result)),
+                }
+            }
+            _ => Ok(value.clone()),
+        }
+    }
+
+    //Good but not perfect
+    // fn render_value(&self, value: &Value, context: &Value) -> Result<Value, TemplateError> {
+    //     println!("Rendering value: {:?}", value);
+    //     match value {
+    //         Value::Object(map) => {
+    //             println!("Rendering object with {} keys", map.len());
+    //             let mut result = serde_json::Map::new();
+    //             for (k, v) in map {
+    //                 println!("Rendering key: {}", k);
+    //                 result.insert(k.clone(), self.render_value(v, context)?);
+    //             }
+    //             Ok(Value::Object(result))
+    //         }
+    //         Value::Array(arr) => {
+    //             println!("Rendering array with {} elements", arr.len());
+    //             let mut result = Vec::new();
+    //             for (i, v) in arr.iter().enumerate() {
+    //                 println!("Rendering array element {}", i);
+    //                 result.push(self.render_value(v, context)?);
+    //             }
+    //             Ok(Value::Array(result))
+    //         }
+    //         Value::String(s) => {
+    //             println!("Rendering string: {}", s);
+    //             let mut result = s.clone();
+    //             let mut start = 0;
+
+    //             // Try to parse the string as JSON first
+    //             if let Ok(json_value) = serde_json::from_str(s) {
+    //                 println!("Successfully parsed string as JSON rendering as JSON");
+    //                 // return Ok(json_value);
+    //                 return Ok(self.render_value(&json_value, context)?);
+    //             } else {
+    //                 println!(
+    //                     "Could not parse string {} as JSON, proceeding with template rendering",
+    //                     s
+    //                 );
+    //             }
+
+    //             // If parsing as JSON fails, proceed with template rendering
+    //             println!("Could not parse string as JSON, proceeding with template rendering");
+    //             while let Some(open_idx) = result[start..].find("{{") {
+    //                 let open_idx = start + open_idx;
+    //                 let close_idx = result[open_idx..].find("}}").ok_or_else(|| TemplateError {
+    //                     message: "Unclosed template variable".to_string(),
+    //                     variable: result.clone(),
+    //                 })?;
+    //                 let close_idx = open_idx + close_idx;
+    //                 let variable = result[open_idx + 2..close_idx].trim();
+
+    //                 println!("Processing variable: {}", variable);
+    //                 let value = Self::get_value_from_path(context, variable).ok_or_else(|| {
+    //                     TemplateError {
+    //                         message: "Variable not found in context".to_string(),
+    //                         variable: variable.to_string(),
+    //                     }
+    //                 })?;
+
+    //                 let replacement = value.to_string();
+    //                 println!("Replacing '{}' with '{}'", variable, replacement);
+    //                 result.replace_range(open_idx..close_idx + 2, &replacement);
+    //                 start = open_idx + replacement.len();
+    //             }
+    //             // Try to parse the result as JSON
+    //             match serde_json::from_str(&result) {
+    //                 Ok(json_value) => {
+    //                     println!("Successfully parsed result as JSON");
+    //                     Ok(self.render_value(&json_value, context)?)
+    //                 }
+    //                 Err(_) => {
+    //                     println!("Could not parse result as JSON, returning as string");
+    //                     Ok(Value::String(result))
+    //                 }
+    //             }
+    //         }
+    //         _ => {
+    //             println!("Rendering other value type: {:?}", value);
+    //             Ok(value.clone())
+    //         }
+    //     }
+    // }
 }
