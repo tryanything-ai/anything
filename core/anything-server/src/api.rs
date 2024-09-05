@@ -217,6 +217,54 @@ pub async fn get_flow_versions(
     Json(items).into_response()
 }
 
+pub async fn get_flow_version(
+    Path((flow_id, version_id)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    let client = &state.anything_client;
+
+    let response = match client
+        .from("flow_versions")
+        .auth(user.jwt)
+        .eq("flow_id", &flow_id)
+        .eq("flow_version_id", &version_id)
+        .select("*")
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
+}
+
 pub async fn create_workflow(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,

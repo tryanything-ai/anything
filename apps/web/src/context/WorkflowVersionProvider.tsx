@@ -134,8 +134,6 @@ export const WorkflowVersionProvider = ({
 
   const router = useRouter();
 
-  // const { getWorkflowById } = useWorkflowsContext();
-
   //Easy Access State
   const [dbFlow, setDbFlow] = useState<any>({});
   const [dbFlowVersion, setDbFlowVersion] = useState<any>({});
@@ -637,24 +635,28 @@ export const WorkflowVersionProvider = ({
 
       if (!workflow_response) return;
       let flow = workflow_response[0];
-      let flow_version = flow.flow_versions[0];
+      // let flow_version = flow.flow_versions[0];
+      let version = await api.flows.getFlowVersionById(
+        workflowId,
+        workflowVersionId,
+      );
       console.log("New Hydreate in Workflow Provider", flow);
-      console.log("Version in New Hydrate Flow", flow_version);
+      console.log("Version in New Hydrate Flow", version);
       console.log(
         "Flow Definition in New Hydrate Flow",
-        flow_version.flow_definition,
+        version.flow_definition,
       );
 
       setDbFlow(flow);
 
-      setDbFlowVersion(flow_version);
-      setFlowVersionDefinition(flow_version.flow_definition);
-      if (flow_version && flow_version.flow_definition) {
+      setDbFlowVersion(version);
+      setFlowVersionDefinition(version.flow_definition);
+      if (version && version.flow_definition) {
         if (
-          flow_version.flow_definition.actions &&
-          flow_version.flow_definition.actions.length !== 0
+          version.flow_definition.actions &&
+          version.flow_definition.actions.length !== 0
         ) {
-          let _nodes: Node[] = flow_version.flow_definition.actions.map(
+          let _nodes: Node[] = version.flow_definition.actions.map(
             (action: any) => {
               let position = action.presentation?.position || { x: 0, y: 0 };
 
@@ -673,10 +675,10 @@ export const WorkflowVersionProvider = ({
         }
 
         if (
-          flow_version.flow_definition.edges &&
-          flow_version.flow_definition.edges.length !== 0
+          version.flow_definition.edges &&
+          version.flow_definition.edges.length !== 0
         ) {
-          let _edges: Edge[] = flow_version.flow_definition.edges.map(
+          let _edges: Edge[] = version.flow_definition.edges.map(
             (edge: any) => {
               return edge;
             },
@@ -709,7 +711,6 @@ export const WorkflowVersionProvider = ({
       resetState();
     };
   }, [workflowId, workflowVersionId]);
-  // }, []);
 
   return (
     <WorkflowVersionContext.Provider

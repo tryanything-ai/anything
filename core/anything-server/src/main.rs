@@ -6,6 +6,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+
 use dotenv::dotenv;
 use postgrest::Postgrest;
 use std::collections::HashMap;
@@ -130,6 +131,10 @@ async fn main() {
         .route("/workflow/:id/versions", get(api::get_flow_versions))
         .route(
             "/workflow/:workflow_id/version/:workflow_version_id",
+            get(api::get_flow_version),
+        )
+        .route(
+            "/workflow/:workflow_id/version/:workflow_version_id",
             put(api::update_workflow_version),
         )
         .route(
@@ -169,7 +174,10 @@ async fn main() {
             get(api::get_auth_accounts_for_provider_name),
         )
         .route("/auth/providers", get(api::get_auth_providers))
-        .route("/auth/:provider_name/initiate", get(auth::init::initiate_auth))
+        .route(
+            "/auth/:provider_name/initiate",
+            get(auth::init::initiate_auth),
+        )
         // Users Testing Workflows
         //Test Workflows
         .route(

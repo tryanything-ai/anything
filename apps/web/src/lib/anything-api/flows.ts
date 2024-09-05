@@ -34,6 +34,31 @@ export const getFlows = async () => {
   }
 }
 
+export const getFlowVersionById = async (workflowId: string, versionId: string) => {
+  try {
+    // Get JWT from supabase to pass to the API
+    // API conforms to RLS policies on behalf of users for external API
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Session:', session);
+
+    if (session) {
+      const response = await fetch(`${ANYTHING_API_URL}/workflow/${workflowId}/version/${versionId}`, {
+        headers: {
+          Authorization: `${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      console.log('Data from /api/workflow/:id/version/:id:', data);
+      return data;
+    }
+  } catch (error) {
+    console.error('Error fetching /api/workflow/:id/version/:id::', error);
+  } finally {
+  }
+}
+
 export const createFlow = async () => {
   try {
     // Get JWT from supabase to pass to the API
