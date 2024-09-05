@@ -109,6 +109,7 @@ pub async fn bundle_context(
     let auth_provider_accounts =
         get_refreshed_auth_accounts(client, &task.account_id.to_string()).await?;
 
+    println!("[BUNDLER] Auth Provider Accounts: {:?}", auth_provider_accounts);
     // for account in auth_provider_accounts {
     //     println!("[BUNDLER] Account: {:?}", account);
     //     let slug = &account.account_auth_provider_account_slug;
@@ -118,6 +119,7 @@ pub async fn bundle_context(
     //     );
     //     context.insert(&format!("accounts.{}", slug), &account);
     // }
+
     let mut accounts_object = serde_json::Map::new();
     for account in auth_provider_accounts {
         println!("[BUNDLER] Account: {:?}", account);
