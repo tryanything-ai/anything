@@ -359,23 +359,30 @@ pub async fn process_task(
 async fn process_http_task(
     bundled_context: &Value,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    println!("[TASK_ENGINE] Entering process_http_task");
+    println!("[TASK_ENGINE] Bundled context: {:?}", bundled_context);
+
     if let (Some(method), Some(url)) = (
         bundled_context.get("method").and_then(Value::as_str),
         bundled_context.get("url").and_then(Value::as_str),
     ) {
-        println!("[TASK_ENGINE] Processing HTTP task");
+        println!("[TASK_ENGINE] Processing HTTP task with method: {}, url: {}", method, url);
         let client = Client::new();
         let method = match method.to_uppercase().as_str() {
             "GET" => reqwest::Method::GET,
             "POST" => reqwest::Method::POST,
             "PUT" => reqwest::Method::PUT,
             "DELETE" => reqwest::Method::DELETE,
-            _ => return Err(format!("Unsupported HTTP method: {}", method).into()),
+            _ => {
+                println!("[TASK_ENGINE] Unsupported HTTP method: {}", method);
+                return Err(format!("Unsupported HTTP method: {}", method).into());
+            }
         };
 
         let mut request_builder = client.request(method, url);
 
         if let Some(headers) = bundled_context.get("headers").and_then(Value::as_object) {
+            println!("[TASK_ENGINE] Adding headers: {:?}", headers);
             for (key, value) in headers {
                 if let Some(value_str) = value.as_str() {
                     request_builder = request_builder.header(key.as_str(), value_str);
@@ -384,30 +391,35 @@ async fn process_http_task(
         }
 
         if let Some(body) = bundled_context.get("body").and_then(Value::as_str) {
+            println!("[TASK_ENGINE] Adding body: {}", body);
             request_builder = request_builder.body(body.to_string());
         }
 
+        println!("[TASK_ENGINE] Sending HTTP request");
         let response = request_builder.send().await?;
-        println!("[TASK_ENGINE] HTTP request response! {:?}", response);
+        println!("[TASK_ENGINE] HTTP request response received: {:?}", response);
         let status = response.status();
         let headers = response.headers().clone();
 
         // Try to parse the response as JSON, if it fails, return the raw text
         let body = match response.text().await {
-            Ok(text) => match serde_json::from_str::<Value>(&text) {
-                Ok(json_value) => {
-                    println!(
-                        "[TASK_ENGINE] HTTP request successful. JSON Response: {:?}",
+            Ok(text) => {
+                println!("[TASK_ENGINE] Response text: {}", text);
+                match serde_json::from_str::<Value>(&text) {
+                    Ok(json_value) => {
+                        println!(
+                            "[TASK_ENGINE] HTTP request successful. JSON Response: {:?}",
+                            json_value
+                        );
                         json_value
-                    );
-                    json_value
-                }
-                Err(_) => {
-                    println!(
-                        "[TASK_ENGINE] HTTP request successful. Text Response: {}",
-                        text
-                    );
-                    Value::String(text)
+                    }
+                    Err(_) => {
+                        println!(
+                            "[TASK_ENGINE] HTTP request successful. Text Response: {}",
+                            text
+                        );
+                        Value::String(text)
+                    }
                 }
             },
             Err(e) => {
@@ -416,15 +428,19 @@ async fn process_http_task(
             }
         };
 
-        Ok(serde_json::json!({
+        let result = serde_json::json!({
             "status": status.as_u16(),
             "headers": headers
                 .iter()
                 .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
                 .collect::<HashMap<String, String>>(),
             "body": body
-        }))
+        });
+
+        println!("[TASK_ENGINE] Returning result: {:?}", result);
+        Ok(result)
     } else {
+        println!("[TASK_ENGINE] Missing required fields (method, url) in task context");
         Err("HTTP Missing required fields (method, url) in task context.".into())
     }
 }
