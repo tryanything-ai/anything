@@ -108,22 +108,28 @@ impl Templater {
     }
 
     fn render_value(&self, value: &Value, context: &Value) -> Result<Value, TemplateError> {
+        println!("[TEMPLATER] Rendering value: {:?}", value);
         match value {
             Value::Object(map) => {
+                println!("[TEMPLATER] Rendering object");
                 let mut result = serde_json::Map::new();
                 for (k, v) in map {
+                    println!("[TEMPLATER] Rendering object key: {}", k);
                     result.insert(k.clone(), self.render_value(v, context)?);
                 }
                 Ok(Value::Object(result))
             }
             Value::Array(arr) => {
+                println!("[TEMPLATER] Rendering array");
                 let mut result = Vec::new();
-                for v in arr {
+                for (i, v) in arr.iter().enumerate() {
+                    println!("[TEMPLATER] Rendering array index: {}", i);
                     result.push(self.render_value(v, context)?);
                 }
                 Ok(Value::Array(result))
             }
             Value::String(s) => {
+                println!("[TEMPLATER] Rendering string: {}", s);
                 let mut result = s.clone();
                 let mut start = 0;
 
@@ -136,12 +142,17 @@ impl Templater {
                     let close_idx = open_idx + close_idx;
                     let variable = result[open_idx + 2..close_idx].trim();
 
+                    println!("[TEMPLATER] Found variable: {}", variable);
+
                     let value = Self::get_value_from_path(context, variable).ok_or_else(|| {
+                        println!("[TEMPLATER] Variable not found in context: {}", variable);
                         TemplateError {
                             message: "Variable not found in context".to_string(),
                             variable: variable.to_string(),
                         }
                     })?;
+
+                    println!("[TEMPLATER] Variable value: {:?}", value);
 
                     let replacement = match value {
                         Value::String(s) => s.clone(),
@@ -151,13 +162,24 @@ impl Templater {
                     start = open_idx + replacement.len();
                 }
 
+                println!("[TEMPLATER] Rendered string: {}", result);
+
                 // Try to parse the result as JSON
                 match serde_json::from_str(&result) {
-                    Ok(json_value) => Ok(json_value),
-                    Err(_) => Ok(Value::String(result)),
+                    Ok(json_value) => {
+                        println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
+                        Ok(json_value)
+                    },
+                    Err(_) => {
+                        println!("[TEMPLATER] Not valid JSON, returning as string");
+                        Ok(Value::String(result))
+                    },
                 }
             }
-            _ => Ok(value.clone()),
+            _ => {
+                println!("[TEMPLATER] Returning value as-is: {:?}", value);
+                Ok(value.clone())
+            },
         }
     }
 
