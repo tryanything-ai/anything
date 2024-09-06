@@ -289,7 +289,6 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
     }
 }
 
-
 pub async fn process_task(
     client: &Postgrest,
     task: &Task,
@@ -366,7 +365,10 @@ async fn process_http_task(
         bundled_context.get("method").and_then(Value::as_str),
         bundled_context.get("url").and_then(Value::as_str),
     ) {
-        println!("[TASK_ENGINE] Processing HTTP task with method: {}, url: {}", method, url);
+        println!(
+            "[TASK_ENGINE] Processing HTTP task with method: {}, url: {}",
+            method, url
+        );
         let client = Client::new();
         let method = match method.to_uppercase().as_str() {
             "GET" => reqwest::Method::GET,
@@ -390,14 +392,25 @@ async fn process_http_task(
             }
         }
 
-        if let Some(body) = bundled_context.get("body").and_then(Value::as_str) {
-            println!("[TASK_ENGINE] Adding body: {}", body);
-            request_builder = request_builder.body(body.to_string());
+        if let Some(body) = bundled_context.get("body") {
+            if let Some(body_object) = body.as_object() {
+                let body_json = serde_json::to_string(body_object)?;
+                println!("[TASK_ENGINE] Adding body: {}", body_json);
+                request_builder = request_builder.body(body_json);
+            } else {
+                println!("[TASK_ENGINE] Body is not an object");
+                return Err("HTTP task body must be an object".into());
+            }
+        } else {
+            println!("[TASK_ENGINE] No body found in task context");
         }
 
         println!("[TASK_ENGINE] Sending HTTP request");
         let response = request_builder.send().await?;
-        println!("[TASK_ENGINE] HTTP request response received: {:?}", response);
+        println!(
+            "[TASK_ENGINE] HTTP request response received: {:?}",
+            response
+        );
         let status = response.status();
         let headers = response.headers().clone();
 
@@ -421,7 +434,7 @@ async fn process_http_task(
                         Value::String(text)
                     }
                 }
-            },
+            }
             Err(e) => {
                 println!("[TASK_ENGINE] Error reading response body: {:?}", e);
                 return Err(e.into());
