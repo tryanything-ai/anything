@@ -1,10 +1,8 @@
 use axum::{
     extract::Request,
     http::{HeaderMap, StatusCode},
-    middleware::{self, Next},
+    middleware::Next,
     response::Response,
-    routing::get,
-    Router,
 };
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
@@ -51,7 +49,6 @@ pub async fn middleware(
 
     match decode_jwt(jwt, &secret) {
         Ok(claims) => {
-
             let user = User {
                 jwt: jwt.to_string(),
                 account_id: claims.sub.clone(),

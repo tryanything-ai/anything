@@ -21,7 +21,7 @@ use auth::init::AuthState;
 
 mod api;
 mod auth;
-mod templater;
+mod billing;
 mod bundler;
 mod execution_planner;
 mod marketplace;
@@ -29,6 +29,7 @@ mod secrets;
 mod supabase_auth_middleware;
 mod task_engine;
 mod task_types;
+mod templater;
 mod trigger_engine;
 mod workflow_types;
 use regex::Regex;
@@ -66,8 +67,8 @@ async fn main() {
             .schema("marketplace")
             .insert_header("apikey", supabase_api_key.clone()),
     );
-
     let cors_origin = Arc::new(cors_origin);
+    println!("[CORS] CORS origin: {:?}", cors_origin);
 
     // Create a regex to match subdomains and localhost
     let protocol = if cors_origin.starts_with("https") {
@@ -75,27 +76,33 @@ async fn main() {
     } else {
         "http"
     };
+    println!("[CORS] Protocol: {}", protocol);
+
     let cors_origin_regex = if cors_origin.contains("localhost") {
-        Regex::new(&format!(r"^{}://localhost(:\d+)?$", protocol))
+        let regex = Regex::new(&format!(r"^{}://localhost(:\d+)?$", protocol)).unwrap();
+        println!("[CORS] Localhost regex: {:?}", regex);
+        regex
     } else {
-        Regex::new(&format!(
+        let regex = Regex::new(&format!(
             r"^{}://(?:[a-zA-Z0-9-]+\.)?{}$",
             protocol,
             regex::escape(&cors_origin)
         ))
-    }
-    .unwrap();
-
-    let preflightlayer = SetResponseHeaderLayer::if_not_present(
-        ACCESS_CONTROL_ALLOW_ORIGIN,
-        HeaderValue::from_static("*"),
-    );
+        .unwrap();
+        println!("[CORS] Domain regex: {:?}", regex);
+        regex
+    };
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::predicate(
             move |origin: &HeaderValue, _request_parts: &RequestParts| {
                 let origin_str = origin.to_str().unwrap_or("");
-                cors_origin_regex.is_match(origin_str)
+                let is_match = cors_origin_regex.is_match(origin_str);
+                println!(
+                    "[CORS] Checking origin: {} - Match: {}",
+                    origin_str, is_match
+                );
+                is_match
             },
         ))
         .allow_methods([
@@ -106,6 +113,13 @@ async fn main() {
             Method::OPTIONS,
         ])
         .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE]);
+
+    println!("[CORS] CORS layer configured");
+
+    let preflightlayer = SetResponseHeaderLayer::if_not_present(
+        ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("*"),
+    );
 
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
@@ -120,10 +134,15 @@ async fn main() {
     });
 
     // Define routes that are public
-    let public_routes = Router::new().route(
-        "/auth/:provider_name/callback",
-        get(auth::init::handle_provider_callback),
-    );
+    let public_routes = Router::new()
+        .route(
+            "/auth/:provider_name/callback",
+            get(auth::init::handle_provider_callback),
+        )
+        .route(
+            "/billing/webhooks/new_account_webhook",
+            post(billing::accounts::handle_new_account_webhook),
+        );
 
     let protected_routes = Router::new()
         .route("/", get(api::root))
