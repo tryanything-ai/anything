@@ -119,7 +119,7 @@ END
 $$ LANGUAGE plpgsql;
 
 -- trigger to slugify the account slug
-CREATE TRIGGER basejump_slugify_account_slug
+CREATE TRIGGER basejump_slugify_account_slugs   
     BEFORE INSERT OR UPDATE
     ON basejump.accounts
     FOR EACH ROW
@@ -187,6 +187,7 @@ begin
 end;
 $$;
 
+-- MOVED TO anything-new-user-functinos.sql to incorporate needs for profiles
 -- trigger the function whenever a new account is created
 -- CREATE TRIGGER basejump_add_current_user_to_new_account
 --     AFTER INSERT
