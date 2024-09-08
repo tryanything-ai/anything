@@ -89,7 +89,7 @@ export default function AccountSelector({
             <CommandList>
               <CommandInput placeholder="Search account..." />
               <CommandEmpty>No account found.</CommandEmpty>
-              <CommandGroup heading="Personal Account">
+              {/* <CommandGroup heading="Personal Account">
                 <CommandItem
                   key={personalAccount?.account_id}
                   onSelect={() => {
@@ -111,7 +111,7 @@ export default function AccountSelector({
                     )}
                   />
                 </CommandItem>
-              </CommandGroup>
+              </CommandGroup> */}
               {Boolean(teamAccounts?.length) && (
                 <CommandGroup heading="Teams">
                   {teamAccounts?.map((team) => (
