@@ -17,8 +17,20 @@ import {
   WorkflowTestingContextInterface,
   WorkflowTestingProvider,
 } from "./WorkflowTestingProvider";
+import {
+  AccountsContext,
+  AccountsContextInterface,
+  AccountsProvider,
+} from "./AccountsContext";
+import {
+  SubscriptionProvider,
+  SubscriptionContextInterface,
+  SubscriptionContext,
+} from "./SubscriptionContext";
 
 interface AnythingContextInterface {
+  accounts: AccountsContextInterface;
+  subscription: SubscriptionContextInterface;
   workflow: WorkflowVersionContextInterface;
   variables: VariablesContextInterface;
   testing: WorkflowTestingContextInterface;
@@ -34,33 +46,47 @@ export const AnythingProvider = ({
   children: React.ReactNode;
 }) => {
   return (
-    <WorkflowVersionProvider>
-      <WorkflowVersionContext.Consumer>
-        {(workflow) => (
-          <VariablesProvider>
-            <VariablesContext.Consumer>
-              {(variables) => (
-                <WorkflowTestingProvider>
-                  <WorkflowTestingContext.Consumer>
-                    {(testing) => (
-                      <AnythingContext.Provider
-                        value={{
-                          workflow,
-                          variables,
-                          testing,
-                        }}
-                      >
-                        {children}
-                      </AnythingContext.Provider>
+    <AccountsProvider>
+      <AccountsContext.Consumer>
+        {(accounts) => (
+          <SubscriptionProvider>
+            <SubscriptionContext.Consumer>
+              {(subscription) => (
+                <WorkflowVersionProvider>
+                  <WorkflowVersionContext.Consumer>
+                    {(workflow) => (
+                      <VariablesProvider>
+                        <VariablesContext.Consumer>
+                          {(variables) => (
+                            <WorkflowTestingProvider>
+                              <WorkflowTestingContext.Consumer>
+                                {(testing) => (
+                                  <AnythingContext.Provider
+                                    value={{
+                                      accounts,
+                                      subscription,
+                                      workflow,
+                                      variables,
+                                      testing,
+                                    }}
+                                  >
+                                    {children}
+                                  </AnythingContext.Provider>
+                                )}
+                              </WorkflowTestingContext.Consumer>
+                            </WorkflowTestingProvider>
+                          )}
+                        </VariablesContext.Consumer>
+                      </VariablesProvider>
                     )}
-                  </WorkflowTestingContext.Consumer>
-                </WorkflowTestingProvider>
+                  </WorkflowVersionContext.Consumer>
+                </WorkflowVersionProvider>
               )}
-            </VariablesContext.Consumer>
-          </VariablesProvider>
+            </SubscriptionContext.Consumer>
+          </SubscriptionProvider>
         )}
-      </WorkflowVersionContext.Consumer>
-    </WorkflowVersionProvider>
+      </AccountsContext.Consumer>
+    </AccountsProvider>
   );
 };
 

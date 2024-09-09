@@ -62,7 +62,7 @@ $$;
 CREATE TABLE IF NOT EXISTS basejump.config
 (
     enable_team_accounts            boolean default true,
-    enable_personal_account_billing boolean default true,
+    enable_personal_account_billing boolean default false,
     enable_team_account_billing     boolean default true,
     billing_provider                text    default 'stripe'
 );
