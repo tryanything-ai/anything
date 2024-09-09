@@ -6,6 +6,9 @@ import { useState } from "react";
 import { VscClose, VscMenu } from "react-icons/vsc";
 import { FaDiscord } from "react-icons/fa";
 import { Stargazer } from "@/components/ui/Stargazer";
+import ShinyButton from "@repo/ui/components/magicui/shiny-button";
+import ShimmerButton from "@repo/ui/components/magicui/shimmer-button";
+import { Button } from "@repo/ui/components/ui/button";
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -24,12 +27,14 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           <Link href="/" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
             <span className="sr-only">Anything AI</span>
             <div className="flex gap-2">
-              <span className="text-xl font-bold tracking-tight">
+              <span className=" font-bold tracking-tight text-xl">
                 Anything AI
               </span>
             </div>
           </Link>
-          <Stargazer count={stargazers_count} />
+          <div className="hidden sm:block">
+            <Stargazer count={stargazers_count} />
+          </div>
 
           {/* <Link
             href="/platform"
@@ -44,7 +49,16 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         </div>
 
         {/* Ensure Discord button is always on the right side */}
-        <div className="lg:flex items-center hidden">
+        <Button
+          className="h-11 mr-2 hidden md:flex rounded-full"
+          variant="outline"
+        >
+          Login
+        </Button>
+        <ShimmerButton background="rgb(147 51 234)" className="p-2 font-bold">
+          Get Started
+        </ShimmerButton>
+        {/* <div className="lg:flex items-center hidden">
           <a
             href="https://discord.gg/VRBKaqjprE"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
@@ -59,9 +73,10 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             <span className="sr-only">Discord</span>
             <FaDiscord className="h-6 w-6" aria-hidden="true" />
           </a>
-        </div>
+        </div> */}
+
         {/* Ensure Discord button is always on the right side */}
-        <div
+        {/* <div
           className="lg:hidden"
           role="button"
           tabIndex={0}
@@ -73,7 +88,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           }}
         >
           <VscMenu className="h-6 w-6 text-slate-900" aria-hidden="true" />
-        </div>
+        </div> */}
       </nav>
 
       {/* Mobile Menu Dialog */}
