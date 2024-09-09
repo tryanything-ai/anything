@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::AppState;
 use std::sync::Arc;
-use stripe::{Client, CreateCustomer, Customer, ListCustomers};
+use stripe::{CreateCustomer, CreateSubscription, CreateSubscriptionItems, Customer, Subscription};
 
 use dotenv::dotenv;
 use std::env;
@@ -12,31 +12,6 @@ use std::env;
 pub struct GetUserByIdParams {
     pub user_id: uuid::Uuid,
 }
-
-// #[derive(Debug, Deserialize, Serialize)]
-// pub struct GetUserByIdResponse {
-//     pub user: Option<User>,
-// }
-
-// pub async fn get_user_by_id(
-//     State(state): State<Arc<AppState>>,
-//     Json(params): Json<GetUserByIdParams>,
-// ) -> Result<Json<GetUserByIdResponse>, StatusCode> {
-//     let client = &state.anything_client;
-
-//     let response = client
-//         .rpc("get_user_by_id", serde_json::to_string(&params).unwrap())
-//         .execute()
-//         .await
-//         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-//     let user: Option<User> = response
-//         .json()
-//         .await
-//         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-//     Ok(Json(GetUserByIdResponse { user }))
-// }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct User {
@@ -75,6 +50,14 @@ pub struct User {
     pub is_sso_user: bool,
     pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
     pub is_anonymous: bool,
+}
+
+// Define the input struct for the SQL function
+#[derive(Debug, Serialize)]
+struct UpsertCustomerSubscriptionInput {
+    account_id: uuid::Uuid,
+    customer: Option<serde_json::Value>,
+    subscription: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -229,6 +212,72 @@ pub async fn handle_new_account_webhook(
                     "created a customer at https://dashboard.stripe.com/test/customers/{}",
                     customer.id
                 );
+
+                // Create the subscriptoin
+                // let subscription = {
+                //     let mut params = CreateSubscription::new(customer.id.clone());
+                //     params.items = Some(vec![
+                //         CreateSubscriptionItems {
+                //             price: Some("price_1PwpfXFBAuZoeGEU0iJhmcxF".to_string()), //0.99 / 1k extra
+                //             ..Default::default()
+                //         },
+                //         CreateSubscriptionItems {
+                //             price: Some("price_1Pwpe2FBAuZoeGEUh9zS63rH".to_string()), //$10 / month for 10k
+                //             ..Default::default()
+                //         },
+                //     ]);
+                //     params.trial_period_days = Some(7);
+                //     // params.default_payment_method = Some(&payment_method.id);
+                //     params.expand = &["items", "items.data.price.product", "schedule"];
+
+                //     Subscription::create(&client, params).await.unwrap()
+                // };
+
+                // Create the input for the SQL function
+                // let stripe_input = UpsertCustomerSubscriptionInput {
+                //     account_id: record.id,
+                //     customer: Some(serde_json::to_value(customer).unwrap()),
+                //     subscription: Some(serde_json::to_value(subscription).unwrap()), // We're not creating a subscription at this point
+                // };
+
+                // Update the account with the Stripe customer ID
+                //     let update_account_billing_response = match state
+                //         .public_client
+                //         .rpc(
+                //             "service_role_upsert_customer_subscription",
+                //             serde_json::to_string(&stripe_input).unwrap(),
+                //         )
+                //         .auth(supabase_service_role_api_key.clone())
+                //         .execute()
+                //         .await
+                //     {
+                //         Ok(response) => {
+                //             println!("Response status: {:?}", response.status());
+                //             println!("Response headers: {:?}", response.headers());
+
+                //             if response.status().is_success() {
+                //                 response
+                //             } else {
+                //                 let status = response.status();
+                //                 let error_body = response
+                //                     .text()
+                //                     .await
+                //                     .unwrap_or_else(|_| "Unable to read error body".to_string());
+                //                 eprintln!("Error response body: {}", error_body);
+                //                 return Err((
+                //                     StatusCode::INTERNAL_SERVER_ERROR,
+                //                     format!("Failed to fetch user data. Status: {}", status),
+                //                 ));
+                //             }
+                //         }
+                //         Err(err) => {
+                //             eprintln!("Error fetching user data: {:?}", err);
+                //             return Err((
+                //                 StatusCode::INTERNAL_SERVER_ERROR,
+                //                 "Failed to fetch user data".to_string(),
+                //             ));
+                //         }
+                //     };
             }
 
             Ok(StatusCode::CREATED)
