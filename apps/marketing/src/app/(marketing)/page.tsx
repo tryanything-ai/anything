@@ -1,11 +1,13 @@
 import { headers } from "next/headers";
 
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
-import Image from "next/image";
 import { Button } from "@repo/ui/components/ui/button";
 import Llama from "../../../public/llamascreenshot.png";
 import Features from "@/components/LocalFeatures";
 import Faq from "@/components/LocalFaq";
+import PricingGroup from "@/components/marketing/pricing/pricing-group";
+
+import Image from "next/image";
 
 export default function IndexPage() {
   const headerList = headers();
@@ -63,6 +65,7 @@ export default function IndexPage() {
           // height="1000"
         />
       </div>
+      <PricingGroup />
       {/* <Features /> */}
       {/* TODO: Add Features List */}
       {/* Templates https://tailwindui.com/components/marketing/sections/feature-sections */}
