@@ -17,16 +17,16 @@ export const Stargazer = ({ count }: { count: number }) => {
     <div className="flex">
       <Link
         href="https://github.com/tryanything-ai/anything"
-        className="caption-s flex items-center gap-1 rounded-l-[4px] border border-slate-7 bg-slate-3 px-2 py-[2px] font-medium text-slate-12 hover:border-slate-8 hover:bg-slate-4"
+        className="caption-s flex items-center gap-1 rounded-l-[4px] border border-slate-300 bg-slate-100 px-2 py-[2px] font-medium text-slate-800 hover:border-slate-400 hover:bg-slate-200"
       >
-        <GitHubIcon className="h-5 w-5 fill-slate-12" />
+        <GitHubIcon className="h-5 w-5 fill-slate-800" />
         <span className="">Star</span>
       </Link>
       <Link
         href="https://github.com/tryanything-ai/anything"
-        className="group inline-flex items-center rounded-r-[4px] border-y border-r border-slate-7 bg-slate-1 px-2 py-[2px] hover:bg-slate-2"
+        className="group inline-flex items-center rounded-r-[4px] border-y border-r border-slate-300 bg-white px-2 py-[2px] hover:bg-slate-50"
       >
-        <span className="caption-s font-medium text-slate-12 group-hover:text-crimson-9">
+        <span className="caption-s font-medium text-slate-800 group-hover:text-crimson-600">
           {count}
         </span>
       </Link>
