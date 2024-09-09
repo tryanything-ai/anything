@@ -40,6 +40,7 @@ extern crate slugify;
 pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
+    basejump_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
@@ -67,6 +68,14 @@ async fn main() {
             .schema("marketplace")
             .insert_header("apikey", supabase_api_key.clone()),
     );
+
+    //Basejump Schema
+    let basejump_client = Arc::new(
+        Postgrest::new(supabase_url.clone())
+            .schema("marketplace")
+            .insert_header("apikey", supabase_api_key.clone()),
+    );
+
     let cors_origin = Arc::new(cors_origin);
     println!("[CORS] CORS origin: {:?}", cors_origin);
 
@@ -127,6 +136,7 @@ async fn main() {
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
+        basejump_client: basejump_client.clone(),
         auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,

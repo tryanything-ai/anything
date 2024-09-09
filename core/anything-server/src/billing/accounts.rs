@@ -3,92 +3,236 @@ use serde::{Deserialize, Serialize};
 
 use crate::AppState;
 use std::sync::Arc;
+use stripe::{Client, CreateCustomer, Customer, ListCustomers};
 
+use dotenv::dotenv;
+use std::env;
 
-// #[derive(Debug, Deserialize)]
-// #[serde(tag = "type")]
-// pub enum WebhookPayload<T> {
-//     #[serde(rename = "INSERT")]
-//     Insert {
-//         table: String,
-//         schema: String,
-//         record: T,
-//         old_record: Option<()>,
-//     },
-//     #[serde(rename = "UPDATE")]
-//     Update {
-//         table: String,
-//         schema: String,
-//         record: T,
-//         old_record: T,
-//     },
-//     #[serde(rename = "DELETE")]
-//     Delete {
-//         table: String,
-//         schema: String,
-//         record: Option<()>,
-//         old_record: T,
-//     },
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GetUserByIdParams {
+    pub user_id: uuid::Uuid,
+}
+
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct GetUserByIdResponse {
+//     pub user: Option<User>,
 // }
 
-// #[derive(Debug, Deserialize)]
-// pub struct TableRecord {
-//     id: uuid::Uuid,
-//     primary_owner_user_id: uuid::Uuid,
-//     name: Option<String>,
-//     slug: Option<String>,
-//     personal_account: bool,
-//     updated_at: Option<chrono::DateTime<chrono::Utc>>,
-//     created_at: Option<chrono::DateTime<chrono::Utc>>,
-//     created_by: Option<uuid::Uuid>,
-//     updated_by: Option<uuid::Uuid>,
-//     private_metadata: serde_json::Value,
-//     public_metadata: serde_json::Value,
+// pub async fn get_user_by_id(
+//     State(state): State<Arc<AppState>>,
+//     Json(params): Json<GetUserByIdParams>,
+// ) -> Result<Json<GetUserByIdResponse>, StatusCode> {
+//     let client = &state.anything_client;
+
+//     let response = client
+//         .rpc("get_user_by_id", serde_json::to_string(&params).unwrap())
+//         .execute()
+//         .await
+//         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+//     let user: Option<User> = response
+//         .json()
+//         .await
+//         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+//     Ok(Json(GetUserByIdResponse { user }))
 // }
 
-// pub type NewAccountWebhookPayload = WebhookPayload<TableRecord>;
+#[derive(Debug, Deserialize, Serialize)]
+pub struct User {
+    pub instance_id: Option<uuid::Uuid>,
+    pub id: uuid::Uuid,
+    pub aud: Option<String>,
+    pub role: Option<String>,
+    pub email: Option<String>,
+    pub encrypted_password: Option<String>,
+    pub email_confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub invited_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub confirmation_token: Option<String>,
+    pub confirmation_sent_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub recovery_token: Option<String>,
+    pub recovery_sent_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub email_change_token_new: Option<String>,
+    pub email_change: Option<String>,
+    pub email_change_sent_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_sign_in_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub raw_app_meta_data: Option<serde_json::Value>,
+    pub raw_user_meta_data: Option<serde_json::Value>,
+    pub is_super_admin: Option<bool>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub phone: Option<String>,
+    pub phone_confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub phone_change: Option<String>,
+    pub phone_change_token: Option<String>,
+    pub phone_change_sent_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub email_change_token_current: Option<String>,
+    pub email_change_confirm_status: Option<i16>,
+    pub banned_until: Option<chrono::DateTime<chrono::Utc>>,
+    pub reauthentication_token: Option<String>,
+    pub reauthentication_sent_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub is_sso_user: bool,
+    pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub is_anonymous: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
+pub enum WebhookPayload<T> {
+    #[serde(rename = "INSERT")]
+    Insert {
+        table: String,
+        schema: String,
+        record: T,
+        old_record: Option<()>,
+    },
+    #[serde(rename = "UPDATE")]
+    Update {
+        table: String,
+        schema: String,
+        record: T,
+        old_record: T,
+    },
+    #[serde(rename = "DELETE")]
+    Delete {
+        table: String,
+        schema: String,
+        record: Option<()>,
+        old_record: T,
+    },
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct TableRecord {
+    id: uuid::Uuid,
+    primary_owner_user_id: uuid::Uuid,
+    name: Option<String>,
+    slug: Option<String>,
+    personal_account: bool,
+    updated_at: Option<chrono::DateTime<chrono::Utc>>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
+    created_by: Option<uuid::Uuid>,
+    updated_by: Option<uuid::Uuid>,
+    private_metadata: serde_json::Value,
+    public_metadata: serde_json::Value,
+}
+
+pub type NewAccountWebhookPayload = WebhookPayload<TableRecord>;
 
 pub async fn handle_new_account_webhook(
     State(state): State<Arc<AppState>>,
-    Json(payload): Json<serde_json::Value>,
+    Json(payload): Json<NewAccountWebhookPayload>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    // match payload {
-    //     WebhookPayload::Insert { record, .. } => {
-    println!(
-        "New account created making stripe account now: {:?}",
-        payload
-    );
-    // Handle the new account creation
-    // let stripe_secret_key = std::env::var("STRIPE_SECRET_KEY").map_err(|_| {
-    //     (
-    //         StatusCode::INTERNAL_SERVER_ERROR,
-    //         "Stripe secret key not found".to_string(),
-    //     )
-    // })?;
+    match payload {
+        WebhookPayload::Insert { record, .. } => {
+            println!(
+                "New account created making stripe account now: {:?}",
+                record.clone()
+            );
 
-    // let client = StripeClient::new(stripe_secret_key);
+            // Check if it's not a personal account
+            if !record.personal_account {
+                // Fetch user data from Supabase
+                let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+                    .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    // let mut create_account = CreateAccount::new();
-    // // You might want to get the email from somewhere else, as it's not in the TableRecord
-    // // create_account.email = Some(&record.email);
-    // create_account.type_ = Some(stripe::AccountType::Standard);
+                let input = GetUserByIdParams {
+                    user_id: record.primary_owner_user_id,
+                };
 
-    // let account = StripeAccount::create(&client, create_account)
-    //     .await
-    //     .map_err(|e| {
-    //         (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             format!("Failed to create Stripe account: {}", e),
-    //         )
-    //     })?;
+                let user_response = match state
+                    .anything_client
+                    .rpc("get_user_by_id", serde_json::to_string(&input).unwrap())
+                    .auth(supabase_service_role_api_key.clone())
+                    .execute()
+                    .await
+                {
+                    Ok(response) => {
+                        println!("Response status: {:?}", response.status());
+                        println!("Response headers: {:?}", response.headers());
 
-    // Here you might want to update the account in your database with the Stripe account ID
-    // For example:
-    // update_account_with_stripe_id(state, record.id, account.id).await?;
+                        if response.status().is_success() {
+                            response
+                        } else {
+                            let status = response.status();
+                            let error_body = response
+                                .text()
+                                .await
+                                .unwrap_or_else(|_| "Unable to read error body".to_string());
+                            eprintln!("Error response body: {}", error_body);
+                            return Err((
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                format!("Failed to fetch user data. Status: {}", status),
+                            ));
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("Error fetching user data: {:?}", err);
+                        return Err((
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "Failed to fetch user data".to_string(),
+                        ));
+                    }
+                };
 
-    //     Ok(StatusCode::CREATED)
-    // }
-    // _ => Ok(StatusCode::OK), // Ignore other types of webhook payloads
-    // }
-    Ok(StatusCode::OK)
+                let user: User = match user_response.json().await {
+                    Ok(user) => user,
+                    Err(err) => {
+                        eprintln!("Error parsing user response: {:?}", err);
+                        // let response_text = user_response.text().await
+                        //     .unwrap_or_else(|_| "Unable to read response body".to_string());
+                        // eprintln!("Response body: {}", response_text);
+                        return Err((
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "Failed to parse user response".to_string(),
+                        ));
+                    }
+                };
+
+                println!("User data for non-personal account: {:?}", user);
+
+                // Handle the new account creation
+                let stripe_secret_key = std::env::var("STRIPE_SECRET_KEY").map_err(|_| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Stripe secret key not found".to_string(),
+                    )
+                })?;
+
+                let client = stripe::Client::new(stripe_secret_key);
+
+                // Create a new Stripe customer
+                let customer = Customer::create(
+                    &client,
+                    CreateCustomer {
+                        // name: Some("Alexander Lyon"),
+                        email: Some(user.email.as_deref().unwrap_or("")),
+                        // description: Some(
+                        //     "A customer created through the Anything platform.",
+                        // ),
+                        metadata: Some(std::collections::HashMap::from([
+                            (
+                                String::from("team_name"),
+                                String::from(record.name.as_deref().unwrap_or("")),
+                            ),
+                            (String::from("team_id"), String::from(record.id.to_string())),
+                        ])),
+
+                        ..Default::default()
+                    },
+                )
+                .await
+                .unwrap();
+
+                println!(
+                    "created a customer at https://dashboard.stripe.com/test/customers/{}",
+                    customer.id
+                );
+            }
+
+            Ok(StatusCode::CREATED)
+        }
+        _ => Ok(StatusCode::OK), // Ignore other types of webhook payloads
+    }
 }
