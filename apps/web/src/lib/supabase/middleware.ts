@@ -77,7 +77,7 @@ export const validateSession = async (request: NextRequest) => {
 
 
     // Exclude /login route from being protected
-    if (request.nextUrl.pathname !== '/login' && !user && protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
+    if (request.nextUrl.pathname !== '/login' && request.nextUrl.pathname !== '/signup' && !user && protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
       // redirect to /login
       return forceLoginWithReturn(request);
     }
