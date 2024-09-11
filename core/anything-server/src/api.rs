@@ -1446,15 +1446,14 @@ pub async fn get_task_by_workflow_id(
 
     Json(item).into_response()
 }
-
 pub async fn get_auth_provider_by_name(
-    Path(provider_name): Path<String>,
+    Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!(
-        "Handling a get_auth_provider_by_name for  {:?}",
-        provider_name
+        "Handling a get_auth_provider_by_name for account {:?} and provider {:?}",
+        account_id, provider_name
     );
 
     let client = &state.anything_client;
@@ -1462,6 +1461,7 @@ pub async fn get_auth_provider_by_name(
     let response = match client
         .from("auth_providers")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("provider_name", &provider_name)
         .select("*")
         .execute()
@@ -1500,15 +1500,14 @@ pub async fn get_auth_provider_by_name(
 
     Json(item).into_response()
 }
-
 pub async fn get_auth_accounts_for_provider_name(
-    Path(provider_name): Path<String>,
+    Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!(
-        "Handling a get_auth_accounts_for_provider_name for  {:?}",
-        provider_name
+        "Handling a get_auth_accounts_for_provider_name for account {:?} and provider {:?}",
+        account_id, provider_name
     );
 
     let client = &state.anything_client;
@@ -1516,6 +1515,7 @@ pub async fn get_auth_accounts_for_provider_name(
     let response = match client
         .from("account_auth_provider_accounts")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("auth_provider_id", &provider_name)
         .select("*")
         .execute()
@@ -1558,14 +1558,16 @@ pub async fn get_auth_accounts_for_provider_name(
 pub async fn get_auth_accounts(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
 ) -> impl IntoResponse {
-    println!("Handling a get auth accounts");
+    println!("Handling a get auth accounts for account_id: {}", account_id);
 
     let client = &state.anything_client;
 
     let response = match client
         .from("account_auth_provider_accounts")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .select("*, auth_provider:auth_providers(*)")
         .execute()
         .await
@@ -1603,12 +1605,12 @@ pub async fn get_auth_accounts(
 
     Json(item).into_response()
 }
-
 pub async fn get_auth_providers(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
 ) -> impl IntoResponse {
-    println!("Handling a get auth accounts");
+    println!("Handling a get auth providers for account_id: {}", account_id);
 
     let client = &state.anything_client;
 

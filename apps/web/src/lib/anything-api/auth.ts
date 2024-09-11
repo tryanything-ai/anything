@@ -2,19 +2,16 @@ import { createClient } from "../supabase/client";
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getProvider = async (provider_name: string) => {
+export const getProvider = async (account_id: string, provider_name: string) => {
     try {
-
         console.log('getting provider_name in anything_api/auth:', provider_name);
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/auth/providers/${provider_name}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/auth/providers/${provider_name}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -24,21 +21,19 @@ export const getProvider = async (provider_name: string) => {
             return data;
         }
     } catch (error) {
-        console.error('Error fetching provier by provider_name:', error);
+        console.error('Error fetching provider by provider_name:', error);
     } 
 }
 
-export const getAuthAccounts = async () => {
+export const getAuthAccounts = async (account_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/auth/accounts`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/auth/accounts`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -48,22 +43,20 @@ export const getAuthAccounts = async () => {
             return data;
         }
     } catch (error) {
-        console.error('Error fetching auth accoutns', error);
+        console.error('Error fetching auth accounts', error);
     } 
 }
 
-export const getAuthAccountsForProvider = async (provider_name: string) => {
+export const getAuthAccountsForProvider = async (account_id: string, provider_name: string) => {
     try {
         console.log('getting auth accounts for provider: ', provider_name);
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/auth/accounts/${provider_name}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/auth/accounts/${provider_name}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -78,17 +71,15 @@ export const getAuthAccountsForProvider = async (provider_name: string) => {
     } 
 }
 
-export const getProviders = async () => {
+export const getProviders = async (account_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/auth/providers`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/auth/providers`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -102,9 +93,8 @@ export const getProviders = async () => {
     } 
 }
 
-export const handleCallbackForProvider = async ({provider_name, code, state, }: {provider_name: string, code: any, state: any}) => {
+export const handleCallbackForProvider = async ({account_id, provider_name, code, state}: {account_id: string, provider_name: string, code: any, state: any}) => {
     try {
-        
         console.log('handling callback for provider: ', provider_name);
         const supabase = createClient();
         const userData = await supabase.auth.getUser(); 
@@ -117,7 +107,7 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
 
         if (session) {
             console.log("calling /api/auth/:provider_name/callback");
-            const response = await fetch(`${ANYTHING_API_URL}/auth/${provider_name}/callback`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/auth/${provider_name}/callback`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -139,27 +129,24 @@ export const handleCallbackForProvider = async ({provider_name, code, state, }: 
     } 
 }
 
-export const initiateProviderAuth = async (provider_name: string) => {
+export const initiateProviderAuth = async (account_id: string, provider_name: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/auth/${provider_name}/initiate`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/auth/${provider_name}/initiate`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
             });
             const data = await response.json();
-            console.log('Data from /api/auth/:provider_name/initate', data);
+            console.log('Data from /api/auth/:provider_name/initiate', data);
             return data;
         }
     } catch (error) {
-        console.error('Error fetching auth providers', error);
+        console.error('Error initiating provider auth', error);
     } 
 }
-

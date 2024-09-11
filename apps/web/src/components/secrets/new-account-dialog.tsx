@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
+import { useAnything } from "@/context/AnythingContext";
 // Helper function to generate a random string
 const generateRandomString = (length: number) => {
   const charset =
@@ -33,6 +34,9 @@ const NewAccountDialog = (): JSX.Element => {
   const [providers, setProviders] = useState<any[]>([]);
   const [codeVerifier, setCodeVerifier] = useState(generateRandomString(43));
   const [codeChallenge, setCodeChallenge] = useState("");
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   useEffect(() => {
     // Fetch accounts
@@ -46,7 +50,8 @@ const NewAccountDialog = (): JSX.Element => {
 
   const fetchAccounts = async () => {
     try {
-      const res = await api.auth.getProviders();
+      if (!selectedAccount) return;
+      const res = await api.auth.getProviders(selectedAccount.account_id);
       console.log("providers res:", res);
       setProviders(res);
     } catch (error) {
@@ -67,7 +72,11 @@ const NewAccountDialog = (): JSX.Element => {
 
   const addConnection = async (provider: any) => {
     try {
-      let { url } = await api.auth.initiateProviderAuth(provider.provider_name);
+      if (!selectedAccount) return;
+      let { url } = await api.auth.initiateProviderAuth(
+        selectedAccount?.account_id,
+        provider.provider_name,
+      );
 
       console.log("url", url);
       // Open the auth URL in a popup window

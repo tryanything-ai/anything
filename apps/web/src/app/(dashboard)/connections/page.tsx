@@ -19,13 +19,18 @@ import api from "@/lib/anything-api";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { format } from "date-fns";
 import NewAccountDialog from "@/components/secrets/new-account-dialog";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function AccountsPage(): JSX.Element {
   const [accounts, setAccounts] = useState<any[]>([]);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   const fetchAccounts = async () => {
     try {
-      let res = await api.auth.getAuthAccounts();
+      if (!selectedAccount) return;
+      let res = await api.auth.getAuthAccounts(selectedAccount.account_id);
       console.log("accounts res:", res);
       setAccounts(res);
     } catch (error) {

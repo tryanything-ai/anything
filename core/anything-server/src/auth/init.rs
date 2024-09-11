@@ -385,7 +385,7 @@ pub async fn exchange_code_for_token(
 }
 
 pub async fn initiate_auth(
-    Path(provider_name): Path<String>,
+    Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -393,8 +393,8 @@ pub async fn initiate_auth(
     // Generate a unique state parameter
     let state_string = generate_random_string(32);
     let code_verifier = generate_code_verifier();
-    // Replace with actual user ID or relevant data
-    let account_id = user.account_id.clone();
+    // Use the account_id from the path parameter
+    let account_id = account_id.clone();
 
     let auth_state = AuthState {
         state: state_string.clone(),

@@ -15,6 +15,7 @@ import api from "@/lib/anything-api";
 import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
+import { useAnything } from "@/context/AnythingContext";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldText,
@@ -269,6 +270,9 @@ function FieldAccount({
   const [hydrated, setHydrated] = useState(false);
   const [accountsForProvider, setAccountsForProvider] = useState<any[any]>([]);
   const [providerDetails, setProviderDetails] = useState<any[any]>([]);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   //TODO:
   //Load check if user has an account that matches the variable schema
@@ -287,7 +291,11 @@ function FieldAccount({
   const getProviderDetails = async () => {
     try {
       console.log("provider in form field", provider);
-      let res = await api.auth.getProvider(provider);
+      if (!selectedAccount) return;
+      let res = await api.auth.getProvider(
+        selectedAccount.account_id,
+        provider,
+      );
       console.log("res for getProviderDetails", res);
       setProviderDetails(res[0]);
     } catch (e) {
@@ -297,8 +305,11 @@ function FieldAccount({
 
   const getUserAccountsForProvider = async () => {
     try {
-      if (!provider) return;
-      let res = await api.auth.getAuthAccountsForProvider(provider);
+      if (!provider || !selectedAccount) return;
+      let res = await api.auth.getAuthAccountsForProvider(
+        selectedAccount?.account_id,
+        provider,
+      );
       console.log("res", res);
       setAccountsForProvider(res);
       setHydrated(true);

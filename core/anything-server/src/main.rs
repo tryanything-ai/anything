@@ -201,7 +201,7 @@ async fn main() {
             "/account/:account_id/auth/accounts/:provider_name",
             get(api::get_auth_accounts_for_provider_name),
         )
-        .route("/account/:account_id/auth/providers", get(api::get_auth_providers))
+        .route("/account/:account_id/auth/providers", get(api::get_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
         .route(
             "/account/:account_id/auth/:provider_name/initiate",
             get(auth::init::initiate_auth),
