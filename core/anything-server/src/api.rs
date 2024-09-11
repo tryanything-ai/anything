@@ -1273,7 +1273,7 @@ pub async fn test_action(
 
 // Actions
 pub async fn get_test_session_results(
-    Path((workflow_id, workflow_version_id, session_id)): Path<(String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, session_id)): Path<(String, String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1284,6 +1284,7 @@ pub async fn get_test_session_results(
     let response = match client
         .from("tasks")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("flow_session_id", &session_id)
         .eq("flow_id", &workflow_id)
         .eq("flow_version_id", &workflow_version_id)

@@ -8,6 +8,7 @@ import {
   TaskRow,
   WorklfowTestSessionResult,
 } from "@/lib/anything-api/testing";
+import { useAccountsContext } from "./AccountsContext";
 
 export enum TestingMode {
   ACTION = "action",
@@ -49,6 +50,8 @@ export const WorkflowTestingProvider = ({
   const { setPanelTab, db_flow_id, db_flow_version_id } =
     useWorkflowVersionContext();
 
+  const { selectedAccount } = useAccountsContext();
+
   const [testingMode, setTestingMode] = useState<TestingMode>(
     TestingMode.ACTION,
   );
@@ -81,8 +84,14 @@ export const WorkflowTestingProvider = ({
 
     while (!isComplete) {
       // Mock API call to check workflow status
+      if (!flowId || !versionId || !workflow_session_id || !selectedAccount) {
+        console.log("No flow or version id to poll for results");
+        return;
+      }
+
       const result: WorklfowTestSessionResult =
         await api.testing.getTestingResults(
+          selectedAccount.account_id,
           flowId,
           versionId,
           workflow_session_id,
@@ -124,7 +133,13 @@ export const WorkflowTestingProvider = ({
       setTestingMode(TestingMode.WORKFLOW);
       setPanelTab("testing");
 
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+
       let results: StartWorkflowTestResult = await api.testing.testWorkflow(
+        selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,
       );
@@ -147,14 +162,19 @@ export const WorkflowTestingProvider = ({
 
   const testAction = async (action_id: string) => {
     try {
-      if (!db_flow_id || !db_flow_version_id) {
+      if (!db_flow_id || !db_flow_version_id || !selectedAccount) {
         console.log("No flow or version id to test action");
         return;
       }
       setTestingAction(true);
       setTestingMode(TestingMode.ACTION);
       setPanelTab("testing");
-      await api.testing.testAction(db_flow_id, db_flow_version_id, action_id);
+      await api.testing.testAction(
+        selectedAccount.account_id,
+        db_flow_id,
+        db_flow_version_id,
+        action_id,
+      );
     } catch (error) {
       console.error(error);
     } finally {

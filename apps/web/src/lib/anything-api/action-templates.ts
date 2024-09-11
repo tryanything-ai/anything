@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getActionTemplates = async () => {
+export const getActionTemplates = async (account_id: string) => {
     try {
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
@@ -14,7 +14,7 @@ export const getActionTemplates = async () => {
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/actions`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/actions`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },

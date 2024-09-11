@@ -20,12 +20,19 @@ import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 export function StudioActionsSheet(): JSX.Element {
   const {
     workflow: { showingActionSheet, setShowingActionSheet, addNode },
+    accounts: { selectedAccount },
   } = useAnything();
   const [actions, setActions] = useState<any>([]);
 
   const fetchActions = async () => {
     try {
-      const res = await api.action_templates.getActionTemplates();
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+      const res = await api.action_templates.getActionTemplates(
+        selectedAccount.account_id,
+      );
       console.log("action sheet templates res:", res);
       setActions(res);
     } catch (error) {

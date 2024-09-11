@@ -33,7 +33,7 @@ export interface TaskRow {
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const testAction = async (workflow_id: string, workflow_version_id: string, action_id: string) => {
+export const testAction = async (account_id: string, workflow_id: string, workflow_version_id: string, action_id: string) => {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -41,13 +41,13 @@ export const testAction = async (workflow_id: string, workflow_version_id: strin
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/testing/workflow/${workflow_id}/version/${workflow_version_id}/action/${action_id}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/testing/workflow/${workflow_id}/version/${workflow_version_id}/action/${action_id}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
             });
             const data = await response.json();
-            console.log('Testing action via /api/workflow/id/version/id/action/id', data);
+            console.log('Testing action via /api/account/id/workflow/id/version/id/action/id', data);
             return data;
         }
     } catch (error) {
@@ -61,7 +61,7 @@ export type StartWorkflowTestResult = {
     trigger_session_id: string;
 } | undefined; 
 
-export const testWorkflow = async (workflow_id: string, workflow_version_id: string): Promise<StartWorkflowTestResult> => {
+export const testWorkflow = async (account_id: string, workflow_id: string, workflow_version_id: string): Promise<StartWorkflowTestResult> => {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -69,13 +69,13 @@ export const testWorkflow = async (workflow_id: string, workflow_version_id: str
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/testing/workflow/${workflow_id}/version/${workflow_version_id}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/testing/workflow/${workflow_id}/version/${workflow_version_id}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
             });
             const data = await response.json();
-            console.log('Testing action via /api/workflow/id/version/id', data);
+            console.log('Testing action via /api/account/id/workflow/id/version/id', data);
             return data;
         }
     } catch (error) {
@@ -89,7 +89,7 @@ export type WorklfowTestSessionResult = {
 } | undefined;
 
 
-export const getTestingResults = async (workflow_id: string, workflow_version_id: string, workflow_session_id: string) => {
+export const getTestingResults = async (account_id: string, workflow_id: string, workflow_version_id: string, workflow_session_id: string) => {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -99,13 +99,13 @@ export const getTestingResults = async (workflow_id: string, workflow_version_id
         console.log('Getting Testing results:', workflow_id, workflow_version_id, workflow_session_id);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/testing/workflow/${workflow_id}/version/${workflow_version_id}/session/${workflow_session_id}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/testing/workflow/${workflow_id}/version/${workflow_version_id}/session/${workflow_session_id}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
             });
             const data = await response.json();
-            console.log('Testing action via /api/workflow/id/version/id/session/id', data);
+            console.log('Testing action via /api/account/id/workflow/id/version/id/session/id', data);
             return data;
         }
     } catch (error) {
