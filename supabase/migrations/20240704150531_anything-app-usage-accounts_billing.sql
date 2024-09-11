@@ -20,7 +20,7 @@ BEGIN
     INSERT INTO anything.accounts_billing (
         account_id,
         free_trial_started_at,
-        free_trial_ends_at,
+        free_trial_ends_at
     )
     VALUES (
         NEW.id,

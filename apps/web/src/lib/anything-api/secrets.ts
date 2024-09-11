@@ -2,7 +2,7 @@ import { createClient } from "../supabase/client";
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export async function createSecret(secret_name: string, secret_value: string, secret_description: string) {
+export async function createSecret(account_id: string, secret_name: string, secret_value: string, secret_description: string) {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -12,7 +12,7 @@ export async function createSecret(secret_name: string, secret_value: string, se
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/secret`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/secret`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export async function createSecret(secret_name: string, secret_value: string, se
 }
 
 
-export const getSecrets = async () => {
+export const getSecrets = async (account_id: string) => {
     try {
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
@@ -47,7 +47,7 @@ export const getSecrets = async () => {
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch('http://localhost:3001/secrets', {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/secrets`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -62,7 +62,7 @@ export const getSecrets = async () => {
     }
 }
 
-export async function deleteSecret(secret_id: string) {
+export async function deleteSecret(account_id: string, secret_id: string) {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -70,7 +70,7 @@ export async function deleteSecret(secret_id: string) {
         console.log('Deleting Secret');
 
         if (session) {
-            const response = await fetch(`http://localhost:3001/secret/${secret_id}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/secret/${secret_id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ export async function deleteSecret(secret_id: string) {
     }
 }
 
-export async function updateSecret(secret_id: string, secret_vault_id: string, secret_value: string, secret_description: string) {
+export async function updateSecret(account_id: string, secret_id: string, secret_vault_id: string, secret_value: string, secret_description: string) {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -99,7 +99,7 @@ export async function updateSecret(secret_id: string, secret_vault_id: string, s
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`http://localhost:3001/secret`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/secret`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

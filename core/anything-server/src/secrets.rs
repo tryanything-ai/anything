@@ -42,6 +42,7 @@ pub struct AnythingCreateSecretInput {
 pub async fn create_secret(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<CreateSecretPayload>,
 ) -> impl IntoResponse {
@@ -50,12 +51,7 @@ pub async fn create_secret(
     println!("create_secret Input?: {:?}", payload);
 
     let vault_secret_name = slugify!(
-        format!(
-            "{}_{}",
-            user.account_id.clone(),
-            payload.secret_name.clone()
-        )
-        .as_str(),
+        format!("{}_{}", account_id.clone(), payload.secret_name.clone()).as_str(),
         separator = "_"
     );
 
@@ -106,19 +102,19 @@ pub async fn create_secret(
 
     let secret_vault_id = body.trim_matches('"');
 
-    let anythingSecretInput = AnythingCreateSecretInput {
+    let anything_secret_input = AnythingCreateSecretInput {
         secret_id: secret_vault_id.to_string(), //use the same id in vault and public secrets table for dx
         secret_name: payload.secret_name.clone(),
         vault_secret_id: secret_vault_id.to_string(), //vault_secret_id.clone(),
         secret_description: payload.secret_description.clone(),
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
     };
 
     //Create Flow Version
     let db_secret_response = match client
         .from("secrets")
         .auth(user.jwt.clone())
-        .insert(serde_json::to_string(&anythingSecretInput).unwrap())
+        .insert(serde_json::to_string(&anything_secret_input).unwrap())
         .execute()
         .await
     {
@@ -150,13 +146,13 @@ pub async fn create_secret(
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetDecryptedSecretsInput {
-    user_account_id: String,
+    team_account_id: String,
 }
-
 // Secrets
 pub async fn get_decrypted_secrets(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
 ) -> impl IntoResponse {
     println!("Handling a get_decrypted_secrets");
 
@@ -165,7 +161,7 @@ pub async fn get_decrypted_secrets(
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     let input = GetDecryptedSecretsInput {
-        user_account_id: user.account_id.clone(),
+        team_account_id: account_id,
     };
 
     println!("get_decrypted_secrets rpc Input?: {:?}", input);
@@ -240,6 +236,7 @@ pub struct ReadVaultSecretInput {
 pub async fn update_secret(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<UpdateSecretPayload>,
 ) -> impl IntoResponse {
@@ -333,7 +330,7 @@ pub async fn update_secret(
 
     println!("update_secret_body: {:?}", update_secret_body);
 
-    let anythingSecretInput = UpdateAnythingSecretInput {
+    let anything_secret_input = UpdateAnythingSecretInput {
         secret_description: payload.secret_description.clone(),
     };
 
@@ -342,7 +339,8 @@ pub async fn update_secret(
         .from("secrets")
         .auth(user.jwt.clone())
         .eq("secret_id", &payload.secret_id.clone())
-        .update(serde_json::to_string(&anythingSecretInput).unwrap())
+        .eq("account_id", &account_id)
+        .update(serde_json::to_string(&anything_secret_input).unwrap())
         .execute()
         .await
     {
@@ -378,12 +376,15 @@ pub struct DeleteVaultSecretInput {
 }
 
 pub async fn delete_secret(
-    Path(secret_id): Path<String>,
+    Path((account_id, secret_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    println!("Delete Secret: {:?}", secret_id);
+    println!(
+        "Delete Secret: {:?} for account: {:?}",
+        secret_id, account_id
+    );
 
     let client = &state.anything_client;
 
@@ -392,6 +393,7 @@ pub async fn delete_secret(
         .from("secrets")
         .auth(user.jwt)
         .eq("secret_id", &secret_id)
+        .eq("account_id", &account_id)
         .delete()
         .execute()
         .await

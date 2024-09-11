@@ -173,24 +173,29 @@ async fn main() {
         .route("/account/:account_id/workflow/:id", delete(api::delete_workflow))
         .route("/account/:account_id/workflow/:id", put(api::update_workflow))
         .route("/account/:account_id/actions", get(api::get_actions))
+        
         //Marketplace
         .route(
             "/account/:account_id/marketplace/:workflow_id/publish",
             post(marketplace::publish_workflow_to_marketplace),
         )
+
         //Tasks
         .route("/account/:account_id/tasks", get(api::get_tasks))
         .route("/account/:account_id/tasks/:workflow_id", get(api::get_task_by_workflow_id))
+
         //Charts
         .route(
             "/account/:account_id/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit",
             get(api::get_task_status_counts_by_workflow_id),
         )
+
         // Secrets
         .route("/account/:account_id/secrets", get(secrets::get_decrypted_secrets))
         .route("/account/:account_id/secret", post(secrets::create_secret))
         .route("/account/:account_id/secret", put(secrets::update_secret))
         .route("/account/:account_id/secret/:id", delete(secrets::delete_secret))
+
         //Auth Providrs
         .route(
             "/account/:account_id/auth/providers/:provider_name",

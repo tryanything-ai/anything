@@ -1481,7 +1481,7 @@ INSERT INTO anything.action_templates (
     }', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'); 
 
 
-   -- Inserting sample secrets into marketplace.secrets
+   -- Inserting sample secrets into vault.secrets
 INSERT INTO vault.secrets (
     id, name, description, secret
 ) VALUES

@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, Edit2 } from "lucide-react";
+import { Trash2, Edit2, Eye, EyeOff } from "lucide-react";
 import api from "@/lib/anything-api";
-import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
-import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
-import { Separator } from "@repo/ui/components/ui/separator";
 
 import {
   AlertDialog,
@@ -34,12 +31,19 @@ import {
   TableBody,
   TableCell,
 } from "@repo/ui/components/ui/table";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function AccountsPage(): JSX.Element {
   const [secrets, setSecrets] = useState<any[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [secretToDelete, setSecretToDelete] = useState<any>({});
   const [showNewSecretEditor, setShowNewSecretEditor] = useState(false);
+  const [visibleSecrets, setVisibleSecrets] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   const cancel = () => {
     setShowNewSecretEditor(false);
@@ -47,7 +51,11 @@ export default function AccountsPage(): JSX.Element {
 
   const fetchSecrets = async () => {
     try {
-      const response = await api.secrets.getSecrets();
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+      const response = await api.secrets.getSecrets(selectedAccount.account_id);
       if (response.length === 0) {
         setSecrets([]);
         return;
@@ -65,7 +73,12 @@ export default function AccountsPage(): JSX.Element {
     secret_description: string,
   ) => {
     try {
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
       await api.secrets.updateSecret(
+        selectedAccount.account_id,
         secret_id,
         secret_name,
         secret_value,
@@ -79,12 +92,16 @@ export default function AccountsPage(): JSX.Element {
 
   const deleteSecret = async (secret_id: string) => {
     try {
-      await api.secrets.deleteSecret(secret_id);
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+      await api.secrets.deleteSecret(selectedAccount.account_id, secret_id);
       fetchSecrets();
     } catch (error) {
       console.error("Error deleting secret:", error);
     } finally {
-      secretToDelete({});
+      setSecretToDelete({});
       setShowDeleteDialog(false);
     }
   };
@@ -95,7 +112,12 @@ export default function AccountsPage(): JSX.Element {
     secret_description: string,
   ) => {
     try {
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
       await api.secrets.createSecret(
+        selectedAccount.account_id,
         secret_name,
         secret_value,
         secret_description,
@@ -114,6 +136,13 @@ export default function AccountsPage(): JSX.Element {
     setSecretToDelete(secret);
   };
 
+  const toggleSecretVisibility = (secretId: string) => {
+    setVisibleSecrets((prev) => ({
+      ...prev,
+      [secretId]: !prev[secretId],
+    }));
+  };
+
   useEffect(() => {
     fetchSecrets();
   }, []);
@@ -127,14 +156,7 @@ export default function AccountsPage(): JSX.Element {
             <CardDescription>Manage API Keys etc</CardDescription>
           </div>
           <div className="ml-auto py-6">
-            {showNewSecretEditor ? (
-              <Button
-                variant="secondary"
-                onClick={() => setShowNewSecretEditor(false)}
-              >
-                Cancel
-              </Button>
-            ) : (
+            {!showNewSecretEditor && (
               <Button onClick={() => setShowNewSecretEditor(true)}>
                 Create New Secret
               </Button>
@@ -142,59 +164,70 @@ export default function AccountsPage(): JSX.Element {
           </div>
         </CardHeader>
         <CardContent>
+          {showNewSecretEditor && (
+            <div className="w-full mb-6">
+              <CreateNewSecret
+                cancel={() => setShowNewSecretEditor(false)}
+                saveSecret={(
+                  name: string,
+                  value: string,
+                  description: string,
+                ) => {
+                  saveNewSecret(name, value, description);
+                  setShowNewSecretEditor(false);
+                }}
+              />
+            </div>
+          )}
           <Table>
             <TableBody className="border border-gray-300">
-              {showNewSecretEditor && (
-                <div className="w-full">
-                  <CreateNewSecret cancel={cancel} saveSecret={saveNewSecret} />
-                </div>
-              )}
-              {/* <div className="w-full"> */}
               {secrets.map((secret: any, index) => (
-                <TableRow className="">
-                  {/* {secret && !editing ? (
-                      <> */}
+                <TableRow key={secret.secret_id} className="">
                   <TableCell>{secret.secret_name}</TableCell>
-                  <TableCell>{secret.secret_description}</TableCell>
-                  <TableCell>{secret.secret_value}</TableCell>
+                  <TableCell className="w-64">
+                    <span className="flex items-center">
+                      {visibleSecrets[secret.secret_id] ? (
+                        <span>{secret.secret_value}</span>
+                      ) : (
+                        <span className="text-lg tracking-widest">
+                          ••••••••
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2"
+                        onClick={() => toggleSecretVisibility(secret.secret_id)}
+                      >
+                        {visibleSecrets[secret.secret_id] ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </span>
+                  </TableCell>
 
                   <TableCell className="text-right">
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       className="ml-2"
                       // onClick={() => setEditing(!editing)}
                     >
                       <Edit2 className="size-5" />
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"
                       className="ml-2"
-                      onClick={() => deleteSecret(secret)}
+                      onClick={() => deleteSecret(secret.secret_id)}
                     >
                       <Trash2 className="size-5" />
                     </Button>
                   </TableCell>
                 </TableRow>
-                // <EditSecret
-                //   key={index}
-                //   secret={secret}
-                //   deleteSecret={openDialog}
-                //   updateSecret={updateSecret}
-                // />
               ))}
-              {/* </div> */}
-              {/* {teams.map((team) => (
-                              <TableRow key={team.account_id}>
-                                  <TableCell>
-                                      <div className="flex gap-x-2">
-                                      {team.name}
-                                      <Badge variant={team.account_role === 'owner' ? 'default' : 'outline'}>{team.is_primary_owner ? 'Primary Owner' : team.account_role}</Badge></div>
-                                  </TableCell>
-                                  <TableCell className="text-right"><Button variant="outline" asChild><Link href={`/dashboard/${team.slug}`}>View</Link></Button></TableCell>
-                              </TableRow>
-                          ))} */}
             </TableBody>
           </Table>
         </CardContent>
@@ -226,36 +259,5 @@ export default function AccountsPage(): JSX.Element {
         </AlertDialogContent>
       </AlertDialog>
     </>
-
-    // <div className="flex flex-col gap-y-4 py-12 h-full w-full max-w-screen-md mx-auto text-center">
-    // <div className="space-y-6 w-full">
-    //     <DashboardTitleWithAction title="Secrets" description="Manage secrets." action={() => setShowNewSecretEditor(true)} />
-    //     <Separator />
-    //     {/* <h1 className="text-2xl font-bold">Secrets</h1> */}
-    //     {showNewSecretEditor && (
-    //         <div className="w-full ">
-    //             <CreateNewSecret cancel={cancel} saveSecret={saveNewSecret} />
-    //         </div>)
-    //     }
-    //     <div className="w-full ">
-    //         {secrets.map((secret: any, index) => (
-    //             <EditSecret key={index} secret={secret} deleteSecret={openDialog} updateSecret={updateSecret} />
-    //         ))}
-    //     </div>
-    //     <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); setSecretToDelete({}); }}>
-    //         <AlertDialogContent>
-    //             <AlertDialogHeader>
-    //                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-    //                 <AlertDialogDescription>
-    //                     {`This action cannot be undone. This will permanently delete the secret "${secretToDelete.secret_name}"`}
-    //                 </AlertDialogDescription>
-    //             </AlertDialogHeader>
-    //             <AlertDialogFooter>
-    //                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-    //                 <AlertDialogAction className="bg-red-500" onClick={() => deleteSecret(secretToDelete.secret_id)}>Delete Secret</AlertDialogAction>
-    //             </AlertDialogFooter>
-    //         </AlertDialogContent>
-    //     </AlertDialog>
-    // </div>
   );
 }
