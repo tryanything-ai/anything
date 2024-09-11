@@ -35,6 +35,7 @@ import api from "@/lib/anything-api";
 import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
+import { useAccountsContext } from "./AccountsContext";
 
 export enum PanelTab {
   SETTINGS = "settings",
@@ -133,6 +134,7 @@ export const WorkflowVersionProvider = ({
   }>();
 
   const router = useRouter();
+  const { selectedAccount } = useAccountsContext();
 
   //Easy Access State
   const [dbFlow, setDbFlow] = useState<any>({});
@@ -231,12 +233,12 @@ export const WorkflowVersionProvider = ({
 
   const updateWorkflow = async (args: UpdateWorklowArgs) => {
     try {
-      if (!dbFlowId) return;
+      if (!dbFlowId || !selectedAccount) return;
 
       console.log("Updating Workflow", args);
 
       //Save to cloud
-      await api.flows.updateFlow(dbFlowId, args);
+      await api.flows.updateFlow(selectedAccount.account_id, dbFlowId, args);
 
       //Update state here
       setDbFlow((prevFlow: any) => {
@@ -253,11 +255,14 @@ export const WorkflowVersionProvider = ({
 
   const publishWorkflowVersion = async () => {
     try {
-      if (!dbFlowId) return;
-      if (!dbFlowVersionId) return;
+      if (!dbFlowId || !dbFlowVersionId || !selectedAccount) return;
 
       //Save to cloud
-      await api.flows.publishFlowVersion(dbFlowId, dbFlowVersionId);
+      await api.flows.publishFlowVersion(
+        selectedAccount?.account_id,
+        dbFlowId,
+        dbFlowVersionId,
+      );
 
       //Update state here
       setDbFlowVersion((prevFlow: any) => {
@@ -573,7 +578,9 @@ export const WorkflowVersionProvider = ({
 
   const _saveFlowVersion = async (workflow: Workflow) => {
     try {
+      if (!dbFlowId || !dbFlowVersionId || !selectedAccount) return;
       const res: any = await api.flows.updateFlowVersion(
+        selectedAccount.account_id,
         dbFlowId,
         dbFlowVersionId,
         workflow,
@@ -629,14 +636,18 @@ export const WorkflowVersionProvider = ({
   const hydrateFlow = async () => {
     try {
       console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
-      if (!workflowId) return;
-      let workflow_response = await api.flows.getFlow(workflowId);
+      if (!workflowId || !selectedAccount) return;
+      let workflow_response = await api.flows.getFlow(
+        selectedAccount.account_id,
+        workflowId,
+      );
       // let workflow_response = await getWorkflowById(workflowId);
 
       if (!workflow_response) return;
       let flow = workflow_response[0];
       // let flow_version = flow.flow_versions[0];
       let version = await api.flows.getFlowVersionById(
+        selectedAccount.account_id,
         workflowId,
         workflowVersionId,
       );

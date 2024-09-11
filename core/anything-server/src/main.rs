@@ -154,71 +154,71 @@ async fn main() {
 
     let protected_routes = Router::new()
         .route("/", get(api::root))
-        .route("/workflows", get(api::get_workflows))
-        .route("/workflow/:id", get(api::get_workflow))
-        .route("/workflow/:id/versions", get(api::get_flow_versions))
+        .route("/account/:account_id/workflows", get(api::get_workflows))
+        .route("/account/:account_id/workflow/:id", get(api::get_workflow))
+        .route("/account/:account_id/workflow/:id/versions", get(api::get_flow_versions))
         .route(
-            "/workflow/:workflow_id/version/:workflow_version_id",
+            "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
             get(api::get_flow_version),
         )
         .route(
-            "/workflow/:workflow_id/version/:workflow_version_id",
+            "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
             put(api::update_workflow_version),
         )
         .route(
-            "/workflow/:workflow_id/version/:workflow_version_id/publish",
+            "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id/publish",
             put(api::publish_workflow_version),
         )
-        .route("/workflow", post(api::create_workflow))
-        .route("/workflow/:id", delete(api::delete_workflow))
-        .route("/workflow/:id", put(api::update_workflow))
-        .route("/actions", get(api::get_actions))
+        .route("/account/:account_id/workflow", post(api::create_workflow))
+        .route("/account/:account_id/workflow/:id", delete(api::delete_workflow))
+        .route("/account/:account_id/workflow/:id", put(api::update_workflow))
+        .route("/account/:account_id/actions", get(api::get_actions))
         //Marketplace
         .route(
-            "/marketplace/:workflow_id/publish",
+            "/account/:account_id/marketplace/:workflow_id/publish",
             post(marketplace::publish_workflow_to_marketplace),
         )
         //Tasks
-        .route("/tasks", get(api::get_tasks))
-        .route("/tasks/:workflow_id", get(api::get_task_by_workflow_id))
+        .route("/account/:account_id/tasks", get(api::get_tasks))
+        .route("/account/:account_id/tasks/:workflow_id", get(api::get_task_by_workflow_id))
         //Charts
         .route(
-            "/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit",
+            "/account/:account_id/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit",
             get(api::get_task_status_counts_by_workflow_id),
         )
         // Secrets
-        .route("/secrets", get(secrets::get_decrypted_secrets))
-        .route("/secret", post(secrets::create_secret))
-        .route("/secret", put(secrets::update_secret))
-        .route("/secret/:id", delete(secrets::delete_secret))
+        .route("/account/:account_id/secrets", get(secrets::get_decrypted_secrets))
+        .route("/account/:account_id/secret", post(secrets::create_secret))
+        .route("/account/:account_id/secret", put(secrets::update_secret))
+        .route("/account/:account_id/secret/:id", delete(secrets::delete_secret))
         //Auth Providrs
         .route(
-            "/auth/providers/:provider_name",
+            "/account/:account_id/auth/providers/:provider_name",
             get(api::get_auth_provider_by_name),
         )
-        .route("/auth/accounts", get(api::get_auth_accounts))
+        .route("/account/:account_id/auth/accounts", get(api::get_auth_accounts))
         .route(
-            "/auth/accounts/:provider_name",
+            "/account/:account_id/auth/accounts/:provider_name",
             get(api::get_auth_accounts_for_provider_name),
         )
-        .route("/auth/providers", get(api::get_auth_providers))
+        .route("/account/:account_id/auth/providers", get(api::get_auth_providers))
         .route(
-            "/auth/:provider_name/initiate",
+            "/account/:account_id/auth/:provider_name/initiate",
             get(auth::init::initiate_auth),
         )
         // Users Testing Workflows
         //Test Workflows
         .route(
-            "/testing/workflow/:workflow_id/version/:workflow_version_id",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id",
             get(api::test_workflow),
         )
         .route(
-            "/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
             get(api::get_test_session_results),
         )
         //Test Actions
         .route(
-            "/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(api::test_action),
         )
         .layer(middleware::from_fn(supabase_auth_middleware::middleware));

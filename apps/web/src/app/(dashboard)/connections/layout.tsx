@@ -8,8 +8,8 @@ export default function AuthAndSecretsPage({
   children: React.ReactNode;
 }): JSX.Element {
   const items = [
-    { name: "Accounts", href: "/accounts" },
-    { name: "Secrets", href: "/accounts/secrets" },
+    { name: "Accounts", href: "/connections" },
+    { name: "Secrets", href: "/connections/secrets" },
   ];
 
   return (

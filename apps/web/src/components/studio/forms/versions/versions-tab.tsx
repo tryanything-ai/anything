@@ -4,14 +4,20 @@ import api from "@/lib/anything-api";
 import { format } from "date-fns";
 import { Badge } from "@repo/ui/components/ui/badge";
 import Link from "next/link";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function VersionsTab(): JSX.Element {
   const params = useParams<{ workflowVersionId: string; workflowId: string }>();
   const [workflowVersions, setWorkflowVersions] = useState<any[]>([]);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   const fetchVersions = async () => {
     try {
+      if (!selectedAccount) return;
       const versions = await api.flows.getFlowVersionsForWorkflowId(
+        selectedAccount.account_id,
         params.workflowId,
       );
       setWorkflowVersions(versions);

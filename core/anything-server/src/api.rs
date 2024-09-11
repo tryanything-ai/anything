@@ -62,6 +62,7 @@ pub async fn root() -> &'static str {
 }
 
 pub async fn get_workflows(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -79,6 +80,7 @@ pub async fn get_workflows(
             "*,draft_workflow_versions:flow_versions(*), published_workflow_versions:flow_versions(*)",
         )
         .eq("archived", "false")
+        .eq("account_id", &account_id)
         .eq("draft_workflow_versions.published", "false")
         .order_with_options("created_at", Some("draft_workflow_versions"), false, true)
         .foreign_table_limit(1, "draft_workflow_versions")
@@ -125,7 +127,7 @@ pub async fn get_workflows(
 }
 
 pub async fn get_workflow(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -135,6 +137,7 @@ pub async fn get_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .select("*,flow_versions(*)")
         .execute()
         .await
@@ -171,7 +174,7 @@ pub async fn get_workflow(
 }
 
 pub async fn get_flow_versions(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -181,6 +184,7 @@ pub async fn get_flow_versions(
         .from("flow_versions")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .select("*")
         .order("created_at.desc")
         .execute()
@@ -218,7 +222,7 @@ pub async fn get_flow_versions(
 }
 
 pub async fn get_flow_version(
-    Path((flow_id, version_id)): Path<(String, String)>,
+    Path((account_id, flow_id, version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -229,6 +233,7 @@ pub async fn get_flow_version(
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
         .eq("flow_version_id", &version_id)
+        .eq("account_id", &account_id)
         .select("*")
         .single()
         .execute()
@@ -266,6 +271,7 @@ pub async fn get_flow_version(
 }
 
 pub async fn create_workflow(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     _headers: HeaderMap,
@@ -279,7 +285,7 @@ pub async fn create_workflow(
         flow_id: payload.flow_id.clone(),
         flow_name: "New Default Flow".to_string(),
         description: "New Default Flow".to_string(),
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
     };
 
     println!("Workflow: {:?}", input);
@@ -304,7 +310,7 @@ pub async fn create_workflow(
     };
 
     let version_input = BaseFlowVersionInput {
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
         flow_id: payload.flow_id.clone(),
         flow_definition: serde_json::json!(Workflow::default()),
     };
@@ -349,7 +355,7 @@ pub async fn create_workflow(
 
 //TODO: we also need to set active to false
 pub async fn delete_workflow(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -359,6 +365,7 @@ pub async fn delete_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .update("{\"archived\": true, \"active\": false}")
         .execute()
         .await
@@ -393,7 +400,7 @@ pub async fn delete_workflow(
 }
 
 pub async fn update_workflow(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     _headers: HeaderMap,
@@ -419,6 +426,7 @@ pub async fn update_workflow(
             .from("flow_versions")
             .auth(user.jwt.clone())
             .eq("flow_id", &flow_id)
+            .eq("account_id", &account_id)
             .eq("published", "true")
             .select("*")
             .execute()
@@ -469,6 +477,7 @@ pub async fn update_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .update(serde_json::to_string(&payload).unwrap())
         .execute()
         .await
@@ -918,7 +927,7 @@ pub async fn get_actions(
 
 // Testing a workflow
 pub async fn test_workflow(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -931,6 +940,7 @@ pub async fn test_workflow(
         .from("flow_versions")
         .auth(user.jwt.clone())
         .eq("flow_version_id", &workflow_version_id)
+        .eq("account_id", &account_id)
         .select("*")
         .execute()
         .await
@@ -1013,7 +1023,7 @@ pub async fn test_workflow(
     let flow_session_id = Uuid::new_v4().to_string();
 
     let input = CreateTaskInput {
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
@@ -1089,7 +1099,7 @@ pub async fn test_workflow(
 //Just ask the user for dummy data and send it up when they do the call
 // Testing a workflow
 pub async fn test_action(
-    Path((workflow_id, workflow_version_id, action_id)): Path<(String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, action_id)): Path<(String, String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1102,6 +1112,7 @@ pub async fn test_action(
         .from("flow_versions")
         .auth(user.jwt.clone())
         .eq("flow_version_id", &workflow_version_id)
+        .eq("account_id", &account_id)
         .select("*")
         .execute()
         .await
@@ -1190,7 +1201,7 @@ pub async fn test_action(
     };
 
     let input = CreateTaskInput {
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),

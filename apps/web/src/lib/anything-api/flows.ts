@@ -9,17 +9,15 @@ export type UpdateFlowArgs = {
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getFlows = async () => {
+export const getFlows = async (account_id: string) => {
   try {
-    // Get JWT from supabase to pass to the API
-    // API conforms to RLS policies on behalf of users for external API
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Session:', session);
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflows`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflows`, {
         headers: {
           Authorization: `${session.access_token}`,
         },
@@ -34,17 +32,15 @@ export const getFlows = async () => {
   }
 }
 
-export const getFlowVersionById = async (workflowId: string, versionId: string) => {
+export const getFlowVersionById = async (account_id: string, workflowId: string, versionId: string) => {
   try {
-    // Get JWT from supabase to pass to the API
-    // API conforms to RLS policies on behalf of users for external API
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Session:', session);
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${workflowId}/version/${versionId}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${workflowId}/version/${versionId}`, {
         headers: {
           Authorization: `${session.access_token}`,
         },
@@ -59,10 +55,8 @@ export const getFlowVersionById = async (workflowId: string, versionId: string) 
   }
 }
 
-export const createFlow = async () => {
+export const createFlow = async (account_id: string) => {
   try {
-    // Get JWT from supabase to pass to the API
-    // API conforms to RLS policies on behalf of users for external API
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -70,7 +64,7 @@ export const createFlow = async () => {
 
     if (session) {
       let flow_id = uuidv4();
-      const response = await fetch(`${ANYTHING_API_URL}/workflow`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,13 +82,9 @@ export const createFlow = async () => {
     console.error('Error creating Workflow:', error);
   } finally {
   }
-  // console.log(`Called createFlow with ${flowName}`);
-  // let res = await anything.createFlow(flowName);
-  // console.log(`Got back from createFlow ${JSON.stringify(res)}`);
-  // return res;
 };
 
-export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
+export async function updateFlow(account_id: string, flow_id: string, args: UpdateFlowArgs) {
   try {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -102,7 +92,7 @@ export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
     console.log('Updating Workflow:', flow_id, "with args: ", args);
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${flow_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +112,7 @@ export async function updateFlow(flow_id: string, args: UpdateFlowArgs) {
   }
 }
 
-export async function updateFlowVersion(flow_id: string, flow_version_id: string, flow_definition: Workflow) {
+export async function updateFlowVersion(account_id: string, flow_id: string, flow_version_id: string, flow_definition: Workflow) {
   try {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -130,7 +120,7 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
     console.log('Updating Workflow');
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}/version/${flow_version_id}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${flow_id}/version/${flow_version_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +130,6 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
       });
 
       const data = await response.json();
-      // console.log('Data from /api/workflows/id/version/id PUT:', data);
       return data;
     }
 
@@ -150,7 +139,7 @@ export async function updateFlowVersion(flow_id: string, flow_version_id: string
   }
 }
 
-export async function deleteFlow(flowId: string) {
+export async function deleteFlow(account_id: string, flowId: string) {
   try {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -158,7 +147,7 @@ export async function deleteFlow(flowId: string) {
     console.log('Deleting Workflow');
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flowId}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${flowId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +166,7 @@ export async function deleteFlow(flowId: string) {
   }
 }
 
-export const getFlow = async (flowId: string) => {
+export const getFlow = async (account_id: string, flowId: string) => {
   try {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -185,7 +174,7 @@ export const getFlow = async (flowId: string) => {
     console.log('Fetching Workflow by ID');
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flowId}`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${flowId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +193,7 @@ export const getFlow = async (flowId: string) => {
   }
 };
 
-export async function publishFlowVersion(flow_id: string, flow_version_id: string) {
+export async function publishFlowVersion(account_id: string, flow_id: string, flow_version_id: string) {
   try {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -212,7 +201,7 @@ export async function publishFlowVersion(flow_id: string, flow_version_id: strin
     console.log('Publishing Workflow');
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${flow_id}/version/${flow_version_id}/publish`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${flow_id}/version/${flow_version_id}/publish`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -230,17 +219,15 @@ export async function publishFlowVersion(flow_id: string, flow_version_id: strin
   } 
 }
 
-export const getFlowVersionsForWorkflowId = async (workflowId: string) => {
+export const getFlowVersionsForWorkflowId = async (account_id: string, workflowId: string) => {
   try {
-    // Get JWT from supabase to pass to the API
-    // API conforms to RLS policies on behalf of users for external API
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Session:', session);
 
     if (session) {
-      const response = await fetch(`${ANYTHING_API_URL}/workflow/${workflowId}/versions`, {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${workflowId}/versions`, {
         headers: {
           Authorization: `${session.access_token}`,
         },

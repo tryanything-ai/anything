@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getTasks = async () => {
+export const getTasks = async (account_id: string) => {
     try {
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
@@ -14,7 +14,7 @@ export const getTasks = async () => {
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/tasks`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/tasks`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -29,7 +29,7 @@ export const getTasks = async () => {
     }
 }
 
-export const getTasksForWorkflow = async (workflow_id: string) => {
+export const getTasksForWorkflow = async (account_id: string, workflow_id: string) => {
     try {
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
@@ -39,7 +39,7 @@ export const getTasksForWorkflow = async (workflow_id: string) => {
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/tasks/${workflow_id}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/tasks/${workflow_id}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -54,7 +54,7 @@ export const getTasksForWorkflow = async (workflow_id: string) => {
 }
 
 //A single run of a whole workflow is called a "session" for now i think
-export const getTasksForSession = async (session_id: string) => {
+export const getTasksForSession = async (account_id: string, session_id: string) => {
     try {
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
@@ -64,7 +64,7 @@ export const getTasksForSession = async (session_id: string) => {
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/session/${session_id}/tasks`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/session/${session_id}/tasks`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },
@@ -78,4 +78,3 @@ export const getTasksForSession = async (session_id: string) => {
     } finally {
     }
 }
-

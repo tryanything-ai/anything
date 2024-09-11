@@ -1,35 +1,38 @@
 "use client";
-import { PartyPopper } from "lucide-react";
-import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
+
 import { Separator } from "@repo/ui/components/ui/separator";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
 import { TaskRow } from "@/lib/anything-api/testing";
 import api from "@/lib/anything-api";
-import { Table } from "@repo/ui/components/ui/table";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { TimeUnit } from "@/lib/anything-api/charts";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function WorkflowManager(): JSX.Element {
-
   const [workflow, setWorkflow] = useState<any | undefined>(undefined);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [chartData, setChartData] = useState<any | undefined>(undefined);
   const params = useParams<{ workflowId: string }>();
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   useEffect(() => {
     const fetchData = async () => {
       console.log("params in useEffect", params);
-      if (params.workflowId) {
-        // let flow = await getWorkflowById(params.workflowId);
-        let flow = await api.flows.getFlow(params.workflowId);
+      if (params.workflowId && selectedAccount) {
+        let flow = await api.flows.getFlow(
+          selectedAccount.account_id,
+          params.workflowId,
+        );
         console.log("flow", flow);
         if (flow && flow.length > 0) {
           setWorkflow(flow[0]);
         }
-        let tasks = await api.tasks.getTasksForWorkflow(params.workflowId);
+        let tasks = await api.tasks.getTasksForWorkflow(selectedAccount.account_id, params.workflowId);
         console.log("tasks", tasks);
         setTasks(tasks);
 
@@ -50,7 +53,7 @@ export default function WorkflowManager(): JSX.Element {
     };
 
     fetchData();
-  }, [params.workflowId]);
+  }, [params.workflowId, selectedAccount]);
 
   console.log("workflow", workflow);
   return (

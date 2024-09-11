@@ -48,43 +48,49 @@ export const AnythingProvider = ({
   return (
     <AccountsProvider>
       <AccountsContext.Consumer>
-        {(accounts) => (
-          <SubscriptionProvider>
-            <SubscriptionContext.Consumer>
-              {(subscription) => (
-                <WorkflowVersionProvider>
-                  <WorkflowVersionContext.Consumer>
-                    {(workflow) => (
-                      <VariablesProvider>
-                        <VariablesContext.Consumer>
-                          {(variables) => (
-                            <WorkflowTestingProvider>
-                              <WorkflowTestingContext.Consumer>
-                                {(testing) => (
-                                  <AnythingContext.Provider
-                                    value={{
-                                      accounts,
-                                      subscription,
-                                      workflow,
-                                      variables,
-                                      testing,
-                                    }}
-                                  >
-                                    {children}
-                                  </AnythingContext.Provider>
-                                )}
-                              </WorkflowTestingContext.Consumer>
-                            </WorkflowTestingProvider>
-                          )}
-                        </VariablesContext.Consumer>
-                      </VariablesProvider>
-                    )}
-                  </WorkflowVersionContext.Consumer>
-                </WorkflowVersionProvider>
-              )}
-            </SubscriptionContext.Consumer>
-          </SubscriptionProvider>
-        )}
+        {(accounts) => {
+          if (accounts.isLoading || !accounts.selectedAccount) {
+            return null; // Or any loading indicator
+            // TODO: not great but works
+          }
+          return (
+            <SubscriptionProvider>
+              <SubscriptionContext.Consumer>
+                {(subscription) => (
+                  <WorkflowVersionProvider>
+                    <WorkflowVersionContext.Consumer>
+                      {(workflow) => (
+                        <VariablesProvider>
+                          <VariablesContext.Consumer>
+                            {(variables) => (
+                              <WorkflowTestingProvider>
+                                <WorkflowTestingContext.Consumer>
+                                  {(testing) => (
+                                    <AnythingContext.Provider
+                                      value={{
+                                        accounts,
+                                        subscription,
+                                        workflow,
+                                        variables,
+                                        testing,
+                                      }}
+                                    >
+                                      {children}
+                                    </AnythingContext.Provider>
+                                  )}
+                                </WorkflowTestingContext.Consumer>
+                              </WorkflowTestingProvider>
+                            )}
+                          </VariablesContext.Consumer>
+                        </VariablesProvider>
+                      )}
+                    </WorkflowVersionContext.Consumer>
+                  </WorkflowVersionProvider>
+                )}
+              </SubscriptionContext.Consumer>
+            </SubscriptionProvider>
+          );
+        }}
       </AccountsContext.Consumer>
     </AccountsProvider>
   );

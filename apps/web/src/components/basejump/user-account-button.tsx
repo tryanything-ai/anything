@@ -24,7 +24,7 @@ export default async function UserAccountButton(): Promise<JSX.Element> {
 
     const supabase = createClient();
     await supabase.auth.signOut();
-    return redirect("/");
+    return redirect("/login");
   };
 
   return (
@@ -48,7 +48,7 @@ export default async function UserAccountButton(): Promise<JSX.Element> {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/">My Account</Link>
+            <Link href="/settings">My Account</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">Settings</Link>

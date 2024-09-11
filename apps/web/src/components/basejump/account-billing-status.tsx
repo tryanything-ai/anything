@@ -23,20 +23,6 @@ export default async function AccountBillingStatus({
   accountId,
   returnUrl,
 }: Props): Promise<JSX.Element> {
-  const supabaseClient = createClient();
-
-  const { data, error } = await supabaseClient.functions.invoke(
-    "billing-functions",
-    {
-      body: {
-        action: "get_billing_status",
-        args: {
-          account_id: accountId,
-        },
-      },
-    },
-  );
-
   return (
     <Card>
       <CardHeader>
@@ -46,7 +32,7 @@ export default async function AccountBillingStatus({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!Boolean(data?.billing_enabled) ? (
+        {/* {!Boolean(data?.billing_enabled) ? (
           <Alert variant="destructive">
             <AlertDescription>
               Billing is not enabled for this account. Check out usebasejump.com
@@ -58,11 +44,11 @@ export default async function AccountBillingStatus({
           <div>
             <p>Status: {data.status}</p>
           </div>
-        )}
+        )} */}
       </CardContent>
-      {Boolean(data?.billing_enabled) && (
-        <CardFooter>
-          <form className="w-full">
+      {/* {Boolean(data?.billing_enabled) && (
+        <CardFooter> */}
+      {/* <form className="w-full">
             <input type="hidden" name="accountId" value={accountId} />
             <input type="hidden" name="returnUrl" value={returnUrl} />
             {data.status === "not_setup" ? (
@@ -80,9 +66,9 @@ export default async function AccountBillingStatus({
                 Manage Subscription
               </SubmitButton>
             )}
-          </form>
-        </CardFooter>
-      )}
+          </form> */}
+      {/* </CardFooter> */}
+      {/* )} */}
     </Card>
   );
 }

@@ -4,13 +4,20 @@ import DashboardTitleWithAction from "@/components/workflows/dashboard-title-wit
 import { Separator } from "@repo/ui/components/ui/separator";
 import api from "@/lib/anything-api";
 import { useRouter } from "next/navigation";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function Workflows(): JSX.Element {
   const router = useRouter();
+  const { accounts: { selectedAccount } } = useAnything();
 
   const createWorkflow = async () => {
+    if (!selectedAccount) {
+      console.error("No account selected");
+      return;
+    }
+
     try {
-      let res = await api.flows.createFlow();
+      let res = await api.flows.createFlow(selectedAccount.account_id);
       console.log("created workflow", res);
       router.push(
         `/workflows/${res.workflow_id}/${res.workflow_version_id}/editor`,
@@ -19,6 +26,7 @@ export default function Workflows(): JSX.Element {
       console.error("error creating workflow", error);
     }
   };
+
   return (
     <div className="space-y-6 w-full">
       <DashboardTitleWithAction

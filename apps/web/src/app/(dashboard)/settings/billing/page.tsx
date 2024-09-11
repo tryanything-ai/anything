@@ -16,7 +16,7 @@ export default async function PersonalAccountBillingPage(): Promise<JSX.Element>
     <div>
       <AccountBillingStatus
         accountId={personalAccount.account_id}
-        returnUrl={`${returnUrl}/dashboard/settings/billing`}
+        returnUrl={`${returnUrl}/settings/billing`}
       />
     </div>
   );

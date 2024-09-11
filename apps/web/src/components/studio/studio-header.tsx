@@ -17,7 +17,10 @@ export default function StudioHeader(): JSX.Element {
   const router = useRouter();
   const params = useParams<{ workflowVersionId: string; workflowId: string }>();
 
-  const { workflow } = useAnything();
+  const {
+    workflow,
+    accounts: { selectedAccount },
+  } = useAnything();
 
   const [version, setVersion] = useState<any>(null);
 
@@ -27,7 +30,10 @@ export default function StudioHeader(): JSX.Element {
 
   const fetchVersion = async () => {
     try {
+      if (!selectedAccount) return;
+
       let version = await api.flows.getFlowVersionById(
+        selectedAccount.account_id,
         params.workflowId,
         params.workflowVersionId,
       );

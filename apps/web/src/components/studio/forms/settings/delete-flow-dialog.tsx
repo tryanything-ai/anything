@@ -20,11 +20,15 @@ export default function DeleteFlowDialog({
   workflowId: string;
 }): JSX.Element {
   const navigate = useRouter();
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   const handleDelete = async () => {
     try {
       console.log("Deleting Flow in DeleteFlowDialog");
-      await api.flows.deleteFlow(workflowId);
+      if (!selectedAccount) return;
+      await api.flows.deleteFlow(selectedAccount.account_id, workflowId);
       navigate.push("/workflows");
     } catch (error) {
       console.error(error);

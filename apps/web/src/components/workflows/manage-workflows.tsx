@@ -14,16 +14,20 @@ import { Edit } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
 import api from "@/lib/anything-api";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function ManageWorkflows(): JSX.Element {
-  // let { workflows } = useAnything();
+  let {
+    accounts: { selectedAccount },
+  } = useAnything();
+
   const [workflows, setWorkflows] = useState([]);
-  // console.log("flows in component", workflows.flows);
 
   const getWorkflows = async (): Promise<void> => {
     console.log("Getting Flows from API");
     try {
-      let res: any = await api.flows.getFlows();
+      if (!selectedAccount) return;
+      let res: any = await api.flows.getFlows(selectedAccount.account_id);
       console.log("getFlows:", res);
       if (res.length > 0) {
         setWorkflows(res);
@@ -37,7 +41,7 @@ export default function ManageWorkflows(): JSX.Element {
 
   useEffect(() => {
     getWorkflows();
-  }, []);
+  }, [selectedAccount]);
 
   return (
     <div>
@@ -72,11 +76,11 @@ export default function ManageWorkflows(): JSX.Element {
         }
 
         return (
-          <Link key={flow.flow_id} href={`/workflows/${flow.flow_id}`}>
-            <Card
-              key={flow.flow_id}
-              className="mt-2 flex flex-row hover:border-green-500"
-            >
+          <Card
+            key={flow.flow_id}
+            className="mt-2 flex flex-row hover:border-green-500"
+          >
+            <Link href={`/workflows/${flow.flow_id}`} className="flex-1 flex">
               <CardHeader className="w-1/4">
                 <CardTitle className="truncate">{flow.flow_name}</CardTitle>
                 <CardDescription className="truncate">
@@ -85,7 +89,6 @@ export default function ManageWorkflows(): JSX.Element {
               </CardHeader>
               <CardContent className="flex-1">
                 <div className="flex flex-row h-full items-end">
-                  {/* <div className="flex flex-row"> */}
                   {icons.map((icon, index) => {
                     return (
                       <BaseNodeIcon
@@ -97,26 +100,25 @@ export default function ManageWorkflows(): JSX.Element {
                   })}
 
                   <div className="flex-1" />
-                  {/* {draft && <div className="mx-3">DRAFT </div>} */}
                   <div className="mx-3">
                     <WorkflowStatusComponent
                       active={flow.active}
                       draft={draft}
                     />
                   </div>
-
-                  <Link
-                    className="flex flex-col justify-end h-full"
-                    href={`/workflows/${flow.flow_id}/${flow_version.flow_version_id}/editor`}
-                  >
-                    <Button>
-                      <Edit size={16} />
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
-            </Card>
-          </Link>
+            </Link>
+            <div className="flex items-end p-6">
+              <Link
+                href={`/workflows/${flow.flow_id}/${flow_version.flow_version_id}/editor`}
+              >
+                <Button>
+                  <Edit size={16} />
+                </Button>
+              </Link>
+            </div>
+          </Card>
         );
       })}
     </div>
