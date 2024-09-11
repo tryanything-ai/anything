@@ -12,7 +12,7 @@ export enum TimeUnit {
     Month = "month"
 }
 
-export const getTasksChart = async (workflow_id: string, start_date: string, end_date: string, time_unit: TimeUnit) => {
+export const getTasksChart = async (account_id: string, workflow_id: string, start_date: string, end_date: string, time_unit: TimeUnit) => {
     try {
         // Get JWT from supabase to pass to the API
         // API conforms to RLS policies on behalf of users for external API
@@ -22,7 +22,7 @@ export const getTasksChart = async (workflow_id: string, start_date: string, end
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/charts/${workflow_id}/tasks/${start_date}/${end_date}/${time_unit}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/charts/${workflow_id}/tasks/${start_date}/${end_date}/${time_unit}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },

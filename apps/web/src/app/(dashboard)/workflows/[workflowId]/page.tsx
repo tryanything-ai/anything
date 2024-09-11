@@ -32,7 +32,10 @@ export default function WorkflowManager(): JSX.Element {
         if (flow && flow.length > 0) {
           setWorkflow(flow[0]);
         }
-        let tasks = await api.tasks.getTasksForWorkflow(selectedAccount.account_id, params.workflowId);
+        let tasks = await api.tasks.getTasksForWorkflow(
+          selectedAccount.account_id,
+          params.workflowId,
+        );
         console.log("tasks", tasks);
         setTasks(tasks);
 
@@ -41,6 +44,7 @@ export default function WorkflowManager(): JSX.Element {
           new Date().setDate(new Date().getDate() - 30),
         ).toISOString();
         let chardDataRes = await api.charts.getTasksChart(
+          selectedAccount.account_id,
           params.workflowId,
           startDate,
           endDate,

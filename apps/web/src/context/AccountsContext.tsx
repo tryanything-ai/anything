@@ -9,6 +9,7 @@ import {
   useContext,
 } from "react";
 import { useAccounts } from "@/lib/hooks/use-accounts";
+import { useRouter } from "next/navigation";
 
 export type Account = {
   account_id: string;
@@ -44,6 +45,7 @@ export const AccountsProvider = ({
   const [selectedAccount, setSelectedAccountState] = useState<
     Account | undefined
   >();
+  const router = useRouter();
 
   const { data: accounts, isLoading } = useAccounts();
 
@@ -73,6 +75,7 @@ export const AccountsProvider = ({
   const setSelectedAccount = (account: Account) => {
     setSelectedAccountState(account);
     localStorage.setItem("selectedAccount", JSON.stringify(account));
+    router.push("/");
   };
 
   return (

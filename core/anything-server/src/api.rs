@@ -1345,16 +1345,18 @@ pub async fn get_test_session_results(
 
 //Task
 pub async fn get_tasks(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    println!("Handling a get_tasks");
+    println!("Handling a get_tasks for account_id: {}", account_id);
 
     let client = &state.anything_client;
 
     let response = match client
         .from("tasks")
-        .auth(&user.jwt) // Pass a reference to the JWT
+        .auth(&user.jwt)
+        .eq("account_id", &account_id)
         .select("*")
         .execute()
         .await
@@ -1398,7 +1400,7 @@ pub async fn get_tasks(
 }
 
 pub async fn get_task_by_workflow_id(
-    Path(workflow_id): Path<String>,
+    Path((account_id, workflow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1407,6 +1409,7 @@ pub async fn get_task_by_workflow_id(
     let response = match client
         .from("tasks")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("flow_id", &workflow_id)
         .select("*")
         .order("created_at.desc,processing_order.desc")
@@ -1665,7 +1668,7 @@ fn parse_date_or_default(date_str: &str) -> DateTime<Utc> {
 }
 
 pub async fn get_task_status_counts_by_workflow_id(
-    Path((workflow_id, start_date, end_date, time_unit)): Path<(String, String, String, String)>,
+    Path((account_id, workflow_id, start_date, end_date, time_unit)): Path<(String, String, String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1679,6 +1682,7 @@ pub async fn get_task_status_counts_by_workflow_id(
     let query = client
         .from("tasks")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("flow_id", &workflow_id)
         .select("task_status, created_at")
         .gte("created_at", start.to_rfc3339())
