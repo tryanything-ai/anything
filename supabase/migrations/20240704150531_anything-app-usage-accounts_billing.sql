@@ -1,6 +1,8 @@
 -- Create the accounts_billing table
 CREATE TABLE IF NOT EXISTS anything.accounts_billing (
     account_id uuid PRIMARY KEY REFERENCES basejump.accounts(id),
+    stripe_customer_id text,
+    stripe_data jsonb,
     free_trial_days integer DEFAULT 7,
     free_trial_task_limit integer DEFAULT 1000,
     free_trial_started_at timestamp with time zone,

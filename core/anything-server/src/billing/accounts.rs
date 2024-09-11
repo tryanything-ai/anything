@@ -8,6 +8,7 @@ use stripe::{CreateCustomer, CreateSubscription, CreateSubscriptionItems, Custom
 use dotenv::dotenv;
 use std::env;
 
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetUserByIdParams {
     pub user_id: uuid::Uuid,
@@ -212,6 +213,33 @@ pub async fn handle_new_account_webhook(
                     "created a customer at https://dashboard.stripe.com/test/customers/{}",
                     customer.id
                 );
+
+                // Update the accounts_billing table with Stripe customer data
+                let update_account_billing = serde_json::json!({
+                    "stripe_customer_id": customer.id,
+                    "stripe_data": serde_json::to_value(&customer).unwrap(),
+                });
+
+                match state
+                    .anything_client
+                    .from("accounts_billing")
+                    .auth(&supabase_service_role_api_key)
+                    .eq("account_id", record.id.to_string())
+                    .update(update_account_billing.to_string())
+                    .execute()
+                    .await
+                {
+                    Ok(response) => {
+                        println!("Successfully updated accounts_billing: {:?}", response);
+                    }
+                    Err(err) => {
+                        eprintln!("Failed to update accounts_billing: {:?}", err);
+                        return Err((
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "Failed to update billing information".to_string(),
+                        ));
+                    }
+                }
 
                 // Create the subscriptoin
                 // let subscription = {

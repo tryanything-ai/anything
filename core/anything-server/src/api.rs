@@ -326,7 +326,7 @@ pub async fn create_workflow(
         Ok(response) => {
             println!("Flow version creation response: {:?}", response);
             response
-        },
+        }
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -1099,7 +1099,12 @@ pub async fn test_workflow(
 //Just ask the user for dummy data and send it up when they do the call
 // Testing a workflow
 pub async fn test_action(
-    Path((account_id, workflow_id, workflow_version_id, action_id)): Path<(String, String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, action_id)): Path<(
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1273,7 +1278,12 @@ pub async fn test_action(
 
 // Actions
 pub async fn get_test_session_results(
-    Path((account_id, workflow_id, workflow_version_id, session_id)): Path<(String, String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, session_id)): Path<(
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1462,7 +1472,6 @@ pub async fn get_auth_provider_by_name(
     let response = match client
         .from("auth_providers")
         .auth(user.jwt)
-        .eq("account_id", &account_id)
         .eq("provider_name", &provider_name)
         .select("*")
         .execute()
@@ -1561,7 +1570,10 @@ pub async fn get_auth_accounts(
     Extension(user): Extension<User>,
     Path(account_id): Path<String>,
 ) -> impl IntoResponse {
-    println!("Handling a get auth accounts for account_id: {}", account_id);
+    println!(
+        "Handling a get auth accounts for account_id: {}",
+        account_id
+    );
 
     let client = &state.anything_client;
 
@@ -1611,7 +1623,10 @@ pub async fn get_auth_providers(
     Extension(user): Extension<User>,
     Path(account_id): Path<String>,
 ) -> impl IntoResponse {
-    println!("Handling a get auth providers for account_id: {}", account_id);
+    println!(
+        "Handling a get auth providers for account_id: {}",
+        account_id
+    );
 
     let client = &state.anything_client;
 
@@ -1671,7 +1686,13 @@ fn parse_date_or_default(date_str: &str) -> DateTime<Utc> {
 }
 
 pub async fn get_task_status_counts_by_workflow_id(
-    Path((account_id, workflow_id, start_date, end_date, time_unit)): Path<(String, String, String, String, String)>,
+    Path((account_id, workflow_id, start_date, end_date, time_unit)): Path<(
+        String,
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {

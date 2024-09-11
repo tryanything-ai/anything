@@ -173,7 +173,7 @@ async fn main() {
         .route("/account/:account_id/workflow/:id", delete(api::delete_workflow))
         .route("/account/:account_id/workflow/:id", put(api::update_workflow))
         .route("/account/:account_id/actions", get(api::get_actions))
-        
+
         //Marketplace
         .route(
             "/account/:account_id/marketplace/:workflow_id/publish",
@@ -251,6 +251,9 @@ async fn main() {
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+
+    //Spawn task billing processing loop
+    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
