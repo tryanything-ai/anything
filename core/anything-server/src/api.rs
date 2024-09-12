@@ -687,7 +687,7 @@ pub async fn update_workflow_version(
 }
 
 pub async fn publish_workflow_version(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -696,6 +696,7 @@ pub async fn publish_workflow_version(
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     println!("Handling publish workflow version");
+    println!("account id: {}", account_id);
     println!("workflow id: {}", workflow_id);
     println!("flow-version id: {}", workflow_version_id);
 

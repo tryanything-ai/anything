@@ -31,13 +31,13 @@ export default function ActionSettingsForm(): JSX.Element {
           <div className="grid gap-6">
             {/* Debug essentially */}
             <div className="flex flex-row gap-2 mt-2">
-              <Button
+              {/* <Button
                 onClick={() => testAction(workflow.selected_node_id)}
                 className="hover:bg-green-500"
               >
                 Test Action
                 <Play size={16} className="ml-2" />
-              </Button>
+              </Button> */}
               <Button onClick={testWorkflow} className="hover:bg-green-500">
                 Test Workflow
                 <Play size={16} className="ml-2" />

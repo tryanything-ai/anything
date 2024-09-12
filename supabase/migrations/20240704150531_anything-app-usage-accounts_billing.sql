@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS anything.accounts_billing (
     free_trial_ends_at timestamp with time zone,
     free_trial_task_usage bigint DEFAULT 0,
     trial_ended boolean DEFAULT false,
-    total_tasks bigint DEFAULT 0,
-
+    total_task_usage bigint DEFAULT 0,
+    total_execution_time_ms bigint DEFAULT 0,
+    
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );

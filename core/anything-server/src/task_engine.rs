@@ -393,13 +393,20 @@ async fn process_http_task(
         }
 
         if let Some(body) = bundled_context.get("body") {
-            if let Some(body_object) = body.as_object() {
+            if let Some(body_str) = body.as_str() {
+                if !body_str.is_empty() {
+                    println!("[TASK_ENGINE] Adding body: {}", body_str);
+                    request_builder = request_builder.body(body_str.to_string());
+                } else {
+                    println!("[TASK_ENGINE] Body is an empty string, sending request without body");
+                }
+            } else if let Some(body_object) = body.as_object() {
                 let body_json = serde_json::to_string(body_object)?;
                 println!("[TASK_ENGINE] Adding body: {}", body_json);
                 request_builder = request_builder.body(body_json);
             } else {
-                println!("[TASK_ENGINE] Body is not an object");
-                return Err("HTTP task body must be an object".into());
+                println!("[TASK_ENGINE] Body is not a string or an object");
+                return Err("HTTP task body must be a string or an object".into());
             }
         } else {
             println!("[TASK_ENGINE] No body found in task context");

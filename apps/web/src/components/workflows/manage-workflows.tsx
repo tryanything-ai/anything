@@ -82,7 +82,7 @@ export default function ManageWorkflows(): JSX.Element {
           >
             <Link href={`/workflows/${flow.flow_id}`} className="flex-1 flex">
               <CardHeader className="w-1/4">
-                <CardTitle className="truncate">{flow.flow_name}</CardTitle>
+                <CardTitle className="truncate leading-tight">{flow.flow_name}</CardTitle>
                 <CardDescription className="truncate">
                   {flow.description}
                 </CardDescription>

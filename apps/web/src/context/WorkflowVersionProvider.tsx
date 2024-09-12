@@ -255,7 +255,10 @@ export const WorkflowVersionProvider = ({
 
   const publishWorkflowVersion = async () => {
     try {
-      if (!dbFlowId || !dbFlowVersionId || !selectedAccount) return;
+      if (!dbFlowId || !dbFlowVersionId || !selectedAccount) {
+        console.error("No Flow Id or Flow Version Id or Account to publish workflow version");
+        return;
+      }
 
       //Save to cloud
       await api.flows.publishFlowVersion(
