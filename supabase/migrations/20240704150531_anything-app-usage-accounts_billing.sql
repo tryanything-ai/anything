@@ -11,7 +11,10 @@ CREATE TABLE IF NOT EXISTS anything.accounts_billing (
     trial_ended boolean DEFAULT false,
     total_task_usage bigint DEFAULT 0,
     total_execution_time_ms bigint DEFAULT 0,
-    
+    paying_customer boolean DEFAULT false,
+    customer_status text DEFAULT 'trial',
+    keep_processing_workflows boolean DEFAULT true,
+
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );
@@ -48,3 +51,13 @@ EXECUTE PROCEDURE basejump.trigger_set_timestamps();
 
 -- Enable RLS on the table
 ALTER TABLE anything.accounts_billing ENABLE ROW LEVEL SECURITY;
+
+-------------
+-- Users should be able to read records that are owned by an account they belong to
+--------------
+create policy "Account members can select" on anything.accounts_billing
+    for select
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -10,22 +13,31 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import Link from "next/link";
 import { UserIcon } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
-export default async function UserAccountButton(): Promise<JSX.Element> {
+export default function UserAccountButton(): JSX.Element {
+  const [personalAccount, setPersonalAccount] = useState<any>(null);
+  const router = useRouter();
   const supabaseClient = createClient();
-  const { data: personalAccount }: any = await supabaseClient.rpc(
-    "get_personal_account",
-  );
+
+  useEffect(() => {
+    const fetchPersonalAccount = async () => {
+      const { data } = await supabaseClient.rpc("get_personal_account");
+      setPersonalAccount(data);
+    };
+
+    fetchPersonalAccount();
+  }, []);
 
   const signOut = async () => {
-    "use server";
-
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    return redirect("/login");
+    await supabaseClient.auth.signOut();
+    router.push("/login");
   };
+
+  if (!personalAccount) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <DropdownMenu>
@@ -59,9 +71,7 @@ export default async function UserAccountButton(): Promise<JSX.Element> {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <form action={signOut}>
-            <button>Log out</button>
-          </form>
+          <button onClick={signOut}>Log out</button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

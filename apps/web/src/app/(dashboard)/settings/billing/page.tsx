@@ -12,6 +12,8 @@ export default async function PersonalAccountBillingPage(): Promise<JSX.Element>
     "get_personal_account",
   );
 
+  
+
   return (
     <div>
       <AccountBillingStatus

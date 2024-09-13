@@ -5,9 +5,7 @@ use crate::AppState;
 use std::sync::Arc;
 use stripe::{CreateCustomer, CreateSubscription, CreateSubscriptionItems, Customer, Subscription};
 
-use dotenv::dotenv;
 use std::env;
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetUserByIdParams {

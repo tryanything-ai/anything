@@ -14,7 +14,7 @@ export default function WorkflowSettingsForm(): JSX.Element {
   let input = {
     flow_name: db_flow?.flow_name,
     description: db_flow?.description,
-    active: db_flow?.active,
+    // active: db_flow?.active,
   };
 
   console.log("input in worfklow-settings-form", input);

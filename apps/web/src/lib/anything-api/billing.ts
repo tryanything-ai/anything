@@ -1,0 +1,26 @@
+import { createClient } from "../supabase/client";
+
+const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
+
+export const getAccountStatus = async (account_id: string) => {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+  
+      console.log('Session:', session);
+  
+      if (session) {
+        const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/billing/status`, {
+          headers: {
+            Authorization: `${session.access_token}`,
+          },
+        });
+        const data = await response.json();
+        console.log('Data from /api/account/:account_id/status:', data);
+        return data;
+      }
+    } catch (error) {
+      console.error('Error fetching account status:', error);
+    } finally {
+    }
+  }

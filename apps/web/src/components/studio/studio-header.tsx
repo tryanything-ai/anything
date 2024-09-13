@@ -10,6 +10,7 @@ import WorkflowToggle from "../workflows/workflow-toggle";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import api from "@/lib/anything-api";
+import FreeTrialBadge from "../free-trial-badge";
 // flow_name={workflow?.db_flow.flow_name || ""}
 // savingStatus={workflow.savingStatus}
 
@@ -20,6 +21,7 @@ export default function StudioHeader(): JSX.Element {
   const {
     workflow,
     accounts: { selectedAccount },
+    subscription,
   } = useAnything();
 
   const [version, setVersion] = useState<any>(null);
@@ -50,6 +52,16 @@ export default function StudioHeader(): JSX.Element {
     }
   }, [params.workflowVersionId]);
 
+  const calculateDaysLeft = () => {
+    if (!subscription.free_trial_ends_at) return 0;
+    const endDate = new Date(subscription.free_trial_ends_at);
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 3600 * 24));
+  };
+
+  const daysLeft = calculateDaysLeft();
+
   return (
     <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
       <div className="border-b p-2">
@@ -73,9 +85,10 @@ export default function StudioHeader(): JSX.Element {
         active={workflow.db_flow.active}
         workflow_id={workflow.db_flow_id}
       />
-      {/* <ShareDialog /> */}
       {/* TODO:bring this back */}
-      <div className="ml-auto">
+      {/* <ShareDialog /> */}
+      <div className="ml-auto flex items-center gap-2">
+        <FreeTrialBadge />
         {version && version.published ? (
           <Button
             variant="outline"

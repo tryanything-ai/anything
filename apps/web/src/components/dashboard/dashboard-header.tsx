@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import UserAccountButton from "@/components/basejump/user-account-button";
 import AnythingLogo from "@/components/logo";
@@ -11,6 +13,7 @@ import {
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
 import { Menu } from "lucide-react";
+import FreeTrialBadge from "../free-trial-badge";
 
 interface Props {
   accountId: string;
@@ -73,6 +76,7 @@ export default function DashboardHeader({
       </Sheet>
 
       <div className="flex items-center gap-x-4">
+        <FreeTrialBadge />
         <UserAccountButton />
       </div>
     </nav>

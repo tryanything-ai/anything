@@ -180,6 +180,9 @@ async fn main() {
             post(marketplace::publish_workflow_to_marketplace),
         )
 
+        //Billing
+        .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
+
         //Tasks
         .route("/account/:account_id/tasks", get(api::get_tasks))
         .route("/account/:account_id/tasks/:workflow_id", get(api::get_task_by_workflow_id))
@@ -253,7 +256,9 @@ async fn main() {
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
-    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(state.clone()));
+    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+        state.clone(),
+    ));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();

@@ -11,16 +11,18 @@ export let EDIT_FLOW_SCHEMA: any = {
             "description": "Longer description of what the flow does.",
             "type": "string",
         },
-        "active": {
-            "title": "Flow Active",
-            "description": "Turns the flow on or off.",
-            "type": "boolean",
-            "x-jsf-presentation": {
-                "inputType": "checkbox"
-            }
-        }
+        // "active": {
+        //     "title": "Flow Active",
+        //     "description": "Turns the flow on or off.",
+        //     "type": "boolean",
+        //     "x-jsf-presentation": {
+        //         "inputType": "checkbox"
+        //     }
+        // }
     },
-    "x-jsf-order": ["flow_name", "description", "active"],
+    "x-jsf-order": ["flow_name", "description",
+        //  "active"
+        ],
     "required": ["flow_name", "description"],
     "additionalProperties": false
 }

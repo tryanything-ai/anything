@@ -5,6 +5,7 @@ import * as testing from './testing';
 import * as tasks from './tasks'; 
 import * as charts from './charts';
 import * as auth from './auth'; 
+import * as billing from './billing';
 
 const api = {
   flows,
@@ -13,7 +14,8 @@ const api = {
   action_templates,
   secrets, 
   charts,
-  auth
+  auth,
+  billing
 };
 
 export default api;

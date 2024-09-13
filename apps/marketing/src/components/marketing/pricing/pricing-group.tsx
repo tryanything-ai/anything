@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Radio, RadioGroup } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 
 const frequencies = [
@@ -16,6 +15,7 @@ const tiers = [
     price: { monthly: "$9.99", annually: "$50" },
     description: "A plan that scales to Anything.",
     features: [
+      "7 Day Free Trial",
       "10K included tasks",
       "$0.99 / 1k tasks after that",
       "Unlimited users",
