@@ -182,7 +182,9 @@ async fn main() {
 
         //Billing
         .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
-
+        .route("/account/:account_id/billing/checkout", post(billing::create_links::get_checkout_link))
+        // .route("/account/:account_id/billing/portal", post(billing::create_links::get_billing_portal_link))
+        
         //Tasks
         .route("/account/:account_id/tasks", get(api::get_tasks))
         .route("/account/:account_id/tasks/:workflow_id", get(api::get_task_by_workflow_id))

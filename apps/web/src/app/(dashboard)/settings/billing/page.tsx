@@ -1,25 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
 import AccountBillingStatus from "@/components/basejump/account-billing-status";
 
-const returnUrl: string =
-  process.env.NODE_ENV === "production"
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : `http://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+// const returnUrl: string =
+//   process.env.NODE_ENV === "production"
+//     ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+//     : `http://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
 
-export default async function PersonalAccountBillingPage(): Promise<JSX.Element> {
-  const supabaseClient = createClient();
-  const { data: personalAccount }: any = await supabaseClient.rpc(
-    "get_personal_account",
-  );
-
-  
-
-  return (
-    <div>
-      <AccountBillingStatus
-        accountId={personalAccount.account_id}
-        returnUrl={`${returnUrl}/settings/billing`}
-      />
-    </div>
-  );
+export default function PersonalAccountBillingPage(): JSX.Element {
+  return <AccountBillingStatus />;
 }

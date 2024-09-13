@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -7,22 +9,51 @@ import {
   CardTitle,
 } from "@repo/ui/components/ui/card";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
-import { createClient } from "@/lib/supabase/server";
-import { SubmitButton } from "@/components/submit-button";
-import {
-  manageSubscription,
-  setupNewSubscription,
-} from "@/lib/actions/billing";
+import { Button } from "@repo/ui/components/ui/button";
+import { useAnything } from "@/context/AnythingContext";
+import api from "@/lib/anything-api";
 
-type Props = {
-  accountId: string;
-  returnUrl: string;
-};
+const returnUrl: string =
+  process.env.NODE_ENV === "production"
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : `http://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
 
-export default async function AccountBillingStatus({
-  accountId,
-  returnUrl,
-}: Props): Promise<JSX.Element> {
+export default function AccountBillingStatus(): JSX.Element {
+  const {
+    subscription,
+    accounts: { selectedAccount },
+  } = useAnything();
+
+  const manageSubscription = async () => {
+    // Implement manage subscription logic here
+    //TODO: Create session for managing invoices.
+    window.location.href =
+      "https://billing.stripe.com/p/login/test_6oE6qIbcTe8o9fqfYY";
+  };
+
+  const setupNewSubscription = async () => {
+    console.log("Starting setupNewSubscription");
+    // Navigate to the Stripe checkout page
+    if (!selectedAccount) {
+      console.log("No selected account, returning");
+      return;
+    }
+    try { 
+      console.log("Fetching checkout link for account:", selectedAccount.account_id);
+      const res = await api.billing.getCheckoutLink(selectedAccount.account_id, returnUrl);
+      console.log("Received response:", res);
+      if (res.checkout_url) {
+        console.log("Redirecting to checkout URL:", res.checkout_url);
+        window.location.href = res.checkout_url;
+      } else {
+        console.error("No checkout URL received");
+      }
+    } catch (error) {
+      console.error("Error setting up new subscription:", error);
+      // Handle the error appropriately, e.g., show an error message to the user
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -32,43 +63,20 @@ export default async function AccountBillingStatus({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* {!Boolean(data?.billing_enabled) ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              Billing is not enabled for this account. Check out usebasejump.com
-              for more info or remove this component if you don't plan on
-              enabling billing.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <div>
-            <p>Status: {data.status}</p>
-          </div>
-        )} */}
+        <p>
+          Status:{" "}
+          {subscription.paying_customer
+            ? "Active Subscription"
+            : "No Active Subscription"}
+        </p>
       </CardContent>
-      {/* {Boolean(data?.billing_enabled) && (
-        <CardFooter> */}
-      {/* <form className="w-full">
-            <input type="hidden" name="accountId" value={accountId} />
-            <input type="hidden" name="returnUrl" value={returnUrl} />
-            {data.status === "not_setup" ? (
-              <SubmitButton
-                pendingText="Loading..."
-                formAction={setupNewSubscription}
-              >
-                Setup your Subscription
-              </SubmitButton>
-            ) : (
-              <SubmitButton
-                pendingText="Loading..."
-                formAction={manageSubscription}
-              >
-                Manage Subscription
-              </SubmitButton>
-            )}
-          </form> */}
-      {/* </CardFooter> */}
-      {/* )} */}
+      <CardFooter>
+        {/* {!subscription.paying_customer ? ( */}
+        <Button onClick={setupNewSubscription}>Subscribe Now</Button>
+        {/* // ) : ( */}
+        <Button onClick={manageSubscription}>Manage Subscription</Button>
+        {/* // )} */}
+      </CardFooter>
     </Card>
   );
 }
