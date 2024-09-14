@@ -52,10 +52,15 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         <Button
           className="h-11 mr-2 hidden md:flex rounded-full"
           variant="outline"
+          onClick={() => window.location.href = `https://app.${window.location.hostname}/login`}
         >
           Login
         </Button>
-        <ShimmerButton background="rgb(147 51 234)" className="p-2 font-bold">
+        <ShimmerButton 
+          background="rgb(147 51 234)" 
+          className="p-2 font-bold"
+          onClick={() => window.location.href = `https://app.${window.location.hostname}/signup`}
+        >
           Get Started
         </ShimmerButton>
         {/* <div className="lg:flex items-center hidden">

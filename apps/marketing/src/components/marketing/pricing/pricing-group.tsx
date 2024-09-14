@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { CheckIcon } from "@heroicons/react/20/solid";
+import { useRouter } from "next/navigation";
 
 const frequencies = [
   { value: "monthly", label: "Monthly", priceSuffix: "/month" },
   { value: "annually", label: "Annually", priceSuffix: "/year" },
 ];
+
 const tiers = [
   {
     name: "Pay As You Go",
     id: "payg",
-    href: "#",
+    href: `https://app.${window.location.hostname}/signup`,
     price: { monthly: "$9.99", annually: "$50" },
     description: "A plan that scales to Anything.",
     features: [
@@ -49,6 +51,11 @@ function classNames(...classes: any) {
 
 export default function PricingGroup() {
   const [frequency, setFrequency] = useState(frequencies[0]);
+  const router = useRouter();
+
+  const handleTierCTA = (tier: any) => {
+    window.location.href = tier.href;
+  };
 
   return (
     <div className="bg-white py-24 sm:py-32">
@@ -133,18 +140,18 @@ export default function PricingGroup() {
                   </span>
                 ) : null}
               </p>
-              <a
-                href={tier.href}
+              <button
+                onClick={() => handleTierCTA(tier)}
                 aria-describedby={tier.id}
                 className={classNames(
                   tier.featured
                     ? "bg-white/10 text-white hover:bg-white/20 focus-visible:outline-white"
                     : "bg-purple-600 text-white shadow-sm hover:bg-purple-500 focus-visible:outline-purple-600",
-                  "mt-6 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+                  "mt-6 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-full",
                 )}
               >
                 {tier.cta}
-              </a>
+              </button>
               <ul
                 role="list"
                 className={classNames(
