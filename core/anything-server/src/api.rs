@@ -515,7 +515,7 @@ pub async fn update_workflow(
 }
 
 pub async fn update_workflow_version(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     _headers: HeaderMap,

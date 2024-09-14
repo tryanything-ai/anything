@@ -30,8 +30,6 @@ export default function StudioWorkflowEditor(): JSX.Element {
         onEdgesChange={workflow.onEdgesChange}
         onConnect={workflow.onConnect}
         nodeDragThreshold={1}
-        // onDragOver={workflow.onDragOver}
-        // onDrop={(e) => onDrop(e, reactFlowWrapper)}
         onInit={workflow.setReactFlowInstance}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />

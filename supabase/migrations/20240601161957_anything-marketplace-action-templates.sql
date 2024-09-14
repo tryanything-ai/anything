@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS marketplace.action_templates
     app_action_template_id uuid NOT NULL, 
     action_template_definition json NOT NULL, -- the definition of the action template
     public_template boolean not null default false,
-    action_type text not null, 
+    type text not null, 
     publisher_id uuid not null, -- kind like the same as the above account_id i think
     anonymous_publish boolean not null default false,
     slug text not null,

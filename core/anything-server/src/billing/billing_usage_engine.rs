@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::sync::Arc;
-use stripe::UsageRecord;
 use tokio::time::{sleep, Duration};
 
 use crate::AppState;

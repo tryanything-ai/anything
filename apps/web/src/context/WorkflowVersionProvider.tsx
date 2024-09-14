@@ -256,7 +256,9 @@ export const WorkflowVersionProvider = ({
   const publishWorkflowVersion = async () => {
     try {
       if (!dbFlowId || !dbFlowVersionId || !selectedAccount) {
-        console.error("No Flow Id or Flow Version Id or Account to publish workflow version");
+        console.error(
+          "No Flow Id or Flow Version Id or Account to publish workflow version",
+        );
         return;
       }
 
@@ -569,7 +571,7 @@ export const WorkflowVersionProvider = ({
       setSavingStatus(SavingStatus.SAVING);
       await _debouncedSaveFlowVersion(makeUpdateFlow(nodes, edges));
     } catch (error) {
-      console.log("error in saveFlowVersion", error);
+      console.log("error in saveFlowVersionDebounced", error);
     }
   };
 
@@ -581,7 +583,13 @@ export const WorkflowVersionProvider = ({
 
   const _saveFlowVersion = async (workflow: Workflow) => {
     try {
-      if (!dbFlowId || !dbFlowVersionId || !selectedAccount) return;
+      if (!dbFlowId || !dbFlowVersionId || !selectedAccount) {
+        console.log(
+          "No Flow Id or Flow Version Id or Account to save flow version",
+        );
+        return;
+      }
+
       const res: any = await api.flows.updateFlowVersion(
         selectedAccount.account_id,
         dbFlowId,
@@ -621,7 +629,7 @@ export const WorkflowVersionProvider = ({
       //things like selected node and its dependences like selected_node_data etc etc
       //Maybe difficult!
     } catch (error) {
-      console.log("error in saveFlowVersion", error);
+      console.log("error in _saveFlowVersion", error);
     }
   };
 
@@ -630,7 +638,7 @@ export const WorkflowVersionProvider = ({
       try {
         await _saveFlowVersion(workflow);
       } catch (error) {
-        console.log("error in saveFlowVersion", error);
+        console.log("error in _debouncedSaveFlowVersion", error);
       }
     }, 1000),
     [dbFlowId, dbFlowVersionId],
@@ -640,11 +648,11 @@ export const WorkflowVersionProvider = ({
     try {
       console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
       if (!workflowId || !selectedAccount) return;
+
       let workflow_response = await api.flows.getFlow(
         selectedAccount.account_id,
         workflowId,
       );
-      // let workflow_response = await getWorkflowById(workflowId);
 
       if (!workflow_response) return;
       let flow = workflow_response[0];
