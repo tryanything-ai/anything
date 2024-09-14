@@ -32,8 +32,8 @@ export default async function TeamBillingPage({
   return (
     <div>
       <AccountBillingStatus
-        accountId={teamAccount.account_id}
-        returnUrl={`${returnUrl}/dashboard/${accountSlug}/settings/billing`}
+        // accountId={teamAccount.account_id}
+        // returnUrl={`${returnUrl}/dashboard/${accountSlug}/settings/billing`}
       />
     </div>
   );

@@ -36,7 +36,7 @@ export default function UserAccountButton(): JSX.Element {
   };
 
   if (!personalAccount) {
-    return null; // Or a loading spinner
+    return <div></div>; // Return a loading indicator instead of null
   }
 
   return (
