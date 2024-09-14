@@ -1,9 +1,9 @@
 [{
-  "action_type": "action", 
+  "type": "action", 
   "action_template_definition": 
   {
     "anything_action_version": "0.1.0",
-    "action_type": "action",
+    "type": "action",
     "plugin_id": "http",
     "node_id": "api_action",
     "plugin_version": "0.1.0",

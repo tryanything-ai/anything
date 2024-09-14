@@ -301,7 +301,7 @@ pub async fn process_task(
     let result: Result<Value, Box<dyn std::error::Error + Send + Sync>> = async {
         let bundled_context = bundle_context(client, task).await?;
 
-        let task_result = if task.action_type == ActionType::Trigger.as_str().to_string() {
+        let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
             println!("[TASK_ENGINE] Processing trigger task {}", task.task_id);
             process_trigger_task(client, task).await?
         } else {
@@ -511,7 +511,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
                 }
 
                 // Process the trigger task if it is a trigger
-                if task.action_type == ActionType::Trigger.as_str().to_string() {
+                if task.r#type == ActionType::Trigger.as_str().to_string() {
                     if let Err(e) = process_task(&client, &task).await {
                         println!("[TASK_ENGINE] Failed to process trigger task: {}", e);
                     }

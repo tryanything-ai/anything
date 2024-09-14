@@ -40,7 +40,7 @@ export function TaskTable({ tasks }: { tasks: TaskRow[] }): JSX.Element {
             <TableRow key={task.task_id}>
               <TableCell>
                 <TriggerBadge
-                  is_trigger={task.action_type == ActionType.Trigger}
+                  is_trigger={task.type == ActionType.Trigger}
                 />
               </TableCell>
               <TableCell className="text-left font-medium">

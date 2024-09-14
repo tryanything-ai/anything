@@ -20,7 +20,7 @@ pub struct Workflow {
 // #[serde(rename_all = "camelCase")]
 pub struct Action {
     pub anything_action_version: String,
-    pub action_type: ActionType,
+    pub r#type: ActionType,
     pub plugin_id: String,
     pub node_id: String,
     pub plugin_version: String,
@@ -92,7 +92,7 @@ pub struct CreateTaskInput {
     pub flow_session_id: String,
     pub flow_session_status: String,
     pub node_id: String,
-    pub action_type: ActionType,
+    pub r#type: ActionType,
     pub plugin_id: String,
     pub stage: String,
     pub config: Value,
@@ -127,7 +127,7 @@ pub struct Task {
     pub flow_session_id: String,
     pub flow_session_status: String,
     pub node_id: String,
-    pub action_type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
+    pub r#type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
     pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
     pub stage: String,
     pub test_config: Option<Value>,
@@ -165,7 +165,7 @@ impl Default for Workflow {
     fn default() -> Self {
         let action1 = Action {
             anything_action_version: "0.1.0".to_string(),
-            action_type: ActionType::Trigger,
+            r#type: ActionType::Trigger,
             plugin_id: "cron".to_string(),
             node_id: "cron_trigger".to_string(),
             plugin_version: "0.1.0".to_string(),
@@ -214,7 +214,7 @@ impl Default for Workflow {
 
         let action2 = Action {
             anything_action_version: "0.1.0".to_string(),
-            action_type: ActionType::Action,
+            r#type: ActionType::Action,
             plugin_id: "http".to_string(),
             node_id: "http_action".to_string(),
             plugin_version: "0.1.0".to_string(),

@@ -27,8 +27,35 @@ export default function AccountBillingStatus(): JSX.Element {
   const manageSubscription = async () => {
     // Implement manage subscription logic here
     //TODO: Create session for managing invoices.
-    window.location.href =
-      "https://billing.stripe.com/p/login/test_6oE6qIbcTe8o9fqfYY";
+    if (!selectedAccount) {
+      console.error("No selected account");
+      return;
+    }
+    console.log(
+      "Navigating to billing portal for account:",
+      selectedAccount.account_id,
+    );
+    try {
+      const res = await api.billing.getBillingPortalLink(
+        selectedAccount.account_id,
+        returnUrl,
+      );
+      console.log("Received response:", res);
+      if (res.portal_url) {
+        console.log(
+          "Redirecting to billing portal URL:",
+          res.billing_portal_url,
+        );
+        window.location.href = res.portal_url;
+      } else {
+        console.error("No billing portal URL received");
+      }
+    } catch (error) {
+      console.error("Error managing subscription:", error);
+    }
+
+    // window.location.href =
+    // "https://billing.stripe.com/p/login/test_6oE6qIbcTe8o9fqfYY";
   };
 
   const setupNewSubscription = async () => {
@@ -38,9 +65,15 @@ export default function AccountBillingStatus(): JSX.Element {
       console.log("No selected account, returning");
       return;
     }
-    try { 
-      console.log("Fetching checkout link for account:", selectedAccount.account_id);
-      const res = await api.billing.getCheckoutLink(selectedAccount.account_id, returnUrl);
+    try {
+      console.log(
+        "Fetching checkout link for account:",
+        selectedAccount.account_id,
+      );
+      const res = await api.billing.getCheckoutLink(
+        selectedAccount.account_id,
+        returnUrl,
+      );
       console.log("Received response:", res);
       if (res.checkout_url) {
         console.log("Redirecting to checkout URL:", res.checkout_url);
@@ -69,13 +102,30 @@ export default function AccountBillingStatus(): JSX.Element {
             ? "Active Subscription"
             : "No Active Subscription"}
         </p>
+        <p>Free Trial: {subscription.trial_ended ? "Expired" : "Active"}</p>
+        {!subscription.trial_ended && (
+          <div>
+            <p>
+              Free Trial Ends:{" "}
+              {subscription.free_trial_ends_at
+                ? new Date(subscription.free_trial_ends_at).toLocaleDateString()
+                : "Not available"}
+            </p>
+            or
+            <p>When you've used all free tasks.</p>
+            <p>
+              You have currently used {subscription.free_trial_task_usage} of{" "}
+              {subscription.free_trial_task_limit} free tasks.
+            </p>
+          </div>
+        )}
       </CardContent>
       <CardFooter>
-        {/* {!subscription.paying_customer ? ( */}
-        <Button onClick={setupNewSubscription}>Subscribe Now</Button>
-        {/* // ) : ( */}
-        <Button onClick={manageSubscription}>Manage Subscription</Button>
-        {/* // )} */}
+        {!subscription.paying_customer ? (
+          <Button onClick={setupNewSubscription}>Subscribe Now</Button>
+        ) : (
+          <Button onClick={manageSubscription}>Manage Subscription</Button>
+        )}
       </CardFooter>
     </Card>
   );

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { Handle, HandleProps } from "reactflow";
-import { Action } from "@/types/workflows";
+import { Action, ActionType } from "@/types/workflows";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -45,6 +45,7 @@ export default function BaseNode({
   const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     // Handle button click logic here
+    console.log("Node data:", data);
   };
 
   // const createReusableAction = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -63,6 +64,8 @@ export default function BaseNode({
     deleteNode(id);
   };
 
+
+
   return (
     <>
       <DropdownMenu>
@@ -72,7 +75,6 @@ export default function BaseNode({
             "bg-white border border-gray-300 text-primary-content flex h-20 w-90 flex-row rounded-md text-xl hover:bg-gray-50",
             selected ? "border-pink-700" : "",
           )}
-          // className=""
         >
           {data.handles
             ? data.handles.map((handle: HandleProps) => {
@@ -99,15 +101,17 @@ export default function BaseNode({
             </div>
           </div>
           <div className="flex h-full flex-row items-center pr-3">
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="p-2"
-                onClick={handleButtonClick}
-              >
-                <EllipsisVertical className="w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            {data.type !== ActionType.Trigger && (
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="p-2"
+                  onClick={handleButtonClick}
+                >
+                  <EllipsisVertical className="w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            )}
           </div>
         </div>
         {/* Content of Dropdown */}

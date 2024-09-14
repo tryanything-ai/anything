@@ -1,9 +1,0 @@
-flow_id = "uuid"
-
-[trigger]
-trigger_id = "1"
-trigger_label = "trigger_label"
-trigger_icon = ""
-alt = ""
-description = ""
-

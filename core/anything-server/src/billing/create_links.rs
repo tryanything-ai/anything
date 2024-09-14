@@ -9,18 +9,26 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use stripe::{
-    CheckoutSession, CheckoutSessionMode, Client as StripeClient, CreateCheckoutSession,
-    CreateCheckoutSessionLineItems, CustomerId,
+    BillingPortalSession, CheckoutSession, CheckoutSessionMode, Client as StripeClient,
+    CreateBillingPortalSession, CreateCheckoutSession, CreateCheckoutSessionLineItems, CustomerId,
 };
 
 #[derive(Deserialize)]
 pub struct CheckoutRequest {
     return_url: String,
 }
+#[derive(Deserialize)]
+pub struct PortalRequest {
+    return_url: String,
+}
 
 #[derive(Serialize)]
 pub struct CheckoutResponse {
     checkout_url: String,
+}
+#[derive(Serialize)]
+pub struct PortalResponse {
+    portal_url: String,
 }
 
 pub async fn get_checkout_link(
@@ -130,4 +138,93 @@ pub async fn get_checkout_link(
     );
 
     Ok(Json(CheckoutResponse { checkout_url }))
+}
+
+pub async fn get_billing_portal_link(
+    Path(account_id): Path<String>,
+    Extension(user): Extension<User>,
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<PortalRequest>,
+) -> impl IntoResponse {
+    println!(
+        "[BILLING LINKS] Starting get_billing_portal_link for account_id: {}",
+        account_id
+    );
+
+    // Fetch the customer's Stripe ID from the accounts_billing table
+    let customer_stripe_id = match state
+        .anything_client
+        .from("accounts_billing")
+        .auth(&user.jwt) // Pass a reference to the JWT
+        .select("stripe_customer_id")
+        .eq("account_id", account_id)
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => match response.text().await {
+            Ok(body) => match serde_json::from_str::<serde_json::Value>(&body) {
+                Ok(value) => {
+                    let stripe_id = value
+                        .get("stripe_customer_id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    println!(
+                        "[BILLING LINKS] Retrieved stripe_customer_id: {:?}",
+                        stripe_id
+                    );
+                    stripe_id
+                }
+                Err(e) => {
+                    println!("[BILLING LINKS] Error parsing JSON: {:?}", e);
+                    return Err(StatusCode::INTERNAL_SERVER_ERROR);
+                }
+            },
+            Err(e) => {
+                println!("[BILLING LINKS] Error reading response body: {:?}", e);
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+        },
+        Err(e) => {
+            println!("[BILLING LINKS] Error querying accounts_billing: {:?}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    let customer_stripe_id = customer_stripe_id.unwrap_or_default();
+    // If no Stripe customer exists, return an error
+    if customer_stripe_id.is_empty() {
+        println!("[BILLING LINKS] No Stripe customer ID found for account_id");
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let stripe_secret_key = std::env::var("STRIPE_SECRET_KEY").map_err(|e| {
+        println!("[BILLING LINKS] Error fetching STRIPE_SECRET_KEY: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    let client = StripeClient::new(stripe_secret_key);
+
+    let mut params =
+        CreateBillingPortalSession::new(customer_stripe_id.parse::<CustomerId>().unwrap());
+    params.return_url = Some(&request.return_url);
+
+    let billing_portal_session = BillingPortalSession::create(&client, params)
+        .await
+        .map_err(|e| {
+            println!(
+                "[BILLING LINKS] Error creating Stripe billing portal session: {:?}",
+                e
+            );
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let billing_portal_url = billing_portal_session.url;
+    println!(
+        "[BILLING LINKS] Billing portal session created successfully. URL: {}",
+        billing_portal_url
+    );
+
+    Ok(Json(PortalResponse {
+        portal_url: billing_portal_url,
+    }))
 }

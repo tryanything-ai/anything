@@ -51,7 +51,7 @@ export const getCheckoutLink = async (account_id: string, return_url: string) =>
       }
 }
 
-export const getBillingPortalLink = async (account_id: string, returnUrl: string) => {
+export const getBillingPortalLink = async (account_id: string, return_url: string) => {
     try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -62,9 +62,10 @@ export const getBillingPortalLink = async (account_id: string, returnUrl: string
           const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/billing/portal`, {
             method: 'POST',
             headers: {
+              'Content-Type': 'application/json',
               Authorization: `${session.access_token}`,
             },
-            body: JSON.stringify({ returnUrl }),
+            body: JSON.stringify({ return_url }),
           });
           const data = await response.json();
           console.log('Data from /api/account/:account_id/billing/portal:', data);

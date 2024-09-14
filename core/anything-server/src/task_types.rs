@@ -95,7 +95,7 @@ pub enum ActionType {
     Trigger,    // Trigger action
     Action,     // General action
     Loop,       // Loop action
-    Decision,   // Decision actiond
+    Decision,   // Decision action
     Filter,     // Filter action
     Output      // Output action
 }

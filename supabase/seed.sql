@@ -288,7 +288,7 @@ INSERT INTO anything.flow_versions (
     "actions": [
       {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "anything_input",
       "node_id": "anything_input", 
       "plugin_version": "1.0.0",
@@ -354,7 +354,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action", 
       "plugin_version": "1.0.0",
@@ -439,7 +439,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action_2",
       "plugin_version": "1.0.0",
@@ -495,7 +495,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "other_example_plugin",
       "node_id": "other_example_action",
       "plugin_version": "1.0.0",
@@ -551,7 +551,7 @@ INSERT INTO anything.flow_versions (
     },
      {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "anything_output",
       "node_id": "anything_output", 
       "plugin_version": "1.0.0",
@@ -610,7 +610,7 @@ INSERT INTO anything.flow_versions (
     "actions": [
       {
       "anything_action_version": "1.0.0",
-      "action_type": "trigger",
+      "type": "trigger",
       "plugin_id": "cron_trigger",
       "node_id": "anything_cron_trigger", 
       "plugin_version": "1.0.0",
@@ -651,7 +651,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "http",
       "node_id": "example_action", 
       "plugin_version": "1.0.0",
@@ -753,7 +753,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "http",
       "node_id": "example_action_2",
       "plugin_version": "1.0.0",
@@ -809,7 +809,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "other_example_plugin",
       "node_id": "other_example_action",
       "plugin_version": "1.0.0",
@@ -869,7 +869,7 @@ INSERT INTO anything.flow_versions (
     "actions": [
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action",
       "plugin_version": "1.0.0",
@@ -925,7 +925,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action_2",
       "plugin_version": "1.0.0",
@@ -981,7 +981,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "other_example_plugin",
       "node_id": "other_example_action",
       "plugin_version": "1.0.0",
@@ -1041,7 +1041,7 @@ INSERT INTO anything.flow_versions (
     "actions": [
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action",
       "plugin_version": "1.0.0",
@@ -1097,7 +1097,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action_2",
       "plugin_version": "1.0.0",
@@ -1153,7 +1153,7 @@ INSERT INTO anything.flow_versions (
     },
     {
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "other_example_plugin",
       "node_id": "other_example_action",
       "plugin_version": "1.0.0",
@@ -1212,7 +1212,7 @@ INSERT INTO anything.flow_versions (
 
 -- Inserting sample events into anything.events
 INSERT INTO anything.tasks (
-    task_id, account_id, task_status, flow_id, flow_version_id, action_label, trigger_id, trigger_session_id, trigger_session_status, flow_session_id, flow_session_status, node_id, action_type, plugin_id, stage, config, context, started_at, ended_at, debug_result, result, updated_at, created_at, updated_by, created_by
+    task_id, account_id, task_status, flow_id, flow_version_id, action_label, trigger_id, trigger_session_id, trigger_session_status, flow_session_id, flow_session_status, node_id, type, plugin_id, stage, config, context, started_at, ended_at, debug_result, result, updated_at, created_at, updated_by, created_by
 ) VALUES
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'completed', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'Trigger Action', 'trigger1', 'session1', 'completed', 'flow_session_1', 'completed', 'node1', 'action', 'extension1', 'DEV', '{"key": "value"}', '{"key": "value"}', now(), now(), '{"key": "value"}', '{"key": "value"}', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
     (uuid_generate_v4(), '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'completed', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222', 'Trigger Action', 'trigger2', 'session2', 'completed', 'flow_session_2', 'completed', 'node2', 'action', 'extension2', 'DEV', '{"key": "value"}', '{"key": "value"}', now(), now(), '{"key": "value"}', '{"key": "value"}', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
@@ -1222,11 +1222,11 @@ INSERT INTO anything.tasks (
 
 -- Inserting sample action-templates into anyting.action_templates
 INSERT INTO anything.action_templates (
-    action_template_id, account_id, action_type, action_template_definition,  updated_at, created_at, updated_by, created_by
+    action_template_id, account_id, type, action_template_definition,  updated_at, created_at, updated_by, created_by
 ) VALUES
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'action',  '{
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action", 
       "plugin_version": "1.0.0",
@@ -1311,7 +1311,7 @@ INSERT INTO anything.action_templates (
     }', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'action', '{
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action", 
       "plugin_version": "1.0.0",
@@ -1396,7 +1396,7 @@ INSERT INTO anything.action_templates (
     }', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'action', '{
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action", 
       "plugin_version": "1.0.0",
@@ -1506,11 +1506,11 @@ INSERT INTO anything.secrets (
 
     -- Inserting sample action-templates into anyting.action_templates
 INSERT INTO marketplace.action_templates (
-    action_template_id, account_id, app_action_template_id, publisher_id, slug, action_type, action_template_definition, updated_at, created_at, updated_by, created_by
+    action_template_id, account_id, app_action_template_id, publisher_id, slug, type, action_template_definition, updated_at, created_at, updated_by, created_by
 ) VALUES
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '123e4567-e89b-12d3-a456-426614174004', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'simple_http_action', 'action', '{
       "anything_action_version": "1.0.0",
-      "action_type": "action",
+      "type": "action",
       "plugin_id": "example_plugin",
       "node_id": "example_action", 
       "plugin_version": "1.0.0",
