@@ -87,7 +87,7 @@ async fn main() {
         let regex = Regex::new(&format!(
             r"^{}://(?:[a-zA-Z0-9-]+\.)?{}$",
             protocol,
-            regex::escape(&cors_origin)
+            regex::escape(&cors_origin) //TODO: maybe this is breaking? app acts normal but the logs say is not woring
         ))
         .unwrap();
         println!("[CORS] Domain regex: {:?}", regex);

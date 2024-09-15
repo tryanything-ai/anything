@@ -144,8 +144,6 @@ pub async fn handle_provider_callback(
             json!({"provider_name_param": &provider_name}).to_string(),
         )
         .auth(supabase_service_role_api_key.clone())
-        .select("*")
-        .single()
         .execute()
         .await
     {
@@ -452,7 +450,6 @@ pub async fn exchange_code_for_token(
 pub async fn initiate_auth(
     Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     let auth_states = &state.auth_states;
     // Generate a unique state parameter
@@ -476,13 +473,17 @@ pub async fn initiate_auth(
 
     let client = &state.anything_client;
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     // Get Provider details
     let response = match client
-        .from("auth_providers")
-        .auth(&user.jwt)
-        .eq("provider_name", &provider_name)
-        .select("*")
-        .single()
+        .rpc(
+            "get_decrypted_auth_provider_by_name",
+            json!({"provider_name_param": &provider_name}).to_string(),
+        )
+        .auth(supabase_service_role_api_key.clone())
         .execute()
         .await
     {
