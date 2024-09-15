@@ -193,8 +193,8 @@ INSERT INTO anything.account_auth_provider_accounts (
     auth_provider_id, 
     account_auth_provider_account_label,
     account_auth_provider_account_slug,  
-    access_token, 
-    refresh_token, 
+    access_token_vault_id, 
+    refresh_token_vault_id, 
     access_token_expires_at,
     refresh_token_expires_at,
     updated_at, 
@@ -208,8 +208,8 @@ INSERT INTO anything.account_auth_provider_accounts (
         'airtable', -- Airtable Provider
         'Airtable Account 1', 
         'airtable',
-        'EXAMPLE_ACCESS_TOKEN_1', 
-        'EXAMPLE_REFRESH_TOKEN_1', 
+        '123e4567-e89b-12d3-a456-426614174009', 
+        '123e4567-e89b-12d3-a456-426614174011', 
         '2024-08-08 12:00:00+00', -- Example expiration timestamp
          '2024-08-08 12:00:00+00',
         now(), 
@@ -223,8 +223,8 @@ INSERT INTO anything.account_auth_provider_accounts (
         'gmail', -- Gmail Provider
         'Gmail Account 2', 
         'gmail', 
-        'EXAMPLE_ACCESS_TOKEN_2', 
-        'EXAMPLE_REFRESH_TOKEN_2', 
+        '123e4567-e89b-12d3-a456-426614174010', 
+        '123e4567-e89b-12d3-a456-426614174012', 
         '2024-08-08 12:00:00+00', -- Example expiration timestamp
          '2024-08-08 12:00:00+00',
         now(), 
@@ -1492,8 +1492,12 @@ INSERT INTO vault.secrets (
     ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5'),
     ('123e4567-e89b-12d3-a456-426614174005', 'provider_client_id_for_aritable', 'silly description', 'provider_client_id_for_aritable_tst_key_123'),
     ('123e4567-e89b-12d3-a456-426614174006', 'provider_client_secret_id_for_aritable', 'silly description', 'provider_client_secret_id_for_aritable_tst_key_123'),
-     ('123e4567-e89b-12d3-a456-426614174007', 'provider_client_id_for_google', 'silly description', 'provider_client_id_for_google_tst_key_123'),
-    ('123e4567-e89b-12d3-a456-426614174008', 'provider_client_secret_id_for_google', 'silly description', 'provider_client_secret_id_for_google_tst_key_123')
+    ('123e4567-e89b-12d3-a456-426614174007', 'provider_client_id_for_google', 'silly description', 'provider_client_id_for_google_tst_key_123'),
+    ('123e4567-e89b-12d3-a456-426614174008', 'provider_client_secret_id_for_google', 'silly description', 'provider_client_secret_id_for_google_tst_key_123'),
+    ('123e4567-e89b-12d3-a456-426614174009', 'mock_access_token_1', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_1234567890'),
+    ('123e4567-e89b-12d3-a456-426614174010', 'mock_access_token_2', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_0987654321'),
+    ('123e4567-e89b-12d3-a456-426614174011', 'mock_refresh_token_1', 'Mock refresh token for testing', 'MOCK_REFRESH_TOKEN_ABCDEFGHIJ'),
+    ('123e4567-e89b-12d3-a456-426614174012', 'mock_refresh_token_2', 'Mock refresh token for testing', 'MOCK_REFRESH_TOKEN_JIHGFEDCBA')
     ON CONFLICT (id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
 
    -- Inserting sample secrets into anything.secrets
