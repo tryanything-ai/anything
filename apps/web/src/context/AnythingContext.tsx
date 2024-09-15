@@ -50,7 +50,7 @@ export const AnythingProvider = ({
       <AccountsContext.Consumer>
         {(accounts) => {
           if (accounts.isLoading || !accounts.selectedAccount) {
-            return null; // Or any loading indicator
+            return "loading.."; // Or any loading indicator
             // TODO: not great but works
           }
           return (

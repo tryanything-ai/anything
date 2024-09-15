@@ -2,7 +2,8 @@ create trigger "new_account_webhook" after insert
 on "basejump"."accounts" for each row
 execute function "supabase_functions"."http_request"(
 --   'http://localhost:3001/billing/webhooks/new_account_webhook', 0.0.0.0:3001
-  'http://host.docker.internal:3001/billing/webhooks/new_account_webhook', --https://github.com/supabase/supabase/issues/13005#issuecomment-1765482443
+  'https://workflow-engine-axum-dev.up.railway.app/billing/webhooks/new_account_webhook', --for dev branch
+  -- 'http://host.docker.internal:3001/billing/webhooks/new_account_webhook', --https://github.com/supabase/supabase/issues/13005#issuecomment-1765482443
   'POST',
   '{"Content-Type":"application/json"}',
   '{}',
