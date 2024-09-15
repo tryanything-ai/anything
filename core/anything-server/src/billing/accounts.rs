@@ -109,7 +109,7 @@ pub async fn handle_new_account_webhook(
     match payload {
         WebhookPayload::Insert { record, .. } => {
             println!(
-                "New account created making stripe account now: {:?}",
+                "[STRIPE CREATE CUSTOMER WEBHOOK] New account created making stripe account now: {:?}",
                 record.clone()
             );
 
@@ -131,8 +131,8 @@ pub async fn handle_new_account_webhook(
                     .await
                 {
                     Ok(response) => {
-                        println!("Response status: {:?}", response.status());
-                        println!("Response headers: {:?}", response.headers());
+                        println!("[STRIPE CREATE CUSTOMER WEBHOOK] Response status: {:?}", response.status());
+                        println!("[STRIPE CREATE CUSTOMER WEBHOOK] Response headers: {:?}", response.headers());
 
                         if response.status().is_success() {
                             response
@@ -142,7 +142,7 @@ pub async fn handle_new_account_webhook(
                                 .text()
                                 .await
                                 .unwrap_or_else(|_| "Unable to read error body".to_string());
-                            eprintln!("Error response body: {}", error_body);
+                            eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Error response body: {}", error_body);
                             return Err((
                                 StatusCode::INTERNAL_SERVER_ERROR,
                                 format!("Failed to fetch user data. Status: {}", status),
@@ -150,7 +150,7 @@ pub async fn handle_new_account_webhook(
                         }
                     }
                     Err(err) => {
-                        eprintln!("Error fetching user data: {:?}", err);
+                        eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Error fetching user data: {:?}", err);
                         return Err((
                             StatusCode::INTERNAL_SERVER_ERROR,
                             "Failed to fetch user data".to_string(),
@@ -161,7 +161,7 @@ pub async fn handle_new_account_webhook(
                 let user: User = match user_response.json().await {
                     Ok(user) => user,
                     Err(err) => {
-                        eprintln!("Error parsing user response: {:?}", err);
+                        eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Error parsing user response: {:?}", err);
                         // let response_text = user_response.text().await
                         //     .unwrap_or_else(|_| "Unable to read response body".to_string());
                         // eprintln!("Response body: {}", response_text);
@@ -172,7 +172,7 @@ pub async fn handle_new_account_webhook(
                     }
                 };
 
-                println!("User data for non-personal account: {:?}", user);
+                println!("[STRIPE CREATE CUSTOMER WEBHOOK] User data for non-personal account: {:?}", user);
 
                 // Handle the new account creation
                 let stripe_secret_key = std::env::var("STRIPE_SECRET_KEY").map_err(|_| {
@@ -208,7 +208,7 @@ pub async fn handle_new_account_webhook(
                 .unwrap();
 
                 println!(
-                    "created a customer at https://dashboard.stripe.com/test/customers/{}",
+                    "[STRIPE CREATE CUSTOMER WEBHOOK] created a customer at https://dashboard.stripe.com/test/customers/{}",
                     customer.id
                 );
 
@@ -228,82 +228,16 @@ pub async fn handle_new_account_webhook(
                     .await
                 {
                     Ok(response) => {
-                        println!("Successfully updated accounts_billing: {:?}", response);
+                        println!("[STRIPE CREATE CUSTOMER WEBHOOK] Successfully updated accounts_billing: {:?}", response);
                     }
                     Err(err) => {
-                        eprintln!("Failed to update accounts_billing: {:?}", err);
+                        eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Failed to update accounts_billing: {:?}", err);
                         return Err((
                             StatusCode::INTERNAL_SERVER_ERROR,
                             "Failed to update billing information".to_string(),
                         ));
                     }
                 }
-
-                // Create the subscriptoin
-                // let subscription = {
-                //     let mut params = CreateSubscription::new(customer.id.clone());
-                //     params.items = Some(vec![
-                //         CreateSubscriptionItems {
-                //             price: Some("price_1PwpfXFBAuZoeGEU0iJhmcxF".to_string()), //0.99 / 1k extra
-                //             ..Default::default()
-                //         },
-                //         CreateSubscriptionItems {
-                //             price: Some("price_1Pwpe2FBAuZoeGEUh9zS63rH".to_string()), //$10 / month for 10k
-                //             ..Default::default()
-                //         },
-                //     ]);
-                //     params.trial_period_days = Some(7);
-                //     // params.default_payment_method = Some(&payment_method.id);
-                //     params.expand = &["items", "items.data.price.product", "schedule"];
-
-                //     Subscription::create(&client, params).await.unwrap()
-                // };
-
-                // Create the input for the SQL function
-                // let stripe_input = UpsertCustomerSubscriptionInput {
-                //     account_id: record.id,
-                //     customer: Some(serde_json::to_value(customer).unwrap()),
-                //     subscription: Some(serde_json::to_value(subscription).unwrap()), // We're not creating a subscription at this point
-                // };
-
-                // Update the account with the Stripe customer ID
-                //     let update_account_billing_response = match state
-                //         .public_client
-                //         .rpc(
-                //             "service_role_upsert_customer_subscription",
-                //             serde_json::to_string(&stripe_input).unwrap(),
-                //         )
-                //         .auth(supabase_service_role_api_key.clone())
-                //         .execute()
-                //         .await
-                //     {
-                //         Ok(response) => {
-                //             println!("Response status: {:?}", response.status());
-                //             println!("Response headers: {:?}", response.headers());
-
-                //             if response.status().is_success() {
-                //                 response
-                //             } else {
-                //                 let status = response.status();
-                //                 let error_body = response
-                //                     .text()
-                //                     .await
-                //                     .unwrap_or_else(|_| "Unable to read error body".to_string());
-                //                 eprintln!("Error response body: {}", error_body);
-                //                 return Err((
-                //                     StatusCode::INTERNAL_SERVER_ERROR,
-                //                     format!("Failed to fetch user data. Status: {}", status),
-                //                 ));
-                //             }
-                //         }
-                //         Err(err) => {
-                //             eprintln!("Error fetching user data: {:?}", err);
-                //             return Err((
-                //                 StatusCode::INTERNAL_SERVER_ERROR,
-                //                 "Failed to fetch user data".to_string(),
-                //             ));
-                //         }
-                //     };
             }
 
             Ok(StatusCode::CREATED)

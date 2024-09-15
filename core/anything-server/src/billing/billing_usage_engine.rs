@@ -17,15 +17,15 @@ struct AccountUsage {
 }
 
 pub async fn billing_processing_loop(state: Arc<AppState>) {
-    println!("[BILLING_USAGE_ENGINE] Starting billing processing engine");
+    println!("[BILLING USAGE ENGINE] Starting billing processing engine");
     let client = state.anything_client.clone();
-    let interval = Duration::from_secs(300); // 1 minute
+    let interval = Duration::from_secs(180); // 3 minutes
 
     loop {
         match process_billing_usage(&client).await {
-            Ok(_) => println!("[BILLING_USAGE_ENGINE] Billing usage processed successfully"),
+            Ok(_) => println!("[BILLING USAGE ENGINE] Billing usage processed successfully"),
             Err(e) => eprintln!(
-                "[BILLING_USAGE_ENGINE] Error processing billing usage: {}",
+                "[BILLING USAGE ENGINE] Error processing billing usage: {}",
                 e
             ),
         }
@@ -36,7 +36,7 @@ pub async fn billing_processing_loop(state: Arc<AppState>) {
 async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error + Send + Sync>> {
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
 
-    println!("[BILLING_USAGE_ENGINE] Processing billing usage");
+    println!("[BILLING USAGE ENGINE] Processing billing usage");
     // Aggregate usage data
     let response = client
         .from("tasks_billing")
@@ -49,7 +49,7 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
 
     let tasks: Vec<HashMap<String, serde_json::Value>> = response.json().await?;
 
-    println!("[BILLING_USAGE_ENGINE] Retrieved {} tasks", tasks.len());
+    println!("[BILLING USAGE ENGINE] Retrieved {} tasks", tasks.len());
 
     // Collect task_ids first
     let task_ids: Vec<String> = tasks
@@ -61,20 +61,20 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
         .collect();
 
     println!(
-        "[BILLING_USAGE_ENGINE] Collected {} task IDs",
+        "[BILLING USAGE ENGINE] Collected {} task IDs",
         task_ids.len()
     );
 
     let mut account_usage: HashMap<String, AccountUsage> = HashMap::new();
 
     for task in &tasks {
-        println!("[BILLING_USAGE_ENGINE] Processing task: {:?}", task);
+        println!("[BILLING USAGE ENGINE] Processing task: {:?}", task);
 
         let account_id = task["account_id"].as_str().unwrap_or("unknown").to_string();
         let execution_time_ms = task["execution_time_ms"].as_i64().unwrap_or(0);
 
         println!(
-            "[BILLING_USAGE_ENGINE] Task details - Account ID: {}, Execution Time: {}ms",
+            "[BILLING USAGE ENGINE] Task details - Account ID: {}, Execution Time: {}ms",
             account_id, execution_time_ms
         );
 
@@ -92,13 +92,13 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
     }
 
     println!(
-        "[BILLING_USAGE_ENGINE] Aggregated usage for {} accounts",
+        "[BILLING USAGE ENGINE] Aggregated usage for {} accounts",
         account_usage.len()
     );
 
     // Update accounts_billing table and send usage to Stripe
     for (account_id, usage) in account_usage {
-        println!("[BILLING_USAGE_ENGINE] Processing account: {}", account_id);
+        println!("[BILLING USAGE ENGINE] Processing account: {}", account_id);
         let billing_info = client
             .from("accounts_billing")
             .auth(&supabase_service_role_api_key)
@@ -111,7 +111,7 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
         let billing_data: HashMap<String, serde_json::Value> = billing_info.json().await?;
 
         println!(
-            "[BILLING_USAGE_ENGINE] Billing data for account {}: {:?}",
+            "[BILLING USAGE ENGINE] Billing data for account {}: {:?}",
             account_id, billing_data
         );
 
@@ -148,36 +148,39 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
         {
             update_data["trial_ended"] = json!(true);
             println!(
-                "[BILLING_USAGE_ENGINE] Trial ended for account {}",
+                "[BILLING USAGE ENGINE] Trial ended for account {}",
                 account_id
             );
         }
 
         // Send usage to Stripe
-        if let Ok(()) = send_usage_to_stripe(client, &account_id, usage).await {
-            // Only update accounts_billing if send_usage_to_stripe is successful
-            println!(
-                "[BILLING_USAGE_ENGINE] Updating accounts_billing for account {}",
-                account_id
-            );
-            client
-                .from("accounts_billing")
-                .auth(&supabase_service_role_api_key)
-                .eq("account_id", &account_id)
-                .update(json!(update_data).to_string())
-                .execute()
-                .await?;
-        } else {
-            eprintln!(
-                "[BILLING_USAGE_ENGINE] Failed to send usage to Stripe for account {}",
-                account_id
-            );
+        match send_usage_to_stripe(client, &account_id, usage).await {
+            Ok(()) => {
+                println!(
+                    "[BILLING USAGE ENGINE] Updating accounts_billing for account {}",
+                    account_id
+                );
+                client
+                    .from("accounts_billing")
+                    .auth(&supabase_service_role_api_key)
+                    .eq("account_id", &account_id)
+                    .update(json!(update_data).to_string())
+                    .execute()
+                    .await?;
+            }
+            Err(e) => {
+                eprintln!(
+                    "[BILLING USAGE ENGINE] Failed to send usage to Stripe for account {}: {}",
+                    account_id, e
+                );
+                return Err(e.into());
+            }
         }
     }
 
     if !task_ids.is_empty() {
         println!(
-            "[BILLING_USAGE_ENGINE] Updating usage_reported_to_billing_provider for {} tasks",
+            "[BILLING USAGE ENGINE] Updating usage_reported_to_billing_provider for {} tasks",
             task_ids.len()
         );
 
@@ -196,19 +199,19 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
         match update_response.text().await {
             Ok(response_text) => {
                 println!(
-                    "[BILLING_USAGE_ENGINE] Update response text: {}",
+                    "[BILLING USAGE ENGINE] Update response text: {}",
                     response_text
                 );
                 match serde_json::from_str::<serde_json::Value>(&response_text) {
                     Ok(parsed_response) => {
                         println!(
-                            "[BILLING_USAGE_ENGINE] Parsed update response: {:?}",
+                            "[BILLING USAGE ENGINE] Parsed update response: {:?}",
                             parsed_response
                         );
                     }
                     Err(e) => {
                         println!(
-                            "[BILLING_USAGE_ENGINE] Failed to parse update response: {}",
+                            "[BILLING USAGE ENGINE] Failed to parse update response: {}",
                             e
                         );
                     }
@@ -216,53 +219,13 @@ async fn process_billing_usage(client: &Postgrest) -> Result<(), Box<dyn Error +
             }
             Err(e) => {
                 println!(
-                    "[BILLING_USAGE_ENGINE] Failed to read update response text: {}",
+                    "[BILLING USAGE ENGINE] Failed to read update response text: {}",
                     e
                 );
             }
         }
-
-        // println!("[BILLING_USAGE_ENGINE] Update response: {:?}", update_response);
-        // println!("[BILLING_USAGE_ENGINE] Updating usage_reported_to_billing_provider for {} tasks", task_ids.len());
-        // let upsert_data: Vec<serde_json::Value> = task_ids
-        //     .iter()
-        //     .map(|task_id| {
-        //         json!({
-        //             "task_id": task_id,
-        //             "usage_reported_to_billing_provider": true
-        //         })
-        //     })
-        //     .collect();
-
-        // println!("[BILLING_USAGE_ENGINE] Upsert data: {:?}", upsert_data);
-
-        // let upsert_response = client
-        //     .from("tasks_billing")
-        //     .auth(&supabase_service_role_api_key)
-        //     .upsert(serde_json::to_string(&upsert_data)?)
-        //     .execute()
-        //     .await?;
-
-        // match upsert_response.text().await {
-        //     Ok(response_text) => {
-        //         println!("[BILLING_USAGE_ENGINE] Upsert response text: {}", response_text);
-        //         match serde_json::from_str::<serde_json::Value>(&response_text) {
-        //             Ok(parsed_response) => {
-        //                 println!("[BILLING_USAGE_ENGINE] Parsed upsert response: {:?}", parsed_response);
-        //             },
-        //             Err(e) => {
-        //                 println!("[BILLING_USAGE_ENGINE] Failed to parse upsert response: {}", e);
-        //             }
-        //         }
-        //     },
-        //     Err(e) => {
-        //         println!("[BILLING_USAGE_ENGINE] Failed to read upsert response text: {}", e);
-        //     }
-        // }
-
-        // println!("[BILLING_USAGE_ENGINE] Upsert response: {:?}", upsert_response);
     } else {
-        println!("[BILLING_USAGE_ENGINE] No billing_tasks to update");
+        println!("[BILLING USAGE ENGINE] No billing_tasks to update");
     }
 
     Ok(())
@@ -308,12 +271,12 @@ async fn send_usage_to_stripe(
     }
 
     println!(
-        "[BILLING_USAGE_ENGINE] Fetched Stripe customer ID for account {}: {}",
+        "[BILLING USAGE ENGINE] Fetched Stripe customer ID for account {}: {}",
         account_id, stripe_customer_id
     );
     // Implement Stripe API call here
     println!(
-        "[BILLING_USAGE_ENGINE] Sending usage to Stripe for account {}: {:?}",
+        "[BILLING USAGE ENGINE] Sending usage to Stripe for account {}: {:?}",
         account_id, usage
     );
 
@@ -338,7 +301,7 @@ async fn send_usage_to_stripe(
     if !response.status().is_success() {
         let error_text = response.text().await?;
         println!(
-            "[BILLING_USAGE_ENGINE] Failed to create meter event: {}",
+            "[BILLING USAGE ENGINE] Failed to create meter event: {}",
             error_text
         );
         return Err(format!("Failed to create meter event: {}", error_text).into());
@@ -346,7 +309,7 @@ async fn send_usage_to_stripe(
 
     let meter_event: serde_json::Value = response.json().await?;
     println!(
-        "[BILLING_USAGE_ENGINE] Created meter event: {:?}",
+        "[BILLING USAGE ENGINE] Created meter event: {:?}",
         meter_event
     );
 
