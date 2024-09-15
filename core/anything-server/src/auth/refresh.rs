@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
-
+use serde_json::json;
 use std::env;
 
 use crate::auth::init::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken};
@@ -33,23 +33,26 @@ pub async fn refresh_accounts(
     );
 
     let response = client
-        .from("account_auth_provider_accounts")
+        .rpc(
+            "get_account_auth_provider_accounts_with_decrypted_providers",
+            json!({"p_account_id": account_id}).to_string(),
+        )
         .auth(supabase_service_role_api_key.clone())
-        .select("*, auth_provider:auth_providers(*)")
-        .eq("account_id", account_id)
         .execute()
         .await?;
 
     println!("[AUTH REFRESH] Received response from database");
 
     let body = response.text().await?;
-    // println!("[AUTH REFRESH] Response body: {}", body);
 
     let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
     // println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
 
     for account in &accounts {
-        println!("[AUTH REFRESH] Processing account: {:?}", account.auth_provider_id);
+        println!(
+            "[AUTH REFRESH] Processing account: {:?}",
+            account.auth_provider_id
+        );
 
         let auth_provider: AuthProvider = match &account.auth_provider {
             Some(value) => serde_json::from_value(value.clone())?,
@@ -88,7 +91,6 @@ pub async fn refresh_accounts(
                             "[AUTH REFRESH] Successfully refreshed token: {:?}",
                             new_token
                         );
-                        
 
                         let mut access_token_expires_at = None;
                         if let Some(access_token_lifespan) =
@@ -215,7 +217,10 @@ pub async fn refresh_access_token(
         ("client_id", &auth_provider.client_id),
     ];
 
-    println!("[AUTH REFRESH] Refresh token exchange form_params: {:?}", form_params);
+    println!(
+        "[AUTH REFRESH] Refresh token exchange form_params: {:?}",
+        form_params
+    );
 
     let response = request
         .form(&form_params)
@@ -227,14 +232,20 @@ pub async fn refresh_access_token(
     println!("[AUTH REFRESH] Refresh token response status: {:?}", status);
 
     let body = response.text().await.map_err(|e| {
-        println!("[AUTH REFRESH] Error reading refresh token response body: {:?}", e);
+        println!(
+            "[AUTH REFRESH] Error reading refresh token response body: {:?}",
+            e
+        );
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
     println!("[AUTH REFRESH] Refresh token response body: {:?}", body);
 
     if status.is_success() {
         let token: Value = serde_json::from_str(&body).map_err(|e| {
-            println!("[AUTH REFRESH] Failed to parse refresh token response: {:?}", e);
+            println!(
+                "[AUTH REFRESH] Failed to parse refresh token response: {:?}",
+                e
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse refresh token response: {}", e),
@@ -253,7 +264,10 @@ pub async fn refresh_access_token(
         })
     } else {
         let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
-            println!("[AUTH REFRESH] Failed to parse refresh token error response: {:?}", e);
+            println!(
+                "[AUTH REFRESH] Failed to parse refresh token error response: {:?}",
+                e
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse refresh token error response: {}", e),

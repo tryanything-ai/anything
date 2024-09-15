@@ -126,13 +126,15 @@ INSERT INTO marketplace.flow_template_tags (
 -- Inserting sample OAuth providers into anything.auth_providers
 
 INSERT INTO anything.auth_providers (
-    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, redirect_url, scopes, public, updated_at, created_at, updated_by, created_by
+    auth_provider_id, provider_name, provider_label ,client_id_vault_id, client_secret_vault_id, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, redirect_url, scopes, public, updated_at, created_at, updated_by, created_by
 ) VALUES
     -- Airtable Provider
     (
         'airtable',
         'airtable',
         'Airtable',
+        '123e4567-e89b-12d3-a456-426614174005',
+        '123e4567-e89b-12d3-a456-426614174006',
         '<svg width="800px" height="800px" viewBox="0 -20.5 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid">
           <g>
             <path d="M114.25873,2.70101695 L18.8604023,42.1756384 C13.5552723,44.3711638 13.6102328,51.9065311 18.9486282,54.0225085 L114.746142,92.0117514 C123.163769,95.3498757 132.537419,95.3498757 140.9536,92.0117514 L236.75256,54.0225085 C242.08951,51.9065311 242.145916,44.3711638 236.83934,42.1756384 L141.442459,2.70101695 C132.738459,-0.900338983 122.961284,-0.900338983 114.25873,2.70101695" fill="#FFBF00">
@@ -165,6 +167,8 @@ INSERT INTO anything.auth_providers (
         'gmail',
         'gmail',
         'Gmail',
+        '123e4567-e89b-12d3-a456-426614174007',
+        '123e4567-e89b-12d3-a456-426614174008',
         '<svg width="800px" height="800px" viewBox="7.086 -169.483 1277.149 1277.149" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M1138.734 931.095h.283M1139.017 931.095h-.283"/><path d="M1179.439 7.087c57.543 0 104.627 47.083 104.627 104.626v30.331l-145.36 103.833-494.873 340.894L148.96 242.419v688.676h-37.247c-57.543 0-104.627-47.082-104.627-104.625V111.742C7.086 54.198 54.17 7.115 111.713 7.115l532.12 394.525L1179.41 7.115l.029-.028z" fill="#e75a4d"/><linearGradient id="a" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#a)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><path fill="#e7e4d7" d="M148.96 242.419v688.676h989.774V245.877L643.833 586.771z"/><path fill="#b8b7ae" d="M148.96 931.095l494.873-344.324-2.24-1.586L148.96 923.527z"/><path fill="#b7b6ad" d="M1138.734 245.877l.283 685.218-495.184-344.324z"/><path d="M1284.066 142.044l.17 684.51c-2.494 76.082-35.461 103.238-145.219 104.514l-.283-685.219 145.36-103.833-.028.028z" fill="#b2392f"/><linearGradient id="b" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#b)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#c)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="d" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#d)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="e" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#e)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="f" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#f)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#g)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><linearGradient id="h" gradientUnits="userSpaceOnUse" x1="1959.712" y1="737.107" x2="26066.213" y2="737.107" gradientTransform="matrix(.0283 0 0 -.0283 248.36 225.244)"><stop offset="0" stop-color="#f8f6ef"/><stop offset="1" stop-color="#e7e4d6"/></linearGradient><path fill="url(#h)" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/><path fill="#f7f5ed" d="M111.713 7.087l532.12 394.525L1179.439 7.087z"/></svg>',
         'Gmail is a free email service developed by Google.',
         'Refer to the Gmail API documentation for managing this connection.',
@@ -1485,7 +1489,11 @@ INSERT INTO vault.secrets (
     ('123e4567-e89b-12d3-a456-426614174001', 'API_KEY_2', 'silly description', 'SUPER_SECRET_KEY_2'),
     ('123e4567-e89b-12d3-a456-426614174002', 'API_KEY_3', 'silly description', 'SUPER_SECRET_KEY_3'),
     ('123e4567-e89b-12d3-a456-426614174003', 'API_KEY_4', 'silly description', 'SUPER_SECRET_KEY_4'),
-    ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5')
+    ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5'),
+    ('123e4567-e89b-12d3-a456-426614174005', 'provider_client_id_for_aritable', 'silly description', 'provider_client_id_for_aritable_tst_key_123'),
+    ('123e4567-e89b-12d3-a456-426614174006', 'provider_client_secret_id_for_aritable', 'silly description', 'provider_client_secret_id_for_aritable_tst_key_123'),
+     ('123e4567-e89b-12d3-a456-426614174007', 'provider_client_id_for_google', 'silly description', 'provider_client_id_for_google_tst_key_123'),
+    ('123e4567-e89b-12d3-a456-426614174008', 'provider_client_secret_id_for_google', 'silly description', 'provider_client_secret_id_for_google_tst_key_123')
     ON CONFLICT (id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
 
    -- Inserting sample secrets into anything.secrets

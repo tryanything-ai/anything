@@ -58,3 +58,64 @@ ALTER TABLE anything.auth_providers ENABLE ROW LEVEL SECURITY;
 --     FOR ALL
 --     TO service_role
 --     USING (true);
+
+-- Function to get decrypted auth providers
+CREATE OR REPLACE FUNCTION anything.get_decrypted_auth_providers()
+RETURNS TABLE (
+    auth_provider_id UUID,
+    provider_name TEXT,
+    provider_label TEXT,
+    provider_icon TEXT,
+    provider_description TEXT,
+    provider_readme TEXT,
+    auth_type TEXT,
+    auth_url TEXT,
+    token_url TEXT,
+    provider_data JSONB,
+    access_token_lifetime_seconds TEXT,
+    refresh_token_lifetime_seconds TEXT,
+    redirect_url TEXT,
+    client_id TEXT,
+    client_secret TEXT,
+    scopes TEXT,
+    public BOOLEAN,
+    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ,
+    updated_by UUID,
+    created_by UUID
+) 
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+    IF current_setting('role', true) IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'authentication required';
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        ap.auth_provider_id,
+        ap.provider_name,
+        ap.provider_label,
+        ap.provider_icon,
+        ap.provider_description,
+        ap.provider_readme,
+        ap.auth_type,
+        ap.auth_url,
+        ap.token_url,
+        ap.provider_data,
+        ap.access_token_lifetime_seconds,
+        ap.refresh_token_lifetime_seconds,
+        ap.redirect_url,
+        (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = ap.client_id_vault_id) AS client_id,
+        (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = ap.client_secret_vault_id) AS client_secret,
+        ap.scopes,
+        ap.public,
+        ap.updated_at,
+        ap.created_at,
+        ap.updated_by,
+        ap.created_by
+    FROM 
+        anything.auth_providers ap;
+END;
+$$;
