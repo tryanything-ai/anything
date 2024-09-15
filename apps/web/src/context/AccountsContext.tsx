@@ -75,6 +75,15 @@ export const AccountsProvider = ({
   }, [accounts]);
 
   useEffect(() => {
+    console.log("[ACCOUNT CONTEXT] Running account selection effect");
+    if (!selectedAccount && teamAccounts && teamAccounts.length > 0) {
+      console.log("[ACCOUNT CONTEXT] No account selected, updating selection");
+      console.log("[ACCOUNT CONTEXT] Setting default team account");
+      setSelectedAccountState(teamAccounts[0]);
+    }
+  }, [teamAccounts, selectedAccount]);
+
+  useEffect(() => {
     console.log("[ACCOUNT CONTEXT] Running hydration effect");
     const storedAccount = localStorage.getItem("selectedAccount");
     if (storedAccount) {
