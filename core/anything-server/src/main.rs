@@ -66,7 +66,7 @@ async fn main() {
         Postgrest::new(supabase_url.clone())
             .schema("marketplace")
             .insert_header("apikey", supabase_api_key.clone()),
-    );``
+    );
 
     let cors_origin = Arc::new(cors_origin);
     println!("[CORS] CORS origin: {:?}", cors_origin);
