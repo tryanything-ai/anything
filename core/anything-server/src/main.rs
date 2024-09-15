@@ -40,7 +40,6 @@ extern crate slugify;
 pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
-    public_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
@@ -134,7 +133,6 @@ async fn main() {
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
-        public_client: public_client.clone(),
         auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,
