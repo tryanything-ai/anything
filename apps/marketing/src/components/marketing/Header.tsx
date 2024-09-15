@@ -6,7 +6,6 @@ import { useState } from "react";
 import { VscClose, VscMenu } from "react-icons/vsc";
 import { FaDiscord } from "react-icons/fa";
 import { Stargazer } from "@/components/ui/Stargazer";
-import ShinyButton from "@repo/ui/components/magicui/shiny-button";
 import ShimmerButton from "@repo/ui/components/magicui/shimmer-button";
 import { Button } from "@repo/ui/components/ui/button";
 

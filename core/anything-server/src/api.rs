@@ -1461,7 +1461,6 @@ pub async fn get_task_by_workflow_id(
 pub async fn get_auth_provider_by_name(
     Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!(
         "Handling a get_auth_provider_by_name for account {:?} and provider {:?}",
@@ -1470,11 +1469,15 @@ pub async fn get_auth_provider_by_name(
 
     let client = &state.anything_client;
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     let response = match client
         .from("auth_providers")
-        .auth(user.jwt)
+        .auth(supabase_service_role_api_key.clone())
         .eq("provider_name", &provider_name)
-        .select("*")
+        .select("auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at)")
         .execute()
         .await
     {
@@ -1568,7 +1571,6 @@ pub async fn get_auth_accounts_for_provider_name(
 
 pub async fn get_auth_accounts(
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
     Path(account_id): Path<String>,
 ) -> impl IntoResponse {
     println!(
@@ -1578,11 +1580,15 @@ pub async fn get_auth_accounts(
 
     let client = &state.anything_client;
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     let response = match client
         .from("account_auth_provider_accounts")
-        .auth(user.jwt)
+        .auth(supabase_service_role_api_key.clone())
         .eq("account_id", &account_id)
-        .select("*, auth_provider:auth_providers(*)")
+        .select("*, auth_provider:auth_providers(auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at)")
         .execute()
         .await
     {
@@ -1621,7 +1627,6 @@ pub async fn get_auth_accounts(
 }
 pub async fn get_auth_providers(
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
     Path(account_id): Path<String>,
 ) -> impl IntoResponse {
     println!(
@@ -1630,11 +1635,14 @@ pub async fn get_auth_providers(
     );
 
     let client = &state.anything_client;
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     let response = match client
         .from("auth_providers")
-        .auth(user.jwt)
-        .select("*")
+        .auth(supabase_service_role_api_key.clone())
+        .select("auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at")
         .execute()
         .await
     {

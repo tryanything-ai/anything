@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { useAnything } from "@/context/AnythingContext";
 
 export default function FreeTrialBadge() {
@@ -8,7 +8,7 @@ export default function FreeTrialBadge() {
 
   useEffect(() => {
     const calculateDaysLeft = () => {
-      if (!subscription.free_trial_ends_at) return 0;
+      if (!subscription?.free_trial_ends_at) return 0;
       const endDate = new Date(subscription.free_trial_ends_at);
       const today = new Date();
       const diffTime = endDate.getTime() - today.getTime();
@@ -17,17 +17,17 @@ export default function FreeTrialBadge() {
 
     const calculatedDaysLeft = calculateDaysLeft();
     setDaysLeft(calculatedDaysLeft);
-    setIsOnFreeTrial(calculatedDaysLeft > 0 && !subscription.paying_customer);
-  }, [subscription.free_trial_ends_at, subscription.paying_customer]);
+    setIsOnFreeTrial(calculatedDaysLeft > 0 && !subscription?.paying_customer);
+  }, [subscription?.free_trial_ends_at, subscription?.paying_customer]);
 
   if (!isOnFreeTrial) {
     return null;
   }
 
   return (
-    <div className="text-xs bg-blue-100 text-blue-800 p-2 rounded-full flex items-center">
-      Free Trial Tasks Used: {subscription.free_trial_task_usage}/{subscription.free_trial_task_limit} tasks • {daysLeft} days left
+    <div className="hidden lg:flex text-xs bg-blue-100 text-blue-800 p-2 rounded-full items-center">
+      Free Trial Tasks Used: {subscription?.free_trial_task_usage}/
+      {subscription?.free_trial_task_limit} tasks • {daysLeft} days left
     </div>
   );
 }
-
