@@ -15,9 +15,7 @@ CREATE TABLE IF NOT EXISTS anything.auth_providers
     access_token_lifetime_seconds TEXT,
     refresh_token_lifetime_seconds TEXT,
     redirect_url TEXT NOT NULL,
-    client_id TEXT NOT NULL,
     client_id_vault_id uuid, -- this is how we fetch from encrypted storage
-    client_secret TEXT NOT NULL,
     client_secret_vault_id uuid, -- this is how we fetch from encrypted storage
     scopes TEXT NOT NULL,
     public boolean not null default false, -- whether this provider is public just utility

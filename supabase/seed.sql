@@ -126,7 +126,7 @@ INSERT INTO marketplace.flow_template_tags (
 -- Inserting sample OAuth providers into anything.auth_providers
 
 INSERT INTO anything.auth_providers (
-    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, redirect_url, client_id, client_secret, scopes, public, updated_at, created_at, updated_by, created_by
+    auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, redirect_url, scopes, public, updated_at, created_at, updated_by, created_by
 ) VALUES
     -- Airtable Provider
     (
@@ -153,8 +153,6 @@ INSERT INTO anything.auth_providers (
         '3600',
         '5184000',
         'https://workflow-engine-axum-dev.up.railway.app/auth/airtable/callback',
-        'YOUR_CLIENT_ID',
-        'YOUR_CLIENT_SECRET',
         'data.records:read data.records:write',
         true,
         now(),
@@ -176,8 +174,6 @@ INSERT INTO anything.auth_providers (
         '3600',
         '5184000',
         'https://workflow-engine-axum-dev.up.railway.app/auth/google/callbackk',
-        'YOUR_CLIENT_ID',
-        'YOUR_CLIENT_SECRET',
         'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
         true,
         now(),

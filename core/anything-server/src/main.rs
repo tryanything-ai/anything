@@ -151,7 +151,13 @@ async fn main() {
             "/billing/webhooks/new_account_webhook",
             post(billing::accounts::handle_new_account_webhook),
         )
-        .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook));
+        .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
+        .route("/auth/providers/:provider_name/client_id/set",
+            post(auth::providers::update_auth_provider_client_id),
+        )
+        .route("/auth/providers/:provider_name/client_secret_id/set",
+        post(auth::providers::update_auth_provider_client_secret_id),
+    );
 
     let protected_routes = Router::new()
         .route("/", get(api::root))

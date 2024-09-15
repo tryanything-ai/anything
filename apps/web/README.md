@@ -40,3 +40,14 @@ Production runs with "Real Supabase Variables" and Railway Server Prod also
 ```bash
 npx supabase db reset --linked
 ```
+
+# How to set Auth Providers Secrets in Supabase Vault
+
+```bash
+curl -X POST 'http://localhost:3001/auth/providers/airtable/client_id/set' \
+-H 'Content-Type: application/json' \
+-d '{
+  "client_id": "test-vault-secret-id-for-airtable",
+  "cli_secret": "carls-secret"
+}'
+```
