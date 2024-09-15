@@ -24,10 +24,12 @@ export interface AccountsContextInterface {
   selectedAccount: Account | undefined;
   setSelectedAccount: (account: Account) => void;
   isLoading: boolean;
+  hydrated: boolean;
 }
 
 export const AccountsContext = createContext<AccountsContextInterface>({
   isLoading: true,
+  hydrated: false,
   accounts: undefined,
   personalAccount: undefined,
   teamAccounts: undefined,
@@ -47,6 +49,7 @@ export const AccountsProvider = ({
   >();
   const router = useRouter();
 
+  const [hydrated, setHydrated] = useState(false);
   const { data: accounts, isLoading } = useAccounts();
 
   const { personalAccount, teamAccounts } = useMemo(() => {
@@ -70,6 +73,7 @@ export const AccountsProvider = ({
     } else if (teamAccounts && teamAccounts.length > 0 && !selectedAccount) {
       setSelectedAccountState(teamAccounts[0]);
     }
+    setHydrated(true);
   }, []);
 
   const setSelectedAccount = (account: Account) => {
@@ -82,6 +86,7 @@ export const AccountsProvider = ({
     <AccountsContext.Provider
       value={{
         isLoading,
+        hydrated,
         accounts,
         personalAccount,
         teamAccounts,
