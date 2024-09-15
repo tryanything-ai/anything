@@ -131,6 +131,7 @@ begin
 end;
 $$;
 
+-- https://supabase.com/docs/guides/database/vault#updating-secrets
 create or replace function anything.update_secret(id uuid, secret text, name text, description text)
 returns text
 language plpgsql

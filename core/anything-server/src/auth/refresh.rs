@@ -9,12 +9,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
 
-use crate::auth::init::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken};
+use crate::auth::{
+    init::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken},
+    utils::update_secret_in_vault,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateAccountAuthProviderAccount {
-    pub access_token: String,
-    pub refresh_token: Option<String>,
     pub access_token_expires_at: Option<DateTime<Utc>>,
     pub refresh_token_expires_at: Option<DateTime<Utc>>,
 }
@@ -34,7 +35,7 @@ pub async fn refresh_accounts(
 
     let response = client
         .rpc(
-            "get_account_auth_provider_accounts_with_decrypted_providers",
+            "get_decrypted_account_auth_provider_accounts_with_decrypted_providers",
             json!({"p_account_id": account_id}).to_string(),
         )
         .auth(supabase_service_role_api_key.clone())
@@ -121,9 +122,22 @@ pub async fn refresh_accounts(
                             );
                         }
 
+                        //Update the tokens in the vault
+                        update_secret_in_vault(
+                            client,
+                            &account.access_token_vault_id,
+                            &new_token.access_token,
+                        )
+                        .await?;
+
+                        update_secret_in_vault(
+                            client,
+                            &account.refresh_token_vault_id,
+                            &new_token.refresh_token.clone().unwrap_or_default(),
+                        )
+                        .await?;
+
                         let account_updates = UpdateAccountAuthProviderAccount {
-                            access_token: new_token.access_token,
-                            refresh_token: new_token.refresh_token,
                             access_token_expires_at,
                             refresh_token_expires_at,
                         };
@@ -177,7 +191,10 @@ pub async fn refresh_accounts(
     //TODO: if any accounts refresh fails it will kill all the automations in the whole system
     //fetch all the newly refreshed accounts
     let new_response = client
-        .from("account_auth_provider_accounts")
+        .rpc(
+            "get_decrypted_account_auth_provider_accounts",
+            json!({"p_account_id": account_id}).to_string(),
+        )
         .auth(supabase_service_role_api_key.clone())
         .select("*, auth_provider:auth_providers(*)")
         .eq("account_id", account_id)

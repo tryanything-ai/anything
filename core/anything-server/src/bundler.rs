@@ -18,6 +18,8 @@ pub async fn get_fake_account_auth_provider_account(
     let fake_account = AccountAuthProviderAccount {
         account_auth_provider_account_id: Uuid::new_v4(),
         account_id: Uuid::new_v4(),
+        access_token_vault_id: "airtable_access_token".to_string(),
+        refresh_token_vault_id: "airtable_refresh_token".to_string(),
         auth_provider: Some(serde_json::json!({
             "auth_provider_id": "airtable",
             "provider_name": "airtable",
@@ -159,7 +161,7 @@ pub async fn bundle_context(
 
     let mut accounts: HashMap<String, Value> = HashMap::new();
     for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
-    // for account in get_fake_account_auth_provider_account().await? {
+        // for account in get_fake_account_auth_provider_account().await? {
         let slug = account.account_auth_provider_account_slug.clone();
         println!(
             "[BUNDLER] Inserting account with slug: {} at accounts.{}",

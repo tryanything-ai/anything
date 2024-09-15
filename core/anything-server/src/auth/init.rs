@@ -1,5 +1,5 @@
-use crate::supabase_auth_middleware::User;
 use crate::AppState;
+use crate::{auth::utils::insert_secret_to_vault, supabase_auth_middleware::User};
 use axum::{
     extract::{Extension, Path, Query, State},
     http::StatusCode,
@@ -13,6 +13,8 @@ use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use slugify::slugify;
 use std::env;
 use std::sync::Arc;
 use urlencoding;
@@ -33,8 +35,10 @@ pub struct AccountAuthProviderAccount {
     pub account_auth_provider_account_slug: String,
     pub account_data: Option<Value>,
     pub access_token: String,
+    pub access_token_vault_id: String,
     pub access_token_expires_at: Option<DateTime<Utc>>,
     pub refresh_token: Option<String>,
+    pub refresh_token_vault_id: String,
     pub refresh_token_expires_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
     pub created_at: Option<DateTime<Utc>>,
@@ -70,7 +74,9 @@ pub struct AuthProvider {
     pub access_token_lifetime_seconds: Option<String>,
     pub refresh_token_lifetime_seconds: Option<String>,
     pub client_id: String,
+    pub client_id_vault_id: String,
     pub client_secret: String,
+    pub client_secret_vault_id: String,
     pub scopes: String,
     pub public: bool,
     pub updated_at: Option<DateTime<Utc>>,
@@ -98,8 +104,8 @@ pub struct CreateAccountAuthProviderAccount {
     pub auth_provider_id: String,
     pub account_auth_provider_account_label: String,
     pub account_auth_provider_account_slug: String,
-    pub access_token: String,
-    pub refresh_token: String,
+    pub access_token_vault_id: String,
+    pub refresh_token_vault_id: String,
     pub access_token_expires_at: DateTime<Utc>,
     pub refresh_token_expires_at: DateTime<Utc>,
 }
@@ -117,16 +123,27 @@ pub async fn handle_provider_callback(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OAuthCallbackParams>,
 ) -> impl IntoResponse {
-    println!("[AUTH INIT] Handling auth callback for provider: {:?}", provider_name);
+    println!(
+        "[AUTH INIT] Handling auth callback for provider: {:?}",
+        provider_name
+    );
     println!("[AUTH INIT] Params: {:?}", params);
 
     let client = &state.anything_client;
     let auth_states = &state.auth_states;
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     // Get Provider details
+    //BUG: Need to use RPC call to get decrypted access to client id client secret etc
     let response = match client
-        .from("auth_providers")
-        .eq("provider_name", &provider_name)
+        .rpc(
+            "get_decrypted_auth_provider_by_name",
+            json!({"provider_name_param": &provider_name}).to_string(),
+        )
+        .auth(supabase_service_role_api_key.clone())
         .select("*")
         .single()
         .execute()
@@ -222,25 +239,70 @@ pub async fn handle_provider_callback(
         None
     };
 
+    //Add access-token to vault
+    let vault_access_token_name = slugify!(
+        format!(
+            "access_token_for_{}_for_account_{}",
+            auth_provider.auth_provider_id.clone(),
+            auth_state.account_id.clone()
+        )
+        .as_str(),
+        separator = "_"
+    );
+
+    println!("Access Token Vault Name: {}", vault_access_token_name);
+
+    let access_token_vault_id = insert_secret_to_vault(
+        client,
+        &vault_access_token_name,
+        &token.access_token,
+        &format!(
+            "Access Token for {} for Account {}",
+            auth_provider.auth_provider_id, auth_state.account_id
+        ),
+    )
+    .await
+    .unwrap();
+
+    //Add refresh token secret in vault
+    let vault_refresh_token_name = slugify!(
+        format!(
+            "refresh_token_for_{}_for_account_{}",
+            auth_provider.auth_provider_id.clone(),
+            auth_state.account_id.clone()
+        )
+        .as_str(),
+        separator = "_"
+    );
+
+    println!("Refresh Token Vault Name: {}", vault_refresh_token_name);
+
+    // let refresh_token_vault_id = body.trim_matches('"');
+    let refresh_token_vault_id = insert_secret_to_vault(
+        client,
+        &vault_refresh_token_name,
+        &token.refresh_token.unwrap_or_default(),
+        &format!(
+            "Refresh Token for {} for Account {}",
+            auth_provider.auth_provider_id, auth_state.account_id
+        ),
+    )
+    .await
+    .unwrap();
+
     let input = CreateAccountAuthProviderAccount {
         account_id: auth_state.account_id.clone(),
         auth_provider_id: auth_provider.auth_provider_id.clone(),
         account_auth_provider_account_label: account_label,
         account_auth_provider_account_slug: account_slug,
-        access_token: token.access_token.clone(),
+        access_token_vault_id: access_token_vault_id.to_string(),
         access_token_expires_at: access_token_expires_at.unwrap_or_else(Utc::now),
-        refresh_token: token.refresh_token.unwrap_or_default(),
+        refresh_token_vault_id: refresh_token_vault_id.to_string(),
         refresh_token_expires_at: refresh_token_expires_at.unwrap_or_else(Utc::now),
     };
 
     println!("[AUTH INIT] Create Account Input: {:?}", input);
-
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
     // Store token in the database
-    //TODO: store tokens in supabse VAULT
     let create_account_response = match client
         .from("account_auth_provider_accounts")
         .auth(supabase_service_role_api_key.clone())
@@ -258,7 +320,10 @@ pub async fn handle_provider_callback(
         }
     };
 
-    println!("[AUTH INIT] Create Account Response: {:?}", create_account_response);
+    println!(
+        "[AUTH INIT] Create Account Response: {:?}",
+        create_account_response
+    );
 
     // Return success response
     if create_account_response.status().is_success() {

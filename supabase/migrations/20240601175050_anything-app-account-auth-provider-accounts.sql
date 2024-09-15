@@ -11,9 +11,11 @@ CREATE TABLE IF NOT EXISTS anything.account_auth_provider_accounts
     account_auth_provider_account_label TEXT NOT NULL, -- what users see
     account_auth_provider_account_slug TEXT NOT NULL, -- what bundler uses ( will standardize to airtable airtable_2, google google_2) etc
     account_data jsonb,
-    access_token TEXT NOT NULL, -- figure out how to put these in the secrets table
+    access_token_vault_id uuid NOT NULL, 
+    -- access_token TEXT NOT NULL, -- figure out how to put these in the secrets table
     access_token_expires_at TIMESTAMP WITH TIME ZONE,
-    refresh_token TEXT, -- figure out how to put these in secrets table
+    -- refresh_token TEXT, -- figure out how to put these in secrets table
+    refresh_token_vault_id uuid NOT NULL,
     refresh_token_expires_at TIMESTAMP WITH TIME ZONE,
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
@@ -115,7 +117,7 @@ create policy "Account members can update" on anything.account_auth_provider_acc
 --      );
 
 -- Function to get account auth provider accounts with decrypted auth provider details
-CREATE OR REPLACE FUNCTION anything.get_account_auth_provider_accounts_with_decrypted_providers(p_account_id UUID)
+CREATE OR REPLACE FUNCTION anything.get_decrypted_account_auth_provider_accounts_with_decrypted_providers(p_account_id UUID)
 RETURNS TABLE (
     account_auth_provider_account_id UUID,
     account_id UUID,
@@ -124,8 +126,10 @@ RETURNS TABLE (
     account_auth_provider_account_slug TEXT,
     account_data JSONB,
     access_token TEXT,
+    access_token_vault_id UUID,
     access_token_expires_at TIMESTAMPTZ,
     refresh_token TEXT,
+    refresh_token_vault_id UUID,
     refresh_token_expires_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ,
@@ -149,9 +153,11 @@ BEGIN
         aapa.account_auth_provider_account_label,
         aapa.account_auth_provider_account_slug,
         aapa.account_data,
-        aapa.access_token,
+        (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = aapa.access_token_vault_id) AS access_token,
+        aapa.access_token_vault_id,
         aapa.access_token_expires_at,
-        aapa.refresh_token,
+        (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = aapa.refresh_token_vault_id) AS refresh_token,
+        aapa.refresh_token_vault_id,
         aapa.refresh_token_expires_at,
         aapa.updated_at,
         aapa.created_at,
@@ -173,6 +179,82 @@ BEGIN
             'redirect_url', ap.redirect_url,
             'client_id', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = ap.client_id_vault_id),
             'client_secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = ap.client_secret_vault_id),
+            'scopes', ap.scopes,
+            'public', ap.public
+        ) AS auth_provider
+    FROM 
+        anything.account_auth_provider_accounts aapa
+    JOIN 
+        anything.auth_providers ap ON aapa.auth_provider_id = ap.auth_provider_id
+    WHERE 
+        aapa.account_id = p_account_id;
+END;
+$$;
+
+
+-- Function to get account auth provider accounts with decrypted account details but not provider details
+CREATE OR REPLACE FUNCTION anything.get_decrypted_account_auth_provider_accounts(p_account_id UUID)
+RETURNS TABLE (
+    account_auth_provider_account_id UUID,
+    account_id UUID,
+    auth_provider_id TEXT,
+    account_auth_provider_account_label TEXT,
+    account_auth_provider_account_slug TEXT,
+    account_data JSONB,
+    access_token TEXT,
+    access_token_vault_id UUID,
+    access_token_expires_at TIMESTAMPTZ,
+    refresh_token TEXT,
+    refresh_token_vault_id UUID,
+    refresh_token_expires_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ,
+    updated_by UUID,
+    created_by UUID,
+    auth_provider JSONB
+) 
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+    IF current_setting('role', true) IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'authentication required';
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        aapa.account_auth_provider_account_id,
+        aapa.account_id,
+        aapa.auth_provider_id,
+        aapa.account_auth_provider_account_label,
+        aapa.account_auth_provider_account_slug,
+        aapa.account_data,
+        (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = aapa.access_token_vault_id) AS access_token,
+        aapa.access_token_vault_id,
+        aapa.access_token_expires_at,
+        (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = aapa.refresh_token_vault_id) AS refresh_token,
+        aapa.refresh_token_vault_id,
+        aapa.refresh_token_expires_at,
+        aapa.updated_at,
+        aapa.created_at,
+        aapa.updated_by,
+        aapa.created_by,
+        jsonb_build_object(
+            'auth_provider_id', ap.auth_provider_id,
+            'provider_name', ap.provider_name,
+            'provider_label', ap.provider_label,
+            'provider_icon', ap.provider_icon,
+            'provider_description', ap.provider_description,
+            'provider_readme', ap.provider_readme,
+            'auth_type', ap.auth_type,
+            'auth_url', ap.auth_url,
+            'token_url', ap.token_url,
+            'provider_data', ap.provider_data,
+            'access_token_lifetime_seconds', ap.access_token_lifetime_seconds,
+            'refresh_token_lifetime_seconds', ap.refresh_token_lifetime_seconds,
+            'redirect_url', ap.redirect_url,
+            'client_id_vault_id', ap.client_id_vault_id,
+            'client_secret_vault_id', ap.client_secret_vault_id,
             'scopes', ap.scopes,
             'public', ap.public
         ) AS auth_provider
