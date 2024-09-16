@@ -62,7 +62,7 @@ ALTER TABLE anything.auth_providers ENABLE ROW LEVEL SECURITY;
 -- Function to get decrypted auth providers
 CREATE OR REPLACE FUNCTION anything.get_decrypted_auth_providers()
 RETURNS TABLE (
-    auth_provider_id UUID,
+    auth_provider_id TEXT,
     provider_name TEXT,
     provider_label TEXT,
     provider_icon TEXT,
@@ -123,7 +123,7 @@ $$;
 -- Function to get a decrypted auth provider by name
 CREATE OR REPLACE FUNCTION anything.get_decrypted_auth_provider_by_name(provider_name_param TEXT)
 RETURNS TABLE (
-    auth_provider_id UUID,
+    auth_provider_id TEXT,
     provider_name TEXT,
     provider_label TEXT,
     provider_icon TEXT,

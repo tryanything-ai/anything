@@ -19,7 +19,7 @@ struct AccountUsage {
 pub async fn billing_processing_loop(state: Arc<AppState>) {
     println!("[BILLING USAGE ENGINE] Starting billing processing engine");
     let client = state.anything_client.clone();
-    let interval = Duration::from_secs(180); // 3 minutes
+    let interval = Duration::from_secs(300); // 5 minutes
 
     loop {
         match process_billing_usage(&client).await {

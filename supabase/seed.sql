@@ -1481,6 +1481,10 @@ INSERT INTO anything.action_templates (
     }', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'); 
 
 
+  -- Delete old Vault
+   -- Delete old secrets from vault
+   DELETE FROM vault.secrets;
+
    -- Inserting sample secrets into vault.secrets
 INSERT INTO vault.secrets (
     id, name, description, secret
@@ -1490,8 +1494,8 @@ INSERT INTO vault.secrets (
     ('123e4567-e89b-12d3-a456-426614174002', 'API_KEY_3', 'silly description', 'SUPER_SECRET_KEY_3'),
     ('123e4567-e89b-12d3-a456-426614174003', 'API_KEY_4', 'silly description', 'SUPER_SECRET_KEY_4'),
     ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5'),
-    ('123e4567-e89b-12d3-a456-426614174005', 'provider_client_id_for_aritable', 'silly description', 'provider_client_id_for_aritable_tst_key_123'),
-    ('123e4567-e89b-12d3-a456-426614174006', 'provider_client_secret_id_for_aritable', 'silly description', 'provider_client_secret_id_for_aritable_tst_key_123'),
+    ('123e4567-e89b-12d3-a456-426614174005', 'provider_client_id_for_airtable', 'silly description', 'provider_client_id_for_aritable_tst_key_123'),
+    ('123e4567-e89b-12d3-a456-426614174006', 'provider_client_secret_id_for_airtable', 'silly description', 'provider_client_secret_id_for_aritable_tst_key_123'),
     ('123e4567-e89b-12d3-a456-426614174007', 'provider_client_id_for_google', 'silly description', 'provider_client_id_for_google_tst_key_123'),
     ('123e4567-e89b-12d3-a456-426614174008', 'provider_client_secret_id_for_google', 'silly description', 'provider_client_secret_id_for_google_tst_key_123'),
     ('123e4567-e89b-12d3-a456-426614174009', 'mock_access_token_1', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_1234567890'),

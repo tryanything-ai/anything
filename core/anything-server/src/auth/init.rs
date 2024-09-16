@@ -137,7 +137,6 @@ pub async fn handle_provider_callback(
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     // Get Provider details
-    //BUG: Need to use RPC call to get decrypted access to client id client secret etc
     let response = match client
         .rpc(
             "get_decrypted_auth_provider_by_name",
@@ -170,10 +169,17 @@ pub async fn handle_provider_callback(
         }
     };
 
-    let auth_provider: AuthProvider = match serde_json::from_str(&body) {
-        Ok(auth_provider) => auth_provider,
+    let auth_providers: Vec<AuthProvider> = match serde_json::from_str(&body) {
+        Ok(providers) => providers,
         Err(_) => {
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    let auth_provider = match auth_providers.into_iter().next() {
+        Some(provider) => provider,
+        None => {
+            return (StatusCode::NOT_FOUND, "Auth provider not found").into_response()
         }
     };
 
