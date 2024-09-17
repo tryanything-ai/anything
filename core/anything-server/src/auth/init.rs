@@ -183,6 +183,8 @@ pub async fn handle_provider_callback(
         }
     };
 
+    println!("[AUTH INIT] AuthProvider: {:?}", auth_provider);
+
     // Verify state from the database
     // Retrieve the stored AuthState using the received state
     let auth_state = auth_states
@@ -518,14 +520,21 @@ pub async fn initiate_auth(
 
     println!("[AUTH INIT] Body: {:?}", body);
 
-    let auth_provider: AuthProvider = match serde_json::from_str(&body) {
-        Ok(auth_provider) => auth_provider,
+    let auth_providers: Vec<AuthProvider> = match serde_json::from_str(&body) {
+        Ok(providers) => providers,
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse JSON for auth_provider",
+                "Failed to parse JSON for auth_providers",
             )
                 .into_response()
+        }
+    };
+
+    let auth_provider = match auth_providers.into_iter().next() {
+        Some(provider) => provider,
+        None => {
+            return (StatusCode::NOT_FOUND, "Auth provider not found").into_response()
         }
     };
 
