@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
+import OrbitingCirclesIntegrations from "@repo/ui/components/magicui/orbiting-circles-integrations";
 
 export const description =
   "A login page with two columns. The first column has the login form with email and password. There's a Forgot your password link and a link to sign up if you do not have an account. The second column has a cover image.";
@@ -115,13 +116,14 @@ const AuthPage = () => {
         </div>
       </div>
       <div className="hidden bg-muted lg:block">
-        <Image
+        {/* <Image
           src="/placeholder.svg"
           alt="Image"
           width="1920"
           height="1080"
           className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
+        /> */}
+        <OrbitingCirclesIntegrations />
       </div>
     </div>
   );

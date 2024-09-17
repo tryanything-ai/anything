@@ -156,7 +156,10 @@ pub async fn handle_provider_callback(
         }
     };
 
-    println!("[AUTH INIT] Response: {:?}", response);
+    println!(
+        "[AUTH INIT] get_decryped_auth_provider Response: {:?}",
+        response
+    );
 
     let body = match response.text().await {
         Ok(body) => body,
@@ -178,9 +181,7 @@ pub async fn handle_provider_callback(
 
     let auth_provider = match auth_providers.into_iter().next() {
         Some(provider) => provider,
-        None => {
-            return (StatusCode::NOT_FOUND, "Auth provider not found").into_response()
-        }
+        None => return (StatusCode::NOT_FOUND, "Auth provider not found").into_response(),
     };
 
     println!("[AUTH INIT] AuthProvider: {:?}", auth_provider);
@@ -505,7 +506,10 @@ pub async fn initiate_auth(
         }
     };
 
-    println!("[AUTH INIT] Response: {:?}", response);
+    println!(
+        "[AUTH INIT] get_decrypted_auth_provider_by_name Response: {:?}",
+        response
+    );
 
     let body = match response.text().await {
         Ok(body) => body,
@@ -522,23 +526,36 @@ pub async fn initiate_auth(
 
     let auth_providers: Vec<AuthProvider> = match serde_json::from_str(&body) {
         Ok(providers) => providers,
-        Err(_) => {
+        Err(e) => {
+            println!(
+                "[AUTH INIT] Failed to parse JSON for auth_providers: {:?}",
+                e
+            );
+            println!("[AUTH INIT] Raw body: {}", body);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse JSON for auth_providers",
             )
-                .into_response()
+                .into_response();
         }
     };
+
+    if auth_providers.is_empty() {
+        println!("[AUTH INIT] No auth providers found in parsed JSON");
+        return (StatusCode::NOT_FOUND, "No auth providers found").into_response();
+    }
+
+    println!("[AUTH INIT] Parsed {} auth providers", auth_providers.len());
 
     let auth_provider = match auth_providers.into_iter().next() {
         Some(provider) => provider,
         None => {
-            return (StatusCode::NOT_FOUND, "Auth provider not found").into_response()
+            println!("[AUTH INIT] No auth provider found after parsing");
+            return (StatusCode::NOT_FOUND, "Auth provider not found").into_response();
         }
     };
 
-    println!("[AUTH INIT] AuthProvider: {:?}", auth_provider);
+    println!("[AUTH INIT] Selected auth provider: {:?}", auth_provider);
 
     // Build the OAuth URL
     let client_id = auth_provider.client_id.clone();
