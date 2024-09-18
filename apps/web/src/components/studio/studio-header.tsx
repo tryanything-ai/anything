@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Send, XIcon } from "lucide-react";
@@ -8,59 +7,18 @@ import { ShareDialog } from "@/components/studio/share-dialog";
 import { useAnything } from "@/context/AnythingContext";
 import WorkflowToggle from "../workflows/workflow-toggle";
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
-import api from "@/lib/anything-api";
+
 import FreeTrialBadge from "../free-trial-badge";
-// flow_name={workflow?.db_flow.flow_name || ""}
-// savingStatus={workflow.savingStatus}
 
 export default function StudioHeader(): JSX.Element {
   const router = useRouter();
   const params = useParams<{ workflowVersionId: string; workflowId: string }>();
 
-  const {
-    workflow,
-    accounts: { selectedAccount },
-    subscription,
-  } = useAnything();
-
-  const [version, setVersion] = useState<any>(null);
+  const { workflow } = useAnything();
 
   const handleBack = () => {
     router.push(`/workflows/${params.workflowId}`);
   };
-
-  const fetchVersion = async () => {
-    try {
-      if (!selectedAccount) return;
-
-      let version = await api.flows.getFlowVersionById(
-        selectedAccount.account_id,
-        params.workflowId,
-        params.workflowVersionId,
-      );
-      setVersion(version);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    if (params.workflowVersionId && params.workflowId) {
-      console.log("fetching version", params.workflowVersionId);
-      fetchVersion();
-    }
-  }, [params.workflowVersionId]);
-
-  const calculateDaysLeft = () => {
-    if (!subscription.free_trial_ends_at) return 0;
-    const endDate = new Date(subscription.free_trial_ends_at);
-    const today = new Date();
-    const diffTime = endDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 3600 * 24));
-  };
-
-  const daysLeft = calculateDaysLeft();
 
   return (
     <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
@@ -89,7 +47,9 @@ export default function StudioHeader(): JSX.Element {
       {/* <ShareDialog /> */}
       <div className="ml-auto flex items-center gap-2">
         <FreeTrialBadge />
-        {version && version.published ? (
+        {workflow &&
+        workflow.db_flow_version &&
+        workflow.db_flow_version.published ? (
           <Button
             variant="outline"
             size="sm"

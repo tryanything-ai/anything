@@ -27,11 +27,18 @@ import {
   SubscriptionContextInterface,
   SubscriptionContext,
 } from "./SubscriptionContext";
+import {
+  WorkflowVersionControlContextInterface,
+  WorkflowVersionControlContext,
+  WorkflowVersionControlProvider,
+} from "./WorkflowVersionControlContext";
+import { Workflow } from "lucide-react";
 
 interface AnythingContextInterface {
   accounts: AccountsContextInterface;
   subscription: SubscriptionContextInterface;
   workflow: WorkflowVersionContextInterface;
+  version_control: WorkflowVersionControlContextInterface;
   variables: VariablesContextInterface;
   testing: WorkflowTestingContextInterface;
 }
@@ -57,35 +64,42 @@ export const AnythingProvider = ({
             <SubscriptionProvider>
               <SubscriptionContext.Consumer>
                 {(subscription) => (
-                  <WorkflowVersionProvider>
-                    <WorkflowVersionContext.Consumer>
-                      {(workflow) => (
-                        <VariablesProvider>
-                          <VariablesContext.Consumer>
-                            {(variables) => (
-                              <WorkflowTestingProvider>
-                                <WorkflowTestingContext.Consumer>
-                                  {(testing) => (
-                                    <AnythingContext.Provider
-                                      value={{
-                                        accounts,
-                                        subscription,
-                                        workflow,
-                                        variables,
-                                        testing,
-                                      }}
-                                    >
-                                      {children}
-                                    </AnythingContext.Provider>
+                  <WorkflowVersionControlProvider>
+                    <WorkflowVersionControlContext.Consumer>
+                      {(version_control) => (
+                        <WorkflowVersionProvider>
+                          <WorkflowVersionContext.Consumer>
+                            {(workflow) => (
+                              <VariablesProvider>
+                                <VariablesContext.Consumer>
+                                  {(variables) => (
+                                    <WorkflowTestingProvider>
+                                      <WorkflowTestingContext.Consumer>
+                                        {(testing) => (
+                                          <AnythingContext.Provider
+                                            value={{
+                                              accounts,
+                                              version_control,
+                                              subscription,
+                                              workflow,
+                                              variables,
+                                              testing,
+                                            }}
+                                          >
+                                            {children}
+                                          </AnythingContext.Provider>
+                                        )}
+                                      </WorkflowTestingContext.Consumer>
+                                    </WorkflowTestingProvider>
                                   )}
-                                </WorkflowTestingContext.Consumer>
-                              </WorkflowTestingProvider>
+                                </VariablesContext.Consumer>
+                              </VariablesProvider>
                             )}
-                          </VariablesContext.Consumer>
-                        </VariablesProvider>
+                          </WorkflowVersionContext.Consumer>
+                        </WorkflowVersionProvider>
                       )}
-                    </WorkflowVersionContext.Consumer>
-                  </WorkflowVersionProvider>
+                    </WorkflowVersionControlContext.Consumer>
+                  </WorkflowVersionControlProvider>
                 )}
               </SubscriptionContext.Consumer>
             </SubscriptionProvider>

@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import api from "@/lib/anything-api";
 import { format } from "date-fns";
 import { Badge } from "@repo/ui/components/ui/badge";
 import Link from "next/link";
@@ -8,34 +6,13 @@ import { useAnything } from "@/context/AnythingContext";
 
 export default function VersionsTab(): JSX.Element {
   const params = useParams<{ workflowVersionId: string; workflowId: string }>();
-  const [workflowVersions, setWorkflowVersions] = useState<any[]>([]);
+
   const {
-    accounts: { selectedAccount },
+    version_control: { versions },
   } = useAnything();
-
-  const fetchVersions = async () => {
-    try {
-      if (!selectedAccount) return;
-      const versions = await api.flows.getFlowVersionsForWorkflowId(
-        selectedAccount.account_id,
-        params.workflowId,
-      );
-      setWorkflowVersions(versions);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    if (params.workflowVersionId && params.workflowId) {
-      console.log("fetching version", params.workflowVersionId);
-      fetchVersions();
-    }
-  }, [params.workflowVersionId]);
-
   return (
     <div className="grid w-full items-start gap-2">
-      {workflowVersions.map((version) => (
+      {versions.map((version) => (
         <Link
           key={version.flow_version_id}
           href={`/workflows/${params.workflowId}/${version.flow_version_id}/editor`}

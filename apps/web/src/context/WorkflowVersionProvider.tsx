@@ -36,6 +36,7 @@ import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useAccountsContext } from "./AccountsContext";
+import { useWorkflowVersionControlContext } from "./WorkflowVersionControlContext";
 
 export enum PanelTab {
   SETTINGS = "settings",
@@ -135,6 +136,7 @@ export const WorkflowVersionProvider = ({
 
   const router = useRouter();
   const { selectedAccount } = useAccountsContext();
+  const { refresh } = useWorkflowVersionControlContext();
 
   //Easy Access State
   const [dbFlow, setDbFlow] = useState<any>({});
@@ -277,6 +279,8 @@ export const WorkflowVersionProvider = ({
           published_at: new Date().toISOString(),
         };
       });
+
+      refresh();
     } catch (error) {
       console.error(error);
     }
