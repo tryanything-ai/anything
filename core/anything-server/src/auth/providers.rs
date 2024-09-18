@@ -1,5 +1,5 @@
-use crate::supabase_auth_middleware::User;
 use crate::AppState;
+use crate::{auth::utils::update_secret_in_vault, supabase_auth_middleware::User};
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -14,9 +14,24 @@ use std::env;
 use std::sync::Arc;
 
 #[derive(Debug, Deserialize)]
-pub struct UpdateAuthProviderClientIdPayload {
+pub struct SetAuthProviderClientIdPayload {
     client_id: String,
     cli_secret: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateAuthProviderClientIdPayload {
+    client_id_vault_id: String,
+    new_client_id: String,
+    cli_secret: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateVaultSecretInput {
+    id: String,
+    secret: String,
+    name: String,
+    description: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -31,16 +46,43 @@ pub struct UpdateAuthProviderClientIdResopnse {
     message: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct UpdateAuthProviderClientSecretResopnse {
-    auth_provider_client_secret_id: String,
-    message: String,
-}
-
 pub async fn update_auth_provider_client_id(
     State(state): State<Arc<AppState>>,
     Path(auth_provider_name): Path<String>,
     Json(payload): Json<UpdateAuthProviderClientIdPayload>,
+) -> impl IntoResponse {
+    dotenv().ok();
+    let cli_secret = env::var("CLI_SECRET").expect("CLI_SECRET must be set");
+    let client = &state.anything_client;
+
+    // Check if the user has the correct CLI_SECRET
+    if payload.cli_secret != cli_secret {
+        return (StatusCode::UNAUTHORIZED, "Invalid CLI_SECRET").into_response();
+    }
+
+    println!("[PROVIDER SECRETS] create_secret Input?: {:?}", payload);
+
+    match update_secret_in_vault(client, &payload.client_id_vault_id, &payload.new_client_id).await
+    {
+        Ok(_) => {
+            let response = UpdateAuthProviderClientIdResopnse {
+                auth_provider_id: auth_provider_name,
+                message: "Client ID updated successfully".to_string(),
+            };
+            (StatusCode::OK, Json(response)).into_response()
+        }
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to update client ID: {}", e),
+        )
+            .into_response(),
+    }
+}
+
+pub async fn set_auth_provider_client_id(
+    State(state): State<Arc<AppState>>,
+    Path(auth_provider_name): Path<String>,
+    Json(payload): Json<SetAuthProviderClientIdPayload>,
 ) -> impl IntoResponse {
     dotenv().ok();
     let cli_secret = env::var("CLI_SECRET").expect("CLI_SECRET must be set");

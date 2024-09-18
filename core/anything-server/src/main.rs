@@ -146,8 +146,11 @@ async fn main() {
         )
         .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
         .route("/auth/providers/:provider_name/client_id/set",
-            post(auth::providers::update_auth_provider_client_id),
+            post(auth::providers::set_auth_provider_client_id),
         )
+        .route("/auth/providers/:provider_name/client_id/update",
+        post(auth::providers::update_auth_provider_client_id),
+    )
         .route("/auth/providers/:provider_name/client_secret_id/set",
         post(auth::providers::update_auth_provider_client_secret_id),
     );
