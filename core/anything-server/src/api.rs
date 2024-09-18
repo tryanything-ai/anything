@@ -791,6 +791,32 @@ pub async fn publish_workflow_version(
         }
     };
 
+    // Update the workflow to be active so it starts running automatically
+    let update_workflow_json = serde_json::json!({
+        "active": true
+    });
+
+    match client
+        .from("flows")
+        .auth(user.jwt.clone())
+        .eq("flow_id", &workflow_id)
+        .update(update_workflow_json.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Workflow update response: {:?}", response);
+            response
+        }
+        Err(err) => {
+            eprintln!("Error updating workflow: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to update workflow",
+            )
+                .into_response();
+        }
+    };
     // Signal the trigger processing loop that it needs to hydrate and manage new triggers.
     if let Err(err) = state.trigger_engine_signal.send(workflow_id) {
         println!("Failed to send trigger signal: {:?}", err);

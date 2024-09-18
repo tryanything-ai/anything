@@ -34,15 +34,16 @@ export default function StudioHeader(): JSX.Element {
       </div>
       <h1 className="text-xl font-semibold inline">
         {workflow?.db_flow.flow_name || ""}{" "}
-        <span className="text-sm font-normal">
-          {"  "}
-          {workflow.savingStatus}
-        </span>
       </h1>
       <WorkflowToggle
         active={workflow.db_flow.active}
         workflow_id={workflow.db_flow_id}
       />
+      <div className="text-sm font-normal">
+        {"  "}
+        {workflow.savingStatus}
+      </div>
+
       {/* TODO:bring this back */}
       {/* <ShareDialog /> */}
       <div className="ml-auto flex items-center gap-2">

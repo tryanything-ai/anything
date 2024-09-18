@@ -280,6 +280,13 @@ export const WorkflowVersionProvider = ({
         };
       });
 
+      setDbFlow((prevFlow: any) => {
+        return {
+          ...prevFlow,
+          active: true,
+        };
+      });
+
       refresh();
     } catch (error) {
       console.error(error);
