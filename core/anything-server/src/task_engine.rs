@@ -293,7 +293,7 @@ pub async fn process_task(
     client: &Postgrest,
     task: &Task,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-    println!("[TASK_ENGINE] Processing task {}", task.task_id);
+    println!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Update task status to "running"
     update_task_status(client, task, &TaskStatus::Running, None).await?;
@@ -302,10 +302,10 @@ pub async fn process_task(
         let bundled_context = bundle_context(client, task).await?;
 
         let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
-            println!("[TASK_ENGINE] Processing trigger task {}", task.task_id);
+            println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
             process_trigger_task(client, task).await?
         } else {
-            println!("[TASK_ENGINE] Processing regular task {}", task.task_id);
+            println!("[PROCESS TASK] Processing regular task {}", task.task_id);
             if let Some(plugin_id) = &task.plugin_id {
                 if plugin_id == "http" {
                     process_http_task(&bundled_context).await?
@@ -334,7 +334,7 @@ pub async fn process_task(
                 Some(task_result.clone()),
             )
             .await?;
-            println!("[TASK_ENGINE] Task {} completed successfully", task.task_id);
+            println!("[PROCESS TASK] Task {} completed successfully", task.task_id);
             Ok(task_result)
         }
         Err(e) => {
@@ -349,7 +349,7 @@ pub async fn process_task(
                 Some(error_result.clone()),
             )
             .await?;
-            println!("[TASK_ENGINE] Task {} failed: {}", task.task_id, e);
+            println!("[PROCESS TASK] Task {} failed: {}", task.task_id, e);
             Err(e)
         }
     }

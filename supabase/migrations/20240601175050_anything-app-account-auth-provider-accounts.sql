@@ -117,7 +117,7 @@ create policy "Account members can update" on anything.account_auth_provider_acc
 --      );
 
 -- Function to get account auth provider accounts with decrypted auth provider details
-CREATE OR REPLACE FUNCTION anything.get_decrypted_account_auth_provider_accounts_with_decrypted_providers(p_account_id UUID)
+CREATE OR REPLACE FUNCTION anything.get_decrypted_account_and_provider(p_account_id UUID)
 RETURNS TABLE (
     account_auth_provider_account_id UUID,
     account_id UUID,
@@ -179,6 +179,8 @@ BEGIN
             'redirect_url', ap.redirect_url,
             'client_id', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = ap.client_id_vault_id),
             'client_secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = ap.client_secret_vault_id),
+            'client_id_vault_id', ap.client_id_vault_id,
+            'client_secret_vault_id', ap.client_secret_vault_id,
             'scopes', ap.scopes,
             'public', ap.public
         ) AS auth_provider
@@ -193,7 +195,7 @@ $$;
 
 
 -- Function to get account auth provider accounts with decrypted account details but not provider details
-CREATE OR REPLACE FUNCTION anything.get_decrypted_account_auth_provider_accounts(p_account_id UUID)
+CREATE OR REPLACE FUNCTION anything.get_account_auth_provider_accounts(p_account_id UUID)
 RETURNS TABLE (
     account_auth_provider_account_id UUID,
     account_id UUID,

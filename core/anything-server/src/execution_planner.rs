@@ -15,7 +15,7 @@ pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-    println!("[TASK_ENGINE] Processing trigger task");
+    println!("[PROCESS TRIGGER TASK] Processing trigger task");
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -31,23 +31,23 @@ pub async fn process_trigger_task(
         .execute()
         .await
         .map_err(|e| {
-            println!("[TASK_ENGINE] Error executing request: {:?}", e);
+            println!("[PROCESS TRIGGER TASK] Error executing request: {:?}", e);
             e
         })?;
 
     let body = response.text().await.map_err(|e| {
-        println!("[TASK_ENGINE] Error reading response body: {:?}", e);
+        println!("[PROCESS TRIGGER TASK] Error reading response body: {:?}", e);
         e
     })?;
 
     let flow_versions: Vec<FlowVersion> = serde_json::from_str(&body).map_err(|e| {
-        println!("[TASK_ENGINE] Error parsing JSON: {:?}", e);
+        println!("[PROCESS TRIGGER TASK] Error parsing JSON: {:?}", e);
         e
     })?;
 
     let flow_version = flow_versions.into_iter().next().ok_or_else(|| {
         let error_msg = format!("No flow version found for id: {}", task.flow_version_id);
-        println!("[TASK_ENGINE] {}", error_msg);
+        println!("[PROCESS TRIGGER TASK] {}", error_msg);
         error_msg
     })?;
 
@@ -62,11 +62,11 @@ pub async fn process_trigger_task(
         .execute()
         .await
         .map_err(|e| {
-            println!("[TASK_ENGINE] Error inserting new tasks: {:?}", e);
+            println!("[PROCESS TRIGGER TASK] Error inserting new tasks: {:?}", e);
             e
         })?;
 
-    println!("[TASK_ENGINE] Trigger task processed successfully");
+    println!("[PROCESS TRIGGER TASK] Trigger task processed successfully");
 
     Ok(serde_json::json!({
         "message": format!("Trigger task {} processed successfully", task.task_id)

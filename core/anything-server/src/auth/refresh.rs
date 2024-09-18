@@ -35,7 +35,7 @@ pub async fn refresh_accounts(
 
     let response = client
         .rpc(
-            "get_decrypted_account_auth_provider_accounts_with_decrypted_providers",
+            "get_decrypted_account_and_provider",
             json!({"p_account_id": account_id}).to_string(),
         )
         .auth(supabase_service_role_api_key.clone())
@@ -46,8 +46,10 @@ pub async fn refresh_accounts(
 
     let body = response.text().await?;
 
+    println!("[AUTH REFRESH] Response body: {}", body);
+
     let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
-    // println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
+    println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
 
     for account in &accounts {
         println!(
@@ -192,16 +194,16 @@ pub async fn refresh_accounts(
     //fetch all the newly refreshed accounts
     let new_response = client
         .rpc(
-            "get_decrypted_account_auth_provider_accounts",
+            "get_account_auth_provider_accounts",
             json!({"p_account_id": account_id}).to_string(),
         )
         .auth(supabase_service_role_api_key.clone())
-        .select("*, auth_provider:auth_providers(*)")
-        .eq("account_id", account_id)
         .execute()
         .await?;
 
     let new_body = new_response.text().await?;
+    println!("[AUTH REFRESH] New accounts after refresh:");
+    println!("{}", new_body);
     let new_accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&new_body)?;
 
     Ok(new_accounts)
