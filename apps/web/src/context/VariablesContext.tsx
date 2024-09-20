@@ -97,7 +97,6 @@ export const VariablesProvider = ({
 
         let key = slugify(form_data.title, {
           replacement: "_", // replace spaces with replacement character, defaults to `-`
-          lower: true, // convert to lower case, defaults to `false`
         });
         console.log("Generated key for new property: ", key);
 
