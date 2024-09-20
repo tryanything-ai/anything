@@ -65,7 +65,7 @@ pub struct DecryptedSecret {
     pub secret_id: Uuid,
     pub secret_name: String,
     pub secret_value: String,
-    pub secret_description: String,
+    pub secret_description: Option<String>,
 }
 
 // Secrets for building context with API KEYS

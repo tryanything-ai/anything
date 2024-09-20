@@ -49,7 +49,7 @@ export let EDIT_VARIABLES_SCHEMA: any = {
         }
     },
     "x-jsf-order": ["title", "description", "type", "provider"],
-    "required": ["title", "description", "type"],
+    "required": ["title", "type"],
     "allOf": [
     {
       "if": {

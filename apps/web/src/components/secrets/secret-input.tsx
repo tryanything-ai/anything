@@ -29,7 +29,7 @@ const formSchema = z.object({
     })
     .max(50),
   secret_value: z.string().min(2).max(200),
-  secret_description: z.string().min(2).max(50),
+  secret_description: z.string().max(50).optional(),
 });
 
 export function CreateNewSecret({ cancel, saveSecret }: any): JSX.Element {
