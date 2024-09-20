@@ -103,7 +103,7 @@ export const VariablesProvider = ({
         console.log("[VARIABLES PROIVDER] Form Data: ", form_data);
         // Create new property
         variables_schema.properties[key] = {
-          title: form_data.title,
+          title: key,
           description: form_data.description,
           type: form_data.type,
         };

@@ -219,6 +219,32 @@ pub async fn bundle_context(
         render_variables_context
     );
 
+    //Add task responses to the render_variables_context
+    // Add secrets to the render_variables_context
+    let mut completed_tasks: HashMap<String, Value> = HashMap::new();
+    for completed_task in
+        get_completed_tasks_for_session(client, &task.account_id.to_string()).await?
+    {
+        // let secret_name = secret.secret_name.clone();
+        // let secret_value = secret.secret_value.clone();
+        // println!("[BUNDLER] Inserting secret with name: {}", secret_name);
+
+        completed_tasks.insert(
+            completed_task.node_id.to_string(),
+            serde_json::to_value(completed_task)?,
+        );
+    }
+
+    render_variables_context.insert(
+        "actions".to_string(),
+        serde_json::to_value(completed_tasks)?,
+    );
+
+    println!(
+        "[BUNDLER] Context after adding secrets: {:?}",
+        render_variables_context
+    );
+
     // Create a new Templater instance
     let mut templater = Templater::new();
 
