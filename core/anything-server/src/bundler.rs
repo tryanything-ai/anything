@@ -92,8 +92,20 @@ pub async fn get_decrypted_secrets(
         .execute()
         .await?;
 
+    println!(
+        "[BUNDLER] Response for get_decryped_secrets: {:?}",
+        response
+    );
+
     let body = response.text().await?;
-    let items: Vec<DecryptedSecret> = serde_json::from_str(&body)?;
+    let items: Vec<DecryptedSecret> = match serde_json::from_str(&body) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            println!("[BUNDLER] Error parsing decrypted secrets: {}", e);
+            println!("[BUNDLER] Response body: {}", body);
+            return Err(Box::new(e));
+        }
+    };
 
     println!(
         "[BUNDLER] Successfully retrieved {} decrypted secrets",
