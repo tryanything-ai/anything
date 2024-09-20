@@ -58,12 +58,21 @@ pub async fn get_fake_account_auth_provider_account(
 
     Ok(vec![fake_account])
 }
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DecryptedSecret {
+    pub secret_id: Uuid,
+    pub secret_name: String,
+    pub secret_value: String,
+    pub secret_description: String,
+}
 
 // Secrets for building context with API KEYS
 pub async fn get_decrypted_secrets(
     client: &Postgrest,
-    account_id: Uuid,
-) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    account_id: &str,
+) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
 
@@ -73,7 +82,7 @@ pub async fn get_decrypted_secrets(
     );
 
     let input = serde_json::json!({
-        "user_account_id": account_id.to_string()
+        "team_account_id": account_id.to_string()
     })
     .to_string();
 
@@ -84,9 +93,12 @@ pub async fn get_decrypted_secrets(
         .await?;
 
     let body = response.text().await?;
-    let items: Value = serde_json::from_str(&body)?;
+    let items: Vec<DecryptedSecret> = serde_json::from_str(&body)?;
 
-    println!("[BUNDLER] Successfully retrieved decrypted secrets");
+    println!(
+        "[BUNDLER] Successfully retrieved {} decrypted secrets",
+        items.len()
+    );
 
     Ok(items)
 }
@@ -175,6 +187,23 @@ pub async fn bundle_context(
 
     println!(
         "[BUNDLER] Context after adding accounts: {:?}",
+        render_variables_context
+    );
+
+    // Add secrets to the render_variables_context
+    let mut secrets: HashMap<String, Value> = HashMap::new();
+    for secret in get_decrypted_secrets(client, &task.account_id.to_string()).await? {
+        let secret_name = secret.secret_name.clone();
+        let secret_value = secret.secret_value.clone();
+        println!("[BUNDLER] Inserting secret with name: {}", secret_name);
+
+        secrets.insert(secret_name, serde_json::to_value(secret_value)?);
+    }
+
+    render_variables_context.insert("secrets".to_string(), serde_json::to_value(secrets)?);
+
+    println!(
+        "[BUNDLER] Context after adding secrets: {:?}",
         render_variables_context
     );
 
