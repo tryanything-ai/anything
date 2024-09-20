@@ -62,7 +62,7 @@ export interface WorkflowVersionContextInterface {
   db_flow: any;
   db_flow_version: any;
   flow_version_definition: any;
-  selected_node_id: string;
+  selected_action_id: string;
   selected_node_data: Action | undefined;
   selected_node_variables: any;
   selected_node_variables_schema: any;
@@ -95,7 +95,7 @@ export const WorkflowVersionContext =
     db_flow: {},
     db_flow_version: {},
     flow_version_definition: {},
-    selected_node_id: "",
+    selected_action_id: "",
     selected_node_data: undefined,
     selected_node_variables: null,
     selected_node_variables_schema: null,
@@ -204,26 +204,26 @@ export const WorkflowVersionProvider = ({
       return;
     }
 
-    let planned_node_id;
+    let planned_action_id;
 
     console.log("Node Data", node_data);
-    //set node_id
+    //set action_id
     if (node_data) {
-      planned_node_id = node_data.node_id;
+      planned_action_id = node_data.action_id;
     }
 
     if (!position) {
       position = { x: 300, y: 300 };
     }
 
-    const conflictFreeId = findConflictFreeId(nodes, planned_node_id);
+    const conflictFreeId = findConflictFreeId(nodes, planned_action_id);
     console.log("conflictFreeId", conflictFreeId);
     console.log("special data", node_data);
     const newNode: Node = {
       id: conflictFreeId,
       type: "anything",
       position,
-      data: { ...node_data, node_id: conflictFreeId },
+      data: { ...node_data, action_id: conflictFreeId },
     };
 
     let udpatedNodes = [...nodes, newNode];
@@ -302,8 +302,8 @@ export const WorkflowVersionProvider = ({
 
     const { source, target } = edge;
 
-    const planned_node_id = action_template.node_id;
-    const conflictFreeId = findConflictFreeId(newNodes, planned_node_id);
+    const planned_action_id = action_template.action_id;
+    const conflictFreeId = findConflictFreeId(newNodes, planned_action_id);
 
     const sourceNode = newNodes.find((node) => node.id === source);
     const targetNode = newNodes.find((node) => node.id === target);
@@ -319,7 +319,7 @@ export const WorkflowVersionProvider = ({
       id: conflictFreeId,
       type: "anything",
       position,
-      data: { ...action_template, node_id: conflictFreeId },
+      data: { ...action_template, action_id: conflictFreeId },
     };
 
     // Add the new node to the nodes array
@@ -696,7 +696,7 @@ export const WorkflowVersionProvider = ({
               return {
                 position,
                 data: action,
-                id: action.node_id,
+                id: action.action_id,
                 type: "anything",
               };
             },
@@ -753,7 +753,7 @@ export const WorkflowVersionProvider = ({
         db_flow: dbFlow,
         db_flow_version: dbFlowVersion,
         flow_version_definition,
-        selected_node_id: selectedNodeId,
+        selected_action_id: selectedNodeId,
         selected_node_data: selectedNodeData,
         selected_node_variables: selectedNodeVariables,
         selected_node_variables_schema: selectedNodeVariablesSchema,

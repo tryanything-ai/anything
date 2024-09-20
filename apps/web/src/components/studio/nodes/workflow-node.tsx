@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { Handle, HandleProps } from "reactflow";
 import { Action, ActionType } from "@/types/workflows";
-import { Badge } from "@repo/ui/components/ui/badge";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 
@@ -64,8 +63,6 @@ export default function BaseNode({
     deleteNode(id);
   };
 
-
-
   return (
     <>
       <DropdownMenu>
@@ -95,8 +92,8 @@ export default function BaseNode({
             <div className="flex flex-col">
               <div className="px-4">{data.label}</div>
               {/* {detailedMode && data.description && (<div className="text-sm">{data.description}</div>)} */}
-              {detailedMode && data.node_id && (
-                <div className=" px-4 text-sm font-light">{data.node_id}</div>
+              {detailedMode && data.action_id && (
+                <div className=" px-4 text-sm font-light">{data.action_id}</div>
               )}
             </div>
           </div>

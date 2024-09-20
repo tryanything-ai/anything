@@ -36,7 +36,10 @@ pub async fn process_trigger_task(
         })?;
 
     let body = response.text().await.map_err(|e| {
-        println!("[PROCESS TRIGGER TASK] Error reading response body: {:?}", e);
+        println!(
+            "[PROCESS TRIGGER TASK] Error reading response body: {:?}",
+            e
+        );
         e
     })?;
 
@@ -107,7 +110,7 @@ async fn create_execution_plan(
             trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
             flow_session_id: task.flow_session_id.clone(),
             flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-            node_id: action.node_id.clone(),
+            action_id: action.action_id.clone(),
             r#type: action.r#type.clone(),
             plugin_id: action.plugin_id.clone(),
             stage: task.stage.clone(),
@@ -152,12 +155,12 @@ fn bfs_traversal(
             error_msg
         })?;
 
-    if let Some(neighbors) = graph.get(&trigger.node_id) {
+    if let Some(neighbors) = graph.get(&trigger.action_id) {
         for neighbor_id in neighbors {
             if let Some(neighbor) = workflow
                 .actions
                 .iter()
-                .find(|action| &action.node_id == *neighbor_id)
+                .find(|action| &action.action_id == *neighbor_id)
             {
                 queue.push_back(neighbor);
             }
@@ -172,12 +175,12 @@ fn bfs_traversal(
         }
 
         // Enqueue neighbors
-        if let Some(neighbors) = graph.get(&current.node_id) {
+        if let Some(neighbors) = graph.get(&current.action_id) {
             for neighbor_id in neighbors {
                 if let Some(neighbor) = workflow
                     .actions
                     .iter()
-                    .find(|action| &action.node_id == *neighbor_id)
+                    .find(|action| &action.action_id == *neighbor_id)
                 {
                     queue.push_back(neighbor);
                 }

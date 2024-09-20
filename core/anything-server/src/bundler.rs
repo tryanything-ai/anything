@@ -230,7 +230,7 @@ pub async fn bundle_context(
         // println!("[BUNDLER] Inserting secret with name: {}", secret_name);
 
         completed_tasks.insert(
-            completed_task.node_id.to_string(),
+            completed_task.action_id.to_string(),
             serde_json::to_value(completed_task)?,
         );
     }

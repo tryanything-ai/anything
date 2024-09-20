@@ -12,7 +12,7 @@ export interface TaskRow {
     trigger_session_status: string;
     flow_session_id: string;
     flow_session_status: string;
-    node_id: string;
+    action_id: string;
     type: string;
     plugin_id: string;
     stage: string;

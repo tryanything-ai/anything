@@ -40,7 +40,7 @@ export const VariablesProvider = ({
   const {
     selected_node_variables,
     selected_node_variables_schema,
-    selected_node_id,
+    selected_action_id,
     updateNodeData,
   } = useWorkflowVersionContext();
   const [editingMode, setEditingMode] = useState<EditVariableFormMode>(
@@ -210,7 +210,7 @@ export const VariablesProvider = ({
   useEffect(() => {
     //Reset form to main view when we select differnt node ids
     setEditingMode(EditVariableFormMode.INPUT);
-  }, [selected_node_id]);
+  }, [selected_action_id]);
 
   return (
     <VariablesContext.Provider

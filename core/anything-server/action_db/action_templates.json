@@ -5,7 +5,7 @@
     "anything_action_version": "0.1.0",
     "type": "action",
     "plugin_id": "http",
-    "node_id": "api_action",
+    "action_id": "api_action",
     "plugin_version": "0.1.0",
     "label": "Call API",
     "description": "Call any API",
