@@ -102,8 +102,6 @@ export const WorkflowVersionContext =
     selected_node_variables_schema: null,
     selected_node_input: null,
     selected_node_input_schema: null,
-    // selected_node_input: null,
-    // selected_node_input_schema: null,
     panel_tab: PanelTab.CONFIG,
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
@@ -185,11 +183,6 @@ export const WorkflowVersionProvider = ({
     setDbFlowVersion({});
     setFlowVersionDefinition({});
     setSelectedNodeId("");
-    // setSelectedNodeData(undefined);
-    // setSelectedNodeVariables({});
-    // setSelectedNodeVariablesSchema({});
-    // setSelectedNodeInput({});
-    // setSelectedNodeInputSchema({});
   };
 
   const addNode = (node_data: any, position?: { x: number; y: number }) => {
@@ -385,67 +378,11 @@ export const WorkflowVersionProvider = ({
     setEdges(new_edges);
   };
 
-  const selectedNodeInfo = useMemo(() => {
-    const selectedNode = nodes.find((node) => node.id === selectedNodeId);
-    console.log("[useMemo] Selected Node Info", selectedNode);
-    return {
-      data: selectedNode?.data,
-      variables: selectedNode?.data?.variables || {},
-      variablesSchema: selectedNode?.data?.variables_schema || {},
-      input: selectedNode?.data?.input || {},
-      inputSchema: selectedNode?.data?.input_schema || {},
-    };
-  }, [nodes, selectedNodeId]);
-
-  const fanOutLocalSelectedNodeData = (node: any) => {
-    console.log("Fan Out Local Node Data", node);
-
-    if (node?.id) {
-      console.log("Selected Node ID:", node.id);
-      setSelectedNodeId(String(node.id));
-    } else {
-      setSelectedNodeId("");
-      console.log("No Node Id in Fan Out Local Node Data");
-    }
-    // if (node?.data) {
-    //   console.log("New Selected Node Data:", node.data);
-    //   setSelectedNodeData(cloneDeep(node.data));
-    // } else {
-    //   setSelectedNodeData(undefined);
-    //   console.log("No Node Data in Fan Out Local Node Data");
-    // }
-    // if (node?.data?.variables) {
-    //   setSelectedNodeVariables(cloneDeep(node.data.variables));
-    // } else {
-    //   setSelectedNodeVariables(null);
-    //   console.log("No Node Variables in Fan Out Local Node Data");
-    // }
-    // if (node?.data?.variables_schema) {
-    //   setSelectedNodeVariablesSchema(cloneDeep(node.data.variables_schema));
-    // } else {
-    //   setSelectedNodeVariablesSchema(null);
-    //   console.log("No Node Variables Schema in Fan Out Local Node Data");
-    // }
-    // if (node?.data?.input) {
-    //   setSelectedNodeInput(cloneDeep(node.data.input));
-    // } else {
-    //   setSelectedNodeInput(null);
-    //   console.log("No Node Input in Fan Out Local Node Data");
-    // }
-    // if (node?.data?.input_schema) {
-    //   setSelectedNodeInputSchema(cloneDeep(node.data.input_schema));
-    // } else {
-    //   setSelectedNodeInputSchema(null);
-    //   console.log("No Node Input Schema in Fan Out Local Node Data");
-    // }
-  };
-
   const set_panel_tab = (tab: string) => {
     //Used to make nice navigation in side panel
     if (tab === PanelTab.SETTINGS) {
-      // setSelectedNodeData(undefined);
-      // setSelectedNodeId("");
-      fanOutLocalSelectedNodeData(null);
+      //Clear selected node
+      setSelectedNodeId("");
 
       //Trick to clear selection inisde ReactFlow
       onNodesChange([
@@ -480,10 +417,10 @@ export const WorkflowVersionProvider = ({
         let selectedNodeObj: any = nodes.find(
           (node) => node.id === selectedNode.id,
         );
-        fanOutLocalSelectedNodeData(selectedNodeObj);
+        setSelectedNodeId(selectedNodeObj.id);
         setPanelTab(PanelTab.CONFIG);
       } else {
-        fanOutLocalSelectedNodeData(null);
+        setSelectedNodeId("");
       }
     }
 
@@ -540,13 +477,14 @@ export const WorkflowVersionProvider = ({
       return new_edges;
     });
   };
-
+  //TODO: INVESTIGATE THIS - I think we should have ACTIONS managed more seperate then NODES.
+  //This is likely where we are causing weird issues with state.
   const updateNodeData = async (
     update_key: string[],
     data: any[],
   ): Promise<boolean> => {
     try {
-      console.log("updateNodeData:", update_key, data);
+      console.log("[UPDATE NODE DATA SYNC]", update_key, data);
 
       // setNodes((prevNodes) => {
       const newNodes = cloneDeep(nodes);
@@ -555,13 +493,13 @@ export const WorkflowVersionProvider = ({
         if (node.id === selectedNodeId) {
           update_key.forEach((key, index) => {
             console.log(
-              `Updating Node Data in updateNodeData for ${node.id}:${key} with:`,
+              `[UPDATING NODE DATA] Updating Node Data in updateNodeData for ${node.id}:${key} with:`,
               data[index],
             );
             node.data[key] = data[index];
           });
           console.log("NEW_DATA_FOR_NODE", node.data);
-          fanOutLocalSelectedNodeData(node);
+          setSelectedNodeId(node.id);
         }
         return node;
       });
@@ -585,9 +523,8 @@ export const WorkflowVersionProvider = ({
   };
 
   const makeUpdateFlow = (nodes: any, edges: any) => {
-    let new_nodes = cloneDeep(nodes);
     return {
-      actions: new_nodes.map((node: any) => {
+      actions: nodes.map((node: any) => {
         return {
           ...node.data,
           presentation: {
@@ -640,13 +577,6 @@ export const WorkflowVersionProvider = ({
         console.log("Flow Version Ids DO NOT match.");
         console.log("Update on published flow generated a NEW DRAFT version");
 
-        // setDbFlowVersionId(returned_flow.flow_version_id);
-        // setDbFlowVersion(returned_flow);
-        // setFlowVersionDefinition(returned_flow.flow_definition);
-
-        // Set Next.js rout e to workflows/workflow_id/version/version_id
-        // const newRoute = `/workflows/${dbFlowId}/version/${returned_flow.flow_version_id}`;
-        // window.history.pushState(null, '', newRoute);
         router.replace(
           `/workflows/${dbFlowId}/${returned_flow.flow_version_id}/editor`,
         );
@@ -657,9 +587,7 @@ export const WorkflowVersionProvider = ({
 
       setSavingStatus(SavingStatus.SAVED);
       setTimeout(() => setSavingStatus(SavingStatus.NONE), 1500); // Clear the status after 2 seconds
-      // NOTES:
-      // await hydrateFlow(); //This means we would have to hand manage syncing of
-      //things like selected node and its dependences like selected_node_data etc etc
+
       //Maybe difficult!
     } catch (error) {
       console.log("error in _saveFlowVersion", error);
@@ -680,54 +608,41 @@ export const WorkflowVersionProvider = ({
   const hydrateFlow = async () => {
     try {
       console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
-      if (!workflowId || !selectedAccount) return;
+      if (!workflowId || !selectedAccount || !workflowVersionId) return;
 
-      let workflow_response = await api.flows.getFlow(
-        selectedAccount.account_id,
-        workflowId,
-      );
+      const [workflow_response, version] = await Promise.all([
+        api.flows.getFlow(selectedAccount.account_id, workflowId),
+        api.flows.getFlowVersionById(
+          selectedAccount.account_id,
+          workflowId,
+          workflowVersionId,
+        ),
+      ]);
 
-      if (!workflow_response) return;
-      let flow = workflow_response[0];
-      // let flow_version = flow.flow_versions[0];
-      let version = await api.flows.getFlowVersionById(
-        selectedAccount.account_id,
-        workflowId,
-        workflowVersionId,
-      );
-      console.log("New Hydreate in Workflow Provider", flow);
-      console.log("Version in New Hydrate Flow", version);
-      console.log(
-        "Flow Definition in New Hydrate Flow",
-        version.flow_definition,
-      );
+      if (!workflow_response || !version || !version.flow_definition) return;
 
-      setDbFlow(flow);
-
+      setDbFlow(workflow_response[0]);
       setDbFlowVersion(version);
       setFlowVersionDefinition(version.flow_definition);
-      if (version && version.flow_definition) {
-        if (
-          version.flow_definition.actions &&
-          version.flow_definition.actions.length !== 0
-        ) {
-          let _nodes: Node[] = version.flow_definition.actions.map(
-            (action: any) => {
-              let position = action.presentation?.position || { x: 0, y: 0 };
 
-              return {
-                position,
-                data: action,
-                id: action.action_id,
-                type: "anything",
-              };
-            },
-          );
-          console.log("Nodes in hydrate flow", _nodes);
-          setNodes(_nodes);
-        } else {
-          console.log("SKIPPING: No Actions in Flow Definition in hydrateFlow");
-        }
+      if (
+        version.flow_definition.actions &&
+        version.flow_definition.actions.length !== 0
+      ) {
+        let _nodes: Node[] = version.flow_definition.actions.map(
+          (action: any) => {
+            let position = action.presentation?.position || { x: 0, y: 0 };
+
+            return {
+              position,
+              data: action,
+              id: action.action_id,
+              type: "anything",
+            };
+          },
+        );
+        console.log("Nodes in hydrate flow", _nodes);
+        setNodes(_nodes);
 
         if (
           version.flow_definition.edges &&
@@ -741,18 +656,29 @@ export const WorkflowVersionProvider = ({
           console.log("Edges in hydrate flow", _edges);
           setEdges(_edges);
         } else {
-          console.log("SKIPPING: No Edges in Flow Definition in hydrateFlow");
+          console.log("No Edges in Flow Definition in hydrateFlow");
         }
 
         console.log("Hydrated Flow");
-        // setHydrated(true);
       } else {
-        console.log("No Flow Definition in Flow Version in hydrateFlow");
+        console.log("No Actions found in Flow Version in hydrateFlow");
       }
     } catch (e) {
       console.log("error in fetch flow", JSON.stringify(e, null, 3));
     }
   };
+
+  const selectedNodeInfo = useMemo(() => {
+    const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+    console.log("[useMemo] Selected Node Info", selectedNode);
+    return {
+      data: selectedNode?.data,
+      variables: selectedNode?.data?.variables || {},
+      variablesSchema: selectedNode?.data?.variables_schema || {},
+      input: selectedNode?.data?.input || {},
+      inputSchema: selectedNode?.data?.input_schema || {},
+    };
+  }, [nodes, selectedNodeId]);
 
   //Hydrate on Navigation and clean on remove
   useEffect(() => {

@@ -18,25 +18,32 @@ export function JsonSchemaForm({
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
   const [submited, setSubmitted] = useState(false);
 
-
   useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Initial values:", initialValues);
+    console.log("[JSON SCHEMA FORM] Fields:", fields);
     const defaultValues = getDefaultValuesFromFields(fields, initialValues);
+    console.log("[JSON SCHEMA FORM] Default values:", defaultValues);
     setValues(defaultValues);
     setErrors({});
   }, [fields, initialValues]);
 
-
-   const handleInternalValidation = (valuesToValidate: any) => {
+  const handleInternalValidation = (valuesToValidate: any) => {
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
     const { formErrors } = handleValidation(valuesForJson);
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
   const handleFieldChange = (fieldName: any, value: any) => {
-    setValues((prevValues) => ({
-      ...prevValues,
-      [fieldName]: value,
-    }));
+    console.log(`[FIELD CHANGE] ${fieldName}:`, value);
+    setValues((prevValues) => {
+      console.log("[PREV VALUES]", prevValues);
+      const newValues = {
+        ...prevValues,
+        [fieldName]: value,
+      };
+      console.log("[NEW VALUES]", newValues);
+      return newValues;
+    });
   };
 
   const handleSubmit = (e: any) => {
@@ -49,6 +56,9 @@ export function JsonSchemaForm({
     }
   };
 
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Values after update:", values);
+  }, [values]);
 
   console.log("[RENDERING JSON SCHEMA FORM]");
   console.log("Values:", values);
