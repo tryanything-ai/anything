@@ -1,38 +1,37 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 
 import {
   WorkflowVersionProvider,
-  WorkflowVersionContext,
+  useWorkflowVersion,
   WorkflowVersionContextInterface,
 } from "./WorkflowVersionProvider";
 import {
-  VariablesContext,
   VariablesContextInterface,
   VariablesProvider,
+  useVariables,
 } from "./VariablesContext";
 import {
-  WorkflowTestingContext,
   WorkflowTestingContextInterface,
   WorkflowTestingProvider,
+  useWorkflowTesting,
 } from "./WorkflowTestingProvider";
 import {
-  AccountsContext,
   AccountsContextInterface,
   AccountsProvider,
+  useAccounts,
 } from "./AccountsContext";
 import {
   SubscriptionProvider,
   SubscriptionContextInterface,
-  SubscriptionContext,
+  useSubscription,
 } from "./SubscriptionContext";
 import {
   WorkflowVersionControlContextInterface,
-  WorkflowVersionControlContext,
   WorkflowVersionControlProvider,
+  useWorkflowVersionControl,
 } from "./WorkflowVersionControlContext";
-import { Workflow } from "lucide-react";
 
 interface AnythingContextInterface {
   accounts: AccountsContextInterface;
@@ -54,59 +53,61 @@ export const AnythingProvider = ({
 }) => {
   return (
     <AccountsProvider>
-      <AccountsContext.Consumer>
-        {(accounts) => {
-          if (!accounts.selectedAccount) {
-            return null; // Or any loading indicator
-            // TODO: not great but works
-          }
-          return (
-            <SubscriptionProvider>
-              <SubscriptionContext.Consumer>
-                {(subscription) => (
-                  <WorkflowVersionControlProvider>
-                    <WorkflowVersionControlContext.Consumer>
-                      {(version_control) => (
-                        <WorkflowVersionProvider>
-                          <WorkflowVersionContext.Consumer>
-                            {(workflow) => (
-                              <VariablesProvider>
-                                <VariablesContext.Consumer>
-                                  {(variables) => (
-                                    <WorkflowTestingProvider>
-                                      <WorkflowTestingContext.Consumer>
-                                        {(testing) => (
-                                          <AnythingContext.Provider
-                                            value={{
-                                              accounts,
-                                              version_control,
-                                              subscription,
-                                              workflow,
-                                              variables,
-                                              testing,
-                                            }}
-                                          >
-                                            {children}
-                                          </AnythingContext.Provider>
-                                        )}
-                                      </WorkflowTestingContext.Consumer>
-                                    </WorkflowTestingProvider>
-                                  )}
-                                </VariablesContext.Consumer>
-                              </VariablesProvider>
-                            )}
-                          </WorkflowVersionContext.Consumer>
-                        </WorkflowVersionProvider>
-                      )}
-                    </WorkflowVersionControlContext.Consumer>
-                  </WorkflowVersionControlProvider>
-                )}
-              </SubscriptionContext.Consumer>
-            </SubscriptionProvider>
-          );
-        }}
-      </AccountsContext.Consumer>
+      <AnythingProviderInner>{children}</AnythingProviderInner>
     </AccountsProvider>
+  );
+};
+
+const AnythingProviderInner = ({ children }: { children: React.ReactNode }) => {
+  const accounts = useAccounts();
+
+  if (!accounts.selectedAccount) {
+    return null; // Or any loading indicator
+  }
+
+  return (
+    <SubscriptionProvider>
+      <WorkflowVersionControlProvider>
+        <WorkflowVersionProvider>
+          <VariablesProvider>
+            <WorkflowTestingProvider>
+              <AnythingContextProvider>{children}</AnythingContextProvider>
+            </WorkflowTestingProvider>
+          </VariablesProvider>
+        </WorkflowVersionProvider>
+      </WorkflowVersionControlProvider>
+    </SubscriptionProvider>
+  );
+};
+
+const AnythingContextProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const accounts = useAccounts();
+  const subscription = useSubscription();
+  const version_control = useWorkflowVersionControl();
+  const workflow = useWorkflowVersion();
+  const variables = useVariables();
+  const testing = useWorkflowTesting();
+
+  const value = useMemo(
+    () => ({
+      accounts,
+      subscription,
+      version_control,
+      workflow,
+      variables,
+      testing,
+    }),
+    [accounts, subscription, version_control, workflow, variables, testing],
+  );
+
+  return (
+    <AnythingContext.Provider value={value}>
+      {children}
+    </AnythingContext.Provider>
   );
 };
 

@@ -1,9 +1,15 @@
 "use client";
 
-import { createContext, ReactNode, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useEffect,
+  useState,
+  useContext,
+} from "react";
 import { cloneDeep } from "lodash";
 import slugify from "slugify";
-import { useWorkflowVersionContext } from "./WorkflowVersionProvider";
+import { useWorkflowVersion } from "./WorkflowVersionProvider";
 import {
   DEFAULT_VARIABLES_SCHEMA,
   isValidVariablesSchema,
@@ -32,6 +38,8 @@ export const VariablesContext = createContext<VariablesContextInterface>({
   deleteVariable: () => Promise.resolve(false),
 });
 
+export const useVariables = () => useContext(VariablesContext);
+
 export const VariablesProvider = ({
   children,
 }: {
@@ -42,7 +50,7 @@ export const VariablesProvider = ({
     selected_node_variables_schema,
     selected_action_id,
     updateNodeData,
-  } = useWorkflowVersionContext();
+  } = useWorkflowVersion();
   const [editingMode, setEditingMode] = useState<EditVariableFormMode>(
     EditVariableFormMode.INPUT,
   );

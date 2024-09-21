@@ -37,7 +37,9 @@ export const AccountsContext = createContext<AccountsContextInterface>({
   setSelectedAccount: () => {},
 });
 
-export const useAccountsContext = () => useContext(AccountsContext);
+const useAccountsContext = () => useContext(AccountsContext);
+
+export { useAccountsContext as useAccounts };
 
 export const AccountsProvider = ({
   children,

@@ -1,14 +1,14 @@
 "use client";
 
-import { createContext, ReactNode, useState } from "react";
-import { useWorkflowVersionContext } from "./WorkflowVersionProvider";
+import { createContext, ReactNode, useContext, useState } from "react";
+import { useWorkflowVersion } from "./WorkflowVersionProvider";
 import api from "@/lib/anything-api";
 import {
   StartWorkflowTestResult,
   TaskRow,
   WorklfowTestSessionResult,
 } from "@/lib/anything-api/testing";
-import { useAccountsContext } from "./AccountsContext";
+import { useAccounts } from "./AccountsContext";
 
 export enum TestingMode {
   ACTION = "action",
@@ -42,15 +42,16 @@ export const WorkflowTestingContext =
     resetState: () => {},
   });
 
+export const useWorkflowTesting = () => useContext(WorkflowTestingContext);
+
 export const WorkflowTestingProvider = ({
   children,
 }: {
   children: ReactNode;
 }): JSX.Element => {
-  const { setPanelTab, db_flow_id, db_flow_version_id } =
-    useWorkflowVersionContext();
+  const { setPanelTab, db_flow_id, db_flow_version_id } = useWorkflowVersion();
 
-  const { selectedAccount } = useAccountsContext();
+  const { selectedAccount } = useAccounts();
 
   const [testingMode, setTestingMode] = useState<TestingMode>(
     TestingMode.ACTION,

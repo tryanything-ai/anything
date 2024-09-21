@@ -1,7 +1,13 @@
 "use client";
 
-import { createContext, ReactNode, useEffect, useState } from "react";
-import { useAccountsContext } from "./AccountsContext";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useAccounts } from "./AccountsContext";
 import api from "@/lib/anything-api";
 
 export interface SubscriptionContextInterface {
@@ -32,16 +38,18 @@ export const SubscriptionContext = createContext<SubscriptionContextInterface>({
   total_task_usage: 0,
   total_execution_time_ms: 0,
   paying_customer: false,
-  customer_status: '',
+  customer_status: "",
   keep_processing_workflows: true,
 });
+
+export const useSubscription = () => useContext(SubscriptionContext);
 
 export const SubscriptionProvider = ({
   children,
 }: {
   children: ReactNode;
 }): JSX.Element => {
-  const { selectedAccount } = useAccountsContext();
+  const { selectedAccount } = useAccounts();
   const [subscriptionData, setSubscriptionData] =
     useState<SubscriptionContextInterface>({
       stripe_customer_id: null,
@@ -55,7 +63,7 @@ export const SubscriptionProvider = ({
       total_task_usage: 0,
       total_execution_time_ms: 0,
       paying_customer: false,
-      customer_status: '',
+      customer_status: "",
       keep_processing_workflows: true,
     });
 
@@ -72,8 +80,8 @@ export const SubscriptionProvider = ({
       total_task_usage: 0,
       total_execution_time_ms: 0,
       paying_customer: false,
-      customer_status: '',
-      keep_processing_workflows: true
+      customer_status: "",
+      keep_processing_workflows: true,
     });
   };
 

@@ -8,14 +8,6 @@ import NoNodeSelected from "./no-node-selected";
 export default function ActionSettingsForm(): JSX.Element {
   const { workflow, testing } = useAnything();
 
-  const testAction = async (action_id: string) => {
-    try {
-      testing.testAction(action_id);
-    } catch {
-      console.error("Error testing workflow");
-    }
-  };
-
   const testWorkflow = async () => {
     try {
       testing.testWorkflow();
@@ -24,6 +16,8 @@ export default function ActionSettingsForm(): JSX.Element {
     }
   };
 
+  console.log("[RENDERING ACTION & VARIABLES FORMS]");
+
   return (
     <div className="flex flex-col h-full w-full">
       {workflow.selected_node_data && workflow.selected_action_id ? (
@@ -31,23 +25,13 @@ export default function ActionSettingsForm(): JSX.Element {
           <div className="grid gap-6">
             {/* Debug essentially */}
             <div className="flex flex-row gap-2 mt-2">
-              {/* <Button
-                onClick={() => testAction(workflow.selected_action_id)}
-                className="hover:bg-green-500"
-              >
-                Test Action
-                <Play size={16} className="ml-2" />
-              </Button> */}
               <Button onClick={testWorkflow} className="hover:bg-green-500">
                 Test Workflow
                 <Play size={16} className="ml-2" />
               </Button>
             </div>
             <VariablesFormLayout />
-            <ConfigurationForm
-              input_schema={workflow.selected_node_data.input_schema}
-              input={workflow.selected_node_data.input}
-            />
+            <ConfigurationForm />
           </div>
         </div>
       ) : (

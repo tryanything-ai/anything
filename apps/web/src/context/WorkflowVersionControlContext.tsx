@@ -1,7 +1,7 @@
 "use client";
 import { useContext } from "react";
 import { createContext, ReactNode, useEffect, useState } from "react";
-import { useAccountsContext } from "./AccountsContext";
+import { useAccounts } from "./AccountsContext";
 import api from "@/lib/anything-api";
 import { useRouter, useParams } from "next/navigation";
 
@@ -10,7 +10,7 @@ export interface WorkflowVersionControlContextInterface {
   refresh: () => void;
 }
 
-export const useWorkflowVersionControlContext = () =>
+export const useWorkflowVersionControl = () =>
   useContext(WorkflowVersionControlContext);
 
 export const WorkflowVersionControlContext =
@@ -24,7 +24,7 @@ export const WorkflowVersionControlProvider = ({
 }: {
   children: ReactNode;
 }): JSX.Element => {
-  const { selectedAccount } = useAccountsContext();
+  const { selectedAccount } = useAccounts();
   const params = useParams<{ workflowVersionId: string; workflowId: string }>();
   const [versions, setVersions] = useState<any[]>([]);
 

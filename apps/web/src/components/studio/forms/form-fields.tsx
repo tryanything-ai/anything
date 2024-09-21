@@ -44,14 +44,15 @@ function FieldText({
 }: any) {
   const [touched, setTouched] = useState(false);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    console.log("fieldtext not visible", name);
+    return null;
+  }
 
-  // console.log("fieldtext name", label)
-  // console.log("fieldtext props", props)
-  // console.log("fieldtext const", constantValue)
-  // console.log("fieldtext default", defaultValue)
+  console.log("[RENDERING TEXT FIELD: ", name, " = ", value, "]");
 
   function handleChange(e: any) {
+    console.log("fieldtext Input handleChange: ", e);
     if (!touched) setTouched(true);
     onChange(name, e.target.value);
   }

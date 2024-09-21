@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useMemo,
 } from "react";
 
 import { useParams, useRouter } from "next/navigation";
@@ -25,7 +26,6 @@ import {
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
-  ReactFlowInstance,
   getIncomers,
   getOutgoers,
   getConnectedEdges,
@@ -35,8 +35,8 @@ import api from "@/lib/anything-api";
 import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";
-import { useAccountsContext } from "./AccountsContext";
-import { useWorkflowVersionControlContext } from "./WorkflowVersionControlContext";
+import { useAccounts } from "./AccountsContext";
+import { useWorkflowVersionControl } from "./WorkflowVersionControlContext";
 
 export enum PanelTab {
   SETTINGS = "settings",
@@ -66,6 +66,8 @@ export interface WorkflowVersionContextInterface {
   selected_node_data: Action | undefined;
   selected_node_variables: any;
   selected_node_variables_schema: any;
+  selected_node_input: any;
+  selected_node_input_schema: any;
   panel_tab: string;
   savingStatus: string;
   detailedMode: boolean;
@@ -81,7 +83,6 @@ export interface WorkflowVersionContextInterface {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   addNode: (node_data: any, position: { x: number; y: number }) => void;
-  setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   deleteNode: (id: string) => void;
   updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
   updateWorkflow: (args: UpdateWorklowArgs) => Promise<void>;
@@ -99,6 +100,10 @@ export const WorkflowVersionContext =
     selected_node_data: undefined,
     selected_node_variables: null,
     selected_node_variables_schema: null,
+    selected_node_input: null,
+    selected_node_input_schema: null,
+    // selected_node_input: null,
+    // selected_node_input_schema: null,
     panel_tab: PanelTab.CONFIG,
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
@@ -114,15 +119,13 @@ export const WorkflowVersionContext =
     onEdgesChange: () => {},
     onConnect: () => {},
     addNode: () => {},
-    setReactFlowInstance: () => {},
     deleteNode: () => {},
     updateNodeData: async () => false,
     updateWorkflow: async () => {},
     publishWorkflowVersion: async () => {},
   });
 
-export const useWorkflowVersionContext = () =>
-  useContext(WorkflowVersionContext);
+export const useWorkflowVersion = () => useContext(WorkflowVersionContext);
 
 export const WorkflowVersionProvider = ({
   children,
@@ -135,8 +138,8 @@ export const WorkflowVersionProvider = ({
   }>();
 
   const router = useRouter();
-  const { selectedAccount } = useAccountsContext();
-  const { refresh } = useWorkflowVersionControlContext();
+  const { selectedAccount } = useAccounts();
+  const { refresh } = useWorkflowVersionControl();
 
   //Easy Access State
   const [dbFlow, setDbFlow] = useState<any>({});
@@ -147,12 +150,6 @@ export const WorkflowVersionProvider = ({
   const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("");
   const [dbFlowId, setDbFlowId] = useState<string>("");
   const [selectedNodeId, setSelectedNodeId] = useState<string>("");
-  const [selectedNodeData, setSelectedNodeData] = useState<Action | undefined>(
-    undefined,
-  );
-  const [selectedNodeVariables, setSelectedNodeVariables] = useState<any>({});
-  const [selectedNodeVariablesSchema, setSelectedNodeVariablesSchema] =
-    useState<any>({});
   const [detailedMode, setDetailedMode] = useState<boolean>(false);
   //React Flow State
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -165,9 +162,6 @@ export const WorkflowVersionProvider = ({
   //Action sheet for adding nodes
   const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
   const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
-
-  const [reactFlowInstance, setReactFlowInstance] =
-    useState<ReactFlowInstance | null>(null);
 
   const showActionSheetForEdge = (id: string) => {
     console.log("Show Action Sheet for Edge: ", id);
@@ -191,9 +185,11 @@ export const WorkflowVersionProvider = ({
     setDbFlowVersion({});
     setFlowVersionDefinition({});
     setSelectedNodeId("");
-    setSelectedNodeData(undefined);
-    setSelectedNodeVariables({});
-    setSelectedNodeVariablesSchema({});
+    // setSelectedNodeData(undefined);
+    // setSelectedNodeVariables({});
+    // setSelectedNodeVariablesSchema({});
+    // setSelectedNodeInput({});
+    // setSelectedNodeInputSchema({});
   };
 
   const addNode = (node_data: any, position?: { x: number; y: number }) => {
@@ -389,33 +385,59 @@ export const WorkflowVersionProvider = ({
     setEdges(new_edges);
   };
 
+  const selectedNodeInfo = useMemo(() => {
+    const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+    console.log("[useMemo] Selected Node Info", selectedNode);
+    return {
+      data: selectedNode?.data,
+      variables: selectedNode?.data?.variables || {},
+      variablesSchema: selectedNode?.data?.variables_schema || {},
+      input: selectedNode?.data?.input || {},
+      inputSchema: selectedNode?.data?.input_schema || {},
+    };
+  }, [nodes, selectedNodeId]);
+
   const fanOutLocalSelectedNodeData = (node: any) => {
     console.log("Fan Out Local Node Data", node);
 
     if (node?.id) {
-      setSelectedNodeId(() => node.id);
+      console.log("Selected Node ID:", node.id);
+      setSelectedNodeId(String(node.id));
     } else {
-      setSelectedNodeId(() => "");
+      setSelectedNodeId("");
       console.log("No Node Id in Fan Out Local Node Data");
     }
-    if (node?.data) {
-      setSelectedNodeData(() => node.data);
-    } else {
-      setSelectedNodeData(() => undefined);
-      console.log("No Node Data in Fan Out Local Node Data");
-    }
-    if (node?.data?.variables) {
-      setSelectedNodeVariables(() => node.data.variables);
-    } else {
-      setSelectedNodeVariables(() => null);
-      console.log("No Node Variables in Fan Out Local Node Data");
-    }
-    if (node?.data?.variables_schema) {
-      setSelectedNodeVariablesSchema(() => node.data.variables_schema);
-    } else {
-      setSelectedNodeVariablesSchema(() => null);
-      console.log("No Node Variables Schema in Fan Out Local Node Data");
-    }
+    // if (node?.data) {
+    //   console.log("New Selected Node Data:", node.data);
+    //   setSelectedNodeData(cloneDeep(node.data));
+    // } else {
+    //   setSelectedNodeData(undefined);
+    //   console.log("No Node Data in Fan Out Local Node Data");
+    // }
+    // if (node?.data?.variables) {
+    //   setSelectedNodeVariables(cloneDeep(node.data.variables));
+    // } else {
+    //   setSelectedNodeVariables(null);
+    //   console.log("No Node Variables in Fan Out Local Node Data");
+    // }
+    // if (node?.data?.variables_schema) {
+    //   setSelectedNodeVariablesSchema(cloneDeep(node.data.variables_schema));
+    // } else {
+    //   setSelectedNodeVariablesSchema(null);
+    //   console.log("No Node Variables Schema in Fan Out Local Node Data");
+    // }
+    // if (node?.data?.input) {
+    //   setSelectedNodeInput(cloneDeep(node.data.input));
+    // } else {
+    //   setSelectedNodeInput(null);
+    //   console.log("No Node Input in Fan Out Local Node Data");
+    // }
+    // if (node?.data?.input_schema) {
+    //   setSelectedNodeInputSchema(cloneDeep(node.data.input_schema));
+    // } else {
+    //   setSelectedNodeInputSchema(null);
+    //   console.log("No Node Input Schema in Fan Out Local Node Data");
+    // }
   };
 
   const set_panel_tab = (tab: string) => {
@@ -754,9 +776,11 @@ export const WorkflowVersionProvider = ({
         db_flow_version: dbFlowVersion,
         flow_version_definition,
         selected_action_id: selectedNodeId,
-        selected_node_data: selectedNodeData,
-        selected_node_variables: selectedNodeVariables,
-        selected_node_variables_schema: selectedNodeVariablesSchema,
+        selected_node_data: selectedNodeInfo.data,
+        selected_node_variables: selectedNodeInfo.variables,
+        selected_node_variables_schema: selectedNodeInfo.variablesSchema,
+        selected_node_input: selectedNodeInfo.input,
+        selected_node_input_schema: selectedNodeInfo.inputSchema,
         nodes,
         edges,
         savingStatus,
@@ -773,7 +797,6 @@ export const WorkflowVersionProvider = ({
         onEdgesChange,
         addNode,
         deleteNode,
-        setReactFlowInstance,
         updateNodeData,
         updateWorkflow,
         publishWorkflowVersion,
