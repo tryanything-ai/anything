@@ -16,6 +16,9 @@ use crate::execution_planner::process_trigger_task;
 use crate::workflow_types::Task;
 use crate::AppState;
 
+use std::collections::HashSet;
+use tokio::sync::Mutex;
+
 use serde_json::Value;
 
 use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
@@ -245,7 +248,7 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
                                     remaining_task,
                                     &TaskStatus::Canceled,
                                     Some(serde_json::json!({
-                                        "error": format!("Cancelled due to error in previous task: {}", e)
+                                        "error": format!("Cancelled due to error in a previous task named {}", task.action_id)
                                     })),
                                 )
                                 .await
@@ -334,7 +337,10 @@ pub async fn process_task(
                 Some(task_result.clone()),
             )
             .await?;
-            println!("[PROCESS TASK] Task {} completed successfully", task.task_id);
+            println!(
+                "[PROCESS TASK] Task {} completed successfully",
+                task.task_id
+            );
             Ok(task_result)
         }
         Err(e) => {
@@ -474,6 +480,8 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
     // To not hit db like crazy if no work to do
     let mut backoff = Duration::from_millis(200);
 
+    let active_flow_sessions = Arc::new(Mutex::new(HashSet::new()));
+
     loop {
         tokio::select! {
             _ = task_signal_rx.changed() => {
@@ -491,8 +499,23 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
             backoff = Duration::from_millis(200); // Reset backoff when tasks are found
             let client = client.clone();
             let permit = semaphore.clone().acquire_owned().await.unwrap();
+            // let active_flow_sessions = active_flow_sessions.clone();
+            let active_flow_sessions = Arc::clone(&active_flow_sessions);
 
             task::spawn(async move {
+                let flow_session_id = task.flow_session_id.clone();
+
+                // Try to acquire a lock for this flow_session_id
+                let mut active_sessions = active_flow_sessions.lock().await;
+                if !active_sessions.insert(flow_session_id.clone()) {
+                    println!(
+                        "[TASK_ENGINE] Flow session {} is already being processed",
+                        flow_session_id
+                    );
+                    drop(permit);
+                    return;
+                }
+                drop(active_sessions);
                 // Update flow session status to "running"
                 // Prevents other workers from picking up the same flow session ( maybe not perfect )
                 if let Err(e) = update_flow_session_status(
@@ -507,6 +530,8 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
                         "[TASK_ENGINE] Error updating flow session status to processing: {}",
                         e
                     );
+                    active_flow_sessions.lock().await.remove(&flow_session_id);
+                    drop(permit);
                     return;
                 }
 
@@ -517,9 +542,11 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
                     }
                 }
 
-                //Process rest of flwo
-                process_flow_tasks(&client, &task.flow_session_id).await;
+                // Process rest of flow
+                process_flow_tasks(&client, &flow_session_id).await;
 
+                // Remove the flow_session_id from active sessions
+                active_flow_sessions.lock().await.remove(&flow_session_id);
                 drop(permit);
             });
         } else {
