@@ -177,11 +177,15 @@ async fn main() {
         .route("/account/:account_id/workflow/:id", put(api::update_workflow))
         .route("/account/:account_id/actions", get(api::get_actions))
 
-        //Marketplace
+
+        //Marketplace && Templates
         .route(
             "/account/:account_id/marketplace/:workflow_id/publish",
-            post(marketplace::publish_workflow_to_marketplace),
+            post(marketplace::workflows::publish_workflow_to_marketplace),
         )
+        .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
+        .route("/marketplace/actions", get(marketplace::actions::get_actions))
+    
 
         //Billing
         .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))

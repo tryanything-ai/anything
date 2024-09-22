@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS anything.action_templates
 
     -- ADD YOUR COLUMNS HERE
     type text not null,
+    marketplace_action_template_id uuid NULL,
+    action_template_name text not null,
+    action_template_description text null,
     action_template_definition json NOT NULL, -- the definition of the action template
     archived boolean not null default false, 
 

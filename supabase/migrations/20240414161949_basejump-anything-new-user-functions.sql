@@ -57,7 +57,7 @@ begin
      values (team_account_id, NEW.id, 'owner'); 
 
     -- Create profile
-    INSERT INTO marketplace.profiles (id, account_id, username, full_name, avatar_url, website, twitter, tiktok, instagram, youtube, linkedin, github, public, bio, archived, created_by, updated_by)
+    INSERT INTO marketplace.profiles (profile_id, account_id, username, full_name, avatar_url, website, twitter, tiktok, instagram, youtube, linkedin, github, public, bio, archived, created_by, updated_by)
     VALUES (NEW.id, personal_account_id, generated_user_name, NULL, 'https://fokcbrnvhnwnwwpiqkdc.supabase.co/storage/v1/object/marketplace/mocks/botttsNeutral-1698715092376.png', NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, false, NEW.id, NEW.id);
 
     return NEW;

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_versions
     archived boolean not null default false, 
     -- constraint flow_templates_pkey primary key (flow_template_version_id),
     constraint flow_template_versions_flow_template_id_fkey foreign key (flow_template_id) references marketplace.flow_templates(flow_template_id),
-    constraint flow_template_versions_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(id),
+    constraint flow_template_versions_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(profile_id),
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,

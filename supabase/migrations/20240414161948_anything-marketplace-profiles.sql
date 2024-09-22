@@ -2,7 +2,7 @@
 -- Create Table For Profiles
 CREATE TABLE IF NOT EXISTS marketplace.profiles
 (
-    id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
+    profile_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
     -- If your model is owned by an account, you want to make sure you have an account_id column
     -- referencing the account table. Make sure you also set permissions appropriately
     account_id uuid not null references basejump.accounts(id),
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS marketplace.profiles
     bio text null,
     archived boolean not null default false, 
     constraint profiles_username_key unique (username),
-    constraint profiles_id_fkey foreign key (id) references auth.users(id) on delete cascade,
+    constraint profiles_id_fkey foreign key (profile_id) references auth.users(id) on delete cascade,
     constraint username_length check ((char_length(username) >= 3)),
    
     -- timestamps are useful for auditing

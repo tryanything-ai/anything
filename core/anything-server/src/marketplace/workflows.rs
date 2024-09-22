@@ -151,7 +151,11 @@ pub async fn publish_workflow_to_marketplace(
     Json(marketplace_item).into_response()
 }
 
-async fn generate_unique_marketplace_slug(client: &Postgrest, base_slug: &str, user_jwt: &str) -> String {
+pub async fn generate_unique_marketplace_slug(
+    client: &Postgrest,
+    base_slug: &str,
+    user_jwt: &str,
+) -> String {
     let mut slug = slugify!(base_slug);
     let mut counter = 1;
 

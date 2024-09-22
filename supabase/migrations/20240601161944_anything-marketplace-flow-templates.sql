@@ -12,13 +12,14 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     flow_template_name text not null,
     flow_template_description text null,
     public_template boolean not null,
+    approved boolean not null default true, -- if the action template is evil we can flag it as not approved to hide at some point
     publisher_id uuid not null, -- kind like the same as the above account_id i think
     anonymous_publish boolean not null,
     slug text not null,
     archived boolean not null default false, 
     -- constraint flow_templates_pkey1 primary key (flow_template_id),
     constraint flow_templates_slug_key unique (slug),
-    constraint flow_templates_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(id),
+    constraint flow_templates_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(profile_id),
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these

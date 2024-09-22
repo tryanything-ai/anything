@@ -827,6 +827,7 @@ pub async fn publish_workflow_version(
 
 // Actions
 pub async fn get_actions(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -839,6 +840,7 @@ pub async fn get_actions(
     let response = match client
         .from("action_templates")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("archived", "false")
         .select("*")
         .execute()
