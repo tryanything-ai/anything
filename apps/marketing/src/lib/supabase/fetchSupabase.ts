@@ -232,7 +232,7 @@ export const saveFlowTemplate = async (
         flow_template_name,
         flow_template_description,
         slug,
-        public_template: true,
+        public: true,
         publisher_id,
       })
       .select()
@@ -270,7 +270,7 @@ export const saveFlowTemplateVersion = async (
   flow_template_version_id: string,
   flow_template_version_name: string,
   flow_template_json: any,
-  public_template: boolean,
+  public: boolean,
   flow_template_version: string,
   commit_message: string,
   publisher_id: string,
@@ -288,7 +288,7 @@ export const saveFlowTemplateVersion = async (
         anything_flow_version,
         flow_template_version_name,
         flow_template_version,
-        public_template,
+        public,
         recommended_version: true,
         commit_message,
       })

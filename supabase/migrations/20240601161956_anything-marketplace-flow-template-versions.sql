@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_versions
     -- created_at timestamp with time zone not null default now(),
     flow_template_version_name text not null,
     flow_template_json jsonb not null,
-    public_template boolean not null default false,
+    public boolean not null default false,
     flow_template_version text not null default ''::text,
     publisher_id uuid not null,
     flow_template_id uuid not null,
@@ -60,9 +60,21 @@ ALTER TABLE marketplace.flow_template_versions ENABLE ROW LEVEL SECURITY;
 --     to authenticated
 --     using (true);
 
-----------------
+-- -- Authenticated AND Anon users should be able to read all public records
+-- create policy "All authenticated and anonymous users can select public templates" on marketplace.flow_template_versions
+--     for select
+--     to authenticated, anon
+--     using (public = true);
+
+-- Policy to allow all authenticated users to view public templates
+CREATE POLICY "Public templates are visible to anyone" ON marketplace.flow_template_versions
+    FOR SELECT
+    TO authenticated, anon
+    USING (public IS TRUE);
+
+-- --------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
-----------------
+-- -- --------------
 -- create policy "All authenticated and anonymous users can select" on marketplace.flow_template_versions
 --     for select
 --     to authenticated, anon

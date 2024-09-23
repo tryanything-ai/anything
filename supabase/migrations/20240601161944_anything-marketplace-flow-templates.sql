@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     -- created_at timestamp with time zone not null default now(),
     flow_template_name text not null,
     flow_template_description text null,
-    public_template boolean not null,
+    public boolean not null,
     approved boolean not null default true, -- if the action template is evil we can flag it as not approved to hide at some point
     publisher_id uuid not null, -- kind like the same as the above account_id i think
     anonymous_publish boolean not null,
@@ -120,14 +120,13 @@ ALTER TABLE marketplace.flow_templates ENABLE ROW LEVEL SECURITY;
 --     (account_id IN ( SELECT basejump.get_accounts_with_role("owner")))
 --      );
 
-
 -- From GPT
 
 -- Policy to allow all authenticated users to view public templates
-CREATE POLICY "Public templates are visible to all authenticated users" ON marketplace.flow_templates
+CREATE POLICY "Public templates are visible to anyone" ON marketplace.flow_templates
     FOR SELECT
-    TO authenticated
-    USING (public_template IS TRUE);
+    TO authenticated, anon
+    USING (public IS TRUE);
 
 -- Policy to allow account owners to view their own non-public templates
 CREATE POLICY "Account owners can view non-public templates" ON marketplace.flow_templates
@@ -135,7 +134,7 @@ CREATE POLICY "Account owners can view non-public templates" ON marketplace.flow
     TO authenticated
     USING (
         account_id IN (SELECT basejump.get_accounts_with_role('owner'))
-        AND public_template IS FALSE
+        AND public IS FALSE
     );
 
 -- Example policies for other operations (create, update, delete)

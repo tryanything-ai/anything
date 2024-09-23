@@ -1,3 +1,4 @@
+use crate::supabase_auth_middleware::User;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, State},
@@ -10,8 +11,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::supabase_auth_middleware::User;
-
 use uuid::Uuid;
 
 use slugify::slugify;
@@ -22,7 +21,7 @@ pub struct CreateMarketplaceTemplateInput {
     account_id: String,
     flow_template_name: String,
     flow_template_description: String,
-    public_template: bool,
+    public: bool,
     publisher_id: String,
     anonymous_publish: bool,
     slug: String,
@@ -106,7 +105,7 @@ pub async fn publish_workflow_to_marketplace(
             .as_str()
             .unwrap()
             .to_string(),
-        public_template: true,
+        public: true,
         publisher_id: user.account_id.clone(),
         anonymous_publish: false,
         slug: template_slug,
@@ -149,6 +148,54 @@ pub async fn publish_workflow_to_marketplace(
     };
 
     Json(marketplace_item).into_response()
+}
+
+// Actions
+pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let client = &state.marketplace_client;
+
+    println!("[MARKETPLACE] Fetching wo templates");
+
+    let response = match client
+        .from("flow_templates")
+        .select("*, flow_template_versions(*), tags(*), profiles(*)")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to execute request: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to read response body: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    println!("[MARKETPLACE] Query result: {:?}", items);
+
+    Json(items).into_response()
 }
 
 pub async fn generate_unique_marketplace_slug(

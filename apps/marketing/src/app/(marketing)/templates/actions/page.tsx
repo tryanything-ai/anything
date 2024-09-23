@@ -4,7 +4,7 @@ import { TemplateGrid } from "@repo/ui/components/templateGrid";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import api from "@repo/anything-api";
-
+import { ActionTemplateGrid } from "@repo/ui/components/action-grid";
 import { Avatar } from "@/components/avatar";
 
 export default function TemplatePage() {
@@ -15,7 +15,7 @@ export default function TemplatePage() {
     async function fetchTemplates() {
       try {
         const templates =
-          await api.action_templates.getActionTemplatesForMarketplace();
+          await api.marketplace.getActionTemplatesForMarketplace();
         if (templates && templates.length > 0) {
           setActionTemplates(templates);
         } else {
@@ -35,23 +35,20 @@ export default function TemplatePage() {
   return (
     <>
       {/* Hero Copy */}
-      <div className="mt-16 flex flex-col items-center gap-4">
-        <h1 className="h2 md:display  w-full px-4 text-center md:w-[805px] md:px-0">
-          Anything Templates
+      <div className="mt-24 flex flex-col items-center gap-8">
+        <h1 className="text-5xl md:text-7xl font-bold text-center max-w-4xl leading-tight">
+          Unleash the Power of Automation by Integrating your existing tools
         </h1>
-        <p className="body-xl text-slate-11 w-full px-4 text-center md:w-[572px] md:px-0">
-          Automate anything with easy to customize templates
-        </p>
+        {/* <p className="text-2xl md:text-3xl text-slate-11 max-w-3xl text-center leading-relaxed">
+          Transform Your Workflow: Discover, Customize, and Automate with Our
+          Pre Built Integrations and Action Templates
+        </p> */}
       </div>
 
       {/* Grid */}
-      <div className="my-16 flex flex-col items-center">
+      <div className="my-24 flex flex-col items-center">
         {actionTemplates.length > 0 && (
-          <TemplateGrid
-            AvatarComponent={Avatar}
-            LinkComponent={Link}
-            templates={actionTemplates}
-          />
+          <ActionTemplateGrid actionTemplates={actionTemplates} />
         )}
         {/* {error && <p>Error loading templates: {error.message}</p>} */}
       </div>

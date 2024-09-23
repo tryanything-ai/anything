@@ -25,7 +25,7 @@ pub struct CreateMarketplaceActionTemplateInput {
     action_template_name: String,
     action_template_description: Option<String>,
     action_template_definition: Value,
-    public_template: bool,
+    public: bool,
     r#type: String,
     publisher_id: String,
     anonymous_publish: bool,
@@ -54,17 +54,13 @@ pub struct PublishActionTemplateInput {
 }
 
 // Actions
-pub async fn get_actions(
-    State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-) -> impl IntoResponse {
+pub async fn get_actions_from_marketplace(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let client = &state.marketplace_client;
 
-    println!("[ACTIONS] Fetching action templates");
+    println!("[ACTION-TEMPLATES] Fetching action templates");
 
     let response = match client
         .from("action_templates")
-        .auth(user.jwt)
         .select("*")
         .order("action_template_name.desc")
         .execute()
@@ -77,7 +73,7 @@ pub async fn get_actions(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -89,7 +85,7 @@ pub async fn get_actions(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -97,7 +93,7 @@ pub async fn get_actions(
         Ok(items) => items,
         Err(e) => {
             println!("[ACTIONS] Failed to parse JSON: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
@@ -177,7 +173,6 @@ pub async fn publish_action_template(
     if payload.publish_to_marketplace {
         let marketplace_client = &state.marketplace_client;
 
-
         //fetch the marketplace profile for the jwt user
         let marketplace_profile = match marketplace_client
             .from("profiles")
@@ -196,7 +191,8 @@ pub async fn publish_action_template(
             }
         };
 
-        let profile: Value = serde_json::from_str(&marketplace_profile.text().await.unwrap()).unwrap();
+        let profile: Value =
+            serde_json::from_str(&marketplace_profile.text().await.unwrap()).unwrap();
         let publisher_id = profile[0]["profile_id"].as_str().unwrap().to_string();
 
         //Generate Unique Slug
@@ -226,7 +222,7 @@ pub async fn publish_action_template(
                 .as_str()
                 .map(|s| s.to_string()),
             action_template_definition: payload.action_template_definition.clone(),
-            public_template: true,
+            public: true,
             r#type: payload.action_template_definition["type"]
                 .as_str()
                 .unwrap()

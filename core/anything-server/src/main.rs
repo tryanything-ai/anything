@@ -17,6 +17,7 @@ use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 
+
 use auth::init::AuthState;
 
 mod api;
@@ -153,7 +154,10 @@ async fn main() {
     )
         .route("/auth/providers/:provider_name/client_secret_id/set",
         post(auth::providers::update_auth_provider_client_secret_id),
-    );
+    )
+    //marketplace
+    .route("/marketplace/actions", get(marketplace::actions::get_actions_from_marketplace))
+    .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows));
 
     let protected_routes = Router::new()
         .route("/", get(api::root))
@@ -184,7 +188,7 @@ async fn main() {
             post(marketplace::workflows::publish_workflow_to_marketplace),
         )
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
-        .route("/marketplace/actions", get(marketplace::actions::get_actions))
+  
     
 
         //Billing

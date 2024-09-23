@@ -21,6 +21,7 @@ export const TemplateGrid = ({
     <div className="3xl:grid-cols-4 mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
       {templates.map((template: any) => {
         const flowJson = flowJsonFromBigFlow(template);
+        console.log("Flow JSON:", flowJson);
 
         return (
           <TemplateCard

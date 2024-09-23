@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS marketplace.action_templates
     action_template_description text null,
     approved boolean not null default true, -- if the action template is evil we can flag it as not approved to hide at some point
     action_template_definition json NOT NULL, -- the definition of the action template
-    public_template boolean not null default false,
+    public boolean not null default false,
     type text not null, 
     publisher_id uuid not null, -- kind like the same as the above account_id i think
     anonymous_publish boolean not null default false,
@@ -63,10 +63,10 @@ ALTER TABLE marketplace.action_templates ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Authenticated users should be able to read all public records
 ----------------
-create policy "All logged in users can select public templates" on marketplace.action_templates
-    for select
-    to authenticated
-    using (public_template = true);
+-- create policy "All logged in users can select public templates" on marketplace.action_templates
+--     for select
+--     to authenticated
+--     using (public = true);
 
 
 ----------------
@@ -75,7 +75,7 @@ create policy "All logged in users can select public templates" on marketplace.a
 create policy "All authenticated and anonymous users can select public templates" on marketplace.action_templates
     for select
     to authenticated, anon
-    using (public_template = true);
+    using (public = true);
 
 -------------
 -- Users should be able to read records that are owned by an account they belong to

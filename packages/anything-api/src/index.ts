@@ -6,7 +6,7 @@ import * as tasks from './tasks';
 import * as charts from './charts';
 import * as auth from './auth'; 
 import * as billing from './billing';
-
+import * as marketplace from './marketplace';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -21,7 +21,8 @@ const api = {
   secrets, 
   charts,
   auth,
-  billing
+  billing,
+  marketplace
 };
 
 export default api;

@@ -90,7 +90,7 @@ VALUES
 
 -- Inserting sample flow templates into marketplace.flow_templates
 INSERT INTO marketplace.flow_templates (
-    flow_template_id, account_id, flow_template_name, flow_template_description, public_template, publisher_id, anonymous_publish, slug, updated_at, created_at, updated_by, created_by
+    flow_template_id, account_id, flow_template_name, flow_template_description, public, publisher_id, anonymous_publish, slug, updated_at, created_at, updated_by, created_by
 ) VALUES
     ('11111111-1111-1111-1111-111111111111', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Template 1', 'Description for Template 1', true, '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', false, 'template-1', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
     ('22222222-2222-2222-2222-222222222222', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'Template 2', 'Description for Template 2', false, '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', true, 'template-2', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
@@ -101,7 +101,7 @@ INSERT INTO marketplace.flow_templates (
 -- Inserting sample flow template versions into marketplace.flow_template_versions
 -- Inserting sample flow template versions into marketplace.flow_template_versions
 INSERT INTO marketplace.flow_template_versions (
-    flow_template_version_id, account_id, flow_template_version_name, flow_template_json, public_template, flow_template_version, publisher_id, flow_template_id, commit_message, anything_flow_version, recommended_version, updated_at, created_at, updated_by, created_by
+    flow_template_version_id, account_id, flow_template_version_name, flow_template_json, public, flow_template_version, publisher_id, flow_template_id, commit_message, anything_flow_version, recommended_version, updated_at, created_at, updated_by, created_by
 ) VALUES
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Template 1 Version 1', '{"steps": []}', true, 'v1', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '11111111-1111-1111-1111-111111111111', 'Initial version', 'v1.0', true, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Template 1 Version 2', '{"steps": [{"action": "step1"}]}', true, 'v2', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '11111111-1111-1111-1111-111111111111', 'Added step 1', 'v2.0', false, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
