@@ -60,6 +60,8 @@ pub async fn get_actions(
 ) -> impl IntoResponse {
     let client = &state.marketplace_client;
 
+    println!("[ACTIONS] Fetching action templates");
+
     let response = match client
         .from("action_templates")
         .auth(user.jwt)
@@ -69,7 +71,8 @@ pub async fn get_actions(
         .await
     {
         Ok(response) => response,
-        Err(_) => {
+        Err(e) => {
+            println!("[ACTIONS] Failed to execute request: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
@@ -80,7 +83,8 @@ pub async fn get_actions(
 
     let body = match response.text().await {
         Ok(body) => body,
-        Err(_) => {
+        Err(e) => {
+            println!("[ACTIONS] Failed to read response body: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
@@ -91,10 +95,13 @@ pub async fn get_actions(
 
     let items: Value = match serde_json::from_str(&body) {
         Ok(items) => items,
-        Err(_) => {
+        Err(e) => {
+            println!("[ACTIONS] Failed to parse JSON: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
         }
     };
+
+    println!("[ACTIONS] Query result: {:?}", items);
 
     Json(items).into_response()
 }

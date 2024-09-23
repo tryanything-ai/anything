@@ -22,7 +22,20 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8"
         aria-label="Global"
       >
-        <div className="flex items-center gap-4 lg:flex-1">
+        <div className="flex items-center gap-4">
+          <div
+            className="lg:hidden mr-2"
+            role="button"
+            tabIndex={0}
+            onClick={() => setMobileMenuOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setMobileMenuOpen(true);
+              }
+            }}
+          >
+            <VscMenu className="h-6 w-6 text-slate-900" aria-hidden="true" />
+          </div>
           <Link href="/" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
             <span className="sr-only">Anything AI</span>
             <div className="flex gap-2">
@@ -35,64 +48,48 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             <Stargazer count={stargazers_count} />
           </div>
 
-          {/* <Link
-            href="/platform"
+          <Link
+            href="/templates/workflows"
             className="-m-1.5 p-1.5 lg:flex hidden"
             onClick={handleLinkClick}
           >
-            <span className="sr-only">Platform</span>
+            <span className="sr-only">Templates</span>
             <div className="flex gap-2 ml-4">
-              <span className="text-base font-medium">Platform</span>
+              <span className="text-base font-medium">Templates</span>
             </div>
-          </Link> */}
+          </Link>
+          <Link
+            href="/templates/actions"
+            className="-m-1.5 p-1.5 lg:flex hidden"
+            onClick={handleLinkClick}
+          >
+            <span className="sr-only">Integrations</span>
+            <div className="flex gap-2 ml-4">
+              <span className="text-base font-medium">Integrations</span>
+            </div>
+          </Link>
         </div>
 
-        {/* Ensure Discord button is always on the right side */}
-        <Button
-          className="h-11 mr-2 hidden md:flex rounded-full"
-          variant="outline"
-          onClick={() => window.location.href = `https://app.${window.location.hostname}/login`}
-        >
-          Login
-        </Button>
-        <ShimmerButton 
-          background="rgb(147 51 234)" 
-          className="p-2 font-bold"
-          onClick={() => window.location.href = `https://app.${window.location.hostname}/signup`}
-        >
-          Get Started
-        </ShimmerButton>
-        {/* <div className="lg:flex items-center hidden">
-          <a
-            href="https://discord.gg/VRBKaqjprE"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                window.location.href = "https://discord.gg/VRBKaqjprE";
-              }
-            }}
-          >
-            <span className="sr-only">Discord</span>
-            <FaDiscord className="h-6 w-6" aria-hidden="true" />
-          </a>
-        </div> */}
-
-        {/* Ensure Discord button is always on the right side */}
-        {/* <div
-          className="lg:hidden"
-          role="button"
-          tabIndex={0}
-          onClick={() => setMobileMenuOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              setMobileMenuOpen(true);
+        <div className="flex items-center ml-auto">
+          <Button
+            className="h-11 mr-2 rounded-full"
+            variant="outline"
+            onClick={() =>
+              (window.location.href = `https://app.${window.location.hostname}/login`)
             }
-          }}
-        >
-          <VscMenu className="h-6 w-6 text-slate-900" aria-hidden="true" />
-        </div> */}
+          >
+            Login
+          </Button>
+          <ShimmerButton
+            background="rgb(147 51 234)"
+            className="p-2 font-bold"
+            onClick={() =>
+              (window.location.href = `https://app.${window.location.hostname}/signup`)
+            }
+          >
+            Get Started
+          </ShimmerButton>
+        </div>
       </nav>
 
       {/* Mobile Menu Dialog */}
@@ -127,18 +124,30 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               <VscClose className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          {/* <div className="flex items-center justify-between mt-10">
+          <div className="flex items-center justify-between mt-10">
             <Link
-              href="/platform"
+              href="/templates/workflows"
               className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
               onClick={handleLinkClick}
             >
-              <span className="sr-only">Platform</span>
+              <span className="sr-only">Templates</span>
               <div className="flex gap-2">
-                <span className="text-base font-medium">Platform</span>
+                <span className="text-base font-medium">Templates</span>
               </div>
             </Link>
-          </div> */}
+          </div>
+          <div className="flex items-center justify-between mt-10">
+            <Link
+              href="/templates/actions"
+              className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
+              onClick={handleLinkClick}
+            >
+              <span className="sr-only">Integrations</span>
+              <div className="flex gap-2">
+                <span className="text-base font-medium">Integrations</span>
+              </div>
+            </Link>
+          </div>
 
           <div className="flex items-center justify-between mt-10">
             <a

@@ -68,6 +68,7 @@ create policy "All logged in users can select public templates" on marketplace.a
     to authenticated
     using (public_template = true);
 
+
 ----------------
 -- Authenticated AND Anon users should be able to read all public records
 ----------------

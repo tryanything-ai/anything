@@ -12,6 +12,7 @@
     "@headlessui/react": "^2.1.5",
     "@heroicons/react": "^2.1.5",
     "@repo/ui": "workspace:*",
+    "@repo/anything-api": "workspace:*",
     "@sentry/nextjs": "^7.75.0",
     "@supabase/auth-helpers-nextjs": "^0.8.1",
     "@supabase/supabase-js": "^2.38.4",

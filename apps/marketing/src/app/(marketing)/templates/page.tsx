@@ -1,23 +1,36 @@
+"use client";
+
 import { TemplateGrid } from "@repo/ui/components/templateGrid";
-import { fetchTemplates } from "@/lib/supabase/fetchSupabase";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
+import api from "@repo/anything-api";
 
 import { Avatar } from "@/components/avatar";
 
-import type { Metadata } from "next";
+export default function TemplatePage() {
+  const [actionTemplates, setActionTemplates] = useState([]);
+  const [error, setError] = useState(null);
 
-export const metadata: Metadata = {
-  title: "Anything Templates",
-  description: " Automate anything with easy to customize templates",
-};
+  useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        const templates =
+          await api.action_templates.getActionTemplatesForMarketplace();
+        if (templates && templates.length > 0) {
+          setActionTemplates(templates);
+        } else {
+          console.log("No templates found");
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "An unknown error occurred";
+        // setError(errorMessage as React.SetStateAction<null>);
+        console.error("Error fetching action templates:", errorMessage);
+      }
+    }
 
-export default async function TemplatePage() {
-  // const templates: any = await fetchTemplates();
-
-  // if (!templates) {
-  //   notFound();
-  // }
+    fetchTemplates();
+  }, []);
 
   return (
     <>
@@ -33,11 +46,14 @@ export default async function TemplatePage() {
 
       {/* Grid */}
       <div className="my-16 flex flex-col items-center">
-        <TemplateGrid
-          AvatarComponent={Avatar}
-          LinkComponent={Link as any}
-          templates={templates}
-        />
+        {actionTemplates.length > 0 && (
+          <TemplateGrid
+            AvatarComponent={Avatar}
+            LinkComponent={Link}
+            templates={actionTemplates}
+          />
+        )}
+        {/* {error && <p>Error loading templates: {error.message}</p>} */}
       </div>
     </>
   );
