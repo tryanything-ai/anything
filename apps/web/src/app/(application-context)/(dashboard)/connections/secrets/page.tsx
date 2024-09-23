@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Trash2, Edit2, Eye, EyeOff } from "lucide-react";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { Button } from "@repo/ui/components/ui/button";
 
 import {

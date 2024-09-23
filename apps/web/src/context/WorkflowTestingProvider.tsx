@@ -2,12 +2,12 @@
 
 import { createContext, ReactNode, useContext, useState } from "react";
 import { useWorkflowVersion } from "./WorkflowVersionProvider";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import {
   StartWorkflowTestResult,
   TaskRow,
   WorklfowTestSessionResult,
-} from "@/lib/anything-api/testing";
+} from "@repo/anything-api/testing";
 import { useAccounts } from "./AccountsContext";
 
 export enum TestingMode {

@@ -13,7 +13,7 @@ import { BaseNodeIcon } from "../studio/nodes/node-icon";
 import { Edit } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { useAnything } from "@/context/AnythingContext";
 
 export default function ManageWorkflows(): JSX.Element {
@@ -82,7 +82,9 @@ export default function ManageWorkflows(): JSX.Element {
           >
             <Link href={`/workflows/${flow.flow_id}`} className="flex-1 flex">
               <CardHeader className="w-1/4">
-                <CardTitle className="truncate leading-tight">{flow.flow_name}</CardTitle>
+                <CardTitle className="truncate leading-tight">
+                  {flow.flow_name}
+                </CardTitle>
                 <CardDescription className="truncate">
                   {flow.description}
                 </CardDescription>

@@ -12,7 +12,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { useRouter } from "next/navigation";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 
 export default function DeleteFlowDialog({
   workflowId,

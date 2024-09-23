@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { useAccounts } from "./AccountsContext";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 
 export interface SubscriptionContextInterface {
   stripe_customer_id: string | null;

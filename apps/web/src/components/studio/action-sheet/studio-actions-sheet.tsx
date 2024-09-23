@@ -12,7 +12,7 @@ import {
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
 import { useAnything } from "@/context/AnythingContext";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { Action } from "@/types/workflows";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";

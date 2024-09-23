@@ -16,6 +16,7 @@
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@remoteoss/json-schema-form": "0.9.1-beta.0",
     "@repo/ui": "workspace:*",
+    "@repo/anything-api": "workspace:*",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@usebasejump/shared": "^0.0.3",
@@ -46,6 +47,7 @@
     "@next/eslint-plugin-next": "14.2.4",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+
     "@types/lodash": "^4.17.5",
     "@types/node": "^20",
     "@types/react": "^18.2.0",

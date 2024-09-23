@@ -31,7 +31,7 @@ import {
   getConnectedEdges,
 } from "reactflow";
 
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { Action, Workflow } from "@/types/workflows";
 
 import { findConflictFreeId } from "@/lib/studio/helpers";

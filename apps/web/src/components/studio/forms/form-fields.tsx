@@ -11,7 +11,7 @@ import {
   SelectItem,
 } from "@repo/ui/components/ui/select";
 
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";

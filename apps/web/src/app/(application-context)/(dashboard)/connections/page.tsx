@@ -15,7 +15,8 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
+
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { format } from "date-fns";
 import NewAccountDialog from "@/components/secrets/new-account-dialog";

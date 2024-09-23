@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import {
   Table,
   TableBody,

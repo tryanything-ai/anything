@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatePage() {
-  const templates: any = await fetchTemplates();
+  // const templates: any = await fetchTemplates();
 
-  if (!templates) {
-    notFound();
-  }
+  // if (!templates) {
+  //   notFound();
+  // }
 
   return (
     <>

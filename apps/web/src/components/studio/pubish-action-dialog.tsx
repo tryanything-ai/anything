@@ -12,7 +12,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { useState } from "react";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { ActionType } from "@/types/workflows";
 
 export default function PublishActionDialog(): JSX.Element {

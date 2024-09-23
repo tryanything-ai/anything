@@ -2,13 +2,15 @@
 import ManageWorkflows from "@/components/workflows/manage-workflows";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
 import { Separator } from "@repo/ui/components/ui/separator";
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { useRouter } from "next/navigation";
 import { useAnything } from "@/context/AnythingContext";
 
 export default function Workflows(): JSX.Element {
   const router = useRouter();
-  const { accounts: { selectedAccount } } = useAnything();
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   const createWorkflow = async () => {
     if (!selectedAccount) {

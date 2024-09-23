@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { TaskRow } from "@/lib/anything-api/testing";
+import { TaskRow } from "@repo/anything-api/testing";
 import { format } from "date-fns";
 import {
   DurationBadge,
@@ -39,9 +39,7 @@ export function TaskTable({ tasks }: { tasks: TaskRow[] }): JSX.Element {
           tasks.map((task) => (
             <TableRow key={task.task_id}>
               <TableCell>
-                <TriggerBadge
-                  is_trigger={task.type == ActionType.Trigger}
-                />
+                <TriggerBadge is_trigger={task.type == ActionType.Trigger} />
               </TableCell>
               <TableCell className="text-left font-medium">
                 {task.action_label}
