@@ -1,36 +1,23 @@
-"use client";
-
-import { TemplateGrid } from "@repo/ui/components/templateGrid";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import api from "@repo/anything-api";
 import { ActionTemplateGrid } from "@repo/ui/components/action-grid";
-import { Avatar } from "@/components/avatar";
+import api from "@repo/anything-api";
 
-export default function TemplatePage() {
-  const [actionTemplates, setActionTemplates] = useState([]);
-  const [error, setError] = useState(null);
+export default async function TemplatePage() {
+  let actionTemplates = [];
+  let error = null;
 
-  useEffect(() => {
-    async function fetchTemplates() {
-      try {
-        const templates =
-          await api.marketplace.getActionTemplatesForMarketplace();
-        if (templates && templates.length > 0) {
-          setActionTemplates(templates);
-        } else {
-          console.log("No templates found");
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "An unknown error occurred";
-        // setError(errorMessage as React.SetStateAction<null>);
-        console.error("Error fetching action templates:", errorMessage);
-      }
+  try {
+    const templates = await api.marketplace.getActionTemplatesForMarketplace();
+    if (templates && templates.length > 0) {
+      actionTemplates = templates;
+    } else {
+      console.log("No templates found");
     }
-
-    fetchTemplates();
-  }, []);
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unknown error occurred";
+    console.error("Error fetching action templates:", errorMessage);
+    error = errorMessage;
+  }
 
   return (
     <>
@@ -50,7 +37,7 @@ export default function TemplatePage() {
         {actionTemplates.length > 0 && (
           <ActionTemplateGrid actionTemplates={actionTemplates} />
         )}
-        {/* {error && <p>Error loading templates: {error.message}</p>} */}
+        {error && <p>Error loading templates: {error}</p>}
       </div>
     </>
   );

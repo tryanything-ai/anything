@@ -30,7 +30,7 @@ export function StudioActionsSheet(): JSX.Element {
         console.error("No account selected");
         return;
       }
-      const res = await api.action_templates.getActionTemplates(
+      const res = await api.action_templates.getActionTemplatesForAccount(
         selectedAccount.account_id,
       );
       console.log("action sheet templates res:", res);

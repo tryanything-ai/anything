@@ -22,9 +22,6 @@ export const TemplateView = ({
   Avatar,
   ActionComponent,
 }: TemplateViewProps) => {
-  // let flow = flowJsonFromBigFlow(template);
-  // console.log("Flow JSON in TemplateView:", flow);
-
   const getFlowDetails = (template: DBFlowTemplate) => {
     const latestVersion = template.flow_template_versions[0];
     if (!latestVersion || !latestVersion.flow_definition) {
@@ -53,7 +50,7 @@ export const TemplateView = ({
       <div className="flex flex-col md:flex-row gap-4 justify-between ">
         {/* Left */}
         <div>
-          <AvatarAndUsername
+          {/* <AvatarAndUsername
             AvatarComponent={() =>
               Avatar({
                 avatar_url: profile?.avatar_url ? profile.avatar_url : "",
@@ -63,7 +60,7 @@ export const TemplateView = ({
             profile_name={profile?.full_name ? profile.full_name : ""}
             username={profile?.username ? profile.username : ""}
             Link={Link}
-          />
+          /> */}
         </div>
         {/* Right */}
         {/* <div> */}
@@ -91,7 +88,7 @@ export const TemplateView = ({
         {/* <BaseNodeWeb node={flow.trigger} /> */}
       </div>
       <div className="mb-2 mt-8 font-semibold">Actions</div>
-      <div>
+      <div className="space-y-4">
         {actions.map((action: any) => {
           return (
             <ActionNode

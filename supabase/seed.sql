@@ -3222,9 +3222,9 @@ INSERT INTO anything.secrets (
 
     -- Inserting sample action-templates into anyting.action_templates
 INSERT INTO marketplace.action_templates (
-    action_template_id, account_id, app_action_template_id, publisher_id, slug, type, action_template_name, action_template_description, action_template_definition, updated_at, created_at, updated_by, created_by
+    action_template_id, account_id, app_action_template_id, publisher_id, slug, type, public, action_template_name, action_template_description, action_template_definition, updated_at, created_at, updated_by, created_by
 ) VALUES
-    (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '123e4567-e89b-12d3-a456-426614174004', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'simple_http_action', 'action', 'Example Action 1', 'This is the first example action', '{
+    (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '123e4567-e89b-12d3-a456-426614174004', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'simple_http_action', 'action', true, 'Example Action 1', 'This is the first example action', '{
       "anything_action_version": "0.1.0",
       "type": "action",
       "plugin_id": "example_plugin",

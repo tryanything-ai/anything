@@ -1,36 +1,27 @@
-"use client";
-
 import { TemplateGrid } from "@repo/ui/components/templateGrid";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import api from "@repo/anything-api";
+import api, { DBFlowTemplate } from "@repo/anything-api";
 
 import { Avatar } from "@/components/avatar";
 
-export default function WorkflowTemplates() {
-  const [workflowTemplates, setWorkflowTemplates] = useState([]);
-  const [error, setError] = useState(null);
+export default async function WorkflowTemplates() {
+  let workflowTemplates: DBFlowTemplate[] = [];
+  let error = null;
 
-  useEffect(() => {
-    async function fetchTemplates() {
-      try {
-        const templates =
-          await api.marketplace.getWorkflowTemplatesForMarketplace();
-        if (templates && templates.length > 0) {
-          setWorkflowTemplates(templates);
-        } else {
-          console.log("No templates found");
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "An unknown error occurred";
-        // setError(errorMessage as React.SetStateAction<null>);
-        console.error("Error fetching action templates:", errorMessage);
-      }
+  try {
+    const templates =
+      await api.marketplace.getWorkflowTemplatesForMarketplace();
+    if (templates && templates.length > 0) {
+      workflowTemplates = templates;
+    } else {
+      console.log("No templates found");
     }
-
-    fetchTemplates();
-  }, []);
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unknown error occurred";
+    error = errorMessage;
+    console.error("Error fetching action templates:", errorMessage);
+  }
 
   return (
     <>
@@ -54,7 +45,7 @@ export default function WorkflowTemplates() {
             templates={workflowTemplates}
           />
         )}
-        {/* {error && <p>Error loading templates: {error.message}</p>} */}
+        {error && <p>Error loading templates: {error}</p>}
       </div>
     </>
   );
