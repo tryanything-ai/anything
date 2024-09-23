@@ -207,7 +207,7 @@ export const saveFlowTemplate = async (
   flow_template_version_id: string,
   flow_template_name: string,
   flow_template_description: string,
-  flow_template_json: any,
+  flow_definition: any,
   publisher_id: string,
   anything_flow_version: string
 ) => {
@@ -247,7 +247,7 @@ export const saveFlowTemplate = async (
       data.flow_template_id,
       flow_template_version_id,
       flow_template_name,
-      flow_template_json,
+      flow_definition,
       true,
       "0.0.1",
       "Initial Commit",
@@ -269,7 +269,7 @@ export const saveFlowTemplateVersion = async (
   flow_template_id: string,
   flow_template_version_id: string,
   flow_template_version_name: string,
-  flow_template_json: any,
+  flow_definition: any,
   public: boolean,
   flow_template_version: string,
   commit_message: string,
@@ -283,7 +283,7 @@ export const saveFlowTemplateVersion = async (
       .insert({
         flow_template_id,
         flow_template_version_id,
-        flow_template_json,
+        flow_definition,
         publisher_id,
         anything_flow_version,
         flow_template_version_name,

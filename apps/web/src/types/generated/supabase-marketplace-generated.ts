@@ -83,7 +83,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           flow_template_id: string
-          flow_template_json: Json
+          flow_definition: Json
           flow_template_version: string
           flow_template_version_id: string
           flow_template_version_name: string
@@ -100,7 +100,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           flow_template_id: string
-          flow_template_json: Json
+          flow_definition: Json
           flow_template_version?: string
           flow_template_version_id?: string
           flow_template_version_name: string
@@ -117,7 +117,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           flow_template_id?: string
-          flow_template_json?: Json
+          flow_definition?: Json
           flow_template_version?: string
           flow_template_version_id?: string
           flow_template_version_name?: string

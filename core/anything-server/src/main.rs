@@ -157,7 +157,8 @@ async fn main() {
     )
     //marketplace
     .route("/marketplace/actions", get(marketplace::actions::get_actions_from_marketplace))
-    .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows));
+    .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows))
+    .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug));
 
     let protected_routes = Router::new()
         .route("/", get(api::root))

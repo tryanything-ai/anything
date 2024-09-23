@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-interface ActionTemplate {
+export interface ActionTemplate {
   action_template_id: string;
   action_template_name: string;
   action_template_description: string;
@@ -17,7 +17,17 @@ interface ActionTemplate {
   type: string;
 }
 
-const ActionNode = ({ data }: { data: ActionTemplate }) => {
+export const ActionNode = ({
+  id,
+  name,
+  description,
+  icon,
+}: {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}) => {
   return (
     <div
       className={cn(
@@ -25,12 +35,10 @@ const ActionNode = ({ data }: { data: ActionTemplate }) => {
       )}
     >
       <div className="flex h-full w-full flex-row items-center p-3">
-        <BaseNodeIcon icon={data.action_template_definition.icon} />
+        <BaseNodeIcon icon={icon} />
         <div className="flex flex-col">
-          <div className="px-4">{data.action_template_name}</div>
-          <div className="px-4 text-sm font-light">
-            {data.action_template_description}
-          </div>
+          <div className="px-4">{name}</div>
+          <div className="px-4 text-sm font-light">{description}</div>
         </div>
       </div>
     </div>
@@ -45,7 +53,13 @@ export const ActionTemplateGrid = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {actionTemplates.map((template) => (
-        <ActionNode key={template.action_template_id} data={template} />
+        <ActionNode
+          key={template.action_template_id}
+          id={template.action_template_id}
+          name={template.action_template_name}
+          description={template.action_template_description}
+          icon={template.action_template_definition.icon}
+        />
       ))}
     </div>
   );

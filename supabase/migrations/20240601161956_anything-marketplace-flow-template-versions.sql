@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_versions
     -- flow_template_version_id uuid not null default gen_random_uuid (),
     -- created_at timestamp with time zone not null default now(),
     flow_template_version_name text not null,
-    flow_template_json jsonb not null,
+    flow_definition jsonb not null,
     public boolean not null default false,
     flow_template_version text not null default ''::text,
     publisher_id uuid not null,

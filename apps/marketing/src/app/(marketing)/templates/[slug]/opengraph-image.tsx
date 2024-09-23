@@ -1,11 +1,11 @@
-import {
-  fetchProfile,
-  fetchTemplateBySlug,
-} from "@/lib/supabase/fetchSupabase";
-import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
+// import {
+//   fetchProfile,
+//   fetchTemplateBySlug,
+// } from "@/lib/supabase/fetchSupabase";
+// import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
 import { ImageResponse } from "next/og";
 import { FlowTemplateOgImage } from "@/components/og/template_css";
-import { FlowTemplate } from "@/types/flow";
+// import { FlowTemplate } from "@/types/flow";
 
 const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
 
@@ -23,37 +23,37 @@ export const contentType = "image/png";
 
 // Image generation
 export default async function Image({ params }: { params: { slug: string } }) {
-  console.log(
-    "params in TemplatePageOgImage Generation",
-    JSON.stringify(params),
-  );
-  const templateResponse = await fetchTemplateBySlug(params.slug);
+  // console.log(
+  //   "params in TemplatePageOgImage Generation",
+  //   JSON.stringify(params),
+  // );
+  // const templateResponse = await fetchTemplateBySlug(params.slug);
 
-  if (!templateResponse) {
-    console.log(
-      "templateResponse in TemplatePage",
-      JSON.stringify(templateResponse, null, 3),
-    );
-    throw new Error("Template not found");
-  }
+  // if (!templateResponse) {
+  //   console.log(
+  //     "templateResponse in TemplatePage",
+  //     JSON.stringify(templateResponse, null, 3),
+  //   );
+  //   throw new Error("Template not found");
+  // }
 
-  const template = templateResponse[0];
-  console.log("template in TemplatePage", JSON.stringify(template, null, 3));
+  // const template = templateResponse[0];
+  // console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 
-  const profile: any | undefined = template?.profiles?.username
-    ? await fetchProfile(template.profiles.username)
-    : undefined;
+  // const profile: any | undefined = template?.profiles?.username
+  //   ? await fetchProfile(template.profiles.username)
+  //   : undefined;
 
-  const flow = (await flowJsonFromBigFlow(template)) as FlowTemplate;
+  // const flow = (await flowJsonFromBigFlow(template)) as FlowTemplate;
 
-  console.log(
-    "params in TemplatePageOgImage Generation",
-    JSON.stringify(params),
-  );
+  // console.log(
+  //   "params in TemplatePageOgImage Generation",
+  //   JSON.stringify(params),
+  // );
 
-  const boldFontData = await fetch(
-    this_url + "/fonts/DMSans-SemiBold.ttf",
-  ).then((res) => res.arrayBuffer());
+  // const boldFontData = await fetch(
+  //   this_url + "/fonts/DMSans-SemiBold.ttf",
+  // ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
     (
@@ -67,14 +67,15 @@ export default async function Image({ params }: { params: { slug: string } }) {
           color: "#FFFFFF",
         }}
       >
-        <FlowTemplateOgImage
+        {/* TODO: bring back */}
+        {/* <FlowTemplateOgImage
           actions={flow.actions}
           profileImage={profile?.avatar_url || ""}
           profileName={profile?.full_name || ""}
           title={template.flow_template_name}
           trigger={flow.trigger}
           username={profile?.username || ""}
-        />
+        /> */}
       </div>
     ),
     {

@@ -1,14 +1,15 @@
 import { TemplateView } from "@repo/ui/components/templateView";
-import {
-  fetchProfile,
-  fetchTemplateBySlug,
-  fetchTemplates,
-} from "@/lib/supabase/fetchSupabase";
+// import {
+//   fetchProfile,
+//   fetchTemplateBySlug,
+//   fetchTemplates,
+// } from "@/lib/supabase/fetchSupabase";
 import { getAProfileLink } from "@repo/ui/helpers/helpers";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
+import api, { DBFlowTemplate } from "@repo/anything-api";
 
 type Props = {
   params: { slug: string };
@@ -22,14 +23,24 @@ export async function generateMetadata(
   let Metadata: Metadata = {};
 
   // fetch data
-  const templateResponse = await fetchTemplateBySlug(params.slug);
+  const templateResponse =
+    await api.marketplace.getWorkflowTemplateBySlugForMarketplace(params.slug);
+
+  // Print the response for debugging purposes
+  console.log("Template Response for gernateMetadata:", templateResponse);
+
+  // Check if templateResponse is undefined or null
+  if (!templateResponse) {
+    console.error("Template not found");
+    notFound();
+  }
 
   if (templateResponse) {
-    const template = templateResponse[0];
+    const template: DBFlowTemplate = templateResponse;
 
-    const profile: any | undefined = template?.profiles?.username
-      ? await fetchProfile(template.profiles.username)
-      : undefined;
+    // const profile: any | undefined = template?.profiles?.username
+    //   ? await fetchProfile(template.profiles.username)
+    //   : undefined;
 
     Metadata = {
       title: template.flow_template_name,
@@ -42,8 +53,8 @@ export async function generateMetadata(
       },
       authors: [
         {
-          name: profile?.full_name || undefined,
-          url: profile ? getAProfileLink(profile) : undefined,
+          // name: profile?.full_name || undefined,
+          // url: profile ? getAProfileLink(profile) : undefined,
         },
       ],
     };
@@ -53,8 +64,9 @@ export async function generateMetadata(
 }
 
 export const generateStaticParams = async (): Promise<any> => {
-  const templates = await fetchTemplates();
+  // const templates = await fetchTemplates();
   // has "slug" key to populate route
+  const templates = await api.marketplace.getWorkflowTemplatesForMarketplace();
   if (!templates) return [];
   return templates;
 };
@@ -100,18 +112,20 @@ export default async function Template({
   params,
 }: Props): Promise<JSX.Element> {
   console.log("params in TemplatePage", params);
-  const templateResponse = await fetchTemplateBySlug(params.slug);
+  const templateResponse =
+    await api.marketplace.getWorkflowTemplateBySlugForMarketplace(params.slug);
 
   if (!templateResponse) {
     notFound();
   }
 
-  const template = templateResponse[0];
-  console.log("template in TemplatePage", JSON.stringify(template, null, 3));
+  const template: DBFlowTemplate = templateResponse;
+  console.log(
+    "DBFLOWTEMPLATE in TemplatePage",
+    JSON.stringify(template, null, 3),
+  );
 
-  const profile: any | undefined = template?.profiles?.username
-    ? await fetchProfile(template.profiles.username)
-    : undefined;
+  const profile: any | undefined = template?.profiles;
 
   return (
     <div className="mx-4 my-6 flex max-w-4xl flex-col md:mx-auto md:my-16">

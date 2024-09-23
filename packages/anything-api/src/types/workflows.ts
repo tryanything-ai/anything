@@ -49,3 +49,45 @@ interface Variable {
 }
 
 export type AnythingNodeProps = NodeProps<Action>;
+
+
+export type DBFlowTemplate = {
+  flow_template_id: string;
+  account_id: string;
+  flow_template_name: string;
+  flow_template_description: string | null;
+  public: boolean;
+  approved: boolean;
+  publisher_id: string;
+  anonymous_publish: boolean;
+  slug: string;
+  flow_template_versions: DBFlowTemplateVersion[];
+  tags: any[];
+  profiles: any;
+  archived: boolean;
+  updated_at: string;
+  created_at: string;
+  updated_by: string | null;
+  created_by: string | null;
+};
+
+
+export type DBFlowTemplateVersion = {
+  flow_template_version_id: string;
+  account_id: string;
+  flow_template_version_name: string;
+  flow_definition: Workflow;
+  public: boolean;
+  flow_template_version: string;
+  publisher_id: string;
+  flow_template_id: string;
+  commit_message: string | null;
+  anything_flow_version: string;
+  recommended_version: boolean;
+  archived: boolean;
+  updated_at: string;
+  created_at: string;
+  updated_by: string | null;
+  created_by: string | null;
+};
+

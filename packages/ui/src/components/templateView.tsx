@@ -5,21 +5,45 @@ import { AvatarAndUsername } from "./avatarAndUsername";
 import { BaseNodeWeb } from "./baseNodeWeb";
 import { ProfileLinks } from "./profileLinks";
 import { Tags } from "./tags";
+import api, { DBFlowTemplate } from "@repo/anything-api";
+
+import { ActionNode } from "./action-grid";
 
 interface TemplateViewProps extends CommonProps {
-  template: any;
+  template: DBFlowTemplate;
   profile: any | undefined;
   ActionComponent: ComponentType<any>;
 }
 
-export const TemplateView= ({
+export const TemplateView = ({
   template,
   profile,
   Link,
   Avatar,
   ActionComponent,
 }: TemplateViewProps) => {
-  let flow = flowJsonFromBigFlow(template);
+  // let flow = flowJsonFromBigFlow(template);
+  // console.log("Flow JSON in TemplateView:", flow);
+
+  const getFlowDetails = (template: DBFlowTemplate) => {
+    const latestVersion = template.flow_template_versions[0];
+    if (!latestVersion || !latestVersion.flow_definition) {
+      return { trigger: null, actions: [] };
+    }
+
+    const { actions } = latestVersion.flow_definition;
+    const trigger = actions.find((action) => action.type === "trigger");
+    const nonTriggerActions = actions.filter(
+      (action) => action.type !== "trigger",
+    );
+
+    return { trigger, actions: nonTriggerActions };
+  };
+
+  const { trigger, actions } = getFlowDetails(template);
+
+  console.log("Trigger:", trigger);
+  console.log("Actions:", actions);
 
   return (
     <>
@@ -56,12 +80,28 @@ export const TemplateView= ({
 
       <div className="mb-2 mt-8 font-semibold">Trigger</div>
       <div>
-        <BaseNodeWeb node={flow.trigger} />
+        {trigger && (
+          <ActionNode
+            id={trigger.action_id || ""}
+            name={trigger.label || ""}
+            description={trigger.description || ""}
+            icon={trigger.icon || ""}
+          />
+        )}
+        {/* <BaseNodeWeb node={flow.trigger} /> */}
       </div>
       <div className="mb-2 mt-8 font-semibold">Actions</div>
       <div>
-        {flow.actions.map((action: any) => {
-          return <BaseNodeWeb key={action.node_name} node={action} />;
+        {actions.map((action: any) => {
+          return (
+            <ActionNode
+              id={action.action_id}
+              key={action.action_id}
+              name={action.label || ""}
+              description={action.description || ""}
+              icon={action.icon || ""}
+            />
+          );
         })}
       </div>
       <div className="mb-2 mt-8 font-semibold">Tags</div>
@@ -74,4 +114,4 @@ export const TemplateView= ({
       ) : null}
     </>
   );
-}
+};

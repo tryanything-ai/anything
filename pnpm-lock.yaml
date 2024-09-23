@@ -256,6 +256,9 @@ importers:
       react:
         specifier: ^18.2.0
         version: 18.3.1
+      reactflow:
+        specifier: ^11.11.3
+        version: 11.11.4(@types/react@18.3.4)(react-dom@18.2.0(react@18.3.1))(react@18.3.1)
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
@@ -389,6 +392,9 @@ importers:
         specifier: ^3.22.4
         version: 3.23.8
     devDependencies:
+      '@repo/anything-api':
+        specifier: workspace:*
+        version: link:../anything-api
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
