@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/tryanything-ai/anything/blob/main/apps/web/public/magic_3po.webp" height="300" alt="Anything" />
+  <img src="https://github.com/tryanything-ai/anything/blob/main/apps/marketing/public/magic_3po.webp" height="300" alt="Anything" />
 </p>
 <p align="center">
   <em>If Posthog built Zapier. Feature complete, Fullstack, AI Automation framework written in Rust made for users.</em>
