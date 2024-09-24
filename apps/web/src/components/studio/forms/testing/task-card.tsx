@@ -2,7 +2,7 @@ import React from "react";
 import { cn, formatTimeDifference } from "@/lib/utils";
 import { formatDuration, intervalToDuration } from "date-fns";
 import ReactJson from "react-json-view";
-import { TaskRow } from "@repo/anything-api/testing";
+import { TaskRow } from "@repo/anything-api";
 import TaskStatus from "./task-status";
 import { Clock } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";

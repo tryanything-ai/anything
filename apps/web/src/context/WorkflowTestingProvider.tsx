@@ -7,7 +7,7 @@ import {
   StartWorkflowTestResult,
   TaskRow,
   WorklfowTestSessionResult,
-} from "@repo/anything-api/testing";
+} from "@repo/anything-api";
 import { useAccounts } from "./AccountsContext";
 
 export enum TestingMode {

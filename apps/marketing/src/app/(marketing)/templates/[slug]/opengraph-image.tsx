@@ -1,7 +1,3 @@
-// import {
-//   fetchProfile,
-//   fetchTemplateBySlug,
-// } from "@/lib/supabase/fetchSupabase";
 // import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
 import { ImageResponse } from "next/og";
 import { FlowTemplateOgImage } from "@/components/og/template_css";

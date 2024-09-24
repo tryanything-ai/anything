@@ -8,11 +8,6 @@ import * as auth from './auth';
 import * as billing from './billing';
 import * as marketplace from './marketplace';
 import * as profiles from './profiles';
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Load the .env file
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const api = {
   flows,

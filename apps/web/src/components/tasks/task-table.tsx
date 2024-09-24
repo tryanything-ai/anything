@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { TaskRow } from "@repo/anything-api/testing";
+import { TaskRow } from "@repo/anything-api";
 import { format } from "date-fns";
 import {
   DurationBadge,
