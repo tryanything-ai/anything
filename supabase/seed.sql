@@ -101,7 +101,7 @@ INSERT INTO marketplace.flow_templates (
 -- Inserting sample flow template versions into marketplace.flow_template_versions
 -- Inserting sample flow template versions into marketplace.flow_template_versions
 INSERT INTO marketplace.flow_template_versions (
-    flow_template_version_id, account_id, flow_template_version_name, flow_definition, public, flow_template_version, publisher_id, flow_template_id, commit_message, anything_flow_version, recommended_version, updated_at, created_at, updated_by, created_by
+    flow_template_version_id, account_id, flow_template_version_name, flow_definition, public, flow_template_version, publisher_id, flow_template_id, commit_message, app_flow_version_id, recommended_version, updated_at, created_at, updated_by, created_by
 ) VALUES
     (uuid_generate_v4(), 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'Template 1 Version 1', '{
       "edges": [

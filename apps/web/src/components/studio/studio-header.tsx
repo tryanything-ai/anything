@@ -45,9 +45,10 @@ export default function StudioHeader(): JSX.Element {
       </div>
 
       {/* TODO:bring this back */}
-      {/* <ShareDialog /> */}
+
       <div className="ml-auto flex items-center gap-2">
         <FreeTrialBadge />
+        <ShareDialog />
         {workflow &&
         workflow.db_flow_version &&
         workflow.db_flow_version.published ? (

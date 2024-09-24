@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     -- ADD YOUR COLUMNS HERE
     -- flow_template_id uuid not null default gen_random_uuid (),
     -- created_at timestamp with time zone not null default now(),
+    app_flow_id uuid NULL,
     featured boolean not null default false,
     flow_template_name text not null,
     flow_template_icon text null,

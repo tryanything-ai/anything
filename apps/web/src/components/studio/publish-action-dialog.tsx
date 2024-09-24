@@ -21,6 +21,7 @@ export default function PublishActionDialog(): JSX.Element {
     workflow: { selected_node_data },
   } = useAnything();
 
+  const [checkedForSensitiveData, setCheckedForSensitiveData] = useState(false);
   const [publishToMarketplace, setPublishToMarketplace] = useState(false);
   const [publishAnonymously, setPublishAnonymously] = useState(false);
   const [publishToTeam, setPublishToTeam] = useState(true);
@@ -35,6 +36,12 @@ export default function PublishActionDialog(): JSX.Element {
         console.error("At least one publishing option must be selected");
         return;
       }
+
+      if (!checkedForSensitiveData) {
+        console.error("Must confirm checking for sensitive data");
+        return;
+      }
+
       let res = await api.action_templates.publishActionTemplate(
         selectedAccount.account_id,
         selected_node_data,
@@ -73,6 +80,24 @@ export default function PublishActionDialog(): JSX.Element {
             {!success ? (
               <>
                 <div className="flex flex-col space-y-4">
+                  <p className="text-yellow-600 font-semibold">
+                    Before publishing make sure your template has no sensitive
+                    data like API keys hard coded into the templates.
+                  </p>
+                  <label className="flex items-center space-x-2 mt-4">
+                    <input
+                      type="checkbox"
+                      checked={checkedForSensitiveData}
+                      onChange={(e) =>
+                        setCheckedForSensitiveData(e.target.checked)
+                      }
+                    />
+                    <span>I have checked my template for sensitive data</span>
+                  </label>
+                  <p className="text-sm text-gray-500 ml-6">
+                    Confirm that you have reviewed your template and removed any
+                    sensitive information such as API keys or personal data.
+                  </p>
                   <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -83,7 +108,7 @@ export default function PublishActionDialog(): JSX.Element {
                   </label>
                   <p className="text-sm text-gray-500 ml-6">
                     Make this action template available to all members of your
-                    team.
+                    team as a reusable action.
                   </p>
                   <label className="flex items-center space-x-2 mt-4">
                     <input
@@ -116,7 +141,10 @@ export default function PublishActionDialog(): JSX.Element {
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handlePublish}
-                    disabled={!publishToTeam && !publishToMarketplace}
+                    disabled={
+                      (!publishToTeam && !publishToMarketplace) ||
+                      !checkedForSensitiveData
+                    }
                   >
                     Publish
                   </AlertDialogAction>

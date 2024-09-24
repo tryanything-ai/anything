@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_versions
     publisher_id uuid not null,
     flow_template_id uuid not null,
     commit_message text null,
-    anything_flow_version text not null,
+    app_flow_version_id text not null,
     recommended_version boolean not null default false,
     archived boolean not null default false, 
     -- constraint flow_templates_pkey primary key (flow_template_version_id),
@@ -94,32 +94,32 @@ CREATE POLICY "Public templates are visible to anyone" ON marketplace.flow_templ
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
--- create policy "Account members can insert" on marketplace.flow_template_versions
---     for insert
---     to authenticated
---     with check (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can insert" on marketplace.flow_template_versions
+    for insert
+    to authenticated
+    with check (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
--- create policy "Account members can update" on marketplace.flow_template_versions
---     for update
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can update" on marketplace.flow_template_versions
+    for update
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account members can delete" on marketplace.flow_template_versions
---     for delete
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can delete" on marketplace.flow_template_versions
+    for delete
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to

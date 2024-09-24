@@ -185,7 +185,7 @@ async fn main() {
 
         //Marketplace && Templates
         .route(
-            "/account/:account_id/marketplace/:workflow_id/publish",
+            "/account/:account_id/marketplace/workflow/:workflow_id/version/:workflow_version_id/publish",
             post(marketplace::workflows::publish_workflow_to_marketplace),
         )
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
