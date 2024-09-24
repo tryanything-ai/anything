@@ -250,9 +250,6 @@ importers:
       '@supabase/supabase-js':
         specifier: latest
         version: 2.45.4
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.5
       react:
         specifier: ^18.2.0
         version: 18.3.1
