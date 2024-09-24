@@ -27,6 +27,7 @@ const TemplateCard = ({
   Link,
   AvatarComponent,
 }: TemplateCardProps) => {
+  
   const getFlowDetails = (template: DBFlowTemplate) => {
     const latestVersion = template.flow_template_versions[0];
     if (!latestVersion || !latestVersion.flow_definition) {

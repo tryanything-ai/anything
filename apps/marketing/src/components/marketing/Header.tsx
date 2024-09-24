@@ -38,9 +38,12 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           </div>
           <Link href="/" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
             <span className="sr-only">Anything AI</span>
-            <div className="flex gap-2">
-              <span className=" font-bold tracking-tight text-xl">
+            <div className="flex gap-2 items-center">
+              <span className="font-bold tracking-tight text-xl">
                 Anything AI
+              </span>
+              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded-full hidden sm:inline-block">
+                beta
               </span>
             </div>
           </Link>
@@ -72,7 +75,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
 
         <div className="flex items-center ml-auto">
           <Button
-            className="h-11 mr-2 rounded-full"
+            className="h-11 mr-2 rounded-full hidden sm:inline-flex"
             variant="outline"
             onClick={() =>
               (window.location.href = `https://app.${window.location.hostname}/login`)

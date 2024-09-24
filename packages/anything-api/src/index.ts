@@ -7,6 +7,7 @@ import * as charts from './charts';
 import * as auth from './auth'; 
 import * as billing from './billing';
 import * as marketplace from './marketplace';
+import * as profiles from './profiles';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -22,7 +23,8 @@ const api = {
   charts,
   auth,
   billing,
-  marketplace
+  marketplace, 
+  profiles
 };
 
 export default api;

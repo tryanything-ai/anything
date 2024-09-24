@@ -158,7 +158,9 @@ async fn main() {
     //marketplace
     .route("/marketplace/actions", get(marketplace::actions::get_actions_from_marketplace))
     .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows))
-    .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug));
+    .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug))
+    .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
+    .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username));
 
     let protected_routes = Router::new()
         .route("/", get(api::root))
@@ -186,10 +188,10 @@ async fn main() {
         //Marketplace && Templates
         .route(
             "/account/:account_id/marketplace/workflow/:workflow_id/version/:workflow_version_id/publish",
-            post(marketplace::workflows::publish_workflow_to_marketplace),
+            post(marketplace::workflows::publish_workflow_to_marketplace), 
         )
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
-  
+        
     
 
         //Billing
