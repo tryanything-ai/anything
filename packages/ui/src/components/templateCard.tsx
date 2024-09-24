@@ -1,8 +1,8 @@
-// import type { FlowTemplate, Json } from "utils";
 import React from "react";
-// import { VscArrowSmallRight } from "react-icons/vsc";
 import { AvatarAndUsername } from "./avatarAndUsername";
 import { BaseNodeIcon } from "./baseNodeIcons";
+import { DBFlowTemplate } from "@repo/anything-api";
+import { ArrowBigRight } from "lucide-react";
 
 export interface TemplateCardProps {
   slug: string;
@@ -10,29 +10,40 @@ export interface TemplateCardProps {
   profileName: string;
   profile: boolean;
   username: string;
-  flowName: string;
-  flowTemplateJson: any;
+  flowName: DBFlowTemplate;
+  template: any;
   Link: React.ComponentType<any>;
   AvatarComponent: React.ComponentType;
 }
 
 const TemplateCard = ({
-  flowTemplateJson,
-  // avatar_url,
+  template,
   username,
   profileName,
   profile,
-  // tags,
   slug,
   description,
   flowName,
   Link,
   AvatarComponent,
 }: TemplateCardProps) => {
-  const flowJson =
-    typeof flowTemplateJson === "string"
-      ? JSON.parse(flowTemplateJson)
-      : flowTemplateJson;
+  
+  const getFlowDetails = (template: DBFlowTemplate) => {
+    const latestVersion = template.flow_template_versions[0];
+    if (!latestVersion || !latestVersion.flow_definition) {
+      return { trigger: null, actions: [] };
+    }
+
+    const { actions } = latestVersion.flow_definition;
+    const trigger = actions.find((action) => action.type === "trigger");
+    const nonTriggerActions = actions.filter(
+      (action) => action.type !== "trigger",
+    );
+
+    return { trigger, actions: nonTriggerActions };
+  };
+
+  const { trigger, actions } = getFlowDetails(template);
 
   return (
     <Link
@@ -41,30 +52,16 @@ const TemplateCard = ({
       href={`/templates/${slug}`}
       to={`/templates/${slug}`}
     >
-      <div className="card card-compact bg-base-300 mx-1 max-w-md transform overflow-hidden shadow-xl transition-all duration-200 ease-in-out hover:scale-105 sm:w-96">
-        <div className="card-body">
-          <h2 className="card-title text-ellipsis text-2xl line-clamp-1">
-            {flowName}
+      <div className="bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-300 overflow-hidden">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-2 text-gray-800 truncate">
+            {template.flow_template_name}
           </h2>
-
-          {/* User */}
-          {profile ? (
-            <AvatarAndUsername
-              AvatarComponent={AvatarComponent}
-              Link={Link}
-              link={false}
-              profile_name={profileName}
-              username={username}
-            />
-          ) : null}
-
-          <p className="mt-1 line-clamp-2 overflow-hidden overflow-ellipsis h-12">
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2 font-light">
             {description}
           </p>
-          <figure>
-            <div className="mb-1 h-px  w-full bg-white bg-opacity-30" />
-          </figure>
-          {flowJson?.trigger?.icon ? <NodeArray flow={flowJson} /> : null}
+          <div className="h-px w-full bg-gray-200 mb-4" />
+          {trigger?.icon && <NodeArray trigger={trigger} actions={actions} />}
         </div>
       </div>
     </Link>
@@ -73,31 +70,29 @@ const TemplateCard = ({
 
 export default TemplateCard;
 
-const NodeArray = ({ flow }: { flow: any }) => {
-  //Loop through trigger and all actions to create icons
-  const actions = [...flow.actions.map((action: any) => action.icon)];
+const NodeArray = ({ actions, trigger }: { actions: any[]; trigger: any }) => {
   const visibleActions = actions.slice(0, 4);
   const hiddenIconsCount = actions.length - visibleActions.length;
 
   return (
-    <div className="flex h-full flex-row gap-2">
-      <BaseNodeIcon className="text-pink-500" icon={flow.trigger.icon} />
-      <div className="flex h-14 items-center justify-center font-bold">
-        {/* <VscArrowSmallRight className="w-6 text-3xl" /> */}
+    <div className="flex items-center space-x-2">
+      <div className="bg-white border border-gray-600 text-primary-content flex h-14 w-14 flex-row rounded-md text-xl hover:bg-gray-50">
+        <BaseNodeIcon icon={trigger.icon} />
       </div>
-      {visibleActions.map((icon, index) => {
-        if (index === 3 && hiddenIconsCount > 0) {
-          return (
-            <div
-              className="flex h-14 w-14 items-center justify-center rounded-md border p-2 text-xl opacity-50"
-              key={index}
-            >
-              +{hiddenIconsCount + 1}
-            </div>
-          );
-        }
-        return <BaseNodeIcon icon={icon} key={index} />;
-      })}
+      <ArrowBigRight className="text-gray-600" />
+      {visibleActions.map((action, index) => (
+        <div
+          key={index}
+          className="bg-white border border-gray-600 text-primary-content flex h-14 w-14 flex-row rounded-md text-xl hover:bg-gray-50"
+        >
+          <BaseNodeIcon icon={action.icon} />
+        </div>
+      ))}
+      {hiddenIconsCount > 0 && (
+        <div className="flex h-14 w-14 items-center justify-center rounded-md bg-white bg-opacity-30 border border-gray-600 text-gray-600 font-medium">
+          +{hiddenIconsCount}
+        </div>
+      )}
     </div>
   );
 };

@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS anything.action_templates
     account_id uuid not null references basejump.accounts(id),
 
     -- ADD YOUR COLUMNS HERE
-    action_type text not null,
+    type text not null,
+    marketplace_action_template_id uuid NULL,
+    action_template_name text not null,
+    action_template_description text null,
     action_template_definition json NOT NULL, -- the definition of the action template
     archived boolean not null default false, 
 

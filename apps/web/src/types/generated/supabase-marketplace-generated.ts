@@ -83,11 +83,11 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           flow_template_id: string
-          flow_template_json: Json
+          flow_definition: Json
           flow_template_version: string
           flow_template_version_id: string
           flow_template_version_name: string
-          public_template: boolean
+          public: boolean
           publisher_id: string
           recommended_version: boolean
           updated_at: string | null
@@ -100,11 +100,11 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           flow_template_id: string
-          flow_template_json: Json
+          flow_definition: Json
           flow_template_version?: string
           flow_template_version_id?: string
           flow_template_version_name: string
-          public_template?: boolean
+          public?: boolean
           publisher_id: string
           recommended_version?: boolean
           updated_at?: string | null
@@ -117,11 +117,11 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           flow_template_id?: string
-          flow_template_json?: Json
+          flow_definition?: Json
           flow_template_version?: string
           flow_template_version_id?: string
           flow_template_version_name?: string
-          public_template?: boolean
+          public?: boolean
           publisher_id?: string
           recommended_version?: boolean
           updated_at?: string | null
@@ -174,7 +174,7 @@ export type Database = {
           flow_template_description: string | null
           flow_template_id: string
           flow_template_name: string
-          public_template: boolean
+          public: boolean
           publisher_id: string
           slug: string
           updated_at: string | null
@@ -188,7 +188,7 @@ export type Database = {
           flow_template_description?: string | null
           flow_template_id?: string
           flow_template_name: string
-          public_template: boolean
+          public: boolean
           publisher_id: string
           slug: string
           updated_at?: string | null
@@ -202,7 +202,7 @@ export type Database = {
           flow_template_description?: string | null
           flow_template_id?: string
           flow_template_name?: string
-          public_template?: boolean
+          public?: boolean
           publisher_id?: string
           slug?: string
           updated_at?: string | null

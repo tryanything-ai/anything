@@ -6,6 +6,7 @@ import BaseNode from "./nodes/workflow-node";
 import { useAnything } from "@/context/AnythingContext";
 import CustomEdge from "./edges/workflow-edge";
 import { Button } from "@repo/ui/components/ui/button";
+import { StudioActionsSheet } from "./action-sheet/studio-actions-sheet";
 
 const nodeTypes = {
   anything: BaseNode,
@@ -29,9 +30,6 @@ export default function StudioWorkflowEditor(): JSX.Element {
         onEdgesChange={workflow.onEdgesChange}
         onConnect={workflow.onConnect}
         nodeDragThreshold={1}
-        // onDragOver={workflow.onDragOver}
-        // onDrop={(e) => onDrop(e, reactFlowWrapper)}
-        onInit={workflow.setReactFlowInstance}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
 
@@ -50,6 +48,7 @@ export default function StudioWorkflowEditor(): JSX.Element {
         >
           Add Node
         </Button>
+        <StudioActionsSheet />
       </ReactFlow>
     </div>
   );

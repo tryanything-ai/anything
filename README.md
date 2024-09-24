@@ -14,11 +14,7 @@
 
 # Anything AI
 
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_dnd_sept_11.gif)
-
-### Make Anything happen
-
-![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_sept_11.gif)
+![Anything UI](https://raw.githubusercontent.com/tryanything-ai/anything/main/assets/anything_screenshot.png)
 
 ### 🔧 Setting Up
 

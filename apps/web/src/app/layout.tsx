@@ -1,7 +1,6 @@
 import { Inter as FontSans } from "next/font/google";
 import "@repo/ui/globals.css";
 import { cn } from "@/lib/utils";
-import { AnythingProvider } from "@/context/AnythingContext";
 
 const defaultUrl: string =
   process.env.NODE_ENV === "production"
@@ -33,9 +32,7 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
       )}
     >
       <body className="bg-background text-foreground">
-        <AnythingProvider>
-          <main className="min-h-screen">{children}</main>
-        </AnythingProvider>
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   );

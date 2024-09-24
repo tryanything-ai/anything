@@ -1,6 +1,6 @@
 "use client";
 
-import { ComponentPropsWithoutRef, useMemo, useState } from "react";
+import { ComponentPropsWithoutRef, useState } from "react";
 import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -28,46 +28,25 @@ import {
   PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
 import NewTeamForm from "@/components/basejump/new-team-form";
-import { useAccounts } from "@/lib/hooks/use-accounts";
+import { useAnything } from "@/context/AnythingContext";
 
 type PopoverTriggerProps = ComponentPropsWithoutRef<typeof PopoverTrigger>;
-
-type SelectedAccount = NonNullable<ReturnType<typeof useAccounts>["data"]>[0];
 
 interface AccountSelectorProps extends PopoverTriggerProps {
   accountId: string;
   placeholder?: string;
-  onAccountSelected?: (account: SelectedAccount) => void;
 }
 
 export default function AccountSelector({
   className,
   accountId,
-  onAccountSelected,
-  placeholder = "Select an account...",
+  placeholder = "Select a team...",
 }: AccountSelectorProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
 
-  const { data: accounts } = useAccounts();
-
-  const { teamAccounts, personalAccount, selectedAccount } = useMemo(() => {
-    const personalAccount = accounts?.find(
-      (account) => account.personal_account,
-    );
-    const teamAccounts = accounts?.filter(
-      (account) => !account.personal_account,
-    );
-    const selectedAccount = accounts?.find(
-      (account) => account.account_id === accountId,
-    );
-
-    return {
-      personalAccount,
-      teamAccounts,
-      selectedAccount,
-    };
-  }, [accounts, accountId]);
+  const { accounts } = useAnything();
+  const { teamAccounts, selectedAccount, setSelectedAccount } = accounts;
 
   return (
     <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
@@ -87,58 +66,30 @@ export default function AccountSelector({
         <PopoverContent className="w-[250px] p-0">
           <Command>
             <CommandList>
-              <CommandInput placeholder="Search account..." />
-              <CommandEmpty>No account found.</CommandEmpty>
-              <CommandGroup heading="Personal Account">
-                <CommandItem
-                  key={personalAccount?.account_id}
-                  onSelect={() => {
-                    if (onAccountSelected) {
-                      onAccountSelected(personalAccount!);
-                    }
-                    setOpen(false);
-                  }}
-                  className="text-sm"
-                >
-                  {personalAccount?.name}
-                  <Check
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      selectedAccount?.account_id ===
-                        personalAccount?.account_id
-                        ? "opacity-100"
-                        : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
+              <CommandInput placeholder="Search team..." />
+              <CommandEmpty>No team found.</CommandEmpty>
+              <CommandGroup heading="Teams">
+                {teamAccounts?.map((team) => (
+                  <CommandItem
+                    key={team.account_id}
+                    onSelect={() => {
+                      setSelectedAccount(team);
+                      setOpen(false);
+                    }}
+                    className="text-sm"
+                  >
+                    {team.name}
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        selectedAccount?.account_id === team.account_id
+                          ? "opacity-100"
+                          : "opacity-0",
+                      )}
+                    />
+                  </CommandItem>
+                ))}
               </CommandGroup>
-              {Boolean(teamAccounts?.length) && (
-                <CommandGroup heading="Teams">
-                  {teamAccounts?.map((team) => (
-                    <CommandItem
-                      key={team.account_id}
-                      onSelect={() => {
-                        if (onAccountSelected) {
-                          onAccountSelected(team);
-                        }
-
-                        setOpen(false);
-                      }}
-                      className="text-sm"
-                    >
-                      {team.name}
-                      <Check
-                        className={cn(
-                          "ml-auto h-4 w-4",
-                          selectedAccount?.account_id === team.account_id
-                            ? "opacity-100"
-                            : "opacity-0",
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
             </CommandList>
             <CommandSeparator />
             <CommandList>

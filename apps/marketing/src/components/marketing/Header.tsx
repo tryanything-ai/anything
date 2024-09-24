@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { VscClose, VscMenu } from "react-icons/vsc";
 import { FaDiscord } from "react-icons/fa";
-import { Stargazer } from "@/components/ui/Stargazer"; 
+import { Stargazer } from "@/components/ui/Stargazer";
+import ShimmerButton from "@repo/ui/components/magicui/shimmer-button";
+import { Button } from "@repo/ui/components/ui/button";
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,62 +17,81 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
   };
 
   return (
-    <header className="text-white border-b border-slate-6 bg-slate-1/5 py-3 backdrop-blur-lg">
+    <header className="text-slate-900 border-b border-slate-200 bg-white py-3 font-sans">
       <nav
         className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8"
         aria-label="Global"
       >
-        <div className="flex items-center gap-4 lg:flex-1">
+        <div className="flex items-center gap-4">
+          <div
+            className="lg:hidden mr-2"
+            role="button"
+            tabIndex={0}
+            onClick={() => setMobileMenuOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setMobileMenuOpen(true);
+              }
+            }}
+          >
+            <VscMenu className="h-6 w-6 text-slate-900" aria-hidden="true" />
+          </div>
           <Link href="/" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
-            <span className="sr-only">Anything</span>
-            <div className="flex gap-2">
-              <span className="body-semibold">Anything</span>
+            <span className="sr-only">Anything AI</span>
+            <div className="flex gap-2 items-center">
+              <span className="font-bold tracking-tight text-xl">
+                Anything AI
+              </span>
+              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded-full hidden sm:inline-block">
+                beta
+              </span>
             </div>
           </Link>
-          <Stargazer count={stargazers_count} />
+          <div className="hidden sm:block">
+            <Stargazer count={stargazers_count} />
+          </div>
 
           <Link
-            href="/platform"
+            href="/templates/workflows"
             className="-m-1.5 p-1.5 lg:flex hidden"
             onClick={handleLinkClick}
           >
-            <span className="sr-only">Platform</span>
+            <span className="sr-only">Templates</span>
             <div className="flex gap-2 ml-4">
-              <span className="">Platform</span>
+              <span className="text-base font-medium">Templates</span>
+            </div>
+          </Link>
+          <Link
+            href="/templates/actions"
+            className="-m-1.5 p-1.5 lg:flex hidden"
+            onClick={handleLinkClick}
+          >
+            <span className="sr-only">Integrations</span>
+            <div className="flex gap-2 ml-4">
+              <span className="text-base font-medium">Integrations</span>
             </div>
           </Link>
         </div>
 
-        {/* Ensure Discord button is always on the right side */}
-        <div className="lg:flex items-center hidden">
-          <a
-            href="https://discord.gg/VRBKaqjprE"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-11"
-            role="button" // Add role
-            tabIndex={0} // Make it focusable
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                window.location.href = "https://discord.gg/VRBKaqjprE";
-              }
-            }} // Handle keyboard events
-          >
-            <span className="sr-only">Discord</span>
-            <FaDiscord className="h-6 w-6" aria-hidden="true" />
-          </a>
-        </div>
-        {/* Ensure Discord button is always on the right side */}
-        <div
-          className="lg:hidden"
-          role="button" // Add role
-          tabIndex={0} // Make it focusable
-          onClick={() => setMobileMenuOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              setMobileMenuOpen(true);
+        <div className="flex items-center ml-auto">
+          <Button
+            className="h-11 mr-2 rounded-full hidden sm:inline-flex"
+            variant="outline"
+            onClick={() =>
+              (window.location.href = `https://app.${window.location.hostname}/login`)
             }
-          }} // Handle keyboard events
-        >
-          <VscMenu className="h-6 w-6" aria-hidden="true" />
+          >
+            Login
+          </Button>
+          <ShimmerButton
+            background="rgb(147 51 234)"
+            className="p-2 font-bold"
+            onClick={() =>
+              (window.location.href = `https://app.${window.location.hostname}/signup`)
+            }
+          >
+            Get Started
+          </ShimmerButton>
         </div>
       </nav>
 
@@ -81,24 +102,26 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         open={mobileMenuOpen}
         onClose={setMobileMenuOpen}
       >
-        <div className="text-white fixed inset-0 z-10" />
-        <Dialog.Panel className="text-white fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-slate-1 p-6 sm:max-w-sm sm:ring-1 sm:ring-slate-6">
+        <div className="fixed inset-0 z-10 bg-black/30" />
+        <Dialog.Panel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
           <div className="flex items-center justify-between">
             <Link href="/" className="-m-1.5 p-1.5" onClick={handleLinkClick}>
               <span className="sr-only">Anything</span>
               <div className="flex gap-2">
-                <span className="body-semibold">Anything</span>
+                <span className="text-xl font-bold tracking-tight text-slate-900">
+                  Anything
+                </span>
               </div>
             </Link>
             <button
               type="button"
-              className="-m-2.5 rounded-md p-2.5 text-slate-11"
+              className="-m-2.5 rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
               onClick={() => setMobileMenuOpen(false)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   setMobileMenuOpen(false);
                 }
-              }} // Handle keyboard events
+              }}
             >
               <span className="sr-only">Close menu</span>
               <VscClose className="h-6 w-6" aria-hidden="true" />
@@ -106,39 +129,40 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           </div>
           <div className="flex items-center justify-between mt-10">
             <Link
-              href="/platform"
-              className="-m-1.5 p-1.5"
+              href="/templates/workflows"
+              className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
               onClick={handleLinkClick}
             >
-              <span className="sr-only">Platform</span>
+              <span className="sr-only">Templates</span>
               <div className="flex gap-2">
-                <span className="body-semibold">Platform</span>
+                <span className="text-base font-medium">Templates</span>
               </div>
             </Link>
           </div>
           <div className="flex items-center justify-between mt-10">
             <Link
-              href="/local"
-              className="-m-1.5 p-1.5"
+              href="/templates/actions"
+              className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
               onClick={handleLinkClick}
             >
-              <span className="sr-only">Local AI (legacy)</span>
+              <span className="sr-only">Integrations</span>
               <div className="flex gap-2">
-                <span className="body-semibold">Local AI (legacy)</span>
+                <span className="text-base font-medium">Integrations</span>
               </div>
             </Link>
           </div>
+
           <div className="flex items-center justify-between mt-10">
             <a
               href="https://discord.gg/VRBKaqjprE"
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-11"
-              role="button" // Add role
-              tabIndex={0} // Make it focusable
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
+              role="button"
+              tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   window.location.href = "https://discord.gg/VRBKaqjprE";
                 }
-              }} // Handle keyboard events
+              }}
             >
               <span className="sr-only">Discord</span>
               <FaDiscord className="h-6 w-6" aria-hidden="true" />

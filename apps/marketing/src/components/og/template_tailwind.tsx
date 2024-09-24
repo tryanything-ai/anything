@@ -1,5 +1,5 @@
 import { BaseNodeIcon } from "@repo/ui/components/baseNodeIcons";
-import { BaseNodeWeb } from "@repo/ui/components/baseNodeWeb";
+// import { BaseNodeWeb } from "@repo/ui/components/baseNodeWeb";
 import { AvatarAndUsername } from "@repo/ui/components/avatarAndUsername";
 import { Node } from "@/types/flow";
 import Image from "next/image";
@@ -54,7 +54,7 @@ export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
         <div className="flex w-1/2 flex-col">
           <div className="mb-4">
             <div className="text-2xl">When:</div>
-            <BaseNodeWeb node={trigger} />
+            {/* <BaseNodeWeb node={trigger} /> */}
           </div>
           <div>
             <div className="text-2xl">Do:</div>

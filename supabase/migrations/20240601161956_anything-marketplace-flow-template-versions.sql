@@ -10,18 +10,18 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_template_versions
     -- flow_template_version_id uuid not null default gen_random_uuid (),
     -- created_at timestamp with time zone not null default now(),
     flow_template_version_name text not null,
-    flow_template_json jsonb not null,
-    public_template boolean not null default false,
+    flow_definition jsonb not null,
+    public boolean not null default false,
     flow_template_version text not null default ''::text,
     publisher_id uuid not null,
     flow_template_id uuid not null,
     commit_message text null,
-    anything_flow_version text not null,
+    app_flow_version_id text not null,
     recommended_version boolean not null default false,
     archived boolean not null default false, 
     -- constraint flow_templates_pkey primary key (flow_template_version_id),
     constraint flow_template_versions_flow_template_id_fkey foreign key (flow_template_id) references marketplace.flow_templates(flow_template_id),
-    constraint flow_template_versions_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(id),
+    constraint flow_template_versions_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(profile_id),
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,
@@ -60,9 +60,21 @@ ALTER TABLE marketplace.flow_template_versions ENABLE ROW LEVEL SECURITY;
 --     to authenticated
 --     using (true);
 
-----------------
+-- -- Authenticated AND Anon users should be able to read all public records
+-- create policy "All authenticated and anonymous users can select public templates" on marketplace.flow_template_versions
+--     for select
+--     to authenticated, anon
+--     using (public = true);
+
+-- Policy to allow all authenticated users to view public templates
+CREATE POLICY "Public templates are visible to anyone" ON marketplace.flow_template_versions
+    FOR SELECT
+    TO authenticated, anon
+    USING (public IS TRUE);
+
+-- --------------
 -- Authenticated AND Anon users should be able to read all records regardless of account
-----------------
+-- -- --------------
 -- create policy "All authenticated and anonymous users can select" on marketplace.flow_template_versions
 --     for select
 --     to authenticated, anon
@@ -82,32 +94,32 @@ ALTER TABLE marketplace.flow_template_versions ENABLE ROW LEVEL SECURITY;
 ----------------
 -- Users should be able to create records that are owned by an account they belong to
 ----------------
--- create policy "Account members can insert" on marketplace.flow_template_versions
---     for insert
---     to authenticated
---     with check (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can insert" on marketplace.flow_template_versions
+    for insert
+    to authenticated
+    with check (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
 ---------------
--- create policy "Account members can update" on marketplace.flow_template_versions
---     for update
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can update" on marketplace.flow_template_versions
+    for update
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ----------------
 -- Users should be able to delete records that are owned by an account they belong to
 ----------------
--- create policy "Account members can delete" on marketplace.flow_template_versions
---     for delete
---     to authenticated
---     using (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+create policy "Account members can delete" on marketplace.flow_template_versions
+    for delete
+    to authenticated
+    using (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ----------------
 -- Only account OWNERS should be able to delete records that are owned by an account they belong to

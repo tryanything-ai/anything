@@ -1,0 +1,28 @@
+{
+  "name": "@repo/anything-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "ui:add": "pnpm dlx shadcn-ui@latest add",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^20",
+    "@types/uuid": "^9.0.8",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "reactflow": "^11.11.3",
+    "slugify": "^1.6.6",
+    "uuid": "^9.0.0"
+  },
+  "exports": "./src/index.ts"
+}

@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS anything.tasks
     trigger_session_status TEXT NOT NULL, -- the status of the trigger session
     flow_session_id TEXT NOT NULL, -- a single instance of a flow running
     flow_session_status TEXT NOT NULL, -- the status of the flow session
-    node_id TEXT NOT NULL, -- the node that defined this event
-    action_type TEXT NOT NULL, -- if this event is a trigger, action, loop, input et
+    action_id TEXT NOT NULL, -- the node that defined this event
+    type TEXT NOT NULL, -- if this event is a trigger, action, loop, input et
     plugin_id TEXT NOT NULL, -- the extension that processed this event
     stage TEXT NOT NULL, -- the stage of the event DEV OR PROD etc
     test_config json, -- the config used to do special testing for flow and action

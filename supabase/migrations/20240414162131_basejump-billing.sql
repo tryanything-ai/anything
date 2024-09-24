@@ -7,7 +7,7 @@
 /**
 * Subscription Status
 * Tracks the current status of the account subscription
-*/
+*/  
 DO
 $$
     BEGIN

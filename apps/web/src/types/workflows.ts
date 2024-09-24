@@ -22,7 +22,7 @@ export interface Action {
   anything_action_version: string; //defines compatability so in future we can upgrade actions
   type: ActionType;
   plugin_id: string;
-  node_id: string; //unique id for react flow. probably generated based on action_id or plugin_id or slug of label
+  action_id: string; //unique id for react flow. probably generated based on action_id or plugin_id or slug of label
   plugin_version: string; //TODO: so we can manage upgrade of plugins
   label: string;
   description?: string;

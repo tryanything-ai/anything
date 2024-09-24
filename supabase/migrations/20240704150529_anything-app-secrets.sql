@@ -131,6 +131,7 @@ begin
 end;
 $$;
 
+-- https://supabase.com/docs/guides/database/vault#updating-secrets
 create or replace function anything.update_secret(id uuid, secret text, name text, description text)
 returns text
 language plpgsql
@@ -208,7 +209,7 @@ $$;
 -- end;
 -- $$;
 
-CREATE OR REPLACE FUNCTION anything.get_decrypted_secrets(user_account_id uuid)
+CREATE OR REPLACE FUNCTION anything.get_decrypted_secrets(team_account_id uuid)
 RETURNS TABLE (
     secret_id uuid,
     secret_name text,
@@ -236,10 +237,6 @@ BEGIN
     ON 
         s.vault_secret_id = vs.id
     WHERE
-        s.account_id IN (
-            SELECT account_id
-            FROM basejump.account_user wu
-            WHERE wu.user_id = user_account_id
-        );
+        s.account_id = team_account_id;
 END;
 $$;

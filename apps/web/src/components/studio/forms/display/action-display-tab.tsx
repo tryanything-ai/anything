@@ -7,7 +7,7 @@ export default function ActionDisplayTab(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full w-full">
-      {workflow.selected_node_data && workflow.selected_node_id ? (
+      {workflow.selected_node_data && workflow.selected_action_id ? (
         <div className="grid w-full items-start gap-6">
           <div className="grid gap-6">
             <ActionDisplayForm />

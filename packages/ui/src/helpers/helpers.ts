@@ -9,7 +9,7 @@ export const flowJsonFromBigFlow = (template: any) => {
     Array.isArray(template.flow_template_versions) &&
     template.flow_template_versions.length > 0
   ) {
-    flow_json = template.flow_template_versions[0].flow_template_json;
+    flow_json = template.flow_template_versions[0].flow_definition;
   } else {
     flow_json = null;
   }

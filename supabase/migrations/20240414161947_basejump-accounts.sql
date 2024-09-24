@@ -119,7 +119,7 @@ END
 $$ LANGUAGE plpgsql;
 
 -- trigger to slugify the account slug
-CREATE TRIGGER basejump_slugify_account_slug
+CREATE TRIGGER basejump_slugify_account_slugs   
     BEFORE INSERT OR UPDATE
     ON basejump.accounts
     FOR EACH ROW
@@ -187,13 +187,16 @@ begin
 end;
 $$;
 
--- trigger the function whenever a new account is created
--- CREATE TRIGGER basejump_add_current_user_to_new_account
---     AFTER INSERT
---     ON basejump.accounts
---     FOR EACH ROW
--- EXECUTE FUNCTION basejump.add_current_user_to_new_account();
 
+-- trigger the function whenever a new account is created
+CREATE TRIGGER basejump_add_current_user_to_new_account
+    AFTER INSERT
+    ON basejump.accounts
+    FOR EACH ROW
+EXECUTE FUNCTION basejump.add_current_user_to_new_account();
+
+
+-- MOVED TO anything-new-user-functinos.sql to incorporate needs for profiles
 -- /**
 --   * When a user signs up, we need to create a personal account for them
 --   * and add them to the account_user table so they can act on it
@@ -588,7 +591,14 @@ grant execute on function public.get_personal_account() to authenticated;
 /**
   * Create an account
  */
-create or replace function public.create_account(slug text default null, name text default null)
+/**
+  * Create an account
+ */
+create or replace function public.create_account(
+    slug text default null,
+    name text default null,
+    primary_owner_user_id uuid default auth.uid()
+)
     returns json
     language plpgsql
 as
@@ -596,8 +606,14 @@ $$
 DECLARE
     new_account_id uuid;
 BEGIN
-    insert into basejump.accounts (slug, name)
-    values (create_account.slug, create_account.name)
+    -- Check if the function is being called from another function
+    IF NOT (SELECT pg_has_role(current_user, 'authenticated', 'MEMBER')) THEN
+        -- If not called from another function, use auth.uid() as primary_owner_user_id
+        primary_owner_user_id := auth.uid();
+    END IF;
+
+    insert into basejump.accounts (slug, name, primary_owner_user_id)
+    values (create_account.slug, create_account.name, create_account.primary_owner_user_id)
     returning id into new_account_id;
 
     return public.get_account(new_account_id);
@@ -607,7 +623,28 @@ EXCEPTION
 END;
 $$;
 
-grant execute on function public.create_account(slug text, name text) to authenticated;
+grant execute on function public.create_account(text, text, uuid) to authenticated;
+ --//TODO: this works but trying somethign else to create accounts from otehr functions
+-- create or replace function public.create_account(slug text default null, name text default null)
+--     returns json
+--     language plpgsql
+-- as
+-- $$
+-- DECLARE
+--     new_account_id uuid;
+-- BEGIN
+--     insert into basejump.accounts (slug, name)
+--     values (create_account.slug, create_account.name)
+--     returning id into new_account_id;
+
+--     return public.get_account(new_account_id);
+-- EXCEPTION
+--     WHEN unique_violation THEN
+--         raise exception 'An account with that unique ID already exists';
+-- END;
+-- $$;
+
+-- grant execute on function public.create_account(slug text, name text) to authenticated;
 
 /**
   Update an account with passed in info. None of the info is required except for account ID.

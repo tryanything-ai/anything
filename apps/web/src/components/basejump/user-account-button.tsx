@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -10,22 +13,31 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import Link from "next/link";
 import { UserIcon } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
-export default async function UserAccountButton(): Promise<JSX.Element> {
+export default function UserAccountButton(): JSX.Element {
+  const [personalAccount, setPersonalAccount] = useState<any>(null);
+  const router = useRouter();
   const supabaseClient = createClient();
-  const { data: personalAccount }: any = await supabaseClient.rpc(
-    "get_personal_account",
-  );
+
+  useEffect(() => {
+    const fetchPersonalAccount = async () => {
+      const { data } = await supabaseClient.rpc("get_personal_account");
+      setPersonalAccount(data);
+    };
+
+    fetchPersonalAccount();
+  }, []);
 
   const signOut = async () => {
-    "use server";
-
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    return redirect("/");
+    await supabaseClient.auth.signOut();
+    router.push("/login");
   };
+
+  if (!personalAccount) {
+    return <div></div>; // Return a loading indicator instead of null
+  }
 
   return (
     <DropdownMenu>
@@ -48,20 +60,18 @@ export default async function UserAccountButton(): Promise<JSX.Element> {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/">My Account</Link>
+            <Link href="/settings">My Account</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">Settings</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          {/* <DropdownMenuItem asChild>
             <Link href="/settings/teams">Teams</Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <form action={signOut}>
-            <button>Log out</button>
-          </form>
+          <button onClick={signOut}>Log out</button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

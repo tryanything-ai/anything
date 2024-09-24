@@ -10,7 +10,10 @@ export async function GET(request: Request) {
   const returnUrl = requestUrl.searchParams.get("returnUrl");
   const origin = requestUrl.origin;
 
+  console.log("hitting auth/callback route"); 
+  
   if (code) {
+    console.log("We have code in exchangeCodeForSession for Supabas Auth"); 
     const supabase = createClient();
     await supabase.auth.exchangeCodeForSession(code);
   }

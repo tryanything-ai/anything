@@ -24,7 +24,7 @@ use crate::workflow_types::{CreateTaskInput, TaskConfig};
 #[derive(Debug, Clone)]
 pub struct InMemoryTrigger {
     pub account_id: String,
-    pub node_id: String,
+    pub action_id: String,
     pub trigger_id: String,
     pub flow_id: String,
     pub action_label: String,
@@ -36,7 +36,8 @@ pub struct InMemoryTrigger {
 
 pub async fn cron_job_loop(state: Arc<AppState>) {
     //worfklow_id => trigger
-    let trigger_state = Arc::new(RwLock::new(HashMap::new()));
+    let trigger_state: Arc<RwLock<HashMap<String, InMemoryTrigger>>> =
+        Arc::new(RwLock::new(HashMap::new()));
 
     // Receive info from other systems
     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
@@ -338,8 +339,8 @@ async fn create_trigger_task(
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        node_id: trigger.node_id.clone(),
-        action_type: ActionType::Trigger,
+        action_id: trigger.action_id.clone(),
+        r#type: ActionType::Trigger,
         plugin_id: trigger.trigger_id.clone(),
         stage: Stage::Production.as_str().to_string(),
         config: serde_json::json!(task_config),
@@ -380,12 +381,12 @@ pub fn create_in_memory_triggers_from_flow_definition(
     ) {
         if let Some(actions) = flow_definition.get("actions").and_then(|v| v.as_array()) {
             for action in actions {
-                if let (Some(trigger_id), Some(action_type), Some(node_id)) = (
+                if let (Some(trigger_id), Some(r#type), Some(action_id)) = (
                     action.get("plugin_id").and_then(|v| v.as_str()),
-                    action.get("action_type").and_then(|v| v.as_str()),
-                    action.get("node_id").and_then(|v| v.as_str()),
+                    action.get("type").and_then(|v| v.as_str()),
+                    action.get("action_id").and_then(|v| v.as_str()),
                 ) {
-                    if action_type == "trigger" {
+                    if r#type == "trigger" {
                         let input = action.get("input").cloned().unwrap_or_default();
                         let variables = action.get("variables").cloned().unwrap_or_default();
 
@@ -407,7 +408,7 @@ pub fn create_in_memory_triggers_from_flow_definition(
                         };
 
                         let trigger = InMemoryTrigger {
-                            node_id: node_id.to_string(),
+                            action_id: action_id.to_string(),
                             account_id: account_id.to_string(),
                             trigger_id: trigger_id.to_string(),
                             flow_id: flow_id.to_string(),

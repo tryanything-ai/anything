@@ -44,7 +44,7 @@ interface NodePresentation {
 
 export interface Action extends Node {
   trigger: false;
-  action_type: string;
+  type: string;
 }
 
 export interface Trigger extends Node {
@@ -86,7 +86,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
 
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
       {
@@ -96,7 +96,7 @@ export const MockNewFlows: FlowTemplate[] = [
         node_label: "Mock Label",
         variables: [],
         config: {},
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
       {
@@ -106,7 +106,7 @@ export const MockNewFlows: FlowTemplate[] = [
         node_label: "Mock Label",
         variables: [],
         config: {},
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
     ],
@@ -138,7 +138,7 @@ export const MockNewFlows: FlowTemplate[] = [
         node_label: "Mock Label",
         variables: [],
         config: {},
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
       {
@@ -149,7 +149,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
 
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
       {
@@ -160,7 +160,7 @@ export const MockNewFlows: FlowTemplate[] = [
         variables: [],
         config: {},
 
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
       {
@@ -170,7 +170,7 @@ export const MockNewFlows: FlowTemplate[] = [
         node_label: "Mock Label",
         variables: [],
         config: {},
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
       {
@@ -180,7 +180,7 @@ export const MockNewFlows: FlowTemplate[] = [
         node_label: "Mock Label",
         variables: [],
         config: {},
-        action_type: "Mock Action Type",
+        type: "Mock Action Type",
 
       },
     ],

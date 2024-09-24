@@ -1,12 +1,8 @@
-import {
-  fetchProfile,
-  fetchTemplateBySlug,
-} from "@/lib/supabase/fetchSupabase";
-import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
+// import { flowJsonFromBigFlow } from "@repo/ui/helpers/helpers";
 import { ImageResponse } from "next/og";
 import { FlowTemplateOgImage } from "@/components/og/template_css";
-import { FlowTemplate } from "@/types/flow";
-
+// import { FlowTemplate } from "@/types/flow";
+import api, { DBFlowTemplate } from "@repo/anything-api";
 const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
 
 // Route segment config
@@ -27,7 +23,8 @@ export default async function Image({ params }: { params: { slug: string } }) {
     "params in TemplatePageOgImage Generation",
     JSON.stringify(params),
   );
-  const templateResponse = await fetchTemplateBySlug(params.slug);
+  const templateResponse =
+    await api.marketplace.getWorkflowTemplateBySlugForMarketplace(params.slug);
 
   if (!templateResponse) {
     console.log(
@@ -37,14 +34,33 @@ export default async function Image({ params }: { params: { slug: string } }) {
     throw new Error("Template not found");
   }
 
-  const template = templateResponse[0];
+  const template: DBFlowTemplate = templateResponse[0];
   console.log("template in TemplatePage", JSON.stringify(template, null, 3));
 
   const profile: any | undefined = template?.profiles?.username
-    ? await fetchProfile(template.profiles.username)
+    ? await api.profiles.getMarketplaceProfileByUsername(
+        template.profiles.username,
+      )
     : undefined;
 
-  const flow = (await flowJsonFromBigFlow(template)) as FlowTemplate;
+  // const flow = (await flowJsonFromBigFlow(template)) as FlowTemplate;
+
+  const getFlowDetails = (template: DBFlowTemplate) => {
+    const latestVersion = template.flow_template_versions[0];
+    if (!latestVersion || !latestVersion.flow_definition) {
+      return { trigger: null, actions: [] };
+    }
+
+    const { actions } = latestVersion.flow_definition;
+    const trigger = actions.find((action) => action.type === "trigger");
+    const nonTriggerActions = actions.filter(
+      (action) => action.type !== "trigger",
+    );
+
+    return { trigger, actions: nonTriggerActions };
+  };
+
+  const { trigger, actions } = getFlowDetails(template);
 
   console.log(
     "params in TemplatePageOgImage Generation",
@@ -67,12 +83,13 @@ export default async function Image({ params }: { params: { slug: string } }) {
           color: "#FFFFFF",
         }}
       >
+        {/* TODO: bring back */}
         <FlowTemplateOgImage
-          actions={flow.actions}
+          actions={actions}
           profileImage={profile?.avatar_url || ""}
           profileName={profile?.full_name || ""}
           title={template.flow_template_name}
-          trigger={flow.trigger}
+          trigger={trigger}
           username={profile?.username || ""}
         />
       </div>

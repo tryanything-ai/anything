@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   formValuesToJsonValues,
@@ -14,46 +14,54 @@ export function JsonSchemaForm({
   handleValidation,
   onSubmit,
 }: any): JSX.Element {
-  const [values, setValues] = useState<{ [key: string]: any }>(() =>
-    getDefaultValuesFromFields(fields, initialValues),
-  );
+  const [values, setValues] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
-  const [submited, setSubmited] = useState(false);
+  const [submited, setSubmitted] = useState(false);
 
-  function handleInternalValidation(valuesToValidate: any) {
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Initial values:", initialValues);
+    console.log("[JSON SCHEMA FORM] Fields:", fields);
+    const defaultValues = getDefaultValuesFromFields(fields, initialValues);
+    console.log("[JSON SCHEMA FORM] Default values:", defaultValues);
+    setValues(defaultValues);
+    setErrors({});
+  }, [fields, initialValues]);
+
+  const handleInternalValidation = (valuesToValidate: any) => {
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
     const { formErrors } = handleValidation(valuesForJson);
+    return { errors: formErrors || {}, jsonValues: valuesForJson };
+  };
 
-    setErrors(formErrors || {});
+  const handleFieldChange = (fieldName: any, value: any) => {
+    console.log(`[FIELD CHANGE] ${fieldName}:`, value);
+    setValues((prevValues) => {
+      console.log("[PREV VALUES]", prevValues);
+      const newValues = {
+        ...prevValues,
+        [fieldName]: value,
+      };
+      console.log("[NEW VALUES]", newValues);
+      return newValues;
+    });
+  };
 
-    return {
-      errors: formErrors,
-      jsonValues: valuesForJson,
-    };
-  }
-
-  function handleFieldChange(fieldName: any, value: any) {
-    const newValues = {
-      ...values,
-      [fieldName]: value,
-    };
-    setValues(newValues);
-
-    handleInternalValidation(newValues);
-  }
-
-  function handleSubmit(e: any) {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
-    setSubmited(true);
-
-    const validation = handleInternalValidation(values);
-
-    if (validation.errors) {
-      return null;
+    setSubmitted(true);
+    const { errors, jsonValues } = handleInternalValidation(values);
+    setErrors(errors);
+    if (Object.keys(errors).length === 0) {
+      onSubmit(jsonValues, { formValues: values });
     }
+  };
 
-    return onSubmit(validation.jsonValues, { formValues: values });
-  }
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Values after update:", values);
+  }, [values]);
+
+  console.log("[RENDERING JSON SCHEMA FORM]");
+  console.log("Values:", values);
 
   return (
     <form name={name} onSubmit={handleSubmit} noValidate>

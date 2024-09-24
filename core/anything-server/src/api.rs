@@ -24,6 +24,9 @@ use chrono::Timelike;
 use chrono::{DateTime, Datelike, Duration, Utc};
 use std::collections::HashMap;
 
+use std::fs::File;
+use std::io::BufReader;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
     account_id: String,
@@ -34,7 +37,6 @@ pub struct BaseFlowVersionInput {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateWorkflowHandleInput {
     flow_id: String,
-    flow_name: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -60,6 +62,7 @@ pub async fn root() -> &'static str {
 }
 
 pub async fn get_workflows(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -77,6 +80,7 @@ pub async fn get_workflows(
             "*,draft_workflow_versions:flow_versions(*), published_workflow_versions:flow_versions(*)",
         )
         .eq("archived", "false")
+        .eq("account_id", &account_id)
         .eq("draft_workflow_versions.published", "false")
         .order_with_options("created_at", Some("draft_workflow_versions"), false, true)
         .foreign_table_limit(1, "draft_workflow_versions")
@@ -123,7 +127,7 @@ pub async fn get_workflows(
 }
 
 pub async fn get_workflow(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -133,6 +137,7 @@ pub async fn get_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .select("*,flow_versions(*)")
         .execute()
         .await
@@ -169,7 +174,7 @@ pub async fn get_workflow(
 }
 
 pub async fn get_flow_versions(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -179,7 +184,9 @@ pub async fn get_flow_versions(
         .from("flow_versions")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .select("*")
+        .order("created_at.desc")
         .execute()
         .await
     {
@@ -214,55 +221,21 @@ pub async fn get_flow_versions(
     Json(items).into_response()
 }
 
-pub async fn create_workflow(
+pub async fn get_flow_version(
+    Path((account_id, flow_id, version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    _headers: HeaderMap,
-    Json(payload): Json<CreateWorkflowHandleInput>,
 ) -> impl IntoResponse {
-    println!("Handling a create_workflow");
-
     let client = &state.anything_client;
 
-    let input = CreateWorkflowInput {
-        flow_id: payload.flow_id.clone(),
-        flow_name: payload.flow_name.clone(),
-        description: "New Default Flow".to_string(),
-        account_id: user.account_id.clone(),
-    };
-
-    println!("Workflow: {:?}", input);
-
-    let jwt = user.jwt.clone();
-    // Create Flow
     let response = match client
-        .from("flows")
-        .auth(jwt)
-        .insert(serde_json::to_string(&input).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response()
-        }
-    };
-
-    let version_input = BaseFlowVersionInput {
-        account_id: user.account_id.clone(),
-        flow_id: payload.flow_id.clone(),
-        flow_definition: serde_json::json!(Workflow::default()),
-    };
-
-    //Create Flow Version
-    let _version_response = match client
         .from("flow_versions")
-        .auth(user.jwt.clone())
-        .insert(serde_json::to_string(&version_input).unwrap())
+        .auth(user.jwt)
+        .eq("flow_id", &flow_id)
+        .eq("flow_version_id", &version_id)
+        .eq("account_id", &account_id)
+        .select("*")
+        .single()
         .execute()
         .await
     {
@@ -287,12 +260,102 @@ pub async fn create_workflow(
         }
     };
 
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
+}
+
+pub async fn create_workflow(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+    _headers: HeaderMap,
+    Json(payload): Json<CreateWorkflowHandleInput>,
+) -> impl IntoResponse {
+    println!("Handling a create_workflow");
+
+    let client = &state.anything_client;
+
+    let input = CreateWorkflowInput {
+        flow_id: payload.flow_id.clone(),
+        flow_name: "New Default Flow".to_string(),
+        description: "New Default Flow".to_string(),
+        account_id: account_id.clone(),
+    };
+
+    println!("Workflow: {:?}", input);
+
+    let jwt = user.jwt.clone();
+    // Create Flow
+    let response = match client
+        .from("flows")
+        .auth(jwt)
+        .insert(serde_json::to_string(&input).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let version_input = BaseFlowVersionInput {
+        account_id: account_id.clone(),
+        flow_id: payload.flow_id.clone(),
+        flow_definition: serde_json::json!(Workflow::default()),
+    };
+    // Create Flow Version
+    let version_response = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&version_input).unwrap())
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Flow version creation response: {:?}", response);
+            response
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match version_response.json::<serde_json::Value>().await {
+        Ok(body) => serde_json::json!({
+            "workflow_id": payload.flow_id,
+            "workflow_version_id": body["flow_version_id"].as_str().unwrap_or("")
+        }),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
     Json(body).into_response()
 }
 
 //TODO: we also need to set active to false
 pub async fn delete_workflow(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -302,6 +365,7 @@ pub async fn delete_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .update("{\"archived\": true, \"active\": false}")
         .execute()
         .await
@@ -336,7 +400,7 @@ pub async fn delete_workflow(
 }
 
 pub async fn update_workflow(
-    Path(flow_id): Path<String>,
+    Path((account_id, flow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     _headers: HeaderMap,
@@ -362,6 +426,7 @@ pub async fn update_workflow(
             .from("flow_versions")
             .auth(user.jwt.clone())
             .eq("flow_id", &flow_id)
+            .eq("account_id", &account_id)
             .eq("published", "true")
             .select("*")
             .execute()
@@ -412,6 +477,7 @@ pub async fn update_workflow(
         .from("flows")
         .auth(user.jwt)
         .eq("flow_id", &flow_id)
+        .eq("account_id", &account_id)
         .update(serde_json::to_string(&payload).unwrap())
         .execute()
         .await
@@ -449,7 +515,7 @@ pub async fn update_workflow(
 }
 
 pub async fn update_workflow_version(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     _headers: HeaderMap,
@@ -621,7 +687,7 @@ pub async fn update_workflow_version(
 }
 
 pub async fn publish_workflow_version(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -630,6 +696,7 @@ pub async fn publish_workflow_version(
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     println!("Handling publish workflow version");
+    println!("account id: {}", account_id);
     println!("workflow id: {}", workflow_id);
     println!("flow-version id: {}", workflow_version_id);
 
@@ -724,6 +791,32 @@ pub async fn publish_workflow_version(
         }
     };
 
+    // Update the workflow to be active so it starts running automatically
+    let update_workflow_json = serde_json::json!({
+        "active": true
+    });
+
+    match client
+        .from("flows")
+        .auth(user.jwt.clone())
+        .eq("flow_id", &workflow_id)
+        .update(update_workflow_json.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Workflow update response: {:?}", response);
+            response
+        }
+        Err(err) => {
+            eprintln!("Error updating workflow: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to update workflow",
+            )
+                .into_response();
+        }
+    };
     // Signal the trigger processing loop that it needs to hydrate and manage new triggers.
     if let Err(err) = state.trigger_engine_signal.send(workflow_id) {
         println!("Failed to send trigger signal: {:?}", err);
@@ -734,6 +827,7 @@ pub async fn publish_workflow_version(
 
 // Actions
 pub async fn get_actions(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -741,48 +835,128 @@ pub async fn get_actions(
 
     let client = &state.anything_client;
 
+    // Fetch data from the database
+    println!("Fetching data from the database");
     let response = match client
         .from("action_templates")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("archived", "false")
         .select("*")
         .execute()
         .await
     {
-        Ok(response) => response,
-        Err(_) => {
+        Ok(response) => {
+            println!(
+                "Successfully fetched data from the database: {:?}",
+                response
+            );
+            response
+        }
+        Err(err) => {
+            eprintln!("Failed to execute request: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
+    println!("Reading response body");
     let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
+        Ok(body) => {
+            println!("Successfully read response body");
+            body
+        }
+        Err(err) => {
+            eprintln!("Failed to read response body: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+    println!("Parsing response body as JSON");
+    let mut db_items: Value = match serde_json::from_str(&body) {
+        Ok(items) => {
+            println!("Successfully parsed JSON: {:?}", items);
+            items
+        }
+        Err(err) => {
+            eprintln!("Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
-    Json(items).into_response()
+    // Log the current working directory
+    println!("Logging the current working directory");
+    let current_dir = match env::current_dir() {
+        Ok(path) => {
+            println!("Current directory: {}", path.display());
+            path
+        }
+        Err(e) => {
+            println!("Failed to get current directory: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get current directory",
+            )
+                .into_response();
+        }
+    };
+
+    // Load data from the JSON file
+    let json_file_path = current_dir.join("action_db/action_templates.json");
+    println!("Loading data from the JSON file at {:?}", json_file_path);
+    let file = match File::open(&json_file_path) {
+        Ok(file) => {
+            println!("Successfully opened JSON file");
+            file
+        }
+        Err(err) => {
+            eprintln!("Failed to open JSON file: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to open JSON file",
+            )
+                .into_response();
+        }
+    };
+
+    println!("Reading JSON file");
+    let reader = BufReader::new(file);
+    let json_items: Value = match serde_json::from_reader(reader) {
+        Ok(items) => {
+            println!("Successfully parsed JSON file: {:?}", items);
+            items
+        }
+        Err(err) => {
+            eprintln!("Failed to parse JSON file: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse JSON file",
+            )
+                .into_response();
+        }
+    };
+
+    // Combine both database and JSON file items into a single array
+    println!("Combining database and JSON file items");
+    if let Some(db_array) = db_items.as_array_mut() {
+        if let Some(json_array) = json_items.as_array() {
+            db_array.extend(json_array.clone());
+        }
+    }
+
+    Json(db_items).into_response()
 }
 
 // Testing a workflow
 pub async fn test_workflow(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -795,6 +969,7 @@ pub async fn test_workflow(
         .from("flow_versions")
         .auth(user.jwt.clone())
         .eq("flow_version_id", &workflow_version_id)
+        .eq("account_id", &account_id)
         .select("*")
         .execute()
         .await
@@ -877,18 +1052,18 @@ pub async fn test_workflow(
     let flow_session_id = Uuid::new_v4().to_string();
 
     let input = CreateTaskInput {
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
         action_label: workflow.actions[0].label.clone(),
-        trigger_id: workflow.actions[0].node_id.clone(),
+        trigger_id: workflow.actions[0].action_id.clone(),
         trigger_session_id: trigger_session_id.clone(),
         trigger_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         flow_session_id: flow_session_id.clone(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        node_id: workflow.actions[0].node_id.clone(),
-        action_type: ActionType::Trigger,
+        action_id: workflow.actions[0].action_id.clone(),
+        r#type: ActionType::Trigger,
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
@@ -953,7 +1128,12 @@ pub async fn test_workflow(
 //Just ask the user for dummy data and send it up when they do the call
 // Testing a workflow
 pub async fn test_action(
-    Path((workflow_id, workflow_version_id, action_id)): Path<(String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, action_id)): Path<(
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -966,6 +1146,7 @@ pub async fn test_action(
         .from("flow_versions")
         .auth(user.jwt.clone())
         .eq("flow_version_id", &workflow_version_id)
+        .eq("account_id", &account_id)
         .select("*")
         .execute()
         .await
@@ -1054,18 +1235,18 @@ pub async fn test_action(
     };
 
     let input = CreateTaskInput {
-        account_id: user.account_id.clone(),
+        account_id: account_id.clone(),
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
         action_label: workflow.actions[0].label.clone(),
-        trigger_id: workflow.actions[0].node_id.clone(),
+        trigger_id: workflow.actions[0].action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        node_id: workflow.actions[0].node_id.clone(),
-        action_type: workflow.actions[0].action_type.clone(),
+        action_id: workflow.actions[0].action_id.clone(),
+        r#type: workflow.actions[0].r#type.clone(),
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
@@ -1126,7 +1307,12 @@ pub async fn test_action(
 
 // Actions
 pub async fn get_test_session_results(
-    Path((workflow_id, workflow_version_id, session_id)): Path<(String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, session_id)): Path<(
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1137,6 +1323,7 @@ pub async fn get_test_session_results(
     let response = match client
         .from("tasks")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("flow_session_id", &session_id)
         .eq("flow_id", &workflow_id)
         .eq("flow_version_id", &workflow_version_id)
@@ -1198,16 +1385,18 @@ pub async fn get_test_session_results(
 
 //Task
 pub async fn get_tasks(
+    Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    println!("Handling a get_tasks");
+    println!("Handling a get_tasks for account_id: {}", account_id);
 
     let client = &state.anything_client;
 
     let response = match client
         .from("tasks")
-        .auth(&user.jwt) // Pass a reference to the JWT
+        .auth(&user.jwt)
+        .eq("account_id", &account_id)
         .select("*")
         .execute()
         .await
@@ -1251,7 +1440,7 @@ pub async fn get_tasks(
 }
 
 pub async fn get_task_by_workflow_id(
-    Path(workflow_id): Path<String>,
+    Path((account_id, workflow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1260,6 +1449,7 @@ pub async fn get_task_by_workflow_id(
     let response = match client
         .from("tasks")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("flow_id", &workflow_id)
         .select("*")
         .order("created_at.desc,processing_order.desc")
@@ -1296,24 +1486,26 @@ pub async fn get_task_by_workflow_id(
 
     Json(item).into_response()
 }
-
 pub async fn get_auth_provider_by_name(
-    Path(provider_name): Path<String>,
+    Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!(
-        "Handling a get_auth_provider_by_name for  {:?}",
-        provider_name
+        "Handling a get_auth_provider_by_name for account {:?} and provider {:?}",
+        account_id, provider_name
     );
 
     let client = &state.anything_client;
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     let response = match client
         .from("auth_providers")
-        .auth(user.jwt)
+        .auth(supabase_service_role_api_key.clone())
         .eq("provider_name", &provider_name)
-        .select("*")
+        .select("auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at)")
         .execute()
         .await
     {
@@ -1350,15 +1542,14 @@ pub async fn get_auth_provider_by_name(
 
     Json(item).into_response()
 }
-
 pub async fn get_auth_accounts_for_provider_name(
-    Path(provider_name): Path<String>,
+    Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!(
-        "Handling a get_auth_accounts_for_provider_name for  {:?}",
-        provider_name
+        "Handling a get_auth_accounts_for_provider_name for account {:?} and provider {:?}",
+        account_id, provider_name
     );
 
     let client = &state.anything_client;
@@ -1366,6 +1557,7 @@ pub async fn get_auth_accounts_for_provider_name(
     let response = match client
         .from("account_auth_provider_accounts")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("auth_provider_id", &provider_name)
         .select("*")
         .execute()
@@ -1407,16 +1599,24 @@ pub async fn get_auth_accounts_for_provider_name(
 
 pub async fn get_auth_accounts(
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
 ) -> impl IntoResponse {
-    println!("Handling a get auth accounts");
+    println!(
+        "Handling a get auth accounts for account_id: {}",
+        account_id
+    );
 
     let client = &state.anything_client;
 
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     let response = match client
         .from("account_auth_provider_accounts")
-        .auth(user.jwt)
-        .select("*, auth_provider:auth_providers(*)")
+        .auth(supabase_service_role_api_key.clone())
+        .eq("account_id", &account_id)
+        .select("*, auth_provider:auth_providers(auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at)")
         .execute()
         .await
     {
@@ -1453,19 +1653,24 @@ pub async fn get_auth_accounts(
 
     Json(item).into_response()
 }
-
 pub async fn get_auth_providers(
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
+    Path(account_id): Path<String>,
 ) -> impl IntoResponse {
-    println!("Handling a get auth accounts");
+    println!(
+        "Handling a get auth providers for account_id: {}",
+        account_id
+    );
 
     let client = &state.anything_client;
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     let response = match client
         .from("auth_providers")
-        .auth(user.jwt)
-        .select("*")
+        .auth(supabase_service_role_api_key.clone())
+        .select("auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at")
         .execute()
         .await
     {
@@ -1518,7 +1723,13 @@ fn parse_date_or_default(date_str: &str) -> DateTime<Utc> {
 }
 
 pub async fn get_task_status_counts_by_workflow_id(
-    Path((workflow_id, start_date, end_date, time_unit)): Path<(String, String, String, String)>,
+    Path((account_id, workflow_id, start_date, end_date, time_unit)): Path<(
+        String,
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
@@ -1532,6 +1743,7 @@ pub async fn get_task_status_counts_by_workflow_id(
     let query = client
         .from("tasks")
         .auth(user.jwt)
+        .eq("account_id", &account_id)
         .eq("flow_id", &workflow_id)
         .select("task_status, created_at")
         .gte("created_at", start.to_rfc3339())

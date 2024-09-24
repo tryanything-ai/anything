@@ -5,10 +5,15 @@ interface IconProps {
   className?: string; // Optional className property
 }
 
-export function removeWidthHeight(svgString: string) {
+export function removeWidthHeight(svgString: string | null | undefined) {
+  if (typeof svgString !== 'string') {
+    console.error('Invalid SVG string:', svgString);
+    return '';
+  }
+
   let cleanedSvgString = svgString
-    .replace(/\s*width="[^"]*"/, "")
-    .replace(/\s*height="[^"]*"/, "");
+    .replace(/\s*width="[^"]*"/g, "")
+    .replace(/\s*height="[^"]*"/g, "");
 
   // Ensure viewBox and preserveAspectRatio are properly set
   if (!cleanedSvgString.includes('preserveAspectRatio="')) {
@@ -19,24 +24,13 @@ export function removeWidthHeight(svgString: string) {
   }
 
   // Check if fill attribute already exists
-  // if (!cleanedSvgString.includes('fill="')) {
-  //   // Add fill attribute with currentValue
-  //   cleanedSvgString = cleanedSvgString.replace(
-  //     "<svg",
-  //     '<svg fill="currentColor"'
-  //   );
-  // }
-
-  // Check if fill attribute already exists
   if (!cleanedSvgString.includes('fill="')) {
-    // Add fill attribute with currentValue
+    // Add fill attribute with currentColor
     cleanedSvgString = cleanedSvgString.replace(
       "<svg",
       '<svg fill="currentColor"'
     );
   }
-
-
 
   return cleanedSvgString;
 }
@@ -65,8 +59,9 @@ export const SvgRenderer: React.FC<IconProps> = ({ icon, className }) => {
 export const BaseNodeIcon: React.FC<IconProps> = ({ icon, className }) => {
   return (
     <div
-      className={`h-14 w-14 p-2 rounded-md bg-white bg-opacity-30 ${className ?? ""
-        }`}
+      className={`h-14 w-14 p-2 rounded-md bg-white bg-opacity-30 ${
+        className ?? ""
+      }`}
     >
       <SvgRenderer className={`${className} w-full h-full`} icon={icon} />
     </div>

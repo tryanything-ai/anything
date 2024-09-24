@@ -1,21 +1,21 @@
-use std::collections::VecDeque;
-use std::collections::HashMap;
-use postgrest::Postgrest; 
+use postgrest::Postgrest;
 use serde_json::Value;
+use std::collections::HashMap;
+use std::collections::VecDeque;
 
 use dotenv::dotenv;
 use std::env;
 
 use crate::task_types::FlowSessionStatus;
 use crate::task_types::TaskStatus;
-use crate::task_types::{TriggerSessionStatus, ActionType};
-use crate::workflow_types::{Task, Workflow, Action, CreateTaskInput, FlowVersion, TaskConfig};
+use crate::task_types::{ActionType, TriggerSessionStatus};
+use crate::workflow_types::{Action, CreateTaskInput, FlowVersion, Task, TaskConfig, Workflow};
 
 pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-    println!("[TASK_ENGINE] Processing trigger task");
+    println!("[PROCESS TRIGGER TASK] Processing trigger task");
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -31,23 +31,26 @@ pub async fn process_trigger_task(
         .execute()
         .await
         .map_err(|e| {
-            println!("[TASK_ENGINE] Error executing request: {:?}", e);
+            println!("[PROCESS TRIGGER TASK] Error executing request: {:?}", e);
             e
         })?;
 
     let body = response.text().await.map_err(|e| {
-        println!("[TASK_ENGINE] Error reading response body: {:?}", e);
+        println!(
+            "[PROCESS TRIGGER TASK] Error reading response body: {:?}",
+            e
+        );
         e
     })?;
 
     let flow_versions: Vec<FlowVersion> = serde_json::from_str(&body).map_err(|e| {
-        println!("[TASK_ENGINE] Error parsing JSON: {:?}", e);
+        println!("[PROCESS TRIGGER TASK] Error parsing JSON: {:?}", e);
         e
     })?;
 
     let flow_version = flow_versions.into_iter().next().ok_or_else(|| {
         let error_msg = format!("No flow version found for id: {}", task.flow_version_id);
-        println!("[TASK_ENGINE] {}", error_msg);
+        println!("[PROCESS TRIGGER TASK] {}", error_msg);
         error_msg
     })?;
 
@@ -62,17 +65,16 @@ pub async fn process_trigger_task(
         .execute()
         .await
         .map_err(|e| {
-            println!("[TASK_ENGINE] Error inserting new tasks: {:?}", e);
+            println!("[PROCESS TRIGGER TASK] Error inserting new tasks: {:?}", e);
             e
         })?;
 
-    println!("[TASK_ENGINE] Trigger task processed successfully");
- 
+    println!("[PROCESS TRIGGER TASK] Trigger task processed successfully");
+
     Ok(serde_json::json!({
         "message": format!("Trigger task {} processed successfully", task.task_id)
     }))
 }
-
 
 async fn create_execution_plan(
     task: &Task,
@@ -81,11 +83,10 @@ async fn create_execution_plan(
     println!("[EXECUTION_PLANNER] Creating execution plan");
 
     // Deserialize the flow definition into a Workflow struct
-    let workflow: Workflow = serde_json::from_value(flow_version.flow_definition)
-        .map_err(|e| {
-            println!("[EXECUTION_PLANNER] Error deserializing workflow: {:?}", e);
-            e
-        })?;
+    let workflow: Workflow = serde_json::from_value(flow_version.flow_definition).map_err(|e| {
+        println!("[EXECUTION_PLANNER] Error deserializing workflow: {:?}", e);
+        e
+    })?;
 
     // Traverse the workflow to get the list of actions in BFS order, excluding the trigger
     let result = bfs_traversal(&workflow)?;
@@ -109,8 +110,8 @@ async fn create_execution_plan(
             trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
             flow_session_id: task.flow_session_id.clone(),
             flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-            node_id: action.node_id.clone(),
-            action_type: action.action_type.clone(),
+            action_id: action.action_id.clone(),
+            r#type: action.r#type.clone(),
             plugin_id: action.plugin_id.clone(),
             stage: task.stage.clone(),
             config: serde_json::json!(task_config),
@@ -125,14 +126,19 @@ async fn create_execution_plan(
     Ok(events)
 }
 
-fn bfs_traversal(workflow: &Workflow) -> Result<Vec<&Action>, Box<dyn std::error::Error + Send + Sync>> {
+fn bfs_traversal(
+    workflow: &Workflow,
+) -> Result<Vec<&Action>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[EXECUTION_PLANNER] Starting BFS traversal");
     let mut work_list = Vec::new();
 
     // Create a map of node ids to their outgoing edges
     let mut graph = HashMap::new();
     for edge in &workflow.edges {
-        graph.entry(&edge.source).or_insert_with(Vec::new).push(&edge.target);
+        graph
+            .entry(&edge.source)
+            .or_insert_with(Vec::new)
+            .push(&edge.target);
     }
 
     // Use a BFS queue
@@ -142,19 +148,19 @@ fn bfs_traversal(workflow: &Workflow) -> Result<Vec<&Action>, Box<dyn std::error
     let trigger = workflow
         .actions
         .iter()
-        .find(|action| matches!(action.action_type, ActionType::Trigger))
+        .find(|action| matches!(action.r#type, ActionType::Trigger))
         .ok_or_else(|| {
             let error_msg = "Trigger not found in workflow".to_string();
             println!("[EXECUTION_PLANNER] Error: {}", error_msg);
             error_msg
         })?;
 
-    if let Some(neighbors) = graph.get(&trigger.node_id) {
+    if let Some(neighbors) = graph.get(&trigger.action_id) {
         for neighbor_id in neighbors {
             if let Some(neighbor) = workflow
                 .actions
                 .iter()
-                .find(|action| &action.node_id == *neighbor_id)
+                .find(|action| &action.action_id == *neighbor_id)
             {
                 queue.push_back(neighbor);
             }
@@ -164,17 +170,17 @@ fn bfs_traversal(workflow: &Workflow) -> Result<Vec<&Action>, Box<dyn std::error
     // BFS traversal
     while let Some(current) = queue.pop_front() {
         // Add current node to the work list, skipping the trigger action
-        if !matches!(current.action_type, ActionType::Trigger) {
+        if !matches!(current.r#type, ActionType::Trigger) {
             work_list.push(current);
         }
 
         // Enqueue neighbors
-        if let Some(neighbors) = graph.get(&current.node_id) {
+        if let Some(neighbors) = graph.get(&current.action_id) {
             for neighbor_id in neighbors {
                 if let Some(neighbor) = workflow
                     .actions
                     .iter()
-                    .find(|action| &action.node_id == *neighbor_id)
+                    .find(|action| &action.action_id == *neighbor_id)
                 {
                     queue.push_back(neighbor);
                 }

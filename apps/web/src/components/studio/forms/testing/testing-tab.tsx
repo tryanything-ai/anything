@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Play } from "lucide-react";
@@ -5,7 +6,7 @@ import { TaskResult } from "./task-card";
 import { formatDuration, intervalToDuration } from "date-fns";
 
 export default function TestingTab(): JSX.Element {
-  const { workflow, testing } = useAnything();
+  const { testing } = useAnything();
 
   const runWorkflow = async () => {
     try {
@@ -15,8 +16,12 @@ export default function TestingTab(): JSX.Element {
     }
   };
 
-  //TODO: show results of testing.
-  //Polling: for results as they happen
+  useEffect(() => {
+    return () => {
+      // Clear any data or state related to the testing workflow when the component unmounts
+      testing.resetState();
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-full">

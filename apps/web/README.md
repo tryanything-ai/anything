@@ -34,3 +34,20 @@ http://127.0.0.1:54323/project/default
 
 Previews all run with "Staging Supabase Variables"
 Production runs with "Real Supabase Variables" and Railway Server Prod also
+
+# Reset Supabase Staging DB Command
+
+```bash
+npx supabase db reset --linked
+```
+
+# How to set Auth Providers Secrets in Supabase Vault
+
+```bash
+curl -X POST 'http://localhost:3001/auth/providers/airtable/client_id/set' \
+-H 'Content-Type: application/json' \
+-d '{
+  "client_id": "test-vault-secret-id-for-airtable",
+  "cli_secret": "carls-secret"
+}'
+```

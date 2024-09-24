@@ -1,18 +1,28 @@
 use axum::{
-    http::{HeaderValue, Method},
+    http::{
+        header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
+    },
     middleware::{self},
     routing::{delete, get, post, put},
     Router,
 };
+
 use dotenv::dotenv;
 use postgrest::Postgrest;
+use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use tokio::sync::{watch, Semaphore};
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::set_header::SetResponseHeaderLayer;
+
+
+use auth::init::AuthState;
 
 mod api;
 mod auth;
+mod billing;
 mod bundler;
 mod execution_planner;
 mod marketplace;
@@ -20,8 +30,10 @@ mod secrets;
 mod supabase_auth_middleware;
 mod task_engine;
 mod task_types;
+mod templater;
 mod trigger_engine;
 mod workflow_types;
+use regex::Regex;
 
 #[macro_use]
 extern crate slugify;
@@ -30,13 +42,14 @@ pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
+    auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
 }
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok(); 
+    dotenv().ok();
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
@@ -56,8 +69,44 @@ async fn main() {
             .insert_header("apikey", supabase_api_key.clone()),
     );
 
+    let cors_origin = Arc::new(cors_origin);
+    println!("[CORS] CORS origin: {:?}", cors_origin);
+
+    // Create a regex to match subdomains and localhost
+    let protocol = if cors_origin.starts_with("https") {
+        "https"
+    } else {
+        "http"
+    };
+    println!("[CORS] Protocol: {}", protocol);
+
+    let cors_origin_regex = if cors_origin.contains("localhost") {
+        let regex = Regex::new(&format!(r"^{}://localhost(:\d+)?$", protocol)).unwrap();
+        println!("[CORS] Localhost regex: {:?}", regex);
+        regex
+    } else {
+        let regex = Regex::new(&format!(
+            r"^{}://(?:[a-zA-Z0-9-]+\.)?{}$",
+            protocol,
+            regex::escape(&cors_origin) //TODO: maybe this is breaking? app acts normal but the logs say is not woring
+        ))
+        .unwrap();
+        println!("[CORS] Domain regex: {:?}", regex);
+        regex
+    };
+
     let cors = CorsLayer::new()
-        .allow_origin(cors_origin.parse::<HeaderValue>().unwrap())
+        .allow_origin(AllowOrigin::predicate(
+            move |origin: &HeaderValue, _request_parts: &RequestParts| {
+                let origin_str = origin.to_str().unwrap_or("");
+                let is_match = cors_origin_regex.is_match(origin_str);
+                println!(
+                    "[CORS] Checking origin: {} - Match: {}",
+                    origin_str, is_match
+                );
+                is_match
+            },
+        ))
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -67,85 +116,142 @@ async fn main() {
         ])
         .allow_headers([hyper::header::AUTHORIZATION, hyper::header::CONTENT_TYPE]);
 
+    println!("[CORS] CORS layer configured");
+
+    let preflightlayer = SetResponseHeaderLayer::if_not_present(
+        ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("*"),
+    );
+
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
+        auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,
         trigger_engine_signal,
     });
 
-    let app = Router::new()
-        .route("/", get(api::root))
-        .route("/workflows", get(api::get_workflows))
-        .route("/workflow/:id", get(api::get_workflow))
-        .route("/workflow/:id/versions", get(api::get_flow_versions))
+    // Define routes that are public
+    let public_routes = Router::new()
         .route(
-            "/workflow/:workflow_id/version/:workflow_version_id",
+            "/auth/:provider_name/callback",
+            get(auth::init::handle_provider_callback),
+        )
+        .route(
+            "/billing/webhooks/new_account_webhook",
+            post(billing::accounts::handle_new_account_webhook),
+        )
+        .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
+        .route("/auth/providers/:provider_name/client_id/set",
+            post(auth::providers::set_auth_provider_client_id),
+        )
+        .route("/auth/providers/:provider_name/client_id/update",
+        post(auth::providers::update_auth_provider_client_id),
+    )
+        .route("/auth/providers/:provider_name/client_secret_id/set",
+        post(auth::providers::update_auth_provider_client_secret_id),
+    )
+    //marketplace
+    .route("/marketplace/actions", get(marketplace::actions::get_actions_from_marketplace))
+    .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows))
+    .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug))
+    .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
+    .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username));
+
+    let protected_routes = Router::new()
+        .route("/", get(api::root))
+        .route("/account/:account_id/workflows", get(api::get_workflows))
+        .route("/account/:account_id/workflow/:id", get(api::get_workflow))
+        .route("/account/:account_id/workflow/:id/versions", get(api::get_flow_versions))
+        .route(
+            "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
+            get(api::get_flow_version),
+        )
+        .route(
+            "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
             put(api::update_workflow_version),
         )
         .route(
-            "/workflow/:workflow_id/version/:workflow_version_id/publish",
+            "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id/publish",
             put(api::publish_workflow_version),
         )
-        .route("/workflow", post(api::create_workflow))
-        .route("/workflow/:id", delete(api::delete_workflow))
-        .route("/workflow/:id", put(api::update_workflow))
-        .route("/actions", get(api::get_actions))
-        //Marketplace
+        .route("/account/:account_id/workflow", post(api::create_workflow))
+        .route("/account/:account_id/workflow/:id", delete(api::delete_workflow))
+        .route("/account/:account_id/workflow/:id", put(api::update_workflow))
+        .route("/account/:account_id/actions", get(api::get_actions))
+
+
+        //Marketplace && Templates
         .route(
-            "/marketplace/:workflow_id/publish",
-            post(marketplace::publish_workflow_to_marketplace),
+            "/account/:account_id/marketplace/workflow/:workflow_id/version/:workflow_version_id/publish",
+            post(marketplace::workflows::publish_workflow_to_marketplace), 
         )
+        .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
+        
+    
+
+        //Billing
+        .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
+        .route("/account/:account_id/billing/checkout", post(billing::create_links::get_checkout_link))
+        .route("/account/:account_id/billing/portal", post(billing::create_links::get_billing_portal_link))
+        
         //Tasks
-        .route("/tasks", get(api::get_tasks))
-        .route("/tasks/:workflow_id", get(api::get_task_by_workflow_id))
+        .route("/account/:account_id/tasks", get(api::get_tasks))
+        .route("/account/:account_id/tasks/:workflow_id", get(api::get_task_by_workflow_id))
+
         //Charts
         .route(
-            "/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit",
+            "/account/:account_id/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit",
             get(api::get_task_status_counts_by_workflow_id),
         )
+
         // Secrets
-        .route("/secrets", get(secrets::get_decrypted_secrets))
-        .route("/secret", post(secrets::create_secret))
-        .route("/secret", put(secrets::update_secret))
-        .route("/secret/:id", delete(secrets::delete_secret))
+        .route("/account/:account_id/secrets", get(secrets::get_decrypted_secrets))
+        .route("/account/:account_id/secret", post(secrets::create_secret))
+        .route("/account/:account_id/secret", put(secrets::update_secret))
+        .route("/account/:account_id/secret/:id", delete(secrets::delete_secret))
+
         //Auth Providrs
         .route(
-            "/auth/providers/:provider_name",
+            "/account/:account_id/auth/providers/:provider_name",
             get(api::get_auth_provider_by_name),
         )
-        .route("/auth/accounts", get(api::get_auth_accounts))
+        .route("/account/:account_id/auth/accounts", get(api::get_auth_accounts))
         .route(
-            "/auth/accounts/:provider_name",
+            "/account/:account_id/auth/accounts/:provider_name",
             get(api::get_auth_accounts_for_provider_name),
         )
-        .route("/auth/providers", get(api::get_auth_providers))
-        // .route(
-        //     "/auth/callback/:provider_name",
-        //     get(auth::handle_provider_callback),
-        // )
-        // .route("/auth/initiate/:provider_name", post(auth::initiate_auth_flow))
+        .route("/account/:account_id/auth/providers", get(api::get_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
+        .route(
+            "/account/:account_id/auth/:provider_name/initiate",
+            get(auth::init::initiate_auth),
+        )
         // Users Testing Workflows
         //Test Workflows
         .route(
-            "/testing/workflow/:workflow_id/version/:workflow_version_id",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id",
             get(api::test_workflow),
         )
         .route(
-            "/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
             get(api::get_test_session_results),
         )
         //Test Actions
         .route(
-            "/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(api::test_action),
         )
-        .layer(middleware::from_fn(supabase_auth_middleware::middleware))
+        .layer(middleware::from_fn(supabase_auth_middleware::middleware));
+
+    let app = Router::new()
+        .merge(public_routes) // Public routes
+        .merge(protected_routes) // Protected routes
         .layer(cors)
+        .layer(preflightlayer)
         .with_state(state.clone());
 
     // let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
@@ -164,6 +270,11 @@ async fn main() {
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+
+    //Spawn task billing processing loop
+    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+        state.clone(),
+    ));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();

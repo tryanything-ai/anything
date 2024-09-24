@@ -11,9 +11,11 @@ import {
   SelectItem,
 } from "@repo/ui/components/ui/select";
 
-import api from "@/lib/anything-api";
+import api from "@repo/anything-api";
 import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
 import { Button } from "@repo/ui/components/ui/button";
+import Link from "next/link";
+import { useAnything } from "@/context/AnythingContext";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldText,
@@ -42,14 +44,15 @@ function FieldText({
 }: any) {
   const [touched, setTouched] = useState(false);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    console.log("fieldtext not visible", name);
+    return null;
+  }
 
-  // console.log("fieldtext name", label)
-  // console.log("fieldtext props", props)
-  // console.log("fieldtext const", constantValue)
-  // console.log("fieldtext default", defaultValue)
+  console.log("[RENDERING TEXT FIELD: ", name, " = ", value, "]");
 
   function handleChange(e: any) {
+    console.log("fieldtext handleChange: ", e);
     if (!touched) setTouched(true);
     onChange(name, e.target.value);
   }
@@ -219,10 +222,16 @@ function FieldSelect({
 
   if (!isVisible) return null;
 
-  function handleValueChange(e: any) {
+  function handleValueChange(value: any) {
     if (!touched) setTouched(true);
-    onValueChange(e);
+    // don't pass it to onchange if the value is an empty string
+    if (value === "") return;
+    onChange(name, value);
+    // onChange(value); //THIS maybe caused like a 2 day bug. It should be onChange(name, e.target.value)? on onValueChange
   }
+
+  console.log("[RENDERING SELECT FIELD: ", name, " = ", value, "]");
+  console.log("[SELECT OPTIONS]", options);
 
   return (
     <div className="grid gap-3 my-4">
@@ -233,7 +242,7 @@ function FieldSelect({
         </SelectTrigger>
         <SelectContent>
           {options.map((option: any) => (
-            <SelectItem key={option.label} value={option.value}>
+            <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
           ))}
@@ -268,6 +277,9 @@ function FieldAccount({
   const [hydrated, setHydrated] = useState(false);
   const [accountsForProvider, setAccountsForProvider] = useState<any[any]>([]);
   const [providerDetails, setProviderDetails] = useState<any[any]>([]);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
 
   //TODO:
   //Load check if user has an account that matches the variable schema
@@ -285,7 +297,12 @@ function FieldAccount({
 
   const getProviderDetails = async () => {
     try {
-      let res = await api.auth.getProvider(provider);
+      console.log("provider in form field", provider);
+      if (!selectedAccount) return;
+      let res = await api.auth.getProvider(
+        selectedAccount.account_id,
+        provider,
+      );
       console.log("res for getProviderDetails", res);
       setProviderDetails(res[0]);
     } catch (e) {
@@ -295,8 +312,11 @@ function FieldAccount({
 
   const getUserAccountsForProvider = async () => {
     try {
-      if (!provider) return;
-      let res = await api.auth.getAuthAccountsForProvider(provider);
+      if (!provider || !selectedAccount) return;
+      let res = await api.auth.getAuthAccountsForProvider(
+        selectedAccount?.account_id,
+        provider,
+      );
       console.log("res", res);
       setAccountsForProvider(res);
       setHydrated(true);
@@ -325,6 +345,7 @@ function FieldAccount({
 
   return (
     <div className="grid gap-3 my-4">
+      <Label htmlFor={name}>{label}</Label>
       {!hydrated ? (
         <div>Loading...</div>
       ) : (
@@ -334,9 +355,12 @@ function FieldAccount({
               <BaseNodeIcon icon={providerDetails.provider_icon} />
               <div className="text-xl ml-2">Connect your Airtable Account</div>
               <div className="ml-auto">
-                <Button onClick={connect} variant="outline">
+                <Link href="/accounts">
+                  <Button variant="outline">Add Account</Button>
+                </Link>
+                {/* <Button onClick={connect} variant="outline">
                   Connect
-                </Button>
+                </Button> */}
               </div>
             </div>
           ) : (
@@ -367,12 +391,13 @@ function FieldAccount({
                     <div className="mr-2 ml-8">
                       <BaseSelectIcon icon={providerDetails.provider_icon} />
                     </div>
-
                     <div className="text-lg flex items-center">
                       Connnect New Account
                     </div>
                     <div className="ml-auto">
-                      <Button variant="outline">Add Account</Button>
+                      <Link href="/accounts">
+                        <Button variant="outline">Add Account</Button>
+                      </Link>
                     </div>
                   </div>
                 </div>

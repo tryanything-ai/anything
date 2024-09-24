@@ -8,17 +8,22 @@ CREATE TABLE IF NOT EXISTS marketplace.action_templates
 
     -- ADD YOUR COLUMNS HERE
     -- app_action_template_id uuid not null references anything.action_templates(action_template_id),
-    app_action_template_id uuid NOT NULL, 
+    featured boolean not null default false,
+    app_action_template_id uuid NULL,
+    action_template_name text not null,
+    action_template_long_description text null,
+    action_template_description text null,
+    approved boolean not null default true, -- if the action template is evil we can flag it as not approved to hide at some point
     action_template_definition json NOT NULL, -- the definition of the action template
-    public_template boolean not null default false,
-    action_type text not null, 
+    public boolean not null default false,
+    type text not null, 
     publisher_id uuid not null, -- kind like the same as the above account_id i think
     anonymous_publish boolean not null default false,
     slug text not null,
     archived boolean not null default false,
 
     constraint action_template_slug_key unique (slug),
-    constraint action_template_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(id),
+    constraint action_template_publisher_id_fkey foreign key (publisher_id) references marketplace.profiles(profile_id),
 
     -- archived boolean not null default false, 
     -- constraint action_templates_pkey1 primary key (action_template_id),
@@ -58,20 +63,21 @@ ALTER TABLE marketplace.action_templates ENABLE ROW LEVEL SECURITY;
 -- Here are a few example policies that you may find useful when working with Basejump
 
 ----------------
--- Authenticated users should be able to read all records regardless of account
+-- Authenticated users should be able to read all public records
 ----------------
-create policy "All logged in users can select" on marketplace.action_templates
-    for select
-    to authenticated
-    using (true);
+-- create policy "All logged in users can select public templates" on marketplace.action_templates
+--     for select
+--     to authenticated
+--     using (public = true);
+
 
 ----------------
--- Authenticated AND Anon users should be able to read all records regardless of account
+-- Authenticated AND Anon users should be able to read all public records
 ----------------
-create policy "All authenticated and anonymous users can select" on marketplace.action_templates
+create policy "All authenticated and anonymous users can select public templates" on marketplace.action_templates
     for select
     to authenticated, anon
-    using (true);
+    using (public = true);
 
 -------------
 -- Users should be able to read records that are owned by an account they belong to
@@ -84,15 +90,15 @@ create policy "All authenticated and anonymous users can select" on marketplace.
 --     );
 
 
-----------------
+-- --------------
 -- Users should be able to create records that are owned by an account they belong to
-----------------
--- create policy "Account members can insert" on marketplace.action_templates
---     for insert
---     to authenticated
---     with check (
---     (account_id IN ( SELECT basejump.get_accounts_with_role()))
---     );
+-- --------------
+create policy "Account members can insert" on marketplace.action_templates
+    for insert
+    to authenticated
+    with check (
+    (account_id IN ( SELECT basejump.get_accounts_with_role()))
+    );
 
 ---------------
 -- Users should be able to update records that are owned by an account they belong to
@@ -123,6 +129,5 @@ create policy "All authenticated and anonymous users can select" on marketplace.
 --     using (
 --     (account_id IN ( SELECT basejump.get_accounts_with_role("owner")))
 --      );
-
 
 

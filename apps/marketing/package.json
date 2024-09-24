@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@headlessui/react": "^1.7.17",
+    "@headlessui/react": "^2.1.5",
+    "@heroicons/react": "^2.1.5",
     "@repo/ui": "workspace:*",
+    "@repo/anything-api": "workspace:*",
     "@sentry/nextjs": "^7.75.0",
     "@supabase/auth-helpers-nextjs": "^0.8.1",
     "@supabase/supabase-js": "^2.38.4",
@@ -38,6 +40,6 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.20",
     "tailwindcss": "^3.4.4",
-   "typescript": "^5.4.5"
+    "typescript": "^5.4.5"
   }
 }

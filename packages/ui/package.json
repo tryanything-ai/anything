@@ -12,6 +12,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/anything-api": "workspace:*",
     "@types/node": "^20",
     "@types/react": "^18.2.0",
     "autoprefixer": "^10.4.19",
@@ -39,11 +40,12 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
+    "framer-motion": "^11.5.4",
     "lucide-react": "^0.395.0",
     "react-hook-form": "^7.45.4",
     "react-resizable-panels": "^2.0.22",
     "recharts": "^2.12.7",
-    "tailwind-merge": "^2.3.0",
+    "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4"
   },

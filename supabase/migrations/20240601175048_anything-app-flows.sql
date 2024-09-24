@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS anything.flows
     -- ADD YOUR COLUMNS HERE
     flow_name TEXT NOT NULL,
     description TEXT,
+    icon TEXT NULL,
+    long_description TEXT NULL,
+    header_image TEXT NULL,
+    marketplace_flow_template_id uuid NULL,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     archived boolean not null default false,
 
