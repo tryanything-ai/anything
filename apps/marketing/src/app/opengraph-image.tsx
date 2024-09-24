@@ -1,4 +1,4 @@
-import { ImageResponse } from "next/server";
+import { ImageResponse } from "next/og";
 import { OgDiv } from "@/components/og/baseOg";
 
 const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
@@ -18,18 +18,14 @@ export const size = {
 export const contentType = "image/png";
 
 // Image generation
-export default async function Image({
-  params,
-}: {
-  params;
-}): Promise<ImageResponse> {
+export default async function Image({ params }: { params: any }) {
   console.log(
     "params in TemplatePageOgImage Generation",
-    JSON.stringify(params)
+    JSON.stringify(params),
   );
 
   const boldFontData = await fetch(
-    this_url + "/fonts/DMSans-SemiBold.ttf"
+    this_url + "/fonts/DMSans-SemiBold.ttf",
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
@@ -95,6 +91,6 @@ export default async function Image({
           weight: 700,
         },
       ],
-    }
+    },
   );
 }

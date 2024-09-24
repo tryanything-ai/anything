@@ -17,12 +17,30 @@ export let EDIT_VARIABLES_SCHEMA: any = {
             "type": "string",
             "oneOf": [
                 {
-                    "value": "string",
+                    "value": "text",
                     "title": "Text"
                 },
                 {
-                    "value": "number",
-                    "title": "Number"
+                    "value": "account",
+                    "title": "Account"
+                }
+            ],
+            "x-jsf-presentation": {
+                "inputType": "select"
+            }
+        }, 
+        "provider": {
+            "title": "Authentication Provider",
+            "description": "System your connecting too",
+            "type": "string",
+            "oneOf": [
+                {
+                    "value": "airtable",
+                    "title": "Airtable"
+                },
+                {
+                    "value": "gmail",
+                    "title": "Gmail"
                 }
             ],
             "x-jsf-presentation": {
@@ -30,15 +48,39 @@ export let EDIT_VARIABLES_SCHEMA: any = {
             }
         }
     },
-    "x-jsf-order": ["title", "description", "type"],
-    "required": ["title", "description", "type"],
+    "x-jsf-order": ["title", "description", "type", "provider"],
+    "required": ["title", "type"],
+    "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "account"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "required": [
+          "provider"
+        ]
+      },
+      "else": {
+        "properties": {
+          "provider": false
+        }
+      }
+    }
+  ],
     "additionalProperties": false
 }
 
 export const EDIT_VARIABLES_VARIABLES = {
     "title": "",
     "description": "",
-    "type": ""
+    "type": "",
 }
 
 export type VariableProperty = {
@@ -60,4 +102,22 @@ export const DEFAULT_VARIABLES_SCHEMA: any = {
     "x-jsf-order": [],
     required: [],
     additionalProperties: false
+}
+
+
+export const isValidVariablesSchema = (obj: any): boolean => {
+    const defaultKeys = Object.keys(DEFAULT_VARIABLES_SCHEMA);
+    const objKeys = Object.keys(obj);
+
+    if (defaultKeys.length !== objKeys.length) {
+        return false;
+    }
+
+    for (let key of defaultKeys) {
+        if (!objKeys.includes(key)) {
+            return false;
+        }
+    }
+
+    return true;
 }

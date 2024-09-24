@@ -13,8 +13,8 @@ const mockFlowProps: FlowTemplateOgImageProps = {
   username: "mockCreator",
   profileName: "Mock Creator",
   profileImage: "",
-  trigger: MockNewFlows[0].trigger,
-  actions: MockNewFlows[0].actions,
+  trigger: MockNewFlows?.[0]?.trigger!,
+  actions: MockNewFlows?.[0]?.actions!,
 };
 
 const mockProfileProps: ProfileOgImageProps = {

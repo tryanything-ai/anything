@@ -1,4 +1,4 @@
-import { fetchTemplates, fetchProfiles } from "utils";
+import api from "@repo/anything-api";
 import { MetadataRoute } from "next";
 
 const base_url = process.env.NEXT_PUBLIC_HOSTED_URL;
@@ -7,10 +7,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: any = [];
 
   //TODO: works for more than 1000? 100? idk
-  const templateResult = await fetchTemplates();
+  const templateResult = await api.marketplace.getWorkflowTemplatesForMarketplace();
 
   if (templateResult) {
-    templateResult.forEach((template) =>
+    templateResult.forEach((template: any) =>
       routes.push({
         url: `${base_url}/templates/${template.slug}`,
         lastModified: new Date(template.created_at),
@@ -20,18 +20,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
   }
 
-  const profileResult = await fetchProfiles();
+  // const profileResult = await fetchProfiles();
 
-  if (profileResult) {
-    profileResult.forEach((profile) =>
-      routes.push({
-        url: `${base_url}/${profile.username}`,
-        lastModified: profile.updated_at ? new Date(profile.updated_at) : null,
-        changeFrequency: "monthly",
-        priority: 0.1,
-      })
-    );
-  }
+  // if (profileResult) {
+  //   profileResult.forEach((profile) =>
+  //     routes.push({
+  //       url: `${base_url}/${profile.username}`,
+  //       lastModified: profile.updated_at ? new Date(profile.updated_at) : null,
+  //       changeFrequency: "monthly",
+  //       priority: 0.1,
+  //     })
+  //   );
+  // }
 
   //home
   routes.push({

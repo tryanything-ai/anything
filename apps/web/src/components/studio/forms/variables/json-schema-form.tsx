@@ -1,75 +1,93 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-import { formValuesToJsonValues, getDefaultValuesFromFields } from "@/lib/json-schema-utils";
-import { Button } from "@/components/ui/button";
+import {
+  formValuesToJsonValues,
+  getDefaultValuesFromFields,
+} from "@/lib/json-schema-utils";
+import { Button } from "@repo/ui/components/ui/button";
 import { fieldsMap } from "../form-fields";
 
-export function JsonSchemaForm({ name, fields, initialValues, handleValidation, onSubmit}: any) {
+export function JsonSchemaForm({
+  name,
+  fields,
+  initialValues,
+  handleValidation,
+  onSubmit,
+}: any): JSX.Element {
+  const [values, setValues] = useState<{ [key: string]: any }>({});
+  const [errors, setErrors] = useState<{ [key: string]: any }>({});
+  const [submited, setSubmitted] = useState(false);
 
-    const [values, setValues] = useState<{ [key: string]: any }>(() =>
-        getDefaultValuesFromFields(fields, initialValues)
-    );
-    const [errors, setErrors] = useState<{ [key: string]: any }>({});
-    const [submited, setSubmited] = useState(false);
-    
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Initial values:", initialValues);
+    console.log("[JSON SCHEMA FORM] Fields:", fields);
+    const defaultValues = getDefaultValuesFromFields(fields, initialValues);
+    console.log("[JSON SCHEMA FORM] Default values:", defaultValues);
+    setValues(defaultValues);
+    setErrors({});
+  }, [fields, initialValues]);
 
-    function handleInternalValidation(valuesToValidate: any) {
-        const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
-        const { formErrors } = handleValidation(valuesForJson);
+  const handleInternalValidation = (valuesToValidate: any) => {
+    const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
+    const { formErrors } = handleValidation(valuesForJson);
+    return { errors: formErrors || {}, jsonValues: valuesForJson };
+  };
 
-        setErrors(formErrors || {});
+  const handleFieldChange = (fieldName: any, value: any) => {
+    console.log(`[FIELD CHANGE] ${fieldName}:`, value);
+    setValues((prevValues) => {
+      console.log("[PREV VALUES]", prevValues);
+      const newValues = {
+        ...prevValues,
+        [fieldName]: value,
+      };
+      console.log("[NEW VALUES]", newValues);
+      return newValues;
+    });
+  };
 
-        return {
-            errors: formErrors,
-            jsonValues: valuesForJson
-        };
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    setSubmitted(true);
+    const { errors, jsonValues } = handleInternalValidation(values);
+    setErrors(errors);
+    if (Object.keys(errors).length === 0) {
+      onSubmit(jsonValues, { formValues: values });
     }
+  };
 
-    function handleFieldChange(fieldName: any, value: any) {
-        const newValues = {
-            ...values,
-            [fieldName]: value
-        };
-        setValues(newValues);
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Values after update:", values);
+  }, [values]);
 
-        handleInternalValidation(newValues);
-    }
+  console.log("[RENDERING JSON SCHEMA FORM]");
+  console.log("Values:", values);
 
-    function handleSubmit(e: any) {
-        e.preventDefault();
-        setSubmited(true);
+  return (
+    <form name={name} onSubmit={handleSubmit} noValidate>
+      <div>
+        {fields?.map((field: any) => {
+          const { name: fieldName, inputType } = field;
+          const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
 
-        const validation = handleInternalValidation(values);
-
-        if (validation.errors) {
-            return null;
-        }
-
-        return onSubmit(validation.jsonValues, { formValues: values });
-    }
-
-    return (
-        <form name={name} onSubmit={handleSubmit} noValidate>
-            <div>
-                {fields?.map((field: any) => {
-                    const { name: fieldName, inputType } = field;
-                    const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
-
-                    return (
-                        <FieldComponent
-                            key={fieldName}
-                            value={values?.[fieldName]}
-                            error={errors[fieldName]}
-                            submited={submited}
-                            onChange={handleFieldChange}
-                            onValueChange={(value: any) => handleFieldChange(fieldName, value)}
-                            {...field}
-
-                        />
-                    );
-                })}
-                <Button type="submit" variant={"default"} >Submit</Button>
-            </div>
-        </form>
-    );
+          return (
+            <FieldComponent
+              key={fieldName}
+              value={values?.[fieldName]}
+              error={errors[fieldName]}
+              submited={submited}
+              onChange={handleFieldChange}
+              onValueChange={(value: any) =>
+                handleFieldChange(fieldName, value)
+              }
+              {...field}
+            />
+          );
+        })}
+        <Button type="submit" variant={"default"}>
+          Submit
+        </Button>
+      </div>
+    </form>
+  );
 }

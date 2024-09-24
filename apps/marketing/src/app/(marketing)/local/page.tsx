@@ -1,9 +1,8 @@
 import { headers } from "next/headers";
 
-// import { BgPattern } from "@/components/ui/Bgpattern";
 // import { SignUpButton } from "@/components/marketing/LandingSignUp";
 import Image from "next/image";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@repo/ui/components/ui/button";
 import Llama from "../../../../public/llamascreenshot.png";
 import Features from "@/components/LocalFeatures";
 import Faq from "@/components/LocalFaq";
@@ -36,14 +35,15 @@ export default function IndexPage() {
         <div className="flex flex-col w-full px-4 items-center justify-center md:flex-row gap-4">
           {/* <SignUpButton className="block" />
            */}
-          <Button
+          {/* <Button
             href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             rel="noopener noreferrer"
             target="_blank"
-            variant="daisy_primary"
+            variant="default"
+            // variant="daisy_primary"
           >
             Get Early Access
-          </Button>
+          </Button> */}
           {/* <Button
             href={`https://airtable.com/shrfQYBtcoUqYNylu?prefill_fldVLaD0gtTpY1jxP=wysiwyg&hide_fldVLaD0gtTpY1jxP=true&prefill_referring_domain=${referringDomain}&hide_referring_domain=true`}
             rel="noopener noreferrer"
@@ -60,16 +60,21 @@ export default function IndexPage() {
           src={Llama}
           // src={`https://${process.env.NEXT_PUBLIC_VERCEL_URL}/llamascreenshot.png`}
           alt="Llama Screenshot"
-        // width="500"
-        // height="1000"
+          // width="500"
+          // height="1000"
         />
       </div>
       <Features />
       {/* TODO: Add Features List */}
       {/* Templates https://tailwindui.com/components/marketing/sections/feature-sections */}
       {/* <div className="relative w-full max-w-5xl mx-auto"> */}
-      <h2 className="text-2xl text-center mb-12 font-semibold text-slate-12">Demo Video</h2>
-      <div className="relative w-full max-w-5xl mx-auto" style={{ paddingBottom: "62.5%", height: 0 }}>
+      <h2 className="text-2xl text-center mb-12 font-semibold text-slate-12">
+        Demo Video
+      </h2>
+      <div
+        className="relative w-full max-w-5xl mx-auto"
+        style={{ paddingBottom: "62.5%", height: 0 }}
+      >
         <iframe
           src="https://www.loom.com/embed/c71dc4d5a07c4424b3f6d5bbe218549f?sid=6cc91e63-8d1e-431d-a88a-1f1458c58411"
           frameBorder="0"

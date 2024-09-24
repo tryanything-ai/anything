@@ -1,4 +1,3 @@
-import { Node } from "utils";
 import React from "react";
 import { OgDiv } from "./baseOg";
 
@@ -10,8 +9,8 @@ export type FlowTemplateOgImageProps = {
   username: string;
   profileName: string;
   profileImage: string;
-  trigger: Node;
-  actions: Node[];
+  trigger: any;
+  actions: any[];
 };
 
 export const FlowTemplateOgImage: React.FC<FlowTemplateOgImageProps> = ({
