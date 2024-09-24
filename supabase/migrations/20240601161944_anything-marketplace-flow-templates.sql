@@ -9,7 +9,11 @@ CREATE TABLE IF NOT EXISTS marketplace.flow_templates
     -- ADD YOUR COLUMNS HERE
     -- flow_template_id uuid not null default gen_random_uuid (),
     -- created_at timestamp with time zone not null default now(),
+    featured boolean not null default false,
     flow_template_name text not null,
+    flow_template_icon text null,
+    flow_template_long_description text null,
+    flow_template_header_image text null,
     flow_template_description text null,
     public boolean not null,
     approved boolean not null default true, -- if the action template is evil we can flag it as not approved to hide at some point

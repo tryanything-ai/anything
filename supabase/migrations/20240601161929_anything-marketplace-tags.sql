@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS marketplace.tags
 
     -- ADD YOUR COLUMNS HERE
     -- created_at timestamp with time zone not null default now(),
+    featured boolean not null default false,
     tag_uuid uuid not null DEFAULT uuid_generate_v4(),
     tag_label text not null,
     tag_slug text not null,

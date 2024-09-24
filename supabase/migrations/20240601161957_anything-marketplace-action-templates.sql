@@ -8,8 +8,10 @@ CREATE TABLE IF NOT EXISTS marketplace.action_templates
 
     -- ADD YOUR COLUMNS HERE
     -- app_action_template_id uuid not null references anything.action_templates(action_template_id),
+    featured boolean not null default false,
     app_action_template_id uuid NULL,
     action_template_name text not null,
+    action_template_long_description text null,
     action_template_description text null,
     approved boolean not null default true, -- if the action template is evil we can flag it as not approved to hide at some point
     action_template_definition json NOT NULL, -- the definition of the action template
