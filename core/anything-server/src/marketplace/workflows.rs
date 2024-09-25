@@ -394,6 +394,7 @@ pub async fn publish_workflow_to_marketplace(
     Json(combined_response).into_response()
 }
 
+
 // Workflows
 pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let client = &state.marketplace_client;
@@ -406,7 +407,10 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
         .execute()
         .await
     {
-        Ok(response) => response,
+        Ok(response) => {
+            println!("[MARKETPLACE] Request successful: {:?}", response);
+            response
+        },
         Err(e) => {
             println!("[MARKETPLACE] Failed to execute request: {:?}", e);
             return (
@@ -418,7 +422,10 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
     };
 
     let body = match response.text().await {
-        Ok(body) => body,
+        Ok(body) => {
+            println!("[MARKETPLACE] Response body: {:?}", body);
+            body
+        },
         Err(e) => {
             println!("[MARKETPLACE] Failed to read response body: {:?}", e);
             return (
@@ -430,17 +437,66 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
     };
 
     let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
+        Ok(items) => {
+            println!("[MARKETPLACE] Parsed JSON successfully: {:?}", items);
+            items
+        },
         Err(e) => {
             println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
-    // println!("[MARKETPLACE] Query result: {:?}", items);
-
+    println!("[MARKETPLACE] Returning JSON response: {:?}", items);
     Json(items).into_response()
 }
+// // Workflows
+// pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+//     let client = &state.marketplace_client;
+
+//     println!("[MARKETPLACE] Fetching workflow templates");
+
+//     let response = match client
+//         .from("flow_templates")
+//         .select("*, flow_template_versions(*), tags(*), profiles(*)")
+//         .execute()
+//         .await
+//     {
+//         Ok(response) => response,
+//         Err(e) => {
+//             println!("[MARKETPLACE] Failed to execute request: {:?}", e);
+//             return (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 "Failed to execute request",
+//             )
+//                 .into_response();
+//         }
+//     };
+
+//     let body = match response.text().await {
+//         Ok(body) => body,
+//         Err(e) => {
+//             println!("[MARKETPLACE] Failed to read response body: {:?}", e);
+//             return (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 "Failed to read response body",
+//             )
+//                 .into_response();
+//         }
+//     };
+
+//     let items: Value = match serde_json::from_str(&body) {
+//         Ok(items) => items,
+//         Err(e) => {
+//             println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
+//             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+//         }
+//     };
+
+//     // println!("[MARKETPLACE] Query result: {:?}", items);
+
+//     Json(items).into_response()
+// }
 
 pub async fn get_marketplace_workflow_by_slug(
     State(state): State<Arc<AppState>>,
