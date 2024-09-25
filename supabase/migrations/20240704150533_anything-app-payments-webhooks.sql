@@ -8,7 +8,18 @@ execute function "supabase_functions"."http_request"(
   '{"Content-Type":"application/json"}',
   '{}',
   '5000'
-);  
+);
+
+create trigger "create_user_in_external_email_system_webhook" after insert
+on "auth"."users" for each row
+execute function "supabase_functions"."http_request"(
+  'http://host.docker.internal:3001/webhooks/create_user_in_external_email_system', --for dev branch
+  'POST',
+  '{"Content-Type":"application/json"}',
+  '{}',
+  '5000'
+);
+
 
 -- Optionally, you can add a check within the function to ensure it's being called by the service role
 CREATE OR REPLACE FUNCTION anything.get_user_by_id(user_id uuid)
@@ -37,7 +48,6 @@ GRANT EXECUTE ON FUNCTION anything.get_user_by_id(uuid) TO service_role;
 -- How to do this with real variables so we don't need to hard code urls and stuff
 -- https://github.com/orgs/supabase/discussions/12813#discussioncomment-10422025
 -- store in vault and make a vault access function
-
 
 -- FOr internal links for testin locally
 -- https://github.com/supabase/supabase/issues/13005#issuecomment-1765482443 "host.docker.internal" is the way to go for url

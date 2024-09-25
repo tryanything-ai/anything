@@ -23,6 +23,7 @@ use auth::init::AuthState;
 mod api;
 mod auth;
 mod billing;
+mod email;
 mod bundler;
 mod execution_planner;
 mod marketplace;
@@ -146,6 +147,7 @@ async fn main() {
             "/billing/webhooks/new_account_webhook",
             post(billing::accounts::handle_new_account_webhook),
         )
+        .route("/webhooks/create_user_in_external_email_system", post(email::handle_new_account_webhook))
         .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
         .route("/auth/providers/:provider_name/client_id/set",
             post(auth::providers::set_auth_provider_client_id),
