@@ -4,85 +4,40 @@ const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
 export const getActionTemplatesForMarketplace = async () => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-
-        console.log('Session:', session);
-
-        const headers: HeadersInit = {
-            'Content-Type': 'application/json',
-        };
-
-        if (session) {
-            headers['Authorization'] = `${session.access_token}`;
-        }
-
-        const response = await fetch(`${ANYTHING_API_URL}/marketplace/actions`, {
-            headers: headers,
-        });
+        const url = `${ANYTHING_API_URL}/marketplace/actions`;
+        console.log(`[MARKETPLACE.TS] Fetching from: ${url}`);
+        const response = await fetch(url);
         const data = await response.json();
-        console.log('Data from /api/marketplace/actions:', data);
+        console.log('[MARKETPLACE.TS] Data from /api/marketplace/actions:', data);
         return data;
     } catch (error) {
-        console.error('Error fetching actions:', error);
+        console.error('[MARKETPLACE.TS] Error fetching actions:', error);
     }
 }
 
 export const getWorkflowTemplatesForMarketplace = async () => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-
-        console.log('Session:', session);
-
-        const headers: HeadersInit = {
-            'Content-Type': 'application/json',
-        };
-
-        if (session) {
-            headers['Authorization'] = `${session.access_token}`;
-        }
-
-        const response = await fetch(`${ANYTHING_API_URL}/marketplace/workflows`, {
-            headers: headers,
-        });
+        const url = `${ANYTHING_API_URL}/marketplace/workflows`;
+        console.log(`[MARKETPLACE.TS] Fetching from: ${url}`);
+        const response = await fetch(url);
         const data = await response.json();
-        console.log('Data from /api/marketplace/workflows:', data);
+        console.log('[MARKETPLACE.TS] Data from /api/marketplace/workflows:', data);
         return data;
     } catch (error) {
-        console.error('Error fetching workflows:', error);
+        console.error('[MARKETPLACE.TS] Error fetching workflows:', error);
     }
 }
 
 export const getWorkflowTemplateBySlugForMarketplace = async (slug: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-
-        console.log('Session:', session);
-
-        const headers: HeadersInit = {
-            'Content-Type': 'application/json',
-        };
-
-        if (session) {
-            headers['Authorization'] = `${session.access_token}`;
-        }
-
-        const response = await fetch(`${ANYTHING_API_URL}/marketplace/workflow/${slug}`, {
-            headers: headers,
-        });
+        const url = `${ANYTHING_API_URL}/marketplace/workflow/${slug}`;
+        console.log(`[MARKETPLACE.TS] Fetching from: ${url}`);
+        const response = await fetch(url);
         const data = await response.json();
-        console.log(`Data from /api/marketplace/workflows/${slug}:`, data);
+        console.log(`[MARKETPLACE.TS] Data from /api/marketplace/workflows/${slug}:`, data);
         return data;
     } catch (error) {
-        console.error('Error fetching workflow by slug:', error);
+        console.error('[MARKETPLACE.TS] Error fetching workflow by slug:', error);
     }
 }
 
@@ -91,7 +46,7 @@ export const publishFlowTemplateToMarketplace = async (account_id: string, workf
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
-        console.log('Session:', session);
+        console.log('[MARKETPLACE.TS] Session:', session);
 
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
@@ -101,7 +56,9 @@ export const publishFlowTemplateToMarketplace = async (account_id: string, workf
             headers['Authorization'] = `${session.access_token}`;
         }
 
-        const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/marketplace/workflow/${workflow_id}/version/${workflow_version_id}/publish`, {
+        const url = `${ANYTHING_API_URL}/account/${account_id}/marketplace/workflow/${workflow_id}/version/${workflow_version_id}/publish`;
+        console.log(`[MARKETPLACE.TS] Posting to: ${url}`);
+        const response = await fetch(url, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify({
@@ -109,9 +66,9 @@ export const publishFlowTemplateToMarketplace = async (account_id: string, workf
             }),
         });
         const data = await response.json();
-        console.log('Data from /api/marketplace/workflow/:id/verion/:id/publish:', data);
+        console.log('[MARKETPLACE.TS] Data from /api/marketplace/workflow/:id/verion/:id/publish:', data);
         return data;
     } catch (error) {
-        console.error('Error publishing workflow template:', error);
+        console.error('[MARKETPLACE.TS] Error publishing workflow template:', error);
     }
 }
