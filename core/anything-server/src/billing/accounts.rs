@@ -131,8 +131,14 @@ pub async fn handle_new_account_webhook(
                     .await
                 {
                     Ok(response) => {
-                        println!("[STRIPE CREATE CUSTOMER WEBHOOK] Response status: {:?}", response.status());
-                        println!("[STRIPE CREATE CUSTOMER WEBHOOK] Response headers: {:?}", response.headers());
+                        println!(
+                            "[STRIPE CREATE CUSTOMER WEBHOOK] Response status: {:?}",
+                            response.status()
+                        );
+                        println!(
+                            "[STRIPE CREATE CUSTOMER WEBHOOK] Response headers: {:?}",
+                            response.headers()
+                        );
 
                         if response.status().is_success() {
                             response
@@ -142,7 +148,10 @@ pub async fn handle_new_account_webhook(
                                 .text()
                                 .await
                                 .unwrap_or_else(|_| "Unable to read error body".to_string());
-                            eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Error response body: {}", error_body);
+                            eprintln!(
+                                "[STRIPE CREATE CUSTOMER WEBHOOK] Error response body: {}",
+                                error_body
+                            );
                             return Err((
                                 StatusCode::INTERNAL_SERVER_ERROR,
                                 format!("Failed to fetch user data. Status: {}", status),
@@ -150,7 +159,10 @@ pub async fn handle_new_account_webhook(
                         }
                     }
                     Err(err) => {
-                        eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Error fetching user data: {:?}", err);
+                        eprintln!(
+                            "[STRIPE CREATE CUSTOMER WEBHOOK] Error fetching user data: {:?}",
+                            err
+                        );
                         return Err((
                             StatusCode::INTERNAL_SERVER_ERROR,
                             "Failed to fetch user data".to_string(),
@@ -161,7 +173,10 @@ pub async fn handle_new_account_webhook(
                 let user: User = match user_response.json().await {
                     Ok(user) => user,
                     Err(err) => {
-                        eprintln!("[STRIPE CREATE CUSTOMER WEBHOOK] Error parsing user response: {:?}", err);
+                        eprintln!(
+                            "[STRIPE CREATE CUSTOMER WEBHOOK] Error parsing user response: {:?}",
+                            err
+                        );
                         // let response_text = user_response.text().await
                         //     .unwrap_or_else(|_| "Unable to read response body".to_string());
                         // eprintln!("Response body: {}", response_text);
@@ -172,7 +187,10 @@ pub async fn handle_new_account_webhook(
                     }
                 };
 
-                println!("[STRIPE CREATE CUSTOMER WEBHOOK] User data for non-personal account: {:?}", user);
+                println!(
+                    "[STRIPE CREATE CUSTOMER WEBHOOK] User data for non-personal account: {:?}",
+                    user
+                );
 
                 // Handle the new account creation
                 let stripe_secret_key = std::env::var("STRIPE_SECRET_KEY").map_err(|_| {
