@@ -137,6 +137,7 @@ async fn main() {
 
     // Define routes that are public
     let public_routes = Router::new()
+    .route("/", get(api::root))
         .route(
             "/auth/:provider_name/callback",
             get(auth::init::handle_provider_callback),
@@ -163,7 +164,6 @@ async fn main() {
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username));
 
     let protected_routes = Router::new()
-        .route("/", get(api::root))
         .route("/account/:account_id/workflows", get(api::get_workflows))
         .route("/account/:account_id/workflow/:id", get(api::get_workflow))
         .route("/account/:account_id/workflow/:id/versions", get(api::get_flow_versions))

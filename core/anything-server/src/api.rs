@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, State},
     http::{HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{Html, IntoResponse},
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -57,8 +57,8 @@ pub struct UpdateWorkflowInput {
     description: Option<String>,
 }
 
-pub async fn root() -> &'static str {
-    "Hello, World!"
+pub async fn root() -> impl IntoResponse {
+    Html(r#"Check out <a href="https://tryanything.xyz">tryanything.xyz</a> to start"#)
 }
 
 pub async fn get_workflows(
