@@ -78,7 +78,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             className="h-11 mr-2 rounded-full hidden sm:inline-flex"
             variant="outline"
             onClick={() =>
-              (window.location.href = `https://app.${window.location.hostname}/login`)
+              (window.location.href = `https://app.${window.location.hostname.replace('www.', '')}/login`)
             }
           >
             Login
@@ -87,7 +87,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             background="rgb(147 51 234)"
             className="p-2 font-bold"
             onClick={() =>
-              (window.location.href = `https://app.${window.location.hostname}/signup`)
+              (window.location.href = `https://app.${window.location.hostname.replace('www.', '')}/signup`)
             }
           >
             Get Started
