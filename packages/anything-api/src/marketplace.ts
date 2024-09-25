@@ -6,7 +6,7 @@ export const getActionTemplatesForMarketplace = async () => {
     try {
         const url = `${ANYTHING_API_URL}/marketplace/actions`;
         console.log(`[MARKETPLACE.TS] Fetching from: ${url}`);
-        const response = await fetch(url); 
+        const response = await fetch(url);
         const data = await response.json();
         console.log('[MARKETPLACE.TS] Data from /api/marketplace/actions:', data);
         return data;
