@@ -13,7 +13,7 @@ const tiers = [
   {
     name: "Pay As You Go",
     id: "payg",
-    href: `https://app.${window.location.hostname}/signup`,
+    href: `https://app.${window.location.hostname.replace('www.', '')}/signup`,
     price: { monthly: "$9.99", annually: "$50" },
     description: "A plan that scales to Anything.",
     features: [
@@ -30,7 +30,7 @@ const tiers = [
   {
     name: "Done For You",
     id: "dfy",
-    href: "#",
+    href: "https://airtable.com/app4pkbS50GcnTaeA/pagORjCMLKMkvk9mh/form",
     price: "Custom",
     description:
       "Our team works hand in hand to implement automations for your business.",
