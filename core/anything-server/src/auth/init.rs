@@ -76,7 +76,7 @@ pub struct AuthProvider {
     pub client_id: String,
     pub client_secret: Option<String>,
     pub client_id_vault_id: Uuid,
-    pub client_secret_vault_id: Uuid,
+    pub client_secret_vault_id: Option<Uuid>,
     pub scopes: String,
     pub public: bool,
     pub updated_at: Option<DateTime<Utc>>,
