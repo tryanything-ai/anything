@@ -58,7 +58,6 @@ pub struct AuthState {
 struct OAuthResponse {
     url: String,
 }
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthProvider {
     pub auth_provider_id: String,
@@ -70,13 +69,14 @@ pub struct AuthProvider {
     pub auth_type: String,
     pub auth_url: String,
     pub token_url: String,
-    pub redirect_url: String,
+    pub provider_data: Option<serde_json::Value>,
     pub access_token_lifetime_seconds: Option<String>,
     pub refresh_token_lifetime_seconds: Option<String>,
+    pub redirect_url: String,
     pub client_id: String,
-    pub client_id_vault_id: String,
-    pub client_secret: String,
-    pub client_secret_vault_id: String,
+    pub client_secret: Option<String>,
+    pub client_id_vault_id: Uuid,
+    pub client_secret_vault_id: Uuid,
     pub scopes: String,
     pub public: bool,
     pub updated_at: Option<DateTime<Utc>>,
