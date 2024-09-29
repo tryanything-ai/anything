@@ -381,6 +381,9 @@ async fn process_http_task(
             "POST" => reqwest::Method::POST,
             "PUT" => reqwest::Method::PUT,
             "DELETE" => reqwest::Method::DELETE,
+            "HEAD" => reqwest::Method::HEAD,
+            "OPTIONS" => reqwest::Method::OPTIONS,
+            "PATCH" => reqwest::Method::PATCH,
             _ => {
                 println!("[TASK_ENGINE] Unsupported HTTP method: {}", method);
                 return Err(format!("Unsupported HTTP method: {}", method).into());
