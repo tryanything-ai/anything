@@ -49,6 +49,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
   console.log('User fetched from supabase:', user)
   if (user) {
+    //BUG: this didn't work. Find a way so when they hit this page if they are already logged in it takes them to the app
     if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')) {
       console.log('User found on login/signup page, redirecting to /')
       const url = request.nextUrl.clone()

@@ -16,6 +16,7 @@ import api from "@repo/anything-api";
 import { Action } from "@/types/workflows";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
+import { Badge } from "@repo/ui/components/ui/badge";
 
 export function StudioActionsSheet(): JSX.Element {
   const {
@@ -71,6 +72,7 @@ export function StudioActionsSheet(): JSX.Element {
             <ScrollArea className="h-full pr-4">
               {actions.map((db_action: any) => {
                 let action: Action = db_action.action_template_definition;
+                let team: boolean = "featured" in db_action;
                 return (
                   <div
                     key={db_action.action_template_id}
@@ -85,6 +87,11 @@ export function StudioActionsSheet(): JSX.Element {
                       <div>
                         <div className="text-lg font-semibold">
                           {action.label}
+                          {team && (
+                            <Badge className="ml-2" variant="outline">
+                              Team
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-sm font-normal">
                           {action.description}

@@ -41,6 +41,18 @@
               {
                 "value": "DELETE",
                 "title": "DELETE"
+              },
+              {
+                "value": "HEAD",
+                "title": "HEAD"
+              },
+              {
+                "value": "OPTIONS",
+                "title": "OPTIONS"
+              },
+              {
+                "value": "PATCH",
+                "title": "PATCH"
               }
             ],
             "x-jsf-presentation": {
