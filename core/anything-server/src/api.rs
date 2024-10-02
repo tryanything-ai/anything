@@ -17,11 +17,11 @@ use crate::{
 };
 use uuid::Uuid;
 
+
 use dotenv::dotenv;
 use std::env;
 
-use chrono::Timelike;
-use chrono::{DateTime, Datelike, Duration, Utc};
+use chrono::{DateTime, Datelike, Duration, Utc, FixedOffset, TimeZone, Timelike};
 use std::collections::HashMap;
 
 use std::fs::File;
@@ -902,10 +902,7 @@ pub async fn get_actions(
         .await
     {
         Ok(response) => {
-            println!(
-                "Successfully fetched marketplace data: {:?}",
-                response
-            );
+            println!("Successfully fetched marketplace data: {:?}", response);
             response
         }
         Err(err) => {
@@ -940,7 +937,11 @@ pub async fn get_actions(
         }
         Err(err) => {
             eprintln!("Failed to parse marketplace JSON: {:?}", err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse marketplace JSON").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse marketplace JSON",
+            )
+                .into_response();
         }
     };
 
@@ -1762,179 +1763,4 @@ pub async fn get_auth_providers(
     };
 
     Json(item).into_response()
-}
-
-#[derive(Serialize)]
-struct ChartDataPoint {
-    date: String,
-    #[serde(flatten)]
-    status_counts: HashMap<String, i32>,
-}
-
-fn parse_date_or_default(date_str: &str) -> DateTime<Utc> {
-    println!("Date Str: {:?}", date_str);
-    DateTime::parse_from_rfc3339(date_str)
-        .map(|dt| dt.with_timezone(&Utc))
-        .unwrap_or_else(|_| Utc::now())
-}
-
-pub async fn get_task_status_counts_by_workflow_id(
-    Path((account_id, workflow_id, start_date, end_date, time_unit)): Path<(
-        String,
-        String,
-        String,
-        String,
-        String,
-    )>,
-    State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-) -> impl IntoResponse {
-    let client = &state.anything_client;
-
-    let start = parse_date_or_default(&start_date);
-    let end = parse_date_or_default(&end_date);
-
-    println!("Start: {:?}, End: {:?}", start, end);
-
-    let query = client
-        .from("tasks")
-        .auth(user.jwt)
-        .eq("account_id", &account_id)
-        .eq("flow_id", &workflow_id)
-        .select("task_status, created_at")
-        .gte("created_at", start.to_rfc3339())
-        .lte("created_at", end.to_rfc3339());
-
-    let response = match query.execute().await {
-        Ok(response) => {
-            println!("Response from tasks w gte y lte: {:?}", response);
-            response
-        }
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response()
-        }
-    };
-
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
-    };
-
-    let tasks: Vec<Value> = match serde_json::from_str(&body) {
-        Ok(tasks) => tasks,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
-        }
-    };
-
-    let interval = match time_unit.as_str() {
-        "minute" => Duration::minutes(1),
-        "hour" => Duration::hours(1),
-        "day" => Duration::days(1),
-        "week" => Duration::weeks(1),
-        "month" => Duration::days(30), // Approximation
-        _ => return (StatusCode::BAD_REQUEST, "Invalid time unit").into_response(),
-    };
-
-    // Get all unique statuses from tasks
-    let all_statuses: Vec<String> = tasks
-        .iter()
-        .filter_map(|task| task["task_status"].as_str())
-        .map(|s| s.to_string())
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
-
-    let mut date_status_counts: HashMap<DateTime<Utc>, HashMap<String, i32>> = HashMap::new();
-
-    // Initialize all intervals with zero counts for all statuses
-    let mut current = start;
-    while current <= end {
-        let mut status_counts = HashMap::new();
-        for status in &all_statuses {
-            status_counts.insert(status.clone(), 0);
-        }
-        date_status_counts.insert(current, status_counts);
-        current += interval;
-    }
-
-    // println!("Date Status Counts: {:?}", date_status_counts);
-
-    // Process tasks
-    for task in tasks {
-        let status = task["task_status"]
-            .as_str()
-            .unwrap_or("unknown")
-            .to_string();
-        let created_at = task["created_at"].as_str().unwrap_or("");
-        if let Ok(date) = DateTime::parse_from_rfc3339(created_at) {
-            let date_utc = date.with_timezone(&Utc);
-            let interval_start = match time_unit.as_str() {
-                "month" => date_utc
-                    .with_day(1)
-                    .unwrap()
-                    .with_hour(0)
-                    .unwrap()
-                    .with_minute(0)
-                    .unwrap()
-                    .with_second(0)
-                    .unwrap(),
-                "week" => {
-                    let days_from_monday = date_utc.weekday().num_days_from_monday();
-                    date_utc
-                        .with_hour(0)
-                        .unwrap()
-                        .with_minute(0)
-                        .unwrap()
-                        .with_second(0)
-                        .unwrap()
-                        - Duration::days(days_from_monday as i64)
-                }
-                _ => {
-                    let interval_seconds = (date_utc - start).num_seconds()
-                        / interval.num_seconds()
-                        * interval.num_seconds();
-                    start + Duration::seconds(interval_seconds)
-                }
-            };
-            if let Some(date_counts) = date_status_counts.get_mut(&interval_start) {
-                *date_counts.entry(status).or_insert(0) += 1;
-            }
-        }
-    }
-
-    // Convert to ChartDataPoint format
-    let mut chart_data: Vec<ChartDataPoint> = date_status_counts
-        .into_iter()
-        .map(|(date, status_counts)| ChartDataPoint {
-            date: format_date(&date, &time_unit),
-            status_counts,
-        })
-        .collect();
-
-    // Sort the chart_data by date
-    chart_data.sort_by(|a, b| a.date.cmp(&b.date));
-
-    Json(json!({ "chartData": chart_data })).into_response()
-}
-
-fn format_date(date: &DateTime<Utc>, time_unit: &str) -> String {
-    match time_unit {
-        "minute" => date.format("%Y-%m-%d %H:%M").to_string(),
-        "hour" => date.format("%Y-%m-%d %H:00").to_string(),
-        "day" => date.format("%Y-%m-%d").to_string(),
-        "week" => date.format("%Y-%m-%d").to_string(), // Start of the week
-        "month" => date.format("%Y-%m").to_string(),
-        _ => date.to_rfc3339(),
-    }
 }

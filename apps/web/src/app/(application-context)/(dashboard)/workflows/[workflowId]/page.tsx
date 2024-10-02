@@ -42,15 +42,23 @@ export default function WorkflowManager(): JSX.Element {
         const startDate = new Date(
           new Date().setDate(new Date().getDate() - 30),
         ).toISOString();
-        let chardDataRes = await api.charts.getTasksChart(
+        // Get the user's timezone
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        console.log("Timezone:", timezone);
+
+        console.log("Start Date:", startDate);
+        console.log("End Date:", endDate);
+        let chardDataRes = await api.charts.getTasksChartForWorkflow(
           selectedAccount.account_id,
           params.workflowId,
           startDate,
           endDate,
           TimeUnit.Day,
+          encodeURIComponent(timezone),
         );
 
-        console.log("chart data", chardDataRes);
+        console.log("chart data for " + params.workflowId, chardDataRes);
         setChartData(chardDataRes.chartData);
       }
     };

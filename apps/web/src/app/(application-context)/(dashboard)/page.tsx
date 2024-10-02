@@ -1,14 +1,59 @@
-import { PartyPopper } from "lucide-react";
+"use client";
 
-export default function PersonalAccountPage(): JSX.Element {
+import { Separator } from "@repo/ui/components/ui/separator";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
+import { TaskRow, TimeUnit } from "@repo/anything-api";
+import api from "@repo/anything-api";
+import { TaskTable } from "@/components/tasks/task-table";
+import { TaskChart } from "@/components/tasks/task-chart";
+import { useAnything } from "@/context/AnythingContext";
+
+export default function MainDashboard(): JSX.Element {
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [chartData, setChartData] = useState<any | undefined>(undefined);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (selectedAccount) {
+        let tasks = await api.tasks.getTasks(selectedAccount.account_id);
+        console.log("tasks", tasks);
+        setTasks(tasks);
+
+        const endDate = new Date().toISOString();
+        const startDate = new Date(
+          new Date().setDate(new Date().getDate() - 30),
+        ).toISOString();
+        let chardDataRes = await api.charts.getTasksChartForAccount(
+          selectedAccount.account_id,
+          startDate,
+          endDate,
+          TimeUnit.Day,
+        );
+
+        console.log("chart data", chardDataRes);
+        setChartData(chardDataRes.chartData);
+      }
+    };
+
+    fetchData();
+  }, [selectedAccount]);
+
   return (
-    <div className="flex flex-col gap-y-4 py-12 h-full w-full items-center justify-center content-center max-w-screen-md mx-auto text-center">
-      <PartyPopper className="h-12 w-12 text-gray-400" />
-      <h1 className="text-2xl font-bold">Personal Account</h1>
-      <p>
-        Here's where you'll put all your awesome personal account items. If you
-        only want to support team accounts, you can just remove these pages
-      </p>
-    </div>
+    <>
+      <div className="space-y-6 w-full">
+        <div className=" flex flex-col gap-y-4 w-full  mx-auto text-center">
+          <TaskChart chartData={chartData} />
+        </div>
+
+        <div className="border rounded-md flex flex-col gap-y-4  h-full w-full items-center justify-center content-center mx-auto text-center">
+          <TaskTable tasks={tasks} />
+        </div>
+      </div>
+    </>
   );
 }
