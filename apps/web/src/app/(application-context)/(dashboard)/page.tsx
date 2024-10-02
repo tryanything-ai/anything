@@ -28,11 +28,20 @@ export default function MainDashboard(): JSX.Element {
         const startDate = new Date(
           new Date().setDate(new Date().getDate() - 30),
         ).toISOString();
+        // Get the user's timezone
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        console.log("Timezone:", timezone);
+
+        console.log("Start Date:", startDate);
+        console.log("End Date:", endDate);
+
         let chardDataRes = await api.charts.getTasksChartForAccount(
           selectedAccount.account_id,
           startDate,
           endDate,
           TimeUnit.Day,
+          encodeURIComponent(timezone)
         );
 
         console.log("chart data", chardDataRes);

@@ -46,7 +46,7 @@ export const getTasksChartForAccount = async (account_id: string, start_date: st
         console.log('Session:', session);
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/charts//tasks/${start_date}/${end_date}/${time_unit}/${timezone}`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/charts/tasks/${start_date}/${end_date}/${time_unit}/${timezone}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
                 },

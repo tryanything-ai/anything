@@ -211,7 +211,7 @@ async fn main() {
             "/account/:account_id/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit/:timezone",
             get(charts::get_workflow_tasks_chart),
         )
-        // .route("/account/:account_id/charts/tasks/:start_date/:end_date/:time_unit", get(api::get_task_status_counts_by_workflow_id))
+        .route("/account/:account_id/charts/tasks/:start_date/:end_date/:time_unit/:timezone", get(charts::get_account_tasks_chart))
 
         // Secrets
         .route("/account/:account_id/secrets", get(secrets::get_decrypted_secrets))
