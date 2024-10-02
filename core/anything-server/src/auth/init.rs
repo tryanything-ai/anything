@@ -561,7 +561,8 @@ pub async fn initiate_auth(
     let client_id = auth_provider.client_id.clone();
     let redirect_uri = auth_provider.redirect_url.clone();
     let auth_url = auth_provider.auth_url.clone();
-    let scope = "data.records:read data.records:write"; //TODO: Replace with your actual scopes
+    // let scope = "data.records:read data.records:write"; //TODO: Replace with your actual scopes
+    let scope = auth_provider.scopes.clone();
     let code_challenge = generate_code_challenge(&code_verifier).await; // Assuming you have a function to generate code challenge
 
     let auth_url = format!(
@@ -569,7 +570,7 @@ pub async fn initiate_auth(
         auth_url,
         client_id,
         urlencoding::encode(redirect_uri.as_str()),
-        urlencoding::encode(scope),
+        urlencoding::encode(scope.as_str()),
         urlencoding::encode(&state_string),
         urlencoding::encode(&code_challenge)
     );
