@@ -72,7 +72,7 @@ export function StudioActionsSheet(): JSX.Element {
             <ScrollArea className="h-full pr-4">
               {actions.map((db_action: any) => {
                 let action: Action = db_action.action_template_definition;
-                let team: boolean = "featured" in db_action;
+                let marketplace: boolean = "featured" in db_action;
                 return (
                   <div
                     key={db_action.action_template_id}
@@ -87,7 +87,7 @@ export function StudioActionsSheet(): JSX.Element {
                       <div>
                         <div className="text-lg font-semibold">
                           {action.label}
-                          {team && (
+                          {!marketplace && (
                             <Badge className="ml-2" variant="outline">
                               Team
                             </Badge>
