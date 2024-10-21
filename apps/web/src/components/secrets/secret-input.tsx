@@ -27,9 +27,9 @@ const formSchema = z.object({
     .regex(/^[A-Z0-9]+(?:_{0,2}[A-Z0-9]+)*$/, {
       message: "Must be all caps and SNAKE_CASE example: OPENAI_API_KEY",
     })
-    .max(50),
-  secret_value: z.string().min(2).max(200),
-  secret_description: z.string().max(50).optional(),
+    .max(100),
+  secret_value: z.string().min(2).max(400),
+  secret_description: z.string().max(100).optional(),
 });
 
 export function CreateNewSecret({ cancel, saveSecret }: any): JSX.Element {
