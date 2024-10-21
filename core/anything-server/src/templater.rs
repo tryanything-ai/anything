@@ -84,12 +84,15 @@ impl Templater {
 
     fn get_value_from_path(context: &Value, path: &str) -> Option<Value> {
         let mut current = context;
-        for key in path.split('.') {
-            match current {
-                Value::Object(map) => {
-                    current = map.get(key)?;
-                }
-                _ => return None,
+        for part in path.split('.') {
+            if let Some(index_start) = part.find('[') {
+                let key = &part[..index_start];
+                let index_end = part.find(']').unwrap_or(part.len());
+                let index: usize = part[index_start + 1..index_end].parse().ok()?;
+                
+                current = current.get(key)?.get(index)?;
+            } else {
+                current = current.get(part)?;
             }
         }
         Some(current.clone())

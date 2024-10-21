@@ -36,7 +36,7 @@ const chartConfig = {
   },
   failed: {
     label: "Failed",
-    color: "hsl(var(--failure))",
+    color: "hsl(var(--chart-6))",
   },
   canceled: {
     label: "Canceled",

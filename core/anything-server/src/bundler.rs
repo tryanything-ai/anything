@@ -263,7 +263,7 @@ pub async fn bundle_context(
         println!("[BUNDLER] No variables found in task config");
     }
 
-    // Get the variables from the task definition
+// Get the variables from the task definition
     let variables = templater.get_template_variables("task_variables_definition")?;
 
     // Print the variables
