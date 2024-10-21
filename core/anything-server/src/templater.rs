@@ -89,12 +89,12 @@ impl Templater {
                 let key = &part[..index_start];
                 let index_end = part.find(']').unwrap_or(part.len());
                 let index: usize = part[index_start + 1..index_end].parse().ok()?;
-    
+
                 current = current.get(key)?.get(index)?;
             } else {
                 current = current.get(part)?;
             }
-    
+
             // Try to parse as JSON if it's a string
             if let Value::String(s) = current {
                 if let Ok(parsed) = serde_json::from_str::<Value>(s) {
@@ -176,10 +176,21 @@ impl Templater {
                 println!("[TEMPLATER] Rendered string: {}", result);
 
                 // Try to parse the result as JSON
+                // match serde_json::from_str(&result) {
+                //     Ok(json_value) => {
+                //         println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
+                //         Ok(json_value)
+                //     }
+                //     Err(_) => {
+                //         println!("[TEMPLATER] Not valid JSON, returning as string");
+                //         Ok(Value::String(result))
+                //     }
+                // }
                 match serde_json::from_str(&result) {
                     Ok(json_value) => {
                         println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
-                        Ok(json_value)
+                        // Recursively render the parsed JSON
+                        self.render_value(&json_value, context)
                     }
                     Err(_) => {
                         println!("[TEMPLATER] Not valid JSON, returning as string");
