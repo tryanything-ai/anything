@@ -132,11 +132,21 @@ pub async fn get_completed_tasks_for_session(
         .auth(supabase_service_role_api_key.clone())
         .select("*")
         .eq("flow_session_id", session_id)
+        .eq("task_status", "completed")
         .execute()
         .await?;
 
     let body = response.text().await?;
     let tasks: Vec<Task> = serde_json::from_str(&body)?;
+
+    // Print tasks for debugging
+    println!("[BUNDLER] Completed tasks:");
+    for task in &tasks {
+        println!(
+            "[BUNDLER] [COMPLETED_TASK] Task ID: {}, Action ID: {}, Status: {:?}, Result: {:?}",
+            task.task_id, task.action_id, task.task_status, task.result
+        );
+    }
 
     println!("[BUNDLER] Retrieved {} completed tasks", tasks.len());
 
