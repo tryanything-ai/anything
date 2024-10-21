@@ -42,6 +42,17 @@ export default function PublishActionDialog(): JSX.Element {
         return;
       }
 
+      // Update the action_id to match the plugin_id
+      // Prevents node access slugs from propogating into marketplace from users local version that has some context
+      // of the workflow it was included in like http_4 vs http
+      if (selected_node_data.plugin_id) {
+        selected_node_data.action_id = selected_node_data.plugin_id;
+      } else {
+        console.warn("No plugin_id found for the selected node");
+      }
+
+      console.log("Updated selected_node_data:", selected_node_data);
+
       let res = await api.action_templates.publishActionTemplate(
         selectedAccount.account_id,
         selected_node_data,
