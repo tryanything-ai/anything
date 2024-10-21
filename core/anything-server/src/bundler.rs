@@ -223,12 +223,8 @@ pub async fn bundle_context(
     // Add secrets to the render_variables_context
     let mut completed_tasks: HashMap<String, Value> = HashMap::new();
     for completed_task in
-        get_completed_tasks_for_session(client, &task.account_id.to_string()).await?
+        get_completed_tasks_for_session(client, &&task.flow_session_id.to_string()).await?
     {
-        // let secret_name = secret.secret_name.clone();
-        // let secret_value = secret.secret_value.clone();
-        // println!("[BUNDLER] Inserting secret with name: {}", secret_name);
-
         completed_tasks.insert(
             completed_task.action_id.to_string(),
             serde_json::to_value(completed_task)?,
@@ -241,7 +237,7 @@ pub async fn bundle_context(
     );
 
     println!(
-        "[BUNDLER] Context after adding secrets: {:?}",
+        "[BUNDLER] Context after adding completed tasks: {:?}",
         render_variables_context
     );
 
