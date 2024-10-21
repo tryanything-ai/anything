@@ -1,6 +1,4 @@
-import { Action, Workflow } from "./types/workflows";
 import { createClient } from "./supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
