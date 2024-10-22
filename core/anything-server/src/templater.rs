@@ -84,15 +84,34 @@ impl Templater {
 
     fn get_value_from_path(context: &Value, path: &str) -> Option<Value> {
         let mut current = context;
-        for part in path.split('.') {
+        let parts: Vec<&str> = path.split('.').collect();
+    
+        for (i, part) in parts.iter().enumerate() {
             if let Some(index_start) = part.find('[') {
                 let key = &part[..index_start];
                 let index_end = part.find(']').unwrap_or(part.len());
                 let index: usize = part[index_start + 1..index_end].parse().ok()?;
-                
-                current = current.get(key)?.get(index)?;
+    
+                current = current.get(key)?;
+                if current.is_array() {
+                    current = current.get(index)?;
+                } else {
+                    return None; // Not an array when we expected one
+                }
             } else {
                 current = current.get(part)?;
+            }
+    
+            if let Value::String(s) = current {
+                if let Ok(parsed) = serde_json::from_str(s) {
+                    if i < parts.len() - 1 {
+                        // If not the last part, continue traversing
+                        return Self::get_value_from_path(&parsed, &parts[i + 1..].join("."));
+                    } else {
+                        // If it's the last part, return the parsed value
+                        return Some(parsed);
+                    }
+                }
             }
         }
         Some(current.clone())
@@ -172,18 +191,17 @@ impl Templater {
                     Ok(json_value) => {
                         println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
                         Ok(json_value)
-                    },
+                    }
                     Err(_) => {
                         println!("[TEMPLATER] Not valid JSON, returning as string");
                         Ok(Value::String(result))
-                    },
+                    }
                 }
             }
             _ => {
                 println!("[TEMPLATER] Returning value as-is: {:?}", value);
                 Ok(value.clone())
-            },
+            }
         }
     }
-
 }
