@@ -402,26 +402,17 @@ async fn process_http_task(
         }
 
         if let Some(body) = bundled_context.get("body") {
-            if let Some(body_object) = body.as_object() {
-                let mut escaped_body = serde_json::Map::new();
-                for (key, value) in body_object {
-                    let escaped_value = match value {
-                        Value::String(s) => Value::String(s.replace("\"", "\\\"")),
-                        _ => value.clone(),
-                    };
-                    escaped_body.insert(key.clone(), escaped_value);
-                }
-                let body_json = serde_json::to_string(&escaped_body)?;
-                println!("[TASK_ENGINE] Adding body: {}", body_json);
-                request_builder = request_builder.body(body_json);
-            } else if let Some(body_str) = body.as_str() {
+            if let Some(body_str) = body.as_str() {
                 if !body_str.is_empty() {
-                    let escaped_body = body_str.replace("\"", "\\\"");
-                    println!("[TASK_ENGINE] Adding body: {}", escaped_body);
-                    request_builder = request_builder.body(escaped_body);
+                    println!("[TASK_ENGINE] Adding body: {}", body_str);
+                    request_builder = request_builder.body(body_str.to_string());
                 } else {
                     println!("[TASK_ENGINE] Body is an empty string, sending request without body");
                 }
+            } else if let Some(body_object) = body.as_object() {
+                let body_json = serde_json::to_string(body_object)?;
+                println!("[TASK_ENGINE] Adding body: {}", body_json);
+                request_builder = request_builder.body(body_json);
             } else {
                 println!("[TASK_ENGINE] Body is not a string or an object");
                 return Err("HTTP task body must be a string or an object".into());
@@ -429,36 +420,6 @@ async fn process_http_task(
         } else {
             println!("[TASK_ENGINE] No body found in task context");
         }
-
-        // if let Some(body) = bundled_context.get("body") {
-        //     let body_content = if let Some(body_object) = body.as_object() {
-        //         // If it's already a JSON object, serialize it
-        //         serde_json::to_string(body_object)?
-        //     } else if let Some(body_str) = body.as_str() {
-        //         if body_str.trim().starts_with('{') || body_str.trim().starts_with('[') {
-        //             // If it's a string that looks like JSON, parse and re-serialize it
-        //             // This ensures it's valid JSON and allows for pretty-printing if needed
-        //             let parsed: serde_json::Value = serde_json::from_str(body_str)
-        //                 .map_err(|_| "Failed to parse body string as JSON")?;
-        //             serde_json::to_string(&parsed)?
-        //         } else {
-        //             // If it doesn't look like JSON, use it as-is
-        //             body_str.to_string()
-        //         }
-        //     } else {
-        //         // If it's neither an object nor a string, try to serialize it to JSON
-        //         serde_json::to_string(body)?
-        //     };
-
-        //     if !body_content.is_empty() {
-        //         println!("[TASK_ENGINE] Adding body: {}", body_content);
-        //         request_builder = request_builder.body(body_content);
-        //     } else {
-        //         println!("[TASK_ENGINE] Body is empty, sending request without body");
-        //     }
-        // } else {
-        //     println!("[TASK_ENGINE] No body found in task context");
-        // }
 
         println!("[TASK_ENGINE] Sending HTTP request");
         let response = request_builder.send().await?;
