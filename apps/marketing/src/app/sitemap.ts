@@ -37,15 +37,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   routes.push({
     url: `${base_url}`,
     lastModified: new Date(),
-    changeFrequency: "daily",
+    changeFrequency: "weekly",
     priority: 1,
   });
 
   //templates
   routes.push({
-    url: `${base_url}/templates`,
+    url: `${base_url}templates`,
     lastModified: new Date(),
-    changeFrequency: "daily",
+    changeFrequency: "weekly",
+    priority: 0.8,
+  });
+
+  //integrations aka action templates
+   routes.push({
+    url: `${base_url}templates/actions`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
     priority: 0.8,
   });
 
