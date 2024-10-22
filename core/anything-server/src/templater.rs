@@ -97,13 +97,13 @@ impl Templater {
                 //         current = &json_value;
                 //     }
                 // }
-                  // Try to parse as JSON if it's a string
-                if let Value::String(s) = current {
-                    if let Ok(parsed) = serde_json::from_str::<Value>(s) {
-                        println!("[TEMPLATER] Successfully parsed JSON string: {}", s);
-                        return Some(parsed);
-                    }
-                }
+                // Try to parse as JSON if it's a string
+                // if let Value::String(s) = current {
+                //     if let Ok(parsed) = serde_json::from_str::<Value>(s) {
+                //         println!("[TEMPLATER] Successfully parsed JSON string: {}", s);
+                //         return Some(parsed);
+                //     }
+                // }
                 current = current.get(part)?;
             }
         }
