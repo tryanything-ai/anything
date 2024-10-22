@@ -95,13 +95,13 @@ impl Templater {
                 current = current.get(part)?;
             }
 
-            // Try to parse as JSON if it's a string
-            if let Value::String(s) = current {
-                if let Ok(parsed) = serde_json::from_str::<Value>(s) {
-                    println!("[TEMPLATER] Successfully parsed JSON string: {}", s);
-                    return Some(parsed);
-                }
-            }
+            // // Try to parse as JSON if it's a string
+            // if let Value::String(s) = current {
+            //     if let Ok(parsed) = serde_json::from_str::<Value>(s) {
+            //         println!("[TEMPLATER] Successfully parsed JSON string: {}", s);
+            //         return Some(parsed);
+            //     }
+            // }
         }
         Some(current.clone())
     }
@@ -141,6 +141,22 @@ impl Templater {
             }
             Value::String(s) => {
                 println!("[TEMPLATER] Rendering string: {}", s);
+                // Try to parse the string as JSON first
+                match serde_json::from_str(s) {
+                    Ok(json_value) => {
+                        println!(
+                            "[TEMPLATER] String Parsed as JSON so rendering Object: {:?}",
+                            json_value
+                        );
+                        // Recursively render the parsed JSON value
+                        return self.render_value(&json_value, context);
+                    }
+                    Err(_) => {
+                        println!("[TEMPLATER] Not valid JSON, processing as string");
+                        // Continue with string processing
+                    }
+                }
+
                 let mut result = s.clone();
                 let mut start = 0;
 
@@ -174,7 +190,7 @@ impl Templater {
                 }
 
                 println!("[TEMPLATER] Rendered string: {}", result);
-
+                Ok(Value::String(result))
                 // Try to parse the result as JSON
                 // match serde_json::from_str(&result) {
                 //     Ok(json_value) => {
@@ -186,17 +202,6 @@ impl Templater {
                 //         Ok(Value::String(result))
                 //     }
                 // }
-                match serde_json::from_str(&result) {
-                    Ok(json_value) => {
-                        println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
-                        // Recursively render the parsed JSON
-                        self.render_value(&json_value, context)
-                    }
-                    Err(_) => {
-                        println!("[TEMPLATER] Not valid JSON, returning as string");
-                        Ok(Value::String(result))
-                    }
-                }
             }
             _ => {
                 println!("[TEMPLATER] Returning value as-is: {:?}", value);
