@@ -41,7 +41,7 @@ export default function TemplateLoadingPage() {
         clonedTemplateResponse.flow_version_id
       ) {
         router.push(
-          `/workflows/${clonedTemplateResponse.flow_id}/${clonedTemplateResponse.flow_version_id}/edit`,
+          `/workflows/${clonedTemplateResponse.flow_id}/${clonedTemplateResponse.flow_version_id}/editor`,
         );
       } else {
         throw new Error("Failed to clone template");
