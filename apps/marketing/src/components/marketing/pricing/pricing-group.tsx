@@ -13,7 +13,7 @@ const tiers = [
   {
     name: "Pay As You Go",
     id: "payg",
-    href: `https://app.${process.env.NEXT_PUBLIC_HOSTED_URL?.replace("www.", "")}/signup`,
+    href: `https://app.${process.env.NEXT_PUBLIC_HOSTED_URL?.replace(/^https?:\/\//, '').replace('www.', '')}/signup`,
     price: { monthly: "$9.99", annually: "$50" },
     description: "A plan that scales to Anything.",
     features: [

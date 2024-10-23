@@ -187,14 +187,13 @@ async fn main() {
         .route("/account/:account_id/workflow/:id", put(api::update_workflow))
         .route("/account/:account_id/actions", get(api::get_actions))
 
-
         //Marketplace && Templates
         .route(
             "/account/:account_id/marketplace/workflow/:workflow_id/version/:workflow_version_id/publish",
             post(marketplace::workflows::publish_workflow_to_marketplace), 
         )
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
-        
+        .route("/account/:account_id/marketplace/workflow/:template_id/clone", get(marketplace::workflows::clone_marketplace_workflow_template))
     
 
         //Billing

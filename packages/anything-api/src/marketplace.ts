@@ -72,3 +72,34 @@ export const publishFlowTemplateToMarketplace = async (account_id: string, workf
         console.error('[MARKETPLACE.TS] Error publishing workflow template:', error);
     }
 }
+
+
+
+export const cloneWorkflowTemplate = async (account_id: string, template_id: string) => {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('[MARKETPLACE.TS] Session:', session);
+
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (session) {
+            headers['Authorization'] = `${session.access_token}`;
+        }
+
+        const url = `${ANYTHING_API_URL}/account/${account_id}/marketplace/workflow/${template_id}/clone`;
+        console.log(`[MARKETPLACE.TS] Fetching from: ${url}`);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: headers,
+        });
+        const data = await response.json();
+        console.log(`[MARKETPLACE.TS] Data from /api/marketplace/workflow/${template_id}/clone:`, data);
+        return data;
+    } catch (error) {
+        console.error('[MARKETPLACE.TS] Error cloning workflow template:', error);
+    }
+}
