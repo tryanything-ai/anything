@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   //templates
   routes.push({
-    url: `${base_url}templates`,
+    url: `${base_url}templates/workflows`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.8,
