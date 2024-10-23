@@ -260,3 +260,4 @@ pub async fn publish_action_template(
 
     Json(response).into_response()
 }
+

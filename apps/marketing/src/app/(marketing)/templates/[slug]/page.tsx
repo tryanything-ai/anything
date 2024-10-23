@@ -80,7 +80,7 @@ const Action = ({ template, profile }: any): JSX.Element => {
           profile?.username
         }
         data-ph-capture-attribute-flow-template-slug={template.slug}
-        href={`https://app.domain.xyz/templates/${template.flow_template_id}`}
+        href={`https://app.tryanything.xyz/templates/${template.flow_template_id}`}
       >
         Use This Template
       </a>
