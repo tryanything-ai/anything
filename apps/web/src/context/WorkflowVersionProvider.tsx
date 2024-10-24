@@ -106,7 +106,7 @@ export const WorkflowVersionContext =
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
     showingActionSheet: false,
-    detailedMode: false,
+    detailedMode: true,
     setDetailedMode: () => {},
     showActionSheetForEdge: () => {},
     setShowingActionSheet: () => {},

@@ -29,12 +29,19 @@ export default function Workflows(): JSX.Element {
     }
   };
 
+  const exploreTemplates = () => {
+    window.open("https://tryanything.xyz/templates/workflows", "_blank");
+  };
+
   return (
     <div className="space-y-6 w-full">
       <DashboardTitleWithAction
         title="Workflows"
         description="Manage workflows."
-        action={createWorkflow}
+        actions={[
+          { label: "Create New Workflow", onClick: createWorkflow },
+          { label: "Explore Templates", onClick: exploreTemplates },
+        ]}
       />
       <Separator />
       <ManageWorkflows />
