@@ -17,11 +17,10 @@ use crate::{
 };
 use uuid::Uuid;
 
-
 use dotenv::dotenv;
 use std::env;
 
-use chrono::{DateTime, Datelike, Duration, Utc, FixedOffset, TimeZone, Timelike};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, TimeZone, Timelike, Utc};
 use std::collections::HashMap;
 
 use std::fs::File;
@@ -1455,6 +1454,8 @@ pub async fn get_tasks(
         .auth(&user.jwt)
         .eq("account_id", &account_id)
         .select("*")
+        .limit(100)
+        .order("created_at.desc,processing_order.desc")
         .execute()
         .await
     {
@@ -1509,6 +1510,7 @@ pub async fn get_task_by_workflow_id(
         .eq("account_id", &account_id)
         .eq("flow_id", &workflow_id)
         .select("*")
+        .limit(100)
         .order("created_at.desc,processing_order.desc")
         .execute()
         .await
