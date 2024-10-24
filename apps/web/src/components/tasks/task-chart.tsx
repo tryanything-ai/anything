@@ -20,27 +20,27 @@ import {
 const chartConfig = {
   pending: {
     label: "Pending",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--task-status-pending))",
   },
   waiting: {
     label: "Waiting",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--task-status-waiting))",
   },
   running: {
     label: "Running",
-    color: "hsl(var(--chart-3))",
+    color: "hsl(var(--task-status-running))",
   },
   completed: {
     label: "Completed",
-    color: "rebeccapurple",
+    color: "hsl(var(--task-status-completed))",
   },
   failed: {
     label: "Failed",
-    color: "hsl(var(--chart-6))",
+    color: "hsl(var(--task-status-failed))",
   },
   canceled: {
     label: "Canceled",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--task-status-canceled))",
   },
 } satisfies ChartConfig;
 
