@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
 import { OgDiv } from "@/components/og/baseOg";
 
-const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
-let svg = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL + "/3og.svg";
+const this_url = "http://" + process.env.NEXT_PUBLIC_HOSTED_URL;
+let svg = "http://" + process.env.NEXT_PUBLIC_HOSTED_URL + "/3og.svg";
 
 // Route segment config
 export const runtime = "edge";
