@@ -32,7 +32,7 @@ export const TriggerBadge = ({ is_trigger }: { is_trigger: boolean }) => {
     <>
       {is_trigger ? (
         <div
-          className={`inline-flex items-center h-5 w-5 rounded-full bg-green-200 text-green-800 hover:bg-green-200 items-center justify-center`}
+          className={`inline-flex h-5 w-5 rounded-full bg-green-200 text-green-800 hover:bg-green-200 items-center justify-center`}
         >
           <Zap size={16} className="" />
         </div>
