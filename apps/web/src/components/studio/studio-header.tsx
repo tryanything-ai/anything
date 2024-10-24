@@ -17,7 +17,8 @@ export default function StudioHeader(): JSX.Element {
   const { workflow } = useAnything();
 
   const handleBack = () => {
-    router.push(`/workflows/${params.workflowId}`);
+    // router.push(`/workflows/${params.workflowId}`);
+    router.push(`/workflows`);
   };
 
   return (

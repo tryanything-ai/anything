@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import Link from "next/link";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
-import { Edit } from "lucide-react";
+import { BarChart, Edit } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
 import api from "@repo/anything-api";
@@ -80,7 +80,11 @@ export default function ManageWorkflows(): JSX.Element {
             key={flow.flow_id}
             className="mt-2 flex flex-row hover:border-green-500"
           >
-            <Link href={`/workflows/${flow.flow_id}`} className="flex-1 flex">
+            <Link
+              href={`/workflows/${flow.flow_id}/${flow_version.flow_version_id}/editor`}
+              // href={`/workflows/${flow.flow_id}`}
+              className="flex-1 flex"
+            >
               <CardHeader className="w-1/4">
                 <CardTitle className="truncate leading-tight">
                   {flow.flow_name}
@@ -113,10 +117,12 @@ export default function ManageWorkflows(): JSX.Element {
             </Link>
             <div className="flex items-end p-6">
               <Link
-                href={`/workflows/${flow.flow_id}/${flow_version.flow_version_id}/editor`}
+                href={`/workflows/${flow.flow_id}`}
+                // href={`/workflows/${flow.flow_id}/${flow_version.flow_version_id}/editor`}
               >
                 <Button>
-                  <Edit size={16} />
+                  {/* <Edit size={16} /> */}
+                  <BarChart size={16} />
                 </Button>
               </Link>
             </div>
