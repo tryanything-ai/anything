@@ -148,7 +148,7 @@ export const WorkflowVersionProvider = ({
   const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("");
   const [dbFlowId, setDbFlowId] = useState<string>("");
   const [selectedNodeId, setSelectedNodeId] = useState<string>("");
-  const [detailedMode, setDetailedMode] = useState<boolean>(false);
+  const [detailedMode, setDetailedMode] = useState<boolean>(true);
   //React Flow State
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
