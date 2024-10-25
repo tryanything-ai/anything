@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import { Label } from "@repo/ui/components/ui/label";
 import { Input } from "@repo/ui/components/ui/input";
+import { ExpandableInput } from "@repo/ui/components/ui/expandable-input";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import {
   Select,
@@ -61,7 +62,7 @@ function FieldText({
     <div className="grid gap-3 my-4">
       <Label htmlFor={name}>{label}</Label>
       {/* {description && <div id={`${name}-description`}>{description}</div>} */}
-      <Input
+      <ExpandableInput
         id={name}
         type="text"
         disabled={
