@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import DeleteFlowDialog from "./delete-flow-dialog";
 import { Switch } from "@repo/ui/components/ui/switch";
 import WorkflowSettingsForm from "./workflow-settings-form";
+import { Button } from "@repo/ui/components/ui/button";
 
 type Inputs = {
   flow_name: string;
@@ -23,34 +24,22 @@ export default function WorkflowSettingsTab(): JSX.Element {
     formState: { errors },
   } = useForm<Inputs>();
 
-  // const onSubmit: SubmitHandler<Inputs> = async (data) => {
-  //     try {
-  //         setLoading(true);
-  //         if (flow_name && flowFrontmatter) {
-  //             let UpdateFlowArgs = {
-  //                 flow_name: data.flow_name,
-  //                 active: flowFrontmatter.active,
-  //                 version: flowFrontmatter.version,
-  //             };
-
-  //             console.log(
-  //                 "Updating Flow In Settings Panel with Args",
-  //                 UpdateFlowArgs
-  //             );
-  //             let res = await updateFlow(flowFrontmatter.flow_id, UpdateFlowArgs);
-  //             console.log("res from rename flow in settings panel", res);
-  //             // navigate(`/flows/${data.flow_name}`);
-  //             navigate.back();
-  //         } else {
-  //             console.log("Data problem in settings panel");
-  //         }
-  //     } catch (error) {
-  //         console.log("error in settings panel", error);
-  //     } finally {
-  //         console.log(data);
-  //         setLoading(false);
-  //     }
-  // };
+  const downloadWorkflowJson = () => {
+    const jsonString = JSON.stringify(
+      workflow.flow_version_definition,
+      null,
+      2,
+    );
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${workflow.db_flow.flow_name || "workflow"}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="grid w-full items-start gap-6">
@@ -65,6 +54,15 @@ export default function WorkflowSettingsTab(): JSX.Element {
         />
       </div>
 
+      <div className="absolute bottom-14 w-full mb-2">
+        <Button
+          variant={"secondary"}
+          className="w-full"
+          onClick={downloadWorkflowJson}
+        >
+          Download Workflow as JSON
+        </Button>
+      </div>
       <div className="absolute bottom-0 w-full mb-2">
         <DeleteFlowDialog workflowId={workflow.db_flow_id} />
       </div>

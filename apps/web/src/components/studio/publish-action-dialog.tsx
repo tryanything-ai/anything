@@ -7,7 +7,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@repo/ui/components/ui/alert-dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
@@ -15,7 +14,12 @@ import { useState } from "react";
 import api from "@repo/anything-api";
 import { ActionType } from "@/types/workflows";
 
-export default function PublishActionDialog(): JSX.Element {
+interface PublishActionDialogProps {
+  show: boolean;
+  onClose: () => void;
+}
+
+export default function PublishActionDialog({ show, onClose }: PublishActionDialogProps): JSX.Element {
   const {
     accounts: { selectedAccount },
     workflow: { selected_node_data },
@@ -75,12 +79,7 @@ export default function PublishActionDialog(): JSX.Element {
   return (
     <>
       {selected_node_data && selected_node_data.type !== ActionType.Trigger && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button className="bottom-0 w-full mb-2" variant="secondary">
-              Publish As Action Template
-            </Button>
-          </AlertDialogTrigger>
+        <AlertDialog open={show} onOpenChange={onClose}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Publish Action Template</AlertDialogTitle>
@@ -149,7 +148,7 @@ export default function PublishActionDialog(): JSX.Element {
                   </p>
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handlePublish}
                     disabled={
@@ -177,7 +176,10 @@ export default function PublishActionDialog(): JSX.Element {
                   </a>
                 )}
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setSuccess(false)}>
+                  <AlertDialogCancel onClick={() => {
+                    setSuccess(false);
+                    onClose();
+                  }}>
                     Close
                   </AlertDialogCancel>
                 </AlertDialogFooter>

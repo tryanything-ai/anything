@@ -61,7 +61,7 @@ export default function StudioHeader(): JSX.Element {
             className="gap-1.5 text-sm bg-green-400 disabled:opacity-100"
           >
             <Send className="size-3.5" />
-            Published
+            Live
           </Button>
         ) : (
           <Button
@@ -71,7 +71,7 @@ export default function StudioHeader(): JSX.Element {
             className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
           >
             <Send className="size-3.5" />
-            Publish
+            Deploy
           </Button>
         )}
       </div>

@@ -153,7 +153,7 @@ export function StudioActionsSheet(): JSX.Element {
                                 </Badge>
                               )}
                             </div>
-                            <div className="text-sm font-normal">
+                            <div className="text-sm font-normal truncate overflow-ellipsis">
                               {action.description}
                             </div>
                           </div>
