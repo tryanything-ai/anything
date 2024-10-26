@@ -29,7 +29,7 @@ export default function BaseNode({
   selected: boolean;
 }): JSX.Element {
   const {
-    workflow: { deleteNode, detailedMode },
+    workflow: { deleteNode, detailedMode, addNode },
   } = useAnything();
 
   const [showDialog, setShowDialog] = useState(false);
@@ -59,6 +59,7 @@ export default function BaseNode({
   const duplicateAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     console.log("TODO: Make duplicate action");
+    addNode(data, { x: 100, y: 300 });
   };
 
   const downloadJson = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -155,11 +156,9 @@ export default function BaseNode({
         </div>
         {/* Content of Dropdown */}
         <DropdownMenuContent className="w-56">
-          {/* <DropdownMenuItem onClick={createReusableAction}>Make Reusable Action</DropdownMenuItem> */}
-          {/* <DropdownMenuItem onClick={duplicateAction}>Duplicate</DropdownMenuItem> */}
-          {/* <DropdownMenuItem onClick={shareAction}>
-            Share Action
-          </DropdownMenuItem> */}
+          <DropdownMenuItem onClick={duplicateAction}>
+            Duplicate
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={shareAction}>
             Make Reusable Action
           </DropdownMenuItem>
