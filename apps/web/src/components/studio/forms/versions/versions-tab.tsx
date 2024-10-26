@@ -30,7 +30,7 @@ export default function VersionsTab(): JSX.Element {
               )}
               {version.published && (
                 <Badge className="inline-flex items-center px-3 py-1 rounded-full bg-green-200 text-green-800 hover:bg-green-200 ml-1">
-                  Published
+                  Live
                 </Badge>
               )}
             </div>
