@@ -88,6 +88,19 @@ export default function BaseNode({
     deleteNode(id);
   };
 
+  const copyToClipboard = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    const jsonString = JSON.stringify(data, null, 2);
+    navigator.clipboard
+      .writeText(jsonString)
+      .then(() => {
+        console.log("Data copied to clipboard");
+      })
+      .catch((err) => {
+        console.error("Failed to copy data: ", err);
+      });
+  };
+
   return (
     <>
       <PublishActionDialog
@@ -151,7 +164,10 @@ export default function BaseNode({
             Make Reusable Action
           </DropdownMenuItem>
           <DropdownMenuItem onClick={downloadJson}>
-            Download JSON
+            Download as JSON
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={copyToClipboard}>
+            Copy to Clipboard
           </DropdownMenuItem>
           <DropdownMenuItem onClick={deleteAction}>Delete</DropdownMenuItem>
         </DropdownMenuContent>
