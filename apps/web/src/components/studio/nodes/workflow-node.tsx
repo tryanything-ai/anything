@@ -4,6 +4,7 @@ import { Handle, HandleProps } from "reactflow";
 import { Action, ActionType } from "@/types/workflows";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
+import { useState } from "react";
 
 import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { useAnything } from "@/context/AnythingContext";
+import PublishActionDialog from "../publish-action-dialog";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
@@ -29,6 +31,8 @@ export default function BaseNode({
   const {
     workflow: { deleteNode, detailedMode },
   } = useAnything();
+
+  const [showDialog, setShowDialog] = useState(false);
 
   // const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
   //   useFlowNavigationContext();
@@ -57,6 +61,27 @@ export default function BaseNode({
     console.log("TODO: Make duplicate action");
   };
 
+  const downloadJson = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    console.log("TODO: Download JSON");
+
+    event.stopPropagation();
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${data.label || "action"}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const shareAction = (event: React.MouseEvent<HTMLDivElement>) => {
+    setShowDialog(true);
+  };
+
   const deleteAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     console.log("TODO: Delete Action");
@@ -65,6 +90,10 @@ export default function BaseNode({
 
   return (
     <>
+      <PublishActionDialog
+        show={showDialog}
+        onClose={() => setShowDialog(false)}
+      />
       <DropdownMenu>
         <div
           // onClick={toggleNodeConfig}
@@ -115,6 +144,15 @@ export default function BaseNode({
         <DropdownMenuContent className="w-56">
           {/* <DropdownMenuItem onClick={createReusableAction}>Make Reusable Action</DropdownMenuItem> */}
           {/* <DropdownMenuItem onClick={duplicateAction}>Duplicate</DropdownMenuItem> */}
+          {/* <DropdownMenuItem onClick={shareAction}>
+            Share Action
+          </DropdownMenuItem> */}
+          <DropdownMenuItem onClick={shareAction}>
+            Make Reusable Action
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={downloadJson}>
+            Download JSON
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={deleteAction}>Delete</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
