@@ -75,6 +75,10 @@ export interface WorkflowVersionContextInterface {
   setPanelTab: (tab: string) => void;
   showingActionSheet: boolean;
   setShowingActionSheet: (showing: boolean) => void;
+  showExplorer: boolean;
+  setShowExplorer: (showing: boolean) => void;
+  explorerTab: string;
+  setExplorerTab: (tab: string) => void;
   showActionSheetForEdge: (id: string) => void;
   showActionSheet: () => void;
   nodes: Node[];
@@ -106,6 +110,10 @@ export const WorkflowVersionContext =
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
     showingActionSheet: false,
+    showExplorer: false,
+    setShowExplorer: () => {},
+    explorerTab: "results",
+    setExplorerTab: () => {},
     detailedMode: true,
     setDetailedMode: () => {},
     showActionSheetForEdge: () => {},
@@ -160,6 +168,9 @@ export const WorkflowVersionProvider = ({
   //Action sheet for adding nodes
   const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
   const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
+
+  const [showExplorer, setShowExplorer] = useState<boolean>(false);
+  const [explorerTab, setExplorerTab] = useState<string>("results");
 
   const showActionSheetForEdge = (id: string) => {
     console.log("Show Action Sheet for Edge: ", id);
@@ -712,6 +723,10 @@ export const WorkflowVersionProvider = ({
         savingStatus,
         panel_tab,
         showingActionSheet,
+        showExplorer,
+        setShowExplorer,
+        explorerTab,
+        setExplorerTab,
         detailedMode,
         setDetailedMode,
         setShowingActionSheet,

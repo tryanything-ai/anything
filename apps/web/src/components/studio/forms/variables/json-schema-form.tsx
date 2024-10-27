@@ -13,6 +13,8 @@ export function JsonSchemaForm({
   initialValues,
   handleValidation,
   onSubmit,
+  onFocus,
+  onBlur,
 }: any): JSX.Element {
   const [values, setValues] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
@@ -56,6 +58,23 @@ export function JsonSchemaForm({
     }
   };
 
+  //used to hook into showing variables etc
+  const handleFieldFocus = (fieldName: string) => {
+    // setFocusedField(fieldName);
+    console.log("Show something?");
+    if (onFocus) {
+      onFocus();
+    }
+  };
+
+  const handleFieldBlur = () => {
+    // setFocusedField(null);
+    console.log("STOP showing something?");
+    if (onBlur) {
+      onBlur();
+    }
+  };
+
   useEffect(() => {
     console.log("[JSON SCHEMA FORM] Values after update:", values);
   }, [values]);
@@ -77,6 +96,8 @@ export function JsonSchemaForm({
               error={errors[fieldName]}
               submited={submited}
               onChange={handleFieldChange}
+              onFocus={() => handleFieldFocus(fieldName)}
+              onBlur={handleFieldBlur}
               onValueChange={(value: any) =>
                 handleFieldChange(fieldName, value)
               }
