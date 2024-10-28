@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 import { Label } from "@repo/ui/components/ui/label";
 
+import { cn } from "@repo/ui/lib/utils";
+
 export default function FieldTex({
   type,
   name,
@@ -74,16 +76,22 @@ export default function FieldTex({
   return (
     <div className="grid gap-3 my-4">
       <Label htmlFor={name}>{label}</Label>
-      <div
-        ref={contentRef}
-        contentEditable
-        className="editable-input border border-gray-300 p-2 rounded"
-        onInput={handleInput}
-        aria-invalid={!!error}
-        aria-describedby={`${name}-error ${name}-description`}
-        aria-required={required}
-        {...props}
-      />
+      <div className="relative">
+        <div
+          ref={contentRef}
+          contentEditable
+          className="editable-input w-full min-h-[40px] max-h-[300px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          onInput={handleInput}
+          aria-invalid={!!error}
+          aria-describedby={`${name}-error ${name}-description`}
+          aria-required={required}
+          style={{
+            resize: "vertical",
+            overflowY: "auto",
+          }}
+          {...props}
+        />
+      </div>
       {(touched || submited) && error && (
         <div className="text-red-500" id={`${name}-error`}>
           {error}
@@ -93,7 +101,6 @@ export default function FieldTex({
         .editable-input {
           white-space: pre-wrap;
           font-family: monospace;
-          min-height: 100px;
           background-color: #fafafa;
           line-height: 1.5;
         }
@@ -111,6 +118,14 @@ export default function FieldTex({
         .editable-input,
         .editable-input * {
           color: #000;
+        }
+
+        /* Add resize handle styling */
+        .editable-input::-webkit-resizer {
+          border-width: 6px;
+          border-style: solid;
+          border-color: transparent #ccc #ccc transparent;
+          background-color: transparent;
         }
       `}</style>
     </div>
