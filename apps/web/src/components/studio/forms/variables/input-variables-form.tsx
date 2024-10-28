@@ -70,7 +70,7 @@ export default function InputVariablesForm(): JSX.Element {
             onSubmit={handleVariableInputSubmit}
             fields={fields}
             onFocus={() => {
-              setExplorerTab("variables");
+              setExplorerTab("results");
               setShowExplorer(true);
             }}
             onBlur={() => {

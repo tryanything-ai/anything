@@ -1,8 +1,12 @@
 import { useAnything } from "@/context/AnythingContext";
 import { ActionType } from "@/types/workflows";
+import { useState } from "react";
 
 export function VariablesExplorer(): JSX.Element {
   const { workflow } = useAnything();
+
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const Header = () => {
     let header_title = "Variables";
@@ -17,15 +21,21 @@ export function VariablesExplorer(): JSX.Element {
 
   return (
     // Hide variables if its a trigger
-    <>
+    <div className="grid w-full items-start gap-6 p-2">
       {" "}
       {workflow &&
         workflow.selected_node_data &&
         workflow.selected_node_data.type !== ActionType.Trigger && (
           <div className="rounded-lg border p-4">
             <Header />
+            {loading && <div>Loading...</div>}
+            {results.length === 0 && !loading && (
+              <div className="text-muted-foreground">
+                Run Workflow Test Access Results
+              </div>
+            )}
           </div>
         )}
-    </>
+    </div>
   );
 }
