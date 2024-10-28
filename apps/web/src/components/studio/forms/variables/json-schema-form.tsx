@@ -63,11 +63,11 @@ export function JsonSchemaForm({
     // setFocusedField(fieldName);
     console.log("Show something?");
     if (onFocus) {
-      onFocus();
+      onFocus(fieldName);
     }
   };
 
-  const handleFieldBlur = () => {
+  const handleFieldBlur = (e: any) => {
     // setFocusedField(null);
     console.log("STOP showing something?");
     if (onBlur) {

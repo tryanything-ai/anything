@@ -1,9 +1,13 @@
 import { useAnything } from "@/context/AnythingContext";
 import { ActionType } from "@/types/workflows";
 import { useState } from "react";
+import { Button } from "@repo/ui/components/ui/button";
 
 export function ResultsExplorer(): JSX.Element {
-  const { workflow } = useAnything();
+  const {
+    workflow,
+    explorer: { insertAtCursor },
+  } = useAnything();
 
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,6 +38,15 @@ export function ResultsExplorer(): JSX.Element {
                 Run Workflow Test Access Results
               </div>
             )}
+            <Button
+              onClick={() =>
+                insertAtCursor(
+                  "{{actions.results.body.hello_world}}",   // Or whatever field name you're targeting
+                )
+              }
+            >
+              Insert Template
+            </Button>
           </div>
         )}
     </div>

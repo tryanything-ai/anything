@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 import { Label } from "@repo/ui/components/ui/label";
 
-import { cn } from "@repo/ui/lib/utils";
 import { useAnything } from "@/context/AnythingContext";
 
 export default function FieldTex({
@@ -34,7 +33,7 @@ export default function FieldTex({
   const [touched, setTouched] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const {
-    explorer: { registerEditorRef, unregisterEditorRef },
+    explorer: { registerEditorRef, unregisterEditorRef, setActiveEditor },
   } = useAnything();
 
   if (!isVisible) {
@@ -122,6 +121,12 @@ export default function FieldTex({
           contentEditable
           className="editable-input w-full min-h-[40px] max-h-[300px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           onInput={handleInput}
+          // onFocus={() => setActiveEditor(name)}
+          // onFocus={(e) => {
+          //   setActiveEditor(name);
+          //   // Call parent's onFocus if it exists
+          //   props.onFocus?.(e);
+          // }}
           aria-invalid={!!error}
           aria-describedby={`${name}-error ${name}-description`}
           aria-required={required}
