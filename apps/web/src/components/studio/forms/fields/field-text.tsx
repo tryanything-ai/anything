@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Label } from "@repo/ui/components/ui/label";
 
 import { cn } from "@repo/ui/lib/utils";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function FieldTex({
   type,
@@ -19,8 +20,22 @@ export default function FieldTex({
   required,
   ...props
 }: any) {
+  console.log("FieldTex render with props:", {
+    type,
+    name,
+    label,
+    value,
+    isVisible,
+    error,
+    submited,
+    required,
+  });
+
   const [touched, setTouched] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null); // Ref to the contenteditable div
+  const editorRef = useRef<HTMLDivElement>(null);
+  const {
+    explorer: { registerEditorRef, unregisterEditorRef },
+  } = useAnything();
 
   if (!isVisible) {
     console.log("fieldtext not visible", name);
@@ -31,54 +46,79 @@ export default function FieldTex({
 
   // Function to highlight syntax inside contenteditable
   function highlightSyntax(text: string) {
-    return text.replace(/(\{\{.*?\}\})/g, '<span class="highlight">$1</span>');
+    console.log("highlightSyntax input:", text);
+    const result = text.replace(
+      /(\{\{.*?\}\})/g,
+      '<span class="highlight">$1</span>',
+    );
+    console.log("highlightSyntax output:", result);
+    return result;
   }
 
   // Sync the content back to the onChange handler
   function syncContent() {
-    const rawValue = contentRef.current?.innerText || "";
+    console.log("syncContent called");
+    const rawValue = editorRef.current?.innerText || "";
+    console.log("syncContent rawValue:", rawValue);
     onChange(name, rawValue); // Call onChange with the raw text
   }
 
   // Handle input changes and apply syntax highlighting
   function handleInput() {
-    if (!touched) setTouched(true);
+    console.log("handleInput called");
+    if (!touched) {
+      console.log("Setting touched to true");
+      setTouched(true);
+    }
     syncContent(); // Sync raw content
     applyHighlighting(); // Reapply highlighting
   }
 
   // Apply syntax highlighting with cursor preservation
   function applyHighlighting() {
-    const rawText = contentRef.current?.innerText || "";
+    console.log("applyHighlighting called");
+    const rawText = editorRef.current?.innerText || "";
+    console.log("Current raw text:", rawText);
     const highlighted = highlightSyntax(rawText);
-    contentRef.current!.innerHTML = highlighted;
-    placeCursorAtEnd(contentRef.current!); // Keep cursor in place
+    console.log("Highlighted text:", highlighted);
+    editorRef.current!.innerHTML = highlighted;
+    placeCursorAtEnd(editorRef.current!); // Keep cursor in place
   }
 
   // Keep cursor at the end after updating the innerHTML
   function placeCursorAtEnd(el: HTMLElement) {
+    console.log("placeCursorAtEnd called");
     const range = document.createRange();
     const sel = window.getSelection();
     range.selectNodeContents(el);
     range.collapse(false);
     sel?.removeAllRanges();
     sel?.addRange(range);
+    console.log("Cursor position updated");
   }
 
-  // Initialize with syntax highlighting on mount
   useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.innerText = value || "";
+    console.log("useEffect triggered with value:", value);
+    if (editorRef.current) {
+      console.log("Setting initial text:", value || "");
+      editorRef.current.innerText = value || "";
       applyHighlighting(); // Initial highlighting
+    } else {
+      console.log("editorRef.current is null");
     }
   }, [value]);
+
+  useEffect(() => {
+    registerEditorRef(name, editorRef);
+    return () => unregisterEditorRef(name);
+  }, [name]);
 
   return (
     <div className="grid gap-3 my-4">
       <Label htmlFor={name}>{label}</Label>
       <div className="relative">
         <div
-          ref={contentRef}
+          ref={editorRef}
           contentEditable
           className="editable-input w-full min-h-[40px] max-h-[300px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           onInput={handleInput}
