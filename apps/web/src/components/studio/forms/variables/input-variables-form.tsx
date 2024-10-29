@@ -11,7 +11,7 @@ export default function InputVariablesForm(): JSX.Element {
       setShowExplorer,
       setExplorerTab,
     },
-    explorer: { setActiveEditor}
+    explorer: { setActiveEditor },
   } = useAnything();
 
   let fields, handleValidation;
@@ -71,7 +71,7 @@ export default function InputVariablesForm(): JSX.Element {
             onSubmit={handleVariableInputSubmit}
             fields={fields}
             onFocus={(fieldName: string) => {
-              setActiveEditor(fieldName); 
+              // setActiveEditor(fieldName);
               setExplorerTab("results");
               setShowExplorer(true);
             }}
