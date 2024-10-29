@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs/components/prism-core";
+import "prismjs/components/prism-core";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-markup";
+import "prismjs/components/prism-markup-templating";
+import "prismjs/components/prism-handlebars";
+import "prismjs/themes/prism.css";
 import { Label } from "@repo/ui/components/ui/label";
-
+import { cn } from "@repo/ui/lib/utils";
 import { useAnything } from "@/context/AnythingContext";
 
 export default function FieldTex({
@@ -112,67 +120,116 @@ export default function FieldTex({
     return () => unregisterEditorRef(name);
   }, [name]);
 
+  const [code, setCode] = useState(`{{ variable }}`);
+
+  console.log("FieldText render with value:", value);
+
   return (
-    <div className="grid gap-3 my-4">
+    <>
       <Label htmlFor={name}>{label}</Label>
-      <div className="relative">
-        <div
-          ref={editorRef}
-          contentEditable
-          className="editable-input w-full min-h-[40px] max-h-[300px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          onInput={handleInput}
-          // onFocus={() => setActiveEditor(name)}
-          // onFocus={(e) => {
-          //   setActiveEditor(name);
-          //   // Call parent's onFocus if it exists
-          //   props.onFocus?.(e);
-          // }}
-          aria-invalid={!!error}
-          aria-describedby={`${name}-error ${name}-description`}
-          aria-required={required}
-          style={{
-            resize: "vertical",
-            overflowY: "auto",
-          }}
-          {...props}
-        />
-      </div>
-      {(touched || submited) && error && (
-        <div className="text-red-500" id={`${name}-error`}>
-          {error}
-        </div>
-      )}
-      <style jsx global>{`
-        .editable-input {
-          white-space: pre-wrap;
-          font-family: monospace;
-          background-color: #fafafa;
-          line-height: 1.5;
-        }
-
-        .highlight {
-          background-color: #e2f1ff;
-          border-radius: 3px;
-          padding: 0 2px;
-          border: 1px solid #b3d4ff;
-          margin: 0 1px;
-          display: inline-block;
-        }
-
-        /* Ensure text is visible */
-        .editable-input,
-        .editable-input * {
-          color: #000;
-        }
-
-        /* Add resize handle styling */
-        .editable-input::-webkit-resizer {
-          border-width: 6px;
-          border-style: solid;
-          border-color: transparent #ccc #ccc transparent;
-          background-color: transparent;
-        }
-      `}</style>
-    </div>
+      <Editor
+        id={name}
+        type="text"
+        defaultValue={value}
+        aria-invalid={!!error}
+        aria-describedby={`${name}-error ${name}-description`}
+        aria-required={required}
+        value={value}
+        onValueChange={onChange}
+        // highlight={(code) => {
+        //   if (!code || code.length === 0) {
+        //     return "";
+        //   }
+        //   return highlight(code, languages.handlebars, "handlebars");
+        // }}
+        highlight={(code) => {
+          if (!code || code.length === 0) {
+            return "";
+          }
+          try {
+            // You can verify if the grammar is loaded
+            console.log("Available languages:", Object.keys(languages));
+            return highlight(code, languages.handlebars, "handlebars");
+          } catch (e) {
+            console.error("Highlighting error:", e);
+            return code; // Fallback to plain text if highlighting fails
+          }
+        }}
+        className={cn(
+          "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          props.className,
+        )}
+        padding={10}
+        style={{
+          fontFamily: '"Fira code", "Fira Mono", monospace',
+          fontSize: 12,
+        }}
+        {...props}
+      />
+    </>
   );
+
+  // return (
+  //   <div className="grid gap-3 my-4">
+  //     <Label htmlFor={name}>{label}</Label>
+  //     <div className="relative">
+  //       <div
+  //         ref={editorRef}
+  //         contentEditable
+  //         className="editable-input w-full min-h-[40px] max-h-[300px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+  //         onInput={handleInput}
+  //         // onFocus={() => setActiveEditor(name)}
+  //         // onFocus={(e) => {
+  //         //   setActiveEditor(name);
+  //         //   // Call parent's onFocus if it exists
+  //         //   props.onFocus?.(e);
+  //         // }}
+  //         aria-invalid={!!error}
+  //         aria-describedby={`${name}-error ${name}-description`}
+  //         aria-required={required}
+  //         style={{
+  //           resize: "vertical",
+  //           overflowY: "auto",
+  //         }}
+  //         {...props}
+  //       />
+  //     </div>
+  //     {(touched || submited) && error && (
+  //       <div className="text-red-500" id={`${name}-error`}>
+  //         {error}
+  //       </div>
+  //     )}
+  //     <style jsx global>{`
+  //       .editable-input {
+  //         white-space: pre-wrap;
+  //         font-family: monospace;
+  //         background-color: #fafafa;
+  //         line-height: 1.5;
+  //       }
+
+  //       .highlight {
+  //         background-color: #e2f1ff;
+  //         border-radius: 3px;
+  //         padding: 0 2px;
+  //         border: 1px solid #b3d4ff;
+  //         margin: 0 1px;
+  //         display: inline-block;
+  //       }
+
+  //       /* Ensure text is visible */
+  //       .editable-input,
+  //       .editable-input * {
+  //         color: #000;
+  //       }
+
+  //       /* Add resize handle styling */
+  //       .editable-input::-webkit-resizer {
+  //         border-width: 6px;
+  //         border-style: solid;
+  //         border-color: transparent #ccc #ccc transparent;
+  //         background-color: transparent;
+  //       }
+  //     `}</style>
+  //   </div>
+  // );
 }
