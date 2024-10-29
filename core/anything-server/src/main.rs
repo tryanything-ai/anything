@@ -25,6 +25,7 @@ mod auth;
 mod billing;
 mod email;
 mod bundler;
+mod variables; 
 mod charts;
 mod execution_planner;
 mod marketplace;
@@ -242,6 +243,12 @@ async fn main() {
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
             get(api::get_test_session_results),
+        )
+        //TODO: get last session results
+        //Variables Explorer for Testing
+        .route(
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/variables",
+            get(variables::get_flow_version_variables),
         )
         //Test Actions
         .route(
