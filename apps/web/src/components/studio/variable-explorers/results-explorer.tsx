@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import api, { TaskRow } from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";
+import { JsonExplorer } from "./json-explorer";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 export function ResultsExplorer(): JSX.Element {
   const {
@@ -20,7 +22,7 @@ export function ResultsExplorer(): JSX.Element {
         console.log("[RESULTS EXPLORER] Missing required IDs:", {
           db_flow_id,
           db_flow_version_id,
-          account: selectedAccount?.account_id
+          account: selectedAccount?.account_id,
         });
         return;
       }
@@ -28,7 +30,7 @@ export function ResultsExplorer(): JSX.Element {
       console.log("[RESULTS EXPLORER] Fetching variables for:", {
         account_id: selectedAccount.account_id,
         flow_id: db_flow_id,
-        version_id: db_flow_version_id
+        version_id: db_flow_version_id,
       });
 
       const result = await api.variables.getWorkflowVersionVariables(
@@ -65,40 +67,40 @@ export function ResultsExplorer(): JSX.Element {
   };
 
   return (
-    // Hide variables if its a trigger
-    <div className="grid w-full items-start gap-6 p-2">
-      {" "}
-      {selected_node_data && selected_node_data.type !== ActionType.Trigger && (
-        <div className="rounded-lg border p-4">
-          <Header />
-          {loading && <div>Loading...</div>}
-          {results.length === 0 && !loading && (
-            <div className="text-muted-foreground">
-              Run Workflow Test Access Results
-            </div>
-          )}
-          <Button
-            onClick={() =>
-              insertAtCursor(
-                "{{actions.results.body.hello_world}}", // Or whatever field name you're targeting
-              )
-            }
-          >
-            Insert Template
-          </Button>
-
-          {results.map((task: TaskRow) => (
-            <div key={task.task_id} className="flex flex-row items-center">
-              <div className="flex-1">{task.task_id}</div>
-              <div className="flex-1">{task.action_label}</div>
-              <div className="flex-1">{task.task_status}</div>
-              <div className="flex-1">
-                {JSON.stringify(task.result, null, 3)}
+    <div className="h-full overflow-y-auto">
+      <ScrollArea>
+        <div className="grid w-full items-start gap-6 p-2">
+          {selected_node_data &&
+            selected_node_data.type !== ActionType.Trigger && (
+              <div className="rounded-lg border p-4">
+                <Header />
+                {loading && <div>Loading...</div>}
+                {results.length === 0 && !loading && (
+                  <div className="text-muted-foreground">
+                    Run Workflow Test Access Results
+                  </div>
+                )}
+                {results.map(
+                  (task: TaskRow) =>
+                    task.type === "action" && (
+                      <div key={task.task_id} className="flex flex-col">
+                        <div className="flex-1">{task.action_label}</div>
+                        <JsonExplorer
+                          data={task.result}
+                          onSelect={(v) => {
+                            console.log(v);
+                            insertAtCursor(
+                              `{{${v}}}`, // Or whatever field name you're targeting
+                            );
+                          }}
+                        />
+                      </div>
+                    ),
+                )}
               </div>
-            </div>
-          ))}
+            )}
         </div>
-      )}
+      </ScrollArea>
     </div>
   );
 }

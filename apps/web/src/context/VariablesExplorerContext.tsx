@@ -12,8 +12,6 @@ export const useVariablesExplorer = () => useContext(VariablesExplorerContext);
 
 export interface VariablesExplorerInterface {
   ediorRefs: Map<string, React.RefObject<HTMLDivElement>>;
-  // insertAtCursor: (text: string) => void;
-  // setTemplateValue: (value: string) => void;
   insertAtCursor: (text: string) => void;
   registerEditorRef: (
     name: string,
