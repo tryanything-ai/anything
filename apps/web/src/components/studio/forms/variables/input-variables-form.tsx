@@ -1,6 +1,7 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "./json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
+import { useState } from "react";
 
 export default function InputVariablesForm(): JSX.Element {
   const {
@@ -11,8 +12,10 @@ export default function InputVariablesForm(): JSX.Element {
       setShowExplorer,
       setExplorerTab,
     },
-    explorer: { setActiveEditor },
   } = useAnything();
+
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [activeFieldName, setActiveFieldName] = useState("");
 
   let fields, handleValidation;
 
@@ -71,7 +74,6 @@ export default function InputVariablesForm(): JSX.Element {
             onSubmit={handleVariableInputSubmit}
             fields={fields}
             onFocus={(fieldName: string) => {
-              // setActiveEditor(fieldName);
               setExplorerTab("results");
               setShowExplorer(true);
             }}

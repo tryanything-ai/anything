@@ -10,7 +10,7 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 export function ResultsExplorer(): JSX.Element {
   const {
     workflow: { db_flow_id, db_flow_version_id, selected_node_data },
-    explorer: { insertAtCursor },
+    explorer: { insertVariable },
   } = useAnything();
 
   const [results, setResults] = useState<TaskRow[]>([]);
@@ -89,7 +89,7 @@ export function ResultsExplorer(): JSX.Element {
                           data={task.result}
                           onSelect={(v) => {
                             console.log(v);
-                            insertAtCursor(
+                            insertVariable(
                               `{{${v}}}`, // Or whatever field name you're targeting
                             );
                           }}

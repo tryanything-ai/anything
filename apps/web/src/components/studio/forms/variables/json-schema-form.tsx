@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
   formValuesToJsonValues,
@@ -6,6 +6,10 @@ import {
 } from "@/lib/json-schema-utils";
 import { Button } from "@repo/ui/components/ui/button";
 import { fieldsMap } from "../form-fields";
+import { useAnything } from "@/context/AnythingContext";
+
+let GLOBAL_CURSOR_LOCATION = 0;
+let GLOBAL_ACTIVE_FIELD = "";
 
 export function JsonSchemaForm({
   name,
@@ -16,9 +20,19 @@ export function JsonSchemaForm({
   onFocus,
   onBlur,
 }: any): JSX.Element {
+  const {
+    explorer: { registerCallback, unRegisterCallback },
+  } = useAnything();
+
   const [values, setValues] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
   const [submited, setSubmitted] = useState(false);
+
+  const valuesRef = useRef(values);
+
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
 
   useEffect(() => {
     console.log("[JSON SCHEMA FORM] Initial values:", initialValues);
@@ -82,6 +96,73 @@ export function JsonSchemaForm({
   console.log("[RENDERING JSON SCHEMA FORM]");
   console.log("Values:", values);
 
+  const handleCursorChange = (e: React.SyntheticEvent, fieldName: string) => {
+    const target = e.target as HTMLTextAreaElement;
+
+    GLOBAL_CURSOR_LOCATION = target.selectionStart;
+
+    GLOBAL_ACTIVE_FIELD = fieldName;
+
+    console.log("Event type:", e.type);
+    console.log("Cursor position:", {
+      start: target.selectionStart,
+      end: target.selectionEnd,
+    });
+    console.log("Active field name:", name);
+  };
+
+  const insertVariable = (variable: string) => {
+    const values = valuesRef.current; // Use the latest values
+    console.log("Inserting variable:", variable);
+    if (!GLOBAL_ACTIVE_FIELD || GLOBAL_CURSOR_LOCATION === null) {
+      console.log("No active field or cursor position");
+      return;
+    }
+
+    console.log("[INSERT VARIABLE] Cursor location:", GLOBAL_CURSOR_LOCATION);
+    console.log("[INSERT VARIABLE] Active field:", GLOBAL_ACTIVE_FIELD);
+    console.log("[INSERT VARIABLE] Values:", values);
+
+    const currentValue = values[GLOBAL_ACTIVE_FIELD] || "";
+    console.log("[INSERT VARIABLE] Current value:", currentValue);
+    const beforeCursor = currentValue.slice(0, GLOBAL_CURSOR_LOCATION);
+    console.log("[INSERT VARIABLE] Before cursor:", beforeCursor);
+    const afterCursor = currentValue.slice(GLOBAL_CURSOR_LOCATION);
+    console.log("[INSERT VARIABLE] After cursor:", afterCursor);
+    const newValue = beforeCursor + variable + afterCursor;
+
+    handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+  };
+
+  // const insertVariable = (variable: string) => {
+  //   console.log("Inserting variable:", variable);
+  //   if (!GLOBAL_ACTIVE_FIELD || GLOBAL_CURSOR_LOCATION === null) {
+  //     console.log("No active field or cursor position");
+  //     return;
+  //   }
+
+  //   console.log("[INSERT VARIABLE] Cursor location:", GLOBAL_CURSOR_LOCATION);
+  //   console.log("[INSERT VARIABLE] Active field:", GLOBAL_ACTIVE_FIELD);
+  //   console.log("[INSERT VARIABLE] Values:", values);
+
+  //   const currentValue = values[GLOBAL_ACTIVE_FIELD] || "";
+  //   console.log("[INSERT VARIABLE] Current value:", currentValue);
+  //   const beforeCursor = currentValue.slice(0, GLOBAL_CURSOR_LOCATION);
+  //   console.log("[INSERT VARIABLE] Before cursor:", beforeCursor);
+  //   const afterCursor = currentValue.slice(GLOBAL_CURSOR_LOCATION);
+  //   console.log("[INSERT VARIABLE] After cursor:", afterCursor);
+  //   const newValue = beforeCursor + variable + afterCursor;
+
+  //   handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+  // };
+
+  useEffect(() => {
+    registerCallback(insertVariable);
+    return () => {
+      unRegisterCallback();
+    };
+  }, []);
+
   return (
     <form name={name} onSubmit={handleSubmit} noValidate>
       <div>
@@ -98,6 +179,9 @@ export function JsonSchemaForm({
               onChange={handleFieldChange}
               onFocus={() => handleFieldFocus(fieldName)}
               onBlur={handleFieldBlur}
+              onSelect={(e: any) => handleCursorChange(e, fieldName)}
+              onClick={(e: any) => handleCursorChange(e, fieldName)}
+              onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
               onValueChange={(value: any) =>
                 handleFieldChange(fieldName, value)
               }
