@@ -1,7 +1,6 @@
 import { useAnything } from "@/context/AnythingContext";
 import { ActionType } from "@/types/workflows";
 import { useEffect, useState } from "react";
-import { Button } from "@repo/ui/components/ui/button";
 import api, { TaskRow } from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";
 import { JsonExplorer } from "./json-explorer";
@@ -9,7 +8,12 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 export function ResultsExplorer(): JSX.Element {
   const {
-    workflow: { db_flow_id, db_flow_version_id, selected_node_data },
+    workflow: {
+      db_flow_id,
+      db_flow_version_id,
+      selected_node_data,
+      setShowExplorer,
+    },
     explorer: { insertVariable },
   } = useAnything();
 
@@ -18,7 +22,14 @@ export function ResultsExplorer(): JSX.Element {
   const { selectedAccount } = useAccounts();
   const fetchResults = async () => {
     try {
-      if (!db_flow_id || !db_flow_version_id || !selectedAccount) {
+      setLoading(true);
+      if (
+        !db_flow_id ||
+        !db_flow_version_id ||
+        !selectedAccount ||
+        !selected_node_data ||
+        !selected_node_data.action_id
+      ) {
         console.log("[RESULTS EXPLORER] Missing required IDs:", {
           db_flow_id,
           db_flow_version_id,
@@ -37,6 +48,7 @@ export function ResultsExplorer(): JSX.Element {
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,
+        selected_node_data?.action_id,
       );
 
       if (result) {
@@ -47,6 +59,8 @@ export function ResultsExplorer(): JSX.Element {
       }
     } catch (error) {
       console.error("[RESULTS EXPLORER] Error fetching results:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,6 +82,28 @@ export function ResultsExplorer(): JSX.Element {
 
   return (
     <div className="h-full overflow-y-auto">
+      <div className="flex items-center justify-end p-2">
+        <button
+          onClick={() => setShowExplorer(false)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
       <ScrollArea>
         <div className="grid w-full items-start gap-6 p-2">
           {selected_node_data &&
@@ -75,29 +111,27 @@ export function ResultsExplorer(): JSX.Element {
               <div className="rounded-lg border p-4">
                 <Header />
                 {loading && <div>Loading...</div>}
-                {results.length === 0 && !loading && (
+                {results && results.length === 0 && !loading && (
                   <div className="text-muted-foreground">
                     Run Workflow Test Access Results
                   </div>
                 )}
-                {results.map(
-                  (task: TaskRow) =>
-                    task.type === "action" && (
-                      <div key={task.task_id} className="flex flex-col">
-                        <div className="flex-1">{task.action_label}</div>
-                        <JsonExplorer
-                          parentPath={"actions." + task.action_id + "."}
-                          data={task.result}
-                          onSelect={(v) => {
-                            console.log(v);
-                            insertVariable(
-                              `{{${v}}}`, // Or whatever field name you're targeting
-                            );
-                          }}
-                        />
-                      </div>
-                    ),
-                )}
+                {results &&
+                  results.map((task: TaskRow) => (
+                    <div key={task.task_id} className="flex flex-col">
+                      <div className="flex-1">{task.action_label}</div>
+                      <JsonExplorer
+                        parentPath={"actions." + task.action_id + "."}
+                        data={task.result}
+                        onSelect={(v) => {
+                          console.log(v);
+                          insertVariable(
+                            `{{${v}}}`, // Or whatever field name you're targeting
+                          );
+                        }}
+                      />
+                    </div>
+                  ))}
               </div>
             )}
         </div>

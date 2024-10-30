@@ -108,7 +108,7 @@ export function JsonSchemaForm({
       start: target.selectionStart,
       end: target.selectionEnd,
     });
-    console.log("Active field name:", name);
+    console.log("Active field name:", fieldName);
   };
 
   const insertVariable = (variable: string) => {

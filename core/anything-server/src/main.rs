@@ -247,7 +247,7 @@ async fn main() {
         //TODO: get last session results
         //Variables Explorer for Testing
         .route(
-            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/variables",
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
             get(variables::get_flow_version_variables),
         )
         //Test Actions

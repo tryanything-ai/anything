@@ -4,8 +4,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::sync::Arc;
 
 use crate::supabase_auth_middleware::User;
@@ -13,14 +12,21 @@ use crate::AppState;
 
 // Actions
 pub async fn get_flow_version_variables(
-    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
+    Path((account_id, workflow_id, workflow_version_id, action_id)): Path<(
+        String,
+        String,
+        String,
+        String,
+    )>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
-    println!("[VARIABLES] Handling get_flow_version_variables request for account: {}, workflow: {}, version: {}", 
-        account_id, workflow_id, workflow_version_id);
+    println!("[VARIABLES] Handling get_flow_version_variables request for account: {}, workflow: {}, version: {}, action: {}", 
+        account_id, workflow_id, workflow_version_id, action_id);
 
     let client = &state.anything_client;
+
+    //TODO: we need to get what action_id's are done before the action_id that was sent.
 
     // Get last session
     println!("[VARIABLES] Fetching last task for workflow");
@@ -32,7 +38,6 @@ pub async fn get_flow_version_variables(
         .eq("flow_version_id", &workflow_version_id)
         .select("*")
         .order("created_at.desc")
-        // .single()
         .execute()
         .await
     {
@@ -131,33 +136,54 @@ pub async fn get_flow_version_variables(
     };
 
     let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
+        Ok(items) => {
+            println!("[VARIABLES] Parsed items: {:?}", items);
+            items
+        }
         Err(e) => {
             println!("[VARIABLES] Error parsing tasks JSON: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
-    let all_completed = items.as_array().map_or(false, |tasks| {
-        tasks.iter().all(|task| {
-            let flow_status = task.get("flow_session_status");
-            let trigger_status = task.get("trigger_session_status");
-            let task_status = task.get("task_status");
-            (flow_status == Some(&Value::String("completed".to_string()))
-                || flow_status == Some(&Value::String("failed".to_string())))
-                && (trigger_status == Some(&Value::String("completed".to_string()))
-                    || trigger_status == Some(&Value::String("failed".to_string())))
-                && (task_status == Some(&Value::String("completed".to_string()))
-                    || task_status == Some(&Value::String("canceled".to_string()))
-                    || task_status == Some(&Value::String("failed".to_string())))
+    // Find the processing order of the target action
+    let target_processing_order = items
+        .as_array()
+        .and_then(|tasks| {
+            tasks
+                .iter()
+                .find(|task| task.get("action_id").and_then(|id| id.as_str()) == Some(&action_id))
         })
-    });
+        .and_then(|task| task.get("processing_order"))
+        .and_then(|order| order.as_i64());
 
-    println!("[VARIABLES] All tasks completed: {}", all_completed);
+    println!(
+        "[VARIABLES] Found target processing order: {:?}",
+        target_processing_order
+    );
+
+    // Filter tasks to only include those with lower processing order
+    let filtered_items = match target_processing_order {
+        Some(target_order) => Value::Array(
+            items
+                .as_array()
+                .unwrap_or(&Vec::new())
+                .iter()
+                .filter(|task| {
+                    task.get("processing_order")
+                        .and_then(|order| order.as_i64())
+                        .map_or(false, |order| order < target_order)
+                })
+                .cloned()
+                .collect(),
+        ),
+        None => items,
+    };
+
+    let items = filtered_items;
 
     let result = serde_json::json!({
-        "tasks": items,
-        "complete": all_completed
+        "tasks": items
     });
 
     println!("[VARIABLES] Returning response");
