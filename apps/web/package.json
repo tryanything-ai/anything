@@ -26,7 +26,7 @@
     "geist": "^1.2.1",
     "lodash": "^4.17.21",
     "lucide-react": "^0.368.0",
-    "next": "latest",
+    "next": "^14",
     "next-themes": "^0.3.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",

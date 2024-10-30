@@ -6,7 +6,7 @@ import { Button } from "@repo/ui/components/ui/button";
 export function VariablesExplorer(): JSX.Element {
   const {
     workflow,
-    explorer: { insertAtCursor },
+    explorer: { insertVariable },
   } = useAnything();
 
   const [results, setResults] = useState<any[]>([]);
@@ -39,9 +39,9 @@ export function VariablesExplorer(): JSX.Element {
               </div>
             )}
             <Button
-              onClick={() =>
-                insertAtCursor("{{actions.results.body.hello_world}}")
-              }
+            // onClick={() =>
+            //   // inser("{{actions.results.body.hello_world}}")
+            // }
             >
               Insert Template
             </Button>
