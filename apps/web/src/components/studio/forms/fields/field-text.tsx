@@ -1,5 +1,5 @@
 import Editor from "react-simple-code-editor";
-import { highlight, languages } from "prismjs";
+import { highlight,languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-markup";
@@ -24,12 +24,10 @@ export default function FieldText({
   required,
   ...props
 }: any) {
-
   if (!isVisible) {
     console.log("fieldtext not visible", name);
     return null;
   }
-
 
   return (
     <div className="grid gap-3 my-4">
@@ -48,7 +46,7 @@ export default function FieldText({
               return "";
             }
             try {
-              return highlight(code, languages.handlebars!, "handlebars");
+              return highlight(code, languages.handlebars, "handlebars");
             } catch (e) {
               console.error("Highlighting error:", e);
               return code; // Fallback to plain text if highlighting fails
