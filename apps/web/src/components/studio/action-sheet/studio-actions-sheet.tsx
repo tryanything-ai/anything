@@ -130,37 +130,41 @@ export function StudioActionsSheet(): JSX.Element {
             ) : (
               <ScrollArea className="h-full pr-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {actions.map((db_action: any) => {
-                    let action: Action = db_action.action_template_definition;
-                    let marketplace: boolean = "featured" in db_action;
-                    return (
-                      <div
-                        key={`${db_action.action_template_id}-${action.label}`}
-                        onClick={() => {
-                          addNode(action, { x: 100, y: 300 });
-                          setShowingActionSheet(false);
-                        }}
-                        className="flex flex-col justify-between p-4 border rounded-md border-black cursor-pointer hover:bg-gray-50"
-                      >
-                        <div className="flex flex-row gap-4 items-center" key={`content-${db_action.action_template_id}`}>
-                          <BaseNodeIcon icon={action.icon} />
-                          <div>
-                            <div className="text-lg font-semibold">
-                              {action.label}
-                              {!marketplace && (
-                                <Badge className="ml-2" variant="outline">
-                                  Team
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm font-normal truncate overflow-ellipsis">
-                              {action.description}
+                  {actions &&
+                    actions.map((db_action: any) => {
+                      let action: Action = db_action.action_template_definition;
+                      let marketplace: boolean = "featured" in db_action;
+                      return (
+                        <div
+                          key={`${db_action.action_template_id}-${action.label}`}
+                          onClick={() => {
+                            addNode(action, { x: 100, y: 300 });
+                            setShowingActionSheet(false);
+                          }}
+                          className="flex flex-col justify-between p-4 border rounded-md border-black cursor-pointer hover:bg-gray-50"
+                        >
+                          <div
+                            className="flex flex-row gap-4 items-center"
+                            key={`content-${db_action.action_template_id}`}
+                          >
+                            <BaseNodeIcon icon={action.icon} />
+                            <div>
+                              <div className="text-lg font-semibold">
+                                {action.label}
+                                {!marketplace && (
+                                  <Badge className="ml-2" variant="outline">
+                                    Team
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm font-normal truncate overflow-ellipsis">
+                                {action.description}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </ScrollArea>
             )}

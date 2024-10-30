@@ -32,10 +32,7 @@ export default function InputVariablesForm(): JSX.Element {
       selected_node_variables,
       selected_node_variables_schema,
     );
-    if (
-      Object.keys(selected_node_variables).length > 0 &&
-      Object.keys(selected_node_variables_schema).length > 0
-    ) {
+    if (Object.keys(selected_node_variables_schema.properties).length > 0) {
       ({ fields, handleValidation } = createHeadlessForm(
         selected_node_variables_schema,
         {
@@ -67,8 +64,7 @@ export default function InputVariablesForm(): JSX.Element {
         typeof selected_node_variables === "object" &&
         selected_node_variables_schema &&
         typeof selected_node_variables_schema === "object" &&
-        Object.keys(selected_node_variables).length > 0 &&
-        Object.keys(selected_node_variables_schema).length > 0 && (
+        Object.keys(selected_node_variables_schema.properties).length > 0 && (
           <JsonSchemaForm
             name="input-variables-form"
             onSubmit={handleVariableInputSubmit}
