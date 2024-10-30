@@ -3,7 +3,6 @@
 import StudioHeader from "@/components/studio/studio-header";
 import StudioWorkflowEditor from "@/components/studio/studio-workflow-editor";
 import RightPanelFormEditor from "@/components/studio/forms/right-panel-form-editor";
-import { useState } from "react";
 
 import {
   ResizableHandle,
@@ -28,17 +27,17 @@ export default function StudioLayout(): JSX.Element {
             <StudioWorkflowEditor />
           </div>
         </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={40}>
-          <RightPanelFormEditor />
-        </ResizablePanel>
-        {showExplorer && <ResizableHandle withHandle />}
         {showExplorer && (
-          <ResizablePanel defaultSize={20}>
+          <ResizablePanel defaultSize={40}>
             {explorerTab === "results" && <ResultsExplorer />}
             {explorerTab === "variables" && <VariablesExplorer />}
           </ResizablePanel>
         )}
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={40}>
+          <RightPanelFormEditor />
+        </ResizablePanel>
+        {/* {showExplorer && <ResizableHandle withHandle />} */}
       </ResizablePanelGroup>
     </div>
   );

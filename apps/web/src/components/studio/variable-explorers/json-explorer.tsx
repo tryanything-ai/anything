@@ -15,7 +15,7 @@ export function JsonExplorer({
     if (value === null) return <span className="text-gray-400">null</span>;
     if (typeof value === "object") {
       return (
-        <div className="ml-4">
+        <div className="">
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -57,10 +57,10 @@ export function JsonExplorer({
   };
 
   return (
-    <div className="p-4 rounded-lg border">
+    <>
       {Object.entries(data).map(([key, value]) => (
         <div key={key}>{renderValue(key, value, `${parentPath}${key}`)}</div>
       ))}
-    </div>
+    </>
   );
 }

@@ -69,20 +69,9 @@ export function ResultsExplorer(): JSX.Element {
     fetchResults();
   }, []);
 
-  const Header = () => {
-    let header_title = "Action Results";
-
-    return (
-      <div className="flex flex-row items-center">
-        <div className="font-bold">{header_title}</div>
-        <div className="flex-1" />
-      </div>
-    );
-  };
-
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="flex items-center justify-end p-2">
+    <div className="h-full overflow-y-auto p-2">
+      <div className="">
         <button
           onClick={() => setShowExplorer(false)}
           className="text-muted-foreground hover:text-foreground"
@@ -104,12 +93,12 @@ export function ResultsExplorer(): JSX.Element {
           </svg>
         </button>
       </div>
-      <ScrollArea>
-        <div className="grid w-full items-start gap-6 p-2">
+      <ScrollArea className="w-full">
+        <div className="w-full">
           {selected_node_data &&
             selected_node_data.type !== ActionType.Trigger && (
-              <div className="rounded-lg border p-4">
-                <Header />
+              <div className="">
+                {/* <Header /> */}
                 {loading && <div>Loading...</div>}
                 {results && results.length === 0 && !loading && (
                   <div className="text-muted-foreground">
@@ -118,18 +107,31 @@ export function ResultsExplorer(): JSX.Element {
                 )}
                 {results &&
                   results.map((task: TaskRow) => (
-                    <div key={task.task_id} className="flex flex-col">
-                      <div className="flex-1">{task.action_label}</div>
-                      <JsonExplorer
-                        parentPath={"actions." + task.action_id + "."}
-                        data={task.result}
-                        onSelect={(v) => {
-                          console.log(v);
-                          insertVariable(
-                            `{{${v}}}`, // Or whatever field name you're targeting
-                          );
+                    <div
+                      key={task.task_id}
+                      className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content"
+                    >
+                      <div className="flex-1 font-bold mb-2">
+                        {task.action_label}
+                      </div>
+                      <div
+                        style={{
+                          backgroundColor: "whitesmoke",
+                          borderRadius: "10px",
+                          padding: "10px",
                         }}
-                      />
+                      >
+                        <JsonExplorer
+                          parentPath={"actions." + task.action_id + "."}
+                          data={task.result}
+                          onSelect={(v) => {
+                            console.log(v);
+                            insertVariable(
+                              `{{${v}}}`, // Or whatever field name you're targeting
+                            );
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
               </div>
