@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 
 interface JsonExplorerProps {
@@ -30,9 +29,12 @@ export function JsonExplorer({
             </span>
           </div>
           <div className="ml-4">
-            {Object.entries(value).map(([k, v]) => (
-              <div key={k}>{renderValue(k, v, `${path}.${k}`)}</div>
-            ))}
+            {Object.entries(value).map(([k, v]) => {
+              const newPath = Array.isArray(value)
+                ? `${path}[${k}]`
+                : `${path}.${k}`;
+              return <div key={k}>{renderValue(k, v, newPath)}</div>;
+            })}
           </div>
         </div>
       );

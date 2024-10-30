@@ -86,6 +86,7 @@ export function ResultsExplorer(): JSX.Element {
                       <div key={task.task_id} className="flex flex-col">
                         <div className="flex-1">{task.action_label}</div>
                         <JsonExplorer
+                          parentPath={"actions." + task.action_id + "."}
                           data={task.result}
                           onSelect={(v) => {
                             console.log(v);
