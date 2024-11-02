@@ -57,7 +57,7 @@ pub struct UpdateWorkflowInput {
 }
 
 pub async fn root() -> impl IntoResponse {
-    Html(r#"Check out <a href="https://tryanything.xyz">tryanything.xyz</a> to start"#)
+    Html(r#"Check out <a href="https://www.tryanything.xyz">tryanything.xyz</a> to start"#)
 }
 
 pub async fn get_workflows(

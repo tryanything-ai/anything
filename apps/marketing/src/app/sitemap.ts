@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (templateResult) {
     templateResult.forEach((template: any) =>
       routes.push({
-        url: `${base_url}templates/${template.slug}`,
+        url: `${base_url}/templates/${template.slug}`,
         lastModified: new Date(template.created_at),
         changeFrequency: "monthly",
         priority: 0.3,
@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   //templates
   routes.push({
-    url: `${base_url}templates/workflows`,
+    url: `${base_url}/templates/workflows`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.8,
@@ -51,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   //integrations aka action templates
    routes.push({
-    url: `${base_url}templates/actions`,
+    url: `${base_url}/templates/actions`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.8,
