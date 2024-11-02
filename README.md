@@ -88,4 +88,4 @@ Love Anything? Give us a star ⭐️!
 
 ### Core Team:
 
-Carl Lippert: [Twitter](https://twitter.com/carllippert)
+Carl Lippert: [Twitter](https://x.com/carllippert)
