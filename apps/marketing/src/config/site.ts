@@ -15,7 +15,7 @@ export const siteConfig: SiteConfig = {
   url: `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`,
   ogImage: `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}/og.jpg`,
   links: {
-    twitter: "https://twitter.com/carllippert",
+    twitter: "https://x.com/_anything_ai",
     github: "https://github.com/tryanything-ai/anything",
   },
 };

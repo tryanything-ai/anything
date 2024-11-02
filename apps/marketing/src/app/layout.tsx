@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { ReactNode, Suspense, JSX } from "react";
 import { siteConfig } from "../config/site";
 import { cn } from "@/lib/utils";
-// import { dm_sans, inter } from "../lib/fonts";
 import { PHProvider, PostHogPageview } from "./providers";
 
 const fontSans = FontSans({
@@ -28,9 +27,9 @@ export const metadata: Metadata = {
   ],
   creator: "anything",
   metadataBase: new URL(siteConfig.url),
-  alternates: {
-    canonical: "/",
-  },
+  // alternates: {
+  //   canonical: "https://tryanything.xyz",
+  // },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -43,13 +42,13 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: ["/og.jpg"],
-    creator: "@carllippert",
+    creator: "@_anything_ai",
   },
   icons: {
     icon: "/favicons/favicon.ico",
     shortcut: "/favicons/favicon-16x16.png",
     apple: "/favicons/apple-touch-icon.png",
-  }
+  },
 };
 
 export default function RootLayout({

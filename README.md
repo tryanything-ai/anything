@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-<a href="https://www.tryanything.xyz/">🔗 Main site</a>
+<a href="https://tryanything.xyz/">🔗 Main site</a>
 <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
 <a href="https://discord.gg/95pNMNGW7c">💬 Discord</a>
 <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -88,4 +88,4 @@ Love Anything? Give us a star ⭐️!
 
 ### Core Team:
 
-Carl Lippert: [Twitter](https://twitter.com/carllippert)
+Carl Lippert: [Twitter](https://x.com/carllippert)
