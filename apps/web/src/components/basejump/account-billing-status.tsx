@@ -8,15 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/ui/card";
-import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import api from "@repo/anything-api";
 
-const returnUrl: string =
-  process.env.NODE_ENV === "production"
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : `http://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+const returnUrl: string = process.env.NEXT_PUBLIC_HOSTED_URL || "";
 
 export default function AccountBillingStatus(): JSX.Element {
   const {

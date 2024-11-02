@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   ],
   creator: "anything",
   metadataBase: new URL(siteConfig.url),
-  // alternates: {
-  //   canonical: "https://www.tryanything.xyz",
-  // },
+  alternates: {
+    canonical: "https://www.tryanything.xyz",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",

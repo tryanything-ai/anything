@@ -4,7 +4,7 @@ import api from "@repo/anything-api";
 export default async function TemplatePage() {
   let actionTemplates = [];
   let error = null;
-
+``
   try {
     const templates = await api.marketplace.getActionTemplatesForMarketplace();
     if (templates && templates.length > 0) {

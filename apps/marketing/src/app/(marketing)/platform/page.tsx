@@ -69,7 +69,7 @@ export default function IndexPage() {
       {/* <div className="flex flex-col w-full max-w-5xl mx-auto">
         <Image
           src={AnythingWeb}
-          // src={`https://${process.env.NEXT_PUBLIC_VERCEL_URL}/llamascreenshot.png`}
+
           alt="Anything Web Screenshot"
         // width="500"
         // height="1000"

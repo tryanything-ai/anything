@@ -2,10 +2,7 @@ import { Inter as FontSans } from "next/font/google";
 import "@repo/ui/globals.css";
 import { cn } from "@/lib/utils";
 
-const defaultUrl: string =
-  process.env.NODE_ENV === "production"
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : `http://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+const defaultUrl: string = process.env.NEXT_PUBLIC_HOSTED_URL!;
 
 const fontSans = FontSans({
   subsets: ["latin"],
