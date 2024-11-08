@@ -6,6 +6,7 @@ import {
 import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
+import { useMemo } from "react";
 
 function extractObjectValues(
   obj: Record<string, any> | null,
@@ -54,13 +55,13 @@ export default function EditVariableForm(): JSX.Element {
     delete EDIT_VARIABLES_SCHEMA.properties.title.const;
   }
 
-  const { fields, handleValidation } = createHeadlessForm(
-    EDIT_VARIABLES_SCHEMA,
-    {
+
+  const { fields, handleValidation } = useMemo(() => {
+    return createHeadlessForm(EDIT_VARIABLES_SCHEMA, {
       strictInputType: false, // so you don't need to pass presentation.inputType,
       initialValues: the_variable,
-    },
-  );
+    });
+  }, [the_variable]);
 
   async function handleOnSubmit(jsonValues: any, { formValues }: any) {
     console.log(

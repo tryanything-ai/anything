@@ -1,6 +1,7 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "./json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
+import { useMemo } from "react";
 
 export default function ConfigurationForm(): JSX.Element {
   const {
@@ -11,26 +12,23 @@ export default function ConfigurationForm(): JSX.Element {
     },
   } = useAnything();
 
-  let fields, handleValidation: any;
 
-  if (
-    selected_node_input &&
-    selected_node_input_schema &&
-    Object.keys(selected_node_input_schema).length > 0
-  ) {
-    console.log("[CREATING HEADLESS FORM FOR INPUT SCHEMA]");
-    console.log("Selected Node Input:", selected_node_input);
-    console.log("Selected Node Input Schema:", selected_node_input_schema);
-    ({ fields, handleValidation } = createHeadlessForm(
-      selected_node_input_schema,
-      {
+  const { fields, handleValidation } = useMemo(() => {
+    if (
+      selected_node_input &&
+      selected_node_input_schema &&
+      Object.keys(selected_node_input_schema).length > 0
+    ) {
+      console.log("[CREATING HEADLESS FORM FOR INPUT SCHEMA]");
+      console.log("Selected Node Input:", selected_node_input);
+      console.log("Selected Node Input Schema:", selected_node_input_schema);
+      return createHeadlessForm(selected_node_input_schema, {
         strictInputType: false, // so you don't need to pass presentation.inputType,
         initialValues: selected_node_input,
-      },
-    ));
-  } else {
-    console.log("[NO INPUT SCHEMA IN CONFIGURATION FORM]");
-  }
+      });
+    }
+    return { fields: undefined, handleValidation: undefined };
+  }, [selected_node_input, selected_node_input_schema]);
 
   async function handleOnSubmit(jsonValues: any, { formValues }: any) {
     await updateNodeData(["input"], [formValues]);

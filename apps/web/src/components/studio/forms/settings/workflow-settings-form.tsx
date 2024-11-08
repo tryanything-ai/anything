@@ -2,13 +2,12 @@ import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EDIT_FLOW_SCHEMA } from "./flow-settings-schema";
+import { useMemo } from "react";
 
 export default function WorkflowSettingsForm(): JSX.Element {
   const {
     workflow: { db_flow, updateWorkflow },
   } = useAnything();
-
-  let fields, handleValidation;
 
   //TODO: Create input
   let input = {
@@ -19,10 +18,12 @@ export default function WorkflowSettingsForm(): JSX.Element {
 
   console.log("input in worfklow-settings-form", input);
 
-  ({ fields, handleValidation } = createHeadlessForm(EDIT_FLOW_SCHEMA, {
-    strictInputType: false, // so you don't need to pass presentation.inputType,
-    initialValues: input,
-  }));
+  const { fields, handleValidation } = useMemo(() => {
+    return createHeadlessForm(EDIT_FLOW_SCHEMA, {
+      strictInputType: false, // so you don't need to pass presentation.inputType,
+      initialValues: input,
+    });
+  }, [input]);
 
   async function handleOnSubmit(jsonValues: any, { formValues }: any) {
     await updateWorkflow(formValues);

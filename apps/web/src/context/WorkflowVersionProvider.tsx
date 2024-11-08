@@ -239,6 +239,7 @@ export const WorkflowVersionProvider = ({
 
       console.log("Updating Workflow", args);
 
+      //TODO: show same saving status in header as other places
       //Save to cloud
       await api.flows.updateFlow(selectedAccount.account_id, dbFlowId, args);
 

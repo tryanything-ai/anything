@@ -1,6 +1,7 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
+import { useMemo } from "react";
 
 export default function InputVariablesForm(): JSX.Element {
   const {
@@ -15,37 +16,21 @@ export default function InputVariablesForm(): JSX.Element {
     },
   } = useAnything();
 
-  let fields, handleValidation: any;
-
-  //Very ugly but we are working with deeply nested Json in the workflow object
-  //There are better ways to do this that require more rewriting than i want right now.
-  if (
-    selected_node_variables &&
-    typeof selected_node_variables === "object" &&
-    selected_node_variables_schema &&
-    typeof selected_node_variables_schema === "object"
-  ) {
-    console.log(
-      "Setting Variables List in Input",
-      selected_node_variables,
-      selected_node_variables_schema,
-    );
-    if (Object.keys(selected_node_variables_schema.properties).length > 0) {
-      ({ fields, handleValidation } = createHeadlessForm(
-        selected_node_variables_schema,
-        {
-          strictInputType: false, // so you don't need to pass presentation.inputType,
-          initialValues: selected_node_variables,
-        },
-      ));
+  const { fields, handleValidation } = useMemo(() => {
+    if (
+      selected_node_variables &&
+      typeof selected_node_variables === "object" &&
+      selected_node_variables_schema &&
+      typeof selected_node_variables_schema === "object" &&
+      Object.keys(selected_node_variables_schema.properties).length > 0
+    ) {
+      return createHeadlessForm(selected_node_variables_schema, {
+        strictInputType: false,
+        initialValues: selected_node_variables,
+      });
     }
-  } else {
-    console.log(
-      "No Variables List in Input",
-      selected_node_variables,
-      selected_node_variables_schema,
-    );
-  }
+    return { fields: undefined, handleValidation: undefined };
+  }, [selected_node_variables, selected_node_variables_schema]);
 
   //Update Configuration
   async function handleVariableInputSubmit(
