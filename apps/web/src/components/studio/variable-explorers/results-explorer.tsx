@@ -67,11 +67,11 @@ export function ResultsExplorer(): JSX.Element {
   useEffect(() => {
     console.log("[RESULTS EXPLORER] Initial fetch triggered");
     fetchResults();
-  }, []);
+  }, [selected_node_data]);
 
   return (
-    <div className="h-full overflow-y-auto p-2">
-      <div className="">
+    <div className="h-full w-full flex flex-col">
+      <div className="p-2">
         <button
           onClick={() => setShowExplorer(false)}
           className="text-muted-foreground hover:text-foreground"
@@ -93,11 +93,11 @@ export function ResultsExplorer(): JSX.Element {
           </svg>
         </button>
       </div>
-      <ScrollArea className="w-full">
-        <div className="w-full">
+      <ScrollArea className="flex-1">
+        <div className="p-2">
           {selected_node_data &&
             selected_node_data.type !== ActionType.Trigger && (
-              <div className="">
+              <div className="w-full">
                 {/* <Header /> */}
                 {loading && <div>Loading...</div>}
                 {results && results.length === 0 && !loading && (
@@ -109,28 +109,25 @@ export function ResultsExplorer(): JSX.Element {
                   results.map((task: TaskRow) => (
                     <div
                       key={task.task_id}
-                      className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content"
+                      // className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content"
+                      className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md" // Added overflow-hidden
                     >
-                      <div className="flex-1 font-bold mb-2">
-                        {task.action_label}
-                      </div>
-                      <div
-                        style={{
-                          backgroundColor: "whitesmoke",
-                          borderRadius: "10px",
-                          padding: "10px",
-                        }}
-                      >
-                        <JsonExplorer
-                          parentPath={"actions." + task.action_id + "."}
-                          data={task.result}
-                          onSelect={(v) => {
-                            console.log(v);
-                            insertVariable(
-                              `{{${v}}}`, // Or whatever field name you're targeting
-                            );
-                          }}
-                        />
+                      <div className="p-3">
+                        <div className="flex-1 font-bold mb-2">
+                          {task.action_label}
+                        </div>
+                        <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
+                            <JsonExplorer
+                              parentPath={"actions." + task.action_id + "."}
+                              data={task.result}
+                              onSelect={(v) => {
+                                console.log(v);
+                                insertVariable(
+                                  `{{${v}}}`, // Or whatever field name you're targeting
+                                );
+                              }}
+                            />
+                        </div>
                       </div>
                     </div>
                   ))}

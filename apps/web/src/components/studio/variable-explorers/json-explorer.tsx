@@ -2,6 +2,7 @@ import { Button } from "@repo/ui/components/ui/button";
 
 interface JsonExplorerProps {
   data: any;
+  className?: string;
   onSelect: (path: string) => void;
   parentPath?: string;
 }
@@ -9,13 +10,14 @@ interface JsonExplorerProps {
 export function JsonExplorer({
   data,
   onSelect,
+  className = "",
   parentPath = "",
 }: JsonExplorerProps): JSX.Element {
   const renderValue = (key: string, value: any, path: string) => {
     if (value === null) return <span className="text-gray-400">null</span>;
     if (typeof value === "object") {
       return (
-        <div className="">
+        <div className={className}>
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -25,7 +27,9 @@ export function JsonExplorer({
               {key}
             </Button>
             <span className="ml-2 text-gray-400">
-              {Array.isArray(value) ? "[]" : "{}"}
+              {Array.isArray(value)
+                ? `[${value.length} value${value.length !== 1 ? "s" : ""}]`
+                : "{}"}
             </span>
           </div>
           <div className="ml-4">
@@ -41,7 +45,7 @@ export function JsonExplorer({
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div>
         <Button
           variant="ghost"
           className="p-1 m-1 h-auto bg-blue-500 text-blue-100 hover:bg-blue-600 hover:text-blue-50 font-medium"

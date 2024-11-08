@@ -28,9 +28,11 @@ export default function StudioLayout(): JSX.Element {
           </div>
         </ResizablePanel>
         {showExplorer && (
-          <ResizablePanel defaultSize={40}>
-            {explorerTab === "results" && <ResultsExplorer />}
-            {explorerTab === "variables" && <VariablesExplorer />}
+          <ResizablePanel defaultSize={40} className="flex flex-col min-h-0">
+            <div className="flex-1 overflow-hidden">
+              {explorerTab === "results" && <ResultsExplorer />}
+              {explorerTab === "variables" && <VariablesExplorer />}
+            </div>
           </ResizablePanel>
         )}
         <ResizableHandle withHandle />
