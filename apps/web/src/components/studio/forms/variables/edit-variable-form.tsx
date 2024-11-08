@@ -3,7 +3,7 @@ import {
   EDIT_VARIABLES_SCHEMA,
   EDIT_VARIABLES_VARIABLES,
 } from "./edit-variable-schema";
-import { JsonSchemaForm } from "./json-schema-form";
+import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
 

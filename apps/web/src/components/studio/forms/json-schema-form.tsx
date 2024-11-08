@@ -5,11 +5,12 @@ import {
   getDefaultValuesFromFields,
 } from "@/lib/json-schema-utils";
 import { Button } from "@repo/ui/components/ui/button";
-import { fieldsMap } from "../form-fields";
+import { fieldsMap } from "./form-fields";
 import { useAnything } from "@/context/AnythingContext";
 
 let GLOBAL_CURSOR_LOCATION = 0;
 let GLOBAL_ACTIVE_FIELD = "";
+let GLOBAL_ACTIVE_FORM_NAME = "";
 
 export function JsonSchemaForm({
   name,
@@ -103,6 +104,8 @@ export function JsonSchemaForm({
 
     GLOBAL_ACTIVE_FIELD = fieldName;
 
+    GLOBAL_ACTIVE_FORM_NAME = name;
+
     console.log("Event type:", e.type);
     console.log("Cursor position:", {
       start: target.selectionStart,
@@ -112,6 +115,12 @@ export function JsonSchemaForm({
   };
 
   const insertVariable = (variable: string) => {
+    
+    if(GLOBAL_ACTIVE_FORM_NAME !== name) {
+      console.log("Not the active form");
+      return;
+    }
+
     const values = valuesRef.current; // Use the latest values
     console.log("Inserting variable:", variable);
     if (!GLOBAL_ACTIVE_FIELD || GLOBAL_CURSOR_LOCATION === null) {
@@ -157,9 +166,9 @@ export function JsonSchemaForm({
   // };
 
   useEffect(() => {
-    registerCallback(insertVariable);
+    registerCallback(name, insertVariable);
     return () => {
-      unRegisterCallback();
+      unRegisterCallback(name);
     };
   }, []);
 

@@ -1,5 +1,5 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
-import { JsonSchemaForm } from "../variables/json-schema-form";
+import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EDIT_FLOW_SCHEMA } from "./flow-settings-schema";
 

@@ -20,8 +20,8 @@ export const useVariablesExplorer = () => {
 };
 
 export interface VariablesExplorerInterface {
-  registerCallback: (callback: (variable: string) => void) => void;
-  unRegisterCallback: () => void;
+  registerCallback: (id: string, callback: (variable: string) => void) => void; // now takes an ID
+  unRegisterCallback: (id: string) => void;
   insertVariable: (variable: string) => void;
   cursorPosition: number;
   setCursorPosition: (position: number) => void;
@@ -34,31 +34,32 @@ export function VariablesExplorerProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [registeredCallback, setRegisteredCallback] = useState<
-    ((variable: string) => void) | null
-  >(null);
+  // const [registeredCallback, setRegisteredCallback] = useState<
+  //   ((variable: string) => void) | null
+  // >(null);
+  const [registeredCallbacks, setRegisteredCallbacks] = useState<Record<string, (variable: string) => void>>({});
   const [cursorPosition, setCursorPosition] = useState(0);
   const [activeFieldName, setActiveFieldName] = useState("");
 
-  const registerCallback = useCallback(
-    (callback: (variable: string) => void) => {
-      setRegisteredCallback(() => callback);
-    },
-    [],
-  );
-
-  const unRegisterCallback = useCallback(() => {
-    setRegisteredCallback(null);
+  const registerCallback = useCallback((id: string, callback: (variable: string) => void) => {
+    setRegisteredCallbacks(callbacks => ({
+      ...callbacks,
+      [id]: callback
+    }));
   }, []);
 
-  const insertVariable = useCallback(
-    (variable: string) => {
-      if (registeredCallback) {
-        registeredCallback(variable);
-      }
-    },
-    [registeredCallback],
-  );
+  const unRegisterCallback = useCallback((id: string) => {
+    setRegisteredCallbacks(callbacks => {
+      const { [id]: _, ...rest } = callbacks;
+      return rest;
+    });
+  }, []);
+
+  const insertVariable = useCallback((variable: string) => {
+    Object.values(registeredCallbacks).forEach(callback => {
+      callback(variable);
+    });
+  }, [registeredCallbacks]);
 
   const handleSetCursorPosition = useCallback((position: number) => {
     console.log("[VARIABLES EXPLORER] Setting cursor position:", position);

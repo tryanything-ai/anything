@@ -1,5 +1,5 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
-import { JsonSchemaForm } from "./json-schema-form";
+import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { useState } from "react";
 
@@ -10,6 +10,8 @@ export default function InputVariablesForm(): JSX.Element {
       selected_node_variables_schema,
       updateNodeData,
       setShowExplorer,
+      explorerTab,
+      showExplorer,
       setExplorerTab,
     },
   } = useAnything();
@@ -70,12 +72,18 @@ export default function InputVariablesForm(): JSX.Element {
             onSubmit={handleVariableInputSubmit}
             fields={fields}
             onFocus={(fieldName: string) => {
-              setExplorerTab("results");
-              setShowExplorer(true);
+              // setExplorerTab("results");
+              // setShowExplorer(true);
+              if (explorerTab !== "results") {
+                setExplorerTab("results");
+              }
+              if (!showExplorer) {
+                setShowExplorer(true);
+              }
             }}
-            onBlur={() => {
+            // onBlur={() => {
               // setShowExplorer(false);
-            }}
+            // }}
             initialValues={selected_node_variables}
             handleValidation={handleValidation}
           />
