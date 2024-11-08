@@ -1,5 +1,5 @@
 import Editor from "react-simple-code-editor";
-import { highlight,languages } from "prismjs/components/prism-core";
+import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-markup";
@@ -8,6 +8,7 @@ import "prismjs/components/prism-handlebars";
 import "prismjs/themes/prism.css";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
+import { useState } from "react";
 
 export default function FieldText({
   type,
@@ -24,9 +25,18 @@ export default function FieldText({
   required,
   ...props
 }: any) {
+  const [touched, setTouched] = useState(false);
+
   if (!isVisible) {
     console.log("fieldtext not visible", name);
     return null;
+  }
+
+  const displayError = submited || touched ? error : null;
+
+  function handleChange(e: any) {
+    if (!touched) setTouched(true);
+    onChange(name, e.target.value);
   }
 
   return (
@@ -40,7 +50,7 @@ export default function FieldText({
           aria-describedby={`${name}-error ${name}-description`}
           aria-required={required}
           value={value}
-          onValueChange={onChange}
+          onValueChange={handleChange}
           highlight={(code) => {
             if (!code || code.length === 0) {
               return "";
@@ -60,6 +70,7 @@ export default function FieldText({
           {...props} //order matters here which is kinda wild!
         />
       </div>
+      {displayError && <div className="text-red-500">{displayError}</div>}
     </div>
   );
 }

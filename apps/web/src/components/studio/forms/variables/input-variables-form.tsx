@@ -1,7 +1,6 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
-import { useState } from "react";
 
 export default function InputVariablesForm(): JSX.Element {
   const {
@@ -16,10 +15,7 @@ export default function InputVariablesForm(): JSX.Element {
     },
   } = useAnything();
 
-  const [cursorPosition, setCursorPosition] = useState(0);
-  const [activeFieldName, setActiveFieldName] = useState("");
-
-  let fields, handleValidation;
+  let fields, handleValidation: any;
 
   //Very ugly but we are working with deeply nested Json in the workflow object
   //There are better ways to do this that require more rewriting than i want right now.
@@ -72,8 +68,6 @@ export default function InputVariablesForm(): JSX.Element {
             onSubmit={handleVariableInputSubmit}
             fields={fields}
             onFocus={(fieldName: string) => {
-              // setExplorerTab("results");
-              // setShowExplorer(true);
               if (explorerTab !== "results") {
                 setExplorerTab("results");
               }
@@ -81,9 +75,6 @@ export default function InputVariablesForm(): JSX.Element {
                 setShowExplorer(true);
               }
             }}
-            // onBlur={() => {
-              // setShowExplorer(false);
-            // }}
             initialValues={selected_node_variables}
             handleValidation={handleValidation}
           />

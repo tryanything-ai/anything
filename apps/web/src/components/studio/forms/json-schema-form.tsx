@@ -8,6 +8,9 @@ import { Button } from "@repo/ui/components/ui/button";
 import { fieldsMap } from "./form-fields";
 import { useAnything } from "@/context/AnythingContext";
 
+//YES these GLOBALS are super naughty and I never do this but damn
+//i could just not get it to work fast enough
+//any other way right now
 let GLOBAL_CURSOR_LOCATION = 0;
 let GLOBAL_ACTIVE_FIELD = "";
 let GLOBAL_ACTIVE_FORM_NAME = "";
@@ -67,8 +70,13 @@ export function JsonSchemaForm({
     e.preventDefault();
     setSubmitted(true);
     const { errors, jsonValues } = handleInternalValidation(values);
+    console.log("[JSON SCHEMA FORM - SUBMIT] Errors:", errors);
     setErrors(errors);
     if (Object.keys(errors).length === 0) {
+      console.log(
+        "[JSON SCHEMA FORM - SUBMIT] No errors, submitting:",
+        jsonValues,
+      );
       onSubmit(jsonValues, { formValues: values });
     }
   };
@@ -115,8 +123,7 @@ export function JsonSchemaForm({
   };
 
   const insertVariable = (variable: string) => {
-    
-    if(GLOBAL_ACTIVE_FORM_NAME !== name) {
+    if (GLOBAL_ACTIVE_FORM_NAME !== name) {
       console.log("Not the active form");
       return;
     }
@@ -142,28 +149,6 @@ export function JsonSchemaForm({
 
     handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
   };
-
-  // const insertVariable = (variable: string) => {
-  //   console.log("Inserting variable:", variable);
-  //   if (!GLOBAL_ACTIVE_FIELD || GLOBAL_CURSOR_LOCATION === null) {
-  //     console.log("No active field or cursor position");
-  //     return;
-  //   }
-
-  //   console.log("[INSERT VARIABLE] Cursor location:", GLOBAL_CURSOR_LOCATION);
-  //   console.log("[INSERT VARIABLE] Active field:", GLOBAL_ACTIVE_FIELD);
-  //   console.log("[INSERT VARIABLE] Values:", values);
-
-  //   const currentValue = values[GLOBAL_ACTIVE_FIELD] || "";
-  //   console.log("[INSERT VARIABLE] Current value:", currentValue);
-  //   const beforeCursor = currentValue.slice(0, GLOBAL_CURSOR_LOCATION);
-  //   console.log("[INSERT VARIABLE] Before cursor:", beforeCursor);
-  //   const afterCursor = currentValue.slice(GLOBAL_CURSOR_LOCATION);
-  //   console.log("[INSERT VARIABLE] After cursor:", afterCursor);
-  //   const newValue = beforeCursor + variable + afterCursor;
-
-  //   handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
-  // };
 
   useEffect(() => {
     registerCallback(name, insertVariable);
