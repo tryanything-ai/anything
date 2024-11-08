@@ -418,7 +418,7 @@ export const WorkflowVersionProvider = ({
     // let nonDimmensionChanges = nodeChanges.filter((nodeChange) => nodeChange.type !== "dimensions") as NodeSelectionChange[];
     // get the id of the node with selected = true
     if (selectionChanges.length > 0) {
-      console.log("selectionChanges", selectionChanges);
+      // console.log("selectionChanges", selectionChanges);
       let selectedNode: any = selectionChanges.find(
         (nodeChange: NodeSelectionChange) => nodeChange.selected,
       );
@@ -428,8 +428,15 @@ export const WorkflowVersionProvider = ({
         let selectedNodeObj: any = nodes.find(
           (node) => node.id === selectedNode.id,
         );
+        // console.log("selectedNodeObj", selectedNodeObj);
+
         setSelectedNodeId(selectedNodeObj.id);
         setPanelTab(PanelTab.CONFIG);
+
+        //if the user selects a trigger hide the panel
+        if (selectedNodeObj?.data?.type === "trigger") {
+          setShowExplorer(false);
+        }
       } else {
         setSelectedNodeId("");
       }
