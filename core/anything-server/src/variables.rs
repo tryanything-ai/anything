@@ -30,8 +30,6 @@ pub async fn get_flow_version_results(
 
     let client = &state.anything_client;
 
-    //TODO: we need to get what action_id's are done before the action_id that was sent.
-
     // Get last session
     println!("[VARIABLES] Fetching last task for workflow");
     let response = match client
@@ -280,7 +278,6 @@ pub async fn get_flow_version_variables(
     };
 
     println!("[VARIABLES] Found session_id: {}", session_id);
-    println!("[VARIABLES] Fetching tasks for session");
 
     // Fetch the current flow version from the database
     let response = match client
@@ -317,7 +314,10 @@ pub async fn get_flow_version_variables(
 
     let flow_version = match serde_json::from_str::<Vec<FlowVersion>>(&body) {
         Ok(versions) => match versions.into_iter().next() {
-            Some(version) => version,
+            Some(version) => {
+                print!("Found flow version: {:?}", version);
+                version
+            }
             None => {
                 println!(
                     "[VARIABLES] No flow version found for id: {}",
@@ -338,7 +338,10 @@ pub async fn get_flow_version_variables(
 
     // Parse the flow definition into a Workflow struct
     let workflow: Workflow = match serde_json::from_value(flow_version.flow_definition) {
-        Ok(workflow) => workflow,
+        Ok(workflow) => {
+            print!("[VARIABLES] Parsed workflow: {:?}", workflow);
+            workflow
+        }
         Err(e) => {
             println!("[VARIABLES] Error parsing workflow definition: {:?}", e);
             return (
@@ -349,15 +352,21 @@ pub async fn get_flow_version_variables(
         }
     };
 
-    // Find the action in the workflow and get its variables, defaulting to empty if not found
-    let variables = Variable {
-        inner: workflow
-            .actions
-            .iter()
-            .find(|action| action.action_id == action_id)
-            .map(|action| action.variables.inner.clone())
-            .unwrap_or_else(|| HashMap::new()),
-    };
+    // Find the action in the workflow and get its variables as a JSON object
+    let variables = workflow
+        .actions
+        .iter()
+        .find(|action| action.action_id == action_id)
+        .map(|action| {
+            print!(
+                "[VARIABLES] Found action with correct action id: {:?}",
+                action
+            );
+            serde_json::to_value(&action.variables.inner).unwrap_or(serde_json::json!({}))
+        })
+        .unwrap_or(serde_json::json!({}));
+
+    println!("[VARIABLES] Found variables: {:?}", variables);
 
     //Create a new mock task with the variables and the correct session_id, account_id, and variables etc
     //This allows us to show what historical session data will look like to the user over new variables in the workflow version definition
@@ -390,7 +399,7 @@ pub async fn get_flow_version_variables(
         stage: "fake".to_string(),
         test_config: None,
         config: serde_json::json!({
-            "variables": serde_json::to_value(variables).unwrap_or_default(),
+            "variables": variables,
             "inputs": serde_json::json!({})
         }),
         context: None,
