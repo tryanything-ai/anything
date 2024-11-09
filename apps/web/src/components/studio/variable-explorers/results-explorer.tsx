@@ -44,7 +44,7 @@ export function ResultsExplorer(): JSX.Element {
         version_id: db_flow_version_id,
       });
 
-      const result = await api.variables.getWorkflowVersionVariables(
+      const result = await api.variables.getWorkflowVersionResults(
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,

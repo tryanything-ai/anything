@@ -9,6 +9,10 @@ export default function ConfigurationForm(): JSX.Element {
       selected_node_input,
       selected_node_input_schema,
       updateNodeData,
+      explorerTab,
+      setExplorerTab,
+      showExplorer,
+      setShowExplorer
     },
   } = useAnything();
 
@@ -53,6 +57,14 @@ export default function ConfigurationForm(): JSX.Element {
           name="configuration-form"
           onSubmit={handleOnSubmit}
           fields={fields}
+          onFocus={(fieldName: string) => {
+            if (explorerTab !== "variables") {
+              setExplorerTab("variables");
+            }
+            if (!showExplorer) {
+              setShowExplorer(true);
+            }
+          }}
           initialValues={selected_node_input}
           handleValidation={handleValidation}
         />
