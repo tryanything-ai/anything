@@ -118,7 +118,7 @@ export function ResultsExplorer(): JSX.Element {
                         </div>
                         <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
                             <JsonExplorer
-                              parentPath={"actions." + task.action_id + "."}
+                              parentPath={"actions." + task.action_id + "."  + "result."} // Added parentPath
                               data={task.result}
                               onSelect={(v) => {
                                 console.log(v);

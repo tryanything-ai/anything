@@ -106,20 +106,20 @@ export function VariablesExplorer(): JSX.Element {
               <div className="w-full">
                 {/* <Header /> */}
                 {loading && <div>Loading...</div>}
-                {variables && !loading && (
+                {!variables && !loading && (
                   <div className="text-muted-foreground">
                     Run Workflow Test Access Variables
                   </div>
                 )}
                 {/* TODO: probably actually loop through the keys of variables and have an explorer for each */}
-                {variables && (
+                {renderedVariables && (
                   <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
                     <div className="p-3">
-                      {/* <div className="flex-1 font-bold mb-2">Variables</div> */}
+                      <div className="flex-1 font-bold mb-2">Variables</div>
                       <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
                         <JsonExplorer
                           parentPath={"variables."}
-                          data={variables}
+                          data={renderedVariables}
                           onSelect={(v) => {
                             console.log(v);
                             insertVariable(
