@@ -64,14 +64,14 @@ export const VariablesProvider = ({
       );
 
       if (selectedProperty) {
-        console.log("Updating existing property");
+        console.log("[VARIABLES CONTEXT] Updating existing property");
 
         if (!selected_node_variables_schema) return false;
         if (!selected_node_variables_schema.properties) return false;
 
         let new_schema = cloneDeep(selected_node_variables_schema);
 
-        console.log("Current Variables Schema to update: ", new_schema);
+        console.log("[VARIABLES CONTEXT] Current Variables Schema to update: ", new_schema);
 
         //Merge incoming data with existing property
         new_schema.properties[selectedProperty.key] = {
@@ -85,7 +85,7 @@ export const VariablesProvider = ({
           ]["provider"];
         }
 
-        console.log("Updated Variables Schema: ", new_schema);
+        console.log("[VARIABLES CONTEXT] Updated Variables Schema: ", new_schema);
 
         //update to Anyting Context and Db
         await updateNodeData(["variables_schema"], [new_schema]);
@@ -99,16 +99,16 @@ export const VariablesProvider = ({
           ? selected_node_variables_schema
           : cloneDeep(DEFAULT_VARIABLES_SCHEMA);
         console.log(
-          "Variables schema after checking existing schema or creating new one: ",
+          "[VARIABLES CONTEXT] Variables schema after checking existing schema or creating new one: ",
           variables_schema,
         );
 
         let key = slugify(form_data.title, {
           replacement: "_", // replace spaces with replacement character, defaults to `-`
         });
-        console.log("Generated key for new property: ", key);
+        console.log("[VARIABLES CONTEXT] Generated key for new property: ", key);
 
-        console.log("[VARIABLES PROIVDER] Form Data: ", form_data);
+        console.log("[VARIABLES CONTEXT] Form Data: ", form_data);
         // Create new property
         variables_schema.properties[key] = {
           title: key,
@@ -117,7 +117,7 @@ export const VariablesProvider = ({
         };
 
         console.log(
-          "Variables schema after adding new property: ",
+          "[VARIABLES CONTEXT] Variables schema after adding new property: ",
           variables_schema,
         );
 
@@ -125,7 +125,7 @@ export const VariablesProvider = ({
         variables_schema["x-jsf-order"].push(key);
         variables_schema.required.push(key);
         console.log(
-          "Variables schema after updating order and required fields: ",
+          "[VARIABLES CONTEXT] Variables schema after updating order and required fields: ",
           variables_schema,
         );
 
@@ -135,7 +135,7 @@ export const VariablesProvider = ({
         };
 
         if (form_data.type === "account") {
-          console.log("Adding provider to x-jsf-presentation");
+          console.log("[VARIABLES CONTEXT] Adding provider to x-jsf-presentation");
           variables_schema.properties[key]["x-jsf-presentation"]["provider"] =
             form_data.provider;
         }
@@ -145,24 +145,24 @@ export const VariablesProvider = ({
         // If we already have variables add to them.
         if (selected_node_variables) {
           new_variables = cloneDeep(selected_node_variables);
-          console.log("Cloned existing variables: ", new_variables);
+          console.log("[VARIABLES CONTEXT] Cloned existing variables: ", new_variables);
         }
 
         new_variables[key] = "";
-        console.log("New variables after adding new key: ", new_variables);
+        console.log("[VARIABLES CONTEXT] New variables after adding new key: ", new_variables);
 
         // Update to Anything Context and Db
         console.log(
-          "Updating node data with new variables schema and variables",
+          "[VARIABLES CONTEXT] Updating node data with new variables schema and variables",
         );
         await updateNodeData(
           ["variables_schema", "variables"],
           [variables_schema, new_variables],
         );
-        console.log("Node data updated successfully");
+        console.log("[VARIABLES CONTEXT] Node data updated successfully");
       }
     } catch (e) {
-      console.log("Error updating variables property: ", e);
+      console.log("[VARIABLES CONTEXT] Error updating variables property: ", e);
       return false;
     } finally {
       setSelectedProperty(null);
@@ -172,11 +172,11 @@ export const VariablesProvider = ({
 
   const deleteVariable = async (variableKey: string) => {
     try {
-      console.log("Deleting variable: ", variableKey);
+      console.log("[VARIABLES CONTEXT] Deleting variable: ", variableKey);
       if (!selected_node_variables) return false;
       if (!selected_node_variables_schema) return false;
 
-      console.log("Made it through checks in delete ");
+      console.log("[VARIABLES CONTEXT] Made it through checks in delete ");
       //deep copy schema
       let updated_schema = cloneDeep(selected_node_variables_schema);
       //deep variables
@@ -199,8 +199,8 @@ export const VariablesProvider = ({
         updated_schema.required.splice(reqIndex, 1);
       }
 
-      console.log("Variables after deleteVariable: ", updated_variables);
-      console.log("Updated Schema after delete: ", updated_schema);
+      console.log("[VARIABLES CONTEXT] Variables after deleteVariable: ", updated_variables);
+      console.log("[VARIABLES CONTEXT] Updated Schema after delete: ", updated_schema);
 
       // Update the database
       await updateNodeData(
@@ -210,7 +210,7 @@ export const VariablesProvider = ({
 
       return true;
     } catch (e) {
-      console.log("Error deleting variable: ", e);
+      console.log("[VARIABLES CONTEXT] Error deleting variable: ", e);
       return false;
     }
   };

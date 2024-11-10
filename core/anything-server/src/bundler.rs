@@ -3,62 +3,15 @@ use crate::auth::init::AccountAuthProviderAccount;
 use crate::workflow_types::Task;
 use dotenv::dotenv;
 use postgrest::Postgrest;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fmt;
-
-use crate::templater::Templater;
 use uuid::Uuid;
 
-// Fake account data for testing purposes
-pub async fn get_fake_account_auth_provider_account(
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    let fake_account = AccountAuthProviderAccount {
-        account_auth_provider_account_id: Uuid::new_v4(),
-        account_id: Uuid::new_v4(),
-        access_token_vault_id: "airtable_access_token".to_string(),
-        refresh_token_vault_id: "airtable_refresh_token".to_string(),
-        auth_provider: Some(serde_json::json!({
-            "auth_provider_id": "airtable",
-            "provider_name": "airtable",
-            "provider_label": "airtable",
-            "provider_icon": "<svg>...</svg>",
-            "provider_description": "Connect with your airtable account",
-            "provider_readme": "Internal notes for managing airtable connection",
-            "auth_type": "oauth2",
-            "auth_url": "https://accounts.airtable.com/o/oauth2/auth",
-            "token_url": "https://oauth2.airtableapis.com/token",
-            "provider_data": {},
-            "access_token_lifetime_seconds": "3600",
-            "refresh_token_lifetime_seconds": "2592000",
-            "redirect_url": "https://example.com/auth/callback",
-            "client_id": "your_client_id",
-            "client_secret": "your_client_secret",
-            "scopes": "email profile",
-            "public": false
-        })),
-        auth_provider_id: "airtable".to_string(),
-        account_auth_provider_account_label: "My airtable Account".to_string(),
-        account_auth_provider_account_slug: "airtable".to_string(),
-        account_data: Some(serde_json::json!({
-            "email": "user@example.com",
-            "name": "Test User"
-        })),
-        access_token: "fake_access_token".to_string(),
-        access_token_expires_at: Some(chrono::Utc::now() + chrono::Duration::hours(1)),
-        refresh_token: Some("fake_refresh_token".to_string()),
-        refresh_token_expires_at: Some(chrono::Utc::now() + chrono::Duration::days(30)),
-        updated_at: Some(chrono::Utc::now()),
-        created_at: Some(chrono::Utc::now()),
-        updated_by: Some(Uuid::new_v4()),
-        created_by: Some(Uuid::new_v4()),
-    };
-
-    Ok(vec![fake_account])
-}
-use serde::{Deserialize, Serialize};
+use crate::templater::Templater;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DecryptedSecret {
@@ -172,6 +125,35 @@ pub async fn get_refreshed_auth_accounts(
     Ok(accounts)
 }
 
+pub async fn get_auth_accounts(
+    client: &Postgrest,
+    account_id: &str,
+) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
+
+    println!(
+        "[BUNDLER] Fetching auth accounts for account_id: {}",
+        account_id
+    );
+
+    let response = client
+        .rpc(
+            "get_account_auth_provider_accounts",
+            json!({"p_account_id": account_id}).to_string(),
+        )
+        .auth(supabase_service_role_api_key.clone())
+        .execute()
+        .await?;
+
+    let body = response.text().await?;
+    let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
+
+    println!("[BUNDLER] Retrieved {} auth accounts", accounts.len());
+
+    Ok(accounts)
+}
+
 #[derive(Debug)]
 struct CustomError(String);
 
@@ -183,26 +165,44 @@ impl fmt::Display for CustomError {
 
 impl Error for CustomError {}
 
-pub async fn bundle_context(
+pub async fn bundle_variables(
     client: &Postgrest,
     task: &Task,
+    refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    println!("[BUNDLER] Starting to bundle context for task: {:?}", task);
+    println!("[BUNDLER] Starting to bundle variables");
 
     let mut render_variables_context: HashMap<String, Value> = HashMap::new();
 
-    println!("[BUNDLER] Initial context: {:?}", render_variables_context);
+    println!(
+        "[BUNDLER] Initial variables context: {:?}",
+        render_variables_context
+    );
 
     let mut accounts: HashMap<String, Value> = HashMap::new();
-    for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
-        // for account in get_fake_account_auth_provider_account().await? {
-        let slug = account.account_auth_provider_account_slug.clone();
-        println!(
-            "[BUNDLER] Inserting account with slug: {} at accounts.{}",
-            slug, slug
-        );
 
-        accounts.insert(slug, serde_json::to_value(account)?);
+    if refresh_auth {
+        for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
+            // for account in get_fake_account_auth_provider_account().await? {
+            let slug = account.account_auth_provider_account_slug.clone();
+            println!(
+                "[BUNDLER] Inserting account with slug: {} at accounts.{}",
+                slug, slug
+            );
+
+            accounts.insert(slug, serde_json::to_value(account)?);
+        }
+    } else {
+        println!("[BUNDLER] Skipping refresh of auth accounts. Just Bundling.");
+        for account in get_auth_accounts(client, &task.account_id.to_string()).await? {
+            let slug = account.account_auth_provider_account_slug.clone();
+            println!(
+                "[BUNDLER] Inserting account with slug: {} at accounts.{}",
+                slug, slug
+            );
+
+            accounts.insert(slug, serde_json::to_value(account)?);
+        }
     }
 
     render_variables_context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
@@ -263,7 +263,7 @@ pub async fn bundle_context(
         println!("[BUNDLER] No variables found in task config");
     }
 
-// Get the variables from the task definition
+    // Get the variables from the task definition
     let variables = templater.get_template_variables("task_variables_definition")?;
 
     // Print the variables
@@ -283,11 +283,25 @@ pub async fn bundle_context(
         rendered_variables_definition
     );
 
+    Ok(rendered_variables_definition)
+}
+
+pub async fn bundle_context(
+    client: &Postgrest,
+    task: &Task,
+    refresh_auth: bool,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    println!("[BUNDLER] Starting to bundle context for task: {:?}", task);
+
+    let rendered_variables_definition = bundle_variables(client, task, refresh_auth).await?;
+
     let mut render_input_context: HashMap<String, Value> = HashMap::new();
 
     render_input_context.insert("variables".to_string(), rendered_variables_definition);
 
-    // println!("[BUNDLER] Final context: {:?}", render_variables_context);
+    // Create a new Templater instance for rendering inputs
+    let mut templater = Templater::new();
+
     // Convert context HashMap to Value
     let iputs_context_value = serde_json::to_value(render_input_context.clone())?;
 

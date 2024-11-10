@@ -8,6 +8,7 @@ import * as auth from './auth';
 import * as billing from './billing';
 import * as marketplace from './marketplace';
 import * as profiles from './profiles';
+import * as variables from './variable-explorer'; 
 
 const api = {
   flows,
@@ -19,7 +20,8 @@ const api = {
   auth,
   billing,
   marketplace, 
-  profiles
+  profiles,
+  variables
 };
 
 export default api;
