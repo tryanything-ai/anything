@@ -75,6 +75,10 @@ export interface WorkflowVersionContextInterface {
   setPanelTab: (tab: string) => void;
   showingActionSheet: boolean;
   setShowingActionSheet: (showing: boolean) => void;
+  showExplorer: boolean;
+  setShowExplorer: (showing: boolean) => void;
+  explorerTab: string;
+  setExplorerTab: (tab: string) => void;
   showActionSheetForEdge: (id: string) => void;
   showActionSheet: () => void;
   nodes: Node[];
@@ -106,6 +110,10 @@ export const WorkflowVersionContext =
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
     showingActionSheet: false,
+    showExplorer: false,
+    setShowExplorer: () => {},
+    explorerTab: "results",
+    setExplorerTab: () => {},
     detailedMode: true,
     setDetailedMode: () => {},
     showActionSheetForEdge: () => {},
@@ -160,6 +168,9 @@ export const WorkflowVersionProvider = ({
   //Action sheet for adding nodes
   const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
   const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
+
+  const [showExplorer, setShowExplorer] = useState<boolean>(false);
+  const [explorerTab, setExplorerTab] = useState<string>("results");
 
   const showActionSheetForEdge = (id: string) => {
     console.log("Show Action Sheet for Edge: ", id);
@@ -228,6 +239,7 @@ export const WorkflowVersionProvider = ({
 
       console.log("Updating Workflow", args);
 
+      //TODO: show same saving status in header as other places
       //Save to cloud
       await api.flows.updateFlow(selectedAccount.account_id, dbFlowId, args);
 
@@ -407,7 +419,7 @@ export const WorkflowVersionProvider = ({
     // let nonDimmensionChanges = nodeChanges.filter((nodeChange) => nodeChange.type !== "dimensions") as NodeSelectionChange[];
     // get the id of the node with selected = true
     if (selectionChanges.length > 0) {
-      console.log("selectionChanges", selectionChanges);
+      // console.log("selectionChanges", selectionChanges);
       let selectedNode: any = selectionChanges.find(
         (nodeChange: NodeSelectionChange) => nodeChange.selected,
       );
@@ -417,8 +429,15 @@ export const WorkflowVersionProvider = ({
         let selectedNodeObj: any = nodes.find(
           (node) => node.id === selectedNode.id,
         );
+        // console.log("selectedNodeObj", selectedNodeObj);
+
         setSelectedNodeId(selectedNodeObj.id);
         setPanelTab(PanelTab.CONFIG);
+
+        //if the user selects a trigger hide the panel
+        if (selectedNodeObj?.data?.type === "trigger") {
+          setShowExplorer(false);
+        }
       } else {
         setSelectedNodeId("");
       }
@@ -712,6 +731,10 @@ export const WorkflowVersionProvider = ({
         savingStatus,
         panel_tab,
         showingActionSheet,
+        showExplorer,
+        setShowExplorer,
+        explorerTab,
+        setExplorerTab,
         detailedMode,
         setDetailedMode,
         setShowingActionSheet,

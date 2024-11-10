@@ -25,6 +25,7 @@ mod auth;
 mod billing;
 mod email;
 mod bundler;
+mod variables; 
 mod charts;
 mod execution_planner;
 mod marketplace;
@@ -140,21 +141,21 @@ async fn main() {
     // Define routes that are public
     let public_routes = Router::new()
     .route("/", get(api::root))
-        .route(
-            "/auth/:provider_name/callback",
-            get(auth::init::handle_provider_callback),
-        )
-        .route(
-            "/billing/webhooks/new_account_webhook",
-            post(billing::accounts::handle_new_account_webhook),
-        )
-        .route("/webhooks/create_user_in_external_email_system", post(email::handle_new_account_webhook))
-        .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
-        .route("/auth/providers/:provider_name/client_id/set",
-            post(auth::providers::set_auth_provider_client_id),
-        )
-        .route("/auth/providers/:provider_name/client_id/update",
-        post(auth::providers::update_auth_provider_client_id),
+    .route(
+        "/auth/:provider_name/callback",
+        get(auth::init::handle_provider_callback),
+    )
+    .route( 
+        "/billing/webhooks/new_account_webhook",
+        post(billing::accounts::handle_new_account_webhook),
+    )
+    .route("/webhooks/create_user_in_external_email_system", post(email::handle_new_account_webhook))
+    .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
+    .route("/auth/providers/:provider_name/client_id/set",
+        post(auth::providers::set_auth_provider_client_id),
+    )
+    .route("/auth/providers/:provider_name/client_id/update",
+    post(auth::providers::update_auth_provider_client_id),
     )
         .route("/auth/providers/:provider_name/client_secret_id/set",
         post(auth::providers::update_auth_provider_client_secret_id),
@@ -194,7 +195,6 @@ async fn main() {
         )
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
         .route("/account/:account_id/marketplace/workflow/:template_id/clone", get(marketplace::workflows::clone_marketplace_workflow_template))
-    
 
         //Billing
         .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
@@ -233,7 +233,6 @@ async fn main() {
             "/account/:account_id/auth/:provider_name/initiate",
             get(auth::init::initiate_auth),
         )
-        // Users Testing Workflows
         //Test Workflows
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id",
@@ -243,6 +242,13 @@ async fn main() {
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
             get(api::get_test_session_results),
         )
+        //Variables Explorer for Testing
+        .route(
+            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/results",
+            get(variables::get_flow_version_results)
+        )
+        .route( "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
+        get(variables::get_flow_version_variables))
         //Test Actions
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",

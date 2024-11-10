@@ -28,7 +28,8 @@ export function VariablesFormLayout(): JSX.Element {
       case EditVariableFormMode.INPUT:
         header_title = "Variables";
         link_button_text =
-          Object.keys(workflow.selected_node_variables).length > 0
+          Object.keys(workflow.selected_node_variables_schema.properties)
+            .length > 0
             ? "Edit"
             : "Add New Variable";
         action = () => variables.setEditingMode(EditVariableFormMode.DELETE);

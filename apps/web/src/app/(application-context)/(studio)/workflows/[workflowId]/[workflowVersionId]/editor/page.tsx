@@ -9,8 +9,15 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@repo/ui/components/ui/resizable";
+import { ResultsExplorer } from "@/components/studio/variable-explorers/results-explorer";
+import { VariablesExplorer } from "@/components/studio/variable-explorers/variables-explorer";
+import { useAnything } from "@/context/AnythingContext";
 
 export default function StudioLayout(): JSX.Element {
+  const {
+    workflow: { showExplorer, explorerTab },
+  } = useAnything();
+
   return (
     <div className="flex flex-col h-screen">
       <StudioHeader />
@@ -20,10 +27,19 @@ export default function StudioLayout(): JSX.Element {
             <StudioWorkflowEditor />
           </div>
         </ResizablePanel>
+        {showExplorer && (
+          <ResizablePanel defaultSize={40} className="flex flex-col min-h-0">
+            <div className="flex-1 overflow-hidden">
+              {explorerTab === "results" && <ResultsExplorer />}
+              {explorerTab === "variables" && <VariablesExplorer />}
+            </div>
+          </ResizablePanel>
+        )}
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={40}>
           <RightPanelFormEditor />
         </ResizablePanel>
+        {/* {showExplorer && <ResizableHandle withHandle />} */}
       </ResizablePanelGroup>
     </div>
   );

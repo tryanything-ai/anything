@@ -302,7 +302,7 @@ pub async fn process_task(
     update_task_status(client, task, &TaskStatus::Running, None).await?;
 
     let result: Result<Value, Box<dyn std::error::Error + Send + Sync>> = async {
-        let bundled_context = bundle_context(client, task).await?;
+        let bundled_context = bundle_context(client, task, true).await?;
 
         let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
             println!("[PROCESS TASK] Processing trigger task {}", task.task_id);

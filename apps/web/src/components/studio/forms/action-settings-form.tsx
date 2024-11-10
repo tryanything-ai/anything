@@ -33,7 +33,6 @@ export default function ActionSettingsForm(): JSX.Element {
             </div>
             <VariablesFormLayout />
             <ConfigurationForm />
-            {/* <PublishActionDialog /> */}
           </div>
         </div>
       ) : (

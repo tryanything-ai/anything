@@ -1,14 +1,14 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
-import { JsonSchemaForm } from "../variables/json-schema-form";
+import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EDIT_ACTION_DISPLAY_SCHEMA } from "./edit-display-schema";
+import { useMemo } from "react";
 
 export default function ActionDisplayForm(): JSX.Element {
   const {
     workflow: { selected_node_data, updateNodeData },
   } = useAnything();
 
-  let fields, handleValidation;
 
   //TODO: Create input
   let input = {
@@ -17,13 +17,15 @@ export default function ActionDisplayForm(): JSX.Element {
     icon: selected_node_data?.icon,
   };
 
-  ({ fields, handleValidation } = createHeadlessForm(
-    EDIT_ACTION_DISPLAY_SCHEMA,
-    {
-      strictInputType: false, // so you don't need to pass presentation.inputType,
-      initialValues: input,
-    },
-  ));
+  const { fields, handleValidation } = useMemo(() => {
+   return createHeadlessForm(
+        EDIT_ACTION_DISPLAY_SCHEMA,
+        {
+          strictInputType: false, // so you don't need to pass presentation.inputType,
+          initialValues: input,
+        }); 
+  }, [input]);
+
 
   async function handleOnSubmit(jsonValues: any, { formValues }: any) {
     await updateNodeData(
