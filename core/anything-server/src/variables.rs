@@ -6,13 +6,13 @@ use axum::{
 };
 
 use serde_json::Value;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::AppState;
 use crate::{bundler::bundle_variables, supabase_auth_middleware::User};
 
-use crate::workflow_types::{FlowVersion, Task, Variable, Workflow};
+use crate::workflow_types::{FlowVersion, Task, Workflow};
 
 // Actions
 pub async fn get_flow_version_results(

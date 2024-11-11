@@ -4,7 +4,6 @@ import { VariablesFormLayout } from "./variables/variables-form-layout";
 import { Play } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import NoNodeSelected from "./no-node-selected";
-import PublishActionDialog from "../publish-action-dialog";
 
 export default function ActionSettingsForm(): JSX.Element {
   const { workflow, testing } = useAnything();
