@@ -61,7 +61,7 @@ export function ResultsExplorer(): JSX.Element {
   useEffect(() => {
     console.log("[RESULTS EXPLORER] Initial fetch triggered");
     fetchResults();
-  }, [selected_node_data]);
+  }, [selected_node_data?.action_id]);
 
   return (
     <div className="flex flex-col w-full">

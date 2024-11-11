@@ -85,7 +85,7 @@ export function SecretsExplorer(): JSX.Element {
   useEffect(() => {
     console.log("[SECRETS EXPLORER] Initial fetch triggered");
     fetchSecrets();
-  }, [selected_node_data]);
+  }, [selected_node_data?.action_id]);
 
   return (
     <div className="flex flex-col w-full">

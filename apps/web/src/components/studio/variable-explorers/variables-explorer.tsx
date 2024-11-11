@@ -75,7 +75,7 @@ export function VariablesExplorer(): JSX.Element {
   useEffect(() => {
     console.log("[VARIABLES EXPLORER] Initial fetch triggered");
     fetchResults();
-  }, [selected_node_data]);
+  }, [selected_node_data?.action_id]);
 
   return (
     <div className="h-full w-full flex flex-col">
