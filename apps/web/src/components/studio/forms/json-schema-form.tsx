@@ -7,6 +7,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { fieldsMap } from "./form-fields";
 import { useAnything } from "@/context/AnythingContext";
+import { TriangleAlertIcon } from "lucide-react";
 
 //YES these GLOBALS are super naughty and I never do this but damn
 //i could just not get it to work fast enough
@@ -31,6 +32,7 @@ export function JsonSchemaForm({
   const [values, setValues] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
   const [submited, setSubmitted] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const valuesRef = useRef(values);
 
@@ -45,6 +47,7 @@ export function JsonSchemaForm({
     console.log("[JSON SCHEMA FORM] Default values:", defaultValues);
     setValues(defaultValues);
     setErrors({});
+    setHasUnsavedChanges(false);
   }, [fields, initialValues]);
 
   const handleInternalValidation = (valuesToValidate: any) => {
@@ -64,6 +67,7 @@ export function JsonSchemaForm({
       console.log("[NEW VALUES]", newValues);
       return newValues;
     });
+    setHasUnsavedChanges(true);
   };
 
   const handleSubmit = (e: any) => {
@@ -78,6 +82,7 @@ export function JsonSchemaForm({
         jsonValues,
       );
       onSubmit(jsonValues, { formValues: values });
+      setHasUnsavedChanges(false);
     }
   };
 
@@ -183,9 +188,17 @@ export function JsonSchemaForm({
             />
           );
         })}
-        <Button type="submit" variant={"default"}>
-          Submit
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button type="submit" variant={"default"}>
+            Submit
+          </Button>
+          {hasUnsavedChanges && (
+            <>
+              <TriangleAlertIcon className="w-4 h-4 text-yellow-400" />
+              <span className="text-sm ">Unsaved changes</span>
+            </>
+          )}
+        </div>
       </div>
     </form>
   );

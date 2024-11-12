@@ -12,6 +12,7 @@ import {
 import { ResultsExplorer } from "@/components/studio/variable-explorers/results-explorer";
 import { VariablesExplorer } from "@/components/studio/variable-explorers/variables-explorer";
 import { useAnything } from "@/context/AnythingContext";
+import VariableEditingExplorer from "@/components/studio/variable-explorers/variable-editing-explorer-layout";
 
 export default function StudioLayout(): JSX.Element {
   const {
@@ -30,7 +31,7 @@ export default function StudioLayout(): JSX.Element {
         {showExplorer && (
           <ResizablePanel defaultSize={40} className="flex flex-col min-h-0">
             <div className="flex-1 overflow-hidden">
-              {explorerTab === "results" && <ResultsExplorer />}
+              {explorerTab === "results" && <VariableEditingExplorer />}
               {explorerTab === "variables" && <VariablesExplorer />}
             </div>
           </ResizablePanel>

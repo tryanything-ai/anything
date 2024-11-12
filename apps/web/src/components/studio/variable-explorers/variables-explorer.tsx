@@ -1,10 +1,12 @@
 import { useAnything } from "@/context/AnythingContext";
 import { ActionType } from "@/types/workflows";
 import { useEffect, useState } from "react";
-import api, { TaskRow } from "@repo/anything-api";
+import api from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";
 import { JsonExplorer } from "./json-explorer";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { Button } from "@repo/ui/components/ui/button";
+import { Send, XIcon } from "lucide-react";
 
 export function VariablesExplorer(): JSX.Element {
   const {
@@ -73,31 +75,19 @@ export function VariablesExplorer(): JSX.Element {
   useEffect(() => {
     console.log("[VARIABLES EXPLORER] Initial fetch triggered");
     fetchResults();
-  }, [selected_node_data]);
+  }, [selected_node_data?.action_id]);
 
   return (
     <div className="h-full w-full flex flex-col">
       <div className="p-2">
-        <button
+        <Button
           onClick={() => setShowExplorer(false)}
-          className="text-muted-foreground hover:text-foreground"
+          variant="outline"
+          size="icon"
+          aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+          <XIcon className="size-5 fill-foreground" />
+        </Button>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2">
