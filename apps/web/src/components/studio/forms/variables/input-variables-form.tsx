@@ -22,7 +22,8 @@ export default function InputVariablesForm(): JSX.Element {
       typeof selected_node_variables === "object" &&
       selected_node_variables_schema &&
       typeof selected_node_variables_schema === "object" &&
-      Object.keys(selected_node_variables_schema.properties).length > 0
+      selected_node_variables_schema.properties &&
+      Object.keys(selected_node_variables_schema.properties || {}).length > 0
     ) {
       return createHeadlessForm(selected_node_variables_schema, {
         strictInputType: false,
@@ -47,6 +48,7 @@ export default function InputVariablesForm(): JSX.Element {
         typeof selected_node_variables === "object" &&
         selected_node_variables_schema &&
         typeof selected_node_variables_schema === "object" &&
+        selected_node_variables_schema.properties &&
         Object.keys(selected_node_variables_schema.properties).length > 0 && (
           <JsonSchemaForm
             name="input-variables-form"
