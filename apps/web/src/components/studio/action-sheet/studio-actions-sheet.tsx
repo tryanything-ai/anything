@@ -23,10 +23,17 @@ import { ExpandableInput } from "@repo/ui/components/ui/expandable-input";
 
 export function StudioActionsSheet(): JSX.Element {
   const {
-    workflow: { showingActionSheet, setShowingActionSheet, addNode },
+    workflow: {
+      showingActionSheet,
+      setShowingActionSheet,
+      addNode,
+      actionSheetMode,
+    },
     accounts: { selectedAccount },
   } = useAnything();
   const [actions, setActions] = useState<any>([]);
+  const [triggers, setTriggers] = useState<any>([]);
+
   const [addingJson, setAddingJson] = useState(false);
   const [json, setJson] = useState("");
 
@@ -46,6 +53,22 @@ export function StudioActionsSheet(): JSX.Element {
     }
   };
 
+  const fetchTriggers = async () => {
+    try {
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+      const res = await api.action_templates.getTriggerTemplatesForAccount(
+        selectedAccount.account_id,
+      );
+      console.log("action sheet trigger templates res:", res);
+      setTriggers(res);
+    } catch (error) {
+      console.error("Error fetching triggers:", error);
+    }
+  };
+
   const addNodeFromJson = (json: string) => {
     addNode(JSON.parse(json), { x: 100, y: 300 });
     setAddingJson(false);
@@ -57,7 +80,11 @@ export function StudioActionsSheet(): JSX.Element {
   };
 
   useEffect(() => {
-    fetchActions();
+    if (actionSheetMode === "actions") {
+      fetchActions();
+    } else {
+      fetchTriggers();
+    }
   }, [showingActionSheet]);
 
   useEffect(() => {
@@ -76,23 +103,30 @@ export function StudioActionsSheet(): JSX.Element {
       <SheetContent side={"bottom"} className="h-4/5 flex flex-col">
         <SheetHeader className="flex flex-row justify-between pr-20">
           <div className="flex flex-col">
-            <SheetTitle>Actions Library</SheetTitle>
+            <SheetTitle>
+              {actionSheetMode === "actions"
+                ? "Actions Library"
+                : "Trigger Library"}
+            </SheetTitle>
             <SheetDescription>
-              Add a new step to your workflow to automate your tasks.
+              {actionSheetMode === "actions"
+                ? " Add a new step to your workflow to automate your tasks."
+                : " Choose when your workflow runs."}
             </SheetDescription>
           </div>
 
           <div className="mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                // TODO: Implement JSON import functionality
-                setAddingJson(true);
-                console.log("Add from JSON clicked");
-              }}
-            >
-              Add from JSON
-            </Button>
+            {actionSheetMode === "actions" && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAddingJson(true);
+                  console.log("Add from JSON clicked");
+                }}
+              >
+                Add from JSON
+              </Button>
+            )}
           </div>
         </SheetHeader>
         <div className="py-4 flex-grow overflow-hidden">
@@ -127,7 +161,7 @@ export function StudioActionsSheet(): JSX.Element {
                   </Button>
                 </div>
               </div>
-            ) : (
+            ) : actionSheetMode === "actions" ? (
               <ScrollArea className="h-full pr-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {actions &&
@@ -146,6 +180,47 @@ export function StudioActionsSheet(): JSX.Element {
                           <div
                             className="flex flex-row gap-4 items-center"
                             key={`content-${db_action.action_template_id}`}
+                          >
+                            <BaseNodeIcon icon={action.icon} />
+                            <div>
+                              <div className="text-lg font-semibold">
+                                {action.label}
+                                {!marketplace && (
+                                  <Badge className="ml-2" variant="outline">
+                                    Team
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm font-normal truncate overflow-ellipsis">
+                                {action.description}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </ScrollArea>
+            ) : (
+              <ScrollArea className="h-full pr-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {triggers &&
+                    triggers.map((db_trigger: any) => {
+                      let action: Action =
+                        db_trigger.action_template_definition;
+                      let marketplace: boolean = "featured" in db_trigger;
+                      return (
+                        <div
+                          key={`${db_trigger.action_template_id}-${action.label}`}
+                          onClick={() => {
+                            addNode(action, { x: 100, y: 300 });
+                            setShowingActionSheet(false);
+                          }}
+                          className="flex flex-col justify-between p-4 border rounded-md border-black cursor-pointer hover:bg-gray-50"
+                        >
+                          <div
+                            className="flex flex-row gap-4 items-center"
+                            key={`content-${db_trigger.action_template_id}`}
                           >
                             <BaseNodeIcon icon={action.icon} />
                             <div>

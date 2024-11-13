@@ -33,7 +33,6 @@ export const getActionTemplatesForAccount = async (account_id: string) => {
     }
 }
 
-
 export const publishActionTemplate = async (account_id: string, action: Action, publish_to_team: boolean, publish_to_marketplace: boolean, publish_to_marketplace_anonymously: boolean) => {
     try {
         const supabase = createClient();
@@ -64,5 +63,35 @@ export const publishActionTemplate = async (account_id: string, action: Action, 
         return data;
     } catch (error) {
         console.error('Error publishing action template:', error);
+    }
+}
+
+export const getTriggerTemplatesForAccount = async (account_id: string) => {
+    try {
+        console.log('Finding action templates for account:', account_id);
+        // Get JWT from supabase to pass to the API
+        // API conforms to RLS policies on behalf of users for external API
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (session) {
+            headers['Authorization'] = `${session.access_token}`;
+        }
+
+        const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/triggers`, {
+            headers: headers,
+        });
+
+        const data = await response.json();
+        console.log('Data from /api/triggers:', data);
+        return data;
+    } catch (error) {
+        console.error('Error fetching actions:', error);
     }
 }

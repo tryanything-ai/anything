@@ -29,21 +29,14 @@ export default function BaseNode({
   selected: boolean;
 }): JSX.Element {
   const {
-    workflow: { deleteNode, detailedMode, addNode },
+    workflow: { deleteNode, detailedMode, addNode, showActionSheetToChangeTrigger },
   } = useAnything();
 
   const [showDialog, setShowDialog] = useState(false);
 
-  // const { setNodeConfigPanel, nodeConfigPanel, nodeId, closeAllPanelsOpenOne } =
-  //   useFlowNavigationContext();
-
-  // const toggleNodeConfig = () => {
-  //   if (nodeConfigPanel && nodeId === id) {
-  //     setNodeConfigPanel(false, "")
-  //   } else {
-  //     closeAllPanelsOpenOne("nodeConfig", id)
-  //   }
-  // }
+  const chooseOtherTrigger = () => { 
+    showActionSheetToChangeTrigger()
+  }
 
   const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -51,10 +44,6 @@ export default function BaseNode({
     console.log("Node data:", data);
   };
 
-  // const createReusableAction = (event: React.MouseEvent<HTMLDivElement>) => {
-  //   event.stopPropagation();
-  //   console.log("TODO: Make reusable")
-  // }
 
   const duplicateAction = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -141,7 +130,17 @@ export default function BaseNode({
             </div>
           </div>
           <div className="flex h-full flex-row items-center pr-3">
-            {data.type !== ActionType.Trigger && (
+            {data.type === ActionType.Trigger ? (
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="p-2"
+                  onClick={handleButtonClick}
+                >
+                  <EllipsisVertical className="w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            ) : (
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -154,22 +153,32 @@ export default function BaseNode({
             )}
           </div>
         </div>
-        {/* Content of Dropdown */}
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuItem onClick={duplicateAction}>
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={shareAction}>
-            Make Reusable Action
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={downloadJson}>
-            Download as JSON
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={copyToClipboard}>
-            Copy to Clipboard
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={deleteAction}>Delete</DropdownMenuItem>
-        </DropdownMenuContent>
+        {/* Content of Dropdown for non-trigger nodes */}
+        {data.type !== ActionType.Trigger && (
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuItem onClick={duplicateAction}>
+              Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={shareAction}>
+              Make Reusable Action
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={downloadJson}>
+              Download as JSON
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={copyToClipboard}>
+              Copy to Clipboard
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={deleteAction}>Delete</DropdownMenuItem>
+          </DropdownMenuContent>
+        )}
+        {/* Content of Dropdown for trigger nodes */}
+        {data.type === ActionType.Trigger && (
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuItem onClick={chooseOtherTrigger}>
+              Choose Different Trigger
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        )}
       </DropdownMenu>
     </>
   );

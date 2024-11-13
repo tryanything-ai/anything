@@ -1,5 +1,6 @@
 [{
   "type": "action", 
+  "featured": false, 
   "action_template_definition": 
   {
     "anything_action_version": "0.1.0",
@@ -97,4 +98,146 @@
         "position": "bottom"
       }
     ]
-  }}]
+  }},
+  {
+    "type": "trigger", 
+    "featured": false, 
+    "action_template_definition": 
+    {
+      "anything_action_version": "0.1.0",
+      "type": "trigger",
+      "plugin_id": "webhook",
+      "action_id": "webhook",
+      "plugin_version": "0.1.0",
+      "label": "Webhook Trigger",
+      "description": "Catch Webhook from 3rd party system",
+      "icon": "<svg width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.52 3.046a3 3 0 0 0-2.13 5.486 1 1 0 0 1 .306 1.38l-3.922 6.163a2 2 0 1 1-1.688-1.073l3.44-5.405a5 5 0 1 1 8.398-2.728 1 1 0 1 1-1.97-.348 3 3 0 0 0-2.433-3.475zM10 6a2 2 0 1 1 3.774.925l3.44 5.405a5 5 0 1 1-1.427 8.5 1 1 0 0 1 1.285-1.532 3 3 0 1 0 .317-4.83 1 1 0 0 1-1.38-.307l-3.923-6.163A2 2 0 0 1 10 6zm-5.428 6.9a1 1 0 0 1-.598 1.281A3 3 0 1 0 8.001 17a1 1 0 0 1 1-1h8.266a2 2 0 1 1 0 2H9.9a5 5 0 1 1-6.61-5.698 1 1 0 0 1 1.282.597Z\" fill=\"#000000\"/></svg>",
+      "variables": {}, 
+      "variables_schema": {},
+      "input": {
+        "method": "GET",
+        "url": "",
+        "headers": "",
+        "body": ""
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "method": {
+             "title": "Method",
+              "description": "HTTP Method for request",
+              "type": "string",
+              "oneOf": [
+                {
+                  "value": "GET",
+                  "title": "GET"
+                },
+                {
+                  "value": "POST",
+                  "title": "POST"
+                },
+                {
+                  "value": "PUT",
+                  "title": "PUT"
+                },
+                {
+                  "value": "DELETE",
+                  "title": "DELETE"
+                },
+                {
+                  "value": "HEAD",
+                  "title": "HEAD"
+                },
+                {
+                  "value": "OPTIONS",
+                  "title": "OPTIONS"
+                },
+                {
+                  "value": "PATCH",
+                  "title": "PATCH"
+                }
+              ],
+              "x-jsf-presentation": {
+                "inputType": "select"
+              }
+          },
+          "url": {
+             "title": "URL",
+            "description": "URL for request",
+            "type": "string"
+          },
+          "headers": {
+            "title": "Headers",
+            "description": "Headers for request",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "description": "Body for request",
+            "type": "string"
+          }
+        },
+        "x-jsf-order": ["url", "method", "headers", "body"],
+        "required": ["method", "url"],
+        "additionalProperties": false
+      },
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }}
+  ,{
+    "type": "trigger",
+    "featured": false, 
+    "action_template_definition": {
+      "anything_action_version": "0.1.0", 
+      "type": "trigger",
+      "plugin_id": "cron",
+      "action_id": "cron_trigger",
+      "plugin_version": "0.1.0",
+      "label": "Cron Trigger",
+      "description": "Run workflow on a schedule",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>",
+      "variables": {},
+      "variables_schema": {},
+      "input": {
+        "cron_expression": "0 0 * * * *"
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "cron_expression": {
+            "title": "Cron Expression",
+            "description": "When to run the trigger", 
+            "type": "string"
+          }
+        },
+        "x-jsf-order": ["cron_expression"],
+        "required": ["cron_expression"],
+        "additionalProperties": false
+      },
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "b",
+          "type": "source", 
+          "position": "bottom"
+        }
+      ]
+    }
+  }
+  ]

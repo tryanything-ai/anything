@@ -172,10 +172,13 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows))
     .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug))
     .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
-    .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username));
-    //user api for webhooks etc
-    // .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::execute_workflow_version))
-    // .route("/api/v1/workflow/:workflow_id/start", get(api::execute_workflow))
+    .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
+
+    //user api for starting workflows etc
+    .route("/api/v1/workflow/:workflow_id/start/*respond", post(api::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/start", post(api::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/*respond", post(api::run_workflow_version))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::run_workflow_version));
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
@@ -197,6 +200,7 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/workflow/:id", delete(workflows::delete_workflow))
         .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
         .route("/account/:account_id/actions", get(actions::get_actions))
+        .route("/account/:accoutn_id/triggers", get(actions::get_triggers))
 
         //Marketplace && Templates
         .route(

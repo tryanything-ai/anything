@@ -80,7 +80,10 @@ export interface WorkflowVersionContextInterface {
   explorerTab: string;
   setExplorerTab: (tab: string) => void;
   showActionSheetForEdge: (id: string) => void;
+  showActionSheetToChangeTrigger: () => void;
   showActionSheet: () => void;
+  actionSheetMode: string;
+  setActionSheetMode: (mode: string) => void;
   nodes: Node[];
   edges: Edge[];
   onNodesChange: OnNodesChange;
@@ -117,8 +120,11 @@ export const WorkflowVersionContext =
     detailedMode: true,
     setDetailedMode: () => {},
     showActionSheetForEdge: () => {},
+    showActionSheetToChangeTrigger: () => {},
     setShowingActionSheet: () => {},
     showActionSheet: () => {},
+    setActionSheetMode: () => {},
+    actionSheetMode: "actions",
     nodes: [],
     edges: [],
     onNodesChange: () => {},
@@ -167,6 +173,7 @@ export const WorkflowVersionProvider = ({
   const [savingStatus, setSavingStatus] = useState<string>(SavingStatus.NONE);
   //Action sheet for adding nodes
   const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
+  const [actionSheetMode, setActionSheetMode] = useState<string>("actions");
   const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
 
   const [showExplorer, setShowExplorer] = useState<boolean>(false);
@@ -174,12 +181,21 @@ export const WorkflowVersionProvider = ({
 
   const showActionSheetForEdge = (id: string) => {
     console.log("Show Action Sheet for Edge: ", id);
+    setActionSheetMode("actions");
     setShowingActionSheet(true);
     setActionSheetEdge(id);
   };
 
+  const showActionSheetToChangeTrigger = () => {
+    console.log("Show Action Sheet to Change Trigger");
+    setActionSheetMode("triggers");
+    setShowingActionSheet(true);
+    setActionSheetEdge("");
+  };
+
   const showActionSheet = () => {
     console.log("Show Action Sheet");
+    setActionSheetMode("actions");
     setShowingActionSheet(true);
     setActionSheetEdge("");
   };
@@ -738,6 +754,8 @@ export const WorkflowVersionProvider = ({
         detailedMode,
         setDetailedMode,
         setShowingActionSheet,
+        showActionSheetToChangeTrigger,
+        actionSheetMode,
         showActionSheetForEdge,
         showActionSheet,
         setPanelTab: set_panel_tab,

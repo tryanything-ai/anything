@@ -10,14 +10,12 @@ use crate::task_types::ActionType;
 use serde_with::{serde_as, DisplayFromStr};
 
 #[derive(Serialize, Deserialize, Debug)]
-// #[serde(rename_all = "camelCase")]
 pub struct Workflow {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-// #[serde(rename_all = "camelCase")]
 pub struct Action {
     pub anything_action_version: String,
     pub r#type: ActionType,
@@ -158,6 +156,7 @@ pub struct Trigger {
 pub struct FlowVersion {
     pub flow_version_id: Uuid,
     pub flow_id: Uuid,
+    pub published: bool,
     pub flow_definition: Value,
 }
 
