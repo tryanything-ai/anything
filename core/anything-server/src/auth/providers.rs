@@ -1,7 +1,7 @@
+use crate::auth::utils::update_secret_in_vault;
 use crate::AppState;
-use crate::{auth::utils::update_secret_in_vault, supabase_auth_middleware::User};
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -9,6 +9,7 @@ use axum::{
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use serde_json::Value;
 use slugify::slugify;
 use std::env;
 use std::sync::Arc;
@@ -44,6 +45,61 @@ pub struct UpdateAuthProviderClientSecretPayload {
 pub struct UpdateAuthProviderClientIdResopnse {
     auth_provider_id: String,
     message: String,
+}
+
+pub async fn get_auth_providers(
+    State(state): State<Arc<AppState>>,
+    Path(account_id): Path<String>,
+) -> impl IntoResponse {
+    println!(
+        "Handling a get auth providers for account_id: {}",
+        account_id
+    );
+
+    let client = &state.anything_client;
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let response = match client
+        .from("auth_providers")
+        .auth(supabase_service_role_api_key.clone())
+        .select("auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at")
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Response: {:?}", response);
+            response
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
 }
 
 pub async fn update_auth_provider_client_id(
@@ -309,4 +365,61 @@ pub async fn update_auth_provider_client_secret_id(
         )
             .into_response()
     }
+}
+
+pub async fn get_auth_provider_by_name(
+    Path((account_id, provider_name)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    println!(
+        "Handling a get_auth_provider_by_name for account {:?} and provider {:?}",
+        account_id, provider_name
+    );
+
+    let client = &state.anything_client;
+
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let response = match client
+        .from("auth_providers")
+        .auth(supabase_service_role_api_key.clone())
+        .eq("provider_name", &provider_name)
+        .select("auth_provider_id, provider_name, provider_label, provider_icon, provider_description, provider_readme, auth_type, auth_url, token_url, access_token_lifetime_seconds, refresh_token_lifetime_seconds, scopes, public, updated_at, created_at)")
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Response: {:?}", response);
+            response
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    let item: Value = match serde_json::from_str(&body) {
+        Ok(item) => item,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        }
+    };
+
+    Json(item).into_response()
 }

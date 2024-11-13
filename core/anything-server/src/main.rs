@@ -1,12 +1,11 @@
 use axum::{
     http::{
         header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
-    },
-    middleware::{self},
-    routing::{delete, get, post, put},
-    Router,
+    }, middleware::{self},
+    response::{Html, IntoResponse},
+      routing::{delete, get, post, put}, Router
 };
-
+ 
 use dotenv::dotenv;
 use postgrest::Postgrest;
 use std::collections::HashMap;
@@ -17,10 +16,18 @@ use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 
+mod workflow_types;
+use regex::Regex;
+
+#[macro_use]
+extern crate slugify;
 
 use auth::init::AuthState;
 
 mod api;
+mod workflows; 
+mod actions; 
+mod tasks; 
 mod auth;
 mod billing;
 mod email;
@@ -34,12 +41,8 @@ mod supabase_auth_middleware;
 mod task_engine;
 mod task_types;
 mod templater;
+mod testing; 
 mod trigger_engine;
-mod workflow_types;
-use regex::Regex;
-
-#[macro_use]
-extern crate slugify;
 
 pub struct AppState {
     anything_client: Arc<Postgrest>,
@@ -138,14 +141,18 @@ async fn main() {
         trigger_engine_signal,
     });
 
+pub async fn root() -> impl IntoResponse {
+    Html(r#"Check out <a href="https://www.tryanything.xyz">tryanything.xyz</a> to start"#)
+}
+
     // Define routes that are public
     let public_routes = Router::new()
-    .route("/", get(api::root))
+    .route("/", get(root))
     .route(
         "/auth/:provider_name/callback",
         get(auth::init::handle_provider_callback),
     )
-    .route( 
+    .route(
         "/billing/webhooks/new_account_webhook",
         post(billing::accounts::handle_new_account_webhook),
     )
@@ -166,27 +173,30 @@ async fn main() {
     .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug))
     .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username));
+    //user api for webhooks etc
+    // .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::execute_workflow_version))
+    // .route("/api/v1/workflow/:workflow_id/start", get(api::execute_workflow))
 
     let protected_routes = Router::new()
-        .route("/account/:account_id/workflows", get(api::get_workflows))
-        .route("/account/:account_id/workflow/:id", get(api::get_workflow))
-        .route("/account/:account_id/workflow/:id/versions", get(api::get_flow_versions))
+        .route("/account/:account_id/workflows", get(workflows::get_workflows))
+        .route("/account/:account_id/workflow/:id", get(workflows::get_workflow))
+        .route("/account/:account_id/workflow/:id/versions", get(workflows::get_flow_versions))
         .route(
             "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
-            get(api::get_flow_version),
+            get(workflows::get_flow_version),
         )
         .route(
             "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
-            put(api::update_workflow_version),
+            put(workflows::update_workflow_version),
         )
         .route(
             "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id/publish",
-            put(api::publish_workflow_version),
+            put(workflows::publish_workflow_version),
         )
-        .route("/account/:account_id/workflow", post(api::create_workflow))
-        .route("/account/:account_id/workflow/:id", delete(api::delete_workflow))
-        .route("/account/:account_id/workflow/:id", put(api::update_workflow))
-        .route("/account/:account_id/actions", get(api::get_actions))
+        .route("/account/:account_id/workflow", post(workflows::create_workflow))
+        .route("/account/:account_id/workflow/:id", delete(workflows::delete_workflow))
+        .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
+        .route("/account/:account_id/actions", get(actions::get_actions))
 
         //Marketplace && Templates
         .route(
@@ -202,8 +212,8 @@ async fn main() {
         .route("/account/:account_id/billing/portal", post(billing::create_links::get_billing_portal_link))
         
         //Tasks
-        .route("/account/:account_id/tasks", get(api::get_tasks))
-        .route("/account/:account_id/tasks/:workflow_id", get(api::get_task_by_workflow_id))
+        .route("/account/:account_id/tasks", get(tasks::get_tasks))
+        .route("/account/:account_id/tasks/:workflow_id", get(tasks::get_task_by_workflow_id))
 
         //Charts
         .route(
@@ -221,14 +231,14 @@ async fn main() {
         //Auth Providrs
         .route(
             "/account/:account_id/auth/providers/:provider_name",
-            get(api::get_auth_provider_by_name),
+            get(auth::providers::get_auth_provider_by_name),
         )
-        .route("/account/:account_id/auth/accounts", get(api::get_auth_accounts))
+        .route("/account/:account_id/auth/accounts", get(auth::accounts::get_auth_accounts))
         .route(
             "/account/:account_id/auth/accounts/:provider_name",
-            get(api::get_auth_accounts_for_provider_name),
+            get(auth::accounts::get_auth_accounts_for_provider_name),
         )
-        .route("/account/:account_id/auth/providers", get(api::get_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
+        .route("/account/:account_id/auth/providers", get(auth::providers::get_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
         .route(
             "/account/:account_id/auth/:provider_name/initiate",
             get(auth::init::initiate_auth),
@@ -236,11 +246,11 @@ async fn main() {
         //Test Workflows
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id",
-            get(api::test_workflow),
+            get(testing::test_workflow),
         )
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
-            get(api::get_test_session_results),
+            get(testing::get_test_session_results),
         )
         //Variables Explorer for Testing
         .route(
@@ -252,7 +262,7 @@ async fn main() {
         //Test Actions
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
-            get(api::test_action),
+            get(testing::test_action),
         )
         .layer(middleware::from_fn(supabase_auth_middleware::middleware));
 
