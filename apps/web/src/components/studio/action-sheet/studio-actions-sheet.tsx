@@ -28,6 +28,7 @@ export function StudioActionsSheet(): JSX.Element {
       setShowingActionSheet,
       addNode,
       actionSheetMode,
+      changeTrigger,
     },
     accounts: { selectedAccount },
   } = useAnything();
@@ -213,7 +214,7 @@ export function StudioActionsSheet(): JSX.Element {
                         <div
                           key={`${db_trigger.action_template_id}-${action.label}`}
                           onClick={() => {
-                            addNode(action, { x: 100, y: 300 });
+                            changeTrigger(action);
                             setShowingActionSheet(false);
                           }}
                           className="flex flex-col justify-between p-4 border rounded-md border-black cursor-pointer hover:bg-gray-50"

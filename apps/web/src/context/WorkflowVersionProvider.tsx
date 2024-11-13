@@ -81,6 +81,7 @@ export interface WorkflowVersionContextInterface {
   setExplorerTab: (tab: string) => void;
   showActionSheetForEdge: (id: string) => void;
   showActionSheetToChangeTrigger: () => void;
+  changeTrigger: (trigger: any) => void;
   showActionSheet: () => void;
   actionSheetMode: string;
   setActionSheetMode: (mode: string) => void;
@@ -124,6 +125,7 @@ export const WorkflowVersionContext =
     setShowingActionSheet: () => {},
     showActionSheet: () => {},
     setActionSheetMode: () => {},
+    changeTrigger: () => {},
     actionSheetMode: "actions",
     nodes: [],
     edges: [],
@@ -247,6 +249,35 @@ export const WorkflowVersionProvider = ({
     saveFlowVersionImmediate(udpatedNodes, edges);
 
     setNodes(() => udpatedNodes);
+  };
+
+  const changeTrigger = (trigger: any) => {
+    console.log("Changing Trigger", trigger);
+
+    //Find the trigger node
+    let triggerNode = nodes.find((node) => node.data.type === "trigger");
+    if (!triggerNode) {
+      console.error("No Trigger Node Found");
+      return;
+    }
+
+    //Update the trigger node
+    let updatedTriggerNode = {
+      ...triggerNode,
+      data: { ...triggerNode.data, ...trigger },
+    };
+
+    //Update the nodes array
+    let updatedNodes = nodes.map((node) => {
+      if (node.id === triggerNode.id) {
+        return updatedTriggerNode;
+      }
+      return node;
+    });
+
+    saveFlowVersionImmediate(updatedNodes, edges);
+
+    setNodes(updatedNodes);
   };
 
   const updateWorkflow = async (args: UpdateWorklowArgs) => {
@@ -755,6 +786,7 @@ export const WorkflowVersionProvider = ({
         setDetailedMode,
         setShowingActionSheet,
         showActionSheetToChangeTrigger,
+        changeTrigger,
         actionSheetMode,
         showActionSheetForEdge,
         showActionSheet,
