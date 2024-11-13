@@ -4,9 +4,9 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-
+use dotenv::dotenv;
 use serde_json::{json, Value};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
 use crate::task_types::Stage;
@@ -21,8 +21,8 @@ pub async fn run_workflow(
     _headers: HeaderMap,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    println!("Handling run workflow");
-    println!("Payload: {:?}", payload);
+    println!("[WEBHOOK API] Handling run workflow");
+    println!("[WEBHOOK API] Payload: {:?}", payload);
 
     // Split the path to extract workflow_id and optional respond path
     let parts: Vec<&str> = params.split('/').collect();
@@ -33,24 +33,34 @@ pub async fn run_workflow(
         None
     };
 
-    println!("Workflow ID: {}", workflow_id);
-    println!("Respond Path: {:?}", respond_path);
+    println!("[WEBHOOK API] Workflow ID: {}", workflow_id);
+    println!("[WEBHOOK API] Respond Path: {:?}", respond_path);
 
     Json(payload).into_response()
 }
 
 pub async fn run_workflow_version(
-    Path(params): Path<String>,
+    Path((workflow_id, workflow_version_id)): Path<(String, String)>, // Changed to tuple extraction
     State(state): State<Arc<AppState>>,
     headers: HeaderMap, //TODO: use when we are doing HMAC secrets
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    println!("Handling run workflow version");
-    println!("Payload: {:?}", payload);
+    println!("[WEBHOOK API] Handling run workflow version");
+    println!("[WEBHOOK API] Payload: {:?}", payload);
 
     // Split the path to extract workflow_id, version_id and optional respond path
-    let parts: Vec<&str> = params.split('/').collect();
-    let (workflow_id, workflow_version_id) = (parts[0].to_string(), parts[1].to_string());
+    // let parts: Vec<&str> = params.split('/').collect();
+    // let (workflow_id, workflow_version_id) = (parts[0].to_string(), parts[1].to_string());
+    // println!(
+    //     "[WEBHOOK API] Workflow ID: {}, Version ID: {}",
+    //     workflow_id, workflow_version_id
+    // );
+
+    println!(
+        "[WEBHOOK API] Workflow ID: {}, Version ID: {}",
+        workflow_id, workflow_version_id
+    );
+
     //TODO: add when we are making "responses" possible
     // let respond_path = if parts.len() > 2 {
     //     Some(parts[2..].join("/"))
@@ -58,10 +68,17 @@ pub async fn run_workflow_version(
     //     None
     // };
 
+    //Get Special Priveledges by passing service_role in auth()
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
     // Get account_id for the workflow
+    println!("[WEBHOOK API] Fetching flow version from database");
     let response = match state
         .anything_client
         .from("flow_versions")
+        .auth(supabase_service_role_api_key.clone())
         .eq("flow_version_id", workflow_version_id.clone())
         .select("*")
         .single()
@@ -70,7 +87,7 @@ pub async fn run_workflow_version(
     {
         Ok(response) => response,
         Err(err) => {
-            println!("Failed to execute request: {:?}", err);
+            println!("[WEBHOOK API] Failed to execute request: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
@@ -80,54 +97,74 @@ pub async fn run_workflow_version(
     };
 
     let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
+        Ok(body) => {
+            println!("[WEBHOOK API] Response body: {}", body);
+            body
+        }
+        Err(err) => {
+            println!("[WEBHOOK API] Failed to read response body: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let workflow_version: FlowVersion = match serde_json::from_str(&body) {
         Ok(version) => version,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+        Err(err) => {
+            println!("[WEBHOOK API] Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
     let account_id = workflow_version.flow_id.to_string();
+    println!("[WEBHOOK API] Account ID from flow version: {}", account_id);
 
     // Only proceed if we have an account_id
     if account_id.is_empty() {
+        println!("[WEBHOOK API] Account ID not found");
         return (StatusCode::BAD_REQUEST, "Account ID not found").into_response();
     }
 
     // Parse the flow definition into a Workflow
+    println!("[WEBHOOK API] Parsing workflow definition");
     let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
         Ok(workflow) => workflow,
-        Err(_) => {
+        Err(err) => {
+            println!(
+                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
+                err
+            );
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse workflow definition",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     // Find the trigger action in the workflow
+    println!("[WEBHOOK API] Looking for trigger node in workflow");
     let trigger_node = match workflow
         .actions
         .iter()
         .find(|action| action.r#type == ActionType::Trigger)
     {
         Some(trigger) => trigger,
-        None => return (StatusCode::BAD_REQUEST, "No trigger found in workflow").into_response(),
+        None => {
+            println!("[WEBHOOK API] No trigger found in workflow");
+            return (StatusCode::BAD_REQUEST, "No trigger found in workflow").into_response();
+        }
     };
 
     // Check if trigger node has plugin_id of "input"
     if trigger_node.plugin_id != "webhook" {
+        println!(
+            "[WEBHOOK API] Invalid trigger type: {}",
+            trigger_node.plugin_id
+        );
         return (StatusCode::BAD_REQUEST, "Trigger must be an input trigger").into_response();
     }
 
@@ -135,6 +172,7 @@ pub async fn run_workflow_version(
     //This has to take the incoming body and headers as an argument and parse them into the variables
 
     // Create a task to initiate the flow
+    println!("[WEBHOOK API] Creating task for workflow execution");
     let task = CreateTaskInput {
         account_id: account_id.to_string(),
         processing_order: 0,
@@ -162,5 +200,6 @@ pub async fn run_workflow_version(
         test_config: None,
     };
 
+    println!("[WEBHOOK API] Task created successfully");
     Json(task).into_response()
 }
