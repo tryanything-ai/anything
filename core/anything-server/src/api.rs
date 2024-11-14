@@ -29,6 +29,9 @@ pub async fn run_workflow_and_respond(
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id,);
 
+    //TODO: respond requires API key for user
+    //TODO: responde requires an "OUTPUT" node in the workflow
+
     //Get Special Priveledges by passing service_role in auth()
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -228,7 +231,7 @@ pub async fn run_workflow_and_respond(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({
                     "error": "Workflow execution channel closed unexpectedly",
-                    "flow_session_id": task.flow_session_id
+                    "workflow_session_id": task.flow_session_id
                 })),
             )
                 .into_response()
@@ -245,7 +248,7 @@ pub async fn run_workflow_and_respond(
                 StatusCode::REQUEST_TIMEOUT,
                 Json(json!({
                     "error": "Workflow execution timed out",
-                    "flow_session_id": task.flow_session_id,
+                    "workflow_session_id": task.flow_session_id,
                     "message": "You can query the workflow status using the flow_session_id"
                 })),
             )
@@ -465,7 +468,10 @@ pub async fn run_workflow(
     println!("[WEBHOOK API] Task created successfully");
     Json(serde_json::json!({
         "success": true,
-        "message": "Webhook task created successfully"
+        "message": "Webhook was successfull",
+        "workflow_session_id": task.flow_session_id,
+        "workflow_id": workflow_id,
+        "workflow_version_id": workflow_version.flow_version_id
     }))
     .into_response()
 }
@@ -683,7 +689,10 @@ pub async fn run_workflow_version(
     println!("[WEBHOOK API] Task created successfully");
     Json(serde_json::json!({
         "success": true,
-        "message": "Webhook task created successfully"
+        "message": "Webhook was successfull",
+        "workflow_session_id": task.flow_session_id,
+        "workflow_id": workflow_id,
+        "workflow_version_id": workflow_version.flow_version_id
     }))
     .into_response()
 }

@@ -24,6 +24,7 @@ export function JsonSchemaForm({
   onSubmit,
   onFocus,
   onBlur,
+  disabled = false,
 }: any): JSX.Element {
   const {
     explorer: { registerCallback, unRegisterCallback },
@@ -52,11 +53,13 @@ export function JsonSchemaForm({
 
   const handleInternalValidation = (valuesToValidate: any) => {
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
+
     const { formErrors } = handleValidation(valuesForJson);
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
   const handleFieldChange = (fieldName: any, value: any) => {
+    if (disabled) return;
     console.log(`[FIELD CHANGE] ${fieldName}:`, value);
     setValues((prevValues) => {
       console.log("[PREV VALUES]", prevValues);
@@ -72,6 +75,7 @@ export function JsonSchemaForm({
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    if (disabled) return;
     setSubmitted(true);
     const { errors, jsonValues } = handleInternalValidation(values);
     console.log("[JSON SCHEMA FORM - SUBMIT] Errors:", errors);
@@ -88,6 +92,7 @@ export function JsonSchemaForm({
 
   //used to hook into showing variables etc
   const handleFieldFocus = (fieldName: string) => {
+    if (disabled) return;
     // setFocusedField(fieldName);
     console.log("Show something?");
     if (onFocus) {
@@ -96,6 +101,7 @@ export function JsonSchemaForm({
   };
 
   const handleFieldBlur = (e: any) => {
+    if (disabled) return;
     // setFocusedField(null);
     console.log("STOP showing something?");
     if (onBlur) {
@@ -111,6 +117,7 @@ export function JsonSchemaForm({
   console.log("Values:", values);
 
   const handleCursorChange = (e: React.SyntheticEvent, fieldName: string) => {
+    if (disabled) return;
     const target = e.target as HTMLTextAreaElement;
 
     GLOBAL_CURSOR_LOCATION = target.selectionStart;
@@ -128,6 +135,7 @@ export function JsonSchemaForm({
   };
 
   const insertVariable = (variable: string) => {
+    if (disabled) return;
     if (GLOBAL_ACTIVE_FORM_NAME !== name) {
       console.log("Not the active form");
       return;
@@ -184,12 +192,13 @@ export function JsonSchemaForm({
               onValueChange={(value: any) =>
                 handleFieldChange(fieldName, value)
               }
+              disabled={disabled}
               {...field}
             />
           );
         })}
         <div className="flex items-center gap-2">
-          <Button type="submit" variant={"default"}>
+          <Button type="submit" variant={"default"} disabled={disabled}>
             Submit
           </Button>
           {hasUnsavedChanges && (

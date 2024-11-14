@@ -788,6 +788,7 @@ export const WorkflowVersionProvider = ({
         showActionSheetToChangeTrigger,
         changeTrigger,
         actionSheetMode,
+        setActionSheetMode,
         showActionSheetForEdge,
         showActionSheet,
         setPanelTab: set_panel_tab,

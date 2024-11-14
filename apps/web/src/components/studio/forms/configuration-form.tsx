@@ -1,21 +1,29 @@
+import { ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import { JsonSchemaForm } from "./json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { useMemo } from "react";
+import { Lock } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
 
 export default function ConfigurationForm(): JSX.Element {
   const {
     workflow: {
       selected_node_input,
+      selected_node_data,
       selected_node_input_schema,
       updateNodeData,
       explorerTab,
       setExplorerTab,
       showExplorer,
-      setShowExplorer
+      setShowExplorer,
     },
   } = useAnything();
 
+  const [isCollapsed, setIsCollapsed] = useState(
+    selected_node_data?.input_locked ?? false,
+  );
 
   const { fields, handleValidation } = useMemo(() => {
     if (
@@ -50,24 +58,41 @@ export default function ConfigurationForm(): JSX.Element {
         Object.keys(selected_node_input).length > 0 && ( */}
       <div className="rounded-lg border p-4">
         <div className="flex flex-row items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mr-2"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            <ChevronRight
+              className={`h-4 w-4 transition-transform ${!isCollapsed ? "rotate-90" : ""}`}
+            />
+          </Button>
+
           <div className="font-bold">Configuration</div>
           <div className="flex-1" />
+          {selected_node_data?.input_locked && (
+            <Lock size={16} className="text-gray-400" />
+          )}
         </div>
-        <JsonSchemaForm
-          name="configuration-form"
-          onSubmit={handleOnSubmit}
-          fields={fields}
-          onFocus={(fieldName: string) => {
-            if (explorerTab !== "variables") {
-              setExplorerTab("variables");
-            }
-            if (!showExplorer) {
-              setShowExplorer(true);
-            }
-          }}
-          initialValues={selected_node_input}
-          handleValidation={handleValidation}
-        />
+        {!isCollapsed && (
+          <JsonSchemaForm
+            name="configuration-form"
+            onSubmit={handleOnSubmit}
+            fields={fields}
+            onFocus={(fieldName: string) => {
+              if (explorerTab !== "variables") {
+                setExplorerTab("variables");
+              }
+              if (!showExplorer) {
+                setShowExplorer(true);
+              }
+            }}
+            disabled={selected_node_data?.input_locked}
+            initialValues={selected_node_input}
+            handleValidation={handleValidation}
+          />
+        )}
       </div>
       {/* )} */}
     </>
