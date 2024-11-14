@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { useParams, useRouter } from "next/navigation";
-import { cloneDeep, debounce } from "lodash";
+import { cloneDeep, conforms, debounce } from "lodash";
 
 import {
   addEdge,
@@ -251,8 +251,8 @@ export const WorkflowVersionProvider = ({
     setNodes(() => udpatedNodes);
   };
 
-  const changeTrigger = (trigger: any) => {
-    console.log("Changing Trigger", trigger);
+  const changeTrigger = (new_trigger: any) => {
+    console.log("Changing Trigger", new_trigger);
 
     //Find the trigger node
     let triggerNode = nodes.find((node) => node.data.type === "trigger");
@@ -261,23 +261,45 @@ export const WorkflowVersionProvider = ({
       return;
     }
 
-    //Update the trigger node
-    let updatedTriggerNode = {
-      ...triggerNode,
-      data: { ...triggerNode.data, ...trigger },
+    console.log("[CHANGE TRIGGER] Old Trigger Node: ", triggerNode);
+
+    //New triggger node old position
+    let updatedTriggerNode: Node = {
+      id: new_trigger.plugin_id,
+      type: "anything",
+      position: triggerNode.position,
+      data: { ...new_trigger, action_id: new_trigger.plugin_id },
     };
+
+    console.log("[CHANGE TRIGGER] New Trigger Node", updatedTriggerNode);
 
     //Update the nodes array
     let updatedNodes = nodes.map((node) => {
       if (node.id === triggerNode.id) {
+        //Swap in new node
         return updatedTriggerNode;
       }
       return node;
     });
 
-    saveFlowVersionImmediate(updatedNodes, edges);
+    // Update edges with new trigger node id if needed
+    let updatedEdges = edges.map((edge) => {
+      if (edge.source === triggerNode.id) {
+        let new_edge = {
+          ...edge,
+          id: `${updatedTriggerNode.id}->${edge.target}`,
+          source: updatedTriggerNode.id,
+        };
+        console.log("[CHANGE TRIGGER] New Edge", new_edge);
+        return new_edge;
+      }
+      return edge;
+    });
+
+    saveFlowVersionImmediate(updatedNodes, updatedEdges);
 
     setNodes(updatedNodes);
+    setEdges(updatedEdges);
   };
 
   const updateWorkflow = async (args: UpdateWorklowArgs) => {

@@ -172,7 +172,7 @@ impl Default for Workflow {
             anything_action_version: "0.1.0".to_string(),
             r#type: ActionType::Trigger,
             plugin_id: "cron".to_string(),
-            action_id: "cron_trigger".to_string(),
+            action_id: "cron".to_string(),
             plugin_version: "0.1.0".to_string(),
             label: "Every Hour".to_string(),
             description: Some("Cron Trigger to run workflow every hour".to_string()),
@@ -351,9 +351,9 @@ impl Default for Workflow {
         };
 
         let edge = Edge {
-            id: "cron_trigger->http".to_string(),
+            id: "cron->http".to_string(),
             r#type: "anything".to_string(),
-            source: "cron_trigger".to_string(),
+            source: "cron".to_string(),
             target: "http".to_string(),
             source_handle: Some("b".to_string()),
             target_handle: Some("a".to_string()),
