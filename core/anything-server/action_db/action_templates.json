@@ -115,70 +115,22 @@
       "variables": {}, 
       "variables_schema": {},
       "input": {
-        "method": "GET",
-        "url": "",
-        "headers": "",
-        "body": ""
+        "require_secret": false
       },
       "input_schema": {
         "type": "object",
         "properties": {
-          "method": {
-             "title": "Method",
-              "description": "HTTP Method for request",
-              "type": "string",
-              "oneOf": [
-                {
-                  "value": "GET",
-                  "title": "GET"
-                },
-                {
-                  "value": "POST",
-                  "title": "POST"
-                },
-                {
-                  "value": "PUT",
-                  "title": "PUT"
-                },
-                {
-                  "value": "DELETE",
-                  "title": "DELETE"
-                },
-                {
-                  "value": "HEAD",
-                  "title": "HEAD"
-                },
-                {
-                  "value": "OPTIONS",
-                  "title": "OPTIONS"
-                },
-                {
-                  "value": "PATCH",
-                  "title": "PATCH"
-                }
-              ],
+          "require_secret": {
+             "title": "Require Secret",
+              "description": "Only Accept Incoming Webhook with Secret",
+              "type": "boolean",
               "x-jsf-presentation": {
-                "inputType": "select"
+                "inputType": "checkbox"
               }
-          },
-          "url": {
-             "title": "URL",
-            "description": "URL for request",
-            "type": "string"
-          },
-          "headers": {
-            "title": "Headers",
-            "description": "Headers for request",
-            "type": "string"
-          },
-          "body": {
-            "title": "Body",
-            "description": "Body for request",
-            "type": "string"
           }
         },
-        "x-jsf-order": ["url", "method", "headers", "body"],
-        "required": ["method", "url"],
+        "x-jsf-order": ["require_secret"],
+        "required": ["require_secret"],
         "additionalProperties": false
       },
       "presentation": {

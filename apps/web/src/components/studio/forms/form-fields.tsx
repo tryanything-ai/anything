@@ -113,18 +113,17 @@ function FieldCheckbox({
       {/* A11Y errors: https://blog.tenon.io/accessible-validation-of-checkbox-and-radiobutton-groups/ */}
       <Label htmlFor={name}>{label}</Label>
 
-      <div className="flex items-center">
-        <Checkbox name={name} checked={value} onCheckedChange={handleChange} />
+      <div className="flex items-center gap-2">
+        <Checkbox
+          name={name}
+          checked={value}
+          onCheckedChange={handleChange}
+          className="w-5 h-5" // Made checkbox bigger with explicit width/height
+        />
         <label
           htmlFor={name}
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {value ? (
-            <span className="p-1 bg-green-400 rounded-lg ml-2">Active</span>
-          ) : (
-            <span className="p-1 bg-red-400 rounded-lg ml-2">Inactive</span>
-          )}
-        </label>
+        ></label>
         {(touched || submited) && error && (
           <div className="text-red-500" id={`${name}-error`}>
             {error}
