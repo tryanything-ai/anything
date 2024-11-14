@@ -111,7 +111,7 @@ pub async fn test_workflow(
 
     let task_config = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables),
-        inputs: serde_json::json!(workflow.actions[0].input),
+        input: serde_json::json!(workflow.actions[0].input),
     };
 
     let trigger_session_id = Uuid::new_v4().to_string();
@@ -292,7 +292,7 @@ pub async fn test_action(
 
     let task_config = TaskConfig {
         variables: serde_json::json!(workflow.actions[0].variables),
-        inputs: serde_json::json!(workflow.actions[0].input),
+        input: serde_json::json!(workflow.actions[0].input),
     };
 
     let test_config = TestConfig {

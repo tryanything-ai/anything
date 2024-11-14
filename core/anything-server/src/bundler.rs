@@ -174,6 +174,8 @@ pub async fn bundle_variables(
 
     let mut render_variables_context: HashMap<String, Value> = HashMap::new();
 
+    //TODO: update so that we only run expensive queries for the variables we actually use
+
     println!(
         "[BUNDLER] Initial variables context: {:?}",
         render_variables_context
@@ -306,12 +308,13 @@ pub async fn bundle_context(
     let iputs_context_value = serde_json::to_value(render_input_context.clone())?;
 
     // Add the task definition as a template and render if it exists
-    if let Some(inputs) = task.config.get("inputs") {
+    if let Some(inputs) = task.config.get("input") {
         println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
         templater.add_template("task_inputs_definition", inputs.clone());
-        
+
         // Render the task definition with the context
-        let rendered_inputs_definition = templater.render("task_inputs_definition", &iputs_context_value)?;
+        let rendered_inputs_definition =
+            templater.render("task_inputs_definition", &iputs_context_value)?;
         println!(
             "[BUNDLER] Rendered inputs output: {}",
             rendered_inputs_definition

@@ -103,7 +103,7 @@ async fn create_execution_plan(
     for (index, action) in result.iter().enumerate() {
         let task_config = TaskConfig {
             variables: serde_json::json!(action.variables),
-            inputs: serde_json::json!(action.input),
+            input: serde_json::json!(action.input),
         };
 
         let event = CreateTaskInput {

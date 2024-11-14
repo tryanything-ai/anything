@@ -400,7 +400,7 @@ pub async fn get_flow_version_variables(
         test_config: None,
         config: serde_json::json!({
             "variables": variables,
-            "inputs": serde_json::json!({})
+            "input": serde_json::json!({})
         }),
         context: None,
         started_at: None,

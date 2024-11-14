@@ -106,7 +106,7 @@ pub struct CreateTaskInput {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TaskConfig {
     pub variables: Value,
-    pub inputs: Value,
+    pub input: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

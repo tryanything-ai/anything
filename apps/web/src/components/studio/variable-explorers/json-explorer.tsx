@@ -42,19 +42,6 @@ export function JsonExplorer({
     }
 
     if (typeof value === "object") {
-      // const isEmpty = Object.keys(value).length === 0;
-
-      // if (isEmpty) {
-      //   return (
-      //     <div className={className}>
-      //       <div className="flex items-center">
-      //         <span className="p-1 m-1">{key}</span>
-      //         <span className="ml-2 text-gray-400">Empty Object</span>
-      //       </div>
-      //     </div>
-      //   );
-      // }
-
       return (
         <div className={className}>
           <div className="flex items-center">

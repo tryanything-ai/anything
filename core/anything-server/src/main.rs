@@ -307,9 +307,10 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
-    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
-        state.clone(),
-    ));
+    //TODO: turn back on before launching
+    // tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+    //     state.clone(),
+    // ));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
