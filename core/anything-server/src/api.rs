@@ -150,7 +150,7 @@ pub async fn run_workflow_and_respond(
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        action_id: Uuid::new_v4().to_string(),
+        action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
         stage: if workflow_version.published {
@@ -386,7 +386,7 @@ pub async fn run_workflow(
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        action_id: Uuid::new_v4().to_string(),
+        action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
         stage: if workflow_version.published {
@@ -604,7 +604,7 @@ pub async fn run_workflow_version(
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        action_id: Uuid::new_v4().to_string(),
+        action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
         stage: if workflow_version.published {
