@@ -10,7 +10,6 @@ use crate::task_types::FlowSessionStatus;
 use crate::task_types::TaskStatus;
 use crate::task_types::{ActionType, TriggerSessionStatus};
 use crate::workflow_types::{Action, CreateTaskInput, FlowVersion, Task, TaskConfig, Workflow};
-
 pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
@@ -71,6 +70,14 @@ pub async fn process_trigger_task(
 
     println!("[PROCESS TRIGGER TASK] Trigger task processed successfully");
 
+    // We set the result to the body of the webhook. this is already set in the task creation but doing again here.
+    if let Some(plugin_id) = &task.plugin_id {
+        if plugin_id == "webhook" {
+            let config = task.result.clone().unwrap_or(serde_json::json!({}));
+            return Ok(config);
+        }
+    }
+
     Ok(serde_json::json!({
         "message": format!("Trigger task {} processed successfully", task.task_id)
     }))
@@ -115,6 +122,7 @@ async fn create_execution_plan(
             plugin_id: action.plugin_id.clone(),
             stage: task.stage.clone(),
             config: serde_json::json!(task_config),
+            result: None,
             test_config: None,
             processing_order: (index + 1) as i32,
         };

@@ -254,36 +254,36 @@ pub async fn bundle_variables(
     // Create a new Templater instance
     let mut templater = Templater::new();
 
-    // Add the task definition as a template
-    if let Some(variables) = task.config.get("variables") {
-        // let variables_str = variables.to_string();
-        println!("[BUNDLER] Task variables definition: {}", variables.clone());
-        templater.add_template("task_variables_definition", variables.clone());
-    } else {
-        println!("[BUNDLER] No variables found in task config");
-    }
-
-    // Get the variables from the task definition
-    let variables = templater.get_template_variables("task_variables_definition")?;
-
-    // Print the variables
-    println!("[BUNDLER] Variables from task variables definition:");
-    for (index, variable) in variables.iter().enumerate() {
-        println!("  {}. {}", index + 1, variable);
-    }
-
     // Convert context HashMap to Value
     let context_value = serde_json::to_value(render_variables_context.clone())?;
 
-    // Render the task definition with the context
-    let rendered_variables_definition =
-        templater.render("task_variables_definition", &context_value)?;
-    println!(
-        "[BUNDLER] Rendered variables output: {}",
-        rendered_variables_definition
-    );
+    // Add the task definition as a template and render if it exists
+    if let Some(variables) = task.config.get("variables") {
+        println!("[BUNDLER] Task variables definition: {}", variables.clone());
+        templater.add_template("task_variables_definition", variables.clone());
 
-    Ok(rendered_variables_definition)
+        // Get the variables from the task definition
+        let variables = templater.get_template_variables("task_variables_definition")?;
+
+        // Print the variables
+        println!("[BUNDLER] Variables from task variables definition:");
+        for (index, variable) in variables.iter().enumerate() {
+            println!("  {}. {}", index + 1, variable);
+        }
+
+        // Render the task definition with the context
+        let rendered_variables_definition =
+            templater.render("task_variables_definition", &context_value)?;
+        println!(
+            "[BUNDLER] Rendered variables output: {}",
+            rendered_variables_definition
+        );
+
+        Ok(rendered_variables_definition)
+    } else {
+        println!("[BUNDLER] No variables found in task config, returning empty object");
+        Ok(json!({}))
+    }
 }
 
 pub async fn bundle_context(
@@ -305,22 +305,20 @@ pub async fn bundle_context(
     // Convert context HashMap to Value
     let iputs_context_value = serde_json::to_value(render_input_context.clone())?;
 
-    // Add the task definition as a template
+    // Add the task definition as a template and render if it exists
     if let Some(inputs) = task.config.get("inputs") {
-        // let inputs_str = inputs.to_string();
         println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
         templater.add_template("task_inputs_definition", inputs.clone());
+        
+        // Render the task definition with the context
+        let rendered_inputs_definition = templater.render("task_inputs_definition", &iputs_context_value)?;
+        println!(
+            "[BUNDLER] Rendered inputs output: {}",
+            rendered_inputs_definition
+        );
+        Ok(rendered_inputs_definition)
     } else {
-        println!("[BUNDLER] No variables found in task config");
+        println!("[BUNDLER] No inputs found in task config, returning empty object");
+        Ok(json!({}))
     }
-
-    // Render the task definition with the context
-    let rendered_inputs_definition =
-        templater.render("task_inputs_definition", &iputs_context_value)?;
-    println!(
-        "[BUNDLER] Rendered inputs ouput: {}",
-        rendered_inputs_definition
-    );
-
-    Ok(rendered_inputs_definition)
 }

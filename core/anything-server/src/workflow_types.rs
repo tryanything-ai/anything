@@ -94,6 +94,7 @@ pub struct CreateTaskInput {
     pub plugin_id: String,
     pub stage: String,
     pub config: Value,
+    pub result: Option<Value>,
     pub test_config: Option<Value>, // context: Value,
     pub processing_order: i32,
 }
@@ -157,6 +158,7 @@ pub struct FlowVersion {
     pub flow_version_id: Uuid,
     pub flow_id: Uuid,
     pub published: bool,
+    pub account_id: Uuid,
     pub flow_definition: Value,
 }
 

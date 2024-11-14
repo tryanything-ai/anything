@@ -344,6 +344,7 @@ async fn create_trigger_task(
         plugin_id: trigger.trigger_id.clone(),
         stage: Stage::Production.as_str().to_string(),
         config: serde_json::json!(task_config),
+        result: None,
         test_config: None,
         processing_order: 0,
     };
@@ -358,6 +359,7 @@ async fn create_trigger_task(
     let body = response.text().await?;
     let _items: Value = serde_json::from_str(&body)?;
 
+    // Send signal to task engine to process the new task
     if let Err(err) = state.task_engine_signal.send(()) {
         println!("Failed to send task signal: {:?}", err);
     }

@@ -133,6 +133,7 @@ pub async fn test_workflow(
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
+        result: None,
         test_config: None,
         processing_order: 0,
     };
@@ -316,6 +317,7 @@ pub async fn test_action(
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
+        result: None,
         test_config: Some(serde_json::json!(test_config)),
         processing_order: 0,
     };

@@ -8,6 +8,7 @@ use axum::{
  
 use dotenv::dotenv;
 use postgrest::Postgrest;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
@@ -44,6 +45,15 @@ mod templater;
 mod testing; 
 mod trigger_engine;
 
+use tokio::sync::oneshot;
+use tokio::sync::Mutex;
+
+// Add this struct to store completion channels
+pub struct FlowCompletion {
+    pub sender: oneshot::Sender<Value>,
+    pub needs_response: bool,
+}
+
 pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
@@ -51,6 +61,7 @@ pub struct AppState {
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
+    flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
 }
 
 #[tokio::main]
@@ -139,6 +150,7 @@ async fn main() {
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,
         trigger_engine_signal,
+        flow_completions: Arc::new(Mutex::new(HashMap::new())),
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -175,9 +187,9 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
 
     //user api for starting workflows etc
-    .route("/api/v1/workflow/:workflow_id/start/*respond", post(api::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/start/respond", post(api::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/start", post(api::run_workflow))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/*respond", post(api::run_workflow_version))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", post(api::run_workflow_version))
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::run_workflow_version));
 
     let protected_routes = Router::new()

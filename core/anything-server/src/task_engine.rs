@@ -19,7 +19,7 @@ use crate::AppState;
 use std::collections::HashSet;
 use tokio::sync::Mutex;
 
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
 
@@ -219,11 +219,23 @@ pub async fn update_flow_session_status(
     Ok(())
 }
 
-pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
+pub async fn process_flow_tasks(
+    client: &Postgrest,
+    flow_session_id: &String,
+    state: Arc<AppState>,
+) {
     println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]");
 
     if let Some(tasks) = fetch_flow_tasks(client, flow_session_id).await {
+        let mut final_result = None;
         let mut all_tasks_completed = true;
+
+        // Store the last successful task result
+        for task in &tasks {
+            if task.task_status == TaskStatus::Completed.as_str().to_string() {
+                final_result = task.result.clone();
+            }
+        }
 
         for task in &tasks {
             if task.task_status == TaskStatus::Pending.as_str().to_string() {
@@ -288,6 +300,18 @@ pub async fn process_flow_tasks(client: &Postgrest, flow_session_id: &String) {
         .await
         {
             println!("[TASK_ENGINE] Error updating flow session status: {}", e);
+        }
+
+        // Send result through completion channel if it exists
+        // This is where we handle the webhook response
+        let mut completions = state.flow_completions.lock().await;
+        if let Some(completion) = completions.remove(flow_session_id) {
+            if completion.needs_response {
+                let _ = completion.sender.send(final_result.unwrap_or(json!({
+                    "status": "completed",
+                    "message": "Workflow completed successfully"
+                })));
+            }
         }
     }
 }
@@ -403,7 +427,7 @@ async fn process_http_task(
                             request_builder = request_builder.header(key.as_str(), value_str);
                         }
                     }
-                },
+                }
                 Value::String(headers_str) => {
                     println!("[TASK_ENGINE] Headers are a string: {}", headers_str);
                     match serde_json::from_str::<Value>(headers_str) {
@@ -411,14 +435,20 @@ async fn process_http_task(
                             println!("[TASK_ENGINE] Parsed headers: {:?}", parsed_headers);
                             for (key, value) in parsed_headers {
                                 if let Some(value_str) = value.as_str() {
-                                    println!("[TASK_ENGINE] Adding header: {} = {}", key, value_str);
-                                    request_builder = request_builder.header(key.as_str(), value_str);
+                                    println!(
+                                        "[TASK_ENGINE] Adding header: {} = {}",
+                                        key, value_str
+                                    );
+                                    request_builder =
+                                        request_builder.header(key.as_str(), value_str);
                                 }
                             }
-                        },
-                        _ => println!("[TASK_ENGINE] Failed to parse headers string as JSON object"),
+                        }
+                        _ => {
+                            println!("[TASK_ENGINE] Failed to parse headers string as JSON object")
+                        }
                     }
-                },
+                }
                 _ => println!("[TASK_ENGINE] Headers are neither an object nor a string"),
             }
         } else {
@@ -529,6 +559,9 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
             // let active_flow_sessions = active_flow_sessions.clone();
             let active_flow_sessions = Arc::clone(&active_flow_sessions);
 
+            // Clone state for the spawned task
+            let state = Arc::clone(&state);
+
             task::spawn(async move {
                 let flow_session_id = task.flow_session_id.clone();
 
@@ -570,7 +603,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
                 }
 
                 // Process rest of flow
-                process_flow_tasks(&client, &flow_session_id).await;
+                process_flow_tasks(&client, &flow_session_id, state).await;
 
                 // Remove the flow_session_id from active sessions
                 active_flow_sessions.lock().await.remove(&flow_session_id);
