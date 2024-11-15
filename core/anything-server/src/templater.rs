@@ -152,6 +152,19 @@ impl Templater {
             }
             Value::String(s) => {
                 println!("[TEMPLATER] Rendering string: {}", s);
+                
+                // Special case: if the string is exactly "{{variables}}" (or any other full variable),
+                // return the raw value instead of string conversion
+                if s.trim().starts_with("{{") && s.trim().ends_with("}}") {
+                    let variable = s.trim()[2..s.trim().len() - 2].trim();
+                    if !variable.contains('.') {
+                        // Only for top-level variables
+                        if let Some(value) = Self::get_value_from_path(context, variable) {
+                            return Ok(value);
+                        }
+                    }
+                }
+
                 let mut result = s.clone();
                 let mut start = 0;
 

@@ -233,12 +233,12 @@
     }
   },
   {
-    "type": "action", 
+    "type": "output", 
     "featured": false, 
     "action_template_definition": 
     {
       "anything_action_version": "0.1.0",
-      "type": "action",
+      "type": "output",
       "plugin_id": "ouput",
       "action_id": "output",
       "plugin_version": "0.1.0",
@@ -249,9 +249,23 @@
       "variables_locked": false,
       "variables_schema": {},
       "variables_schema_locked": false,
-      "input": {},
+      "input": {
+        "output": "{{variables}}"
+      },
       "input_locked": true, 
-      "input_schema": {},
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "output": {
+            "title": "Output",
+            "description": "Output for Workflow",
+            "type": "string"
+          }
+        },
+        "x-jsf-order": ["output"],
+        "required": ["output"],
+        "additionalProperties": false
+      },
       "input_schema_locked": true,
       "presentation": {
         "position": {
