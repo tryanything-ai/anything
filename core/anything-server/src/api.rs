@@ -24,7 +24,7 @@ pub async fn run_workflow_and_respond(
     headers: HeaderMap,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    println!("[WEBHOOK API] Handling run workflow");
+    println!("[WEBHOOK API] Handling run workflow and respond");
     println!("[WEBHOOK API] Payload: {:?}", payload);
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id,);
@@ -123,7 +123,7 @@ pub async fn run_workflow_and_respond(
         }
     };
 
-    // Check if trigger node has plugin_id of "input"
+    // Check if trigger node has plugin_id of "webhook"
     if trigger_node.plugin_id != "webhook" {
         println!(
             "[WEBHOOK API] Invalid trigger type: {}",
@@ -135,6 +135,20 @@ pub async fn run_workflow_and_respond(
         )
             .into_response();
     }
+
+    // Check for output node
+    println!("[WEBHOOK API] Looking for output node in workflow");
+    let output_node = match workflow
+        .actions
+        .iter()
+        .find(|action| action.plugin_id == "output")
+    {
+        Some(output) => output,
+        None => {
+            println!("[WEBHOOK API] No output node found in workflow");
+            return (StatusCode::BAD_REQUEST, "No output node found in workflow").into_response();
+        }
+    };
 
     //We need to use the action definition to generate the config
     //This has to take the incoming body and headers as an argument and parse them into the variables
@@ -359,7 +373,7 @@ pub async fn run_workflow(
         }
     };
 
-    // Check if trigger node has plugin_id of "input"
+    // Check if trigger node has plugin_id of "webhook"
     if trigger_node.plugin_id != "webhook" {
         println!(
             "[WEBHOOK API] Invalid trigger type: {}",

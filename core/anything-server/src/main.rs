@@ -189,7 +189,7 @@ pub async fn root() -> impl IntoResponse {
     //user api for starting workflows etc
     .route("/api/v1/workflow/:workflow_id/start/respond", post(api::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/start", post(api::run_workflow))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", post(api::run_workflow_version))
+    // .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", post(api::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::run_workflow_version));
 
     let protected_routes = Router::new()
@@ -213,6 +213,7 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
         .route("/account/:account_id/actions", get(actions::get_actions))
         .route("/account/:accoutn_id/triggers", get(actions::get_triggers))
+        .route("/account/:account_id/other", get(actions::get_other_actions))
 
         //Marketplace && Templates
         .route(
@@ -307,10 +308,9 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
-    //TODO: turn back on before launching
-    // tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
-    //     state.clone(),
-    // ));
+    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+        state.clone(),
+    ));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();

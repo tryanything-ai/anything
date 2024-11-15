@@ -239,7 +239,7 @@
     {
       "anything_action_version": "0.1.0",
       "type": "output",
-      "plugin_id": "ouput",
+      "plugin_id": "output",
       "action_id": "output",
       "plugin_version": "0.1.0",
       "label": "Output",

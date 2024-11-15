@@ -218,43 +218,61 @@ pub async fn update_flow_session_status(
 
     Ok(())
 }
-
 pub async fn process_flow_tasks(
     client: &Postgrest,
     flow_session_id: &String,
     state: Arc<AppState>,
 ) {
-    println!("[TASK_ENGINE] [PROCESSING_NEW_FLOW]");
+    println!("[PROCESS FLOW TASKS] Starting to process new flow");
+    println!("[PROCESS FLOW TASKS] Flow session ID: {}", flow_session_id);
 
     if let Some(tasks) = fetch_flow_tasks(client, flow_session_id).await {
+        println!(
+            "[PROCESS FLOW TASKS] Found {} tasks to process",
+            tasks.len()
+        );
         let mut final_result = None;
         let mut all_tasks_completed = true;
 
-        // Store the last successful task result
         for task in &tasks {
             if task.task_status == TaskStatus::Completed.as_str().to_string() {
+                println!("[PROCESS FLOW TASKS] Found completed task {}", task.task_id);
                 final_result = task.result.clone();
-            }
-        }
-
-        for task in &tasks {
-            if task.task_status == TaskStatus::Pending.as_str().to_string() {
+            } else if task.task_status == TaskStatus::Pending.as_str().to_string() {
+                println!(
+                    "[PROCESS FLOW TASKS] Processing pending task {}",
+                    task.task_id
+                );
                 match process_task(client, task).await {
-                    Ok(_) => {}
+                    Ok(result) => {
+                        println!(
+                            "[PROCESS FLOW TASKS] Successfully processed task {}",
+                            task.task_id
+                        );
+                        final_result = Some(result.clone());
+                    }
                     Err(e) => {
                         println!(
-                            "[TASK_ENGINE] Error processing task {}: {}",
+                            "[PROCESS FLOW TASKS] Error processing task {}: {}",
                             task.task_id, e
                         );
                         all_tasks_completed = false;
 
                         // Update tasks with process_order > current task to cancelled state
                         let current_process_order = task.processing_order;
+                        println!(
+                            "[PROCESS FLOW TASKS] Cancelling subsequent tasks after failed task {}",
+                            task.task_id
+                        );
                         for remaining_task in &tasks {
                             if remaining_task.processing_order > current_process_order
                                 && remaining_task.task_status
                                     != TaskStatus::Completed.as_str().to_string()
                             {
+                                println!(
+                                    "[PROCESS FLOW TASKS] Cancelling task {}",
+                                    remaining_task.task_id
+                                );
                                 if let Err(update_err) = update_task_status(
                                     client,
                                     remaining_task,
@@ -266,8 +284,8 @@ pub async fn process_flow_tasks(
                                 .await
                                 {
                                     println!(
-                                        "[TASK_ENGINE] Error updating task status: {}",
-                                        update_err
+                                        "[PROCESS FLOW TASKS] Error updating task status for {}: {}",
+                                        remaining_task.task_id, update_err
                                     );
                                 }
                             }
@@ -280,8 +298,10 @@ pub async fn process_flow_tasks(
 
         // Update flow session status
         let flow_session_status = if all_tasks_completed {
+            println!("[PROCESS FLOW TASKS] All tasks completed successfully");
             FlowSessionStatus::Completed
         } else {
+            println!("[PROCESS FLOW TASKS] Some tasks failed");
             FlowSessionStatus::Failed
         };
 
@@ -291,6 +311,10 @@ pub async fn process_flow_tasks(
             TriggerSessionStatus::Failed
         };
 
+        println!(
+            "[PROCESS FLOW TASKS] Updating flow session status to {:?}",
+            flow_session_status
+        );
         if let Err(e) = update_flow_session_status(
             client,
             flow_session_id,
@@ -299,20 +323,32 @@ pub async fn process_flow_tasks(
         )
         .await
         {
-            println!("[TASK_ENGINE] Error updating flow session status: {}", e);
+            println!(
+                "[PROCESS FLOW TASKS] Error updating flow session status: {}",
+                e
+            );
         }
 
         // Send result through completion channel if it exists
         // This is where we handle the webhook response
+        println!("[PROCESS FLOW TASKS] Checking for completion channel");
+        println!("[PROCESS FLOW TASKS] Final result: {:?}", final_result);
+
         let mut completions = state.flow_completions.lock().await;
         if let Some(completion) = completions.remove(flow_session_id) {
             if completion.needs_response {
+                println!("[PROCESS FLOW TASKS] Sending result through completion channel");
                 let _ = completion.sender.send(final_result.unwrap_or(json!({
                     "status": "completed",
                     "message": "Workflow completed successfully"
                 })));
             }
         }
+    } else {
+        println!(
+            "[PROCESS FLOW TASKS] No tasks found for flow session {}",
+            flow_session_id
+        );
     }
 }
 
@@ -336,6 +372,9 @@ pub async fn process_task(
             if let Some(plugin_id) = &task.plugin_id {
                 if plugin_id == "http" {
                     process_http_task(&bundled_context).await?
+                } else if plugin_id == "output" {
+                    // For output plugin, just return the bundled context
+                    bundled_context["output"].clone()
                 } else {
                     serde_json::json!({
                         "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)

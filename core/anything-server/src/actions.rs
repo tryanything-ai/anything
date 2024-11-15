@@ -289,3 +289,78 @@ pub async fn get_triggers(
 
     Json(filtered_items).into_response()
 }
+
+
+pub async fn get_other_actions(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("Handling get_other_actions");
+
+    // Log the current working directory
+    println!("Logging the current working directory");
+    let current_dir = match env::current_dir() {
+        Ok(path) => {
+            println!("Current directory: {}", path.display());
+            path
+        }
+        Err(e) => {
+            println!("Failed to get current directory: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get current directory",
+            )
+                .into_response();
+        }
+    };
+
+    // Load data from the JSON file
+    let json_file_path = current_dir.join("action_db/action_templates.json");
+    println!("Loading data from the JSON file at {:?}", json_file_path);
+    let file = match File::open(&json_file_path) {
+        Ok(file) => {
+            println!("Successfully opened JSON file");
+            file
+        }
+        Err(err) => {
+            eprintln!("Failed to open JSON file: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to open JSON file",
+            )
+                .into_response();
+        }
+    };
+
+    println!("Reading JSON file");
+    let reader = BufReader::new(file);
+    let json_items: Value = match serde_json::from_reader(reader) {
+        Ok(items) => {
+            println!("Successfully parsed JSON file: {:?}", items);
+            items
+        }
+        Err(err) => {
+            eprintln!("Failed to parse JSON file: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse JSON file",
+            )
+                .into_response();
+        }
+    };
+
+    // Filter JSON items to exclude "action" and "trigger" types
+    let filtered_items = json_items.as_array()
+        .map(|arr| arr.iter()
+            .filter(|item| item.get("type")
+                .and_then(|t| t.as_str())
+                .map(|t| t != "action" && t != "trigger")
+                .unwrap_or(true))
+            .cloned()
+            .collect::<Vec<_>>())
+        .map(|filtered| Value::Array(filtered))
+        .unwrap_or(Value::Array(vec![]));
+
+    Json(filtered_items).into_response()
+}

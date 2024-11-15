@@ -95,3 +95,34 @@ export const getTriggerTemplatesForAccount = async (account_id: string) => {
         console.error('Error fetching actions:', error);
     }
 }
+
+
+export const getOtherActionTemplatesForAccount = async (account_id: string) => {
+    try {
+        console.log('Finding other templates for account:', account_id);
+        // Get JWT from supabase to pass to the API
+        // API conforms to RLS policies on behalf of users for external API
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (session) {
+            headers['Authorization'] = `${session.access_token}`;
+        }
+
+        const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/other`, {
+            headers: headers,
+        });
+
+        const data = await response.json();
+        console.log('Data from /api/other:', data);
+        return data;
+    } catch (error) {
+        console.error('Error fetching other actions:', error);
+    }
+}

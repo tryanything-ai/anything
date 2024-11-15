@@ -40,6 +40,8 @@ export function StudioActionsSheet(): JSX.Element {
   } = useAnything();
   const [actions, setActions] = useState<any>([]);
   const [triggers, setTriggers] = useState<any>([]);
+  const [other, setOther] = useState<any>([]);
+
   const [activeTab, setActiveTab] = useState(actionSheetMode);
 
   const [addingJson, setAddingJson] = useState(false);
@@ -77,6 +79,22 @@ export function StudioActionsSheet(): JSX.Element {
     }
   };
 
+  const fetchOther = async () => {
+    try {
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+      const res = await api.action_templates.getOtherActionTemplatesForAccount(
+        selectedAccount.account_id,
+      );
+      console.log("action sheet trigger templates res:", res);
+      setOther(res);
+    } catch (error) {
+      console.error("Error fetching triggers:", error);
+    }
+  };
+
   const addNodeFromJson = (json: string) => {
     addNode(JSON.parse(json), { x: 100, y: 300 });
     setAddingJson(false);
@@ -90,6 +108,7 @@ export function StudioActionsSheet(): JSX.Element {
   useEffect(() => {
     fetchActions();
     fetchTriggers();
+    fetchOther();
   }, [showingActionSheet]);
 
   return (
@@ -119,7 +138,11 @@ export function StudioActionsSheet(): JSX.Element {
         </SheetHeader>
 
         <div className="py-4 flex-grow overflow-hidden">
-          <Tabs defaultValue="actions" className="h-full" onValueChange={setActiveTab}>
+          <Tabs
+            defaultValue="actions"
+            className="h-full"
+            onValueChange={setActiveTab}
+          >
             <TabsList>
               <TabsTrigger value="triggers">Triggers</TabsTrigger>
               <TabsTrigger value="actions">Actions</TabsTrigger>
@@ -161,7 +184,8 @@ export function StudioActionsSheet(): JSX.Element {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {actions &&
                         actions.map((db_action: any) => {
-                          let action: Action = db_action.action_template_definition;
+                          let action: Action =
+                            db_action.action_template_definition;
                           let marketplace: boolean = "featured" in db_action;
                           return (
                             <div
@@ -203,7 +227,8 @@ export function StudioActionsSheet(): JSX.Element {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {triggers &&
                         triggers.map((db_trigger: any) => {
-                          let action: Action = db_trigger.action_template_definition;
+                          let action: Action =
+                            db_trigger.action_template_definition;
                           let marketplace: boolean = "featured" in db_trigger;
                           return (
                             <div
@@ -241,9 +266,46 @@ export function StudioActionsSheet(): JSX.Element {
                 </TabsContent>
 
                 <TabsContent value="other" className="h-full">
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    Coming soon...
-                  </div>
+                  <ScrollArea className="h-full pr-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {other &&
+                        other.map((db_other: any) => {
+                          let action: Action =
+                            db_other.action_template_definition;
+                          let marketplace: boolean = "featured" in db_other;
+                          return (
+                            <div
+                              key={`${db_other.action_template_id}-${action.label}`}
+                              onClick={() => {
+                                addNode(action, { x: 100, y: 300 });
+                                setShowingActionSheet(false);
+                              }}
+                              className="flex flex-col justify-between p-4 border rounded-md border-black cursor-pointer hover:bg-gray-50"
+                            >
+                              <div
+                                className="flex flex-row gap-4 items-center"
+                                key={`content-${db_other.action_template_id}`}
+                              >
+                                <BaseNodeIcon icon={action.icon} />
+                                <div>
+                                  <div className="text-lg font-semibold">
+                                    {action.label}
+                                    {!marketplace && (
+                                      <Badge className="ml-2" variant="outline">
+                                        Team
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-sm font-normal truncate overflow-ellipsis">
+                                    {action.description}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </ScrollArea>
                 </TabsContent>
               </>
             )}
