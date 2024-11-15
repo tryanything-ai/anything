@@ -116,44 +116,13 @@
       "label": "Webhook Trigger",
       "description": "Catch Webhook from 3rd party system",
       "icon": "<svg width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.52 3.046a3 3 0 0 0-2.13 5.486 1 1 0 0 1 .306 1.38l-3.922 6.163a2 2 0 1 1-1.688-1.073l3.44-5.405a5 5 0 1 1 8.398-2.728 1 1 0 1 1-1.97-.348 3 3 0 0 0-2.433-3.475zM10 6a2 2 0 1 1 3.774.925l3.44 5.405a5 5 0 1 1-1.427 8.5 1 1 0 0 1 1.285-1.532 3 3 0 1 0 .317-4.83 1 1 0 0 1-1.38-.307l-3.923-6.163A2 2 0 0 1 10 6zm-5.428 6.9a1 1 0 0 1-.598 1.281A3 3 0 1 0 8.001 17a1 1 0 0 1 1-1h8.266a2 2 0 1 1 0 2H9.9a5 5 0 1 1-6.61-5.698 1 1 0 0 1 1.282.597Z\" fill=\"#000000\"/></svg>",
-      "variables": {
-        "require_secret": false
-      },
-      "variables_locked": false,
-      "variables_schema": {
-        "type": "object",
-        "properties": {
-          "require_secret": {
-            "title": "Require Secret",
-            "description": "Only Accept Incoming Webhook with Secret",
-            "type": "boolean",
-            "x-jsf-presentation": {
-              "inputType": "checkbox"
-            }
-          }
-        },
-        "x-jsf-order": ["require_secret"],
-        "required": [],
-        "additionalProperties": false
-      },
+      "variables": {},
+      "variables_locked": true,
+      "variables_schema": {},
       "variables_schema_locked": true,
-      "input": {
-        "require_secret": "{{variables.require_secret}}"
-      },
+      "input": {},
       "input_locked": true,
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "require_secret": {
-            "title": "Require Secret",
-            "description": "Only Accept Incoming Webhook with Secret", 
-            "type": "string"
-          }
-        },
-        "x-jsf-order": ["require_secret"],
-        "required": ["require_secret"],
-        "additionalProperties": false
-      },
+      "input_schema": {},
       "input_schema_locked": true,
       "presentation": {
         "position": {
