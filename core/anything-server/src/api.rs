@@ -4,17 +4,23 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+
+use std::time::Duration;
+
 use dotenv::dotenv;
 use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
 use crate::task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
-use crate::workflow_types::{CreateTaskInput, FlowVersion, Workflow};
 use crate::AppState;
+use crate::{
+    secrets::get_secret_by_secret_value,
+    workflow_types::{CreateTaskInput, FlowVersion, Workflow},
+    CachedApiKey,
+};
 use crate::{task_types::ActionType, FlowCompletion};
 
-use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 
@@ -29,8 +35,25 @@ pub async fn run_workflow_and_respond(
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id,);
 
-    //TODO: requires API key for user
-    //TODO: make sure an API can only work with its own workflows
+    //TODO: Move this so we can allow users to determine if they require an api key or not
+    //And lean on the action definition to say how they want it to be authed
+    //we need this to allow them to use it with 3rd party services they do not control
+
+    // Get API key from headers
+    let api_key = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
+        Some(header) if header.starts_with("Bearer ") => header[7..].to_string(),
+        _ => {
+            return (StatusCode::UNAUTHORIZED, "Missing or invalid API key").into_response();
+        }
+    };
+
+    // Validate the API key
+    let account_id = match validate_api_key(state.clone(), api_key.clone()).await {
+        Ok(account_id) => account_id,
+        Err(status) => {
+            return (status, "Invalid API key").into_response();
+        }
+    };
 
     //Get Special Priveledges by passing service_role in auth()
     dotenv().ok();
@@ -43,6 +66,7 @@ pub async fn run_workflow_and_respond(
         .anything_client
         .from("flow_versions")
         .eq("flow_id", workflow_id.clone())
+        .eq("account_id", account_id.clone())
         .eq("published", "true")
         .auth(supabase_service_role_api_key.clone())
         .select("*")
@@ -84,13 +108,13 @@ pub async fn run_workflow_and_respond(
         }
     };
 
-    let account_id = workflow_version.account_id.clone();
-    println!("[WEBHOOK API] Account ID from flow version: {}", account_id);
-    // Only proceed if we have an account_id
-    if account_id == Uuid::nil() {
-        println!("[WEBHOOK API] Account ID not found");
-        return (StatusCode::BAD_REQUEST, "Account ID not found").into_response();
-    }
+    // let account_id = workflow_version.account_id.clone();
+    // println!("[WEBHOOK API] Account ID from flow version: {}", account_id);
+    // // Only proceed if we have an account_id
+    // if account_id == Uuid::nil() {
+    //     println!("[WEBHOOK API] Account ID not found");
+    //     return (StatusCode::BAD_REQUEST, "Account ID not found").into_response();
+    // }
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
@@ -138,7 +162,7 @@ pub async fn run_workflow_and_respond(
 
     // Check for output node
     println!("[WEBHOOK API] Looking for output node in workflow");
-    let output_node = match workflow
+    let _output_node = match workflow
         .actions
         .iter()
         .find(|action| action.plugin_id == "output")
@@ -709,4 +733,63 @@ pub async fn run_workflow_version(
         "workflow_version_id": workflow_version.flow_version_id
     }))
     .into_response()
+}
+
+pub async fn validate_api_key(state: Arc<AppState>, api_key: String) -> Result<String, StatusCode> {
+    println!("[VALIDATE API KEY] Starting API key validation");
+    
+    // Check cache first
+    let cached_account = {
+        println!("[VALIDATE API KEY] Checking cache for API key");
+        let cache = state.api_key_cache.read().await;
+        if let Some(cached) = cache.get(&api_key) {
+            println!("[VALIDATE API KEY] Found cached API key");
+            Some(cached.account_id.clone())
+        } else {
+            println!("[VALIDATE API KEY] API key not found in cache");
+            None
+        }
+    };
+
+    // Return early if we have a valid cached value
+    if let Some(account_id) = cached_account {
+        println!("[VALIDATE API KEY] Returning cached account ID");
+        return Ok(account_id);
+    }
+
+    // Not in cache, check database
+    println!("[VALIDATE API KEY] Checking database for API key");
+    let secret = match get_secret_by_secret_value(state.clone(), api_key.clone()).await {
+        Ok(secret) => {
+            println!("[VALIDATE API KEY] Found secret in database");
+            secret
+        },
+        Err(_) => {
+            println!("[VALIDATE API KEY] Secret not found in database");
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+    };
+
+    // Verify this is an API key secret
+    if !secret.anything_api_key {
+        println!("[VALIDATE API KEY] Secret is not an API key");
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    // Update cache with new value
+    {
+        println!("[VALIDATE API KEY] Updating cache with new API key");
+        let mut cache = state.api_key_cache.write().await;
+        cache.insert(
+            api_key,
+            CachedApiKey {
+                account_id: secret.account_id.clone(),
+                secret_id: uuid::Uuid::parse_str(&secret.secret_id).unwrap(),
+                secret_name: secret.secret_name.clone(),
+            },
+        );
+    }
+
+    println!("[VALIDATE API KEY] API key validation successful");
+    Ok(secret.account_id)
 }

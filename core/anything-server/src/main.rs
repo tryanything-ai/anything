@@ -39,6 +39,7 @@ mod execution_planner;
 mod marketplace;
 mod secrets;
 mod supabase_auth_middleware;
+mod api_key_middleware;
 mod task_engine;
 mod task_types;
 mod templater;
@@ -54,6 +55,12 @@ pub struct FlowCompletion {
     pub needs_response: bool,
 }
 
+pub struct CachedApiKey {
+    pub account_id: String,
+    pub secret_id: uuid::Uuid,
+    pub secret_name: String,
+}
+
 pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
@@ -62,6 +69,7 @@ pub struct AppState {
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
+    api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
 }
 
 #[tokio::main]
@@ -151,6 +159,7 @@ async fn main() {
         task_engine_signal,
         trigger_engine_signal,
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
+        api_key_cache: Arc::new(RwLock::new(HashMap::new())),
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -186,11 +195,14 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
 
-    //user api for starting workflows etc
+    // API Routes for running workflows
+    // let api_routes = Router::new()
     .route("/api/v1/workflow/:workflow_id/start/respond", post(api::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/start", post(api::run_workflow))
-    // .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", post(api::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::run_workflow_version));
+    // .layer(middleware::from_fn(api_key_middleware::api_key_middleware));
+
+
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
@@ -248,7 +260,7 @@ pub async fn root() -> impl IntoResponse {
         // User Facing API
         .route("/account/:account_id/keys", get(secrets::get_decrypted_anything_api_keys)) //read
         .route("/account/:account_id/key", post(secrets::create_anything_api_key)) //create
-        .route("/account/:account_id/key/:id", delete(secrets::delete_secret)) //delete
+        .route("/account/:account_id/key/:id", delete(secrets::delete_api_key)) //delete from db, vault, and cache
       
         //Auth Providrs
         .route(
@@ -290,6 +302,7 @@ pub async fn root() -> impl IntoResponse {
 
     let app = Router::new()
         .merge(public_routes) // Public routes
+        // .merge(api_routes) // API routes
         .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)

@@ -566,6 +566,11 @@ pub struct DeleteVaultSecretInput {
     secret_id: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GetSecretBySecretValueInput {
+    secret_value: String,
+}
+
 pub async fn delete_secret(
     Path((account_id, secret_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
@@ -657,4 +662,205 @@ pub async fn delete_secret(
     println!("Delete Vault Secret Body: {:?}", rpc_body);
 
     Json(body).into_response()
+}
+
+pub async fn delete_api_key(
+    Path((account_id, secret_id)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    println!(
+        "Delete Secret: {:?} for account: {:?}",
+        secret_id, account_id
+    );
+
+    let client = &state.anything_client;
+
+    // Get the API key value from vault before deleting
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let get_secret_input = DeleteVaultSecretInput {
+        secret_id: secret_id.clone(),
+    };
+
+    let get_secret_response = match client
+        .rpc(
+            "get_secret",
+            serde_json::to_string(&get_secret_input).unwrap(),
+        )
+        .auth(supabase_service_role_api_key.clone())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let secret_value = match get_secret_response.text().await {
+        Ok(body) => body.trim_matches('"').to_string(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    // Delete from API key cache
+    {
+        let mut cache = state.api_key_cache.write().await;
+        cache.remove(&secret_value);
+    }
+
+    // Delete in DB
+    let response = match client
+        .from("secrets")
+        .auth(user.jwt)
+        .eq("secret_id", &secret_id)
+        .eq("account_id", &account_id)
+        .delete()
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    println!("Delete DB Secret Body: {:?}", body);
+
+    //Delete in Vault
+    let input = DeleteVaultSecretInput {
+        secret_id: secret_id.clone(),
+    };
+
+    println!("delete secret rpc Input?: {:?}", input);
+
+    let rpc_response = match client
+        .rpc("delete_secret", serde_json::to_string(&input).unwrap())
+        .auth(supabase_service_role_api_key.clone())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    let rpc_body = match rpc_response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    println!("Delete Vault Secret Body: {:?}", rpc_body);
+
+    Json(body).into_response()
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SecretByValueResponse {
+    pub secret_id: String,
+    pub account_id: String,
+    pub secret_name: String,
+    pub vault_secret_id: String,
+    pub secret_description: String,
+    pub anything_api_key: bool,
+    pub updated_at: String,
+    pub created_at: String,
+    pub updated_by: String,
+    pub created_by: String,
+}
+
+pub async fn get_secret_by_secret_value(
+    state: Arc<AppState>,
+    secret_value: String,
+) -> Result<SecretByValueResponse, StatusCode> {
+    println!("[GET SECRET BY SECRET VALUE] Starting get_secret_by_value");
+    println!(
+        "[GET SECRET BY SECRET VALUE] Secret Value: {:?}",
+        secret_value
+    );
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let input = GetSecretBySecretValueInput {
+        secret_value: secret_value.clone(),
+    };
+
+    let client = &state.anything_client;
+
+    println!("[GET SECRET BY SECRET VALUE] Making RPC call to get_secret_by_secret_value");
+    let response = client
+        .rpc(
+            "get_secret_by_secret_value",
+            serde_json::to_string(&input).unwrap(),
+        )
+        .auth(supabase_service_role_api_key)
+        .execute()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    println!(
+        "[GET SECRET BY SECRET VALUE] Got response from RPC call: {:?}",
+        response
+    );
+    let body = response.text().await.map_err(|e| {
+        println!(
+            "[GET SECRET BY SECRET VALUE] Error getting response text: {:?}",
+            e
+        );
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    println!("[GET SECRET BY SECRET VALUE] Response body: {}", body);
+
+    if body.contains("[]") {
+        println!("[GET SECRET BY SECRET VALUE] No secret found - body was empty array");
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    println!("[GET SECRET BY SECRET VALUE] Parsing response body");
+    let mut secrets: Vec<SecretByValueResponse> =
+        serde_json::from_str(&body).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // We expect only one result since secret values should be unique
+    println!("[GET SECRET BY SECRET VALUE] Returning secret");
+    secrets.pop().ok_or(StatusCode::NOT_FOUND)
 }
