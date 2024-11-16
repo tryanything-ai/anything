@@ -29,8 +29,8 @@ pub async fn run_workflow_and_respond(
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id,);
 
-    //TODO: respond requires API key for user
-    //TODO: responde requires an "OUTPUT" node in the workflow
+    //TODO: requires API key for user
+    //TODO: make sure an API can only work with its own workflows
 
     //Get Special Priveledges by passing service_role in auth()
     dotenv().ok();

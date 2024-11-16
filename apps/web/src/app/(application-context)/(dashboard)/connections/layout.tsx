@@ -10,6 +10,7 @@ export default function AuthAndSecretsPage({
   const items = [
     { name: "Accounts", href: "/connections" },
     { name: "Secrets", href: "/connections/secrets" },
+    { name: "Anything API Keys", href: "/connections/keys" },
   ];
 
   return (

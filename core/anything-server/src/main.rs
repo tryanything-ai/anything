@@ -244,7 +244,12 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/secret", post(secrets::create_secret))
         .route("/account/:account_id/secret", put(secrets::update_secret))
         .route("/account/:account_id/secret/:id", delete(secrets::delete_secret))
-
+        
+        // User Facing API
+        .route("/account/:account_id/keys", get(secrets::get_decrypted_anything_api_keys)) //read
+        .route("/account/:account_id/key", post(secrets::create_anything_api_key)) //create
+        .route("/account/:account_id/key/:id", delete(secrets::delete_secret)) //delete
+      
         //Auth Providrs
         .route(
             "/account/:account_id/auth/providers/:provider_name",
