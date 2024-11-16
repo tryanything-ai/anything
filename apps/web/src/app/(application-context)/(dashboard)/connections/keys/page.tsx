@@ -133,7 +133,7 @@ export default function AccountsPage(): JSX.Element {
           <div className="flex flex-col space-y-1.5 p-6">
             <CardTitle>Anything API Keys</CardTitle>
             <CardDescription>
-              Manage API Keys for using Anything Webhooks etc
+              Manage API Keys for using Anything Webhooks and Rest API
             </CardDescription>
           </div>
           <div className="ml-auto py-6">
