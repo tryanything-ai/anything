@@ -34,15 +34,15 @@ export function StudioActionsSheet(): JSX.Element {
       setShowingActionSheet,
       addNode,
       actionSheetMode,
+      setActionSheetMode,
       changeTrigger,
     },
     accounts: { selectedAccount },
   } = useAnything();
+
   const [actions, setActions] = useState<any>([]);
   const [triggers, setTriggers] = useState<any>([]);
   const [other, setOther] = useState<any>([]);
-
-  const [activeTab, setActiveTab] = useState(actionSheetMode);
 
   const [addingJson, setAddingJson] = useState(false);
   const [json, setJson] = useState("");
@@ -141,7 +141,8 @@ export function StudioActionsSheet(): JSX.Element {
           <Tabs
             defaultValue="actions"
             className="h-full"
-            onValueChange={setActiveTab}
+            value={actionSheetMode}
+            onValueChange={setActionSheetMode}
           >
             <TabsList>
               <TabsTrigger value="triggers">Triggers</TabsTrigger>
