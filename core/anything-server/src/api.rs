@@ -102,19 +102,15 @@ pub async fn run_workflow_and_respond(
 
     let workflow_version: FlowVersion = match serde_json::from_str(&body) {
         Ok(version) => version,
-        Err(err) => {
-            println!("[WEBHOOK API] Failed to parse JSON: {:?}", err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        Err(_) => {
+            println!("[WEBHOOK API] No published workflow found");
+            return (
+                StatusCode::BAD_REQUEST,
+                "Unpublished Workflow. To use this endpoint you must publish your workflow.",
+            )
+                .into_response();
         }
     };
-
-    // let account_id = workflow_version.account_id.clone();
-    // println!("[WEBHOOK API] Account ID from flow version: {}", account_id);
-    // // Only proceed if we have an account_id
-    // if account_id == Uuid::nil() {
-    //     println!("[WEBHOOK API] Account ID not found");
-    //     return (StatusCode::BAD_REQUEST, "Account ID not found").into_response();
-    // }
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
@@ -737,7 +733,7 @@ pub async fn run_workflow_version(
 
 pub async fn validate_api_key(state: Arc<AppState>, api_key: String) -> Result<String, StatusCode> {
     println!("[VALIDATE API KEY] Starting API key validation");
-    
+
     // Check cache first
     let cached_account = {
         println!("[VALIDATE API KEY] Checking cache for API key");
@@ -763,7 +759,7 @@ pub async fn validate_api_key(state: Arc<AppState>, api_key: String) -> Result<S
         Ok(secret) => {
             println!("[VALIDATE API KEY] Found secret in database");
             secret
-        },
+        }
         Err(_) => {
             println!("[VALIDATE API KEY] Secret not found in database");
             return Err(StatusCode::UNAUTHORIZED);

@@ -424,6 +424,11 @@ pub struct ReadVaultSecretInput {
     secret_id: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ReadVaultDecryptedSecretInput {
+    secret_uuid: String,
+}
+
 pub async fn update_secret(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
@@ -671,7 +676,7 @@ pub async fn delete_api_key(
     headers: HeaderMap,
 ) -> impl IntoResponse {
     println!(
-        "Delete Secret: {:?} for account: {:?}",
+        "[DELETE API KEY] Deleting secret: {:?} for account: {:?}",
         secret_id, account_id
     );
 
@@ -681,47 +686,88 @@ pub async fn delete_api_key(
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    let get_secret_input = DeleteVaultSecretInput {
-        secret_id: secret_id.clone(),
+    let get_secret_input = ReadVaultDecryptedSecretInput {
+        secret_uuid: secret_id.clone(),
     };
-
+    println!("[DELETE API KEY] Getting secret value from vault");
     let get_secret_response = match client
         .rpc(
-            "get_secret",
+            "get_decrypted_secret",
             serde_json::to_string(&get_secret_input).unwrap(),
         )
         .auth(supabase_service_role_api_key.clone())
         .execute()
         .await
     {
-        Ok(response) => response,
-        Err(_) => {
+        Ok(response) => {
+            println!("[DELETE API KEY] Got response from vault: {:?}", response);
+            response
+        }
+        Err(e) => {
+            println!("[DELETE API KEY] Failed to get secret from vault: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    let secret_value = match get_secret_response.text().await {
-        Ok(body) => body.trim_matches('"').to_string(),
-        Err(_) => {
+    let secret_body = match get_secret_response.text().await {
+        Ok(body) => {
+            println!("[DELETE API KEY] Got secret body from response: {:?}", body);
+            body
+        }
+        Err(e) => {
+            println!(
+                "[DELETE API KEY] Failed to read secret value from response: {:?}",
+                e
+            );
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
+    let secret_json: Value = match serde_json::from_str(&secret_body) {
+        Ok(json) => json,
+        Err(_) => {
+            println!("[DELETE API KEY] Failed to parse secret JSON");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse secret response",
+            )
+                .into_response();
+        }
+    };
+
+    // Extract secret value from the returned JSON array
+    let secret_value = match secret_json[0]["secret_value"].as_str() {
+        Some(value) => value.to_string(),
+        None => {
+            println!("[DELETE API KEY] Failed to get secret value from JSON");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get secret value",
+            )
+                .into_response();
+        }
+    };
+
+    println!("[DELETE API KEY] Removing API key from cache");
     // Delete from API key cache
     {
         let mut cache = state.api_key_cache.write().await;
-        cache.remove(&secret_value);
+        let removed = cache.remove(&secret_value);
+        println!(
+            "[DELETE API KEY] Successfully removed from cache: {}",
+            removed.is_some()
+        );
     }
 
+    println!("[DELETE API KEY] Deleting secret from database");
     // Delete in DB
     let response = match client
         .from("secrets")
@@ -734,33 +780,36 @@ pub async fn delete_api_key(
     {
         Ok(response) => response,
         Err(_) => {
+            println!("[DELETE API KEY] Failed to delete from database");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let body = match response.text().await {
         Ok(body) => body,
         Err(_) => {
+            println!("[DELETE API KEY] Failed to read database response");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    println!("Delete DB Secret Body: {:?}", body);
+    println!("[DELETE API KEY] Database deletion response: {:?}", body);
 
+    println!("[DELETE API KEY] Deleting secret from vault");
     //Delete in Vault
     let input = DeleteVaultSecretInput {
         secret_id: secret_id.clone(),
     };
 
-    println!("delete secret rpc Input?: {:?}", input);
+    println!("[DELETE API KEY] Vault deletion input: {:?}", input);
 
     let rpc_response = match client
         .rpc("delete_secret", serde_json::to_string(&input).unwrap())
@@ -770,26 +819,29 @@ pub async fn delete_api_key(
     {
         Ok(response) => response,
         Err(_) => {
+            println!("[DELETE API KEY] Failed to delete from vault");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let rpc_body = match rpc_response.text().await {
         Ok(body) => body,
         Err(_) => {
+            println!("[DELETE API KEY] Failed to read vault deletion response");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    println!("Delete Vault Secret Body: {:?}", rpc_body);
+    println!("[DELETE API KEY] Vault deletion response: {:?}", rpc_body);
+    println!("[DELETE API KEY] API key deletion completed successfully");
 
     Json(body).into_response()
 }

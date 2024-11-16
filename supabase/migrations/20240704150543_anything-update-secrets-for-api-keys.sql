@@ -115,3 +115,34 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION anything.get_decrypted_secret(secret_uuid uuid)
+RETURNS TABLE (
+    secret_id uuid,
+    secret_name text, 
+    secret_value text,
+    secret_description text
+)
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+    IF current_setting('role', true) IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'authentication required';
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        s.secret_id,
+        s.secret_name,
+        vs.decrypted_secret AS secret_value,
+        s.secret_description
+    FROM 
+        anything.secrets s
+    JOIN 
+        vault.decrypted_secrets vs
+    ON 
+        s.vault_secret_id = vs.id
+    WHERE
+        s.secret_id = secret_uuid;
+END;
+$$;
