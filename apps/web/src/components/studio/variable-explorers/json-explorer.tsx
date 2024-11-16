@@ -13,6 +13,8 @@ export function JsonExplorer({
   className = "",
   parentPath = "",
 }: JsonExplorerProps): JSX.Element {
+  console.log("[JSON EXPLORER] Rendering data:", { data, parentPath });
+
   const renderValue = (key: string, value: any, path: string) => {
     if (value === null) {
       return (
@@ -42,6 +44,7 @@ export function JsonExplorer({
     }
 
     if (typeof value === "object") {
+
       return (
         <div className={className}>
           <div className="flex items-center">
@@ -88,9 +91,13 @@ export function JsonExplorer({
 
   return (
     <>
-      {Object.entries(data).map(([key, value]) => (
-        <div key={key}>{renderValue(key, value, `${parentPath}${key}`)}</div>
-      ))}
+      {Object.entries(data).length === 0 ? (
+        <div className="text-gray-400">{"No results"}</div>
+      ) : (
+        Object.entries(data).map(([key, value]) => (
+          <div key={key}>{renderValue(key, value, `${parentPath}${key}`)}</div>
+        ))
+      )}
     </>
   );
 }
