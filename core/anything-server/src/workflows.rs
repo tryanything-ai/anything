@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::workflow_types:: Workflow; 
 use crate::AppState;
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 use uuid::Uuid;
 
 use dotenv::dotenv;

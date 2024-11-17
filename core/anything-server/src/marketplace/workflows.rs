@@ -1,4 +1,4 @@
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, State},

@@ -36,7 +36,7 @@ import { CreateNewApiKey } from "@/components/secrets/api-key-input";
 export default function AccountsPage(): JSX.Element {
   const [secrets, setSecrets] = useState<any[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [secretToDelete, setSecretToDelete] = useState<any>({});
+  const [secretIdToDelete, setSecretIdToDelete] = useState<string>("");
   const [showNewSecretEditor, setShowNewSecretEditor] = useState(false);
   const [visibleSecrets, setVisibleSecrets] = useState<{
     [key: string]: boolean;
@@ -68,21 +68,34 @@ export default function AccountsPage(): JSX.Element {
     }
   };
 
-  const deleteSecret = async (secret_id: string) => {
+  const askToDelete = (secret_id: string) => {
+    setSecretIdToDelete(secret_id);
+    setShowDeleteDialog(true);
+  };
+
+  const deleteSecret = async () => {
     try {
       if (!selectedAccount) {
         console.error("No account selected");
         return;
       }
+
+      if (!secretIdToDelete) {
+        console.error("No secret to delete");
+        return;
+      }
+
       await api.secrets.deleteAnythingApiKey(
         selectedAccount.account_id,
-        secret_id,
+        secretIdToDelete,
       );
+      setSecretIdToDelete("");
+
       fetchSecrets();
     } catch (error) {
       console.error("Error deleting secret:", error);
     } finally {
-      setSecretToDelete({});
+      setSecretIdToDelete("");
       setShowDeleteDialog(false);
     }
   };
@@ -105,14 +118,14 @@ export default function AccountsPage(): JSX.Element {
     } catch (error) {
       console.error("Error deleting secret:", error);
     } finally {
-      setSecretToDelete({});
+      setSecretIdToDelete("");
       setShowDeleteDialog(false);
     }
   };
 
   const openDialog = (secret: any) => {
     setShowDeleteDialog(true);
-    setSecretToDelete(secret);
+    setSecretIdToDelete(secret);
   };
 
   const toggleSecretVisibility = (secretId: string) => {
@@ -198,7 +211,7 @@ export default function AccountsPage(): JSX.Element {
                       variant="outline"
                       size="sm"
                       className="ml-2"
-                      onClick={() => deleteSecret(secret.secret_id)}
+                      onClick={() => askToDelete(secret.secret_id)}
                     >
                       <Trash2 className="size-5" />
                     </Button>
@@ -214,21 +227,20 @@ export default function AccountsPage(): JSX.Element {
         open={showDeleteDialog}
         onOpenChange={(open) => {
           setShowDeleteDialog(open);
-          setSecretToDelete({});
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {`This action cannot be undone. This will permanently delete the API KEY "${secretToDelete.secret_name}"`}
+              {`This action cannot be undone. This will permanently delete this API Key.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-500"
-              onClick={() => deleteSecret(secretToDelete.secret_id)}
+              onClick={() => deleteSecret()}
             >
               Delete API Key
             </AlertDialogAction>

@@ -10,7 +10,7 @@ use serde_json::Value;
 use std::env;
 use std::sync::Arc;
 
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 
 use dotenv::dotenv;

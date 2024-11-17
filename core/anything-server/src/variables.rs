@@ -10,7 +10,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::{bundler::bundle_variables, supabase_auth_middleware::User};
+use crate::{bundler::bundle_variables, supabase_jwt_middleware::User};
 
 use crate::workflow_types::{FlowVersion, Task, Workflow};
 

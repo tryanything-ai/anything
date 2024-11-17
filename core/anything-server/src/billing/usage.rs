@@ -6,7 +6,7 @@ use axum::Json;
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 
 pub async fn get_account_billing_status(
     State(state): State<Arc<AppState>>,

@@ -18,7 +18,12 @@ import { Input } from "@repo/ui/components/ui/input";
 
 //Use same schema for both
 const formSchema = z.object({
-  secret_name: z.string().max(100),
+  secret_name: z
+    .string()
+    .regex(/^[A-Z0-9]+(?:_{0,2}[A-Z0-9]+)*$/, {
+      message: "Must be all caps and SNAKE_CASE example: ANYTHING_API_KEY",
+    })
+    .max(100),
   secret_description: z.string().max(100).optional(),
 });
 
@@ -53,7 +58,7 @@ export function CreateNewApiKey({ cancel, saveSecret }: any): JSX.Element {
                   <FormItem className="mr-10">
                     <FormLabel>API Key Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Internal Tool API Key" {...field} />
+                      <Input placeholder="ANYTHING_API_KEY" {...field} />
                     </FormControl>
                     <FormDescription>
                       Simple name for this secret

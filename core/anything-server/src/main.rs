@@ -9,7 +9,7 @@ use axum::{
 use dotenv::dotenv;
 use postgrest::Postgrest;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -38,8 +38,9 @@ mod charts;
 mod execution_planner;
 mod marketplace;
 mod secrets;
-mod supabase_auth_middleware;
+mod supabase_jwt_middleware;
 mod api_key_middleware;
+mod account_auth_middleware;
 mod task_engine;
 mod task_types;
 mod templater;
@@ -70,6 +71,7 @@ pub struct AppState {
     trigger_engine_signal: watch::Sender<String>,
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
     api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
+    account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
 }
 
 #[tokio::main]
@@ -160,6 +162,9 @@ async fn main() {
         trigger_engine_signal,
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
+        account_access_cache: Arc::new(RwLock::new(
+            account_auth_middleware::AccountAccessCache::new(Duration::from_secs(3600))
+        ))
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -195,14 +200,10 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
 
-    // API Routes for running workflows
-    // let api_routes = Router::new()
+    // API Routes for running workflows - some protection done at api.rs vs route level
     .route("/api/v1/workflow/:workflow_id/start/respond", post(api::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/start", post(api::run_workflow))
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::run_workflow_version));
-    // .layer(middleware::from_fn(api_key_middleware::api_key_middleware));
-
-
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
@@ -298,7 +299,11 @@ pub async fn root() -> impl IntoResponse {
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(testing::test_action),
         )
-        .layer(middleware::from_fn(supabase_auth_middleware::middleware));
+        .layer(middleware::from_fn(supabase_jwt_middleware::middleware))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            account_auth_middleware::account_access_middleware,
+        ));
 
     let app = Router::new()
         .merge(public_routes) // Public routes
@@ -329,6 +334,9 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
         state.clone(),
     ));
+
+    // Add the cache cleanup task here
+    tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
