@@ -116,7 +116,9 @@
       "label": "Webhook Trigger",
       "description": "Catch Webhook from 3rd party system",
       "icon": "<svg width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.52 3.046a3 3 0 0 0-2.13 5.486 1 1 0 0 1 .306 1.38l-3.922 6.163a2 2 0 1 1-1.688-1.073l3.44-5.405a5 5 0 1 1 8.398-2.728 1 1 0 1 1-1.97-.348 3 3 0 0 0-2.433-3.475zM10 6a2 2 0 1 1 3.774.925l3.44 5.405a5 5 0 1 1-1.427 8.5 1 1 0 0 1 1.285-1.532 3 3 0 1 0 .317-4.83 1 1 0 0 1-1.38-.307l-3.923-6.163A2 2 0 0 1 10 6zm-5.428 6.9a1 1 0 0 1-.598 1.281A3 3 0 1 0 8.001 17a1 1 0 0 1 1-1h8.266a2 2 0 1 1 0 2H9.9a5 5 0 1 1-6.61-5.698 1 1 0 0 1 1.282.597Z\" fill=\"#000000\"/></svg>",
-      "variables": {},
+      "variables": {
+        "security_model": "none"
+      },
       "variables_locked": true,
       "variables_schema": {},
       "variables_schema_locked": true,
@@ -249,5 +251,235 @@
           "position": "top"
         }
       ]
-    }}
+    }},
+    {
+      "type": "trigger",
+      "featured": false,
+      "action_template_definition": {
+        "anything_action_version": "0.1.0",
+        "type": "trigger",
+        "plugin_id": "webhook",
+        "action_id": "webhook",
+        "plugin_version": "0.1.0",
+        "label": "Webhook Trigger v4",
+        "description": "Catch Webhook from 3rd party system",
+        "icon": "<svg width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.52 3.046a3 3 0 0 0-2.13 5.486 1 1 0 0 1 .306 1.38l-3.922 6.163a2 2 0 1 1-1.688-1.073l3.44-5.405a5 5 0 1 1 8.398-2.728 1 1 0 1 1-1.97-.348 3 3 0 0 0-2.433-3.475zM10 6a2 2 0 1 1 3.774.925l3.44 5.405a5 5 0 1 1-1.427 8.5 1 1 0 0 1 1.285-1.532 3 3 0 1 0 .317-4.83 1 1 0 0 1-1.38-.307l-3.923-6.163A2 2 0 0 1 10 6zm-5.428 6.9a1 1 0 0 1-.598 1.281A3 3 0 1 0 8.001 17a1 1 0 0 1 1-1h8.266a2 2 0 1 1 0 2H9.9a5 5 0 1 1-6.61-5.698 1 1 0 0 1 1.282.597Z\" fill=\"#000000\"/></svg>",
+        "variables": {
+          "security_model": "none",
+          "username": "",
+          "password": "",
+          "api_key": "",
+          "custom_header_name": "",
+          "custom_header_value": ""
+        },
+        "variables_locked": false,
+        "variables_schema": {
+          "type": "object",
+          "properties": {
+            "security_model": {
+              "title": "Security Model", 
+              "description": "Select the security model for the webhook",
+              "type": "string",
+              "oneOf": [
+                {
+                  "value": "none",
+                  "title": "None"
+                },
+                {
+                  "value": "basic_auth", 
+                  "title": "Basic Auth"
+                },
+                {
+                  "value": "api_key",
+                  "title": "API Key"
+                },
+                {
+                  "value": "custom_header",
+                  "title": "Custom Header"
+                }
+              ],
+              "default": "none",
+              "x-jsf-presentation": {
+                "inputType": "select"
+              }
+            },
+            "username": {
+              "title": "Username",
+              "description": "Username for Basic Authentication",
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              }
+            },
+            "password": {
+              "title": "Password",
+              "description": "Password for Basic Authentication",
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              }
+            },
+            "api_key": {
+              "title": "API Key",
+              "description": "API Key for authentication",
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              }
+            },
+            "custom_header_name": {
+              "title": "Custom Header Name",
+              "description": "Name of the custom header",
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              }
+            },
+            "custom_header_value": {
+              "title": "Custom Header Value",
+              "description": "Value of the custom header",
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              }
+            }
+          },
+          "required": ["security_model"],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "security_model": {
+                    "const": "basic_auth"
+                  }
+                },
+                "required": ["security_model"]
+              },
+              "then": {
+                "required": ["username", "password"]
+              },
+              "else": {
+                "properties": {
+                  "username": "",
+                  "password": ""
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "security_model": {
+                    "const": "api_key"
+                  }
+                },
+                "required": ["security_model"]
+              },
+              "then": {
+                "required": ["api_key"]
+              },
+              "else": {
+                "properties": {
+                  "api_key": false
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "security_model": {
+                    "const": "custom_header"
+                  }
+                },
+                "required": ["security_model"]
+              },
+              "then": {
+                "required": ["custom_header_name", "custom_header_value"]
+              },
+              "else": {
+                "properties": {
+                  "custom_header_name": "",
+                  "custom_header_value": ""
+                }
+              }
+            }
+          ],
+          "x-jsf-order": [
+            "security_model",
+            "username",
+            "password",
+            "api_key",
+            "custom_header_name",
+            "custom_header_value"
+          ]
+        },
+        "variables_schema_locked": true,
+        "input": {
+          "security_model": "{{variables.security_model}}",
+          "username": "{{variables.username}}",
+          "password": "{{variables.password}}",
+          "api_key": "{{variables.api_key}}",
+          "custom_header_name": "{{variables.custom_header_name}}",
+          "custom_header_value": "{{variables.custom_header_value}}"
+        },
+        "input_locked": true,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "security_model": {
+              "title": "Security Model",
+              "description": "Select the security model for the webhook",
+              "type": "string"
+            },
+            "username": {
+              "title": "Username",
+              "description": "Username for Basic Authentication",
+              "type": "string"
+            },
+            "password": {
+              "title": "Password",
+              "description": "Password for Basic Authentication",
+              "type": "string"
+            },
+            "api_key": {
+              "title": "API Key",
+              "description": "API Key for authentication",
+              "type": "string"
+            },
+            "custom_header_name": {
+              "title": "Custom Header Name",
+              "description": "Name of the custom header",
+              "type": "string"
+            },
+            "custom_header_value": {
+              "title": "Custom Header Value",
+              "description": "Value of the custom header",
+              "type": "string"
+            }
+          },
+          "x-jsf-order": [
+            "security_model",
+            "username",
+            "password",
+            "api_key",
+            "custom_header_name",
+            "custom_header_value"
+          ],
+          "required": ["security_model"]
+        },
+        "input_schema_locked": true,
+        "presentation": {
+          "position": {
+            "x": 300,
+            "y": 100
+          }
+        },
+        "handles": [
+          {
+            "id": "b",
+            "type": "source",
+            "position": "bottom"
+          }
+        ]
+      }
+    }
   ]

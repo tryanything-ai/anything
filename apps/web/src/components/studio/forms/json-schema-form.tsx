@@ -58,16 +58,35 @@ export function JsonSchemaForm({
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
+  // const handleFieldChange = (fieldName: any, value: any) => {
+  //   if (disabled) return;
+  //   console.log(`[FIELD CHANGE] ${fieldName}:`, value);
+  //   setValues((prevValues) => {
+  //     console.log("[PREV VALUES]", prevValues);
+  //     const newValues = {
+  //       ...prevValues,
+  //       [fieldName]: value,
+  //     };
+  //     console.log("[NEW VALUES]", newValues);
+  //     return newValues;
+  //   });
+  //   setHasUnsavedChanges(true);
+  // };
+
   const handleFieldChange = (fieldName: any, value: any) => {
     if (disabled) return;
     console.log(`[FIELD CHANGE] ${fieldName}:`, value);
     setValues((prevValues) => {
-      console.log("[PREV VALUES]", prevValues);
       const newValues = {
         ...prevValues,
         [fieldName]: value,
       };
       console.log("[NEW VALUES]", newValues);
+
+      // Add validation on field change
+      const { errors, jsonValues } = handleInternalValidation(newValues);
+      setErrors(errors);
+
       return newValues;
     });
     setHasUnsavedChanges(true);
