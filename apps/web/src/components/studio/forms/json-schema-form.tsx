@@ -23,7 +23,7 @@ export function JsonSchemaForm({
   handleValidation,
   onSubmit,
   onFocus,
-  onBlur,
+  // onBlur,
   disabled = false,
 }: any): JSX.Element {
   const {
@@ -104,15 +104,6 @@ export function JsonSchemaForm({
     console.log("Show something?");
     if (onFocus) {
       onFocus(fieldName);
-    }
-  };
-
-  const handleFieldBlur = (e: any) => {
-    if (disabled) return;
-    // setFocusedField(null);
-    console.log("STOP showing something?");
-    if (onBlur) {
-      onBlur();
     }
   };
 
@@ -197,7 +188,6 @@ export function JsonSchemaForm({
 
           return (
             <FieldComponent
-              // {...field}ß
               key={fieldName}
               value={values?.[fieldName]}
               error={errors[fieldName]}
@@ -205,7 +195,6 @@ export function JsonSchemaForm({
               type={field.type}
               onChange={handleFieldChange}
               onFocus={() => handleFieldFocus(fieldName)}
-              onBlur={handleFieldBlur}
               onSelect={(e: any) => handleCursorChange(e, fieldName)}
               onClick={(e: any) => handleCursorChange(e, fieldName)}
               onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
@@ -213,17 +202,11 @@ export function JsonSchemaForm({
                 handleFieldChange(fieldName, value)
               }
               disabled={disabled}
-              //new explicit props
-              // type={field.type}
               name={field.name}
               label={field.label}
               options={field.options}
               description={field.description}
               isVisible={field.isVisible}
-              // error={field.error}
-              // submited={field.submited}
-              // onChange={field.onChange}
-              // onValueChange={field.onValueChange}
               required={field.required}
             />
           );

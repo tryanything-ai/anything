@@ -20,7 +20,11 @@ export default function FieldText({
   isVisible,
   error,
   submited,
+  onFocus,
   onChange,
+  onSelect,
+  onClick,
+  onKeyUp,
   required,
   ...props
 }: any) {
@@ -49,10 +53,14 @@ export default function FieldText({
           // {...props}
           id={name}
           // defaultValue={value}
+          onFocus={onFocus}
           aria-invalid={!!error}
           aria-describedby={`${name}-error ${name}-description`}
           aria-required={required}
           value={value}
+          onSelect={onSelect}
+          onClick={onClick}
+          onKeyUp={onKeyUp}
           onValueChange={handleChange} //being shadowed by props i think
           highlight={(code) => {
             if (!code || code.length === 0) {
