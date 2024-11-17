@@ -5,12 +5,12 @@ use axum::{
     response::Response,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use tracing::info;
 
-use crate::AppState;
+use crate::{supabase_jwt_middleware::User, AppState};
 
 // Cache entry with expiration
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -34,7 +34,7 @@ pub struct AccountAccessCache {
 
 impl AccountAccessCache {
     pub fn new(ttl: Duration) -> Self {
-        info!(
+        println!(
             "[ACCOUNT MIDDLEWARE] Creating new AccountAccessCache with TTL: {:?}",
             ttl
         );
@@ -57,7 +57,7 @@ impl AccountAccessCache {
                 None
             }
         });
-        info!(
+        println!(
             "[ACCOUNT MIDDLEWARE] Cache lookup for user_id: {}, account_id: {} -> result: {:?}",
             user_id, account_id, result
         );
@@ -65,7 +65,7 @@ impl AccountAccessCache {
     }
 
     pub fn set(&mut self, user_id: &str, account_id: &str, has_access: bool) {
-        info!(
+        println!(
             "[ACCOUNT MIDDLEWARE] Setting cache for user_id: {}, account_id: {} -> has_access: {}",
             user_id, account_id, has_access
         );
@@ -84,7 +84,7 @@ impl AccountAccessCache {
     }
 
     pub fn remove(&mut self, user_id: &str, account_id: &str) {
-        info!(
+        println!(
             "[ACCOUNT MIDDLEWARE] Removing cache entry for user_id: {}, account_id: {}",
             user_id, account_id
         );
@@ -97,41 +97,63 @@ impl AccountAccessCache {
 
     // Cleanup expired entries
     pub fn cleanup(&mut self) {
-        info!("[ACCOUNT MIDDLEWARE] Starting cache cleanup");
+        println!("[ACCOUNT MIDDLEWARE] Starting cache cleanup");
         let before_count = self.cache.len();
         self.cache
             .retain(|_, entry| entry.expires_at > SystemTime::now());
         let after_count = self.cache.len();
-        info!(
+        println!(
             "[ACCOUNT MIDDLEWARE] Cache cleanup complete - removed {} entries",
             before_count - after_count
         );
     }
 }
 
+
 async fn verify_account_access(
     client: &postgrest::Postgrest,
+    jwt: &str,
     user_id: &str,
     account_id: &str,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    info!(
-        "[ACCOUNT MIDDLEWARE] Verifying account access for user_id: {}, account_id: {}",
+    println!(
+        "[VERIFY_ACCOUNT_ACCESS] Starting verification for user_id: {}, account_id: {}",
         user_id, account_id
     );
+
+    println!(
+        "[VERIFY_ACCOUNT_ACCESS] Making RPC call to get_account with payload: {}",
+        serde_json::to_string(&json!({ "account_id": account_id })).unwrap()
+    );
+
     let response = client
-        .from("account_user")
-        .select("*")
-        .eq("user_id", user_id)
-        .eq("account_id", account_id)
+        .rpc(
+            "get_account",
+            serde_json::to_string(&json!({ "account_id": account_id })).unwrap(),
+        )
+        .auth(jwt)
         .execute()
         .await?;
 
-    let accounts: Vec<serde_json::Value> = response.json().await?;
-    let has_access = !accounts.is_empty();
-    info!(
-        "[ACCOUNT MIDDLEWARE] Database access check result: {}",
-        has_access
+    println!(
+        "[VERIFY_ACCOUNT_ACCESS] Response status: {}",
+        response.status()
     );
+
+    println!(
+        "[VERIFY_ACCOUNT_ACCESS] Response headers: {:?}",
+        response.headers()
+    );
+
+    // If the user doesn't have access, get_account will return a 404/401
+    // So if we get a successful response, the user has access
+    let has_access = response.status().is_success();
+
+    println!(
+        "[VERIFY_ACCOUNT_ACCESS] Access determination: {}",
+        if has_access { "GRANTED" } else { "DENIED" }
+    );
+
     Ok(has_access)
 }
 
@@ -140,25 +162,28 @@ pub async fn account_access_middleware(
     request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    info!("[ACCOUNT MIDDLEWARE] Processing request");
+    println!("[ACCOUNT MIDDLEWARE] Processing request");
 
     // Extract user_id from the existing auth middleware
-    let user_id = request
-        .extensions()
-        .get::<String>()
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-    info!("[ACCOUNT MIDDLEWARE] Extracted user_id: {}", user_id);
+    println!("[ACCOUNT MIDDLEWARE] Attempting to extract user from request extensions");
+    let user = request.extensions().get::<User>().ok_or_else(|| {
+        println!("[ACCOUNT MIDDLEWARE] No user found in request extensions");
+        StatusCode::UNAUTHORIZED
+    })?;
+    println!("[ACCOUNT MIDDLEWARE] Successfully found user in request extensions");
+    let user_id = &user.account_id;
+    println!("[ACCOUNT MIDDLEWARE] Extracted user_id: {}", user_id);
+    // println!("[ACCOUNT MIDDLEWARE] User email: {}", user.email.as_deref().unwrap_or("no email"));
 
     // Extract account_id from path parameters
+    println!("[ACCOUNT MIDDLEWARE] Path: {}", request.uri().path());
     let account_id = request
         .uri()
         .path()
         .split('/')
-        .find(|segment| segment.starts_with("account_"))
-        .map(|s| s.trim_start_matches("account_"))
+        .nth(2) // "account" is at index 1, so account_id will be at index 2
         .ok_or(StatusCode::BAD_REQUEST)?;
-    info!("[ACCOUNT MIDDLEWARE] Extracted account_id: {}", account_id);
-
+    println!("[ACCOUNT MIDDLEWARE] Extracted account_id: {}", account_id);
     // Check cache first
     let mut needs_db_check = true;
     let has_access = {
@@ -170,21 +195,22 @@ pub async fn account_access_middleware(
             false
         }
     };
-    info!(
+    println!(
         "[ACCOUNT MIDDLEWARE] Cache check - needs_db_check: {}, has_access: {}",
         needs_db_check, has_access
     );
 
     if !needs_db_check {
         if !has_access {
-            info!("[ACCOUNT MIDDLEWARE] Access denied from cache");
+            println!("[ACCOUNT MIDDLEWARE] Access denied from cache");
             return Err(StatusCode::FORBIDDEN);
         }
     } else {
         // Verify access in database
-        let db_has_access = verify_account_access(&state.anything_client, user_id, account_id)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        let db_has_access =
+            verify_account_access(&state.public_client, &user.jwt, user_id, account_id)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
         // Update cache
         {
@@ -193,25 +219,25 @@ pub async fn account_access_middleware(
         }
 
         if !db_has_access {
-            info!("[ACCOUNT MIDDLEWARE] Access denied from database check");
+            println!("[ACCOUNT MIDDLEWARE] Access denied from database check");
             return Err(StatusCode::FORBIDDEN);
         }
     }
 
-    info!("[ACCOUNT MIDDLEWARE] Access granted, proceeding with request");
+    println!("[ACCOUNT MIDDLEWARE] Access granted, proceeding with request");
     Ok(next.run(request).await)
 }
 
 // Periodic cache cleanup task
 pub async fn cleanup_account_access_cache(state: Arc<AppState>) {
     let cleanup_interval = Duration::from_secs(3600); // Run cleanup every hour
-    info!(
+    println!(
         "[ACCOUNT MIDDLEWARE] Starting periodic cache cleanup task with interval: {:?}",
         cleanup_interval
     );
     loop {
         tokio::time::sleep(cleanup_interval).await;
-        info!("[ACCOUNT MIDDLEWARE] Running scheduled cache cleanup");
+        println!("[ACCOUNT MIDDLEWARE] Running scheduled cache cleanup");
         let mut cache = state.account_access_cache.write().await;
         cache.cleanup();
     }

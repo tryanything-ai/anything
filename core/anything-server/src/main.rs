@@ -65,6 +65,7 @@ pub struct CachedApiKey {
 pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
+    public_client: Arc<Postgrest>,
     semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
@@ -93,6 +94,13 @@ async fn main() {
     let marketplace_client = Arc::new(
         Postgrest::new(supabase_url.clone())
             .schema("marketplace")
+            .insert_header("apikey", supabase_api_key.clone()),
+    );
+    
+    //Marketplace Schema for Managing Templates etc
+    let public_client = Arc::new(
+        Postgrest::new(supabase_url.clone())
+            .schema("public")
             .insert_header("apikey", supabase_api_key.clone()),
     );
 
@@ -156,6 +164,7 @@ async fn main() {
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
+        public_client: public_client.clone(),
         auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,
@@ -225,7 +234,7 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/workflow/:id", delete(workflows::delete_workflow))
         .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
         .route("/account/:account_id/actions", get(actions::get_actions))
-        .route("/account/:accoutn_id/triggers", get(actions::get_triggers))
+        .route("/account/:account_id/triggers", get(actions::get_triggers))
         .route("/account/:account_id/other", get(actions::get_other_actions))
 
         //Marketplace && Templates
@@ -299,11 +308,12 @@ pub async fn root() -> impl IntoResponse {
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(testing::test_action),
         )
-        .layer(middleware::from_fn(supabase_jwt_middleware::middleware))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,
-        ));
+        ))
+        .layer(middleware::from_fn(supabase_jwt_middleware::middleware));
+   
 
     let app = Router::new()
         .merge(public_routes) // Public routes
