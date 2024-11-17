@@ -176,7 +176,6 @@ function FieldSelect({
   }
 
   console.log("[RENDERING SELECT FIELD: ", name, " = ", value, "]");
-  console.log("[SELECT OPTIONS]", options);
 
   return (
     <div className="grid gap-3 my-4">

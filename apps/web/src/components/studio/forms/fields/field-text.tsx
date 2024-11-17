@@ -14,9 +14,8 @@ export default function FieldText({
   type,
   name,
   label,
-  const: constantValue,
-  default: defaultValue,
   description,
+  className,
   value,
   isVisible,
   error,
@@ -32,11 +31,14 @@ export default function FieldText({
     return null;
   }
 
+  console.log("[FIELDTEXT]: ", name, " = ", value, " and props: ", props);
+
   const displayError = submited || touched ? error : null;
 
-  function handleChange(e: any) {
+  function handleChange(value: any) {
     if (!touched) setTouched(true);
-    onChange(name, e.target.value);
+    console.log(`[FIELD TEXT FIELD] [HANDLE CHANGE] ${name}:`, value);
+    onChange(name, value);
   }
 
   return (
@@ -44,15 +46,17 @@ export default function FieldText({
       <Label htmlFor={name}>{label}</Label>
       <div className="relative">
         <Editor
+          // {...props}
           id={name}
-          defaultValue={value}
+          // defaultValue={value}
           aria-invalid={!!error}
           aria-describedby={`${name}-error ${name}-description`}
           aria-required={required}
           value={value}
-          onValueChange={handleChange}
+          onValueChange={handleChange} //being shadowed by props i think
           highlight={(code) => {
             if (!code || code.length === 0) {
+              console.log("No code to highlight");
               return "";
             }
             try {
@@ -65,9 +69,9 @@ export default function FieldText({
           padding={10}
           className={cn(
             "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-            props.className,
+            className,
           )}
-          {...props} //order matters here which is kinda wild!
+          // {...props} //order matters here which is kinda wild!
         />
       </div>
       {displayError && <div className="text-red-500">{displayError}</div>}

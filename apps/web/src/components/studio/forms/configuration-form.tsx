@@ -34,10 +34,27 @@ export default function ConfigurationForm(): JSX.Element {
       console.log("[CREATING HEADLESS FORM FOR INPUT SCHEMA]");
       console.log("Selected Node Input:", selected_node_input);
       console.log("Selected Node Input Schema:", selected_node_input_schema);
-      return createHeadlessForm(selected_node_input_schema, {
+      const result = createHeadlessForm(selected_node_input_schema, {
         strictInputType: false, // so you don't need to pass presentation.inputType,
         initialValues: selected_node_input,
       });
+
+      // Add detailed field logging
+      console.log(
+        "[CONFIGURATION FORM DEBUG] Created fields details:",
+        result.fields.map((field: any) => ({
+          name: field.name,
+          type: field.type,
+          inputType: field.inputType,
+          isVisible: field.isVisible,
+          default: field.default,
+          value: field.value,
+        })),
+      );
+
+      return result;
+    } else {
+      console.log("[CONFIGURATION FORM DEBUG] Skipping field Creation");
     }
     return { fields: undefined, handleValidation: undefined };
   }, [selected_node_input, selected_node_input_schema]);

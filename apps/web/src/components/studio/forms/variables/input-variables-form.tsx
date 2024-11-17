@@ -25,10 +25,46 @@ export default function InputVariablesForm(): JSX.Element {
       selected_node_variables_schema.properties &&
       Object.keys(selected_node_variables_schema.properties || {}).length > 0
     ) {
-      return createHeadlessForm(selected_node_variables_schema, {
+      console.log(
+        "[INPUT VARIABLES FORM DEBUG] Schema:",
+        selected_node_variables_schema,
+      );
+      console.log(
+        "[INPUT VARIABLES FORM DEBUG] Initial values:",
+        selected_node_variables,
+      );
+
+      // Add logging for schema properties
+      console.log(
+        "[INPUT VARIABLES FORM DEBUG] Schema properties:",
+        Object.keys(selected_node_variables_schema.properties),
+      );
+
+      const result = createHeadlessForm(selected_node_variables_schema, {
         strictInputType: false,
         initialValues: selected_node_variables,
       });
+
+      // Add detailed field logging
+      console.log(
+        "[INPUT VARIABLES FORM DEBUG] Created fields details:",
+        result.fields.map((field: any) => ({
+          name: field.name,
+          type: field.type,
+          inputType: field.inputType,
+          isVisible: field.isVisible,
+          default: field.default,
+          value: field.value,
+        })),
+      );
+
+      console.log(
+        "[INPUT VARIABLES FORM DEBUG] Created fields:",
+        result.fields,
+      );
+      return result;
+    } else {
+      console.log("[INPUT VARIABLES FORM DEBUG] Skipping field Creation");
     }
     return { fields: undefined, handleValidation: undefined };
   }, [selected_node_variables, selected_node_variables_schema]);
@@ -43,29 +79,20 @@ export default function InputVariablesForm(): JSX.Element {
   }
 
   return (
-    <>
-      {selected_node_variables &&
-        typeof selected_node_variables === "object" &&
-        selected_node_variables_schema &&
-        typeof selected_node_variables_schema === "object" &&
-        selected_node_variables_schema.properties &&
-        Object.keys(selected_node_variables_schema.properties).length > 0 && (
-          <JsonSchemaForm
-            name="input-variables-form"
-            onSubmit={handleVariableInputSubmit}
-            fields={fields}
-            onFocus={(fieldName: string) => {
-              if (explorerTab !== "results") {
-                setExplorerTab("results");
-              }
-              if (!showExplorer) {
-                setShowExplorer(true);
-              }
-            }}
-            initialValues={selected_node_variables}
-            handleValidation={handleValidation}
-          />
-        )}
-    </>
+    <JsonSchemaForm
+      name="input-variables-form"
+      onSubmit={handleVariableInputSubmit}
+      fields={fields}
+      onFocus={(fieldName: string) => {
+        if (explorerTab !== "results") {
+          setExplorerTab("results");
+        }
+        if (!showExplorer) {
+          setShowExplorer(true);
+        }
+      }}
+      initialValues={selected_node_variables}
+      handleValidation={handleValidation}
+    />
   );
 }

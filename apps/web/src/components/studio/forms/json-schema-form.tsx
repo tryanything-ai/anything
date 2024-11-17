@@ -58,24 +58,12 @@ export function JsonSchemaForm({
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
-  // const handleFieldChange = (fieldName: any, value: any) => {
-  //   if (disabled) return;
-  //   console.log(`[FIELD CHANGE] ${fieldName}:`, value);
-  //   setValues((prevValues) => {
-  //     console.log("[PREV VALUES]", prevValues);
-  //     const newValues = {
-  //       ...prevValues,
-  //       [fieldName]: value,
-  //     };
-  //     console.log("[NEW VALUES]", newValues);
-  //     return newValues;
-  //   });
-  //   setHasUnsavedChanges(true);
-  // };
-
   const handleFieldChange = (fieldName: any, value: any) => {
     if (disabled) return;
-    console.log(`[FIELD CHANGE] ${fieldName}:`, value);
+    console.log(
+      `[JSON SCHEMA FORM] [HANDLE FIELD CHANGE] ${fieldName}:`,
+      value,
+    );
     setValues((prevValues) => {
       const newValues = {
         ...prevValues,
@@ -131,6 +119,10 @@ export function JsonSchemaForm({
   useEffect(() => {
     console.log("[JSON SCHEMA FORM] Values after update:", values);
   }, [values]);
+
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Fields after update:", fields);
+  }, [fields]);
 
   console.log("[RENDERING JSON SCHEMA FORM]");
   console.log("Values:", values);
@@ -194,14 +186,23 @@ export function JsonSchemaForm({
       <div>
         {fields?.map((field: any) => {
           const { name: fieldName, inputType } = field;
+          console.log("[DEBUG] Field mapping:", {
+            fieldName,
+            inputType,
+            field,
+          }); // Add this debug line
           const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
+
+          console.log("Field Value: ", fieldName, " ", values?.[fieldName]);
 
           return (
             <FieldComponent
+              // {...field}ß
               key={fieldName}
               value={values?.[fieldName]}
               error={errors[fieldName]}
               submited={submited}
+              type={field.type}
               onChange={handleFieldChange}
               onFocus={() => handleFieldFocus(fieldName)}
               onBlur={handleFieldBlur}
@@ -212,7 +213,18 @@ export function JsonSchemaForm({
                 handleFieldChange(fieldName, value)
               }
               disabled={disabled}
-              {...field}
+              //new explicit props
+              // type={field.type}
+              name={field.name}
+              label={field.label}
+              options={field.options}
+              description={field.description}
+              isVisible={field.isVisible}
+              // error={field.error}
+              // submited={field.submited}
+              // onChange={field.onChange}
+              // onValueChange={field.onValueChange}
+              required={field.required}
             />
           );
         })}

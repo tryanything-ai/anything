@@ -268,7 +268,6 @@
           "security_model": "none",
           "username": "",
           "password": "",
-          "api_key": "",
           "custom_header_name": "",
           "custom_header_value": ""
         },
@@ -282,19 +281,19 @@
               "type": "string",
               "oneOf": [
                 {
-                  "value": "none",
+                  "const": "none",
                   "title": "None"
                 },
                 {
-                  "value": "basic_auth", 
+                  "const": "basic_auth", 
                   "title": "Basic Auth"
                 },
                 {
-                  "value": "api_key",
+                  "const": "api_key",
                   "title": "API Key"
                 },
                 {
-                  "value": "custom_header",
+                  "const": "custom_header",
                   "title": "Custom Header"
                 }
               ],
@@ -314,14 +313,6 @@
             "password": {
               "title": "Password",
               "description": "Password for Basic Authentication",
-              "type": "string",
-              "x-jsf-presentation": {
-                "inputType": "text"
-              }
-            },
-            "api_key": {
-              "title": "API Key",
-              "description": "API Key for authentication",
               "type": "string",
               "x-jsf-presentation": {
                 "inputType": "text"
@@ -369,24 +360,6 @@
               "if": {
                 "properties": {
                   "security_model": {
-                    "const": "api_key"
-                  }
-                },
-                "required": ["security_model"]
-              },
-              "then": {
-                "required": ["api_key"]
-              },
-              "else": {
-                "properties": {
-                  "api_key": false
-                }
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "security_model": {
                     "const": "custom_header"
                   }
                 },
@@ -417,7 +390,6 @@
           "security_model": "{{variables.security_model}}",
           "username": "{{variables.username}}",
           "password": "{{variables.password}}",
-          "api_key": "{{variables.api_key}}",
           "custom_header_name": "{{variables.custom_header_name}}",
           "custom_header_value": "{{variables.custom_header_value}}"
         },
@@ -440,11 +412,6 @@
               "description": "Password for Basic Authentication",
               "type": "string"
             },
-            "api_key": {
-              "title": "API Key",
-              "description": "API Key for authentication",
-              "type": "string"
-            },
             "custom_header_name": {
               "title": "Custom Header Name",
               "description": "Name of the custom header",
@@ -460,7 +427,6 @@
             "security_model",
             "username",
             "password",
-            "api_key",
             "custom_header_name",
             "custom_header_value"
           ],
