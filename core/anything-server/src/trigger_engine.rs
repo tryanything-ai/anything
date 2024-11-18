@@ -6,7 +6,7 @@ use dotenv::dotenv;
 use std::env;
 
 use crate::{
-    bundler::bundle_context,
+    bundler::bundle_task_context,
     task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
     workflow_types::Task,
     AppState,
@@ -451,7 +451,7 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                         //Run the templater over the variables and results from last session
                         //Return the templated variables and inputs
                         println!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
-                        let rendered_input = match bundle_context(client, &mock_task, false).await {
+                        let rendered_input = match bundle_task_context(client, &mock_task, false).await {
                             Ok(vars) => {
                                 println!(
                                     "[TRIGGER ENGINE] Successfully bundled variables: {:?}",

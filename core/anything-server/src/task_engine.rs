@@ -11,7 +11,7 @@ use std::env;
 
 use reqwest::Client;
 
-use crate::bundler::bundle_context;
+use crate::bundler::bundle_task_context;
 use crate::execution_planner::process_trigger_task;
 use crate::workflow_types::Task;
 use crate::AppState;
@@ -362,7 +362,7 @@ pub async fn process_task(
     update_task_status(client, task, &TaskStatus::Running, None).await?;
 
     let result: Result<Value, Box<dyn std::error::Error + Send + Sync>> = async {
-        let bundled_context = bundle_context(client, task, true).await?;
+        let bundled_context = bundle_task_context(client, task, true).await?;
 
         let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
             println!("[PROCESS TASK] Processing trigger task {}", task.task_id);

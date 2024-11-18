@@ -5,15 +5,18 @@ use axum::{
     Json,
 };
 
-use std::time::Duration;
+use std::{arch::aarch64::float32x2x3_t, time::Duration};
 
 use dotenv::dotenv;
 use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
-use crate::task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
 use crate::AppState;
+use crate::{
+    bundler::bundle_context,
+    task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
+};
 use crate::{
     secrets::get_secret_by_secret_value,
     workflow_types::{CreateTaskInput, FlowVersion, Workflow},
@@ -39,21 +42,21 @@ pub async fn run_workflow_and_respond(
     //And lean on the action definition to say how they want it to be authed
     //we need this to allow them to use it with 3rd party services they do not control
 
-    // Get API key from headers
-    let api_key = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
-        Some(header) if header.starts_with("Bearer ") => header[7..].to_string(),
-        _ => {
-            return (StatusCode::UNAUTHORIZED, "Missing or invalid API key").into_response();
-        }
-    };
+    // Get API key from headers //TODO: these work but moving for now to get data from action first
+    // let api_key = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
+    //     Some(header) if header.starts_with("Bearer ") => header[7..].to_string(),
+    //     _ => {
+    //         return (StatusCode::UNAUTHORIZED, "Missing or invalid API key").into_response();
+    //     }
+    // };
 
-    // Validate the API key
-    let account_id = match validate_api_key(state.clone(), api_key.clone()).await {
-        Ok(account_id) => account_id,
-        Err(status) => {
-            return (status, "Invalid API key").into_response();
-        }
-    };
+    // // Validate the API key
+    // let account_id = match validate_api_key(state.clone(), api_key.clone()).await {
+    //     Ok(account_id) => account_id,
+    //     Err(status) => {
+    //         return (status, "Invalid API key").into_response();
+    //     }
+    // };
 
     //Get Special Priveledges by passing service_role in auth()
     dotenv().ok();
@@ -66,7 +69,7 @@ pub async fn run_workflow_and_respond(
         .anything_client
         .from("flow_versions")
         .eq("flow_id", workflow_id.clone())
-        .eq("account_id", account_id.clone())
+        // .eq("account_id", account_id.clone())
         .eq("published", "true")
         .auth(supabase_service_role_api_key.clone())
         .select("*")
@@ -111,6 +114,9 @@ pub async fn run_workflow_and_respond(
                 .into_response();
         }
     };
+
+    // Get account_id from workflow_version
+    let account_id = workflow_version.account_id.clone();
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
@@ -170,8 +176,154 @@ pub async fn run_workflow_and_respond(
         }
     };
 
-    //We need to use the action definition to generate the config
-    //This has to take the incoming body and headers as an argument and parse them into the variables
+    let flow_session_id = Uuid::new_v4().to_string();
+
+    // Bundle the context for the trigger node
+    println!("[WEBHOOK API] Bundling context for trigger node");
+    let rendered_inputs = match bundle_context(
+        &state.anything_client,
+        &account_id.to_string(),
+        &flow_session_id,
+        Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
+        Some(&serde_json::to_value(&trigger_node.input).unwrap()),
+        false,
+    )
+    .await
+    {
+        Ok(context) => context,
+        Err(e) => {
+            println!("[WEBHOOK API] Failed to bundle context: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to bundle trigger context",
+            )
+                .into_response();
+        }
+    };
+
+    println!("[WEBHOOK API] Bundled context: {:?}", rendered_inputs);
+
+    // Extract the security model from the rendered inputs
+    println!("[WEBHOOK API] Extracting security model from rendered inputs");
+    let security_model = rendered_inputs
+        .get("security_model")
+        .and_then(|v| v.as_str())
+        .unwrap_or("none");
+
+    // Validate security based on the security model
+    //TODO: try some of this shit we just let it go with LLM
+    println!(
+        "[WEBHOOK API] Validating security with model: {}",
+        security_model
+    );
+    match security_model {
+        "none" => {
+            println!("[WEBHOOK API] No security validation required");
+        }
+        "basic_auth" => {
+            println!("[WEBHOOK API] Validating Basic Auth");
+            let expected_username = rendered_inputs.get("username").and_then(|v| v.as_str());
+            let expected_password = rendered_inputs.get("password").and_then(|v| v.as_str());
+
+            if expected_username.is_none() || expected_password.is_none() {
+                println!("[WEBHOOK API] Missing username or password configuration");
+                return (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response();
+            }
+
+            let auth_header = match headers.get("authorization") {
+                Some(header) => header,
+                None => {
+                    println!("[WEBHOOK API] No Authorization header found");
+                    return (StatusCode::UNAUTHORIZED, "Missing Authorization header")
+                        .into_response();
+                }
+            };
+
+            let auth_str = String::from_utf8_lossy(auth_header.as_bytes());
+            if !auth_str.starts_with("Basic ") {
+                println!("[WEBHOOK API] Invalid Authorization header format");
+                return (StatusCode::UNAUTHORIZED, "Invalid Authorization header").into_response();
+            }
+
+            let credentials = match base64::decode(&auth_str[6..]) {
+                Ok(decoded) => String::from_utf8_lossy(&decoded).to_string(),
+                Err(_) => {
+                    println!("[WEBHOOK API] Failed to decode Basic Auth credentials");
+                    return (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response();
+                }
+            };
+
+            let parts: Vec<&str> = credentials.split(':').collect();
+            if parts.len() != 2
+                || parts[0] != expected_username.unwrap()
+                || parts[1] != expected_password.unwrap()
+            {
+                println!("[WEBHOOK API] Invalid Basic Auth credentials");
+                return (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response();
+            }
+        }
+        "api_key" => {
+            println!("[WEBHOOK API] Validating API Key");
+            let api_key = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
+                Some(header) if header.starts_with("Bearer ") => header[7..].to_string(),
+                _ => {
+                    return (StatusCode::UNAUTHORIZED, "Missing or invalid API key")
+                        .into_response();
+                }
+            };
+
+            // Validate the API key
+            let _account_id = match validate_api_key(state.clone(), api_key.clone()).await {
+                Ok(account_id) => account_id,
+                Err(status) => {
+                    return (status, "Invalid API key").into_response();
+                }
+            };
+        }
+        "custom_header" => {
+            println!("[WEBHOOK API] Validating custom header");
+            let header_name = match rendered_inputs
+                .get("custom_header_name")
+                .and_then(|v| v.as_str())
+            {
+                Some(name) => name,
+                None => {
+                    println!("[WEBHOOK API] No custom header name configured");
+                    return (StatusCode::UNAUTHORIZED, "Invalid header configuration")
+                        .into_response();
+                }
+            };
+
+            let expected_value = match rendered_inputs
+                .get("custom_header_value")
+                .and_then(|v| v.as_str())
+            {
+                Some(value) => value,
+                None => {
+                    println!("[WEBHOOK API] No custom header value configured");
+                    return (StatusCode::UNAUTHORIZED, "Invalid header configuration")
+                        .into_response();
+                }
+            };
+
+            let header_value = match headers.get(header_name) {
+                Some(value) => String::from_utf8_lossy(value.as_bytes()),
+                None => {
+                    println!("[WEBHOOK API] Required custom header not found");
+                    return (StatusCode::UNAUTHORIZED, "Missing required header").into_response();
+                }
+            };
+
+            if header_value != expected_value {
+                println!("[WEBHOOK API] Invalid custom header value");
+                return (StatusCode::UNAUTHORIZED, "Invalid header value").into_response();
+            }
+        }
+        _ => {
+            println!("[WEBHOOK API] Invalid security model specified");
+            return (StatusCode::BAD_REQUEST, "Invalid security model").into_response();
+        }
+    }
 
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
@@ -185,7 +337,7 @@ pub async fn run_workflow_and_respond(
         trigger_id: trigger_node.action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
-        flow_session_id: Uuid::new_v4().to_string(),
+        flow_session_id,
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
