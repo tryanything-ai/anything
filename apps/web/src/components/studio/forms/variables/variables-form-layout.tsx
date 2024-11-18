@@ -4,21 +4,15 @@ import { EditVariableFormMode } from "@/context/VariablesContext";
 import EditVariableForm from "./edit-variable-form";
 import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@repo/ui/components/ui/button";
-import { ActionType } from "@/types/workflows";
-import { Lock, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight } from "lucide-react";
 
 export function VariablesFormLayout(): JSX.Element {
   const { variables, workflow } = useAnything();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const Header = () => {
     let header_title = "Variables";
     let link_button_text = "";
     let action = () => {};
-    let variables_locked = workflow?.selected_node_data?.variables_locked;
-    let variables_schema_locked =
-      workflow?.selected_node_data?.variables_schema_locked;
 
     switch (variables.editingMode) {
       case EditVariableFormMode.EDIT:
@@ -51,21 +45,23 @@ export function VariablesFormLayout(): JSX.Element {
           variant="ghost"
           size="sm"
           className="mr-2"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => variables.setIsFormVisible(!variables.isFormVisible)}
         >
           <ChevronRight
-            className={`h-4 w-4 transition-transform ${!isCollapsed ? "rotate-90" : ""}`}
+            className={`h-4 w-4 transition-transform ${
+              variables.isFormVisible ? "rotate-90" : ""
+            }`}
           />
         </Button>
         <div className="font-bold">{header_title}</div>
         <div className="flex-1" />
-        {!variables_schema_locked ? (
+        {!workflow?.selected_node_data?.variables_schema_locked ? (
           <Button variant={"link"} onClick={action}>
             {link_button_text}
           </Button>
         ) : (
           // <Lock size={16} className="text-gray-400" />
-          <></>
+          <></> // TODO: Figure better ui pattern to show that you can't add variables to locked schemas
         )}
       </div>
     );
@@ -80,7 +76,7 @@ export function VariablesFormLayout(): JSX.Element {
       case EditVariableFormMode.INPUT:
         return <InputVariablesForm />;
       default:
-        null;
+        return null;
     }
   };
 
@@ -89,7 +85,7 @@ export function VariablesFormLayout(): JSX.Element {
       {workflow && workflow.selected_node_data && (
         <div className="rounded-lg border p-4">
           <Header />
-          {!isCollapsed && renderEditor()}
+          {variables.isFormVisible && renderEditor()}
         </div>
       )}
     </>

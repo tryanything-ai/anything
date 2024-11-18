@@ -79,20 +79,27 @@ export default function InputVariablesForm(): JSX.Element {
   }
 
   return (
-    <JsonSchemaForm
-      name="input-variables-form"
-      onSubmit={handleVariableInputSubmit}
-      fields={fields}
-      onFocus={(fieldName: string) => {
-        if (explorerTab !== "results") {
-          setExplorerTab("results");
-        }
-        if (!showExplorer) {
-          setShowExplorer(true);
-        }
-      }}
-      initialValues={selected_node_variables}
-      handleValidation={handleValidation}
-    />
+    <>
+      {Object.keys(selected_node_variables_schema?.properties || {}).length ===
+      0 ? (
+        <div className="text-gray-500 py-2 ml-12">No variables yet</div>
+      ) : (
+        <JsonSchemaForm
+          name="input-variables-form"
+          onSubmit={handleVariableInputSubmit}
+          fields={fields}
+          onFocus={(fieldName: string) => {
+            if (explorerTab !== "results") {
+              setExplorerTab("results");
+            }
+            if (!showExplorer) {
+              setShowExplorer(true);
+            }
+          }}
+          initialValues={selected_node_variables}
+          handleValidation={handleValidation}
+        />
+      )}
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { Edit2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
 import DeleteVariableDialog from "./delete-variable-dialog";
+import { useEffect } from "react";
 
 export default function EditVariablesForm(): JSX.Element {
   const {
@@ -15,6 +16,17 @@ export default function EditVariablesForm(): JSX.Element {
     variables.setSelectedProperty(property);
     variables.setEditingMode(EditVariableFormMode.EDIT);
   };
+
+  // Automatically open add variable form if no variables exist
+  useEffect(() => {
+    if (
+      !selected_node_variables_schema?.properties ||
+      Object.keys(selected_node_variables_schema.properties).length === 0
+    ) {
+      handleEdit(null);
+      variables.setIsFormVisible(true);
+    }
+  }, [selected_node_variables_schema]);
 
   return (
     <div className="space-y-2 mt-4">
