@@ -25,7 +25,7 @@ extern crate slugify;
 
 use auth::init::AuthState;
 
-mod api;
+mod system_actions; 
 mod workflows; 
 mod actions; 
 mod tasks; 
@@ -210,9 +210,9 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
 
     // API Routes for running workflows - some protection done at api.rs vs route level
-    .route("/api/v1/workflow/:workflow_id/start/respond", post(api::run_workflow_and_respond))
-    .route("/api/v1/workflow/:workflow_id/start", post(api::run_workflow))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(api::run_workflow_version));
+    .route("/api/v1/workflow/:workflow_id/start/respond", post(system_actions::webhook_trigger::run_workflow_and_respond))
+    .route("/api/v1/workflow/:workflow_id/start", post(system_actions::webhook_trigger::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(system_actions::webhook_trigger::run_workflow_version));
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))

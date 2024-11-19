@@ -372,52 +372,52 @@ pub async fn get_flow_version_variables(
     //This allows us to show what historical session data will look like to the user over new variables in the workflow version definition
     //This tasks is never persisted to the db. we just use it as a convenient way to run the production templater over theoretical data
     //For when the user is constructing new workflows
-    let mock_task = Task {
-        task_id: Uuid::new_v4(),
-        account_id: Uuid::parse_str(&account_id).unwrap_or_default(),
-        task_status: "pending".to_string(),
-        flow_id: Uuid::parse_str(&workflow_id).unwrap_or_default(),
-        flow_version_id: Uuid::parse_str(&workflow_version_id).unwrap_or_default(),
-        action_label: workflow
-            .actions
-            .iter()
-            .find(|a| a.action_id == action_id)
-            .map(|a| a.label.clone())
-            .unwrap_or_default(),
-        trigger_id: "".to_string(),
-        trigger_session_id: "".to_string(),
-        trigger_session_status: "".to_string(),
-        flow_session_id: session_id,
-        flow_session_status: "fake".to_string(),
-        action_id: action_id.clone(),
-        r#type: "fake".to_string(),
-        plugin_id: workflow
-            .actions
-            .iter()
-            .find(|a| a.action_id == action_id)
-            .map(|a| a.plugin_id.clone()),
-        stage: "fake".to_string(),
-        test_config: None,
-        config: serde_json::json!({
-            "variables": variables,
-            "input": serde_json::json!({})
-        }),
-        context: None,
-        started_at: None,
-        ended_at: None,
-        debug_result: None,
-        result: None,
-        archived: false,
-        updated_at: None,
-        created_at: None,
-        updated_by: None,
-        created_by: None,
-        processing_order: 0,
-    };
+    // let mock_task = Task {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: Uuid::parse_str(&account_id).unwrap_or_default(),
+    //     task_status: "pending".to_string(),
+    //     flow_id: Uuid::parse_str(&workflow_id).unwrap_or_default(),
+    //     flow_version_id: Uuid::parse_str(&workflow_version_id).unwrap_or_default(),
+    //     action_label: workflow
+    //         .actions
+    //         .iter()
+    //         .find(|a| a.action_id == action_id)
+    //         .map(|a| a.label.clone())
+    //         .unwrap_or_default(),
+    //     trigger_id: "".to_string(),
+    //     trigger_session_id: "".to_string(),
+    //     trigger_session_status: "".to_string(),
+    //     flow_session_id: session_id,
+    //     flow_session_status: "fake".to_string(),
+    //     action_id: action_id.clone(),
+    //     r#type: "fake".to_string(),
+    //     plugin_id: workflow
+    //         .actions
+    //         .iter()
+    //         .find(|a| a.action_id == action_id)
+    //         .map(|a| a.plugin_id.clone()),
+    //     stage: "fake".to_string(),
+    //     test_config: None,
+    //     config: serde_json::json!({
+    //         "variables": variables,
+    //         "input": serde_json::json!({})
+    //     }),
+    //     context: None,
+    //     started_at: None,
+    //     ended_at: None,
+    //     debug_result: None,
+    //     result: None,
+    //     archived: false,
+    //     updated_at: None,
+    //     created_at: None,
+    //     updated_by: None,
+    //     created_by: None,
+    //     processing_order: 0,
+    // };
 
     //Run the templater over the variables and results from last session
     //Return the templated variables
-    let rendered_variables = match bundle_variables(client, &mock_task, false).await {
+    let rendered_variables = match bundle_variables(client, &account_id, &session_id, Some(&variables), false).await {
         Ok(vars) => vars,
         Err(_e) => return Json(serde_json::Value::Null).into_response(),
     };
@@ -431,9 +431,9 @@ pub async fn get_flow_version_variables(
     //TODO: build some sort of tool that can "smell out" if the same api endpoint is being hit? like parse the urls to know its the same endpoint across users etc
     //Store this metadata somewhere usefull
 
-    //Returning both so we can show the keys no matter what if the bundling failes we can still show top level keys
+    //Returning both so we can show the keys no matter what if the bundling fails we can still show top level keys
     let response = serde_json::json!({
-        "variables": mock_task.config["variables"],
+        "variables": variables,
         "rendered_variables": rendered_variables
     });
 
