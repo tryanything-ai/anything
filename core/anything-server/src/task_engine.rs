@@ -13,6 +13,7 @@ use reqwest::Client;
 
 use crate::bundler::bundle_task_context;
 use crate::execution_planner::process_trigger_task;
+use crate::system_actions::output_action::process_output_task;
 use crate::workflow_types::Task;
 use crate::AppState;
 
@@ -373,8 +374,7 @@ pub async fn process_task(
                 if plugin_id == "http" {
                     process_http_task(&bundled_context).await?
                 } else if plugin_id == "output" {
-                    // For output plugin, just return the bundled context
-                    bundled_context["output"].clone()
+                    process_output_task(&bundled_context).await?
                 } else {
                     serde_json::json!({
                         "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
