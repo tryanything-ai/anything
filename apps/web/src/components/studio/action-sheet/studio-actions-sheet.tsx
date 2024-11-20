@@ -181,7 +181,7 @@ export function StudioActionsSheet(): JSX.Element {
             ) : (
               <>
                 <TabsContent value="actions" className="h-full">
-                  <ScrollArea className="h-full pr-4">
+                  <ScrollArea className="h-full pr-4 pb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {actions &&
                         actions.map((db_action: any) => {
@@ -202,8 +202,8 @@ export function StudioActionsSheet(): JSX.Element {
                                 key={`content-${db_action.action_template_id}`}
                               >
                                 <BaseNodeIcon icon={action.icon} />
-                                <div>
-                                  <div className="text-lg font-semibold">
+                                <div className="min-w-0">
+                                  <div className="text-lg font-semibold truncate">
                                     {action.label}
                                     {!marketplace && (
                                       <Badge className="ml-2" variant="outline">
@@ -211,7 +211,7 @@ export function StudioActionsSheet(): JSX.Element {
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="text-sm font-normal truncate overflow-ellipsis">
+                                  <div className="text-sm font-normal truncate">
                                     {action.description}
                                   </div>
                                 </div>
@@ -220,11 +220,12 @@ export function StudioActionsSheet(): JSX.Element {
                           );
                         })}
                     </div>
+                    <div className="h-12" />
                   </ScrollArea>
                 </TabsContent>
 
                 <TabsContent value="triggers" className="h-full">
-                  <ScrollArea className="h-full pr-4">
+                  <ScrollArea className="h-full pr-4 pb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {triggers &&
                         triggers.map((db_trigger: any) => {
@@ -245,8 +246,8 @@ export function StudioActionsSheet(): JSX.Element {
                                 key={`content-${db_trigger.action_template_id}`}
                               >
                                 <BaseNodeIcon icon={action.icon} />
-                                <div>
-                                  <div className="text-lg font-semibold">
+                                <div className="min-w-0">
+                                  <div className="text-lg font-semibold truncate">
                                     {action.label}
                                     {!marketplace && (
                                       <Badge className="ml-2" variant="outline">
@@ -254,7 +255,7 @@ export function StudioActionsSheet(): JSX.Element {
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="text-sm font-normal truncate overflow-ellipsis">
+                                  <div className="text-sm font-normal truncate">
                                     {action.description}
                                   </div>
                                 </div>
@@ -263,11 +264,12 @@ export function StudioActionsSheet(): JSX.Element {
                           );
                         })}
                     </div>
+                    <div className="h-12" />
                   </ScrollArea>
                 </TabsContent>
 
                 <TabsContent value="other" className="h-full">
-                  <ScrollArea className="h-full pr-4">
+                  <ScrollArea className="h-full pr-4 pb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {other &&
                         other.map((db_other: any) => {
@@ -288,8 +290,8 @@ export function StudioActionsSheet(): JSX.Element {
                                 key={`content-${db_other.action_template_id}`}
                               >
                                 <BaseNodeIcon icon={action.icon} />
-                                <div>
-                                  <div className="text-lg font-semibold">
+                                <div className="min-w-0">
+                                  <div className="text-lg font-semibold truncate">
                                     {action.label}
                                     {!marketplace && (
                                       <Badge className="ml-2" variant="outline">
@@ -297,7 +299,7 @@ export function StudioActionsSheet(): JSX.Element {
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="text-sm font-normal truncate overflow-ellipsis">
+                                  <div className="text-sm font-normal truncate">
                                     {action.description}
                                   </div>
                                 </div>
@@ -306,6 +308,7 @@ export function StudioActionsSheet(): JSX.Element {
                           );
                         })}
                     </div>
+                    <div className="h-12" />
                   </ScrollArea>
                 </TabsContent>
               </>
