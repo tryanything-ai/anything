@@ -275,7 +275,7 @@ export const WorkflowVersionProvider = ({
 
     //Update the nodes array
     let updatedNodes = nodes.map((node) => {
-      if (node.id === triggerNode.id) {
+      if (triggerNode && node.id === triggerNode.id) {
         //Swap in new node
         return updatedTriggerNode;
       }
@@ -284,7 +284,7 @@ export const WorkflowVersionProvider = ({
 
     // Update edges with new trigger node id if needed
     let updatedEdges = edges.map((edge) => {
-      if (edge.source === triggerNode.id) {
+      if (triggerNode && edge.source === triggerNode.id) {
         let new_edge = {
           ...edge,
           id: `${updatedTriggerNode.id}->${edge.target}`,
