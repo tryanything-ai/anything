@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, Edit2, Eye, EyeOff } from "lucide-react";
+import { Trash2, Eye, EyeOff } from "lucide-react";
 import api from "@repo/anything-api";
 import { Button } from "@repo/ui/components/ui/button";
 
@@ -16,7 +16,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@repo/ui/components/ui/alert-dialog";
-import { EditSecret, CreateNewSecret } from "@/components/secrets/secret-input";
 
 import {
   Card,
@@ -32,6 +31,7 @@ import {
   TableCell,
 } from "@repo/ui/components/ui/table";
 import { useAnything } from "@/context/AnythingContext";
+import { CreateNewApiKey } from "@/components/secrets/api-key-input";
 
 export default function AccountsPage(): JSX.Element {
   const [secrets, setSecrets] = useState<any[]>([]);
@@ -55,7 +55,9 @@ export default function AccountsPage(): JSX.Element {
         console.error("No account selected");
         return;
       }
-      const response = await api.secrets.getSecrets(selectedAccount.account_id);
+      const response = await api.secrets.getAnythingApiKeys(
+        selectedAccount.account_id,
+      );
       if (response.length === 0) {
         setSecrets([]);
         return;
@@ -63,30 +65,6 @@ export default function AccountsPage(): JSX.Element {
       setSecrets(response);
     } catch (error) {
       console.error("Error fetching secrets:", error);
-    }
-  };
-
-  const updateSecret = async (
-    secret_id: string,
-    secret_name: string,
-    secret_value: string,
-    secret_description: string,
-  ) => {
-    try {
-      if (!selectedAccount) {
-        console.error("No account selected");
-        return;
-      }
-      await api.secrets.updateSecret(
-        selectedAccount.account_id,
-        secret_id,
-        secret_name,
-        secret_value,
-        secret_description,
-      );
-      fetchSecrets();
-    } catch (error) {
-      console.error("Error updating secret:", error);
     }
   };
 
@@ -107,9 +85,12 @@ export default function AccountsPage(): JSX.Element {
         return;
       }
 
-      await api.secrets.deleteSecret(selectedAccount.account_id, secretIdToDelete);
+      await api.secrets.deleteAnythingApiKey(
+        selectedAccount.account_id,
+        secretIdToDelete,
+      );
       setSecretIdToDelete("");
-      
+
       fetchSecrets();
     } catch (error) {
       console.error("Error deleting secret:", error);
@@ -121,7 +102,6 @@ export default function AccountsPage(): JSX.Element {
 
   const saveNewSecret = async (
     secret_name: string,
-    secret_value: string,
     secret_description: string,
   ) => {
     try {
@@ -129,10 +109,9 @@ export default function AccountsPage(): JSX.Element {
         console.error("No account selected");
         return;
       }
-      await api.secrets.createSecret(
+      await api.secrets.createAnythingApiKey(
         selectedAccount.account_id,
         secret_name,
-        secret_value,
         secret_description,
       );
       fetchSecrets();
@@ -142,6 +121,11 @@ export default function AccountsPage(): JSX.Element {
       setSecretIdToDelete("");
       setShowDeleteDialog(false);
     }
+  };
+
+  const openDialog = (secret: any) => {
+    setShowDeleteDialog(true);
+    setSecretIdToDelete(secret);
   };
 
   const toggleSecretVisibility = (secretId: string) => {
@@ -160,15 +144,15 @@ export default function AccountsPage(): JSX.Element {
       <Card>
         <CardHeader className="flex flex-row">
           <div className="flex flex-col space-y-1.5 p-6">
-            <CardTitle>Secrets</CardTitle>
+            <CardTitle>Anything API Keys</CardTitle>
             <CardDescription>
-              Manage API Keys for 3rd party services etc
+              Manage API Keys for using Anything Webhooks and Rest API
             </CardDescription>
           </div>
           <div className="ml-auto py-6">
             {!showNewSecretEditor && (
               <Button onClick={() => setShowNewSecretEditor(true)}>
-                Create New Secret
+                Generate New API Key
               </Button>
             )}
           </div>
@@ -176,14 +160,10 @@ export default function AccountsPage(): JSX.Element {
         <CardContent>
           {showNewSecretEditor && (
             <div className="w-full mb-6">
-              <CreateNewSecret
+              <CreateNewApiKey
                 cancel={() => setShowNewSecretEditor(false)}
-                saveSecret={(
-                  name: string,
-                  value: string,
-                  description: string,
-                ) => {
-                  saveNewSecret(name, value, description);
+                saveSecret={(name: string, description: string) => {
+                  saveNewSecret(name, description);
                   setShowNewSecretEditor(false);
                 }}
               />
@@ -253,7 +233,7 @@ export default function AccountsPage(): JSX.Element {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {`This action cannot be undone. This will permanently delete this secret.`}
+              {`This action cannot be undone. This will permanently delete this API Key.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -262,7 +242,7 @@ export default function AccountsPage(): JSX.Element {
               className="bg-red-500"
               onClick={() => deleteSecret()}
             >
-              Delete Secret
+              Delete API Key
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

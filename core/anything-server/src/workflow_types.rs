@@ -10,14 +10,12 @@ use crate::task_types::ActionType;
 use serde_with::{serde_as, DisplayFromStr};
 
 #[derive(Serialize, Deserialize, Debug)]
-// #[serde(rename_all = "camelCase")]
 pub struct Workflow {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-// #[serde(rename_all = "camelCase")]
 pub struct Action {
     pub anything_action_version: String,
     pub r#type: ActionType,
@@ -28,9 +26,13 @@ pub struct Action {
     pub description: Option<String>,
     pub icon: String,
     pub variables: Variable,
+    pub variables_locked: Option<bool>,
     pub variables_schema: Variable,
+    pub variables_schema_locked: Option<bool>,
     pub input: Variable,
+    pub input_locked: Option<bool>,
     pub input_schema: Variable,
+    pub input_schema_locked: Option<bool>,
     pub presentation: Option<NodePresentation>,
     pub handles: Option<Vec<HandleProps>>,
 }
@@ -96,14 +98,15 @@ pub struct CreateTaskInput {
     pub plugin_id: String,
     pub stage: String,
     pub config: Value,
-    pub test_config: Option<Value>, // context: Value,
+    pub result: Option<Value>,
+    pub test_config: Option<Value>, // deprecate
     pub processing_order: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TaskConfig {
     pub variables: Value,
-    pub inputs: Value,
+    pub input: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -158,6 +161,8 @@ pub struct Trigger {
 pub struct FlowVersion {
     pub flow_version_id: Uuid,
     pub flow_id: Uuid,
+    pub published: bool,
+    pub account_id: Uuid,
     pub flow_definition: Value,
 }
 
@@ -167,25 +172,20 @@ impl Default for Workflow {
             anything_action_version: "0.1.0".to_string(),
             r#type: ActionType::Trigger,
             plugin_id: "cron".to_string(),
-            action_id: "cron_trigger".to_string(),
+            action_id: "cron".to_string(),
             plugin_version: "0.1.0".to_string(),
             label: "Every Hour".to_string(),
             description: Some("Cron Trigger to run workflow every hour".to_string()),
             icon: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>".to_string(),
             variables: Variable {
-                inner: HashMap::new(),
-            },
-            variables_schema: Variable {
-                inner: HashMap::new(),
-            },
-            input: Variable {
                 inner: {
                     let mut map = HashMap::new();
                     map.insert("cron_expression".to_string(), serde_json::json!("0 0 * * * *"));
                     map
                 },
             },
-            input_schema: Variable {
+            variables_locked: Some(false),
+            variables_schema: Variable {
                 inner: {
                     let mut map = HashMap::new();
                     map.insert("type".to_string(), serde_json::json!("object"));
@@ -202,6 +202,33 @@ impl Default for Workflow {
                     map
                 },
             },
+            variables_schema_locked: Some(true),
+            input: Variable {
+                inner: {
+                    let mut map = HashMap::new();
+                    map.insert("cron_expression".to_string(), serde_json::json!("{{variables.cron_expression}}"));
+                    map
+                },
+            },
+            input_locked: Some(true),
+            input_schema: Variable {
+                inner: {
+                    let mut map = HashMap::new();
+                    map.insert("type".to_string(), serde_json::json!("object"));
+                    map.insert("properties".to_string(), serde_json::json!({
+                        "cron_expression": {
+                            "title": "Cron Expression", 
+                            "description": "When to run the trigger",
+                            "type": "string"
+                        }
+                    }));
+                    map.insert("x-jsf-order".to_string(), serde_json::json!(["cron_expression"]));
+                    map.insert("required".to_string(), serde_json::json!(["cron_expression"]));
+                    map.insert("additionalProperties".to_string(), serde_json::json!(false));
+                    map
+                },
+            },
+            input_schema_locked: Some(true),
             presentation: Some(NodePresentation {
                 position: Position { x: 300.0, y: 100.0 },
             }),
@@ -224,9 +251,11 @@ impl Default for Workflow {
             variables: Variable {
                 inner: HashMap::new(),
             },
+            variables_locked: Some(false),
             variables_schema: Variable {
                 inner: HashMap::new(),
             },
+            variables_schema_locked: Some(false),
             input: Variable {
                 inner: {
                     let mut map = HashMap::new();
@@ -237,6 +266,7 @@ impl Default for Workflow {
                     map
                 },
             },
+            input_locked: Some(false),
             input_schema: Variable {
                 inner: {
                     let mut map = HashMap::new();
@@ -302,6 +332,7 @@ impl Default for Workflow {
                     map
                 },
             },
+            input_schema_locked: Some(true),
             presentation: Some(NodePresentation {
                 position: Position { x: 300.0, y: 300.0 },
             }),
@@ -320,9 +351,9 @@ impl Default for Workflow {
         };
 
         let edge = Edge {
-            id: "cron_trigger->http".to_string(),
+            id: "cron->http".to_string(),
             r#type: "anything".to_string(),
-            source: "cron_trigger".to_string(),
+            source: "cron".to_string(),
             target: "http".to_string(),
             source_handle: Some("b".to_string()),
             target_handle: Some("a".to_string()),

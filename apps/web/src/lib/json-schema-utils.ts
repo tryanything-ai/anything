@@ -47,10 +47,15 @@ export function getDefaultValuesFromFields(fields: any, initialValues: any) {
     // TODO/BUG needs to support fieldsets recursively
     // console.log("fields", fields);
     // console.log("initialValues", initialValues);
+    
+    if (!Array.isArray(fields)) {
+        return {};
+    }
+
     return fields.reduce((acc: any, cur: any) => {
         return {
             ...acc,
-            [cur.name]: initialValues[cur.name] || cur.default || ""
+            [cur.name]: (initialValues || {})[cur.name] || cur.default || ""
         };
     }, {});
 }

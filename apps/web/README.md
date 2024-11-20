@@ -10,7 +10,6 @@ pnpm dev --filter=web
 # How to reset supabase db
 
 ```bash
-cd apps/web
 supabase db reset
 ```
 

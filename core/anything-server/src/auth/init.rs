@@ -1,7 +1,7 @@
+use crate::auth::utils::insert_secret_to_vault;
 use crate::AppState;
-use crate::{auth::utils::insert_secret_to_vault, supabase_auth_middleware::User};
 use axum::{
-    extract::{Extension, Path, Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     Json,

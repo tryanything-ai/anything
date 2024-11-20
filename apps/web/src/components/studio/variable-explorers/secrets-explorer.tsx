@@ -74,6 +74,7 @@ export function SecretsExplorer(): JSX.Element {
         setSecrets([]);
         return;
       }
+
       setSecrets(response);
     } catch (error) {
       console.error("Error fetching secrets:", error);
@@ -89,7 +90,7 @@ export function SecretsExplorer(): JSX.Element {
 
   return (
     <div className="flex flex-col w-full">
-      {selected_node_data && selected_node_data.type !== ActionType.Trigger && (
+      {selected_node_data && (
         <div className="w-full">
           {loading && <div>Loading...</div>}
           {secrets && secrets.length === 0 && !loading && (

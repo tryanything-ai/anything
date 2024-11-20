@@ -88,7 +88,7 @@ export function ShareDialog(): JSX.Element {
                 Other users will be able to use your template in their business
                 from the{" "}
                 <Link
-                  href="https://tryanything.xyz/templates"
+                  href="https://tryanything.xyz/templates/workflows"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 underline"

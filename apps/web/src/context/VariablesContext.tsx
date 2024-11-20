@@ -23,8 +23,10 @@ export enum EditVariableFormMode {
 export interface VariablesContextInterface {
   editingMode: EditVariableFormMode;
   selectedProperty: any;
+  isFormVisible: boolean;
   setSelectedProperty: (property: any) => void;
   setEditingMode: (mode: EditVariableFormMode) => void;
+  setIsFormVisible: (visible: boolean) => void;
   updateVariablesProperty: (data: any) => Promise<boolean>;
   deleteVariable: (variableKey: string) => Promise<boolean>;
 }
@@ -32,8 +34,10 @@ export interface VariablesContextInterface {
 export const VariablesContext = createContext<VariablesContextInterface>({
   editingMode: EditVariableFormMode.INPUT,
   selectedProperty: null,
+  isFormVisible: false,
   setSelectedProperty: () => {},
   setEditingMode: () => {},
+  setIsFormVisible: () => {},
   updateVariablesProperty: () => Promise.resolve(false),
   deleteVariable: () => Promise.resolve(false),
 });
@@ -55,6 +59,7 @@ export const VariablesProvider = ({
     EditVariableFormMode.INPUT,
   );
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
 
   const updateVariablesProperty = async (form_data: any) => {
     try {
@@ -227,6 +232,8 @@ export const VariablesProvider = ({
         setEditingMode,
         selectedProperty,
         setSelectedProperty,
+        isFormVisible,
+        setIsFormVisible,
         updateVariablesProperty,
         deleteVariable,
       }}

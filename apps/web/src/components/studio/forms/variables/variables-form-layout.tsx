@@ -4,7 +4,7 @@ import { EditVariableFormMode } from "@/context/VariablesContext";
 import EditVariableForm from "./edit-variable-form";
 import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@repo/ui/components/ui/button";
-import { ActionType } from "@/types/workflows";
+import { ChevronRight } from "lucide-react";
 
 export function VariablesFormLayout(): JSX.Element {
   const { variables, workflow } = useAnything();
@@ -28,8 +28,9 @@ export function VariablesFormLayout(): JSX.Element {
       case EditVariableFormMode.INPUT:
         header_title = "Variables";
         link_button_text =
-          Object.keys(workflow.selected_node_variables_schema.properties)
-            .length > 0
+          Object.keys(
+            workflow?.selected_node_variables_schema?.properties || {},
+          ).length > 0
             ? "Edit"
             : "Add New Variable";
         action = () => variables.setEditingMode(EditVariableFormMode.DELETE);
@@ -40,11 +41,28 @@ export function VariablesFormLayout(): JSX.Element {
 
     return (
       <div className="flex flex-row items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mr-2"
+          onClick={() => variables.setIsFormVisible(!variables.isFormVisible)}
+        >
+          <ChevronRight
+            className={`h-4 w-4 transition-transform ${
+              variables.isFormVisible ? "rotate-90" : ""
+            }`}
+          />
+        </Button>
         <div className="font-bold">{header_title}</div>
         <div className="flex-1" />
-        <Button variant={"link"} onClick={action}>
-          {link_button_text}
-        </Button>
+        {!workflow?.selected_node_data?.variables_schema_locked ? (
+          <Button variant={"link"} onClick={action}>
+            {link_button_text}
+          </Button>
+        ) : (
+          // <Lock size={16} className="text-gray-400" />
+          <></> // TODO: Figure better ui pattern to show that you can't add variables to locked schemas
+        )}
       </div>
     );
   };
@@ -58,22 +76,18 @@ export function VariablesFormLayout(): JSX.Element {
       case EditVariableFormMode.INPUT:
         return <InputVariablesForm />;
       default:
-        null;
+        return null;
     }
   };
 
   return (
-    // Hide variables if its a trigger
     <>
-      {" "}
-      {workflow &&
-        workflow.selected_node_data &&
-        workflow.selected_node_data.type !== ActionType.Trigger && (
-          <div className="rounded-lg border p-4">
-            <Header />
-            {renderEditor()}
-          </div>
-        )}
+      {workflow && workflow.selected_node_data && (
+        <div className="rounded-lg border p-4">
+          <Header />
+          {variables.isFormVisible && renderEditor()}
+        </div>
+      )}
     </>
   );
 }

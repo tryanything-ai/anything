@@ -62,6 +62,93 @@ export const getSecrets = async (account_id: string) => {
     }
 }
 
+export const getAnythingApiKeys = async (account_id: string) => {
+    try {
+        // Get JWT from supabase to pass to the API
+        // API conforms to RLS policies on behalf of users for external API
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/keys`, {
+                headers: {
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Data from /api/keys:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching api keys:', error);
+    } finally {
+    }
+}
+
+export async function createAnythingApiKey(account_id: string, secret_name: string, secret_description: string) {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Creating Api Key');
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/key`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    secret_name,
+                    secret_description,
+                }),
+            });
+
+            const data = await response.json();
+            console.log('Data from /api/key POST:', data);
+            return data;
+        }
+
+    } catch (error) {
+        console.error('Error creating api key:', error);
+    } finally {
+    }
+}
+
+
+export async function deleteAnythingApiKey(account_id: string, secret_id: string) {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Deleting Api Key');
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/key/${secret_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                }
+            });
+
+            const data = await response.json();
+            console.log('Data from /api/key DELETE:', data);
+            return data;
+        }
+
+    } catch (error) {
+        console.error('Error deleting api key:', error);
+    } finally {
+    }
+}
+
+
 export async function deleteSecret(account_id: string, secret_id: string) {
     try {
         const supabase = createClient();

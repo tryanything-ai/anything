@@ -23,7 +23,8 @@ export function JsonSchemaForm({
   handleValidation,
   onSubmit,
   onFocus,
-  onBlur,
+  // onBlur,
+  disabled = false,
 }: any): JSX.Element {
   const {
     explorer: { registerCallback, unRegisterCallback },
@@ -52,19 +53,28 @@ export function JsonSchemaForm({
 
   const handleInternalValidation = (valuesToValidate: any) => {
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
+
     const { formErrors } = handleValidation(valuesForJson);
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
   const handleFieldChange = (fieldName: any, value: any) => {
-    console.log(`[FIELD CHANGE] ${fieldName}:`, value);
+    if (disabled) return;
+    console.log(
+      `[JSON SCHEMA FORM] [HANDLE FIELD CHANGE] ${fieldName}:`,
+      value,
+    );
     setValues((prevValues) => {
-      console.log("[PREV VALUES]", prevValues);
       const newValues = {
         ...prevValues,
         [fieldName]: value,
       };
       console.log("[NEW VALUES]", newValues);
+
+      // Add validation on field change
+      const { errors, jsonValues } = handleInternalValidation(newValues);
+      setErrors(errors);
+
       return newValues;
     });
     setHasUnsavedChanges(true);
@@ -72,6 +82,7 @@ export function JsonSchemaForm({
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    if (disabled) return;
     setSubmitted(true);
     const { errors, jsonValues } = handleInternalValidation(values);
     console.log("[JSON SCHEMA FORM - SUBMIT] Errors:", errors);
@@ -88,6 +99,7 @@ export function JsonSchemaForm({
 
   //used to hook into showing variables etc
   const handleFieldFocus = (fieldName: string) => {
+    if (disabled) return;
     // setFocusedField(fieldName);
     console.log("Show something?");
     if (onFocus) {
@@ -95,22 +107,19 @@ export function JsonSchemaForm({
     }
   };
 
-  const handleFieldBlur = (e: any) => {
-    // setFocusedField(null);
-    console.log("STOP showing something?");
-    if (onBlur) {
-      onBlur();
-    }
-  };
-
   useEffect(() => {
     console.log("[JSON SCHEMA FORM] Values after update:", values);
   }, [values]);
+
+  useEffect(() => {
+    console.log("[JSON SCHEMA FORM] Fields after update:", fields);
+  }, [fields]);
 
   console.log("[RENDERING JSON SCHEMA FORM]");
   console.log("Values:", values);
 
   const handleCursorChange = (e: React.SyntheticEvent, fieldName: string) => {
+    if (disabled) return;
     const target = e.target as HTMLTextAreaElement;
 
     GLOBAL_CURSOR_LOCATION = target.selectionStart;
@@ -128,6 +137,7 @@ export function JsonSchemaForm({
   };
 
   const insertVariable = (variable: string) => {
+    if (disabled) return;
     if (GLOBAL_ACTIVE_FORM_NAME !== name) {
       console.log("Not the active form");
       return;
@@ -167,7 +177,14 @@ export function JsonSchemaForm({
       <div>
         {fields?.map((field: any) => {
           const { name: fieldName, inputType } = field;
+          console.log("[DEBUG] Field mapping:", {
+            fieldName,
+            inputType,
+            field,
+          }); // Add this debug line
           const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
+
+          console.log("Field Value: ", fieldName, " ", values?.[fieldName]);
 
           return (
             <FieldComponent
@@ -175,21 +192,27 @@ export function JsonSchemaForm({
               value={values?.[fieldName]}
               error={errors[fieldName]}
               submited={submited}
+              type={field.type}
               onChange={handleFieldChange}
               onFocus={() => handleFieldFocus(fieldName)}
-              onBlur={handleFieldBlur}
               onSelect={(e: any) => handleCursorChange(e, fieldName)}
               onClick={(e: any) => handleCursorChange(e, fieldName)}
               onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
               onValueChange={(value: any) =>
                 handleFieldChange(fieldName, value)
               }
-              {...field}
+              disabled={disabled}
+              name={field.name}
+              label={field.label}
+              options={field.options}
+              description={field.description}
+              isVisible={field.isVisible}
+              required={field.required}
             />
           );
         })}
         <div className="flex items-center gap-2">
-          <Button type="submit" variant={"default"}>
+          <Button type="submit" variant={"default"} disabled={disabled}>
             Submit
           </Button>
           {hasUnsavedChanges && (

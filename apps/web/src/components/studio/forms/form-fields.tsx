@@ -4,6 +4,7 @@ import { Label } from "@repo/ui/components/ui/label";
 
 import { ExpandableInput } from "@repo/ui/components/ui/expandable-input";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { Switch } from "@repo/ui/components/ui/switch";
 import {
   Select,
   SelectTrigger,
@@ -100,37 +101,35 @@ function FieldCheckbox({
 
   if (!isVisible) return null;
 
-  function handleChange(e: any) {
-    console.log("checkbox e", e);
+  function handleChange(checked: boolean) {
     if (!touched) setTouched(true);
-    onChange(name, e);
+    onChange(name, checked);
   }
 
   const displayError = submited || touched ? error : null;
 
   return (
-    <div key={name} className="grid gap-3 my-4">
-      {/* A11Y errors: https://blog.tenon.io/accessible-validation-of-checkbox-and-radiobutton-groups/ */}
-      <Label htmlFor={name}>{label}</Label>
-
-      <div className="flex items-center">
-        <Checkbox name={name} checked={value} onCheckedChange={handleChange} />
-        <label
-          htmlFor={name}
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {value ? (
-            <span className="p-1 bg-green-400 rounded-lg ml-2">Active</span>
-          ) : (
-            <span className="p-1 bg-red-400 rounded-lg ml-2">Inactive</span>
+    <div key={name} className="grid gap-2 my-4">
+      <div className="flex flex-col gap-1">
+        <Label htmlFor={name}>{label}</Label>
+        <div className="flex items-center gap-2 pt-2">
+          <Switch
+            id={name}
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-input"
+            checked={value}
+            onCheckedChange={handleChange}
+          />
+          {description && (
+            <div className="text-sm text-muted-foreground">{description}</div>
           )}
-        </label>
-        {(touched || submited) && error && (
-          <div className="text-red-500" id={`${name}-error`}>
-            {error}
-          </div>
-        )}
+        </div>
       </div>
+
+      {(touched || submited) && error && (
+        <div className="text-red-500" id={`${name}-error`}>
+          {error}
+        </div>
+      )}
     </div>
   );
 }
@@ -177,7 +176,6 @@ function FieldSelect({
   }
 
   console.log("[RENDERING SELECT FIELD: ", name, " = ", value, "]");
-  console.log("[SELECT OPTIONS]", options);
 
   return (
     <div className="grid gap-3 my-4">

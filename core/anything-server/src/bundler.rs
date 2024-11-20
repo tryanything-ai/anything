@@ -164,10 +164,11 @@ impl fmt::Display for CustomError {
 }
 
 impl Error for CustomError {}
-
 pub async fn bundle_variables(
     client: &Postgrest,
-    task: &Task,
+    account_id: &str,
+    flow_session_id: &str,
+    variables_config: Option<&Value>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle variables");
@@ -182,8 +183,7 @@ pub async fn bundle_variables(
     let mut accounts: HashMap<String, Value> = HashMap::new();
 
     if refresh_auth {
-        for account in get_refreshed_auth_accounts(client, &task.account_id.to_string()).await? {
-            // for account in get_fake_account_auth_provider_account().await? {
+        for account in get_refreshed_auth_accounts(client, account_id).await? {
             let slug = account.account_auth_provider_account_slug.clone();
             println!(
                 "[BUNDLER] Inserting account with slug: {} at accounts.{}",
@@ -194,7 +194,7 @@ pub async fn bundle_variables(
         }
     } else {
         println!("[BUNDLER] Skipping refresh of auth accounts. Just Bundling.");
-        for account in get_auth_accounts(client, &task.account_id.to_string()).await? {
+        for account in get_auth_accounts(client, account_id).await? {
             let slug = account.account_auth_provider_account_slug.clone();
             println!(
                 "[BUNDLER] Inserting account with slug: {} at accounts.{}",
@@ -214,7 +214,7 @@ pub async fn bundle_variables(
 
     // Add secrets to the render_variables_context
     let mut secrets: HashMap<String, Value> = HashMap::new();
-    for secret in get_decrypted_secrets(client, &task.account_id.to_string()).await? {
+    for secret in get_decrypted_secrets(client, account_id).await? {
         let secret_name = secret.secret_name.clone();
         let secret_value = secret.secret_value.clone();
         println!("[BUNDLER] Inserting secret with name: {}", secret_name);
@@ -230,11 +230,8 @@ pub async fn bundle_variables(
     );
 
     //Add task responses to the render_variables_context
-    // Add secrets to the render_variables_context
     let mut completed_tasks: HashMap<String, Value> = HashMap::new();
-    for completed_task in
-        get_completed_tasks_for_session(client, &&task.flow_session_id.to_string()).await?
-    {
+    for completed_task in get_completed_tasks_for_session(client, flow_session_id).await? {
         completed_tasks.insert(
             completed_task.action_id.to_string(),
             serde_json::to_value(completed_task)?,
@@ -254,73 +251,105 @@ pub async fn bundle_variables(
     // Create a new Templater instance
     let mut templater = Templater::new();
 
-    // Add the task definition as a template
-    if let Some(variables) = task.config.get("variables") {
-        // let variables_str = variables.to_string();
-        println!("[BUNDLER] Task variables definition: {}", variables.clone());
-        templater.add_template("task_variables_definition", variables.clone());
-    } else {
-        println!("[BUNDLER] No variables found in task config");
-    }
-
-    // Get the variables from the task definition
-    let variables = templater.get_template_variables("task_variables_definition")?;
-
-    // Print the variables
-    println!("[BUNDLER] Variables from task variables definition:");
-    for (index, variable) in variables.iter().enumerate() {
-        println!("  {}. {}", index + 1, variable);
-    }
-
     // Convert context HashMap to Value
     let context_value = serde_json::to_value(render_variables_context.clone())?;
 
-    // Render the task definition with the context
-    let rendered_variables_definition =
-        templater.render("task_variables_definition", &context_value)?;
-    println!(
-        "[BUNDLER] Rendered variables output: {}",
-        rendered_variables_definition
-    );
+    // Add the task definition as a template and render if it exists
+    if let Some(variables) = variables_config {
+        println!("[BUNDLER] Task variables definition: {}", variables.clone());
+        templater.add_template("task_variables_definition", variables.clone());
 
-    Ok(rendered_variables_definition)
+        // Get the variables from the task definition
+        let variables = templater.get_template_variables("task_variables_definition")?;
+
+        // Print the variables
+        println!("[BUNDLER] Variables from task variables definition:");
+        for (index, variable) in variables.iter().enumerate() {
+            println!("  {}. {}", index + 1, variable);
+        }
+
+        // Render the task definition with the context
+        let rendered_variables_definition =
+            templater.render("task_variables_definition", &context_value)?;
+        println!(
+            "[BUNDLER] Rendered variables output: {}",
+            rendered_variables_definition
+        );
+
+        Ok(rendered_variables_definition)
+    } else {
+        println!("[BUNDLER] No variables found in task config, returning empty object");
+        Ok(json!({}))
+    }
 }
 
-pub async fn bundle_context(
-    client: &Postgrest,
-    task: &Task,
-    refresh_auth: bool,
+fn bundle_inputs(
+    rendered_variables: Value,
+    inputs: Option<&Value>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    println!("[BUNDLER] Starting to bundle context for task: {:?}", task);
-
-    let rendered_variables_definition = bundle_variables(client, task, refresh_auth).await?;
-
     let mut render_input_context: HashMap<String, Value> = HashMap::new();
-
-    render_input_context.insert("variables".to_string(), rendered_variables_definition);
+    render_input_context.insert("variables".to_string(), rendered_variables);
 
     // Create a new Templater instance for rendering inputs
     let mut templater = Templater::new();
 
     // Convert context HashMap to Value
-    let iputs_context_value = serde_json::to_value(render_input_context.clone())?;
+    let inputs_context_value = serde_json::to_value(render_input_context.clone())?;
 
-    // Add the task definition as a template
-    if let Some(inputs) = task.config.get("inputs") {
-        // let inputs_str = inputs.to_string();
+    // Add the task definition as a template and render if it exists
+    if let Some(inputs) = inputs {
         println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
         templater.add_template("task_inputs_definition", inputs.clone());
+
+        // Render the task definition with the context
+        let rendered_inputs_definition =
+            templater.render("task_inputs_definition", &inputs_context_value)?;
+        println!(
+            "[BUNDLER] Rendered inputs output: {}",
+            rendered_inputs_definition
+        );
+        Ok(rendered_inputs_definition)
     } else {
-        println!("[BUNDLER] No variables found in task config");
+        println!("[BUNDLER] No inputs found in task config, returning empty object");
+        Ok(json!({}))
     }
+}
 
-    // Render the task definition with the context
-    let rendered_inputs_definition =
-        templater.render("task_inputs_definition", &iputs_context_value)?;
-    println!(
-        "[BUNDLER] Rendered inputs ouput: {}",
-        rendered_inputs_definition
-    );
+pub async fn bundle_context(
+    client: &Postgrest,
+    account_id: &str,
+    flow_session_id: &str,
+    variables_config: Option<&Value>,
+    inputs_config: Option<&Value>,
+    refresh_auth: bool,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    println!("[BUNDLER] Starting to bundle context from parts");
 
-    Ok(rendered_inputs_definition)
+    let rendered_variables_definition = bundle_variables(
+        client,
+        account_id,
+        flow_session_id,
+        variables_config,
+        refresh_auth,
+    )
+    .await?;
+
+    bundle_inputs(rendered_variables_definition, inputs_config)
+}
+
+// Helper function to bundle context for a task
+pub async fn bundle_task_context(
+    client: &Postgrest,
+    task: &Task,
+    refresh_auth: bool,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    bundle_context(
+        client,
+        task.account_id.to_string().as_str(),
+        task.flow_session_id.to_string().as_str(),
+        task.config.get("variables"),
+        task.config.get("input"),
+        refresh_auth,
+    )
+    .await
 }

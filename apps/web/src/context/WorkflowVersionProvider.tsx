@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { useParams, useRouter } from "next/navigation";
-import { cloneDeep, debounce } from "lodash";
+import { cloneDeep, conforms, debounce } from "lodash";
 
 import {
   addEdge,
@@ -80,7 +80,11 @@ export interface WorkflowVersionContextInterface {
   explorerTab: string;
   setExplorerTab: (tab: string) => void;
   showActionSheetForEdge: (id: string) => void;
+  showActionSheetToChangeTrigger: () => void;
+  changeTrigger: (trigger: any) => void;
   showActionSheet: () => void;
+  actionSheetMode: string;
+  setActionSheetMode: (mode: string) => void;
   nodes: Node[];
   edges: Edge[];
   onNodesChange: OnNodesChange;
@@ -117,8 +121,12 @@ export const WorkflowVersionContext =
     detailedMode: true,
     setDetailedMode: () => {},
     showActionSheetForEdge: () => {},
+    showActionSheetToChangeTrigger: () => {},
     setShowingActionSheet: () => {},
     showActionSheet: () => {},
+    setActionSheetMode: () => {},
+    changeTrigger: () => {},
+    actionSheetMode: "actions",
     nodes: [],
     edges: [],
     onNodesChange: () => {},
@@ -167,6 +175,7 @@ export const WorkflowVersionProvider = ({
   const [savingStatus, setSavingStatus] = useState<string>(SavingStatus.NONE);
   //Action sheet for adding nodes
   const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
+  const [actionSheetMode, setActionSheetMode] = useState<string>("actions");
   const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
 
   const [showExplorer, setShowExplorer] = useState<boolean>(false);
@@ -174,12 +183,21 @@ export const WorkflowVersionProvider = ({
 
   const showActionSheetForEdge = (id: string) => {
     console.log("Show Action Sheet for Edge: ", id);
+    setActionSheetMode("actions");
     setShowingActionSheet(true);
     setActionSheetEdge(id);
   };
 
+  const showActionSheetToChangeTrigger = () => {
+    console.log("Show Action Sheet to Change Trigger");
+    setActionSheetMode("triggers");
+    setShowingActionSheet(true);
+    setActionSheetEdge("");
+  };
+
   const showActionSheet = () => {
     console.log("Show Action Sheet");
+    setActionSheetMode("actions");
     setShowingActionSheet(true);
     setActionSheetEdge("");
   };
@@ -231,6 +249,57 @@ export const WorkflowVersionProvider = ({
     saveFlowVersionImmediate(udpatedNodes, edges);
 
     setNodes(() => udpatedNodes);
+  };
+
+  const changeTrigger = (new_trigger: any) => {
+    console.log("Changing Trigger", new_trigger);
+
+    //Find the trigger node
+    let triggerNode = nodes.find((node) => node.data.type === "trigger");
+    if (!triggerNode) {
+      console.error("No Trigger Node Found");
+      return;
+    }
+
+    console.log("[CHANGE TRIGGER] Old Trigger Node: ", triggerNode);
+
+    //New triggger node old position
+    let updatedTriggerNode: Node = {
+      id: new_trigger.plugin_id,
+      type: "anything",
+      position: triggerNode.position,
+      data: { ...new_trigger, action_id: new_trigger.plugin_id },
+    };
+
+    console.log("[CHANGE TRIGGER] New Trigger Node", updatedTriggerNode);
+
+    //Update the nodes array
+    let updatedNodes = nodes.map((node) => {
+      if (triggerNode && node.id === triggerNode.id) {
+        //Swap in new node
+        return updatedTriggerNode;
+      }
+      return node;
+    });
+
+    // Update edges with new trigger node id if needed
+    let updatedEdges = edges.map((edge) => {
+      if (triggerNode && edge.source === triggerNode.id) {
+        let new_edge = {
+          ...edge,
+          id: `${updatedTriggerNode.id}->${edge.target}`,
+          source: updatedTriggerNode.id,
+        };
+        console.log("[CHANGE TRIGGER] New Edge", new_edge);
+        return new_edge;
+      }
+      return edge;
+    });
+
+    saveFlowVersionImmediate(updatedNodes, updatedEdges);
+
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
   };
 
   const updateWorkflow = async (args: UpdateWorklowArgs) => {
@@ -738,6 +807,10 @@ export const WorkflowVersionProvider = ({
         detailedMode,
         setDetailedMode,
         setShowingActionSheet,
+        showActionSheetToChangeTrigger,
+        changeTrigger,
+        actionSheetMode,
+        setActionSheetMode,
         showActionSheetForEdge,
         showActionSheet,
         setPanelTab: set_panel_tab,
