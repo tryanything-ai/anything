@@ -99,7 +99,7 @@ pub struct CreateTaskInput {
     pub stage: String,
     pub config: Value,
     pub result: Option<Value>,
-    pub test_config: Option<Value>, // context: Value,
+    pub test_config: Option<Value>, // deprecate
     pub processing_order: i32,
 }
 

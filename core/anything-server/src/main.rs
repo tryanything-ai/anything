@@ -212,7 +212,8 @@ pub async fn root() -> impl IntoResponse {
     // API Routes for running workflows - some protection done at api.rs vs route level
     .route("/api/v1/workflow/:workflow_id/start/respond", post(system_actions::webhook_trigger::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/start", post(system_actions::webhook_trigger::run_workflow))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(system_actions::webhook_trigger::run_workflow_version));
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(system_actions::webhook_trigger::run_workflow_version))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", post(system_actions::webhook_trigger::run_workflow_version_and_respond));
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))

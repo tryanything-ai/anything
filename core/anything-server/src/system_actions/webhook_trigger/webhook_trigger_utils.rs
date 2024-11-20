@@ -127,7 +127,7 @@ pub async fn validate_security_model(
     rendered_inputs: &Value,
     headers: &HeaderMap,
     state: Arc<AppState>,
-) -> impl IntoResponse {
+) -> Option<impl IntoResponse> {
     // Extract the security model from the rendered inputs
     println!("[WEBHOOK API] Extracting security model from rendered inputs");
     let security_model = rendered_inputs
@@ -141,10 +141,7 @@ pub async fn validate_security_model(
     );
 
     match security_model {
-        "none" => {
-            println!("[WEBHOOK API] No security validation required");
-            Ok(())
-        }
+        "none" => None,
         "basic_auth" => {
             println!("[WEBHOOK API] Validating Basic Auth");
             let expected_username = rendered_inputs.get("username").and_then(|v| v.as_str());
@@ -152,15 +149,15 @@ pub async fn validate_security_model(
 
             if expected_username.is_none() || expected_password.is_none() {
                 println!("[WEBHOOK API] Missing username or password configuration");
-                return Err((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
+                return Some((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
             }
 
             let auth_header = match headers.get("authorization") {
                 Some(header) => header,
                 None => {
                     println!("[WEBHOOK API] No Authorization header found");
-                    return Err(
-                        (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response()
+                    return Some(
+                        (StatusCode::UNAUTHORIZED, "Missing Authorization header").into_response(),
                     );
                 }
             };
@@ -168,8 +165,8 @@ pub async fn validate_security_model(
             let auth_str = String::from_utf8_lossy(auth_header.as_bytes());
             if !auth_str.starts_with("Basic ") {
                 println!("[WEBHOOK API] Invalid Authorization header format");
-                return Err(
-                    (StatusCode::UNAUTHORIZED, "Invalid Authorization header").into_response()
+                return Some(
+                    (StatusCode::UNAUTHORIZED, "Invalid Authorization header").into_response(),
                 );
             }
 
@@ -177,7 +174,7 @@ pub async fn validate_security_model(
                 Ok(decoded) => String::from_utf8_lossy(&decoded).to_string(),
                 Err(_) => {
                     println!("[WEBHOOK API] Failed to decode Basic Auth credentials");
-                    return Err((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
+                    return Some((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
                 }
             };
 
@@ -187,25 +184,25 @@ pub async fn validate_security_model(
                 || parts[1] != expected_password.unwrap()
             {
                 println!("[WEBHOOK API] Invalid Basic Auth credentials");
-                return Err((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
+                return Some((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
             }
-            Ok(())
+            None
         }
         "api_key" => {
             println!("[WEBHOOK API] Validating API Key");
             let api_key = match headers.get("Authorization").and_then(|h| h.to_str().ok()) {
                 Some(header) if header.starts_with("Bearer ") => header[7..].to_string(),
                 _ => {
-                    return Err(
-                        (StatusCode::UNAUTHORIZED, "Missing or invalid API key").into_response()
+                    return Some(
+                        (StatusCode::UNAUTHORIZED, "Missing or invalid API key").into_response(),
                     );
                 }
             };
 
             // Validate the API key
             match validate_api_key(state, api_key.clone()).await {
-                Ok(_account_id) => Ok(()),
-                Err(status) => Err((status, "Invalid API key").into_response()),
+                Ok(_account_id) => None,
+                Err(status) => Some((status, "Invalid API key").into_response()),
             }
         }
         "custom_header" => {
@@ -217,8 +214,8 @@ pub async fn validate_security_model(
                 Some(name) => name,
                 None => {
                     println!("[WEBHOOK API] No custom header name configured");
-                    return Err(
-                        (StatusCode::UNAUTHORIZED, "Invalid header configuration").into_response()
+                    return Some(
+                        (StatusCode::UNAUTHORIZED, "Invalid header configuration").into_response(),
                     );
                 }
             };
@@ -230,8 +227,8 @@ pub async fn validate_security_model(
                 Some(value) => value,
                 None => {
                     println!("[WEBHOOK API] No custom header value configured");
-                    return Err(
-                        (StatusCode::UNAUTHORIZED, "Invalid header configuration").into_response()
+                    return Some(
+                        (StatusCode::UNAUTHORIZED, "Invalid header configuration").into_response(),
                     );
                 }
             };
@@ -240,21 +237,21 @@ pub async fn validate_security_model(
                 Some(value) => String::from_utf8_lossy(value.as_bytes()),
                 None => {
                     println!("[WEBHOOK API] Required custom header not found");
-                    return Err(
-                        (StatusCode::UNAUTHORIZED, "Missing required header").into_response()
+                    return Some(
+                        (StatusCode::UNAUTHORIZED, "Missing required header").into_response(),
                     );
                 }
             };
 
             if header_value != expected_value {
                 println!("[WEBHOOK API] Invalid custom header value");
-                return Err((StatusCode::UNAUTHORIZED, "Invalid header value").into_response());
+                return Some((StatusCode::UNAUTHORIZED, "Invalid header value").into_response());
             }
-            Ok(())
+            None
         }
         _ => {
             println!("[WEBHOOK API] Invalid security model specified");
-            Err((StatusCode::BAD_REQUEST, "Invalid security model").into_response())
+            Some((StatusCode::BAD_REQUEST, "Invalid security model").into_response())
         }
     }
 }

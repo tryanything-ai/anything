@@ -59,15 +59,14 @@ export default function WorkflowSettingsTab(): JSX.Element {
           <div className="text-sm font-medium ml-1">Call Deployed Workflow</div>
           <div className="flex items-center gap-2">
             <code className="flex-1 p-2 bg-muted rounded-md text-sm overflow-x-auto">
-              https://api.tryanything.xyz/api/v1/workflow/{workflow.db_flow_id}
-              /start
+              {`${process.env.NEXT_PUBLIC_ANYTHING_API_URL}/api/v1/workflow/${workflow.db_flow_id}/start`}
             </code>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `https://api.tryanything.xyz/api/v1/workflow/${workflow.db_flow_id}/start`,
+                  `${process.env.NEXT_PUBLIC_ANYTHING_API_URL}/api/v1/workflow/${workflow.db_flow_id}/start`,
                 );
               }}
             >
@@ -82,17 +81,16 @@ export default function WorkflowSettingsTab(): JSX.Element {
           </div>
           <div className="flex items-center gap-2">
             <code className="flex-1 p-2 bg-muted rounded-md text-sm overflow-x-auto">
-              https://api.tryanything.xyz/api/v1/workflow/{workflow.db_flow_id}
-              /version/{workflow.db_flow_version_id}/start
+              {`${process.env.NEXT_PUBLIC_ANYTHING_API_URL}/api/v1/workflow/${workflow.db_flow_id}/version/${workflow.db_flow_version_id}/start`}
             </code>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `https://api.tryanything.xyz/api/v1/workflow/${workflow.db_flow_id}/version/${workflow.db_flow_version_id}/start`,
+                  `${process.env.NEXT_PUBLIC_ANYTHING_API_URL}/api/v1/workflow/${workflow.db_flow_id}/version/${workflow.db_flow_version_id}/start`,
                 );
-              }}
+              }}  
             >
               Copy
             </Button>
