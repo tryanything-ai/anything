@@ -2,13 +2,14 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Send, XIcon } from "lucide-react";
+import { BarChart, Send, XIcon } from "lucide-react";
 import { ShareDialog } from "@/components/studio/share-dialog";
 import { useAnything } from "@/context/AnythingContext";
 import WorkflowToggle from "../workflows/workflow-toggle";
 import { useParams } from "next/navigation";
 
 import FreeTrialBadge from "../free-trial-badge";
+import Link from "next/link";
 
 export default function StudioHeader(): JSX.Element {
   const router = useRouter();
@@ -17,7 +18,8 @@ export default function StudioHeader(): JSX.Element {
   const { workflow } = useAnything();
 
   const handleBack = () => {
-    router.push(`/workflows/${params.workflowId}`);
+    // router.push(`/workflows/${params.workflowId}`);
+    router.push(`/workflows`);
   };
 
   return (
@@ -43,11 +45,14 @@ export default function StudioHeader(): JSX.Element {
         {"  "}
         {workflow.savingStatus}
       </div>
-
-      {/* TODO:bring this back */}
-
       <div className="ml-auto flex items-center gap-2">
         <FreeTrialBadge />
+        <Link href={`/workflows/${params.workflowId}`}>
+          <Button size="sm" variant={"outline"}>
+            <BarChart className="size-3.5 mr-1" />
+            View History
+          </Button>
+        </Link>
         <ShareDialog />
         {workflow &&
         workflow.db_flow_version &&
@@ -56,11 +61,10 @@ export default function StudioHeader(): JSX.Element {
             variant="outline"
             size="sm"
             disabled={true}
-            // onClick={() => workflow.publishWorkflowVersion()}
             className="gap-1.5 text-sm bg-green-400 disabled:opacity-100"
           >
             <Send className="size-3.5" />
-            Published
+            Live
           </Button>
         ) : (
           <Button
@@ -70,7 +74,7 @@ export default function StudioHeader(): JSX.Element {
             className="gap-1.5 text-sm bg-gray-200 hover:bg-green-400"
           >
             <Send className="size-3.5" />
-            Publish
+            Deploy
           </Button>
         )}
       </div>

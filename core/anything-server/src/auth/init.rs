@@ -1,7 +1,7 @@
+use crate::auth::utils::insert_secret_to_vault;
 use crate::AppState;
-use crate::{auth::utils::insert_secret_to_vault, supabase_auth_middleware::User};
 use axum::{
-    extract::{Extension, Path, Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     Json,
@@ -250,7 +250,7 @@ pub async fn handle_provider_callback(
     let vault_access_token_name = slugify!(
         format!(
             "access_token_for_{}_for_account_{}",
-            auth_provider.auth_provider_id.clone(),
+            account_slug.clone(), //change so we can have multiple per account //its not used for fetching just unique id
             auth_state.account_id.clone()
         )
         .as_str(),
@@ -275,7 +275,7 @@ pub async fn handle_provider_callback(
     let vault_refresh_token_name = slugify!(
         format!(
             "refresh_token_for_{}_for_account_{}",
-            auth_provider.auth_provider_id.clone(),
+            account_slug.clone(), //
             auth_state.account_id.clone()
         )
         .as_str(),
@@ -561,7 +561,7 @@ pub async fn initiate_auth(
     let client_id = auth_provider.client_id.clone();
     let redirect_uri = auth_provider.redirect_url.clone();
     let auth_url = auth_provider.auth_url.clone();
-    // let scope = "data.records:read data.records:write"; //TODO: Replace with your actual scopes
+
     let scope = auth_provider.scopes.clone();
     let code_challenge = generate_code_challenge(&code_verifier).await; // Assuming you have a function to generate code challenge
 

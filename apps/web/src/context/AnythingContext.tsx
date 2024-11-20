@@ -32,6 +32,11 @@ import {
   WorkflowVersionControlProvider,
   useWorkflowVersionControl,
 } from "./WorkflowVersionControlContext";
+import {
+  useVariablesExplorer,
+  VariablesExplorerInterface,
+  VariablesExplorerProvider,
+} from "./VariablesExplorerContext";
 
 interface AnythingContextInterface {
   accounts: AccountsContextInterface;
@@ -40,6 +45,7 @@ interface AnythingContextInterface {
   version_control: WorkflowVersionControlContextInterface;
   variables: VariablesContextInterface;
   testing: WorkflowTestingContextInterface;
+  explorer: VariablesExplorerInterface;
 }
 
 const AnythingContext = createContext<AnythingContextInterface | undefined>(
@@ -71,7 +77,9 @@ const AnythingProviderInner = ({ children }: { children: React.ReactNode }) => {
         <WorkflowVersionProvider>
           <VariablesProvider>
             <WorkflowTestingProvider>
-              <AnythingContextProvider>{children}</AnythingContextProvider>
+              <VariablesExplorerProvider>
+                <AnythingContextProvider>{children}</AnythingContextProvider>
+              </VariablesExplorerProvider>
             </WorkflowTestingProvider>
           </VariablesProvider>
         </WorkflowVersionProvider>
@@ -91,6 +99,7 @@ const AnythingContextProvider = ({
   const workflow = useWorkflowVersion();
   const variables = useVariables();
   const testing = useWorkflowTesting();
+  const explorer = useVariablesExplorer();
 
   const value = useMemo(
     () => ({
@@ -100,8 +109,17 @@ const AnythingContextProvider = ({
       workflow,
       variables,
       testing,
+      explorer,
     }),
-    [accounts, subscription, version_control, workflow, variables, testing],
+    [
+      accounts,
+      subscription,
+      version_control,
+      workflow,
+      variables,
+      testing,
+      explorer,
+    ],
   );
 
   return (

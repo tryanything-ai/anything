@@ -13,7 +13,7 @@ const tiers = [
   {
     name: "Pay As You Go",
     id: "payg",
-    href: `https://app.${window.location.hostname.replace('www.', '')}/signup`,
+    href: `https://app.${process.env.NEXT_PUBLIC_HOSTED_URL?.replace(/^https?:\/\//, '').replace('www.', '')}/signup`,
     price: { monthly: "$9.99", annually: "$50" },
     description: "A plan that scales to Anything.",
     features: [
@@ -45,7 +45,7 @@ const tiers = [
   },
 ];
 
-function classNames(...classes: any) {
+function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -53,8 +53,8 @@ export default function PricingGroup() {
   const [frequency, setFrequency] = useState(frequencies[0]);
   const router = useRouter();
 
-  const handleTierCTA = (tier: any) => {
-    window.location.href = tier.href;
+  const handleTierCTA = (tier: (typeof tiers)[number]) => {
+    router.push(tier.href);
   };
 
   return (
@@ -72,25 +72,7 @@ export default function PricingGroup() {
           Whether you're looking for a self-service solution or a fully managed
           service, we've got you covered.
         </p>
-        {/* <div className="mt-16 flex justify-center">
-          <fieldset aria-label="Payment frequency">
-            <RadioGroup
-              value={frequency}
-              onChange={setFrequency}
-              className="grid grid-cols-2 gap-x-1 rounded-full p-1 text-center text-xs font-semibold leading-5 ring-1 ring-inset ring-gray-200"
-            >
-              {frequencies.map((option) => (
-                <Radio
-                  key={option.value}
-                  value={option}
-                  className="cursor-pointer rounded-full px-2.5 py-1 text-gray-500 data-[checked]:bg-purple-600 data-[checked]:text-white"
-                >
-                  {option.label}
-                </Radio>
-              ))}
-            </RadioGroup>
-          </fieldset>
-        </div> */}
+        {/* Frequency selector commented out */}
         <div className="isolate mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-2">
           {tiers.map((tier) => (
             <div
@@ -126,19 +108,18 @@ export default function PricingGroup() {
                 >
                   {typeof tier.price === "string"
                     ? tier.price
-                    : frequency &&
-                      tier.price[frequency.value as keyof typeof tier.price]}
+                    : tier.price[frequency?.value as keyof typeof tier.price]}
                 </span>
-                {typeof tier.price !== "string" && frequency ? (
+                {typeof tier.price !== "string" && (
                   <span
                     className={classNames(
                       tier.featured ? "text-gray-300" : "text-gray-600",
                       "text-sm font-semibold leading-6",
                     )}
                   >
-                    {frequency.priceSuffix}
+                    {frequency?.priceSuffix}
                   </span>
-                ) : null}
+                )}
               </p>
               <button
                 onClick={() => handleTierCTA(tier)}

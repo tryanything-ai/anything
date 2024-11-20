@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 
 use crate::AppState;
 use std::env;
@@ -260,3 +260,4 @@ pub async fn publish_action_template(
 
     Json(response).into_response()
 }
+

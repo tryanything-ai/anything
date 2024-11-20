@@ -8,7 +8,7 @@ const NoNodeSelected = (): JSX.Element => {
           <ArrowBigLeft size={36} />
         </div>
         <div className="text-xl font-normal">
-          <div>Select a node</div>
+          <div>Select an Action</div>
           <div>to configure</div>
         </div>
       </div>

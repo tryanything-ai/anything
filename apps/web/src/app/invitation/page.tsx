@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 export default async function AcceptInvitationPage({
   searchParams,
 }: {
-  searchParams: { token?: string };
-}): Promise<JSX.Element> {
+  searchParams: any;
+}) {
   if (!searchParams.token) {
     redirect("/");
   }

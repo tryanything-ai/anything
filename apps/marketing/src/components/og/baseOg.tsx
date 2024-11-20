@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { ImageResponse } from "next/og";
 
-const this_url = "http://" + process.env.NEXT_PUBLIC_VERCEL_URL;
+const this_url = "http://" + process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
 // Route segment config
 export const runtime = "edge";

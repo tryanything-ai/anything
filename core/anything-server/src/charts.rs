@@ -8,7 +8,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 
 use chrono::{DateTime, Duration, TimeZone, Utc};

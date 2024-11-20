@@ -28,9 +28,13 @@ export interface Action {
   description?: string;
   icon: string;
   variables: Variable;
+  variables_locked: boolean;
   variables_schema: Variable; //Action Variables. Almost like node level .env
+  variables_schema_locked: boolean;
   input: Variable;
+  input_locked: boolean;
   input_schema: Variable;
+  input_schema_locked: boolean;
   presentation?: NodePresentation;
   handles?: HandleProps[];
 }

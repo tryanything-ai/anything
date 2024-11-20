@@ -1,4 +1,4 @@
-use crate::supabase_auth_middleware::User;
+use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, State},
@@ -387,13 +387,12 @@ pub async fn publish_workflow_to_marketplace(
     let combined_response = json!({
         "flow_template": marketplace_item[0],
         "flow_template_version": flow_version_item[0],
-        "marketplace_url": format!("https://tryanything.xyz/templates/{}", template_slug.clone())
+        "marketplace_url": format!("https://www.tryanything.xyz/templates/{}", template_slug.clone())
     });
 
     println!("[PUBLISH FLOW AS TEMPLATE] Publishing complete, returning response");
     Json(combined_response).into_response()
 }
-
 
 // Workflows
 pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -410,7 +409,7 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
         Ok(response) => {
             println!("[MARKETPLACE] Request successful: {:?}", response);
             response
-        },
+        }
         Err(e) => {
             println!("[MARKETPLACE] Failed to execute request: {:?}", e);
             return (
@@ -425,7 +424,7 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
         Ok(body) => {
             println!("[MARKETPLACE] Response body: {:?}", body);
             body
-        },
+        }
         Err(e) => {
             println!("[MARKETPLACE] Failed to read response body: {:?}", e);
             return (
@@ -440,7 +439,7 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
         Ok(items) => {
             println!("[MARKETPLACE] Parsed JSON successfully: {:?}", items);
             items
-        },
+        }
         Err(e) => {
             println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
@@ -450,53 +449,6 @@ pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> im
     println!("[MARKETPLACE] Returning JSON response: {:?}", items);
     Json(items).into_response()
 }
-// // Workflows
-// pub async fn get_marketplace_workflows(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-//     let client = &state.marketplace_client;
-
-//     println!("[MARKETPLACE] Fetching workflow templates");
-
-//     let response = match client
-//         .from("flow_templates")
-//         .select("*, flow_template_versions(*), tags(*), profiles(*)")
-//         .execute()
-//         .await
-//     {
-//         Ok(response) => response,
-//         Err(e) => {
-//             println!("[MARKETPLACE] Failed to execute request: {:?}", e);
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to execute request",
-//             )
-//                 .into_response();
-//         }
-//     };
-
-//     let body = match response.text().await {
-//         Ok(body) => body,
-//         Err(e) => {
-//             println!("[MARKETPLACE] Failed to read response body: {:?}", e);
-//             return (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to read response body",
-//             )
-//                 .into_response();
-//         }
-//     };
-
-//     let items: Value = match serde_json::from_str(&body) {
-//         Ok(items) => items,
-//         Err(e) => {
-//             println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
-//             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
-//         }
-//     };
-
-//     // println!("[MARKETPLACE] Query result: {:?}", items);
-
-//     Json(items).into_response()
-// }
 
 pub async fn get_marketplace_workflow_by_slug(
     State(state): State<Arc<AppState>>,
@@ -595,4 +547,155 @@ pub async fn generate_unique_marketplace_slug(
     }
 
     slug
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateWorkflowVersionInput {
+    account_id: String,
+    flow_id: String,
+    flow_definition: Value,
+    from_template: Option<bool>,
+    parent_flow_template_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateWorkflowInput {
+    flow_id: String,
+    flow_name: String,
+    description: String,
+    account_id: String,
+}
+
+pub async fn clone_marketplace_workflow_template(
+    State(state): State<Arc<AppState>>,
+    Path((account_id, template_id)): Path<(String, String)>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    let client = &state.marketplace_client;
+
+    println!("[MARKETPLACE] Fetching workflow template to clone");
+
+    //Fetch the template
+    let response = match client
+        .from("flow_templates")
+        .select("*, flow_template_versions(*), tags(*), profiles(*)")
+        .eq("flow_template_id", &template_id)
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[MARKETPLACE] Request successful: {:?}", response);
+            response
+        }
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to execute request: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => {
+            println!("[MARKETPLACE] Response body: {:?}", body);
+            body
+        }
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to read response body: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let template: Value = match serde_json::from_str(&body) {
+        Ok(item) => {
+            println!("[MARKETPLACE] Parsed JSON successfully: {:?}", item);
+            item
+        }
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    // Create new Workflow in user's account
+    let input = CreateWorkflowInput {
+        flow_id: Uuid::new_v4().to_string(), // Generate a new UUID for the flow
+        flow_name: template["flow_template_name"]
+            .as_str()
+            .unwrap_or("New Flow")
+            .to_string(),
+        description: template["flow_template_description"]
+            .as_str()
+            .unwrap_or("")
+            .to_string(),
+        account_id: account_id.to_string(), // Assuming account_id is already defined
+    };
+
+    let response = match state
+        .anything_client
+        .from("flows")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&input).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[MARKETPLACE] Request successful: {:?}", response);
+            response
+        }
+        Err(e) => {
+            println!("[MARKETPLACE] Failed to execute request: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    //Create new flow version for that workflow
+    let flow_version_input = CreateWorkflowVersionInput {
+        account_id: account_id.to_string(),
+        flow_id: input.flow_id.clone(),
+        flow_definition: template["flow_template_versions"][0]["flow_definition"].clone(),
+        from_template: Some(true),
+        parent_flow_template_id: Some(template_id.clone()),
+    };
+
+    let flow_version_response = match state
+        .anything_client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&flow_version_input).unwrap())
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("Flow version creation response: {:?}", response);
+            response
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response()
+        }
+    };
+
+    // Return an object with the flow_id and flow_version_id
+    let response_data = json!({
+        "flow_id": input.flow_id,
+        "flow_version_id": flow_version_response.json::<serde_json::Value>().await.unwrap()["flow_version_id"].as_str().unwrap(),
+    });
+
+    Json(response_data).into_response()
 }

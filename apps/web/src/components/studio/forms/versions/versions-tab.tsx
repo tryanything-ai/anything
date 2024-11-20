@@ -30,14 +30,21 @@ export default function VersionsTab(): JSX.Element {
               )}
               {version.published && (
                 <Badge className="inline-flex items-center px-3 py-1 rounded-full bg-green-200 text-green-800 hover:bg-green-200 ml-1">
-                  Published
+                  Live
                 </Badge>
               )}
             </div>
           </div>
           {/* Bottom Row */}
-          <div className="col-span-3 text-sm text-gray-500 mt-2">
-            id: {version.flow_version_id}
+          <div className="flex flex-col gap-1 mt-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Workflow ID:</span>
+              <code className="text-sm text-gray-500 select-all">{version.flow_id}</code>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Version ID:</span>
+              <code className="text-sm text-gray-500 select-all">{version.flow_version_id}</code>
+            </div>
           </div>
         </Link>
       ))}

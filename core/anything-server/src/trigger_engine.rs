@@ -6,7 +6,9 @@ use dotenv::dotenv;
 use std::env;
 
 use crate::{
+    bundler::bundle_task_context,
     task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
+    workflow_types::Task,
     AppState,
 };
 
@@ -124,7 +126,8 @@ async fn update_triggers_for_workflow(
 
     //Add new triggers to new_triggers
     for flow_version in flow_versions {
-        let triggers_from_flow = create_in_memory_triggers_from_flow_definition(&flow_version);
+        let triggers_from_flow =
+            create_in_memory_triggers_from_flow_definition(&flow_version, client).await;
         new_triggers.extend(triggers_from_flow);
     }
 
@@ -164,7 +167,7 @@ pub async fn hydrate_triggers(
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    let response = match client
+    let response = match client //TODO: pagination for large number of triggers
         .from("flow_versions")
         .auth(supabase_service_role_api_key.clone())
         .select("flow_id, flow_version_id, flow_definition, account_id, flows!inner(active)") // TODO: only fetch active flows
@@ -211,7 +214,8 @@ pub async fn hydrate_triggers(
 
     //Add new triggers to new_triggers
     for flow_version in flow_versions {
-        let triggers_from_flow = create_in_memory_triggers_from_flow_definition(&flow_version);
+        let triggers_from_flow =
+            create_in_memory_triggers_from_flow_definition(&flow_version, client).await;
 
         for (workflow_id, new_trigger) in triggers_from_flow {
             // Check if the trigger already exists in memory
@@ -325,7 +329,7 @@ async fn create_trigger_task(
 
     let task_config = TaskConfig {
         variables: trigger.config.get("variables").cloned().unwrap_or_default(),
-        inputs: trigger.config.get("input").cloned().unwrap_or_default(),
+        input: trigger.config.get("input").cloned().unwrap_or_default(),
     };
 
     let input = CreateTaskInput {
@@ -344,6 +348,7 @@ async fn create_trigger_task(
         plugin_id: trigger.trigger_id.clone(),
         stage: Stage::Production.as_str().to_string(),
         config: serde_json::json!(task_config),
+        result: None,
         test_config: None,
         processing_order: 0,
     };
@@ -358,6 +363,7 @@ async fn create_trigger_task(
     let body = response.text().await?;
     let _items: Value = serde_json::from_str(&body)?;
 
+    // Send signal to task engine to process the new task
     if let Err(err) = state.task_engine_signal.send(()) {
         println!("Failed to send task signal: {:?}", err);
     }
@@ -367,8 +373,9 @@ async fn create_trigger_task(
     Ok(())
 }
 
-pub fn create_in_memory_triggers_from_flow_definition(
+pub async fn create_in_memory_triggers_from_flow_definition(
     flow_version: &Value,
+    client: &Postgrest,
 ) -> HashMap<String, InMemoryTrigger> {
     let mut triggers = HashMap::new();
 
@@ -381,26 +388,98 @@ pub fn create_in_memory_triggers_from_flow_definition(
     ) {
         if let Some(actions) = flow_definition.get("actions").and_then(|v| v.as_array()) {
             for action in actions {
-                if let (Some(trigger_id), Some(r#type), Some(action_id)) = (
+                if let (Some(plugin_id), Some(r#type), Some(action_id)) = (
                     action.get("plugin_id").and_then(|v| v.as_str()),
                     action.get("type").and_then(|v| v.as_str()),
                     action.get("action_id").and_then(|v| v.as_str()),
                 ) {
-                    if r#type == "trigger" {
+                    if r#type == "trigger" && plugin_id == "cron" {
+                        println!(
+                            "[TRIGGER ENGINE] Processing trigger action with ID: {}",
+                            action_id
+                        );
                         let input = action.get("input").cloned().unwrap_or_default();
                         let variables = action.get("variables").cloned().unwrap_or_default();
 
-                        let config = serde_json::json!({
-                            "input": input,
-                            "variables": variables,
-                        });
+                        println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
+                        println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
 
-                        let cron_expression = config["input"]["cron_expression"]
+                        // let config = serde_json::json!({
+                        //     "input": input,
+                        //     "variables": variables,
+                        // });
+
+                        // println!("[TRIGGER ENGINE] Created config: {:?}", config);
+
+                        // Parse action into Task structure
+                        let mock_task = Task {
+                            task_id: Uuid::new_v4(),
+                            account_id: Uuid::parse_str(&account_id).unwrap_or_default(),
+                            task_status: "pending".to_string(),
+                            flow_id: Uuid::new_v4(),
+                            flow_version_id: Uuid::new_v4(),
+                            action_label: "fake".to_string(),
+                            trigger_id: "".to_string(),
+                            trigger_session_id: "".to_string(),
+                            trigger_session_status: "".to_string(),
+                            flow_session_id: "fake".to_string(),
+                            flow_session_status: "fake".to_string(),
+                            action_id: "fake".to_string(),
+                            r#type: "fake".to_string(),
+                            plugin_id: Some("fake".to_string()),
+                            stage: "fake".to_string(),
+                            test_config: None,
+                            config: serde_json::json!({
+                                "variables": variables,
+                                "input": input,
+                            }),
+                            context: None,
+                            started_at: None,
+                            ended_at: None,
+                            debug_result: None,
+                            result: None,
+                            archived: false,
+                            updated_at: None,
+                            created_at: None,
+                            updated_by: None,
+                            created_by: None,
+                            processing_order: 0,
+                        };
+
+                        println!("[TRIGGER ENGINE] Created mock task: {:?}", mock_task);
+
+                        //Run the templater over the variables and results from last session
+                        //Return the templated variables and inputs
+                        println!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
+                        let rendered_input = match bundle_task_context(client, &mock_task, false).await {
+                            Ok(vars) => {
+                                println!(
+                                    "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
+                                    vars
+                                );
+                                vars
+                            }
+                            Err(e) => {
+                                println!("[TRIGGER ENGINE] Failed to bundle variables: {:?}", e);
+                                continue;
+                            }
+                        };
+
+                        let cron_expression = rendered_input["cron_expression"]
                             .as_str()
                             .unwrap_or("* * * * *");
 
+                        println!(
+                            "[TRIGGER ENGINE] Using cron expression: {}",
+                            cron_expression
+                        );
+
                         let next_fire = match Schedule::from_str(cron_expression) {
-                            Ok(schedule) => schedule.upcoming(Utc).next(),
+                            Ok(schedule) => {
+                                let next = schedule.upcoming(Utc).next();
+                                println!("[TRIGGER ENGINE] Calculated next fire time: {:?}", next);
+                                next
+                            }
                             Err(e) => {
                                 println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
                                 None
@@ -410,7 +489,7 @@ pub fn create_in_memory_triggers_from_flow_definition(
                         let trigger = InMemoryTrigger {
                             action_id: action_id.to_string(),
                             account_id: account_id.to_string(),
-                            trigger_id: trigger_id.to_string(),
+                            trigger_id: plugin_id.to_string(),
                             flow_id: flow_id.to_string(),
                             action_label: action
                                 .get("label")
@@ -418,14 +497,17 @@ pub fn create_in_memory_triggers_from_flow_definition(
                                 .unwrap_or("")
                                 .to_string(),
                             flow_version_id: flow_version_id.to_string(),
-                            config,
+                            config: serde_json::json!({
+                                // "variables": rendered_variables,
+                                "input": rendered_input,
+                            }), //TODO: figure out how this is used and where to fix it
                             last_fired: None,
                             next_fire,
                         };
 
                         triggers.insert(flow_id.to_string(), trigger);
                     } else {
-                        println!("[TRIGGER_ENGINE] Found an action that's not a trigger.");
+                        println!("[TRIGGER_ENGINE] Found an action that's not a cron trigger.");
                     }
                 } else {
                     println!(

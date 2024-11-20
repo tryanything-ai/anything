@@ -29,6 +29,13 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    --chart-6: 0 84% 60%;
+    --task-status-pending: 220 14% 65%;
+    --task-status-waiting: 43 96% 47%;
+    --task-status-running: 217 91% 60%;
+    --task-status-completed: 142 71% 45%;
+    --task-status-failed: 0 84% 60%;
+    --task-status-canceled: 271 91% 65%;
   }
 
   .dark {

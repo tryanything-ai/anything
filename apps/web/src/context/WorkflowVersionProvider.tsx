@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { useParams, useRouter } from "next/navigation";
-import { cloneDeep, debounce } from "lodash";
+import { cloneDeep, conforms, debounce } from "lodash";
 
 import {
   addEdge,
@@ -75,8 +75,16 @@ export interface WorkflowVersionContextInterface {
   setPanelTab: (tab: string) => void;
   showingActionSheet: boolean;
   setShowingActionSheet: (showing: boolean) => void;
+  showExplorer: boolean;
+  setShowExplorer: (showing: boolean) => void;
+  explorerTab: string;
+  setExplorerTab: (tab: string) => void;
   showActionSheetForEdge: (id: string) => void;
+  showActionSheetToChangeTrigger: () => void;
+  changeTrigger: (trigger: any) => void;
   showActionSheet: () => void;
+  actionSheetMode: string;
+  setActionSheetMode: (mode: string) => void;
   nodes: Node[];
   edges: Edge[];
   onNodesChange: OnNodesChange;
@@ -106,11 +114,19 @@ export const WorkflowVersionContext =
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
     showingActionSheet: false,
-    detailedMode: false,
+    showExplorer: false,
+    setShowExplorer: () => {},
+    explorerTab: "results",
+    setExplorerTab: () => {},
+    detailedMode: true,
     setDetailedMode: () => {},
     showActionSheetForEdge: () => {},
+    showActionSheetToChangeTrigger: () => {},
     setShowingActionSheet: () => {},
     showActionSheet: () => {},
+    setActionSheetMode: () => {},
+    changeTrigger: () => {},
+    actionSheetMode: "actions",
     nodes: [],
     edges: [],
     onNodesChange: () => {},
@@ -148,7 +164,7 @@ export const WorkflowVersionProvider = ({
   const [dbFlowVersionId, setDbFlowVersionId] = useState<string>("");
   const [dbFlowId, setDbFlowId] = useState<string>("");
   const [selectedNodeId, setSelectedNodeId] = useState<string>("");
-  const [detailedMode, setDetailedMode] = useState<boolean>(false);
+  const [detailedMode, setDetailedMode] = useState<boolean>(true);
   //React Flow State
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -159,16 +175,29 @@ export const WorkflowVersionProvider = ({
   const [savingStatus, setSavingStatus] = useState<string>(SavingStatus.NONE);
   //Action sheet for adding nodes
   const [showingActionSheet, setShowingActionSheet] = useState<boolean>(false);
+  const [actionSheetMode, setActionSheetMode] = useState<string>("actions");
   const [actionSheetEdge, setActionSheetEdge] = useState<string>("");
+
+  const [showExplorer, setShowExplorer] = useState<boolean>(false);
+  const [explorerTab, setExplorerTab] = useState<string>("results");
 
   const showActionSheetForEdge = (id: string) => {
     console.log("Show Action Sheet for Edge: ", id);
+    setActionSheetMode("actions");
     setShowingActionSheet(true);
     setActionSheetEdge(id);
   };
 
+  const showActionSheetToChangeTrigger = () => {
+    console.log("Show Action Sheet to Change Trigger");
+    setActionSheetMode("triggers");
+    setShowingActionSheet(true);
+    setActionSheetEdge("");
+  };
+
   const showActionSheet = () => {
     console.log("Show Action Sheet");
+    setActionSheetMode("actions");
     setShowingActionSheet(true);
     setActionSheetEdge("");
   };
@@ -222,12 +251,64 @@ export const WorkflowVersionProvider = ({
     setNodes(() => udpatedNodes);
   };
 
+  const changeTrigger = (new_trigger: any) => {
+    console.log("Changing Trigger", new_trigger);
+
+    //Find the trigger node
+    let triggerNode = nodes.find((node) => node.data.type === "trigger");
+    if (!triggerNode) {
+      console.error("No Trigger Node Found");
+      return;
+    }
+
+    console.log("[CHANGE TRIGGER] Old Trigger Node: ", triggerNode);
+
+    //New triggger node old position
+    let updatedTriggerNode: Node = {
+      id: new_trigger.plugin_id,
+      type: "anything",
+      position: triggerNode.position,
+      data: { ...new_trigger, action_id: new_trigger.plugin_id },
+    };
+
+    console.log("[CHANGE TRIGGER] New Trigger Node", updatedTriggerNode);
+
+    //Update the nodes array
+    let updatedNodes = nodes.map((node) => {
+      if (triggerNode && node.id === triggerNode.id) {
+        //Swap in new node
+        return updatedTriggerNode;
+      }
+      return node;
+    });
+
+    // Update edges with new trigger node id if needed
+    let updatedEdges = edges.map((edge) => {
+      if (triggerNode && edge.source === triggerNode.id) {
+        let new_edge = {
+          ...edge,
+          id: `${updatedTriggerNode.id}->${edge.target}`,
+          source: updatedTriggerNode.id,
+        };
+        console.log("[CHANGE TRIGGER] New Edge", new_edge);
+        return new_edge;
+      }
+      return edge;
+    });
+
+    saveFlowVersionImmediate(updatedNodes, updatedEdges);
+
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
+  };
+
   const updateWorkflow = async (args: UpdateWorklowArgs) => {
     try {
       if (!dbFlowId || !selectedAccount) return;
 
       console.log("Updating Workflow", args);
 
+      //TODO: show same saving status in header as other places
       //Save to cloud
       await api.flows.updateFlow(selectedAccount.account_id, dbFlowId, args);
 
@@ -407,7 +488,7 @@ export const WorkflowVersionProvider = ({
     // let nonDimmensionChanges = nodeChanges.filter((nodeChange) => nodeChange.type !== "dimensions") as NodeSelectionChange[];
     // get the id of the node with selected = true
     if (selectionChanges.length > 0) {
-      console.log("selectionChanges", selectionChanges);
+      // console.log("selectionChanges", selectionChanges);
       let selectedNode: any = selectionChanges.find(
         (nodeChange: NodeSelectionChange) => nodeChange.selected,
       );
@@ -417,8 +498,15 @@ export const WorkflowVersionProvider = ({
         let selectedNodeObj: any = nodes.find(
           (node) => node.id === selectedNode.id,
         );
+        // console.log("selectedNodeObj", selectedNodeObj);
+
         setSelectedNodeId(selectedNodeObj.id);
         setPanelTab(PanelTab.CONFIG);
+
+        //if the user selects a trigger hide the panel
+        if (selectedNodeObj?.data?.type === "trigger") {
+          setShowExplorer(false);
+        }
       } else {
         setSelectedNodeId("");
       }
@@ -712,9 +800,17 @@ export const WorkflowVersionProvider = ({
         savingStatus,
         panel_tab,
         showingActionSheet,
+        showExplorer,
+        setShowExplorer,
+        explorerTab,
+        setExplorerTab,
         detailedMode,
         setDetailedMode,
         setShowingActionSheet,
+        showActionSheetToChangeTrigger,
+        changeTrigger,
+        actionSheetMode,
+        setActionSheetMode,
         showActionSheetForEdge,
         showActionSheet,
         setPanelTab: set_panel_tab,

@@ -17,12 +17,12 @@ impl Stage {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum TaskStatus {
-    Pending,    // Task is created but not yet started
-    Waiting,    // Task is waiting for correct time to run. Allows pause and HITL stuff we will do later
-    Running,    // Task is running
-    Completed,  // Task is completed
-    Failed,     // Task failed
-    Canceled    // Task was canceled usually because task ahead failed
+    Pending,   // Task is created but not yet started
+    Waiting, // Task is waiting for correct time to run. Allows pause and HITL stuff we will do later
+    Running, // Task is running
+    Completed, // Task is completed
+    Failed,  // Task failed
+    Canceled, // Task was canceled usually because task ahead failed
 }
 
 impl TaskStatus {
@@ -41,12 +41,12 @@ impl TaskStatus {
 //Used to determine if whole workflow is completed or what happened
 #[derive(Debug, Deserialize, Serialize)]
 pub enum FlowSessionStatus {
-    Pending,    // Flow is created but not yet started
-    Waiting,    // Flow is waiting for correct time to run. Allows pause and HITL stuff we will do later
-    Running,    // Flow is running
-    Completed,  // Flow is completed
-    Failed,     // Flow failed
-    Canceled    // Flow was canceled usually because task ahead failed. Maybe if we delete a workflow and their is uncompleted work
+    Pending,   // Flow is created but not yet started
+    Waiting, // Flow is waiting for correct time to run. Allows pause and HITL stuff we will do later
+    Running, // Flow is running
+    Completed, // Flow is completed
+    Failed,  // Flow failed
+    Canceled, // Flow was canceled usually because task ahead failed. Maybe if we delete a workflow and their is uncompleted work
 }
 
 //Used to determine if whole workflow is completed or what happened especially with nested flows where we want to trace
@@ -66,12 +66,12 @@ impl FlowSessionStatus {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum TriggerSessionStatus {
-    Pending,    // Trigger is created but not yet started
-    Waiting,    // Trigger is waiting for correct time to run. Allows pause and HITL stuff we will do later
-    Running,    // Trigger is running
-    Completed,  // Trigger is completed
-    Failed,     // Trigger failed
-    Canceled    // Trigger was canceled usually because task ahead failed. Maybe if we delete a workflow and their is uncompleted work
+    Pending,   // Trigger is created but not yet started
+    Waiting, // Trigger is waiting for correct time to run. Allows pause and HITL stuff we will do later
+    Running, // Trigger is running
+    Completed, // Trigger is completed
+    Failed,  // Trigger failed
+    Canceled, // Trigger was canceled usually because task ahead failed. Maybe if we delete a workflow and their is uncompleted work
 }
 
 impl TriggerSessionStatus {
@@ -87,17 +87,16 @@ impl TriggerSessionStatus {
     }
 }
 
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ActionType {
-    Input,      // Input action
-    Trigger,    // Trigger action
-    Action,     // General action
-    Loop,       // Loop action
-    Decision,   // Decision action
-    Filter,     // Filter action
-    Output      // Output action
+    Input,    // Input action
+    Trigger,  // Trigger action
+    Action,   // General action
+    Loop,     // Loop action
+    Decision, // Decision action
+    Filter,   // Filter action
+    Output,   // Output action
 }
 
 impl ActionType {

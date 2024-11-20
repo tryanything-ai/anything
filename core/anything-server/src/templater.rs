@@ -84,12 +84,34 @@ impl Templater {
 
     fn get_value_from_path(context: &Value, path: &str) -> Option<Value> {
         let mut current = context;
-        for key in path.split('.') {
-            match current {
-                Value::Object(map) => {
-                    current = map.get(key)?;
+        let parts: Vec<&str> = path.split('.').collect();
+
+        for (i, part) in parts.iter().enumerate() {
+            if let Some(index_start) = part.find('[') {
+                let key = &part[..index_start];
+                let index_end = part.find(']').unwrap_or(part.len());
+                let index: usize = part[index_start + 1..index_end].parse().ok()?;
+
+                current = current.get(key)?;
+                if current.is_array() {
+                    current = current.get(index)?;
+                } else {
+                    return None; // Not an array when we expected one
                 }
-                _ => return None,
+            } else {
+                current = current.get(part)?;
+            }
+
+            if let Value::String(s) = current {
+                if let Ok(parsed) = serde_json::from_str(s) {
+                    if i < parts.len() - 1 {
+                        // If not the last part, continue traversing
+                        return Self::get_value_from_path(&parsed, &parts[i + 1..].join("."));
+                    } else {
+                        // If it's the last part, return the parsed value
+                        return Some(parsed);
+                    }
+                }
             }
         }
         Some(current.clone())
@@ -130,6 +152,19 @@ impl Templater {
             }
             Value::String(s) => {
                 println!("[TEMPLATER] Rendering string: {}", s);
+                
+                // Special case: if the string is exactly "{{variables}}" (or any other full variable),
+                // return the raw value instead of string conversion
+                if s.trim().starts_with("{{") && s.trim().ends_with("}}") {
+                    let variable = s.trim()[2..s.trim().len() - 2].trim();
+                    if !variable.contains('.') {
+                        // Only for top-level variables
+                        if let Some(value) = Self::get_value_from_path(context, variable) {
+                            return Ok(value);
+                        }
+                    }
+                }
+
                 let mut result = s.clone();
                 let mut start = 0;
 
@@ -165,22 +200,24 @@ impl Templater {
                 println!("[TEMPLATER] Rendered string: {}", result);
 
                 // Try to parse the result as JSON
-                match serde_json::from_str(&result) {
-                    Ok(json_value) => {
-                        println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
-                        Ok(json_value)
-                    },
-                    Err(_) => {
-                        println!("[TEMPLATER] Not valid JSON, returning as string");
-                        Ok(Value::String(result))
-                    },
-                }
+                // match serde_json::from_str(&result) {
+                //     Ok(json_value) => {
+                //         println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
+                //         Ok(json_value)
+                //     }
+                //     Err(_) => {
+                //         println!("[TEMPLATER] Not valid JSON, returning as string");
+                //         Ok(Value::String(result))
+                //     }
+                // }
+                //TODO: doing this like this helps make context items that a strings work. so our OAUTH right now
+                // But Maybe it prevents from json that has markdown in it working
+                Ok(Value::String(result)) //--> this one might work better for text inside json.
             }
             _ => {
                 println!("[TEMPLATER] Returning value as-is: {:?}", value);
                 Ok(value.clone())
-            },
+            }
         }
     }
-
 }

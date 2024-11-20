@@ -74,7 +74,7 @@ export function ShareDialog(): JSX.Element {
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
           <ShareIcon className="size-3.5" />
-          Share
+          Publish to Marketplace
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-md">
@@ -88,7 +88,7 @@ export function ShareDialog(): JSX.Element {
                 Other users will be able to use your template in their business
                 from the{" "}
                 <Link
-                  href="https://tryanything.xyz/templates"
+                  href="https://tryanything.xyz/templates/workflows"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 underline"
