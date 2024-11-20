@@ -605,7 +605,7 @@ pub async fn run_workflow(
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_inputs_and_outputs(&workflow, true).await {
+        match validate_webhook_inputs_and_outputs(&workflow, false).await {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
@@ -807,7 +807,7 @@ pub async fn run_workflow_version(
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_inputs_and_outputs(&workflow, true).await {
+        match validate_webhook_inputs_and_outputs(&workflow, false).await {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
