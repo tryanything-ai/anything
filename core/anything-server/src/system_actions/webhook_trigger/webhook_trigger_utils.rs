@@ -1,9 +1,15 @@
 use axum::{
-    http::{HeaderMap, StatusCode},
+    extract::Query,
+    http::{HeaderMap, HeaderName, HeaderValue, StatusCode},
     response::IntoResponse,
+    Json,
 };
 
-use serde_json::Value;
+use serde_json::{json, Value};
+use std::str::FromStr;
+
+use std::collections::HashMap;
+
 use std::sync::Arc;
 
 use crate::{secrets::get_secret_by_secret_value, workflow_types::Workflow, CachedApiKey};
@@ -11,9 +17,9 @@ use crate::{workflow_types::Action, AppState};
 
 use crate::task_types::ActionType;
 
-pub async fn validate_webhook_inputs_and_outputs(
+pub fn validate_webhook_input_and_response(
     workflow: &Workflow,
-    require_output: bool,
+    require_response: bool,
 ) -> Result<(Box<&Action>, Option<Box<&Action>>), impl IntoResponse> {
     // Find the trigger action in the workflow
     println!("[WEBHOOK API] Looking for trigger node in workflow");
@@ -44,12 +50,12 @@ pub async fn validate_webhook_inputs_and_outputs(
 
     let mut output_node = None;
     // Check for output node if required
-    if require_output {
+    if require_response {
         println!("[WEBHOOK API] Looking for output node in workflow");
         output_node = match workflow
             .actions
             .iter()
-            .find(|action| action.plugin_id == "output")
+            .find(|action| action.plugin_id == "response")
         {
             Some(output) => Some(Box::new(output)),
             None => {
@@ -252,6 +258,230 @@ pub async fn validate_security_model(
         _ => {
             println!("[WEBHOOK API] Invalid security model specified");
             Some((StatusCode::BAD_REQUEST, "Invalid security model").into_response())
+        }
+    }
+}
+
+pub fn validate_request_method(
+    rendered_inputs: &Value,
+    request_method: &str,
+) -> Option<impl IntoResponse> {
+    println!("[WEBHOOK API] Validating request method");
+
+    // Extract the allowed method from rendered inputs
+    let allowed_method = rendered_inputs
+        .get("request_method")
+        .and_then(|v| v.as_str())
+        .unwrap_or("POST");
+
+    println!(
+        "[WEBHOOK API] Checking request method: {} against allowed method: {}",
+        request_method, allowed_method
+    );
+
+    // If ANY is configured, allow all methods
+    if allowed_method == "ANY" {
+        return None;
+    }
+
+    // Otherwise check if methods match
+    if request_method != allowed_method {
+        println!("[WEBHOOK API] Invalid request method");
+        return Some(
+            (
+                StatusCode::METHOD_NOT_ALLOWED,
+                format!(
+                    "Method {} not allowed. Expected {}",
+                    request_method, allowed_method
+                ),
+            )
+                .into_response(),
+        );
+    }
+
+    None
+}
+
+pub fn convert_request_to_payload(
+    method: axum::http::Method,
+    query: Option<Query<HashMap<String, String>>>,
+    body: Option<Json<Value>>,
+) -> Value {
+    match method {
+        axum::http::Method::GET => {
+            if let Some(Query(params)) = query {
+                let mut result = serde_json::Map::new();
+                let mut array_params: HashMap<String, Vec<Value>> = HashMap::new();
+
+                // First pass - collect all parameters
+                for (key, value) in params.iter() {
+                    if let Some(base_key) = key.split('[').next() {
+                        if key.contains('[') {
+                            // Try to parse as number or boolean first
+                            let parsed_value = value
+                                .parse::<i64>()
+                                .map(Value::from)
+                                .or_else(|_| value.parse::<f64>().map(Value::from))
+                                .or_else(|_| match value.to_lowercase().as_str() {
+                                    "true" => Ok(Value::Bool(true)),
+                                    "false" => Ok(Value::Bool(false)),
+                                    _ => Ok(Value::String(value.clone())),
+                                })
+                                .unwrap_or_else(|_: std::num::ParseFloatError| {
+                                    Value::String(value.clone())
+                                });
+
+                            array_params
+                                .entry(base_key.to_string())
+                                .or_default()
+                                .push(parsed_value);
+                            continue;
+                        }
+                    }
+
+                    // Handle regular key-value pairs with type inference
+                    let parsed_value = value
+                        .parse::<i64>()
+                        .map(Value::from)
+                        .or_else(|_| value.parse::<f64>().map(Value::from))
+                        .or_else(|_| match value.to_lowercase().as_str() {
+                            "true" => Ok(Value::Bool(true)),
+                            "false" => Ok(Value::Bool(false)),
+                            _ => Ok(Value::String(value.clone())),
+                        })
+                        .unwrap_or_else(|_: std::num::ParseFloatError| {
+                            Value::String(value.clone())
+                        });
+
+                    result.insert(key.clone(), parsed_value);
+                }
+
+                // Second pass - process array parameters
+                for (key, values) in array_params {
+                    let array_values: Vec<Value> = values.into_iter().collect();
+                    result.insert(key, Value::Array(array_values));
+                }
+
+                Value::Object(result)
+            } else {
+                json!({})
+            }
+        }
+        _ => {
+            // For non-GET requests, merge query params with body if both exist
+            let mut final_payload = body.map_or(json!({}), |Json(payload)| payload);
+
+            if let Some(Query(params)) = query {
+                if let Value::Object(ref mut map) = final_payload {
+                    for (key, value) in params {
+                        // Don't overwrite existing body parameters
+                        if !map.contains_key(&key) {
+                            map.insert(key, Value::String(value));
+                        }
+                    }
+                }
+            }
+
+            final_payload
+        }
+    }
+}
+
+pub fn parse_response_action_response_into_api_response(stored_result: Value) -> impl IntoResponse {
+    let status_code = stored_result
+        .get("status_code")
+        .and_then(Value::as_u64)
+        .unwrap_or(200) as u16;
+
+    let mut headers = HeaderMap::new();
+
+    // Add headers from stored result
+    if let Some(stored_headers) = stored_result.get("headers").and_then(Value::as_object) {
+        for (key, value) in stored_headers {
+            if let Some(value_str) = value.as_str() {
+                if let (Ok(header_name), Ok(header_value)) =
+                    (HeaderName::from_str(key), HeaderValue::from_str(value_str))
+                {
+                    headers.insert(header_name, header_value);
+                }
+            }
+        }
+    }
+
+    let content_type = stored_result
+        .get("content_type")
+        .and_then(Value::as_str)
+        .unwrap_or("application/json");
+
+    // Handle different content types
+    match content_type {
+        // Handle HTML responses
+        ct if ct.contains("text/html") => {
+            if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
+                headers.insert(
+                    HeaderName::from_static("content-type"),
+                    HeaderValue::from_static("text/html; charset=utf-8"),
+                );
+                (
+                    StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
+                    headers,
+                    body.to_string(),
+                )
+                    .into_response()
+            } else {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Invalid HTML response").into_response()
+            }
+        }
+
+        // Handle XML responses
+        ct if ct.contains("xml") => {
+            if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
+                headers.insert(
+                    HeaderName::from_static("content-type"),
+                    HeaderValue::from_static("application/xml; charset=utf-8"),
+                );
+                (
+                    StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
+                    headers,
+                    body.to_string(),
+                )
+                    .into_response()
+            } else {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Invalid XML response").into_response()
+            }
+        }
+
+        // Handle plain text responses
+        ct if ct.contains("text/plain") => {
+            if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
+                headers.insert(
+                    HeaderName::from_static("content-type"),
+                    HeaderValue::from_static("text/plain; charset=utf-8"),
+                );
+                (
+                    StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
+                    headers,
+                    body.to_string(),
+                )
+                    .into_response()
+            } else {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Invalid text response").into_response()
+            }
+        }
+
+        // Default to JSON responses
+        _ => {
+            headers.insert(
+                HeaderName::from_static("content-type"),
+                HeaderValue::from_static("application/json; charset=utf-8"),
+            );
+            let body = stored_result.get("body").cloned().unwrap_or(json!({}));
+            (
+                StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
+                headers,
+                body.to_string(),
+            )
+                .into_response()
         }
     }
 }
