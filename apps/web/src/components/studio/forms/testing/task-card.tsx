@@ -64,7 +64,10 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
   );
 });
 
-const ResultComponent = ({ result }: any) => {
+export const ResultComponent = ({
+  result,
+  collapseStringsAfterLength = 20,
+}: any) => {
   let content;
 
   switch (typeof result) {
@@ -83,7 +86,7 @@ const ResultComponent = ({ result }: any) => {
             collapsed={1}
             theme={"shapeshifter:inverted"}
             name={false}
-            collapseStringsAfterLength={20}
+            collapseStringsAfterLength={collapseStringsAfterLength}
             src={parsedJson}
           />
         );
@@ -107,7 +110,7 @@ const ResultComponent = ({ result }: any) => {
               padding: "10px",
             }}
             collapsed={1}
-            collapseStringsAfterLength={20}
+            collapseStringsAfterLength={collapseStringsAfterLength}
             theme={"shapeshifter:inverted"}
             src={result}
           />
