@@ -390,6 +390,10 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
     // Check for error first
     if let Some(error) = stored_result.get("error") {
         let error_message = error.as_str().unwrap_or("Unknown error occurred");
+        println!(
+            "[WEBHOOK API] [CREATE RESPONSE] Returning error response: {}",
+            error_message
+        );
         return (StatusCode::INTERNAL_SERVER_ERROR, error_message.to_string()).into_response();
     }
 
@@ -416,6 +420,10 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                     HeaderName::from_static("content-type"),
                     HeaderValue::from_static("text/html; charset=utf-8"),
                 );
+                println!(
+                    "[WEBHOOK API] [CREATE RESPONSE] Returning HTML response with status {}: {}",
+                    status_code, body
+                );
                 (
                     StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                     headers,
@@ -423,6 +431,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                 )
                     .into_response()
             } else {
+                println!("[WEBHOOK API] [CREATE RESPONSE] Returning invalid HTML response error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Invalid HTML response").into_response()
             }
         }
@@ -434,6 +443,10 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                     HeaderName::from_static("content-type"),
                     HeaderValue::from_static("application/xml; charset=utf-8"),
                 );
+                println!(
+                    "[WEBHOOK API] [CREATE RESPONSE] Returning XML response with status {}: {}",
+                    status_code, body
+                );
                 (
                     StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                     headers,
@@ -441,6 +454,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                 )
                     .into_response()
             } else {
+                println!("[WEBHOOK API] [CREATE RESPONSE] Returning invalid XML response error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Invalid XML response").into_response()
             }
         }
@@ -452,6 +466,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                     HeaderName::from_static("content-type"),
                     HeaderValue::from_static("text/plain; charset=utf-8"),
                 );
+                println!("[WEBHOOK API] [CREATE RESPONSE] Returning plain text response with status {}: {}", status_code, body);
                 (
                     StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                     headers,
@@ -459,6 +474,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                 )
                     .into_response()
             } else {
+                println!("[WEBHOOK API] [CREATE RESPONSE] Returning invalid text response error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Invalid text response").into_response()
             }
         }
@@ -470,6 +486,10 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                 HeaderValue::from_static("application/json; charset=utf-8"),
             );
             let body = stored_result.get("body").cloned().unwrap_or(json!({}));
+            println!(
+                "[WEBHOOK API] [CREATE RESPONSE] Returning JSON response with status {}: {}",
+                status_code, body
+            );
             (
                 StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                 headers,
