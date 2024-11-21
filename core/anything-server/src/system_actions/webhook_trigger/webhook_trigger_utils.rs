@@ -6,7 +6,6 @@ use axum::{
 };
 
 use serde_json::{json, Value};
-use std::str::FromStr;
 
 use std::collections::HashMap;
 
@@ -388,6 +387,12 @@ pub fn convert_request_to_payload(
 }
 
 pub fn parse_response_action_response_into_api_response(stored_result: Value) -> impl IntoResponse {
+    // Check for error first
+    if let Some(error) = stored_result.get("error") {
+        let error_message = error.as_str().unwrap_or("Unknown error occurred");
+        return (StatusCode::INTERNAL_SERVER_ERROR, error_message.to_string()).into_response();
+    }
+
     let status_code = stored_result
         .get("status_code")
         .and_then(Value::as_u64)
