@@ -473,7 +473,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             (
                 StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                 headers,
-                body.to_string(),
+                Json(body), // Use axum's Json wrapper instead of to_string()
             )
                 .into_response()
         }
