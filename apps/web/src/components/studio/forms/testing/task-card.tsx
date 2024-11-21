@@ -57,7 +57,10 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
       {task.result && (
         <div className="my-2">
           <div className="text-md font-semibold">Results: </div>
-          <ResultComponent result={task.result} />
+          <ResultComponent
+            result={task.result}
+            collapseStringsAfterLength={20}
+          />
         </div>
       )}
     </div>
@@ -66,7 +69,7 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
 
 export const ResultComponent = ({
   result,
-  collapseStringsAfterLength = 20,
+  collapseStringsAfterLength,
 }: any) => {
   let content;
 
