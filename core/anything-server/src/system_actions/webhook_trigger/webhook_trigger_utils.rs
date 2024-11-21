@@ -418,7 +418,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
                 headers.insert(
                     HeaderName::from_static("content-type"),
-                    HeaderValue::from_static("text/html; charset=utf-8"),
+                    HeaderValue::from_static("text/html"),
                 );
                 println!(
                     "[WEBHOOK API] [CREATE RESPONSE] Returning HTML response with status {}: {}",
@@ -441,7 +441,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
                 headers.insert(
                     HeaderName::from_static("content-type"),
-                    HeaderValue::from_static("application/xml; charset=utf-8"),
+                    HeaderValue::from_static("application/xml"),
                 );
                 println!(
                     "[WEBHOOK API] [CREATE RESPONSE] Returning XML response with status status_code: {} body: {} headers: {:?}",
@@ -464,7 +464,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
                 headers.insert(
                     HeaderName::from_static("content-type"),
-                    HeaderValue::from_static("text/plain; charset=utf-8"),
+                HeaderValue::from_static("text/plain"),
                 );
                 println!("[WEBHOOK API] [CREATE RESPONSE] Returning plain text response with status {}: {}", status_code, body);
                 (
@@ -483,7 +483,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
         _ => {
             headers.insert(
                 HeaderName::from_static("content-type"),
-                HeaderValue::from_static("application/json; charset=utf-8"),
+                HeaderValue::from_static("application/json"),
             );
             let body = stored_result.get("body").cloned().unwrap_or(json!({}));
             println!(
@@ -493,7 +493,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             (
                 StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                 headers,
-                Json(body), // Use axum's Json wrapper instead of to_string()
+                Json(body), 
             )
                 .into_response()
         }
