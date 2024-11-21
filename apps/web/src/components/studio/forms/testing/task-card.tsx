@@ -1,11 +1,19 @@
 import React from "react";
 import { cn, formatTimeDifference } from "@/lib/utils";
 import { formatDuration, intervalToDuration } from "date-fns";
-import ReactJson from "react-json-view";
+// import ReactJson from "react-json-view";
 import { TaskRow } from "@repo/anything-api";
 import TaskStatus from "./task-status";
 import { Clock } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
+
+import dynamic from 'next/dynamic';
+
+// Dynamically import ReactJson with SSR disabled
+const ReactJson = dynamic(() => import('react-json-view'), {
+  ssr: false,
+  loading: () => <div>Loading...</div>
+});
 
 export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
   return (
