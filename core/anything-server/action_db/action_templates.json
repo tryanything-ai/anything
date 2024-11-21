@@ -428,8 +428,7 @@
       "variables": {
         "status_code": "200",
         "content_type": "application/json",
-        "headers": "",
-        "body": ""
+        "body": "{}"
       },
       "variables_locked": false,
       "variables_schema": {
@@ -439,7 +438,7 @@
             "title": "Status Code",
             "description": "HTTP status code for the response",
             "type": "string",
-            "oneOf": [
+            "oneOf": [ 
               {"value": "200", "title": "200 - OK"},
               {"value": "201", "title": "201 - Created"},
               {"value": "202", "title": "202 - Accepted"},
@@ -470,14 +469,6 @@
               "inputType": "select"
             }
           },
-          "headers": {
-            "title": "Headers",
-            "description": "Additional response headers (JSON format)",
-            "type": "string",
-            "x-jsf-presentation": {
-              "inputType": "text"
-            }
-          },
           "body": {
             "title": "Response Body",
             "description": "Content to send in response body",
@@ -488,13 +479,12 @@
           }
         },
         "required": ["status_code", "content_type"],
-        "x-jsf-order": ["status_code", "content_type", "headers", "body"]
+        "x-jsf-order": ["status_code", "content_type", "body"]
       },
       "variables_schema_locked": true,
       "input": {
         "status_code": "{{variables.status_code}}",
         "content_type": "{{variables.content_type}}",
-        "headers": "{{variables.headers}}",
         "body": "{{variables.body}}"
       },
       "input_locked": true,
@@ -511,11 +501,6 @@
             "description": "Content type of the response",
             "type": "string"
           },
-          "headers": {
-            "title": "Headers",
-            "description": "Additional response headers (JSON format)",
-            "type": "string"
-          },
           "body": {
             "title": "Response Body", 
             "description": "Content to send in response body",
@@ -523,7 +508,7 @@
           }
         },
         "required": ["status_code", "content_type"],
-        "x-jsf-order": ["status_code", "content_type", "headers", "body"]
+        "x-jsf-order": ["status_code", "content_type", "body"]
       },
       "input_schema_locked": true,
       "presentation": {

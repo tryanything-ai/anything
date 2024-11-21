@@ -522,6 +522,7 @@ async fn process_http_task(
         );
         let status = response.status();
         let headers = response.headers().clone();
+        let content_type = response.headers().get("content-type").map(|v| v.to_str().unwrap_or(""));
 
         // Try to parse the response as JSON, if it fails, return the raw text
         let body = match response.text().await {
@@ -551,7 +552,7 @@ async fn process_http_task(
         };
 
         let result = serde_json::json!({
-            "status": status.as_u16(),
+            "status_code": status.as_u16(),
             "headers": headers
                 .iter()
                 .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))

@@ -395,21 +395,10 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
 
     let mut headers = HeaderMap::new();
 
-    // Add headers from stored result
-    if let Some(stored_headers) = stored_result.get("headers").and_then(Value::as_object) {
-        for (key, value) in stored_headers {
-            if let Some(value_str) = value.as_str() {
-                if let (Ok(header_name), Ok(header_value)) =
-                    (HeaderName::from_str(key), HeaderValue::from_str(value_str))
-                {
-                    headers.insert(header_name, header_value);
-                }
-            }
-        }
-    }
-
     let content_type = stored_result
-        .get("content_type")
+        .get("headers")
+        .and_then(Value::as_object)
+        .and_then(|h| h.get("content-type"))
         .and_then(Value::as_str)
         .unwrap_or("application/json");
 
