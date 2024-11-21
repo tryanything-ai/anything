@@ -13,7 +13,7 @@ use reqwest::Client;
 
 use crate::bundler::bundle_task_context;
 use crate::execution_planner::process_trigger_task;
-use crate::system_actions::output_action::process_output_task;
+use crate::system_actions::output_action::process_response_task;
 use crate::workflow_types::Task;
 use crate::AppState;
 
@@ -373,8 +373,8 @@ pub async fn process_task(
             if let Some(plugin_id) = &task.plugin_id {
                 if plugin_id == "http" {
                     process_http_task(&bundled_context).await?
-                } else if plugin_id == "output" {
-                    process_output_task(&bundled_context).await?
+                } else if plugin_id == "response" {
+                    process_response_task(&bundled_context).await?
                 } else {
                     serde_json::json!({
                         "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
@@ -522,6 +522,7 @@ async fn process_http_task(
         );
         let status = response.status();
         let headers = response.headers().clone();
+        let content_type = response.headers().get("content-type").map(|v| v.to_str().unwrap_or(""));
 
         // Try to parse the response as JSON, if it fails, return the raw text
         let body = match response.text().await {
@@ -551,7 +552,7 @@ async fn process_http_task(
         };
 
         let result = serde_json::json!({
-            "status": status.as_u16(),
+            "status_code": status.as_u16(),
             "headers": headers
                 .iter()
                 .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))

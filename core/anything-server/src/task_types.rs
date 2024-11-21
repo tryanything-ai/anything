@@ -90,13 +90,14 @@ impl TriggerSessionStatus {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ActionType {
-    Input,    // Input action
     Trigger,  // Trigger action
     Action,   // General action
     Loop,     // Loop action
     Decision, // Decision action
     Filter,   // Filter action
-    Output,   // Output action
+    Response, // Response action for making api endpoints
+    Input,    // Input action for subflows
+    Output,   // Output action for subflows
 }
 
 impl ActionType {
@@ -104,6 +105,7 @@ impl ActionType {
         match self {
             ActionType::Input => "input",
             ActionType::Trigger => "trigger",
+            ActionType::Response => "response",
             ActionType::Action => "action",
             ActionType::Loop => "loop",
             ActionType::Decision => "decision",
