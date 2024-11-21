@@ -444,8 +444,8 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
                     HeaderValue::from_static("application/xml; charset=utf-8"),
                 );
                 println!(
-                    "[WEBHOOK API] [CREATE RESPONSE] Returning XML response with status {}: {}",
-                    status_code, body
+                    "[WEBHOOK API] [CREATE RESPONSE] Returning XML response with status status_code: {} body: {} headers: {:?}",
+                    status_code, body, headers
                 );
                 (
                     StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
