@@ -252,12 +252,14 @@ pub async fn process_flow_tasks(
                         );
                         final_result = Some(result.clone());
                     }
-                    Err(e) => {
+                    Err(error_result) => {
                         println!(
                             "[PROCESS FLOW TASKS] Error processing task {}: {}",
-                            task.task_id, e
+                            task.task_id, error_result
                         );
                         all_tasks_completed = false;
+
+                        final_result = Some(error_result.clone());
 
                         // Update tasks with process_order > current task to cancelled state
                         let current_process_order = task.processing_order;
@@ -353,76 +355,163 @@ pub async fn process_flow_tasks(
     }
 }
 
-pub async fn process_task(
-    client: &Postgrest,
-    task: &Task,
-) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Value> {
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Update task status to "running"
-    update_task_status(client, task, &TaskStatus::Running, None).await?;
+    if let Err(e) = update_task_status(client, task, &TaskStatus::Running, None).await {
+        let error_value = json!({
+            "error": format!("Failed to update task status to running: {}", e)
+        });
+        return Err(error_value);
+    }
 
-    let result: Result<Value, Box<dyn std::error::Error + Send + Sync>> = async {
-        let bundled_context = bundle_task_context(client, task, true).await?;
-
-        let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
-            println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
-            process_trigger_task(client, task).await?
-        } else {
-            println!("[PROCESS TASK] Processing regular task {}", task.task_id);
-            if let Some(plugin_id) = &task.plugin_id {
-                if plugin_id == "http" {
-                    process_http_task(&bundled_context).await?
-                } else if plugin_id == "response" {
-                    process_response_task(&bundled_context).await?
-                } else {
-                    serde_json::json!({
-                        "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
-                    })
-                }
+    let result = match bundle_task_context(client, task, true).await {
+        Ok(bundled_context) => {
+            let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
+                println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
+                process_trigger_task(client, task).await
             } else {
-                serde_json::json!({
-                    "message": format!("No plugin_id found for task {}", task.task_id)
-                })
-            }
-        };
+                println!("[PROCESS TASK] Processing regular task {}", task.task_id);
+                match &task.plugin_id {
+                    Some(plugin_id) => match plugin_id.as_str() {
+                        "http" => process_http_task(&bundled_context).await,
+                        "response" => process_response_task(&bundled_context).await,
+                        _ => Ok(json!({
+                            "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
+                        })),
+                    },
+                    None => Ok(json!({
+                        "message": format!("No plugin_id found for task {}", task.task_id)
+                    })),
+                }
+            };
 
-        Ok(task_result)
-    }.await;
+            match task_result {
+                Ok(result) => Ok(result),
+                Err(e) => Err(json!({
+                    "error": e.to_string()
+                })),
+            }
+        }
+        Err(e) => Err(json!({
+            "error": format!("Failed to bundle task context: {}", e)
+        })),
+    };
 
     match result {
-        Ok(task_result) => {
+        Ok(success_result) => {
             // Update task status to "completed" with the result
-            update_task_status(
+            if let Err(e) = update_task_status(
                 client,
                 task,
                 &TaskStatus::Completed,
-                Some(task_result.clone()),
+                Some(success_result.clone()),
             )
-            .await?;
+            .await
+            {
+                let error_value = json!({
+                    "error": format!("Task succeeded but failed to update status: {}", e)
+                });
+                return Err(error_value);
+            }
             println!(
                 "[PROCESS TASK] Task {} completed successfully",
                 task.task_id
             );
-            Ok(task_result)
+            Ok(success_result)
         }
-        Err(e) => {
-            // Update task status to "error" with the error message
-            let error_result = serde_json::json!({
-                "error": e.to_string()
-            });
-            update_task_status(
+        Err(error_result) => {
+            // Update task status to "failed" with the error message
+            if let Err(e) = update_task_status(
                 client,
                 task,
                 &TaskStatus::Failed,
                 Some(error_result.clone()),
             )
-            .await?;
-            println!("[PROCESS TASK] Task {} failed: {}", task.task_id, e);
-            Err(e)
+            .await
+            {
+                let error_value = json!({
+                    "error": format!("Task failed and failed to update status: {}. Original error: {}", e, error_result)
+                });
+                return Err(error_value);
+            }
+
+            println!(
+                "[PROCESS TASK] Task {} failed: {}",
+                task.task_id, error_result
+            );
+            Err(error_result)
         }
     }
 }
+// pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Value> {
+//     println!("[PROCESS TASK] Processing task {}", task.task_id);
+
+//     // Update task status to "running"
+//     update_task_status(client, task, &TaskStatus::Running, None).await?;
+
+//     let result: Result<Value, Box<dyn std::error::Error + Send + Sync>> = async {
+//         let bundled_context = bundle_task_context(client, task, true).await?;
+
+//         let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
+//             println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
+//             process_trigger_task(client, task).await?
+//         } else {
+//             println!("[PROCESS TASK] Processing regular task {}", task.task_id);
+//             if let Some(plugin_id) = &task.plugin_id {
+//                 if plugin_id == "http" {
+//                     process_http_task(&bundled_context).await?
+//                 } else if plugin_id == "response" {
+//                     process_response_task(&bundled_context).await?
+//                 } else {
+//                     serde_json::json!({
+//                         "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
+//                     })
+//                 }
+//             } else {
+//                 serde_json::json!({
+//                     "message": format!("No plugin_id found for task {}", task.task_id)
+//                 })
+//             }
+//         };
+
+//         Ok(task_result)
+//     }.await;
+
+//     match result {
+//         Ok(task_result) => {
+//             // Update task status to "completed" with the result
+//             update_task_status(
+//                 client,
+//                 task,
+//                 &TaskStatus::Completed,
+//                 Some(task_result.clone()),
+//             )
+//             .await?;
+//             println!(
+//                 "[PROCESS TASK] Task {} completed successfully",
+//                 task.task_id
+//             );
+//             Ok(task_result)
+//         }
+//         Err(e) => {
+//             // Update task status to "error" with the error message
+//             let error_result = serde_json::json!({
+//                 "error": e.to_string()
+//             });
+//             update_task_status(
+//                 client,
+//                 task,
+//                 &TaskStatus::Failed,
+//                 Some(error_result.clone()),
+//             )
+//             .await?;
+//             println!("[PROCESS TASK] Task {} failed: {}", task.task_id, e);
+//             Ok(error_result)
+//         }
+//     }
+// }
 
 async fn process_http_task(
     bundled_context: &Value,
@@ -522,7 +611,10 @@ async fn process_http_task(
         );
         let status = response.status();
         let headers = response.headers().clone();
-        let content_type = response.headers().get("content-type").map(|v| v.to_str().unwrap_or(""));
+        let content_type = response
+            .headers()
+            .get("content-type")
+            .map(|v| v.to_str().unwrap_or(""));
 
         // Try to parse the response as JSON, if it fails, return the raw text
         let body = match response.text().await {
