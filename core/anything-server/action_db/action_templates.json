@@ -542,7 +542,12 @@
         "input_type": "text",
         "operation": "capitalize",
         "input": "",
-        "amount": 0
+        "amount": 0,
+        "format": "",
+        "source_timezone": "",
+        "target_timezone": "",
+        "start_date": "",
+        "end_date": ""
       },
       "variables_locked": false,
       "variables_schema": {
@@ -609,6 +614,22 @@
             "x-jsf-presentation": {
               "inputType": "text"
             }
+          },
+          "start_date": {
+            "title": "Start Date",
+            "description": "Start date for difference in days operation",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "end_date": {
+            "title": "End Date",
+            "description": "End date for difference in days operation",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
           }
         },
         "required": ["input_type", "operation"],
@@ -655,15 +676,17 @@
                     {"const": "subtract_minutes", "title": "Subtract Minutes"},
                     {"const": "format", "title": "Format"},
                     {"const": "to_timezone", "title": "Convert to Timezone"},
-                    {"const": "convert_timezone", "title": "Convert Timezone"}
+                    {"const": "convert_timezone", "title": "Convert Timezone"},
+                    {"const": "to_unix", "title": "Convert to Unix Timestamp"},
+                    {"const": "from_unix", "title": "Convert from Unix Timestamp"}, 
+                    {"const": "is_future", "title": "Is Future"},
+                    {"const": "is_past", "title": "Is Past"},
+                    {"const": "difference_days", "title": "Difference in Days"},
+                    {"const": "difference_hours", "title": "Difference in Hours"},
+                    {"const": "difference_minutes", "title": "Difference in Minutes"},
+                    {"const": "difference_seconds", "title": "Difference in Seconds"}
                   ]
                 }
-              },
-              "required": ["input"]
-            },
-            "else": {
-              "properties": {
-                "input": ""
               }
             }
           },
@@ -678,7 +701,7 @@
                   "subtract_hours",
                   "add_minutes",
                   "subtract_minutes"
-            ]}
+            ]} 
               } 
             },
             "then": {
@@ -687,6 +710,36 @@
             "else": {
               "properties": {
                 "amount": 0
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"enum": [
+                  "add_days",
+                  "subtract_days", 
+                  "add_hours",
+                  "subtract_hours",
+                  "add_minutes",
+                  "subtract_minutes",
+                  "format",
+                  "to_timezone",
+                  "convert_timezone",
+                  "to_unix",
+                  "from_unix",
+                  "is_future",
+                  "is_past"
+            ]} 
+              } 
+            },
+            "then": {
+              "required": ["input"]
+            },
+            "else": {
+              "properties": {
+                "input": ""
               }
             }
           },
@@ -741,6 +794,23 @@
           {
             "if": {
               "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"enum": ["difference_days", "difference_hours", "difference_minutes", "difference_seconds"] }
+              } 
+            },
+            "then": {
+              "required": ["start_date", "end_date"]
+            },
+            "else": {
+              "properties": {
+                "start_date": "",
+                "end_date": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
                 "input_type": {"const": "number"},
                 "operation": {"const": "random"}
               },
@@ -771,6 +841,8 @@
           "format", 
           "source_timezone", 
           "target_timezone", 
+          "start_date", 
+          "end_date", 
           "min", 
           "max"]
       }, 
@@ -787,7 +859,9 @@
         "source_timezone": "{{variables.source_timezone}}",
         "target_timezone": "{{variables.target_timezone}}",
         "min": "{{variables.min}}",
-        "max": "{{variables.max}}"
+        "max": "{{variables.max}}",
+        "start_date": "{{variables.start_date}}",
+        "end_date": "{{variables.end_date}}"
       },
       "input_locked": true,
       "input_schema": {
@@ -852,10 +926,20 @@
             "title": "Maximum",
             "description": "Maximum value for random number",
             "type": "number"
+          },
+          "start_date": {
+            "title": "Start Date",
+            "description": "Start date for difference in days operation",
+            "type": "string"
+          },
+          "end_date": {
+            "title": "End Date",
+            "description": "End date for difference in days operation",
+            "type": "string"
           }
         },
         "required": ["input_type", "operation", "input"],
-        "x-jsf-order": ["input_type", "operation", "input", "pattern", "replacement", "length", "amount", "format", "source_timezone", "target_timezone", "min", "max"]
+        "x-jsf-order": ["input_type", "operation", "input", "pattern", "replacement", "length", "amount", "format", "source_timezone", "target_timezone", "min", "max", "start_date", "end_date"]
       },
       "input_schema_locked": true,
       "presentation": {

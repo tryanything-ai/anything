@@ -50,6 +50,17 @@ pub async fn process_formatter_task(
                 .and_then(|v| v.as_str())
                 .unwrap_or("%Y-%m-%d %H:%M:%S");
 
+            
+            let start_date = bundled_context
+                .get("start_date")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+
+            let end_date = bundled_context
+                .get("end_date")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+
             // Parse the input date string
             let parsed_date = if let Ok(dt) = DateTime::parse_from_rfc3339(input) {
                 dt
@@ -113,8 +124,36 @@ pub async fn process_formatter_task(
                 "is_future" => (parsed_date > Utc::now()).to_string(),
                 "is_past" => (parsed_date < Utc::now()).to_string(),
                 "difference_days" => {
-                    let now = Utc::now();
-                    (now.signed_duration_since(parsed_date).num_days()).to_string()
+                    if let Ok(end_date) = input.parse::<DateTime<Utc>>() {
+                        let start_date = parsed_date;
+                        (end_date.signed_duration_since(start_date).num_days()).to_string()
+                    } else {
+                        "Invalid end date".to_string()
+                    }
+                }
+                "difference_hours" => {
+                    if let Ok(end_date) = input.parse::<DateTime<Utc>>() {
+                        let start_date = parsed_date;
+                        (end_date.signed_duration_since(start_date).num_hours()).to_string()
+                    } else {
+                        "Invalid end date".to_string()
+                    }
+                }
+                "difference_minutes" => {
+                    if let Ok(end_date) = input.parse::<DateTime<Utc>>() {
+                        let start_date = parsed_date;
+                        (end_date.signed_duration_since(start_date).num_minutes()).to_string()
+                    } else {
+                        "Invalid end date".to_string()
+                    }
+                }
+                "difference_seconds" => {
+                    if let Ok(end_date) = input.parse::<DateTime<Utc>>() {
+                        let start_date = parsed_date;
+                        (end_date.signed_duration_since(start_date).num_seconds()).to_string()
+                    } else {
+                        "Invalid end date".to_string()
+                    }
                 }
                 _ => input.to_string(),
             }
