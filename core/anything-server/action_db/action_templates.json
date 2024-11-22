@@ -601,6 +601,14 @@
             "x-jsf-presentation": {
               "inputType": "text"
             }
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "description": "Source timezone for conversion",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
           }
         },
         "required": ["input_type", "operation"],
@@ -646,7 +654,8 @@
                     {"const": "add_minutes", "title": "Add Minutes"},
                     {"const": "subtract_minutes", "title": "Subtract Minutes"},
                     {"const": "format", "title": "Format"},
-                    {"const": "to_timezone", "title": "Convert to Timezone"}
+                    {"const": "to_timezone", "title": "Convert to Timezone"},
+                    {"const": "convert_timezone", "title": "Convert Timezone"}
                   ]
                 }
               },
@@ -685,8 +694,8 @@
             "if": {
               "properties": {
                 "input_type": {"const": "date"},
-                "operation": {"enum": ["format", "to_timezone"] }
-              }  
+                "operation": {"enum": ["format", "to_timezone", "convert_timezone"] }
+              }
             },
             "then": {
               "required": ["format"]
@@ -701,7 +710,7 @@
             "if": {
               "properties": {
                 "input_type": {"const": "date"},
-                "operation": {"const": "to_timezone" }
+                "operation": {"enum": ["to_timezone", "convert_timezone"] }
               } 
             },
             "then": {
@@ -710,6 +719,22 @@
             "else": {
               "properties": {
                 "target_timezone": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"const": "convert_timezone" }
+              } 
+            },
+            "then": {
+              "required": ["source_timezone"]
+            },
+            "else": {
+              "properties": {
+                "source_timezone": ""
               }
             }
           },
