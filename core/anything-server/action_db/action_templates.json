@@ -525,5 +525,332 @@
         }
       ]
     }
-  }
+  },
+  {
+    "type": "action", 
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0",
+      "type": "action",
+      "plugin_id": "formatter",
+      "action_id": "formatter", 
+      "plugin_version": "0.1.0",
+      "label": "Formatter",
+      "description": "Format and transform text, dates and numbers in various ways",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 7C4 6.44772 4.44772 6 5 6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7Z\" fill=\"#000000\"/><path d=\"M4 12C4 11.4477 4.44772 11 5 11H15C15.5523 11 16 11.4477 16 12C16 12.5523 15.5523 13 15 13H5C4.44772 13 4 12.5523 4 12Z\" fill=\"#000000\"/><path d=\"M5 16C4.44772 16 4 16.4477 4 17C4 17.5523 4.44772 18 5 18H13C13.5523 18 14 17.5523 14 17C14 16.4477 13.5523 16 13 16H5Z\" fill=\"#000000\"/></svg>",
+      "variables": {
+        "input_type": "text",
+        "operation": "capitalize",
+        "input": "",
+        "amount": 0
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "input_type": {
+            "title": "Input Type",
+            "description": "Type of input to format",
+            "type": "string",
+            "oneOf": [
+              {"const": "text", "title": "Text"},
+              {"const": "date", "title": "Date"},
+              {"const": "number", "title": "Number"}
+            ],
+            "default": "text",
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "operation": {
+            "title": "Operation",
+            "description": "Formatting operation to perform",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "input": {
+            "title": "Input",
+            "description": "Value to format",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "amount": {
+            "title": "Amount",
+            "description": "Amount to add/subtract for date operations",
+            "type": "number",
+            "x-jsf-presentation": {
+              "inputType": "number"
+            }
+          },
+          "format": {
+            "title": "Format",
+            "description": "Date format string",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "target_timezone": {
+            "title": "Target Timezone",
+            "description": "Target timezone for conversion",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          }
+        },
+        "required": ["input_type", "operation"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "text"}
+              },
+              "required": ["input_type", "operation"]
+            },
+            "then": {
+              "properties": {
+                "operation": {
+                  "oneOf": [
+                    {"const": "capitalize", "title": "Capitalize"}
+                  ]
+                }
+              },
+              "required": ["input"]
+            },
+            "else": {
+              "properties": {
+                "input": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"}
+              },
+              "required": ["input_type", "operation"]
+            },
+            "then": {
+              "properties": {
+                "operation": {
+                  "oneOf": [
+                    {"const": "add_days", "title": "Add Days"},
+                    {"const": "subtract_days", "title": "Subtract Days"},
+                    {"const": "add_hours", "title": "Add Hours"},
+                    {"const": "subtract_hours", "title": "Subtract Hours"},
+                    {"const": "add_minutes", "title": "Add Minutes"},
+                    {"const": "subtract_minutes", "title": "Subtract Minutes"},
+                    {"const": "format", "title": "Format"},
+                    {"const": "to_timezone", "title": "Convert to Timezone"}
+                  ]
+                }
+              },
+              "required": ["input"]
+            },
+            "else": {
+              "properties": {
+                "input": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"enum": [
+                  "add_days",
+                  "subtract_days",
+                  "add_hours",
+                  "subtract_hours",
+                  "add_minutes",
+                  "subtract_minutes"
+            ]}
+              } 
+            },
+            "then": {
+              "required": ["amount"]
+            },
+            "else": {
+              "properties": {
+                "amount": 0
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"enum": ["format", "to_timezone"] }
+              }  
+            },
+            "then": {
+              "required": ["format"]
+            },
+            "else": {
+              "properties": {
+                "format": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"const": "to_timezone" }
+              } 
+            },
+            "then": {
+              "required": ["target_timezone"]
+            },
+            "else": {
+              "properties": {
+                "target_timezone": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "number"},
+                "operation": {"const": "random"}
+              },
+              "required": ["input_type", "operation"]
+            },
+            "then": {
+              "properties": {
+                "min": {"type": "number"},
+                "max": {"type": "number"}
+              }
+            },
+            "else": {
+              "properties": {
+                "min": 0,
+                "max": 0
+              }
+            }
+          }
+        ],
+        "x-jsf-order": [
+          "input_type", 
+          "operation", 
+          "input", 
+          "pattern", 
+          "replacement", 
+          "length", 
+          "amount",
+          "format", 
+          "source_timezone", 
+          "target_timezone", 
+          "min", 
+          "max"]
+      }, 
+      "variables_schema_locked": true,
+      "input": {
+        "input_type": "{{variables.input_type}}",
+        "operation": "{{variables.operation}}",
+        "input": "{{variables.input}}",
+        "pattern": "{{variables.pattern}}",
+        "replacement": "{{variables.replacement}}",
+        "length": "{{variables.length}}",
+        "amount": "{{variables.amount}}",
+        "format": "{{variables.format}}",
+        "source_timezone": "{{variables.source_timezone}}",
+        "target_timezone": "{{variables.target_timezone}}",
+        "min": "{{variables.min}}",
+        "max": "{{variables.max}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input_type": {
+            "title": "Input Type",
+            "description": "Type of input to format",
+            "type": "string"
+          },
+          "operation": {
+            "title": "Operation",
+            "description": "Formatting operation to perform",
+            "type": "string"
+          },
+          "input": {
+            "title": "Input",
+            "description": "Value to format",
+            "type": "string"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "description": "Pattern for replace/extract operations",
+            "type": "string"
+          },
+          "replacement": {
+            "title": "Replacement",
+            "description": "Replacement text for replace operation",
+            "type": "string"
+          },
+          "length": {
+            "title": "Length",
+            "description": "Length for truncate operation",
+            "type": "number"
+          },
+          "amount": {
+            "title": "Amount",
+            "description": "Amount to add/subtract for date operations",
+            "type": "number"
+          },
+          "format": {
+            "title": "Format",
+            "description": "Date format string",
+            "type": "string"
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "description": "Source timezone for conversion",
+            "type": "string"
+          },
+          "target_timezone": {
+            "title": "Target Timezone",
+            "description": "Target timezone for conversion",
+            "type": "string"
+          },
+          "min": {
+            "title": "Minimum",
+            "description": "Minimum value for random number",
+            "type": "number"
+          },
+          "max": {
+            "title": "Maximum",
+            "description": "Maximum value for random number",
+            "type": "number"
+          }
+        },
+        "required": ["input_type", "operation", "input"],
+        "x-jsf-order": ["input_type", "operation", "input", "pattern", "replacement", "length", "amount", "format", "source_timezone", "target_timezone", "min", "max"]
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a",
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+  } 
   ]
