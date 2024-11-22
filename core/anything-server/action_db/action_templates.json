@@ -532,15 +532,14 @@
     "action_template_definition": {
       "anything_action_version": "0.1.0",
       "type": "action",
-      "plugin_id": "formatter",
-      "action_id": "formatter", 
+      "plugin_id": "format_date",
+      "action_id": "format_date",
       "plugin_version": "0.1.0",
-      "label": "Formatter",
-      "description": "Format and transform text, dates and numbers in various ways",
+      "label": "Date Formatter",
+      "description": "Format and transform dates in various ways",
       "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 7C4 6.44772 4.44772 6 5 6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7Z\" fill=\"#000000\"/><path d=\"M4 12C4 11.4477 4.44772 11 5 11H15C15.5523 11 16 11.4477 16 12C16 12.5523 15.5523 13 15 13H5C4.44772 13 4 12.5523 4 12Z\" fill=\"#000000\"/><path d=\"M5 16C4.44772 16 4 16.4477 4 17C4 17.5523 4.44772 18 5 18H13C13.5523 18 14 17.5523 14 17C14 16.4477 13.5523 16 13 16H5Z\" fill=\"#000000\"/></svg>",
       "variables": {
-        "input_type": "text",
-        "operation": "capitalize",
+        "operation": "add_days",
         "input": "",
         "amount": 0,
         "format": "",
@@ -553,30 +552,35 @@
       "variables_schema": {
         "type": "object",
         "properties": {
-          "input_type": {
-            "title": "Input Type",
-            "description": "Type of input to format",
-            "type": "string",
-            "oneOf": [
-              {"const": "text", "title": "Text"},
-              {"const": "date", "title": "Date"},
-              {"const": "number", "title": "Number"}
-            ],
-            "default": "text",
-            "x-jsf-presentation": {
-              "inputType": "select"
-            }
-          },
           "operation": {
             "title": "Operation",
             "description": "Formatting operation to perform",
             "type": "string",
+            "oneOf": [
+              {"const": "add_days", "title": "Add Days"},
+              {"const": "subtract_days", "title": "Subtract Days"},
+              {"const": "add_hours", "title": "Add Hours"},
+              {"const": "subtract_hours", "title": "Subtract Hours"},
+              {"const": "add_minutes", "title": "Add Minutes"},
+              {"const": "subtract_minutes", "title": "Subtract Minutes"},
+              {"const": "format", "title": "Format"},
+              {"const": "to_timezone", "title": "Convert to Timezone"},
+              {"const": "convert_timezone", "title": "Convert Timezone"},
+              {"const": "to_unix", "title": "Convert to Unix Timestamp"},
+              {"const": "from_unix", "title": "Convert from Unix Timestamp"}, 
+              {"const": "is_future", "title": "Is Future"},
+              {"const": "is_past", "title": "Is Past"},
+              {"const": "difference_days", "title": "Difference in Days"},
+              {"const": "difference_hours", "title": "Difference in Hours"},
+              {"const": "difference_minutes", "title": "Difference in Minutes"},
+              {"const": "difference_seconds", "title": "Difference in Seconds"}
+            ],
             "x-jsf-presentation": {
               "inputType": "select"
             }
           },
           "input": {
-            "title": "Input",
+            "title": "Date",
             "description": "Value to format",
             "type": "string",
             "x-jsf-presentation": {
@@ -632,64 +636,8 @@
             }
           }
         },
-        "required": ["input_type", "operation"],
+        "required": ["operation"],
         "allOf": [
-          {
-            "if": {
-              "properties": {
-                "input_type": {"const": "text"}
-              },
-              "required": ["input_type", "operation"]
-            },
-            "then": {
-              "properties": {
-                "operation": {
-                  "oneOf": [
-                    {"const": "capitalize", "title": "Capitalize"}
-                  ]
-                }
-              },
-              "required": ["input"]
-            },
-            "else": {
-              "properties": {
-                "input": ""
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "input_type": {"const": "date"}
-              },
-              "required": ["input_type", "operation"]
-            },
-            "then": {
-              "properties": {
-                "operation": {
-                  "oneOf": [
-                    {"const": "add_days", "title": "Add Days"},
-                    {"const": "subtract_days", "title": "Subtract Days"},
-                    {"const": "add_hours", "title": "Add Hours"},
-                    {"const": "subtract_hours", "title": "Subtract Hours"},
-                    {"const": "add_minutes", "title": "Add Minutes"},
-                    {"const": "subtract_minutes", "title": "Subtract Minutes"},
-                    {"const": "format", "title": "Format"},
-                    {"const": "to_timezone", "title": "Convert to Timezone"},
-                    {"const": "convert_timezone", "title": "Convert Timezone"},
-                    {"const": "to_unix", "title": "Convert to Unix Timestamp"},
-                    {"const": "from_unix", "title": "Convert from Unix Timestamp"}, 
-                    {"const": "is_future", "title": "Is Future"},
-                    {"const": "is_past", "title": "Is Past"},
-                    {"const": "difference_days", "title": "Difference in Days"},
-                    {"const": "difference_hours", "title": "Difference in Hours"},
-                    {"const": "difference_minutes", "title": "Difference in Minutes"},
-                    {"const": "difference_seconds", "title": "Difference in Seconds"}
-                  ]
-                }
-              }
-            }
-          },
           {
             "if": {
               "properties": {
@@ -746,7 +694,7 @@
           {
             "if": {
               "properties": {
-                "input_type": {"const": "date"},
+              
                 "operation": {"enum": ["format", "to_timezone", "convert_timezone"] }
               }
             },
@@ -762,7 +710,7 @@
           {
             "if": {
               "properties": {
-                "input_type": {"const": "date"},
+               
                 "operation": {"enum": ["to_timezone", "convert_timezone"] }
               } 
             },
@@ -794,7 +742,6 @@
           {
             "if": {
               "properties": {
-                "input_type": {"const": "date"},
                 "operation": {"enum": ["difference_days", "difference_hours", "difference_minutes", "difference_seconds"] }
               } 
             },
@@ -807,59 +754,27 @@
                 "end_date": ""
               }
             }
-          },
-          {
-            "if": {
-              "properties": {
-                "input_type": {"const": "number"},
-                "operation": {"const": "random"}
-              },
-              "required": ["input_type", "operation"]
-            },
-            "then": {
-              "properties": {
-                "min": {"type": "number"},
-                "max": {"type": "number"}
-              }
-            },
-            "else": {
-              "properties": {
-                "min": 0,
-                "max": 0
-              }
-            }
           }
         ],
         "x-jsf-order": [
-          "input_type", 
           "operation", 
           "input", 
-          "pattern", 
-          "replacement", 
-          "length", 
           "amount",
           "format", 
           "source_timezone", 
           "target_timezone", 
           "start_date", 
-          "end_date", 
-          "min", 
-          "max"]
+          "end_date"
+          ]
       }, 
       "variables_schema_locked": true,
       "input": {
-        "input_type": "{{variables.input_type}}",
         "operation": "{{variables.operation}}",
         "input": "{{variables.input}}",
-        "pattern": "{{variables.pattern}}",
-        "replacement": "{{variables.replacement}}",
-        "length": "{{variables.length}}",
         "amount": "{{variables.amount}}",
         "format": "{{variables.format}}",
         "source_timezone": "{{variables.source_timezone}}",
         "target_timezone": "{{variables.target_timezone}}",
-        "min": "{{variables.min}}",
-        "max": "{{variables.max}}",
         "start_date": "{{variables.start_date}}",
         "end_date": "{{variables.end_date}}"
       },
@@ -867,11 +782,7 @@
       "input_schema": {
         "type": "object",
         "properties": {
-          "input_type": {
-            "title": "Input Type",
-            "description": "Type of input to format",
-            "type": "string"
-          },
+        
           "operation": {
             "title": "Operation",
             "description": "Formatting operation to perform",
@@ -881,21 +792,6 @@
             "title": "Input",
             "description": "Value to format",
             "type": "string"
-          },
-          "pattern": {
-            "title": "Pattern",
-            "description": "Pattern for replace/extract operations",
-            "type": "string"
-          },
-          "replacement": {
-            "title": "Replacement",
-            "description": "Replacement text for replace operation",
-            "type": "string"
-          },
-          "length": {
-            "title": "Length",
-            "description": "Length for truncate operation",
-            "type": "number"
           },
           "amount": {
             "title": "Amount",
@@ -917,16 +813,6 @@
             "description": "Target timezone for conversion",
             "type": "string"
           },
-          "min": {
-            "title": "Minimum",
-            "description": "Minimum value for random number",
-            "type": "number"
-          },
-          "max": {
-            "title": "Maximum",
-            "description": "Maximum value for random number",
-            "type": "number"
-          },
           "start_date": {
             "title": "Start Date",
             "description": "Start date for difference in days operation",
@@ -938,8 +824,8 @@
             "type": "string"
           }
         },
-        "required": ["input_type", "operation", "input"],
-        "x-jsf-order": ["input_type", "operation", "input", "pattern", "replacement", "length", "amount", "format", "source_timezone", "target_timezone", "min", "max", "start_date", "end_date"]
+        "required": ["operation", "input"],
+        "x-jsf-order": ["operation", "input", "amount", "format", "source_timezone", "target_timezone", "start_date", "end_date"]
       },
       "input_schema_locked": true,
       "presentation": {
@@ -961,5 +847,213 @@
         }
       ]
     }
-  } 
+  } ,
+  {
+    "type": "action",
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0", 
+      "type": "action",
+      "plugin_id": "format_text",
+      "action_id": "format_text",
+      "plugin_version": "0.1.0",
+      "label": "Text Formatter",
+      "description": "Format and transform text in various ways",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 7C4 6.44772 4.44772 6 5 6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7Z\" fill=\"#000000\"/><path d=\"M4 12C4 11.4477 4.44772 11 5 11H15C15.5523 11 16 11.4477 16 12C16 12.5523 15.5523 13 15 13H5C4.44772 13 4 12.5523 4 12Z\" fill=\"#000000\"/><path d=\"M5 16C4.44772 16 4 16.4477 4 17C4 17.5523 4.44772 18 5 18H13C13.5523 18 14 17.5523 14 17C14 16.4477 13.5523 16 13 16H5Z\" fill=\"#000000\"/></svg>",
+      "variables": {
+        "operation": "capitalize",
+        "input": "",
+        "pattern": "",
+        "replacement": "",
+        "length": 0
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "title": "Operation",
+            "description": "Text formatting operation to perform",
+            "type": "string",
+            "oneOf": [
+              {"const": "capitalize", "title": "Capitalize"},
+              {"const": "lowercase", "title": "Lowercase"},
+              {"const": "uppercase", "title": "Uppercase"},
+              {"const": "trim", "title": "Trim"},
+              {"const": "length", "title": "Get Length"},
+              {"const": "word_count", "title": "Word Count"},
+              {"const": "extract_emails", "title": "Extract Emails"},
+              {"const": "extract_urls", "title": "Extract URLs"},
+              {"const": "url_encode", "title": "URL Encode"},
+              {"const": "url_decode", "title": "URL Decode"},
+              {"const": "html_to_markdown", "title": "HTML to Markdown"},
+              {"const": "markdown_to_html", "title": "Markdown to HTML"},
+              {"const": "replace", "title": "Replace Text"},
+              {"const": "truncate", "title": "Truncate"},
+              {"const": "extract_pattern", "title": "Extract Pattern"}
+            ],
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "input": {
+            "title": "Text",
+            "description": "Text to format",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "pattern": {
+            "title": "Pattern",
+            "description": "Pattern to match for replace/extract operations",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "replacement": {
+            "title": "Replacement",
+            "description": "Replacement text for replace operation",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "length": {
+            "title": "Length",
+            "description": "Length for truncate operation",
+            "type": "number",
+            "x-jsf-presentation": {
+              "inputType": "number"
+            }
+          }
+        },
+        "required": ["operation", "input"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {"enum": ["replace", "extract_pattern"]}
+              }
+            },
+            "then": {
+              "required": ["pattern"]
+            },
+            "else": {
+              "properties": {
+                "pattern": ""
+              }
+            }
+          }, 
+          {
+            "if": {
+              "properties": {
+                "operation": {"const": ["truncate"]}
+              }
+            },
+            "then": {
+              "required": ["length"]
+            },
+            "else": {
+              "properties": {
+                "length": ""
+              }
+            }
+          }, 
+          {
+            "if": {
+              "properties": {
+                "operation": {"const": "replace"}
+              }
+            },
+            "then": {
+              "required": ["replacement"]
+            },
+            "else": {
+              "properties": {
+                "replacement": ""
+              }
+            }
+          }, 
+          {
+            "if": {
+              "properties": {
+                "operation": {"const": "extract_pattern"}
+              }
+            },
+            "then": {
+              "required": ["pattern"]
+            },
+            "else": {
+              "properties": {
+                "pattern": ""
+              }
+            }
+          }
+        ],
+        "x-jsf-order": ["operation", "input", "pattern", "replacement", "length"]
+      },
+      "variables_schema_locked": true,
+      "input": {
+        "operation": "{{variables.operation}}",
+        "input": "{{variables.input}}",
+        "pattern": "{{variables.pattern}}",
+        "replacement": "{{variables.replacement}}",
+        "length": "{{variables.length}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "title": "Operation",
+            "description": "Text formatting operation to perform",
+            "type": "string"
+          },
+          "input": {
+            "title": "Input",
+            "description": "Text to format",
+            "type": "string"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "description": "Pattern to match for replace/extract operations",
+            "type": "string"
+          },
+          "replacement": {
+            "title": "Replacement",
+            "description": "Replacement text for replace operation",
+            "type": "string"
+          },
+          "length": {
+            "title": "Length",
+            "description": "Length for truncate operation",
+            "type": "number"
+          }
+        },
+        "required": ["operation", "input"],
+        "x-jsf-order": ["operation", "input", "pattern", "replacement", "length"]
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a",
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+  }
   ]

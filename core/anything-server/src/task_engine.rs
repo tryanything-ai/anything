@@ -13,7 +13,7 @@ use reqwest::Client;
 
 use crate::bundler::bundle_task_context;
 use crate::execution_planner::process_trigger_task;
-use crate::system_actions::formatter_action::process_formatter_task;
+use crate::system_actions::formatter_action::{process_date_task, process_number_task, process_text_task};
 use crate::system_actions::output_action::process_response_task;
 use crate::workflow_types::Task;
 use crate::AppState;
@@ -378,7 +378,9 @@ pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Valu
                     Some(plugin_id) => match plugin_id.as_str() {
                         "http" => process_http_task(&bundled_context).await,
                         "response" => process_response_task(&bundled_context).await,
-                        "formatter" => process_formatter_task(&bundled_context).await,
+                        "format_text" => process_text_task(&bundled_context).await,
+                        "format_date" => process_date_task(&bundled_context).await,
+                        "format_number" => process_number_task(&bundled_context).await,
                         _ => Ok(json!({
                             "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
                         })),
