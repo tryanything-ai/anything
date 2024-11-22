@@ -26,6 +26,7 @@ extern crate slugify;
 use auth::init::AuthState;
 
 mod system_actions; 
+mod system_variables;
 mod workflows; 
 mod actions; 
 mod tasks; 
@@ -304,6 +305,10 @@ pub async fn root() -> impl IntoResponse {
         )
         .route( "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
         get(variables::get_flow_version_variables))
+        .route(
+            "/account/:account_id/testing/system_variables",
+            get(system_variables::get_system_variables_handler))
+        
         //Test Actions
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",

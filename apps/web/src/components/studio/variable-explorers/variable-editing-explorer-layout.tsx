@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Send, XIcon } from "lucide-react";
 import { SecretsExplorer } from "./secrets-explorer";
+import { SystemVariablesExplorer } from "./system-variables-explorer";
 
 export default function VariableEditingExplorer(): JSX.Element {
   const {
@@ -37,9 +38,10 @@ export default function VariableEditingExplorer(): JSX.Element {
           >
             <XIcon className="size-5 fill-foreground" />
           </Button>
-          <TabsList className="w-[200px]">
+          <TabsList className="w-[340px]">
             <TabsTrigger value="results">Action Results</TabsTrigger>
             <TabsTrigger value="secrets">Secrets</TabsTrigger>
+            <TabsTrigger value="system_variables">System Variables</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="results" className="h-full overflow-y-auto">
@@ -50,6 +52,14 @@ export default function VariableEditingExplorer(): JSX.Element {
         <TabsContent value="secrets" className="h-full overflow-y-auto">
           <ScrollArea className="h-full">
             <SecretsExplorer />
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent
+          value="system_variables"
+          className="h-full overflow-y-auto"
+        >
+          <ScrollArea className="h-full">
+            <SystemVariablesExplorer />
           </ScrollArea>
         </TabsContent>
       </Tabs>

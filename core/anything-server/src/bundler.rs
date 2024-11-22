@@ -1,5 +1,6 @@
 use crate::auth;
 use crate::auth::init::AccountAuthProviderAccount;
+use crate::system_variables::get_system_variables;
 use crate::workflow_types::Task;
 use dotenv::dotenv;
 use postgrest::Postgrest;
@@ -246,6 +247,13 @@ pub async fn bundle_variables(
     println!(
         "[BUNDLER] Context after adding completed tasks: {:?}",
         render_variables_context
+    );
+
+    // Add system variables to the render_variables_context
+    let system_variables = get_system_variables();
+    render_variables_context.insert(
+        "system".to_string(),
+        serde_json::to_value(system_variables)?,
     );
 
     // Create a new Templater instance

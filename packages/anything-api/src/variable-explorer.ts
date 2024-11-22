@@ -50,3 +50,27 @@ export const getWorkflowVersionVariables = async (account_id: string, workflow_i
         console.error('Error testing action:', error);
     }
 }
+
+export const getSystemVariables = async (account_id: string) => {
+    try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        console.log('[VARIABLES API] Getting System Variables');
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/testing/system_variables`, {
+                headers: {
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Getting System Variables /api/account/id/system_variables', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error testing action:', error);
+    }
+}
