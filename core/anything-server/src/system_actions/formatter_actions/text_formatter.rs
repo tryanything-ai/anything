@@ -1,9 +1,5 @@
-use chrono::{DateTime, Duration, NaiveDateTime, Offset, Utc};
-use chrono_tz::Tz;
 use html2md::parse_html;
 use pulldown_cmark::{html, Options, Parser};
-use rand::Rng;
-use regex::Regex;
 use serde_json::{json, Value};
 
 pub async fn process_text_task(
@@ -29,10 +25,22 @@ pub async fn process_text_task(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    let length = bundled_context
-        .get("length")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0) as usize;
+    let start_index = bundled_context
+        .get("start_index")
+        .and_then(|v| match v {
+            Value::String(s) => s.parse::<i64>().ok(),
+            Value::Number(n) => n.as_i64(),
+            _ => None,
+        })
+        .unwrap_or(0) as i32;
+
+    let end_index = bundled_context
+        .get("end_index")
+        .and_then(|v| match v {
+            Value::String(s) => s.parse::<i64>().ok(),
+            Value::Number(n) => n.as_i64(),
+            _ => None,
+        });
 
     let result = match operation {
         "capitalize" => input.chars().next().map_or(String::new(), |c| {
@@ -45,20 +53,21 @@ pub async fn process_text_task(
         "trim" => input.trim().to_string(),
         "length" => input.len().to_string(),
         "word_count" => input.split_whitespace().count().to_string(),
-        "extract_emails" => {
-            let re = Regex::new(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b").unwrap();
-            re.find_iter(input)
-                .map(|m| m.as_str().to_string())
-                .collect::<Vec<String>>()
-                .join(", ")
-        }
-        "extract_urls" => {
-            let re = Regex::new(r"https?://[^\s]+").unwrap();
-            re.find_iter(input)
-                .map(|m| m.as_str().to_string())
-                .collect::<Vec<String>>()
-                .join(", ")
-        }
+        //TODO: make into a dif action also when we do loops i would say
+        // "extract_emails" => {
+        //     let re = Regex::new(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b").unwrap();
+        //     re.find_iter(input)
+        //         .map(|m| m.as_str().to_string())
+        //         .collect::<Vec<String>>()
+        //         .join(", ")
+        // }
+        // "extract_urls" => {
+        //     let re = Regex::new(r"https?://[^\s]+").unwrap();
+        //     re.find_iter(input)
+        //         .map(|m| m.as_str().to_string())
+        //         .collect::<Vec<String>>()
+        //         .join(", ")
+        // }
         "url_encode" => urlencoding::encode(input).to_string(),
         "url_decode" => urlencoding::decode(input).unwrap_or_default().to_string(),
         "html_to_markdown" => parse_html(input),
@@ -71,25 +80,50 @@ pub async fn process_text_task(
             html_output
         }
         "replace" => input.replace(pattern, replacement),
-        "truncate" => {
-            if input.len() <= length {
-                input.to_string()
+        "substring" => {
+            let len = input.chars().count() as i32;
+            // Convert negative indices to positive (Python-like behavior)
+            let normalized_start = if start_index < 0 {
+                (len + start_index).max(0)
             } else {
-                format!("{}...", &input[..length])
+                start_index.min(len)
+            } as usize;
+
+            let normalized_end = match end_index {
+                Some(end) => {
+                    let end = end as i32;
+                    if end < 0 {
+                        (len + end).max(0)
+                    } else {
+                        end.min(len)
+                    }
+                }
+                None => len,
+            } as usize;
+
+            if normalized_start >= normalized_end {
+                String::new()
+            } else {
+                input
+                    .chars()
+                    .skip(normalized_start)
+                    .take(normalized_end - normalized_start)
+                    .collect()
             }
         }
-        "extract_pattern" => {
-            if let Ok(re) = Regex::new(pattern) {
-                re.find_iter(input)
-                    .map(|m| m.as_str().to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            } else {
-                "Invalid regex pattern".to_string()
-            }
-        }
+
+        // "extract_pattern" => {
+        //     if let Ok(re) = Regex::new(pattern) {
+        //         re.find_iter(input)
+        //             .map(|m| m.as_str().to_string())
+        //             .collect::<Vec<String>>()
+        //             .join(", ")
+        //     } else {
+        //         "Invalid regex pattern".to_string()
+        //     }
+        // }
         _ => input.to_string(),
     };
 
-    Ok(json!({ "result": result }))
+    Ok(json!({ "formatted_text": result }))
 }
