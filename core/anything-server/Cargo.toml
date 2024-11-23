@@ -27,9 +27,8 @@ regex = "1.10.6"
 rand = "0.8.5"
 urlencoding = "2.1.3"
 sha2 = "0.10.8"
-async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
 chrono-tz = "0.10.0"
 tracing = "0.1.40"
-url = "2.5.3"
 pulldown-cmark = "0.12.2"
 html2md = "0.2.14"
+async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
