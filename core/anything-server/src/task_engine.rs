@@ -73,6 +73,8 @@ pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
         }
     };
 
+    println!("[TASK_ENGINE] Response body: {}", body);
+
     let tasks: Vec<Task> = match serde_json::from_str(&body) {
         Ok(tasks) => tasks,
         Err(e) => {
