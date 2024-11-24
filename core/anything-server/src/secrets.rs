@@ -38,7 +38,6 @@ pub struct AnythingCreateSecretInput {
     secret_description: String,
     account_id: String,
 }
-
 pub async fn create_secret(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
@@ -140,6 +139,13 @@ pub async fn create_secret(
     };
 
     println!("DB Secret Body: {:?}", db_secret_body);
+
+    // Invalidate the bundler secrets cache for this account after creating a new secret
+    // Only lock for the minimum time needed
+    {
+        let mut cache = state.bundler_secrets_cache.write().await;
+        cache.set(&account_id, Vec::new()); // Clear the cached secrets for this account
+    }
 
     Json(db_secret_body).into_response()
 }
@@ -563,6 +569,13 @@ pub async fn update_secret(
 
     println!("Update DB Secret Body: {:?}", db_secret_body);
 
+    // Invalidate the bundler secrets cache for this account after creating a new secret
+    // Only lock for the minimum time needed
+    {
+        let mut cache = state.bundler_secrets_cache.write().await;
+        cache.set(&account_id, Vec::new()); // Clear the cached secrets for this account
+    }
+
     Json(db_secret_body).into_response()
 }
 
@@ -665,6 +678,13 @@ pub async fn delete_secret(
     };
 
     println!("Delete Vault Secret Body: {:?}", rpc_body);
+
+    // Invalidate the bundler secrets cache for this account after creating a new secret
+    // Only lock for the minimum time needed
+    {
+        let mut cache = state.bundler_secrets_cache.write().await;
+        cache.set(&account_id, Vec::new()); // Clear the cached secrets for this account
+    }
 
     Json(body).into_response()
 }

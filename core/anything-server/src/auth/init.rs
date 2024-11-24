@@ -332,6 +332,13 @@ pub async fn handle_provider_callback(
         create_account_response
     );
 
+    // Invalidate the bundler secrets cache for this account after creating a new secret
+    // Only lock for the minimum time needed
+    {
+        let mut cache = state.bundler_accounts_cache.write().await;
+        cache.set(&auth_state.account_id, Vec::new()); // Clear the cached secrets for this account
+    }
+
     // Return success response
     if create_account_response.status().is_success() {
         // Successful response
