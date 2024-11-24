@@ -18,6 +18,7 @@ use tokio::sync::RwLock;
 use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
+use tokio::sync::mpsc; 
 
 mod workflow_types;
 use regex::Regex;
@@ -72,10 +73,12 @@ pub struct AppState {
     public_client: Arc<Postgrest>,
     http_client: Arc<Client>,
     semaphore: Arc<Semaphore>,
+    workflow_processor_semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
-    processor_signal: watch::Sender<String>,
+    processor_sender: mpsc::Sender<String>,
+    processor_receiver: Mutex<mpsc::Receiver<String>>, 
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
     api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
@@ -168,7 +171,7 @@ async fn main() {
 
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
-    let (processor_signal, _) = watch::channel(String::new());
+    let (processor_tx, processor_rx) = mpsc::channel::<String>(1000); // Create both sender and receiver
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -177,9 +180,11 @@ async fn main() {
         http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
+        workflow_processor_semaphore: Arc::new(Semaphore::new(10)), //How many workflows we can run at once
         task_engine_signal,
         trigger_engine_signal,
-        processor_signal,
+        processor_sender: processor_tx,
+        processor_receiver: Mutex::new(processor_rx), 
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
         account_access_cache: Arc::new(RwLock::new(
