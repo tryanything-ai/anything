@@ -1,9 +1,13 @@
 use dotenv::dotenv;
 use postgrest::Postgrest;
-use std::env;
+use secrets_cache::SecretsCache;
+use std::{env, sync::Arc};
+use tracing::debug;
 use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
+
+use crate::AppState;
 
 pub mod secrets_cache;
 
@@ -15,8 +19,46 @@ pub struct DecryptedSecret {
     pub secret_description: Option<String>,
 }
 
-// Secrets for building context with API KEYS
 pub async fn get_decrypted_secrets(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    account_id: &str,
+) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {
+    // Try to get from cache first using a read lock
+    {
+        let cache = state.bundler_secrets_cache.read().await;
+        if let Some(cached_secrets) = cache.get(account_id) {
+            debug!(
+                "[BUNDLER] Using cached secrets for account_id: {}",
+                account_id
+            );
+            return Ok(cached_secrets);
+        }
+    }
+
+    debug!(
+        "[BUNDLER] Cache miss for secrets, fetching from DB for account_id: {}",
+        account_id
+    );
+
+    // If not in cache, fetch from DB
+    let secrets = fetch_secrets_from_vault(client, account_id).await?;
+
+    // Update cache with a write lock
+    {
+        let mut cache = state.bundler_secrets_cache.write().await;
+        cache.set(account_id, secrets.clone());
+        debug!(
+            "[BUNDLER] Updated secrets cache for account_id: {}",
+            account_id
+        );
+    }
+
+    Ok(secrets)
+}
+
+// Secrets for building context with API KEYS
+pub async fn fetch_secrets_from_vault(
     client: &Postgrest,
     account_id: &str,
 ) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {

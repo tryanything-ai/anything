@@ -6,6 +6,7 @@ use axum::{
       routing::{any, delete, get, post, put}, Router
 };
  
+use bundler::{accounts::accounts_cache::AccountsCache, secrets::secrets_cache::SecretsCache};
 use dotenv::dotenv;
 use postgrest::Postgrest;
 use reqwest::Client;
@@ -76,6 +77,8 @@ pub struct AppState {
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
     api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
+    bundler_secrets_cache: RwLock<SecretsCache>,
+    bundler_accounts_cache: RwLock<AccountsCache>,
 }
 
 #[tokio::main]
@@ -177,7 +180,9 @@ async fn main() {
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
         account_access_cache: Arc::new(RwLock::new(
             account_auth_middleware::AccountAccessCache::new(Duration::from_secs(3600))
-        ))
+        )),
+        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(3600))), // 1 hour TTL
+        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(3600))), // 1 hour TTL
     });
 
 pub async fn root() -> impl IntoResponse {

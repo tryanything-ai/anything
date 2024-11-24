@@ -44,9 +44,12 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
     // Receive info from other systems
     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
     let client = state.anything_client.clone();
-    hydrate_triggers(&client, &trigger_state).await;
+    hydrate_triggers(state.clone(), &client, &trigger_state).await;
 
     let refresh_interval = Duration::from_secs(60);
+
+     // Clone state once here for use in the loop
+     let state = Arc::new(state);
 
     loop {
         tokio::select! {
@@ -85,7 +88,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
             _ = trigger_engine_signal_rx.changed() => {
                 let workflow_id = trigger_engine_signal_rx.borrow().clone();
                 println!("[TRIGGER_ENGINE] Received workflow_id: {}", workflow_id);
-                if let Err(e) = update_triggers_for_workflow(&client, &trigger_state, &workflow_id).await {
+                if let Err(e) = update_triggers_for_workflow(&state, &client, &trigger_state, &workflow_id).await {
                     println!("[TRIGGER_ENGINE] Error updating triggers for workflow: {:?}", e);
                 }
             }
@@ -96,6 +99,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
 //From Claude and very untested so far
 //Ment to lightly update triggers so we don't need to refresh the entire memory each time we update something
 async fn update_triggers_for_workflow(
+    state: &Arc<AppState>,
     client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
     workflow_id: &String,
@@ -127,7 +131,8 @@ async fn update_triggers_for_workflow(
     //Add new triggers to new_triggers
     for flow_version in flow_versions {
         let triggers_from_flow =
-            create_in_memory_triggers_from_flow_definition(&flow_version, client).await;
+            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version, client)
+                .await;
         new_triggers.extend(triggers_from_flow);
     }
 
@@ -158,6 +163,7 @@ async fn update_triggers_for_workflow(
 }
 
 pub async fn hydrate_triggers(
+    state: Arc<AppState>,
     client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
 ) {
@@ -215,7 +221,8 @@ pub async fn hydrate_triggers(
     //Add new triggers to new_triggers
     for flow_version in flow_versions {
         let triggers_from_flow =
-            create_in_memory_triggers_from_flow_definition(&flow_version, client).await;
+            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version, client)
+                .await;
 
         for (workflow_id, new_trigger) in triggers_from_flow {
             // Check if the trigger already exists in memory
@@ -318,12 +325,12 @@ async fn update_trigger_last_run(
 }
 
 async fn create_trigger_task(
-    state: &AppState,
+    state: &Arc<AppState>,
     trigger: &InMemoryTrigger,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-    let client = &state.anything_client;
+    let client = state.anything_client.clone();
 
     println!("Handling create task from cron trigger");
 
@@ -374,6 +381,7 @@ async fn create_trigger_task(
 }
 
 pub async fn create_in_memory_triggers_from_flow_definition(
+    state: Arc<AppState>,
     flow_version: &Value,
     client: &Postgrest,
 ) -> HashMap<String, InMemoryTrigger> {
@@ -451,19 +459,25 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                         //Run the templater over the variables and results from last session
                         //Return the templated variables and inputs
                         println!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
-                        let rendered_input = match bundle_task_context(client, &mock_task, false).await {
-                            Ok(vars) => {
-                                println!(
-                                    "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
+                        let rendered_input =
+                            match bundle_task_context(state.clone(), client, &mock_task, false)
+                                .await
+                            {
+                                Ok(vars) => {
+                                    println!(
+                                        "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
+                                        vars
+                                    );
                                     vars
-                                );
-                                vars
-                            }
-                            Err(e) => {
-                                println!("[TRIGGER ENGINE] Failed to bundle variables: {:?}", e);
-                                continue;
-                            }
-                        };
+                                }
+                                Err(e) => {
+                                    println!(
+                                        "[TRIGGER ENGINE] Failed to bundle variables: {:?}",
+                                        e
+                                    );
+                                    continue;
+                                }
+                            };
 
                         let cron_expression = rendered_input["cron_expression"]
                             .as_str()

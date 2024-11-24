@@ -128,6 +128,7 @@ pub async fn run_workflow_and_respond(
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
@@ -382,6 +383,7 @@ pub async fn run_workflow_version_and_respond(
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
@@ -498,42 +500,42 @@ pub async fn run_workflow_version_and_respond(
             .into_response();
     }
 
- // Wait for the result with a timeout
- match timeout(Duration::from_secs(30), rx).await {
-    Ok(Ok(result)) => {
-        println!("[WEBHOOK API] Received workflow result");
-        parse_response_action_response_into_api_response(result).into_response()
+    // Wait for the result with a timeout
+    match timeout(Duration::from_secs(30), rx).await {
+        Ok(Ok(result)) => {
+            println!("[WEBHOOK API] Received workflow result");
+            parse_response_action_response_into_api_response(result).into_response()
+        }
+        Ok(Err(_)) => {
+            println!("[WEBHOOK API] Workflow channel closed unexpectedly");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "error": "Workflow execution channel closed unexpectedly",
+                    "workflow_session_id": task.flow_session_id
+                })),
+            )
+                .into_response()
+        }
+        Err(_) => {
+            println!("[WEBHOOK API] Workflow timed out after 30 seconds");
+            // Remove the completion channel on timeout
+            state
+                .flow_completions
+                .lock()
+                .await
+                .remove(&task.flow_session_id);
+            (
+                StatusCode::REQUEST_TIMEOUT,
+                Json(json!({
+                    "error": "Workflow execution timed out",
+                    "workflow_session_id": task.flow_session_id,
+                    "message": "You can query the workflow status using the flow_session_id"
+                })),
+            )
+                .into_response()
+        }
     }
-    Ok(Err(_)) => {
-        println!("[WEBHOOK API] Workflow channel closed unexpectedly");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({
-                "error": "Workflow execution channel closed unexpectedly",
-                "workflow_session_id": task.flow_session_id
-            })),
-        )
-            .into_response()
-    }
-    Err(_) => {
-        println!("[WEBHOOK API] Workflow timed out after 30 seconds");
-        // Remove the completion channel on timeout
-        state
-            .flow_completions
-            .lock()
-            .await
-            .remove(&task.flow_session_id);
-        (
-            StatusCode::REQUEST_TIMEOUT,
-            Json(json!({
-                "error": "Workflow execution timed out",
-                "workflow_session_id": task.flow_session_id,
-                "message": "You can query the workflow status using the flow_session_id"
-            })),
-        )
-            .into_response()
-    }
-}
 }
 
 pub async fn run_workflow(
@@ -636,6 +638,7 @@ pub async fn run_workflow(
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
@@ -847,6 +850,7 @@ pub async fn run_workflow_version(
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,

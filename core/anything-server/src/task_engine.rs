@@ -234,11 +234,10 @@ pub async fn update_flow_session_status(
     Ok(())
 }
 
-
 pub async fn process_flow_tasks(
+    state: Arc<AppState>,
     client: &Postgrest,
     flow_session_id: &String,
-    state: Arc<AppState>,
 ) {
     let start = Instant::now();
     println!("[PROCESS FLOW TASKS] Starting to process new flow");
@@ -262,7 +261,7 @@ pub async fn process_flow_tasks(
                     "[PROCESS FLOW TASKS] Processing pending task {}",
                     task.task_id
                 );
-                match process_task(client, task, &state.http_client).await {
+                match process_task(state.clone(), client, task).await {
                     Ok(result) => {
                         println!(
                             "[PROCESS FLOW TASKS] Successfully processed task {}",
@@ -315,7 +314,11 @@ pub async fn process_flow_tasks(
                     }
                 }
             }
-            println!("[SPEED] Task {} took {:?}", task.task_id, task_start.elapsed());
+            println!(
+                "[SPEED] Task {} took {:?}",
+                task.task_id,
+                task_start.elapsed()
+            );
         }
 
         // Update flow session status
@@ -376,18 +379,23 @@ pub async fn process_flow_tasks(
 }
 
 pub async fn process_task(
+    state: Arc<AppState>,
     client: &Postgrest,
     task: &Task,
-    http_client: &Client,
 ) -> Result<Value, Value> {
     let start = Instant::now();
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
+    // Clone state before using it in join
+    let state_clone = Arc::clone(&state);
+
     // Run status update and context bundling in parallel
     let (status_result, context_result) = tokio::join!(
         update_task_status(client, task, &TaskStatus::Running, None),
-        bundle_task_context(client, task, true)
+        bundle_task_context(state, client, task, true)
     );
+
+    let http_client = state_clone.http_client.clone();
 
     // Check status update result
     if let Err(e) = status_result {
@@ -406,7 +414,7 @@ pub async fn process_task(
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_id {
                     Some(plugin_id) => match plugin_id.as_str() {
-                        "http" => process_http_task(&bundled_context, http_client).await,
+                        "http" => process_http_task(&http_client, &bundled_context).await,
                         "response" => process_response_task(&bundled_context).await,
                         "format_text" => process_text_task(&bundled_context).await,
                         "format_date" => process_date_task(&bundled_context).await,
@@ -490,8 +498,8 @@ pub async fn process_task(
 }
 
 async fn process_http_task(
-    bundled_context: &Value,
     http_client: &Client,
+    bundled_context: &Value,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
     println!("[TASK_ENGINE] Entering process_http_task");
@@ -714,13 +722,13 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
 
                 // Process the trigger task if it is a trigger
                 if task.r#type == ActionType::Trigger.as_str().to_string() {
-                    if let Err(e) = process_task(&client, &task, &state.http_client).await {
+                    if let Err(e) = process_task(state.clone(), &client, &task).await {
                         println!("[TASK_ENGINE] Failed to process trigger task: {}", e);
                     }
                 }
 
                 // Process rest of flow
-                process_flow_tasks(&client, &flow_session_id, state).await;
+                process_flow_tasks(state, &client, &flow_session_id).await;
 
                 // Remove the flow_session_id from active sessions
                 active_flow_sessions.lock().await.remove(&flow_session_id);
