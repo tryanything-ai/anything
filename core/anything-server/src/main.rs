@@ -75,6 +75,7 @@ pub struct AppState {
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
+    processor_signal: watch::Sender<String>,
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
     api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
@@ -167,6 +168,7 @@ async fn main() {
 
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
+    let (processor_signal, _) = watch::channel(String::new());
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -177,6 +179,7 @@ async fn main() {
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,
         trigger_engine_signal,
+        processor_signal,
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
         account_access_cache: Arc::new(RwLock::new(
@@ -349,6 +352,9 @@ pub async fn root() -> impl IntoResponse {
     // Spawn task processing loop
     // Keeps making progress on work that is meant to be down now.
     tokio::spawn(task_engine::task_processing_loop(state.clone()));
+
+    // Spawn processor loop
+    tokio::spawn(new_processor::processor::processor(state.clone()));
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
