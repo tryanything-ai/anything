@@ -8,7 +8,7 @@ use std::env;
 use crate::{
     bundler::bundle_task_context,
     task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
-    workflow_types::Task,
+    task_types::Task,
     AppState,
 };
 
@@ -423,19 +423,19 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                         let mock_task = Task {
                             task_id: Uuid::new_v4(),
                             account_id: Uuid::parse_str(&account_id).unwrap_or_default(),
-                            task_status: "pending".to_string(),
+                            task_status: TaskStatus::Pending,
                             flow_id: Uuid::new_v4(),
                             flow_version_id: Uuid::new_v4(),
                             action_label: "fake".to_string(),
                             trigger_id: "".to_string(),
                             trigger_session_id: "".to_string(),
-                            trigger_session_status: "".to_string(),
+                            trigger_session_status: TriggerSessionStatus::Pending,
                             flow_session_id: "fake".to_string(),
-                            flow_session_status: "fake".to_string(),
+                            flow_session_status: FlowSessionStatus::Pending,
                             action_id: "fake".to_string(),
                             r#type: "fake".to_string(),
                             plugin_id: Some("fake".to_string()),
-                            stage: "fake".to_string(),
+                            stage: Stage::Production,
                             test_config: None,
                             config: serde_json::json!({
                                 "variables": variables,

@@ -17,7 +17,7 @@ use crate::system_actions::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
 };
 use crate::system_actions::output_action::process_response_task;
-use crate::workflow_types::Task;
+use crate::task_types::Task;
 use crate::AppState;
 
 use std::collections::HashSet;
@@ -253,10 +253,10 @@ pub async fn process_flow_tasks(
 
         for task in &tasks {
             let task_start = Instant::now();
-            if task.task_status == TaskStatus::Completed.as_str().to_string() {
+            if task.task_status == TaskStatus::Completed {
                 println!("[PROCESS FLOW TASKS] Found completed task {}", task.task_id);
                 final_result = task.result.clone();
-            } else if task.task_status == TaskStatus::Pending.as_str().to_string() {
+            } else if task.task_status == TaskStatus::Pending {
                 println!(
                     "[PROCESS FLOW TASKS] Processing pending task {}",
                     task.task_id
@@ -286,8 +286,7 @@ pub async fn process_flow_tasks(
                         );
                         for remaining_task in &tasks {
                             if remaining_task.processing_order > current_process_order
-                                && remaining_task.task_status
-                                    != TaskStatus::Completed.as_str().to_string()
+                                && remaining_task.task_status != TaskStatus::Completed
                             {
                                 println!(
                                     "[PROCESS FLOW TASKS] Cancelling task {}",

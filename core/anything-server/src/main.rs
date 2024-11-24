@@ -179,10 +179,10 @@ async fn main() {
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
         account_access_cache: Arc::new(RwLock::new(
-            account_auth_middleware::AccountAccessCache::new(Duration::from_secs(3600))
+            account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400))
         )),
-        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(3600))), // 1 hour TTL
-        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(3600))), // 1 hour TTL
+        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
+        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -331,7 +331,6 @@ pub async fn root() -> impl IntoResponse {
 
     let app = Router::new()
         .merge(public_routes) // Public routes
-        // .merge(api_routes) // API routes
         .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)

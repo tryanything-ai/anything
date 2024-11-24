@@ -1,5 +1,6 @@
 use crate::system_variables::get_system_variables;
-use crate::workflow_types::Task;
+use crate::task_types::Task;
+
 use crate::AppState;
 use dotenv::dotenv;
 use postgrest::Postgrest;
@@ -53,7 +54,6 @@ pub async fn get_completed_tasks_for_session(
 
     Ok(tasks)
 }
-
 
 pub async fn bundle_variables(
     state: Arc<AppState>,

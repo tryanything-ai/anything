@@ -9,7 +9,9 @@ use std::env;
 use crate::task_types::FlowSessionStatus;
 use crate::task_types::TaskStatus;
 use crate::task_types::{ActionType, TriggerSessionStatus};
-use crate::workflow_types::{Action, CreateTaskInput, FlowVersion, Task, TaskConfig, Workflow};
+use crate::workflow_types::{Action, CreateTaskInput, FlowVersion, TaskConfig, Workflow};
+use crate::task_types::Task;
+
 pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
@@ -120,7 +122,7 @@ async fn create_execution_plan(
             action_id: action.action_id.clone(),
             r#type: action.r#type.clone(),
             plugin_id: action.plugin_id.clone(),
-            stage: task.stage.clone(),
+            stage: task.stage.clone().as_str().to_string(),
             config: serde_json::json!(task_config),
             result: None,
             test_config: None,

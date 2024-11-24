@@ -116,37 +116,7 @@ pub struct TestConfig {
     pub inputs: Value,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Task {
-    pub task_id: Uuid,
-    pub account_id: Uuid,
-    pub task_status: String,
-    pub flow_id: Uuid,
-    pub flow_version_id: Uuid,
-    pub action_label: String,
-    pub trigger_id: String,
-    pub trigger_session_id: String,
-    pub trigger_session_status: String,
-    pub flow_session_id: String,
-    pub flow_session_status: String,
-    pub action_id: String,
-    pub r#type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
-    pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
-    pub stage: String,
-    pub test_config: Option<Value>,
-    pub config: Value,
-    pub context: Option<Value>, //TODO: probably delete so we don't leak secrets
-    pub started_at: Option<DateTime<Utc>>,
-    pub ended_at: Option<DateTime<Utc>>,
-    pub debug_result: Option<Value>,
-    pub result: Option<Value>,
-    pub archived: bool,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub created_at: Option<DateTime<Utc>>,
-    pub updated_by: Option<Uuid>,
-    pub created_by: Option<Uuid>,
-    pub processing_order: i32,
-}
+
 
 #[serde_as]
 #[derive(Debug, Deserialize, Serialize)]

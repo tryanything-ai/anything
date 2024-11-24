@@ -1,6 +1,9 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Stage {
     Production,
     Testing,
@@ -15,7 +18,7 @@ impl Stage {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum TaskStatus {
     Pending,   // Task is created but not yet started
     Waiting, // Task is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -113,4 +116,36 @@ impl ActionType {
             ActionType::Output => "output",
         }
     }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Task {
+    pub task_id: Uuid,
+    pub account_id: Uuid,
+    pub task_status: TaskStatus,
+    pub flow_id: Uuid,
+    pub flow_version_id: Uuid,
+    pub action_label: String,
+    pub trigger_id: String,
+    pub trigger_session_id: String,
+    pub trigger_session_status: TriggerSessionStatus,
+    pub flow_session_id: String,
+    pub flow_session_status: FlowSessionStatus,
+    pub action_id: String,
+    pub r#type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
+    pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
+    pub stage: Stage,
+    pub test_config: Option<Value>,
+    pub config: Value,
+    pub context: Option<Value>, //TODO: probably delete so we don't leak secrets
+    pub started_at: Option<DateTime<Utc>>,
+    pub ended_at: Option<DateTime<Utc>>,
+    pub debug_result: Option<Value>,
+    pub result: Option<Value>,
+    pub archived: bool,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_by: Option<Uuid>,
+    pub created_by: Option<Uuid>,
+    pub processing_order: i32,
 }
