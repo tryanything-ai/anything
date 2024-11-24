@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
-use std::fmt;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::templater::Templater;
@@ -155,16 +155,6 @@ pub async fn get_auth_accounts(
     Ok(accounts)
 }
 
-#[derive(Debug)]
-struct CustomError(String);
-
-impl fmt::Display for CustomError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Error for CustomError {}
 pub async fn bundle_variables(
     client: &Postgrest,
     account_id: &str,
@@ -172,121 +162,68 @@ pub async fn bundle_variables(
     variables_config: Option<&Value>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    println!("[BUNDLER] Starting to bundle variables");
+    debug!("[BUNDLER] Starting to bundle variables");
 
-    let mut render_variables_context: HashMap<String, Value> = HashMap::new();
+    // Pre-allocate with known capacity
+    let mut render_variables_context = HashMap::with_capacity(4);
 
-    println!(
-        "[BUNDLER] Initial variables context: {:?}",
-        render_variables_context
+    // Parallel fetch of secrets, accounts, and tasks
+    let (secrets_result, accounts_result, tasks_result) = tokio::join!(
+        get_decrypted_secrets(client, account_id),
+        async {
+            if refresh_auth {
+                get_refreshed_auth_accounts(client, account_id).await
+            } else {
+                get_auth_accounts(client, account_id).await
+            }
+        },
+        get_completed_tasks_for_session(client, flow_session_id)
     );
 
-    let mut accounts: HashMap<String, Value> = HashMap::new();
-
-    if refresh_auth {
-        for account in get_refreshed_auth_accounts(client, account_id).await? {
-            let slug = account.account_auth_provider_account_slug.clone();
-            println!(
-                "[BUNDLER] Inserting account with slug: {} at accounts.{}",
-                slug, slug
-            );
-
-            accounts.insert(slug, serde_json::to_value(account)?);
-        }
-    } else {
-        println!("[BUNDLER] Skipping refresh of auth accounts. Just Bundling.");
-        for account in get_auth_accounts(client, account_id).await? {
-            let slug = account.account_auth_provider_account_slug.clone();
-            println!(
-                "[BUNDLER] Inserting account with slug: {} at accounts.{}",
-                slug, slug
-            );
-
-            accounts.insert(slug, serde_json::to_value(account)?);
-        }
+    // Process accounts
+    let mut accounts = HashMap::new();
+    for account in accounts_result? {
+        let slug = account.account_auth_provider_account_slug.clone();
+        debug!("[BUNDLER] Inserting account with slug: {}", slug);
+        accounts.insert(slug, serde_json::to_value(account)?);
     }
-
     render_variables_context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
 
-    println!(
-        "[BUNDLER] Context after adding accounts: {:?}",
-        render_variables_context
-    );
-
-    // Add secrets to the render_variables_context
-    let mut secrets: HashMap<String, Value> = HashMap::new();
-    for secret in get_decrypted_secrets(client, account_id).await? {
+    // Process secrets
+    let mut secrets = HashMap::new();
+    for secret in secrets_result? {
         let secret_name = secret.secret_name.clone();
-        let secret_value = secret.secret_value.clone();
-        println!("[BUNDLER] Inserting secret with name: {}", secret_name);
-
-        secrets.insert(secret_name, serde_json::to_value(secret_value)?);
+        debug!("[BUNDLER] Inserting secret with name: {}", secret_name);
+        secrets.insert(secret_name, serde_json::to_value(secret.secret_value)?);
     }
-
     render_variables_context.insert("secrets".to_string(), serde_json::to_value(secrets)?);
 
-    println!(
-        "[BUNDLER] Context after adding secrets: {:?}",
-        render_variables_context
-    );
-
-    //Add task responses to the render_variables_context
-    let mut completed_tasks: HashMap<String, Value> = HashMap::new();
-    for completed_task in get_completed_tasks_for_session(client, flow_session_id).await? {
-        completed_tasks.insert(
-            completed_task.action_id.to_string(),
-            serde_json::to_value(completed_task)?,
-        );
+    // Fetch and process tasks
+    let tasks_result = tasks_result?;
+    let mut tasks_map = HashMap::with_capacity(tasks_result.len());
+    for task in tasks_result {
+        tasks_map.insert(task.action_id.to_string(), serde_json::to_value(task)?);
     }
+    render_variables_context.insert("actions".to_string(), serde_json::to_value(tasks_map)?);
 
-    render_variables_context.insert(
-        "actions".to_string(),
-        serde_json::to_value(completed_tasks)?,
-    );
-
-    println!(
-        "[BUNDLER] Context after adding completed tasks: {:?}",
-        render_variables_context
-    );
-
-    // Add system variables to the render_variables_context
-    let system_variables = get_system_variables();
+    // Add system variables
     render_variables_context.insert(
         "system".to_string(),
-        serde_json::to_value(system_variables)?,
+        serde_json::to_value(get_system_variables())?,
     );
 
-    // Create a new Templater instance
-    let mut templater = Templater::new();
-
-    // Convert context HashMap to Value
-    let context_value = serde_json::to_value(render_variables_context.clone())?;
-
-    // Add the task definition as a template and render if it exists
+    // Process variables config if present
     if let Some(variables) = variables_config {
-        println!("[BUNDLER] Task variables definition: {}", variables.clone());
+        let mut templater = Templater::new();
         templater.add_template("task_variables_definition", variables.clone());
 
-        // Get the variables from the task definition
-        let variables = templater.get_template_variables("task_variables_definition")?;
+        let context_value = serde_json::to_value(&render_variables_context)?;
+        let rendered = templater.render("task_variables_definition", &context_value)?;
 
-        // Print the variables
-        println!("[BUNDLER] Variables from task variables definition:");
-        for (index, variable) in variables.iter().enumerate() {
-            println!("  {}. {}", index + 1, variable);
-        }
-
-        // Render the task definition with the context
-        let rendered_variables_definition =
-            templater.render("task_variables_definition", &context_value)?;
-        println!(
-            "[BUNDLER] Rendered variables output: {}",
-            rendered_variables_definition
-        );
-
-        Ok(rendered_variables_definition)
+        debug!("[BUNDLER] Rendered variables output: {}", rendered);
+        Ok(rendered)
     } else {
-        println!("[BUNDLER] No variables found in task config, returning empty object");
+        debug!("[BUNDLER] No variables found in task config");
         Ok(json!({}))
     }
 }

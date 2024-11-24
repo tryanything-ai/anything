@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::task;
-use tokio::time::{sleep, Duration};
+use tokio::time::{sleep, Duration, Instant};
 
 use chrono::{DateTime, Utc};
 use dotenv::dotenv;
@@ -14,8 +14,7 @@ use reqwest::Client;
 use crate::bundler::bundle_task_context;
 use crate::execution_planner::process_trigger_task;
 use crate::system_actions::formatter_actions::{
-    date_formatter::process_date_task, number_formatter::process_number_task,
-    text_formatter::process_text_task,
+    date_formatter::process_date_task, text_formatter::process_text_task,
 };
 use crate::system_actions::output_action::process_response_task;
 use crate::workflow_types::Task;
@@ -29,6 +28,7 @@ use serde_json::{json, Value};
 use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
 
 pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
+    let start = Instant::now();
     println!(
         "[TASK_ENGINE] Looking for oldest pending task in stage {}",
         stage.as_str()
@@ -81,10 +81,12 @@ pub async fn fetch_task(client: &Postgrest, stage: &Stage) -> Option<Task> {
         }
     };
 
+    println!("[SPEED] fetch_task took {:?}", start.elapsed());
     tasks.into_iter().next()
 }
 
 pub async fn fetch_flow_tasks(client: &Postgrest, flow_session_id: &String) -> Option<Vec<Task>> {
+    let start = Instant::now();
     println!(
         "[TASK_ENGINE] Fetching tasks for flow_session_id {}",
         flow_session_id
@@ -138,6 +140,7 @@ pub async fn fetch_flow_tasks(client: &Postgrest, flow_session_id: &String) -> O
         return None;
     }
 
+    println!("[SPEED] fetch_flow_tasks took {:?}", start.elapsed());
     Some(tasks)
 }
 
@@ -158,6 +161,7 @@ pub async fn update_task_status(
     status: &TaskStatus,
     result: Option<Value>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let start = Instant::now();
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
@@ -189,6 +193,7 @@ pub async fn update_task_status(
         .execute()
         .await?;
 
+    println!("[SPEED] update_task_status took {:?}", start.elapsed());
     Ok(())
 }
 
@@ -204,6 +209,7 @@ pub async fn update_flow_session_status(
     flow_session_status: &FlowSessionStatus,
     trigger_session_status: &TriggerSessionStatus,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let start = Instant::now();
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
@@ -221,13 +227,20 @@ pub async fn update_flow_session_status(
         .execute()
         .await?;
 
+    println!(
+        "[SPEED] update_flow_session_status took {:?}",
+        start.elapsed()
+    );
     Ok(())
 }
+
+
 pub async fn process_flow_tasks(
     client: &Postgrest,
     flow_session_id: &String,
     state: Arc<AppState>,
 ) {
+    let start = Instant::now();
     println!("[PROCESS FLOW TASKS] Starting to process new flow");
     println!("[PROCESS FLOW TASKS] Flow session ID: {}", flow_session_id);
 
@@ -240,6 +253,7 @@ pub async fn process_flow_tasks(
         let mut all_tasks_completed = true;
 
         for task in &tasks {
+            let task_start = Instant::now();
             if task.task_status == TaskStatus::Completed.as_str().to_string() {
                 println!("[PROCESS FLOW TASKS] Found completed task {}", task.task_id);
                 final_result = task.result.clone();
@@ -248,7 +262,7 @@ pub async fn process_flow_tasks(
                     "[PROCESS FLOW TASKS] Processing pending task {}",
                     task.task_id
                 );
-                match process_task(client, task).await {
+                match process_task(client, task, &state.http_client).await {
                     Ok(result) => {
                         println!(
                             "[PROCESS FLOW TASKS] Successfully processed task {}",
@@ -301,6 +315,7 @@ pub async fn process_flow_tasks(
                     }
                 }
             }
+            println!("[SPEED] Task {} took {:?}", task.task_id, task_start.elapsed());
         }
 
         // Update flow session status
@@ -357,20 +372,32 @@ pub async fn process_flow_tasks(
             flow_session_id
         );
     }
+    println!("[SPEED] Total flow processing took {:?}", start.elapsed());
 }
 
-pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Value> {
+pub async fn process_task(
+    client: &Postgrest,
+    task: &Task,
+    http_client: &Client,
+) -> Result<Value, Value> {
+    let start = Instant::now();
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
-    // Update task status to "running"
-    if let Err(e) = update_task_status(client, task, &TaskStatus::Running, None).await {
+    // Run status update and context bundling in parallel
+    let (status_result, context_result) = tokio::join!(
+        update_task_status(client, task, &TaskStatus::Running, None),
+        bundle_task_context(client, task, true)
+    );
+
+    // Check status update result
+    if let Err(e) = status_result {
         let error_value = json!({
             "error": format!("Failed to update task status to running: {}", e)
         });
         return Err(error_value);
     }
 
-    let result = match bundle_task_context(client, task, true).await {
+    let result = match context_result {
         Ok(bundled_context) => {
             let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
@@ -379,7 +406,7 @@ pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Valu
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_id {
                     Some(plugin_id) => match plugin_id.as_str() {
-                        "http" => process_http_task(&bundled_context).await,
+                        "http" => process_http_task(&bundled_context, http_client).await,
                         "response" => process_response_task(&bundled_context).await,
                         "format_text" => process_text_task(&bundled_context).await,
                         "format_date" => process_date_task(&bundled_context).await,
@@ -425,6 +452,11 @@ pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Valu
                 "[PROCESS TASK] Task {} completed successfully",
                 task.task_id
             );
+            println!(
+                "[SPEED] Task {} processing took {:?}",
+                task.task_id,
+                start.elapsed()
+            );
             Ok(success_result)
         }
         Err(error_result) => {
@@ -447,6 +479,11 @@ pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Valu
                 "[PROCESS TASK] Task {} failed: {}",
                 task.task_id, error_result
             );
+            println!(
+                "[SPEED] Failed task {} processing took {:?}",
+                task.task_id,
+                start.elapsed()
+            );
             Err(error_result)
         }
     }
@@ -454,7 +491,9 @@ pub async fn process_task(client: &Postgrest, task: &Task) -> Result<Value, Valu
 
 async fn process_http_task(
     bundled_context: &Value,
+    http_client: &Client,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    let start = Instant::now();
     println!("[TASK_ENGINE] Entering process_http_task");
     println!("[TASK_ENGINE] Bundled context: {:?}", bundled_context);
 
@@ -466,7 +505,6 @@ async fn process_http_task(
             "[TASK_ENGINE] Processing HTTP task with method: {}, url: {}",
             method, url
         );
-        let client = Client::new();
         let method = match method.to_uppercase().as_str() {
             "GET" => reqwest::Method::GET,
             "POST" => reqwest::Method::POST,
@@ -481,7 +519,7 @@ async fn process_http_task(
             }
         };
 
-        let mut request_builder = client.request(method, url);
+        let mut request_builder = http_client.request(method, url);
 
         println!("[TASK_ENGINE] Processing headers");
         if let Some(headers) = bundled_context.get("headers") {
@@ -543,7 +581,9 @@ async fn process_http_task(
         }
 
         println!("[TASK_ENGINE] Sending HTTP request");
+        let request_start = Instant::now();
         let response = request_builder.send().await?;
+        println!("[SPEED] HTTP request took {:?}", request_start.elapsed());
         println!(
             "[TASK_ENGINE] HTTP request response received: {:?}",
             response
@@ -592,6 +632,10 @@ async fn process_http_task(
         });
 
         println!("[TASK_ENGINE] Returning result: {:?}", result);
+        println!(
+            "[SPEED] Total HTTP task processing took {:?}",
+            start.elapsed()
+        );
         Ok(result)
     } else {
         println!("[TASK_ENGINE] Missing required fields (method, url) in task context");
@@ -620,8 +664,10 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
             }
         }
 
-        let task_testing = fetch_task(&client, &Stage::Testing).await;
-        let task_production = fetch_task(&client, &Stage::Production).await;
+        let (task_testing, task_production) = tokio::join!(
+            fetch_task(&client, &Stage::Testing),
+            fetch_task(&client, &Stage::Production)
+        );
 
         if let Some(task) = task_testing.or(task_production) {
             backoff = Duration::from_millis(200); // Reset backoff when tasks are found
@@ -668,7 +714,7 @@ pub async fn task_processing_loop(state: Arc<AppState>) {
 
                 // Process the trigger task if it is a trigger
                 if task.r#type == ActionType::Trigger.as_str().to_string() {
-                    if let Err(e) = process_task(&client, &task).await {
+                    if let Err(e) = process_task(&client, &task, &state.http_client).await {
                         println!("[TASK_ENGINE] Failed to process trigger task: {}", e);
                     }
                 }

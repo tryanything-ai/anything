@@ -8,6 +8,7 @@ use axum::{
  
 use dotenv::dotenv;
 use postgrest::Postgrest;
+use reqwest::Client;
 use serde_json::Value;
 use std::{collections::HashMap, time::Duration};
 use std::env;
@@ -67,6 +68,7 @@ pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
     public_client: Arc<Postgrest>,
+    http_client: Arc<Client>,
     semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
@@ -166,6 +168,7 @@ async fn main() {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
         public_client: public_client.clone(),
+        http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
         task_engine_signal,

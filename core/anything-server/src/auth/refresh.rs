@@ -33,6 +33,7 @@ pub async fn refresh_accounts(
         account_id
     );
 
+    //TODO: cache this somewhere and manage the cache with account updates from user
     let response = client
         .rpc(
             "get_decrypted_account_and_provider",
@@ -124,20 +125,28 @@ pub async fn refresh_accounts(
                             );
                         }
 
-                        //Update the tokens in the vault
-                        update_secret_in_vault(
-                            client,
-                            &account.access_token_vault_id,
-                            &new_token.access_token,
-                        )
-                        .await?;
+                        let refresh_token_value = new_token
+                            .refresh_token
+                            .as_deref()
+                            .unwrap_or_default()
+                            .to_string();
 
-                        update_secret_in_vault(
-                            client,
-                            &account.refresh_token_vault_id,
-                            &new_token.refresh_token.clone().unwrap_or_default(),
-                        )
-                        .await?;
+                        //parallel update of both tokens in the vault
+                        let (access_result, refresh_result) = tokio::join!(
+                            update_secret_in_vault(
+                                client,
+                                &account.access_token_vault_id,
+                                &new_token.access_token,
+                            ),
+                            update_secret_in_vault(
+                                client,
+                                &account.refresh_token_vault_id,
+                                &refresh_token_value,
+                            )
+                        );
+
+                        access_result?;
+                        refresh_result?;
 
                         let account_updates = UpdateAccountAuthProviderAccount {
                             access_token_expires_at,
