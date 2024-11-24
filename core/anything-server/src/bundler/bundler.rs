@@ -1,73 +1,18 @@
-use crate::auth;
-use crate::auth::init::AccountAuthProviderAccount;
 use crate::system_variables::get_system_variables;
 use crate::workflow_types::Task;
 use dotenv::dotenv;
 use postgrest::Postgrest;
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use tracing::debug;
-use uuid::Uuid;
 
 use crate::templater::Templater;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DecryptedSecret {
-    pub secret_id: Uuid,
-    pub secret_name: String,
-    pub secret_value: String,
-    pub secret_description: Option<String>,
-}
-
-// Secrets for building context with API KEYS
-pub async fn get_decrypted_secrets(
-    client: &Postgrest,
-    account_id: &str,
-) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-
-    println!(
-        "[BUNDLER] Attempting to get decrypted secrets for account_id: {}",
-        account_id
-    );
-
-    let input = serde_json::json!({
-        "team_account_id": account_id.to_string()
-    })
-    .to_string();
-
-    let response = client
-        .rpc("get_decrypted_secrets", &input)
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await?;
-
-    println!(
-        "[BUNDLER] Response for get_decryped_secrets: {:?}",
-        response
-    );
-
-    let body = response.text().await?;
-    let items: Vec<DecryptedSecret> = match serde_json::from_str(&body) {
-        Ok(parsed) => parsed,
-        Err(e) => {
-            println!("[BUNDLER] Error parsing decrypted secrets: {}", e);
-            println!("[BUNDLER] Response body: {}", body);
-            return Err(Box::new(e));
-        }
-    };
-
-    println!(
-        "[BUNDLER] Successfully retrieved {} decrypted secrets",
-        items.len()
-    );
-
-    Ok(items)
-}
+use crate::bundler::secrets::get_decrypted_secrets;
+use crate::bundler::accounts::get_refreshed_auth_accounts;
+use crate::bundler::accounts::get_auth_accounts;
 
 pub async fn get_completed_tasks_for_session(
     client: &Postgrest,
@@ -107,53 +52,9 @@ pub async fn get_completed_tasks_for_session(
     Ok(tasks)
 }
 
-pub async fn get_refreshed_auth_accounts(
-    client: &Postgrest,
-    account_id: &str,
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    println!(
-        "[BUNDLER] Refreshing auth accounts for account_id: {}",
-        account_id
-    );
 
-    let accounts = auth::refresh::refresh_accounts(client, account_id).await?;
 
-    println!(
-        "[BUNDLER] Successfully refreshed {} auth accounts",
-        accounts.len()
-    );
 
-    Ok(accounts)
-}
-
-pub async fn get_auth_accounts(
-    client: &Postgrest,
-    account_id: &str,
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-
-    println!(
-        "[BUNDLER] Fetching auth accounts for account_id: {}",
-        account_id
-    );
-
-    let response = client
-        .rpc(
-            "get_account_auth_provider_accounts",
-            json!({"p_account_id": account_id}).to_string(),
-        )
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await?;
-
-    let body = response.text().await?;
-    let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
-
-    println!("[BUNDLER] Retrieved {} auth accounts", accounts.len());
-
-    Ok(accounts)
-}
 
 pub async fn bundle_variables(
     client: &Postgrest,
