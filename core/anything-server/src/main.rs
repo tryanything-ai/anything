@@ -361,6 +361,7 @@ pub async fn root() -> impl IntoResponse {
 
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
+    tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();

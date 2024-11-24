@@ -49,6 +49,14 @@ impl SecretsCache {
         self.cache.insert(account_id.to_string(), cached_secrets);
     }
 
+    pub fn invalidate(&mut self, account_id: &str) {
+        debug!(
+            "[BUNDLER] Invalidating secrets cache for account_id: {}",
+            account_id
+        );
+        self.cache.remove(account_id);
+    }
+
     pub fn cleanup(&mut self) {
         debug!("[BUNDLER] Starting secrets cache cleanup");
         let now = SystemTime::now();

@@ -51,6 +51,14 @@ impl AccountsCache {
         self.cache.insert(account_id.to_string(), cached_accounts);
     }
 
+    pub fn invalidate(&mut self, account_id: &str) {
+        debug!(
+            "[BUNDLER] Invalidating accounts cache for account_id: {}",
+            account_id
+        );
+        self.cache.remove(account_id);
+    }
+
     pub fn cleanup(&mut self) {
         debug!("[BUNDLER] Starting accounts cache cleanup");
         let now = SystemTime::now();

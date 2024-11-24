@@ -336,7 +336,7 @@ pub async fn handle_provider_callback(
     // Only lock for the minimum time needed
     {
         let mut cache = state.bundler_accounts_cache.write().await;
-        cache.set(&auth_state.account_id, Vec::new()); // Clear the cached secrets for this account
+        cache.invalidate(&auth_state.account_id);
     }
 
     // Return success response

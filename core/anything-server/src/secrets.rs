@@ -144,7 +144,7 @@ pub async fn create_secret(
     // Only lock for the minimum time needed
     {
         let mut cache = state.bundler_secrets_cache.write().await;
-        cache.set(&account_id, Vec::new()); // Clear the cached secrets for this account
+        cache.invalidate(&account_id);
     }
 
     Json(db_secret_body).into_response()
@@ -573,7 +573,7 @@ pub async fn update_secret(
     // Only lock for the minimum time needed
     {
         let mut cache = state.bundler_secrets_cache.write().await;
-        cache.set(&account_id, Vec::new()); // Clear the cached secrets for this account
+        cache.invalidate(&account_id);
     }
 
     Json(db_secret_body).into_response()
@@ -683,7 +683,7 @@ pub async fn delete_secret(
     // Only lock for the minimum time needed
     {
         let mut cache = state.bundler_secrets_cache.write().await;
-        cache.set(&account_id, Vec::new()); // Clear the cached secrets for this account
+        cache.invalidate(&account_id);
     }
 
     Json(body).into_response()

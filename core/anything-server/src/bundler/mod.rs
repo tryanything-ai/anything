@@ -10,7 +10,7 @@ use tracing::debug;
 use crate::AppState;
 
 pub async fn cleanup_bundler_caches(state: Arc<AppState>) {
-    let cleanup_interval = Duration::from_secs(3600); // Run cleanup every hour
+    let cleanup_interval = Duration::from_secs(86400); // Run cleanup every day
     debug!("[BUNDLER] Starting periodic cache cleanup task");
     loop {
         tokio::time::sleep(cleanup_interval).await;
