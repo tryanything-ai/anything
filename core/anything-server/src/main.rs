@@ -28,6 +28,7 @@ extern crate slugify;
 use auth::init::AuthState;
 
 mod system_actions; 
+mod new_processor;
 mod system_variables;
 mod workflows; 
 mod actions; 

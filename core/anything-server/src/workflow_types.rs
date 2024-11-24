@@ -9,13 +9,13 @@ use crate::task_types::ActionType;
 
 use serde_with::{serde_as, DisplayFromStr};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Workflow {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Action {
     pub anything_action_version: String,
     pub r#type: ActionType,
@@ -37,31 +37,31 @@ pub struct Action {
     pub handles: Option<Vec<HandleProps>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodePresentation {
     pub position: Position,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Position {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Variable {
     #[serde(flatten)]
     pub inner: HashMap<String, serde_json::Value>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HandleProps {
     pub id: String,
     pub r#type: String,
     pub position: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Edge {
     pub id: String,
     pub source: String,

@@ -42,7 +42,7 @@ impl TaskStatus {
 }
 
 //Used to determine if whole workflow is completed or what happened
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum FlowSessionStatus {
     Pending,   // Flow is created but not yet started
     Waiting, // Flow is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -67,7 +67,7 @@ impl FlowSessionStatus {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum TriggerSessionStatus {
     Pending,   // Trigger is created but not yet started
     Waiting, // Trigger is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -118,7 +118,7 @@ impl ActionType {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Task {
     pub task_id: Uuid,
     pub account_id: Uuid,
