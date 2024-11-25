@@ -201,8 +201,8 @@ pub async fn update_task_status(
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateFlowSesssionInput {
-    flow_session_status: String,
-    trigger_session_status: String,
+    pub flow_session_status: String,
+    pub trigger_session_status: String,
 }
 
 pub async fn update_flow_session_status(

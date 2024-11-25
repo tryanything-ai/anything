@@ -5,8 +5,8 @@ use std::{env, sync::Arc};
 use uuid::Uuid;
 use tracing::debug; 
 
-use crate::task_engine::UpdateTaskInput;
-use crate::task_types::{Task, TaskStatus};
+use crate::task_engine::{UpdateFlowSesssionInput, UpdateTaskInput};
+use crate::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
 use crate::workflow_types::{CreateTaskInput, DatabaseFlowVersion};
 use crate::AppState;
 
@@ -212,5 +212,51 @@ pub async fn update_task_status(
         })?;
 
     debug!("[PROCESSOR DB CALLS] Successfully updated task status");
+    Ok(())
+}
+
+
+
+pub async fn update_flow_session_status(
+    state: &AppState,
+    flow_session_id: &Uuid,
+    flow_session_status: &FlowSessionStatus,
+    trigger_session_status: &TriggerSessionStatus,
+) -> Result<(), String> {
+    debug!(
+        "[PROCESSOR DB CALLS] Updating flow session {} status to {} and trigger status to {}", 
+        flow_session_id,
+        flow_session_status.as_str(),
+        trigger_session_status.as_str()
+    );
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let input = UpdateFlowSesssionInput {
+        flow_session_status: flow_session_status.as_str().to_string(),
+        trigger_session_status: trigger_session_status.as_str().to_string(),
+    };
+
+    state
+        .anything_client
+        .from("tasks")
+        .auth(supabase_service_role_api_key)
+        .eq("flow_session_id", &flow_session_id.to_string())
+        .update(
+            serde_json::to_string(&input)
+                .map_err(|e| {
+                    debug!("[PROCESSOR DB CALLS] Failed to serialize update input: {}", e);
+                    format!("Failed to serialize input: {}", e)
+                })?,
+        )
+        .execute()
+        .await
+        .map_err(|e| {
+            debug!("[PROCESSOR DB CALLS] Failed to execute update flow session request: {}", e);
+            format!("Failed to execute request: {}", e)
+        })?;
+
+    debug!("[PROCESSOR DB CALLS] Successfully updated flow session status");
     Ok(())
 }

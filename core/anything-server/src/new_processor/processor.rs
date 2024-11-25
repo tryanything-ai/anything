@@ -11,7 +11,9 @@ use tokio::sync::Mutex;
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::new_processor::db_calls::{create_task, get_workflow_definition, update_task_status};
+use crate::new_processor::db_calls::{
+    create_task, get_workflow_definition, update_flow_session_status, update_task_status,
+};
 use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
 
 // Add this near your other type definitions
@@ -398,17 +400,39 @@ pub async fn processor(
                         }
                     } else {
                         // No more tasks - workflow is complete
+                        let _ = update_flow_session_status(
+                            &state,
+                            &flow_session_id,
+                            &FlowSessionStatus::Completed,
+                            &TriggerSessionStatus::Completed,
+                        )
+                        .await
+                        .map_err(|e| {
+                            debug!("[PROCESSOR] Failed to update flow session status: {}", e);
+                            e.to_string()
+                        });
+
                         debug!("[PROCESSOR] Workflow completed: {}", flow_session_id);
                         None
                     };
                 }
-                // }
             }
 
             debug!(
                 "[PROCESSOR] Completed workflow processing for {}",
                 flow_session_id
             );
+
+            // Invalidate cache for completed flow session
+            {
+                let mut cache = state.flow_session_cache.write().await;
+                cache.invalidate(&flow_session_id);
+                debug!(
+                    "[PROCESSOR] Removed flow session {} from cache",
+                    flow_session_id
+                );
+            }
+            //TODO: error handling
             //TODO: handle updating flow session and trigger session status et
             // // Remove the flow session from active sessions when done
             // active_flow_sessions.lock().await.remove(&flow_session_id);
