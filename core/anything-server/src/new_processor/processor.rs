@@ -81,55 +81,6 @@ pub async fn processor(
                 flow_session_id
             );
 
-            // let mut workflow_definition = None;
-
-            // Try to get from cache first using a read lock
-            // {
-            //     let cache = state.flow_session_cache.read().await;
-            //     if let Some(session_data) = cache.get(&flow_session_id) {
-            //         if let Some(workflow) = &session_data.workflow {
-            //             debug!(
-            //                 "[PROCESSOR] Using cached workflow for flow_session_id: {}",
-            //                 flow_session_id
-            //             );
-            //             workflow_definition = Some(workflow.clone());
-            //         }
-            //     }
-            // }
-
-            // If not in cache, fetch from DB and update cache
-            // if workflow_definition.is_none() {
-            //     debug!(
-            //         "[PROCESSOR] Cache miss for workflow, fetching from DB for flow_session_id: {}",
-            //         flow_session_id
-            //     );
-
-            //     let workflow =
-            //         get_workflow_definition(state.clone(), &workflow_id, version_id.as_ref())
-            //             .await
-            //             .map_err(|e| {
-            //                 debug!("[PROCESSOR] Error getting workflow definition: {}", e);
-            //                 e
-            //             })
-            //             .unwrap();
-
-            // //    Update cache with a write lock
-            //     {
-            //         let mut cache = state.flow_session_cache.write().await;
-            //         if let Some(mut session_data) = cache.get(&flow_session_id) {
-            //             session_data.workflow = Some(workflow.clone());
-            //             cache.set(&flow_session_id, session_data);
-            //             debug!(
-            //                 "[PROCESSOR] Updated workflow cache for flow_session_id: {}",
-            //                 flow_session_id
-            //             );
-            //         }
-            //     }
-
-            // //     // let workflow_clone = workflow.clone();
-            // //     workflow_definition = Some(workflow.clone());
-            // }
-
             let mut workflow_definition = None;
 
             // Try to get from cache first using a read lock

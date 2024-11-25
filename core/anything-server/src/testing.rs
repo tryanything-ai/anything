@@ -134,10 +134,13 @@ pub async fn test_workflow(
 
     println!("[TEST WORKFLOW] Setting flow session data in cache");
     // Set the flow session data in cache
-    state.flow_session_cache.write().await.set(
-        &Uuid::parse_str(&flow_session_id).unwrap(),
-        flow_session_data,
-    );
+    {
+        let mut cache = state.flow_session_cache.write().await;
+        cache.set(
+            &Uuid::parse_str(&flow_session_id).unwrap(),
+            flow_session_data,
+        );
+    }
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
         println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
@@ -395,6 +398,9 @@ pub async fn get_test_session_results(
     };
 
     let all_completed = items.as_array().map_or(false, |tasks| {
+        if tasks.is_empty() {
+            return false;
+        }
         tasks.iter().all(|task| {
             let flow_status = task.get("flow_session_status");
             let trigger_status = task.get("trigger_session_status");
