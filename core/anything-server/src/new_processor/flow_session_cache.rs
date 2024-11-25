@@ -2,30 +2,18 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tracing::debug;
+use uuid::Uuid;
 
 use crate::task_types::Task;
-use crate::workflow_types::Workflow;
+use crate::workflow_types::DatabaseFlowVersion;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FlowSessionData {
-    pub workflow: Workflow,
-    pub tasks: HashMap<String, Task>, // task_id -> task
-    pub metadata: HashMap<String, String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TaskInfo {
-    pub task_id: String,
-    pub status: TaskStatus,
-    pub result: Option<serde_json::Value>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum TaskStatus {
-    Pending,
-    Running,
-    Completed,
-    Failed,
+    pub workflow: Option<DatabaseFlowVersion>,
+    pub tasks: HashMap<Uuid, Task>, // task_id -> task
+    pub flow_session_id: Uuid,
+    pub workflow_id: Uuid,
+    pub workflow_version_id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -35,20 +23,23 @@ struct CachedSession {
 }
 
 pub struct FlowSessionCache {
-    cache: HashMap<String, CachedSession>, // flow_session_id -> session data
+    cache: HashMap<Uuid, CachedSession>, // flow_session_id -> session data
     ttl: Duration,
 }
 
 impl FlowSessionCache {
     pub fn new(ttl: Duration) -> Self {
-        debug!("[PROCESSOR] Creating new FlowSessionCache with TTL: {:?}", ttl);
+        debug!(
+            "[PROCESSOR] Creating new FlowSessionCache with TTL: {:?}",
+            ttl
+        );
         Self {
             cache: HashMap::new(),
             ttl,
         }
     }
 
-    pub fn get(&self, flow_session_id: &str) -> Option<FlowSessionData> {
+    pub fn get(&self, flow_session_id: &Uuid) -> Option<FlowSessionData> {
         self.cache.get(flow_session_id).and_then(|entry| {
             let now = SystemTime::now();
             if entry.expires_at > now {
@@ -59,29 +50,29 @@ impl FlowSessionCache {
         })
     }
 
-    pub fn set(&mut self, flow_session_id: &str, data: FlowSessionData) {
+    pub fn set(&mut self, flow_session_id: &Uuid, data: FlowSessionData) {
         debug!(
             "[PROCESSOR] Setting flow session cache for session_id: {}",
             flow_session_id
         );
         let expires_at = SystemTime::now() + self.ttl;
         let cached_session = CachedSession { data, expires_at };
-        self.cache.insert(flow_session_id.to_string(), cached_session);
+        self.cache.insert(*flow_session_id, cached_session);
     }
 
-    pub fn update_task(&mut self, flow_session_id: &str, task: Task) -> bool {
+    pub fn update_task(&mut self, flow_session_id: &Uuid, task: Task) -> bool {
         if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
             if SystemTime::now() > cached_session.expires_at {
                 return false;
             }
-            cached_session.data.tasks.insert(task.task_id.to_string(), task);
+            cached_session.data.tasks.insert(task.task_id, task);
             true
         } else {
             false
         }
     }
 
-    pub fn remove_task(&mut self, flow_session_id: &str, task_id: &str) -> bool {
+    pub fn remove_task(&mut self, flow_session_id: &Uuid, task_id: &Uuid) -> bool {
         if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
             if SystemTime::now() > cached_session.expires_at {
                 return false;
@@ -92,7 +83,7 @@ impl FlowSessionCache {
         }
     }
 
-    pub fn invalidate(&mut self, flow_session_id: &str) {
+    pub fn invalidate(&mut self, flow_session_id: &Uuid) {
         debug!(
             "[PROCESSOR] Invalidating flow session cache for session_id: {}",
             flow_session_id

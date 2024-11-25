@@ -7,10 +7,12 @@ use dotenv::dotenv;
 use std::env;
 
 use crate::task_types::FlowSessionStatus;
+use crate::task_types::Task;
 use crate::task_types::TaskStatus;
 use crate::task_types::{ActionType, TriggerSessionStatus};
-use crate::workflow_types::{Action, CreateTaskInput, FlowVersion, TaskConfig, Workflow};
-use crate::task_types::Task;
+use crate::workflow_types::{
+    Action, CreateTaskInput, FlowVersion, TaskConfig, WorkflowVersionDefinition,
+};
 
 pub async fn process_trigger_task(
     client: &Postgrest,
@@ -92,10 +94,11 @@ async fn create_execution_plan(
     println!("[EXECUTION_PLANNER] Creating execution plan");
 
     // Deserialize the flow definition into a Workflow struct
-    let workflow: Workflow = serde_json::from_value(flow_version.flow_definition).map_err(|e| {
-        println!("[EXECUTION_PLANNER] Error deserializing workflow: {:?}", e);
-        e
-    })?;
+    let workflow: WorkflowVersionDefinition = serde_json::from_value(flow_version.flow_definition)
+        .map_err(|e| {
+            println!("[EXECUTION_PLANNER] Error deserializing workflow: {:?}", e);
+            e
+        })?;
 
     // Traverse the workflow to get the list of actions in BFS order, excluding the trigger
     let result = bfs_traversal(&workflow)?;
@@ -137,7 +140,7 @@ async fn create_execution_plan(
 }
 
 fn bfs_traversal(
-    workflow: &Workflow,
+    workflow: &WorkflowVersionDefinition,
 ) -> Result<Vec<&Action>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[EXECUTION_PLANNER] Starting BFS traversal");
     let mut work_list = Vec::new();

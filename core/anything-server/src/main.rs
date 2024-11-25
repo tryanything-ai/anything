@@ -8,6 +8,7 @@ use axum::{
  
 use bundler::{accounts::accounts_cache::AccountsCache, secrets::secrets_cache::SecretsCache};
 use dotenv::dotenv;
+use new_processor::processor::ProcessorMessage;
 use postgrest::Postgrest;
 use reqwest::Client;
 use serde_json::Value;
@@ -77,13 +78,14 @@ pub struct AppState {
     auth_states: RwLock<HashMap<String, AuthState>>,
     task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
-    processor_sender: mpsc::Sender<String>,
-    processor_receiver: Mutex<mpsc::Receiver<String>>, 
+    processor_sender: mpsc::Sender<ProcessorMessage>,
+    processor_receiver: Mutex<mpsc::Receiver<ProcessorMessage>>, 
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
     api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
     bundler_secrets_cache: RwLock<SecretsCache>,
     bundler_accounts_cache: RwLock<AccountsCache>,
+    flow_session_cache: Arc<RwLock<new_processor::flow_session_cache::FlowSessionCache>>,
 }
 
 #[tokio::main]
@@ -171,7 +173,7 @@ async fn main() {
 
     let (task_engine_signal, _) = watch::channel(());
     let (trigger_engine_signal, _) = watch::channel("".to_string());
-    let (processor_tx, processor_rx) = mpsc::channel::<String>(1000); // Create both sender and receiver
+    let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -184,7 +186,7 @@ async fn main() {
         task_engine_signal,
         trigger_engine_signal,
         processor_sender: processor_tx,
-        processor_receiver: Mutex::new(processor_rx), 
+        processor_receiver: Mutex::new(processor_rx),
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
         account_access_cache: Arc::new(RwLock::new(
@@ -192,6 +194,7 @@ async fn main() {
         )),
         bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
         bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
+        flow_session_cache: Arc::new(RwLock::new(new_processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
     });
 
 pub async fn root() -> impl IntoResponse {

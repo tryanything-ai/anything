@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crate::AppState;
 use crate::{bundler::bundle_variables, supabase_jwt_middleware::User};
 
-use crate::workflow_types::{FlowVersion, Workflow};
+use crate::workflow_types::{FlowVersion, WorkflowVersionDefinition};
 
 // Actions
 pub async fn get_flow_version_results(
@@ -336,20 +336,21 @@ pub async fn get_flow_version_variables(
     };
 
     // Parse the flow definition into a Workflow struct
-    let workflow: Workflow = match serde_json::from_value(flow_version.flow_definition) {
-        Ok(workflow) => {
-            print!("[VARIABLES] Parsed workflow: {:?}", workflow);
-            workflow
-        }
-        Err(e) => {
-            println!("[VARIABLES] Error parsing workflow definition: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
+    let workflow: WorkflowVersionDefinition =
+        match serde_json::from_value(flow_version.flow_definition) {
+            Ok(workflow) => {
+                print!("[VARIABLES] Parsed workflow: {:?}", workflow);
+                workflow
+            }
+            Err(e) => {
+                println!("[VARIABLES] Error parsing workflow definition: {:?}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse workflow definition",
+                )
+                    .into_response();
+            }
+        };
 
     // Find the action in the workflow and get its variables as a JSON object
     let variables = workflow

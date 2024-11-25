@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value; 
 use std::sync::Arc;
 
-use crate::workflow_types:: Workflow; 
+use crate::workflow_types:: WorkflowVersionDefinition; 
 use crate::AppState;
 use crate::supabase_jwt_middleware::User;
 use uuid::Uuid;
@@ -300,7 +300,7 @@ pub async fn create_workflow(
     let version_input = BaseFlowVersionInput {
         account_id: account_id.clone(),
         flow_id: payload.flow_id.clone(),
-        flow_definition: serde_json::json!(Workflow::default()),
+        flow_definition: serde_json::json!(WorkflowVersionDefinition::default()),
     };
     // Create Flow Version
     let version_response = match client

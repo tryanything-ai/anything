@@ -9,7 +9,7 @@ use serde_json::Value;
 use std::sync::Arc;
 
 use crate::task_types::Stage;
-use crate::workflow_types::{CreateTaskInput, TaskConfig, TestConfig, Workflow};
+use crate::workflow_types::{CreateTaskInput, TaskConfig, TestConfig, WorkflowVersionDefinition};
 use crate::AppState;
 use crate::{
     supabase_jwt_middleware::User,
@@ -97,7 +97,7 @@ pub async fn test_workflow(
 
     // println!("flow_definition: {:?}", flow_definition);
 
-    let workflow: Workflow = match serde_json::from_value(flow_definition.clone()) {
+    let workflow: WorkflowVersionDefinition = match serde_json::from_value(flow_definition.clone()) {
         Ok(workflow) => workflow,
         Err(err) => {
             println!("Failed to parse flow_definition into Workflow: {:?}", err);
@@ -275,7 +275,7 @@ pub async fn test_action(
 
     println!("flow_definition: {:?}", flow_definition);
 
-    let workflow: Workflow = match serde_json::from_value(flow_definition.clone()) {
+    let workflow: WorkflowVersionDefinition = match serde_json::from_value(flow_definition.clone()) {
         Ok(workflow) => workflow,
         Err(err) => {
             println!("Failed to parse flow_definition into Workflow: {:?}", err);

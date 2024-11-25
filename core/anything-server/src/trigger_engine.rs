@@ -324,6 +324,7 @@ async fn update_trigger_last_run(
     Ok(())
 }
 
+
 async fn create_trigger_task(
     state: &Arc<AppState>,
     trigger: &InMemoryTrigger,

@@ -148,13 +148,13 @@ pub async fn fetch_flow_tasks(client: &Postgrest, flow_session_id: &String) -> O
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateTaskInput {
-    task_status: String,
+    pub task_status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    started_at: Option<DateTime<Utc>>,
+    pub started_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    ended_at: Option<DateTime<Utc>>,
+    pub ended_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    result: Option<Value>,
+    pub result: Option<Value>,
 }
 
 pub async fn update_task_status(
@@ -498,7 +498,7 @@ pub async fn process_task(
     }
 }
 
-async fn process_http_task(
+pub async fn process_http_task(
     http_client: &Client,
     bundled_context: &Value,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {

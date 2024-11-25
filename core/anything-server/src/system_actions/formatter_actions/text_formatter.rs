@@ -34,13 +34,11 @@ pub async fn process_text_task(
         })
         .unwrap_or(0) as i32;
 
-    let end_index = bundled_context
-        .get("end_index")
-        .and_then(|v| match v {
-            Value::String(s) => s.parse::<i64>().ok(),
-            Value::Number(n) => n.as_i64(),
-            _ => None,
-        });
+    let end_index = bundled_context.get("end_index").and_then(|v| match v {
+        Value::String(s) => s.parse::<i64>().ok(),
+        Value::Number(n) => n.as_i64(),
+        _ => None,
+    });
 
     let result = match operation {
         "capitalize" => input.chars().next().map_or(String::new(), |c| {

@@ -11,13 +11,13 @@ use std::collections::HashMap;
 
 use std::sync::Arc;
 
-use crate::{secrets::get_secret_by_secret_value, workflow_types::Workflow, CachedApiKey};
+use crate::{secrets::get_secret_by_secret_value, workflow_types::WorkflowVersionDefinition, CachedApiKey};
 use crate::{workflow_types::Action, AppState};
 
 use crate::task_types::ActionType;
 
 pub fn validate_webhook_input_and_response(
-    workflow: &Workflow,
+    workflow: &WorkflowVersionDefinition,
     require_response: bool,
 ) -> Result<(Box<&Action>, Option<Box<&Action>>), impl IntoResponse> {
     // Find the trigger action in the workflow

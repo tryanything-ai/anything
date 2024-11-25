@@ -10,7 +10,7 @@ use crate::task_types::ActionType;
 use serde_with::{serde_as, DisplayFromStr};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Workflow {
+pub struct WorkflowVersionDefinition {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
@@ -71,7 +71,7 @@ pub struct Edge {
     pub r#type: String,
 }
 
-impl Workflow {
+impl WorkflowVersionDefinition {
     pub fn from_json(json_str: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(json_str)
     }
@@ -136,7 +136,18 @@ pub struct FlowVersion {
     pub flow_definition: Value,
 }
 
-impl Default for Workflow {
+//DUPLICATING INTO NEW NAME FOR NEW PROCESSOR
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct DatabaseFlowVersion {
+    pub flow_version_id: Uuid,
+    pub flow_id: Uuid,
+    pub published: bool,
+    pub account_id: Uuid,
+    pub flow_definition: WorkflowVersionDefinition,
+}
+
+
+impl Default for WorkflowVersionDefinition {
     fn default() -> Self {
         let action1 = Action {
             anything_action_version: "0.1.0".to_string(),
@@ -329,7 +340,7 @@ impl Default for Workflow {
             target_handle: Some("a".to_string()),
         };
 
-        Workflow {
+        WorkflowVersionDefinition {
             actions: vec![action1, action2],
             edges: vec![edge],
         }

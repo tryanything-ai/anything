@@ -12,7 +12,7 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
-use crate::workflow_types::{CreateTaskInput, FlowVersion, Workflow};
+use crate::workflow_types::{CreateTaskInput, FlowVersion, WorkflowVersionDefinition};
 use crate::AppState;
 use crate::{
     bundler::bundle_context,
@@ -102,20 +102,21 @@ pub async fn run_workflow_and_respond(
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
+    let workflow: WorkflowVersionDefinition =
+        match serde_json::from_value(workflow_version.flow_definition) {
+            Ok(workflow) => workflow,
+            Err(err) => {
+                println!(
+                    "[WEBHOOK API] Failed to parse workflow definition: {:?}",
+                    err
+                );
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse workflow definition",
+                )
+                    .into_response();
+            }
+        };
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) = match validate_webhook_input_and_response(&workflow, true) {
@@ -357,20 +358,21 @@ pub async fn run_workflow_version_and_respond(
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
+    let workflow: WorkflowVersionDefinition =
+        match serde_json::from_value(workflow_version.flow_definition) {
+            Ok(workflow) => workflow,
+            Err(err) => {
+                println!(
+                    "[WEBHOOK API] Failed to parse workflow definition: {:?}",
+                    err
+                );
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse workflow definition",
+                )
+                    .into_response();
+            }
+        };
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) = match validate_webhook_input_and_response(&workflow, true) {
@@ -612,20 +614,21 @@ pub async fn run_workflow(
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
+    let workflow: WorkflowVersionDefinition =
+        match serde_json::from_value(workflow_version.flow_definition) {
+            Ok(workflow) => workflow,
+            Err(err) => {
+                println!(
+                    "[WEBHOOK API] Failed to parse workflow definition: {:?}",
+                    err
+                );
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse workflow definition",
+                )
+                    .into_response();
+            }
+        };
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) = match validate_webhook_input_and_response(&workflow, false) {
@@ -824,20 +827,21 @@ pub async fn run_workflow_version(
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
+    let workflow: WorkflowVersionDefinition =
+        match serde_json::from_value(workflow_version.flow_definition) {
+            Ok(workflow) => workflow,
+            Err(err) => {
+                println!(
+                    "[WEBHOOK API] Failed to parse workflow definition: {:?}",
+                    err
+                );
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to parse workflow definition",
+                )
+                    .into_response();
+            }
+        };
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) = match validate_webhook_input_and_response(&workflow, false) {

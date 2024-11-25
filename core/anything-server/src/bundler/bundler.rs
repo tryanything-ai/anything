@@ -129,7 +129,7 @@ pub async fn bundle_variables(
     }
 }
 
-fn bundle_inputs(
+pub fn bundle_inputs(
     rendered_variables: Value,
     inputs: Option<&Value>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
