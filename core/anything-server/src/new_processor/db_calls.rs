@@ -2,20 +2,41 @@ use chrono::Utc;
 use dotenv::dotenv;
 use serde_json::Value;
 use std::{env, sync::Arc};
+use tracing::debug;
 use uuid::Uuid;
-use tracing::debug; 
 
-use crate::task_engine::{UpdateFlowSesssionInput, UpdateTaskInput};
 use crate::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
 use crate::workflow_types::{CreateTaskInput, DatabaseFlowVersion};
 use crate::AppState;
+use chrono::DateTime;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateFlowSesssionInput {
+    pub flow_session_status: String,
+    pub trigger_session_status: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateTaskInput {
+    pub task_status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub started_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ended_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub result: Option<Value>,
+}
 
 pub async fn get_workflow_definition(
     state: Arc<AppState>,
     workflow_id: &Uuid,
     version_id: Option<&Uuid>, // Make version_id optional since webhooks don't have it
 ) -> Result<DatabaseFlowVersion, String> {
-    debug!("[PROCESSOR DB CALLS] Getting workflow definition for workflow_id: {}, version_id: {:?}", workflow_id, version_id);
+    debug!(
+        "[PROCESSOR DB CALLS] Getting workflow definition for workflow_id: {}, version_id: {:?}",
+        workflow_id, version_id
+    );
     //Super User Access
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -41,20 +62,23 @@ pub async fn get_workflow_definition(
         .execute()
         .await
         .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to execute workflow definition request: {}", e);
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to execute workflow definition request: {}",
+                e
+            );
             format!("Failed to execute request: {}", e)
         })?;
 
-    let response_body = response
-        .text()
-        .await
-        .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to read workflow definition response: {}", e);
-            format!("Failed to read response body: {}", e)
-        })?;
+    let response_body = response.text().await.map_err(|e| {
+        debug!(
+            "[PROCESSOR DB CALLS] Failed to read workflow definition response: {}",
+            e
+        );
+        format!("Failed to read response body: {}", e)
+    })?;
 
-    let workflow_version: DatabaseFlowVersion = serde_json::from_str(&response_body)
-        .map_err(|e| {
+    let workflow_version: DatabaseFlowVersion =
+        serde_json::from_str(&response_body).map_err(|e| {
             debug!("[PROCESSOR DB CALLS] No workflow version found: {}", e);
             String::from("No workflow version found")
         })?;
@@ -67,7 +91,10 @@ pub async fn get_session_tasks(
     state: Arc<AppState>,
     flow_session_id: &Uuid, //UUID
 ) -> Result<Vec<Task>, String> {
-    debug!("[PROCESSOR DB CALLS] Fetching tasks for flow_session_id {}", flow_session_id);
+    debug!(
+        "[PROCESSOR DB CALLS] Fetching tasks for flow_session_id {}",
+        flow_session_id
+    );
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -83,30 +110,38 @@ pub async fn get_session_tasks(
         .execute()
         .await
         .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to execute session tasks request: {}", e);
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to execute session tasks request: {}",
+                e
+            );
             format!("Failed to execute request: {}", e)
         })?;
 
-    let response_body = response
-        .text()
-        .await
-        .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to read session tasks response: {}", e);
-            format!("Failed to read response body: {}", e)
-        })?;
+    let response_body = response.text().await.map_err(|e| {
+        debug!(
+            "[PROCESSOR DB CALLS] Failed to read session tasks response: {}",
+            e
+        );
+        format!("Failed to read response body: {}", e)
+    })?;
 
-    let tasks: Vec<Task> = serde_json::from_str(&response_body)
-        .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to parse tasks: {}", e);
-            format!("Failed to parse tasks: {}", e)
-        })?;
+    let tasks: Vec<Task> = serde_json::from_str(&response_body).map_err(|e| {
+        debug!("[PROCESSOR DB CALLS] Failed to parse tasks: {}", e);
+        format!("Failed to parse tasks: {}", e)
+    })?;
 
     if tasks.is_empty() {
-        debug!("[PROCESSOR DB CALLS] No tasks found for session {}", flow_session_id);
+        debug!(
+            "[PROCESSOR DB CALLS] No tasks found for session {}",
+            flow_session_id
+        );
         return Err("No tasks found for session".to_string());
     }
 
-    debug!("[PROCESSOR DB CALLS] Successfully retrieved {} tasks", tasks.len());
+    debug!(
+        "[PROCESSOR DB CALLS] Successfully retrieved {} tasks",
+        tasks.len()
+    );
     Ok(tasks)
 }
 
@@ -131,31 +166,30 @@ pub async fn create_task(state: Arc<AppState>, task: &CreateTaskInput) -> Result
         .execute()
         .await
         .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to execute create task request: {}", e);
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to execute create task request: {}",
+                e
+            );
             format!("Failed to execute request: {}", e)
         })?;
 
-    let response_body = response
-        .text()
-        .await
-        .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to read create task response: {}", e);
-            format!("Failed to read response body: {}", e)
-        })?;
+    let response_body = response.text().await.map_err(|e| {
+        debug!(
+            "[PROCESSOR DB CALLS] Failed to read create task response: {}",
+            e
+        );
+        format!("Failed to read response body: {}", e)
+    })?;
 
-    let tasks: Vec<Task> = serde_json::from_str(&response_body)
-        .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to parse created task: {}", e);
-            format!("Failed to parse created task: {}", e)
-        })?;
+    let tasks: Vec<Task> = serde_json::from_str(&response_body).map_err(|e| {
+        debug!("[PROCESSOR DB CALLS] Failed to parse created task: {}", e);
+        format!("Failed to parse created task: {}", e)
+    })?;
 
-    let task = tasks
-        .into_iter()
-        .next()
-        .ok_or_else(|| {
-            debug!("[PROCESSOR DB CALLS] No task was created");
-            "No task was created".to_string()
-        })?;
+    let task = tasks.into_iter().next().ok_or_else(|| {
+        debug!("[PROCESSOR DB CALLS] No task was created");
+        "No task was created".to_string()
+    })?;
 
     debug!("[PROCESSOR DB CALLS] Successfully created task");
     Ok(task)
@@ -168,7 +202,11 @@ pub async fn update_task_status(
     status: &TaskStatus,
     result: Option<Value>,
 ) -> Result<(), String> {
-    debug!("[PROCESSOR DB CALLS] Updating task {} status to {}", task_id, status.as_str());
+    debug!(
+        "[PROCESSOR DB CALLS] Updating task {} status to {}",
+        task_id,
+        status.as_str()
+    );
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
@@ -197,25 +235,26 @@ pub async fn update_task_status(
         .from("tasks")
         .auth(supabase_service_role_api_key)
         .eq("task_id", &task_id.to_string())
-        .update(
-            serde_json::to_string(&input)
-                .map_err(|e| {
-                    debug!("[PROCESSOR DB CALLS] Failed to serialize update input: {}", e);
-                    format!("Failed to serialize input: {}", e)
-                })?,
-        )
+        .update(serde_json::to_string(&input).map_err(|e| {
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to serialize update input: {}",
+                e
+            );
+            format!("Failed to serialize input: {}", e)
+        })?)
         .execute()
         .await
         .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to execute update task request: {}", e);
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to execute update task request: {}",
+                e
+            );
             format!("Failed to execute request: {}", e)
         })?;
 
     debug!("[PROCESSOR DB CALLS] Successfully updated task status");
     Ok(())
 }
-
-
 
 pub async fn update_flow_session_status(
     state: &AppState,
@@ -224,7 +263,7 @@ pub async fn update_flow_session_status(
     trigger_session_status: &TriggerSessionStatus,
 ) -> Result<(), String> {
     debug!(
-        "[PROCESSOR DB CALLS] Updating flow session {} status to {} and trigger status to {}", 
+        "[PROCESSOR DB CALLS] Updating flow session {} status to {} and trigger status to {}",
         flow_session_id,
         flow_session_status.as_str(),
         trigger_session_status.as_str()
@@ -243,17 +282,20 @@ pub async fn update_flow_session_status(
         .from("tasks")
         .auth(supabase_service_role_api_key)
         .eq("flow_session_id", &flow_session_id.to_string())
-        .update(
-            serde_json::to_string(&input)
-                .map_err(|e| {
-                    debug!("[PROCESSOR DB CALLS] Failed to serialize update input: {}", e);
-                    format!("Failed to serialize input: {}", e)
-                })?,
-        )
+        .update(serde_json::to_string(&input).map_err(|e| {
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to serialize update input: {}",
+                e
+            );
+            format!("Failed to serialize input: {}", e)
+        })?)
         .execute()
         .await
         .map_err(|e| {
-            debug!("[PROCESSOR DB CALLS] Failed to execute update flow session request: {}", e);
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to execute update flow session request: {}",
+                e
+            );
             format!("Failed to execute request: {}", e)
         })?;
 

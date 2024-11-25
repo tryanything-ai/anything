@@ -2,9 +2,9 @@ use chrono::{DateTime, Duration, NaiveDateTime, Offset, Utc};
 use chrono_tz::Tz;
 use serde_json::{json, Value};
 
-pub async fn process_date_task(
+pub fn process_date_task(
     bundled_context: &Value,
-) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[DATE FORMATTER] Starting date task processing");
     println!("[DATE FORMATTER] Bundled context: {:?}", bundled_context);
 
@@ -58,9 +58,9 @@ pub async fn process_date_task(
         DateTime::from_naive_utc_and_offset(dt, Utc.fix())
     } else {
         println!("[DATE FORMATTER] Failed to parse date");
-        return Ok(json!({
+        return Ok(Some(json!({
             "error": "Invalid date format. Please use RFC3339 or YYYY-MM-DD HH:MM:SS"
-        }));
+        })));
     };
     println!("[DATE FORMATTER] Parsed date: {}", parsed_date);
 
@@ -154,10 +154,10 @@ pub async fn process_date_task(
         }
         _ => {
             println!("[DATE FORMATTER] Unknown operation, returning error");
-            return Ok(json!({ "error": "Invalid operation" }));
+            return Ok(Some(json!({ "error": "Invalid operation" })));
         }
     };
 
     println!("[DATE FORMATTER] Operation result: {:?}", result);
-    Ok(json!({ "formatted_date": result }))
+    Ok(Some(json!({ "formatted_date": result })))
 }

@@ -13,11 +13,14 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
-use crate::task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
 use crate::{new_processor::bundling_utils::bundle_context_from_parts, AppState};
 use crate::{
     new_processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
     workflow_types::{CreateTaskInput, DatabaseFlowVersion},
+};
+use crate::{
+    task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
+    workflow_types::TaskConfig,
 };
 
 use crate::{task_types::ActionType, FlowCompletion};
@@ -115,6 +118,11 @@ pub async fn run_workflow_and_respond(
 
     let flow_session_id = Uuid::new_v4();
 
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
+
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context_from_parts(
@@ -176,7 +184,7 @@ pub async fn run_workflow_and_respond(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
             "body": processed_payload.clone(),
@@ -358,6 +366,11 @@ pub async fn run_workflow_version_and_respond(
 
     let flow_session_id = Uuid::new_v4().to_string();
 
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
+
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context_from_parts(
@@ -419,7 +432,7 @@ pub async fn run_workflow_version_and_respond(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
             "body": processed_payload.clone(),
@@ -602,6 +615,11 @@ pub async fn run_workflow(
 
     let flow_session_id = Uuid::new_v4().to_string();
 
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
+
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context_from_parts(
@@ -663,7 +681,7 @@ pub async fn run_workflow(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
             "body": processed_payload.clone(),
@@ -803,6 +821,11 @@ pub async fn run_workflow_version(
 
     let flow_session_id = Uuid::new_v4();
 
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
+
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
     let rendered_inputs = match bundle_context_from_parts(
@@ -864,7 +887,7 @@ pub async fn run_workflow_version(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
             "body": processed_payload.clone(),

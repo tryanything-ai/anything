@@ -47,7 +47,6 @@ mod secrets;
 mod supabase_jwt_middleware;
 mod api_key_middleware;
 mod account_auth_middleware;
-mod task_engine;
 mod task_types;
 mod templater;
 mod testing; 
@@ -73,10 +72,8 @@ pub struct AppState {
     marketplace_client: Arc<Postgrest>,
     public_client: Arc<Postgrest>,
     http_client: Arc<Client>,
-    semaphore: Arc<Semaphore>,
     workflow_processor_semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
-    task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
     processor_sender: mpsc::Sender<ProcessorMessage>,
     processor_receiver: Mutex<mpsc::Receiver<ProcessorMessage>>, 
@@ -171,7 +168,7 @@ async fn main() {
         HeaderValue::from_static("*"),
     );
 
-    let (task_engine_signal, _) = watch::channel(());
+
     let (trigger_engine_signal, _) = watch::channel("".to_string());
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
@@ -181,9 +178,9 @@ async fn main() {
         public_client: public_client.clone(),
         http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
-        semaphore: Arc::new(Semaphore::new(5)),
+
         workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
-        task_engine_signal,
+
         trigger_engine_signal,
         processor_sender: processor_tx,
         processor_receiver: Mutex::new(processor_rx),
@@ -366,7 +363,7 @@ pub async fn root() -> impl IntoResponse {
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
-    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
     //TODO: add back

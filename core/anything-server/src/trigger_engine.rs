@@ -7,8 +7,8 @@ use std::env;
 
 use crate::{
     bundler::bundle_task_context,
-    task_types::Task,
-    task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
+    new_processor::processor::ProcessorMessage,
+    task_types::{ActionType, FlowSessionStatus, Stage, Task, TaskStatus, TriggerSessionStatus},
     AppState,
 };
 
@@ -41,11 +41,12 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
     let trigger_state: Arc<RwLock<HashMap<String, InMemoryTrigger>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
-    // Receive info from other systems
+    // Receive info from other systems like CRUD over workflows that have triggers
     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
     let client = state.anything_client.clone();
     hydrate_triggers(state.clone(), &client, &trigger_state).await;
 
+    //How often we check for triggers to run
     let refresh_interval = Duration::from_secs(60);
 
     // Clone state once here for use in the loop
@@ -328,52 +329,57 @@ async fn create_trigger_task(
     state: &Arc<AppState>,
     trigger: &InMemoryTrigger,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-    let client = state.anything_client.clone();
-
-    println!("Handling create task from cron trigger");
+    println!("[CRON TRIGGER] Handling create task from cron trigger");
 
     let task_config = TaskConfig {
         variables: trigger.config.get("variables").cloned().unwrap_or_default(),
         input: trigger.config.get("input").cloned().unwrap_or_default(),
     };
 
+
     let input = CreateTaskInput {
         account_id: trigger.account_id.clone(),
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: trigger.flow_id.clone(),
         flow_version_id: trigger.flow_version_id.clone(),
         action_label: trigger.action_label.clone(),
         trigger_id: trigger.trigger_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger.trigger_id.clone(),
         stage: Stage::Production.as_str().to_string(),
         config: serde_json::json!(task_config),
-        result: None,
+        result: Some(serde_json::json!({
+            "message": format!("Successfully triggered task"),
+            "created_at": Utc::now()
+        })),
         test_config: None,
         processing_order: 0,
         started_at: Some(Utc::now()),
     };
 
-    let response = client
-        .from("tasks")
-        .auth(supabase_service_role_api_key)
-        .insert(serde_json::to_string(&input)?)
-        .execute()
-        .await?;
+    println!("[CRON TRIGGER] Creating processor message");
+    // Send message to processor
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
+        version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
+        flow_session_id: Uuid::parse_str(&input.flow_session_id).unwrap(),
+        trigger_task: Some(input),
+    };
 
-    let body = response.text().await?;
-    let _items: Value = serde_json::from_str(&body)?;
-
-    // Send signal to task engine to process the new task
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("Failed to send task signal: {:?}", err);
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!(
+            "[TRIGGER_ENGINE] Failed to send message to processor: {}",
+            e
+        );
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to send message to processor: {}", e),
+        )));
     }
 
     println!("Successfully created trigger task");

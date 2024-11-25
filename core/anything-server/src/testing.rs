@@ -109,7 +109,10 @@ pub async fn test_workflow(
             .clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
-        result: None,
+        result: Some(serde_json::json!({
+            "message": format!("Successfully triggered task"),
+            "created_at": Utc::now()
+        })),
         test_config: None,
         processing_order: 0,
         started_at: Some(Utc::now()),
@@ -340,9 +343,6 @@ pub async fn test_action(
 
     // Signal the task processing loop and write error if it can't
     // This is just a hint to the processing system. Processing is lazy sometimes to prevent using resources when not needed
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("Failed to send task signal: {:?}", err);
-    }
 
     Json(items).into_response()
 }

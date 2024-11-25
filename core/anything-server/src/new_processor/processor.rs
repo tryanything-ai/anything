@@ -242,7 +242,7 @@ pub async fn processor(
                 let task_result = match execute_task(state.clone(), &client, &task).await {
                     Ok(success_value) => {
                         debug!("[PROCESSOR] Task {} completed successfully", task.task_id);
-                        Ok(success_value)
+                        success_value
                     }
                     Err(error) => {
                         debug!("[PROCESSOR] Task {} failed: {:?}", task.task_id, error);
@@ -306,22 +306,16 @@ pub async fn processor(
                     }
                 };
 
-                // Always wrap the result in Some() for storage, regardless of success/failure
-                let result_for_storage = Some(match task_result {
-                    Ok(value) => value,
-                    Err(err) => err,
-                });
-
                 // Spawn task status update to DB asynchronously
                 let state_clone = state.clone();
                 let task_id = task.task_id.clone();
-                let result_clone = result_for_storage.clone();
+                let task_result_clone = task_result.clone();
                 tokio::spawn(async move {
                     if let Err(e) = update_task_status(
                         state_clone,
                         &task_id,
                         &TaskStatus::Completed,
-                        result_clone,
+                        task_result_clone.clone()
                     )
                     .await
                     {
@@ -333,7 +327,7 @@ pub async fn processor(
                 {
                     let mut cache = state.flow_session_cache.write().await;
                     let mut task_copy = task.clone();
-                    task_copy.result = result_for_storage;
+                    task_copy.result = task_result;
                     task_copy.task_status = TaskStatus::Completed;
                     task_copy.ended_at = Some(Utc::now());
                     let _ = cache.update_task(&flow_session_id, task_copy);

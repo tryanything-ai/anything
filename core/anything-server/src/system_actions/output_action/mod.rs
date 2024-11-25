@@ -8,7 +8,7 @@ pub async fn process_response_task(
     state: Arc<AppState>,
     flow_session_id: String,
     bundled_context: &Value,
-) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[PROCESS RESPONSE] Starting process_response_task");
     println!(
         "[PROCESS RESPONSE] Initial bundled context: {:?}",
@@ -167,5 +167,5 @@ pub async fn process_response_task(
         }
     }
 
-    Ok(Value::Object(response))
+    Ok(Some(Value::Object(response)))
 }

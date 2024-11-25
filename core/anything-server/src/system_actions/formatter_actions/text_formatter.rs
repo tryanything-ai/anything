@@ -2,9 +2,9 @@ use html2md::parse_html;
 use pulldown_cmark::{html, Options, Parser};
 use serde_json::{json, Value};
 
-pub async fn process_text_task(
+pub fn process_text_task(
     bundled_context: &Value,
-) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let input = bundled_context
         .get("input")
         .and_then(|v| v.as_str())
@@ -123,5 +123,5 @@ pub async fn process_text_task(
         _ => input.to_string(),
     };
 
-    Ok(json!({ "formatted_text": result }))
+    Ok(Some(json!({ "formatted_text": result })))
 }
