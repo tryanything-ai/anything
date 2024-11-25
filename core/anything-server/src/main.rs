@@ -182,7 +182,7 @@ async fn main() {
         http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
         semaphore: Arc::new(Semaphore::new(5)),
-        workflow_processor_semaphore: Arc::new(Semaphore::new(10)), //How many workflows we can run at once
+        workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
         task_engine_signal,
         trigger_engine_signal,
         processor_sender: processor_tx,
