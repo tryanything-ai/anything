@@ -1,6 +1,6 @@
-use crate::new_processor::execute_task::execute_task;
-use crate::new_processor::flow_session_cache::FlowSessionData;
-use crate::new_processor::parsing_utils::get_trigger_node;
+use crate::processor::execute_task::execute_task;
+use crate::processor::flow_session_cache::FlowSessionData;
+use crate::processor::parsing_utils::get_trigger_node;
 use crate::workflow_types::{CreateTaskInput, WorkflowVersionDefinition};
 use crate::AppState;
 use chrono::Utc;
@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::new_processor::db_calls::{
+use crate::processor::db_calls::{
     create_task, get_workflow_definition, update_flow_session_status, update_task_status,
 };
 use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
@@ -450,8 +450,6 @@ pub async fn processor(
                     flow_session_id
                 );
             }
-            //TODO: error handling
-            //TODO: handle updating flow session and trigger session status et
 
             // // Remove the flow session from active sessions when done
             active_flow_sessions.lock().await.remove(&flow_session_id);
@@ -462,14 +460,3 @@ pub async fn processor(
 
     Ok(())
 }
-
-//TODO:
-//Traverse the worfklow definition to get next task
-//Update task status in cache and db
-//Bundle the task
-//Run task
-//Update status and result in cache and db
-//Determine if workflow is complete
-//If complete, update flow session status in cache and db
-//If not complete, update flow session with next task in line
-//Send signal to webhook engine if response is needed

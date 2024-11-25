@@ -8,8 +8,7 @@ use axum::{
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::AppState;
-use crate::{bundler::bundle_variables, supabase_jwt_middleware::User};
+use crate::{bundler::bundle_cached_variables, supabase_jwt_middleware::User, AppState};
 
 use crate::workflow_types::{FlowVersion, WorkflowVersionDefinition};
 
@@ -370,7 +369,7 @@ pub async fn get_flow_version_variables(
 
     //Run the templater over the variables and results from last session
     //Return the templated variables
-    let rendered_variables = match bundle_variables(
+    let rendered_variables = match bundle_cached_variables(
         state.clone(),
         client,
         &account_id,

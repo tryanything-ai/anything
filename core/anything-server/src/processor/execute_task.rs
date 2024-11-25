@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use postgrest::Postgrest;
 
-use crate::new_processor::bundling_utils::bundle_tasks_cached_context;
-use crate::new_processor::process_trigger_utils::process_trigger_task;
+use crate::bundler::bundle_tasks_cached_context;
+use crate::processor::process_trigger_utils::process_trigger_task;
 use crate::system_actions::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
 };

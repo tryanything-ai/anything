@@ -2,11 +2,9 @@ use crate::system_variables::get_system_variables;
 use crate::task_types::Task;
 
 use crate::AppState;
-use dotenv::dotenv;
 use postgrest::Postgrest;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::env;
 use std::error::Error;
 use std::sync::Arc;
 use tracing::debug;
@@ -17,45 +15,63 @@ use crate::bundler::accounts::get_auth_accounts;
 use crate::bundler::accounts::get_refreshed_auth_accounts;
 use crate::bundler::secrets::get_decrypted_secrets;
 
-pub async fn get_completed_tasks_for_session(
+use crate::auth::init::AccountAuthProviderAccount;
+
+use crate::processor::parsing_utils::get_bundle_context_inputs;
+
+use crate::task_types::TaskStatus;
+
+use uuid::Uuid;
+
+pub async fn bundle_tasks_cached_context(
+    state: Arc<AppState>,
     client: &Postgrest,
-    session_id: &str,
-) -> Result<Vec<Task>, Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
+    task: &Task,
+    refresh_auth: bool,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    println!("[BUNDLER] Starting to bundle context from parts");
 
-    println!(
-        "[BUNDLER] Fetching completed tasks for session_id: {}",
-        session_id
-    );
+    let (account_id, flow_session_id, variables_config, inputs_config) =
+        get_bundle_context_inputs(task);
 
-    let response = client
-        .from("tasks")
-        .auth(supabase_service_role_api_key.clone())
-        .select("*")
-        .eq("flow_session_id", session_id)
-        .eq("task_status", "completed")
-        .execute()
-        .await?;
+    let rendered_variables_definition = bundle_cached_variables(
+        state,
+        client,
+        &account_id,
+        &flow_session_id,
+        variables_config,
+        refresh_auth,
+    )
+    .await?;
 
-    let body = response.text().await?;
-    let tasks: Vec<Task> = serde_json::from_str(&body)?;
-
-    // Print tasks for debugging
-    println!("[BUNDLER] Completed tasks:");
-    for task in &tasks {
-        println!(
-            "[BUNDLER] [COMPLETED_TASK] Task ID: {}, Action ID: {}, Status: {:?}, Result: {:?}",
-            task.task_id, task.action_id, task.task_status, task.result
-        );
-    }
-
-    println!("[BUNDLER] Retrieved {} completed tasks", tasks.len());
-
-    Ok(tasks)
+    bundle_inputs(rendered_variables_definition, inputs_config)
 }
 
-pub async fn bundle_variables(
+pub async fn bundle_context_from_parts(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    account_id: &str,
+    flow_session_id: &str,
+    variables_config: Option<&Value>,
+    inputs_config: Option<&Value>,
+    refresh_auth: bool,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    println!("[BUNDLER] Starting to bundle context from parts");
+
+    let rendered_variables_definition = bundle_cached_variables(
+        state,
+        client,
+        account_id,
+        flow_session_id,
+        variables_config,
+        refresh_auth,
+    )
+    .await?;
+
+    bundle_inputs(rendered_variables_definition, inputs_config)
+}
+
+pub async fn bundle_cached_variables(
     state: Arc<AppState>,
     client: &Postgrest,
     account_id: &str,
@@ -68,17 +84,11 @@ pub async fn bundle_variables(
     // Pre-allocate with known capacity
     let mut render_variables_context = HashMap::with_capacity(4);
 
-    // Parallel fetch of secrets, accounts, and tasks
+    // Parallel fetch of secrets, accounts, and cached task results
     let (secrets_result, accounts_result, tasks_result) = tokio::join!(
-        get_decrypted_secrets(state.clone(), client, account_id),
-        async {
-            if refresh_auth {
-                get_refreshed_auth_accounts(state.clone(), client, account_id).await
-            } else {
-                get_auth_accounts(state.clone(), client, account_id).await
-            }
-        },
-        get_completed_tasks_for_session(client, flow_session_id)
+        get_decrypted_secrets(state.clone(), client, account_id), //cached secrets
+        fetch_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
+        fetch_completed_cached_tasks(state.clone(), flow_session_id)  //cached task results
     );
 
     // Process accounts
@@ -129,6 +139,38 @@ pub async fn bundle_variables(
     }
 }
 
+async fn fetch_auth_accounts(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    account_id: &str,
+    refresh_auth: bool,
+) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn Error + Send + Sync>> {
+    if refresh_auth {
+        get_refreshed_auth_accounts(state, client, account_id).await
+    } else {
+        get_auth_accounts(state, client, account_id).await
+    }
+}
+
+async fn fetch_completed_cached_tasks(
+    state: Arc<AppState>,
+    flow_session_id: &str,
+) -> Result<Vec<Task>, Box<dyn Error + Send + Sync>> {
+    let cache = state.flow_session_cache.read().await;
+    let session_id = Uuid::parse_str(flow_session_id).unwrap();
+    let tasks = if let Some(session_data) = cache.get(&session_id) {
+        session_data
+            .tasks
+            .values()
+            .filter(|task| task.task_status == TaskStatus::Completed)
+            .cloned()
+            .collect()
+    } else {
+        Vec::new()
+    };
+    Ok(tasks)
+}
+
 pub fn bundle_inputs(
     rendered_variables: Value,
     inputs: Option<&Value>,
@@ -159,47 +201,4 @@ pub fn bundle_inputs(
         println!("[BUNDLER] No inputs found in task config, returning empty object");
         Ok(json!({}))
     }
-}
-
-pub async fn bundle_context(
-    state: Arc<AppState>,
-    client: &Postgrest,
-    account_id: &str,
-    flow_session_id: &str,
-    variables_config: Option<&Value>,
-    inputs_config: Option<&Value>,
-    refresh_auth: bool,
-) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    println!("[BUNDLER] Starting to bundle context from parts");
-
-    let rendered_variables_definition = bundle_variables(
-        state,
-        client,
-        account_id,
-        flow_session_id,
-        variables_config,
-        refresh_auth,
-    )
-    .await?;
-
-    bundle_inputs(rendered_variables_definition, inputs_config)
-}
-
-// Helper function to bundle context for a task
-pub async fn bundle_task_context(
-    state: Arc<AppState>,
-    client: &Postgrest,
-    task: &Task,
-    refresh_auth: bool,
-) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    bundle_context(
-        state,
-        client,
-        task.account_id.to_string().as_str(),
-        task.flow_session_id.to_string().as_str(),
-        task.config.get("variables"),
-        task.config.get("input"),
-        refresh_auth,
-    )
-    .await
 }

@@ -8,7 +8,7 @@ use axum::{
  
 use bundler::{accounts::accounts_cache::AccountsCache, secrets::secrets_cache::SecretsCache};
 use dotenv::dotenv;
-use new_processor::processor::ProcessorMessage;
+use processor::processor::ProcessorMessage;
 use postgrest::Postgrest;
 use reqwest::Client;
 use serde_json::Value;
@@ -30,7 +30,7 @@ extern crate slugify;
 use auth::init::AuthState;
 
 mod system_actions; 
-mod new_processor;
+mod processor;
 mod system_variables;
 mod workflows; 
 mod actions; 
@@ -82,7 +82,7 @@ pub struct AppState {
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
     bundler_secrets_cache: RwLock<SecretsCache>,
     bundler_accounts_cache: RwLock<AccountsCache>,
-    flow_session_cache: Arc<RwLock<new_processor::flow_session_cache::FlowSessionCache>>,
+    flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
 }
 
 #[tokio::main]
@@ -191,7 +191,7 @@ async fn main() {
         )),
         bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
         bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
-        flow_session_cache: Arc::new(RwLock::new(new_processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
+        flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -344,32 +344,25 @@ pub async fn root() -> impl IntoResponse {
         .layer(cors)
         .layer(preflightlayer)
         .with_state(state.clone());
-
+    
+    //TODO: add JS execution via DENO
     // let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
     // let manifest = Manifest::new([url]);
     // let plugin = Arc::new(Mutex::new(
     //     Plugin::new(&manifest, [], true).unwrap()
     // ));
 
-    // Create a semaphore to limit the number of concurrent tasks
-    // let semaphore = Arc::new(Semaphore::new(5));
-
-    // Spawn task processing loop
-    // Keeps making progress on work that is meant to be down now.
-    // tokio::spawn(task_engine::task_processing_loop(state.clone()));
-
-    // Spawn processor loop
-    tokio::spawn(new_processor::processor::processor(state.clone()));
+    // Spawn processor
+    tokio::spawn(processor::processor(state.clone()));
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
-    //TODO: add back
-    // tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
-    //     state.clone(),
-    // ));
+    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+        state.clone(),
+    ));
 
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));

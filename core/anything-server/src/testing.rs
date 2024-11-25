@@ -10,10 +10,10 @@ use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    new_processor::flow_session_cache::FlowSessionData,
+    processor::flow_session_cache::FlowSessionData,
     workflow_types::{CreateTaskInput, TaskConfig, TestConfig, WorkflowVersionDefinition},
 };
-use crate::{new_processor::processor::ProcessorMessage, task_types::Stage};
+use crate::{processor::processor::ProcessorMessage, task_types::Stage};
 use crate::{
     supabase_jwt_middleware::User,
     task_types::{ActionType, FlowSessionStatus, TaskStatus, TriggerSessionStatus},
