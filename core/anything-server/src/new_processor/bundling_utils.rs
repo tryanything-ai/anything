@@ -15,7 +15,7 @@ use std::sync::Arc;
 use tracing::debug;
 use uuid::Uuid;
 
-pub async fn bundle_cached_context(
+pub async fn bundle_tasks_cached_context(
     state: Arc<AppState>,
     client: &Postgrest,
     task: &Task,
@@ -25,7 +25,7 @@ pub async fn bundle_cached_context(
 
     let (account_id, flow_session_id, variables_config, inputs_config) =
         get_bundle_context_inputs(task);
-        
+
     let rendered_variables_definition = bundle_cached_variables(
         state,
         client,
@@ -38,6 +38,31 @@ pub async fn bundle_cached_context(
 
     bundle_inputs(rendered_variables_definition, inputs_config)
 }
+
+pub async fn bundle_context_from_parts(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    account_id: &str,
+    flow_session_id: &str,
+    variables_config: Option<&Value>,
+    inputs_config: Option<&Value>,
+    refresh_auth: bool,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    println!("[BUNDLER] Starting to bundle context from parts");
+
+    let rendered_variables_definition = bundle_cached_variables(
+        state,
+        client,
+        account_id,
+        flow_session_id,
+        variables_config,
+        refresh_auth,
+    )
+    .await?;
+
+    bundle_inputs(rendered_variables_definition, inputs_config)
+}
+
 
 pub async fn bundle_cached_variables(
     state: Arc<AppState>,
@@ -56,7 +81,7 @@ pub async fn bundle_cached_variables(
     let (secrets_result, accounts_result, tasks_result) = tokio::join!(
         get_decrypted_secrets(state.clone(), client, account_id), //cached secrets
         fetch_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
-        fetch_completed_cached_tasks(state.clone(), flow_session_id) //cached task results
+        fetch_completed_cached_tasks(state.clone(), flow_session_id)  //cached task results
     );
 
     // Process accounts

@@ -2,9 +2,7 @@ use std::sync::Arc;
 
 use postgrest::Postgrest;
 
-use crate::bundler::bundle_context;
-use crate::new_processor::bundling_utils::bundle_cached_context;
-use crate::new_processor::parsing_utils::get_bundle_context_inputs;
+use crate::new_processor::bundling_utils::bundle_tasks_cached_context;
 use crate::new_processor::process_trigger_utils::process_trigger_task;
 use crate::system_actions::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
@@ -16,7 +14,7 @@ use crate::AppState;
 
 use serde_json::{json, Value};
 
-use crate::task_types::{ActionType, TaskStatus};
+use crate::task_types::ActionType;
 
 pub async fn execute_task(
     state: Arc<AppState>,
@@ -29,7 +27,7 @@ pub async fn execute_task(
     let state_clone = Arc::clone(&state);
 
     //Bundle context with results from cache
-    let bundled_context = bundle_cached_context(state, client, task, true).await;
+    let bundled_context = bundle_tasks_cached_context(state, client, task, true).await;
 
     let http_client = state_clone.http_client.clone();
 

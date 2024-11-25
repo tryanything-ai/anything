@@ -13,11 +13,8 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
-use crate::AppState;
-use crate::{
-    bundler::bundle_context,
-    task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
-};
+use crate::task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
+use crate::{new_processor::bundling_utils::bundle_context_from_parts, AppState};
 use crate::{
     new_processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
     workflow_types::{CreateTaskInput, DatabaseFlowVersion},
@@ -33,7 +30,7 @@ use super::webhook_trigger_utils::{
     validate_request_method, validate_security_model, validate_webhook_input_and_response,
 };
 
-//One Minute Timeout
+//One Minute
 pub const WEBHOOK_TIMEOUT: u64 = 60;
 
 pub async fn run_workflow_and_respond(
@@ -120,7 +117,7 @@ pub async fn run_workflow_and_respond(
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
         state.clone(),
         &state.anything_client,
         &account_id.to_string(),
@@ -363,7 +360,7 @@ pub async fn run_workflow_version_and_respond(
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
         state.clone(),
         &state.anything_client,
         &account_id.to_string(),
@@ -607,7 +604,7 @@ pub async fn run_workflow(
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
         state.clone(),
         &state.anything_client,
         &account_id.to_string(),
@@ -808,7 +805,7 @@ pub async fn run_workflow_version(
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
         state.clone(),
         &state.anything_client,
         &account_id.to_string(),
