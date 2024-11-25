@@ -291,7 +291,7 @@ pub async fn processor(
                         }
 
                         debug!("[PROCESSOR] Workflow failed: {}", flow_session_id);
-                        current_task = None; // Exit the processing loop
+                        // current_task = None; // Exit the processing loop
                         break; // Exit the while loop
                     }
                 };

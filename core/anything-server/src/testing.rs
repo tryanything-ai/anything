@@ -9,7 +9,6 @@ use chrono::Utc;
 use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{workflow_types::DatabaseFlowVersion, AppState};
 use crate::{
     new_processor::flow_session_cache::FlowSessionData,
     workflow_types::{CreateTaskInput, TaskConfig, TestConfig, WorkflowVersionDefinition},
@@ -19,6 +18,7 @@ use crate::{
     supabase_jwt_middleware::User,
     task_types::{ActionType, FlowSessionStatus, TaskStatus, TriggerSessionStatus},
 };
+use crate::{workflow_types::DatabaseFlowVersion, AppState};
 use uuid::Uuid;
 
 use dotenv::dotenv;
@@ -52,10 +52,9 @@ pub async fn test_workflow(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
-    
 
     let body = match response.text().await {
         Ok(body) => body,
@@ -65,7 +64,7 @@ pub async fn test_workflow(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -73,7 +72,7 @@ pub async fn test_workflow(
         Ok(dbflowversion) => dbflowversion,
         Err(_) => {
             println!("[TEST WORKFLOW] Failed to parse workflow version JSON");
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
@@ -90,18 +89,24 @@ pub async fn test_workflow(
     println!("[TEST WORKFLOW] Creating task input");
     let input = CreateTaskInput {
         account_id: account_id.clone(),
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
         action_label: workflow_version.flow_definition.actions[0].label.clone(),
-        trigger_id: workflow_version.flow_definition.actions[0].action_id.clone(),
+        trigger_id: workflow_version.flow_definition.actions[0]
+            .action_id
+            .clone(),
         trigger_session_id: trigger_session_id.clone(),
-        trigger_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: FlowSessionStatus::Running.as_str().to_string(),
         flow_session_id: flow_session_id.clone(),
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        action_id: workflow_version.flow_definition.actions[0].action_id.clone(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+        action_id: workflow_version.flow_definition.actions[0]
+            .action_id
+            .clone(),
         r#type: ActionType::Trigger,
-        plugin_id: workflow_version.flow_definition.actions[0].plugin_id.clone(),
+        plugin_id: workflow_version.flow_definition.actions[0]
+            .plugin_id
+            .clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
         result: None,
@@ -271,15 +276,15 @@ pub async fn test_action(
 
     let input = CreateTaskInput {
         account_id: account_id.clone(),
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
         action_label: workflow.actions[0].label.clone(),
         trigger_id: workflow.actions[0].action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: workflow.actions[0].action_id.clone(),
         r#type: workflow.actions[0].r#type.clone(),
         plugin_id: workflow.actions[0].plugin_id.clone(),
