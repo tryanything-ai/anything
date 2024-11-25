@@ -5,12 +5,16 @@ use axum::{
     Json,
 };
 
+use chrono::Utc;
 use serde_json::Value;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use crate::task_types::Stage;
-use crate::workflow_types::{CreateTaskInput, TaskConfig, TestConfig, WorkflowVersionDefinition};
-use crate::AppState;
+use crate::{workflow_types::DatabaseFlowVersion, AppState};
+use crate::{
+    new_processor::flow_session_cache::FlowSessionData,
+    workflow_types::{CreateTaskInput, TaskConfig, TestConfig, WorkflowVersionDefinition},
+};
+use crate::{new_processor::processor::ProcessorMessage, task_types::Stage};
 use crate::{
     supabase_jwt_middleware::User,
     task_types::{ActionType, FlowSessionStatus, TaskStatus, TriggerSessionStatus},
@@ -28,7 +32,7 @@ pub async fn test_workflow(
 ) -> impl IntoResponse {
     let client = &state.anything_client;
 
-    println!("Handling test workflow");
+    println!("[TEST WORKFLOW] Handling test workflow request");
 
     // GET the workflow_version
     let response = match client
@@ -37,11 +41,13 @@ pub async fn test_workflow(
         .eq("flow_version_id", &workflow_version_id)
         .eq("account_id", &account_id)
         .select("*")
+        .single()
         .execute()
         .await
     {
         Ok(response) => response,
         Err(_) => {
+            println!("[TEST WORKFLOW] Failed to execute request to get workflow version");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
@@ -49,12 +55,12 @@ pub async fn test_workflow(
                 .into_response()
         }
     };
-
-    // println!("Response from flow_versions: {:?}", response);
+    
 
     let body = match response.text().await {
         Ok(body) => body,
         Err(_) => {
+            println!("[TEST WORKFLOW] Failed to read response body");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
@@ -63,128 +69,86 @@ pub async fn test_workflow(
         }
     };
 
-    // println!("Body from flow_versions: {:?}", body);
-
-    let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
+    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&body) {
+        Ok(dbflowversion) => dbflowversion,
         Err(_) => {
+            println!("[TEST WORKFLOW] Failed to parse workflow version JSON");
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
         }
     };
 
-    // println!("Items from flow_versions: {:?}", items);
-
-    let db_version_def = match items.get(0) {
-        Some(item) => item,
-        None => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get item zero").into_response()
-        }
-    };
-
-    // println!("db_version_def: {:?}", db_version_def);
-
-    // Parse response into Workflow type
-    let flow_definition = match db_version_def.get("flow_definition") {
-        Some(flow_definition) => flow_definition,
-        None => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get flow_definition",
-            )
-                .into_response()
-        }
-    };
-
-    // println!("flow_definition: {:?}", flow_definition);
-
-    let workflow: WorkflowVersionDefinition = match serde_json::from_value(flow_definition.clone()) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!("Failed to parse flow_definition into Workflow: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to parse flow_definition into Workflow: {:?}", err),
-            )
-                .into_response();
-        }
-    };
+    println!("[TEST WORKFLOW] Successfully retrieved workflow version");
 
     let task_config = TaskConfig {
-        variables: serde_json::json!(workflow.actions[0].variables),
-        input: serde_json::json!(workflow.actions[0].input),
+        variables: serde_json::json!(workflow_version.flow_definition.actions[0].variables),
+        input: serde_json::json!(workflow_version.flow_definition.actions[0].input),
     };
 
     let trigger_session_id = Uuid::new_v4().to_string();
     let flow_session_id = Uuid::new_v4().to_string();
 
+    println!("[TEST WORKFLOW] Creating task input");
     let input = CreateTaskInput {
         account_id: account_id.clone(),
         task_status: TaskStatus::Pending.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
-        action_label: workflow.actions[0].label.clone(),
-        trigger_id: workflow.actions[0].action_id.clone(),
+        action_label: workflow_version.flow_definition.actions[0].label.clone(),
+        trigger_id: workflow_version.flow_definition.actions[0].action_id.clone(),
         trigger_session_id: trigger_session_id.clone(),
         trigger_session_status: FlowSessionStatus::Pending.as_str().to_string(),
         flow_session_id: flow_session_id.clone(),
         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-        action_id: workflow.actions[0].action_id.clone(),
+        action_id: workflow_version.flow_definition.actions[0].action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_id: workflow.actions[0].plugin_id.clone(),
+        plugin_id: workflow_version.flow_definition.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: serde_json::json!(task_config),
         result: None,
         test_config: None,
         processing_order: 0,
+        started_at: Some(Utc::now()),
     };
 
-    // println!("Input: {:?}", input);
-
-    //Get service_role priveledges by passing service_role in auth()
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    let response = match client
-        .from("tasks")
-        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
-        .insert(serde_json::to_string(&input).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response()
-        }
+    println!("[TEST WORKFLOW] Creating processor message");
+    // Send message to processor
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
+        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        trigger_task: Some(input),
     };
 
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
+    println!("[TEST WORKFLOW] Initializing flow session data");
+    // Initialize flow session data and set it in the cache
+    //When we set it in the cache we don't need to fetch it again
+    //But since testing is special we want to create our own task
+    //To send to the processor
+    let flow_session_data = FlowSessionData {
+        workflow: Some(workflow_version),
+        tasks: HashMap::new(),
+        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        workflow_version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
     };
 
-    let _items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
-        }
-    };
+    println!("[TEST WORKFLOW] Setting flow session data in cache");
+    // Set the flow session data in cache
+    state.flow_session_cache.write().await.set(
+        &Uuid::parse_str(&flow_session_id).unwrap(),
+        flow_session_data,
+    );
 
-    // Signal the task processing loop and write error if it can't
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("Failed to send task signal: {:?}", err);
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to send message to processor: {}", e),
+        )
+            .into_response();
     }
 
+    println!("[TEST WORKFLOW] Successfully initiated test workflow");
     Json(serde_json::json!({
         "flow_session_id": flow_session_id,
         "trigger_session_id": trigger_session_id
@@ -275,7 +239,8 @@ pub async fn test_action(
 
     println!("flow_definition: {:?}", flow_definition);
 
-    let workflow: WorkflowVersionDefinition = match serde_json::from_value(flow_definition.clone()) {
+    let workflow: WorkflowVersionDefinition = match serde_json::from_value(flow_definition.clone())
+    {
         Ok(workflow) => workflow,
         Err(err) => {
             println!("Failed to parse flow_definition into Workflow: {:?}", err);
@@ -320,6 +285,7 @@ pub async fn test_action(
         result: None,
         test_config: Some(serde_json::json!(test_config)),
         processing_order: 0,
+        started_at: Some(Utc::now()),
     };
 
     // println!("Input: {:?}", input);

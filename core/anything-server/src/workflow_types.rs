@@ -81,10 +81,11 @@ impl WorkflowVersionDefinition {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CreateTaskInput {
     pub account_id: String,
     pub task_status: String,
+    pub started_at: Option<DateTime<Utc>>,
     pub flow_id: String,
     pub flow_version_id: String,
     pub action_label: String,

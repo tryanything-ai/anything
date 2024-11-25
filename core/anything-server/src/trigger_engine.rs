@@ -7,8 +7,8 @@ use std::env;
 
 use crate::{
     bundler::bundle_task_context,
-    task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
     task_types::Task,
+    task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
     AppState,
 };
 
@@ -48,8 +48,8 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
 
     let refresh_interval = Duration::from_secs(60);
 
-     // Clone state once here for use in the loop
-     let state = Arc::new(state);
+    // Clone state once here for use in the loop
+    let state = Arc::new(state);
 
     loop {
         tokio::select! {
@@ -324,7 +324,6 @@ async fn update_trigger_last_run(
     Ok(())
 }
 
-
 async fn create_trigger_task(
     state: &Arc<AppState>,
     trigger: &InMemoryTrigger,
@@ -359,6 +358,7 @@ async fn create_trigger_task(
         result: None,
         test_config: None,
         processing_order: 0,
+        started_at: Some(Utc::now()),
     };
 
     let response = client

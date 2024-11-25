@@ -60,6 +60,18 @@ impl FlowSessionCache {
         self.cache.insert(*flow_session_id, cached_session);
     }
 
+    pub fn add_task(&mut self, flow_session_id: &Uuid, task: Task) -> bool {
+        if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
+            if SystemTime::now() > cached_session.expires_at {
+                return false;
+            }
+            cached_session.data.tasks.insert(task.task_id, task);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn update_task(&mut self, flow_session_id: &Uuid, task: Task) -> bool {
         if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
             if SystemTime::now() > cached_session.expires_at {

@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use chrono::Utc;
 
 use std::time::Duration;
 
@@ -194,6 +195,7 @@ pub async fn run_workflow_and_respond(
             "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -450,6 +452,7 @@ pub async fn run_workflow_version_and_respond(
             "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -706,6 +709,7 @@ pub async fn run_workflow(
             "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -919,6 +923,7 @@ pub async fn run_workflow_version(
             "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);

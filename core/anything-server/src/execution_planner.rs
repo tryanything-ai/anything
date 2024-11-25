@@ -1,3 +1,4 @@
+use chrono::Utc;
 use postgrest::Postgrest;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -130,6 +131,7 @@ async fn create_execution_plan(
             result: None,
             test_config: None,
             processing_order: (index + 1) as i32,
+            started_at: Some(Utc::now()),
         };
 
         events.push(event);

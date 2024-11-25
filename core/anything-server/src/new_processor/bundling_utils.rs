@@ -4,7 +4,7 @@ use crate::bundler::bundle_inputs;
 use crate::bundler::secrets::get_decrypted_secrets;
 use crate::new_processor::parsing_utils::get_bundle_context_inputs;
 use crate::system_variables::get_system_variables;
-use crate::task_types::Task;
+use crate::task_types::{Task, TaskStatus};
 use crate::templater::Templater;
 use crate::AppState;
 use postgrest::Postgrest;
@@ -22,7 +22,6 @@ pub async fn bundle_cached_context(
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
-
 
     let (account_id, flow_session_id, variables_config, inputs_config) =
         get_bundle_context_inputs(task);
@@ -57,7 +56,7 @@ pub async fn bundle_cached_variables(
     let (secrets_result, accounts_result, tasks_result) = tokio::join!(
         get_decrypted_secrets(state.clone(), client, account_id), //cached secrets
         fetch_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
-        fetch_cached_tasks(state.clone(), flow_session_id) //cached task results
+        fetch_completed_cached_tasks(state.clone(), flow_session_id) //cached task results
     );
 
     // Process accounts
@@ -121,14 +120,19 @@ async fn fetch_auth_accounts(
     }
 }
 
-async fn fetch_cached_tasks(
+async fn fetch_completed_cached_tasks(
     state: Arc<AppState>,
     flow_session_id: &str,
 ) -> Result<Vec<Task>, Box<dyn Error + Send + Sync>> {
     let cache = state.flow_session_cache.read().await;
     let session_id = Uuid::parse_str(flow_session_id).unwrap();
     let tasks = if let Some(session_data) = cache.get(&session_id) {
-        session_data.tasks.values().cloned().collect()
+        session_data
+            .tasks
+            .values()
+            .filter(|task| task.task_status == TaskStatus::Completed)
+            .cloned()
+            .collect()
     } else {
         Vec::new()
     };
