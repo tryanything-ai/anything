@@ -291,7 +291,17 @@ pub async fn processor(
                         }
 
                         debug!("[PROCESSOR] Workflow failed: {}", flow_session_id);
-                        // current_task = None; // Exit the processing loop
+
+                        // Send error response to webhook if needed
+                        let mut completions = state.flow_completions.lock().await;
+                        if let Some(completion) = completions.remove(&flow_session_id.to_string()) {
+                            if completion.needs_response {
+                                println!(
+                                    "[PROCESSOR] Sending error response through completion channel"
+                                );
+                                let _ = completion.sender.send(error);
+                            }
+                        }
                         break; // Exit the while loop
                     }
                 };
