@@ -36,7 +36,7 @@ pub async fn execute_task(
         Ok(bundled_context) => {
             let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
-                process_trigger_task(&bundled_context)
+                process_trigger_task(task)
             } else {
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_id {
