@@ -2,7 +2,7 @@
   "type": "action", 
   "featured": false, 
   "action_template_definition": 
-  {
+  { 
     "anything_action_version": "0.1.0",
     "type": "action",
     "plugin_id": "http",
@@ -19,7 +19,7 @@
       "method": "GET",
       "url": "",
       "headers": "",
-      "body": ""
+      "body": "" 
     },
     "input_locked": false,
     "input_schema": {
@@ -166,55 +166,6 @@
       ]
     }
   },
-  {
-    "type": "output", 
-    "featured": false, 
-    "action_template_definition": 
-    {
-      "anything_action_version": "0.1.0",
-      "type": "output",
-      "plugin_id": "output",
-      "action_id": "output",
-      "plugin_version": "0.1.0",
-      "label": "Output",
-      "description": "Structure Output for Workflow",
-      "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
-      "variables": {}, 
-      "variables_locked": false,
-      "variables_schema": {},
-      "variables_schema_locked": false,
-      "input": {
-        "output": "{{variables}}"
-      },
-      "input_locked": true, 
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "output": {
-            "title": "Output",
-            "description": "Output for Workflow",
-            "type": "string"
-          }
-        },
-        "x-jsf-order": ["output"],
-        "required": ["output"],
-        "additionalProperties": false
-      },
-      "input_schema_locked": true,
-      "presentation": {
-        "position": {
-          "x": 300,
-          "y": 100
-        }
-      },
-      "handles": [
-        {
-          "id": "a", 
-          "type": "target",
-          "position": "top"
-        }
-      ]
-    }},
     {
       "type": "trigger",
       "featured": false,
@@ -225,9 +176,10 @@
         "action_id": "webhook",
         "plugin_version": "0.1.0",
         "label": "Webhook Trigger",
-        "description": "Catch Webhook from 3rd party system",
+        "description": "Catch Requests from 3rd party system",
         "icon": "<svg width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.52 3.046a3 3 0 0 0-2.13 5.486 1 1 0 0 1 .306 1.38l-3.922 6.163a2 2 0 1 1-1.688-1.073l3.44-5.405a5 5 0 1 1 8.398-2.728 1 1 0 1 1-1.97-.348 3 3 0 0 0-2.433-3.475zM10 6a2 2 0 1 1 3.774.925l3.44 5.405a5 5 0 1 1-1.427 8.5 1 1 0 0 1 1.285-1.532 3 3 0 1 0 .317-4.83 1 1 0 0 1-1.38-.307l-3.923-6.163A2 2 0 0 1 10 6zm-5.428 6.9a1 1 0 0 1-.598 1.281A3 3 0 1 0 8.001 17a1 1 0 0 1 1-1h8.266a2 2 0 1 1 0 2H9.9a5 5 0 1 1-6.61-5.698 1 1 0 0 1 1.282.597Z\" fill=\"#000000\"/></svg>",
         "variables": {
+          "request_method": "POST",
           "security_model": "none",
           "username": "",
           "password": "",
@@ -238,6 +190,48 @@
         "variables_schema": {
           "type": "object",
           "properties": {
+            "request_method": {
+              "title": "Request Method",
+              "description": "HTTP Method for request",
+              "type": "string",
+              "oneOf": [
+                {
+                  "value": "ANY",
+                  "title": "ANY"
+                },
+                {
+                  "value": "GET",
+                  "title": "GET"
+                },
+                {
+                  "value": "POST",
+                  "title": "POST"
+                },
+                {
+                  "value": "PUT",
+                  "title": "PUT"
+                },
+                {
+                  "value": "DELETE",
+                  "title": "DELETE"
+                },
+                {
+                  "value": "HEAD",
+                  "title": "HEAD"
+                },
+                {
+                  "value": "OPTIONS",
+                  "title": "OPTIONS"
+                },
+                {
+                  "value": "PATCH",
+                  "title": "PATCH"
+                }
+              ],
+              "x-jsf-presentation": {
+                "inputType": "select"
+              }
+          }, 
             "security_model": {
               "title": "Security Model", 
               "description": "Select the security model for the webhook",
@@ -298,7 +292,7 @@
               }
             }
           },
-          "required": ["security_model"],
+          "required": ["request_method", "security_model"],
           "allOf": [
             {
               "if": {
@@ -307,7 +301,7 @@
                     "const": "basic_auth"
                   }
                 },
-                "required": ["security_model"]
+                "required": ["request_method", "security_model"]
               },
               "then": {
                 "required": ["username", "password"]
@@ -326,7 +320,7 @@
                     "const": "custom_header"
                   }
                 },
-                "required": ["security_model"]
+                "required": ["request_method", "security_model"]
               },
               "then": {
                 "required": ["custom_header_name", "custom_header_value"]
@@ -340,6 +334,7 @@
             }
           ],
           "x-jsf-order": [
+            "request_method",
             "security_model",
             "username",
             "password",
@@ -350,6 +345,7 @@
         },
         "variables_schema_locked": true,
         "input": {
+          "request_method": "{{variables.request_method}}",
           "security_model": "{{variables.security_model}}",
           "username": "{{variables.username}}",
           "password": "{{variables.password}}",
@@ -360,6 +356,11 @@
         "input_schema": {
           "type": "object",
           "properties": {
+            "request_method": {
+              "title": "Request Method",
+              "description": "HTTP Method for request",
+              "type": "string"
+            },
             "security_model": {
               "title": "Security Model",
               "description": "Select the security model for the webhook",
@@ -387,13 +388,14 @@
             }
           },
           "x-jsf-order": [
+            "request_method",
             "security_model",
             "username",
             "password",
             "custom_header_name",
             "custom_header_value"
           ],
-          "required": ["security_model"]
+          "required": ["request_method", "security_model"]
         },
         "input_schema_locked": true,
         "presentation": {
@@ -410,5 +412,585 @@
           }
         ]
       }
+    },
+  {
+    "type": "response",
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0", 
+      "type": "response",
+      "plugin_id": "response",
+      "action_id": "response",
+      "plugin_version": "0.1.0",
+      "label": "Webhook Response",
+      "description": "Send HTTP response with custom status code, headers and body",
+      "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
+      "variables": {
+        "status_code": "200",
+        "content_type": "application/json",
+        "body": "{}"
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "status_code": {
+            "title": "Status Code",
+            "description": "HTTP status code for the response",
+            "type": "string",
+            "oneOf": [ 
+              {"value": "200", "title": "200 - OK"},
+              {"value": "201", "title": "201 - Created"},
+              {"value": "202", "title": "202 - Accepted"},
+              {"value": "204", "title": "204 - No Content"},
+              {"value": "400", "title": "400 - Bad Request"},
+              {"value": "401", "title": "401 - Unauthorized"},
+              {"value": "403", "title": "403 - Forbidden"},
+              {"value": "404", "title": "404 - Not Found"},
+              {"value": "500", "title": "500 - Internal Server Error"},
+              {"value": "503", "title": "503 - Service Unavailable"}
+            ],
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "content_type": {
+            "title": "Content Type",
+            "description": "Content type of the response",
+            "type": "string",
+            "oneOf": [
+              {"value": "application/json", "title": "JSON"},
+              {"value": "text/plain", "title": "Plain Text"},
+              {"value": "text/html", "title": "HTML"},
+              {"value": "text/xml", "title": "XML"},
+              {"value": "application/x-www-form-urlencoded", "title": "Form URL Encoded"}
+            ],
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "body": {
+            "title": "Response Body",
+            "description": "Content to send in response body",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          }
+        },
+        "required": ["status_code", "content_type"],
+        "x-jsf-order": ["status_code", "content_type", "body"]
+      },
+      "variables_schema_locked": true,
+      "input": {
+        "status_code": "{{variables.status_code}}",
+        "content_type": "{{variables.content_type}}",
+        "body": "{{variables.body}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "status_code": {
+            "title": "Status Code",
+            "description": "HTTP status code for the response",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "description": "Content type of the response",
+            "type": "string"
+          },
+          "body": {
+            "title": "Response Body", 
+            "description": "Content to send in response body",
+            "type": "string"
+          }
+        },
+        "required": ["status_code", "content_type"],
+        "x-jsf-order": ["status_code", "content_type", "body"]
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a",
+          "type": "target",
+          "position": "top"
+        }
+      ]
     }
+  },
+  {
+    "type": "action", 
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0",
+      "type": "action",
+      "plugin_id": "format_date",
+      "action_id": "format_date",
+      "plugin_version": "0.1.0",
+      "label": "Date Formatter",
+      "description": "Format and transform dates in various ways",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 7C4 6.44772 4.44772 6 5 6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7Z\" fill=\"#000000\"/><path d=\"M4 12C4 11.4477 4.44772 11 5 11H15C15.5523 11 16 11.4477 16 12C16 12.5523 15.5523 13 15 13H5C4.44772 13 4 12.5523 4 12Z\" fill=\"#000000\"/><path d=\"M5 16C4.44772 16 4 16.4477 4 17C4 17.5523 4.44772 18 5 18H13C13.5523 18 14 17.5523 14 17C14 16.4477 13.5523 16 13 16H5Z\" fill=\"#000000\"/></svg>",
+      "variables": {
+        "operation": "add_days",
+        "input": "",
+        "amount": 0,
+        "format": "",
+        "source_timezone": "",
+        "target_timezone": ""
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "title": "Operation",
+            "description": "Formatting operation to perform",
+            "type": "string",
+            "oneOf": [
+              {"const": "add_days", "title": "Add Days"},
+              {"const": "subtract_days", "title": "Subtract Days"},
+              {"const": "add_hours", "title": "Add Hours"},
+              {"const": "subtract_hours", "title": "Subtract Hours"},
+              {"const": "add_minutes", "title": "Add Minutes"},
+              {"const": "subtract_minutes", "title": "Subtract Minutes"},
+              {"const": "format", "title": "Format"},
+              {"const": "to_timezone", "title": "Convert to Timezone"},
+              {"const": "convert_timezone", "title": "Convert Timezone"},
+              {"const": "to_unix", "title": "Convert to Unix Timestamp"},
+              {"const": "from_unix", "title": "Convert from Unix Timestamp"}
+            ],
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "input": {
+            "title": "Date",
+            "description": "Value to format",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "amount": {
+            "title": "Amount",
+            "description": "Amount to add/subtract for date operations",
+            "type": "number",
+            "x-jsf-presentation": {
+              "inputType": "number"
+            }
+          },
+          "format": {
+            "title": "Format",
+            "description": "Date format string",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "target_timezone": {
+            "title": "Target Timezone",
+            "description": "Target timezone for conversion",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "description": "Source timezone for conversion",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          }
+        },
+        "required": ["operation"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"enum": [
+                  "add_days",
+                  "subtract_days",
+                  "add_hours",
+                  "subtract_hours",
+                  "add_minutes",
+                  "subtract_minutes"
+            ]} 
+              } 
+            },
+            "then": {
+              "required": ["amount"]
+            },
+            "else": {
+              "properties": {
+                "amount": 0
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"enum": [
+                  "add_days",
+                  "subtract_days", 
+                  "add_hours",
+                  "subtract_hours",
+                  "add_minutes",
+                  "subtract_minutes",
+                  "format",
+                  "to_timezone",
+                  "convert_timezone",
+                  "to_unix",
+                  "from_unix"
+            ]} 
+              } 
+            },
+            "then": {
+              "required": ["input"]
+            },
+            "else": {
+              "properties": {
+                "input": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+              
+                "operation": {"enum": ["format", "to_timezone", "convert_timezone"] }
+              }
+            },
+            "then": {
+              "required": ["format"]
+            },
+            "else": {
+              "properties": {
+                "format": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+               
+                "operation": {"enum": ["to_timezone", "convert_timezone"] }
+              } 
+            },
+            "then": {
+              "required": ["target_timezone"]
+            },
+            "else": {
+              "properties": {
+                "target_timezone": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "input_type": {"const": "date"},
+                "operation": {"const": "convert_timezone" }
+              } 
+            },
+            "then": {
+              "required": ["source_timezone"]
+            },
+            "else": {
+              "properties": {
+                "source_timezone": ""
+              }
+            }
+          }
+        ],
+        "x-jsf-order": [
+          "operation", 
+          "input", 
+          "amount",
+          "format", 
+          "source_timezone", 
+          "target_timezone"
+          ]
+      }, 
+      "variables_schema_locked": true,
+      "input": {
+        "operation": "{{variables.operation}}",
+        "input": "{{variables.input}}",
+        "amount": "{{variables.amount}}",
+        "format": "{{variables.format}}",
+        "source_timezone": "{{variables.source_timezone}}",
+        "target_timezone": "{{variables.target_timezone}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+        
+          "operation": {
+            "title": "Operation",
+            "description": "Formatting operation to perform",
+            "type": "string"
+          },
+          "input": {
+            "title": "Input",
+            "description": "Value to format",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "description": "Amount to add/subtract for date operations",
+            "type": "number"
+          },
+          "format": {
+            "title": "Format",
+            "description": "Date format string",
+            "type": "string"
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "description": "Source timezone for conversion",
+            "type": "string"
+          },
+          "target_timezone": {
+            "title": "Target Timezone",
+            "description": "Target timezone for conversion",
+            "type": "string"
+          }
+        },
+        "required": ["operation", "input"],
+        "x-jsf-order": ["operation", "input", "amount", "format", "source_timezone", "target_timezone"]
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a",
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+  } ,
+  {
+    "type": "action",
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0", 
+      "type": "action",
+      "plugin_id": "format_text",
+      "action_id": "format_text",
+      "plugin_version": "0.1.0",
+      "label": "Text Formatter",
+      "description": "Format and transform text in various ways",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 7C4 6.44772 4.44772 6 5 6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7Z\" fill=\"#000000\"/><path d=\"M4 12C4 11.4477 4.44772 11 5 11H15C15.5523 11 16 11.4477 16 12C16 12.5523 15.5523 13 15 13H5C4.44772 13 4 12.5523 4 12Z\" fill=\"#000000\"/><path d=\"M5 16C4.44772 16 4 16.4477 4 17C4 17.5523 4.44772 18 5 18H13C13.5523 18 14 17.5523 14 17C14 16.4477 13.5523 16 13 16H5Z\" fill=\"#000000\"/></svg>",
+      "variables": {
+        "operation": "capitalize",
+        "input": "",
+        "pattern": "",
+        "replacement": "",
+        "start_index": 0,
+        "end_index": 0
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "title": "Operation",
+            "description": "Text formatting operation to perform",
+            "type": "string",
+            "oneOf": [
+              {"const": "capitalize", "title": "Capitalize"},
+              {"const": "lowercase", "title": "Lowercase"},
+              {"const": "uppercase", "title": "Uppercase"},
+              {"const": "trim", "title": "Trim"},
+              {"const": "length", "title": "Get Length"},
+              {"const": "word_count", "title": "Word Count"},
+              {"const": "url_encode", "title": "URL Encode"},
+              {"const": "url_decode", "title": "URL Decode"},
+              {"const": "html_to_markdown", "title": "HTML to Markdown"},
+              {"const": "markdown_to_html", "title": "Markdown to HTML"},
+              {"const": "replace", "title": "Replace Text"},
+              {"const": "substring", "title": "Substring"}
+            ],
+            "x-jsf-presentation": {
+              "inputType": "select"
+            }
+          },
+          "input": {
+            "title": "Text",
+            "description": "Text to format",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "pattern": {
+            "title": "Pattern",
+            "description": "Pattern to match for replace/extract operations",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "replacement": {
+            "title": "Replacement",
+            "description": "Replacement text for replace operation",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            }
+          },
+          "start_index": {
+            "title": "Start Index",
+            "description": "Start index for substring operation",
+            "type": "number"
+          },
+          "end_index": {
+            "title": "End Index",
+            "description": "End index for substring operation",
+            "type": "number"
+          }
+        },
+        "required": ["operation", "input"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {"enum": ["replace"]}
+              }
+            },
+            "then": {
+              "required": ["pattern"]
+            },
+            "else": {
+              "properties": {
+                "pattern": ""
+              }
+            }
+          }, 
+
+          {
+            "if": {
+              "properties": {
+                "operation": {"const": "replace"}
+              }
+            },
+            "then": {
+              "required": ["replacement"]
+            },
+            "else": {
+              "properties": {
+                "replacement": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {"const": "substring"}
+              }
+            },
+            "then": {
+              "required": ["start_index", "end_index"]
+            },
+            "else": {
+              "properties": {
+                "start_index": "",
+                "end_index": ""
+              }
+            }
+          }
+        ],
+        "x-jsf-order": ["operation", "input", "pattern", "replacement", "start_index", "end_index"]
+      },
+      "variables_schema_locked": true,
+      "input": {
+        "operation": "{{variables.operation}}",
+        "input": "{{variables.input}}",
+        "pattern": "{{variables.pattern}}",
+        "replacement": "{{variables.replacement}}",
+        "start_index": "{{variables.start_index}}",
+        "end_index": "{{variables.end_index}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "title": "Operation",
+            "description": "Text formatting operation to perform",
+            "type": "string"
+          },
+          "input": {
+            "title": "Input",
+            "description": "Text to format",
+            "type": "string"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "description": "Pattern to match for replace/extract operations",
+            "type": "string"
+          },
+          "replacement": {
+            "title": "Replacement",
+            "description": "Replacement text for replace operation",
+            "type": "string"
+          },
+          "start_index": {
+            "title": "Start Index",
+            "description": "Start index for substring operation",
+            "type": "number"
+          },
+          "end_index": {
+            "title": "End Index",
+            "description": "End index for substring operation",
+            "type": "number"
+          }
+        },
+        "required": ["operation", "input"],
+        "x-jsf-order": ["operation", "input", "pattern", "replacement", "start_index", "end_index"]
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a",
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+  }
   ]

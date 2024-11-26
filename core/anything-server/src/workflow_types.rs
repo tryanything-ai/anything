@@ -9,13 +9,13 @@ use crate::task_types::ActionType;
 
 use serde_with::{serde_as, DisplayFromStr};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Workflow {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WorkflowVersionDefinition {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Action {
     pub anything_action_version: String,
     pub r#type: ActionType,
@@ -37,31 +37,31 @@ pub struct Action {
     pub handles: Option<Vec<HandleProps>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodePresentation {
     pub position: Position,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Position {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Variable {
     #[serde(flatten)]
     pub inner: HashMap<String, serde_json::Value>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HandleProps {
     pub id: String,
     pub r#type: String,
     pub position: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Edge {
     pub id: String,
     pub source: String,
@@ -71,7 +71,7 @@ pub struct Edge {
     pub r#type: String,
 }
 
-impl Workflow {
+impl WorkflowVersionDefinition {
     pub fn from_json(json_str: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(json_str)
     }
@@ -81,10 +81,11 @@ impl Workflow {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CreateTaskInput {
     pub account_id: String,
     pub task_status: String,
+    pub started_at: Option<DateTime<Utc>>,
     pub flow_id: String,
     pub flow_version_id: String,
     pub action_label: String,
@@ -116,37 +117,7 @@ pub struct TestConfig {
     pub inputs: Value,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Task {
-    pub task_id: Uuid,
-    pub account_id: Uuid,
-    pub task_status: String,
-    pub flow_id: Uuid,
-    pub flow_version_id: Uuid,
-    pub action_label: String,
-    pub trigger_id: String,
-    pub trigger_session_id: String,
-    pub trigger_session_status: String,
-    pub flow_session_id: String,
-    pub flow_session_status: String,
-    pub action_id: String,
-    pub r#type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
-    pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
-    pub stage: String,
-    pub test_config: Option<Value>,
-    pub config: Value,
-    pub context: Option<Value>, //TODO: probably delete so we don't leak secrets
-    pub started_at: Option<DateTime<Utc>>,
-    pub ended_at: Option<DateTime<Utc>>,
-    pub debug_result: Option<Value>,
-    pub result: Option<Value>,
-    pub archived: bool,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub created_at: Option<DateTime<Utc>>,
-    pub updated_by: Option<Uuid>,
-    pub created_by: Option<Uuid>,
-    pub processing_order: i32,
-}
+
 
 #[serde_as]
 #[derive(Debug, Deserialize, Serialize)]
@@ -166,7 +137,18 @@ pub struct FlowVersion {
     pub flow_definition: Value,
 }
 
-impl Default for Workflow {
+//DUPLICATING INTO NEW NAME FOR NEW PROCESSOR
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct DatabaseFlowVersion {
+    pub flow_version_id: Uuid,
+    pub flow_id: Uuid,
+    pub published: bool,
+    pub account_id: Uuid,
+    pub flow_definition: WorkflowVersionDefinition,
+}
+
+
+impl Default for WorkflowVersionDefinition {
     fn default() -> Self {
         let action1 = Action {
             anything_action_version: "0.1.0".to_string(),
@@ -359,7 +341,7 @@ impl Default for Workflow {
             target_handle: Some("a".to_string()),
         };
 
-        Workflow {
+        WorkflowVersionDefinition {
             actions: vec![action1, action2],
             edges: vec![edge],
         }

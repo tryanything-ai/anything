@@ -1,6 +1,10 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum Stage {
     Production,
     Testing,
@@ -15,7 +19,8 @@ impl Stage {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum TaskStatus {
     Pending,   // Task is created but not yet started
     Waiting, // Task is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -39,7 +44,8 @@ impl TaskStatus {
 }
 
 //Used to determine if whole workflow is completed or what happened
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum FlowSessionStatus {
     Pending,   // Flow is created but not yet started
     Waiting, // Flow is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -64,7 +70,8 @@ impl FlowSessionStatus {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum TriggerSessionStatus {
     Pending,   // Trigger is created but not yet started
     Waiting, // Trigger is waiting for correct time to run. Allows pause and HITL stuff we will do later
@@ -90,13 +97,14 @@ impl TriggerSessionStatus {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ActionType {
-    Input,    // Input action
     Trigger,  // Trigger action
     Action,   // General action
     Loop,     // Loop action
     Decision, // Decision action
     Filter,   // Filter action
-    Output,   // Output action
+    Response, // Response action for making api endpoints
+    Input,    // Input action for subflows
+    Output,   // Output action for subflows
 }
 
 impl ActionType {
@@ -104,6 +112,7 @@ impl ActionType {
         match self {
             ActionType::Input => "input",
             ActionType::Trigger => "trigger",
+            ActionType::Response => "response",
             ActionType::Action => "action",
             ActionType::Loop => "loop",
             ActionType::Decision => "decision",
@@ -111,4 +120,36 @@ impl ActionType {
             ActionType::Output => "output",
         }
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct Task {
+    pub task_id: Uuid,
+    pub account_id: Uuid,
+    pub task_status: TaskStatus,
+    pub flow_id: Uuid,
+    pub flow_version_id: Uuid,
+    pub action_label: String,
+    pub trigger_id: String,
+    pub trigger_session_id: String,
+    pub trigger_session_status: TriggerSessionStatus,
+    pub flow_session_id: String,
+    pub flow_session_status: FlowSessionStatus,
+    pub action_id: String,
+    pub r#type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
+    pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
+    pub stage: Stage,
+    pub test_config: Option<Value>,
+    pub config: Value,
+    pub context: Option<Value>, //TODO: probably delete so we don't leak secrets
+    pub started_at: Option<DateTime<Utc>>,
+    pub ended_at: Option<DateTime<Utc>>,
+    pub debug_result: Option<Value>,
+    pub result: Option<Value>,
+    pub archived: bool,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_by: Option<Uuid>,
+    pub created_by: Option<Uuid>,
+    pub processing_order: i32,
 }

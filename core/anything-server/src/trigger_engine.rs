@@ -6,10 +6,7 @@ use dotenv::dotenv;
 use std::env;
 
 use crate::{
-    bundler::bundle_task_context,
-    task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
-    workflow_types::Task,
-    AppState,
+    bundler::bundle_context_from_parts, processor::processor::ProcessorMessage, task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}, AppState
 };
 
 use std::collections::HashMap;
@@ -21,7 +18,7 @@ use serde_json::Value;
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::workflow_types::{CreateTaskInput, TaskConfig};
+use crate::workflow_types::CreateTaskInput;
 
 #[derive(Debug, Clone)]
 pub struct InMemoryTrigger {
@@ -34,6 +31,7 @@ pub struct InMemoryTrigger {
     pub config: Value,
     pub last_fired: Option<DateTime<Utc>>,
     pub next_fire: Option<DateTime<Utc>>,
+    pub cron_expression: String,
 }
 
 pub async fn cron_job_loop(state: Arc<AppState>) {
@@ -41,12 +39,16 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
     let trigger_state: Arc<RwLock<HashMap<String, InMemoryTrigger>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
-    // Receive info from other systems
+    // Receive info from other systems like CRUD over workflows that have triggers
     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
     let client = state.anything_client.clone();
-    hydrate_triggers(&client, &trigger_state).await;
+    hydrate_triggers(state.clone(), &client, &trigger_state).await;
 
+    //How often we check for triggers to run
     let refresh_interval = Duration::from_secs(60);
+
+    // Clone state once here for use in the loop
+    let state = Arc::new(state);
 
     loop {
         tokio::select! {
@@ -85,7 +87,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
             _ = trigger_engine_signal_rx.changed() => {
                 let workflow_id = trigger_engine_signal_rx.borrow().clone();
                 println!("[TRIGGER_ENGINE] Received workflow_id: {}", workflow_id);
-                if let Err(e) = update_triggers_for_workflow(&client, &trigger_state, &workflow_id).await {
+                if let Err(e) = update_triggers_for_workflow(&state, &client, &trigger_state, &workflow_id).await {
                     println!("[TRIGGER_ENGINE] Error updating triggers for workflow: {:?}", e);
                 }
             }
@@ -96,6 +98,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
 //From Claude and very untested so far
 //Ment to lightly update triggers so we don't need to refresh the entire memory each time we update something
 async fn update_triggers_for_workflow(
+    state: &Arc<AppState>,
     client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
     workflow_id: &String,
@@ -127,7 +130,8 @@ async fn update_triggers_for_workflow(
     //Add new triggers to new_triggers
     for flow_version in flow_versions {
         let triggers_from_flow =
-            create_in_memory_triggers_from_flow_definition(&flow_version, client).await;
+            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version, client)
+                .await;
         new_triggers.extend(triggers_from_flow);
     }
 
@@ -158,6 +162,7 @@ async fn update_triggers_for_workflow(
 }
 
 pub async fn hydrate_triggers(
+    state: Arc<AppState>,
     client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
 ) {
@@ -215,7 +220,8 @@ pub async fn hydrate_triggers(
     //Add new triggers to new_triggers
     for flow_version in flow_versions {
         let triggers_from_flow =
-            create_in_memory_triggers_from_flow_definition(&flow_version, client).await;
+            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version, client)
+                .await;
 
         for (workflow_id, new_trigger) in triggers_from_flow {
             // Check if the trigger already exists in memory
@@ -290,7 +296,7 @@ async fn update_trigger_last_run(
     println!("[TRIGGER_ENGINE] Updating trigger last run and next_run time");
 
     let new_next_fire =
-        match Schedule::from_str(trigger.config["input"]["cron_expression"].as_str().unwrap()) {
+        match Schedule::from_str(&trigger.cron_expression) {
             Ok(schedule) => schedule.upcoming(Utc).next(),
             Err(e) => {
                 println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
@@ -318,54 +324,54 @@ async fn update_trigger_last_run(
 }
 
 async fn create_trigger_task(
-    state: &AppState,
+    state: &Arc<AppState>,
     trigger: &InMemoryTrigger,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-    let client = &state.anything_client;
-
-    println!("Handling create task from cron trigger");
-
-    let task_config = TaskConfig {
-        variables: trigger.config.get("variables").cloned().unwrap_or_default(),
-        input: trigger.config.get("input").cloned().unwrap_or_default(),
-    };
+    println!("[CRON TRIGGER] Handling create task from cron trigger");
 
     let input = CreateTaskInput {
         account_id: trigger.account_id.clone(),
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: trigger.flow_id.clone(),
         flow_version_id: trigger.flow_version_id.clone(),
         action_label: trigger.action_label.clone(),
         trigger_id: trigger.trigger_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger.trigger_id.clone(),
         stage: Stage::Production.as_str().to_string(),
-        config: serde_json::json!(task_config),
-        result: None,
+        config: trigger.config.clone(),
+        result: Some(serde_json::json!({
+            "message": format!("Successfully triggered task"),
+            "created_at": Utc::now()
+        })),
         test_config: None,
         processing_order: 0,
+        started_at: Some(Utc::now()),
     };
 
-    let response = client
-        .from("tasks")
-        .auth(supabase_service_role_api_key)
-        .insert(serde_json::to_string(&input)?)
-        .execute()
-        .await?;
+    println!("[CRON TRIGGER] Creating processor message");
+    // Send message to processor
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
+        version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
+        flow_session_id: Uuid::parse_str(&input.flow_session_id).unwrap(),
+        trigger_task: Some(input),
+    };
 
-    let body = response.text().await?;
-    let _items: Value = serde_json::from_str(&body)?;
-
-    // Send signal to task engine to process the new task
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("Failed to send task signal: {:?}", err);
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!(
+            "[TRIGGER_ENGINE] Failed to send message to processor: {}",
+            e
+        );
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to send message to processor: {}", e),
+        )));
     }
 
     println!("Successfully created trigger task");
@@ -374,6 +380,7 @@ async fn create_trigger_task(
 }
 
 pub async fn create_in_memory_triggers_from_flow_definition(
+    state: Arc<AppState>,
     flow_version: &Value,
     client: &Postgrest,
 ) -> HashMap<String, InMemoryTrigger> {
@@ -404,54 +411,25 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                         println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
                         println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
 
-                        // let config = serde_json::json!({
-                        //     "input": input,
-                        //     "variables": variables,
-                        // });
-
-                        // println!("[TRIGGER ENGINE] Created config: {:?}", config);
-
-                        // Parse action into Task structure
-                        let mock_task = Task {
-                            task_id: Uuid::new_v4(),
-                            account_id: Uuid::parse_str(&account_id).unwrap_or_default(),
-                            task_status: "pending".to_string(),
-                            flow_id: Uuid::new_v4(),
-                            flow_version_id: Uuid::new_v4(),
-                            action_label: "fake".to_string(),
-                            trigger_id: "".to_string(),
-                            trigger_session_id: "".to_string(),
-                            trigger_session_status: "".to_string(),
-                            flow_session_id: "fake".to_string(),
-                            flow_session_status: "fake".to_string(),
-                            action_id: "fake".to_string(),
-                            r#type: "fake".to_string(),
-                            plugin_id: Some("fake".to_string()),
-                            stage: "fake".to_string(),
-                            test_config: None,
-                            config: serde_json::json!({
-                                "variables": variables,
-                                "input": input,
-                            }),
-                            context: None,
-                            started_at: None,
-                            ended_at: None,
-                            debug_result: None,
-                            result: None,
-                            archived: false,
-                            updated_at: None,
-                            created_at: None,
-                            updated_by: None,
-                            created_by: None,
-                            processing_order: 0,
-                        };
-
-                        println!("[TRIGGER ENGINE] Created mock task: {:?}", mock_task);
+                        let task_config = serde_json::json!({
+                            "input": input,
+                            "variables": variables,
+                        });
 
                         //Run the templater over the variables and results from last session
                         //Return the templated variables and inputs
                         println!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
-                        let rendered_input = match bundle_task_context(client, &mock_task, false).await {
+                        let rendered_input = match bundle_context_from_parts(
+                            state.clone(),
+                            client,
+                            &account_id,
+                            &Uuid::new_v4().to_string(),
+                            Some(&variables),
+                            Some(&input),
+                            false,
+                        )
+                        .await
+                        {
                             Ok(vars) => {
                                 println!(
                                     "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
@@ -497,12 +475,10 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                                 .unwrap_or("")
                                 .to_string(),
                             flow_version_id: flow_version_id.to_string(),
-                            config: serde_json::json!({
-                                // "variables": rendered_variables,
-                                "input": rendered_input,
-                            }), //TODO: figure out how this is used and where to fix it
+                            config: task_config, // figure out how this is used and where to fix it
                             last_fired: None,
                             next_fire,
+                            cron_expression: cron_expression.to_string(),
                         };
 
                         triggers.insert(flow_id.to_string(), trigger);

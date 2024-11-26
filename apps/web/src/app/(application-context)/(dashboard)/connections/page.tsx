@@ -69,12 +69,22 @@ export default function AccountsPage(): JSX.Element {
                   </TableCell>
 
                   <TableCell>
-                    {account.account_auth_provider_account_label}
+                    <div className="flex items-center gap-2">
+                      {account.account_auth_provider_account_label}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {account.created_at
                       ? format(new Date(account.created_at), "Pp")
                       : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {account.failed && (
+                      <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
+                        Broken
+                      </span>
+                    )}
+                    {/* //TODO: a fix button someday */}
                   </TableCell>
                 </TableRow>
               ))}

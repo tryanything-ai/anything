@@ -1,9 +1,10 @@
 use axum::{
-    extract::{Path, State},
-    http::{HeaderMap, StatusCode},
+    extract::{Path, Query, State},
+    http::{HeaderMap, Method, StatusCode},
     response::IntoResponse,
     Json,
 };
+use chrono::Utc;
 
 use std::time::Duration;
 
@@ -12,11 +13,11 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
-use crate::workflow_types::{CreateTaskInput, FlowVersion, Workflow};
-use crate::AppState;
+use crate::{bundler::bundle_context_from_parts, task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}, AppState};
+
 use crate::{
-    bundler::bundle_context,
-    task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus},
+    processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
+    workflow_types::{CreateTaskInput, DatabaseFlowVersion},
 };
 
 use crate::{task_types::ActionType, FlowCompletion};
@@ -24,17 +25,24 @@ use crate::{task_types::ActionType, FlowCompletion};
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 
-use super::webhook_trigger_utils::{validate_security_model, validate_webhook_inputs_and_outputs};
+use super::webhook_trigger_utils::{
+    convert_request_to_payload, parse_response_action_response_into_api_response,
+    validate_request_method, validate_security_model, validate_webhook_input_and_response,
+};
+
+//One Minute
+pub const WEBHOOK_TIMEOUT: u64 = 60;
 
 pub async fn run_workflow_and_respond(
-    Path(workflow_id): Path<String>, // Changed to tuple extraction
+    method: Method,
+    Path(workflow_id): Path<String>,
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-    Json(payload): Json<Value>,
+    query: Option<Query<HashMap<String, String>>>,
+    body: Option<Json<Value>>,
 ) -> impl IntoResponse {
     println!("[WEBHOOK API] Handling run workflow and respond");
-    println!("[WEBHOOK API] Payload: {:?}", payload);
-
+    // println!("[WEBHOOK API] Payload: {:?}", payload);
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id);
 
     //Super User Access
@@ -66,7 +74,7 @@ pub async fn run_workflow_and_respond(
         }
     };
 
-    let body = match response.text().await {
+    let response_body = match response.text().await {
         Ok(body) => {
             println!("[WEBHOOK API] Response body: {}", body);
             body
@@ -81,7 +89,7 @@ pub async fn run_workflow_and_respond(
         }
     };
 
-    let workflow_version: FlowVersion = match serde_json::from_str(&body) {
+    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
         Ok(version) => version,
         Err(_) => {
             println!("[WEBHOOK API] No published workflow found");
@@ -98,36 +106,27 @@ pub async fn run_workflow_and_respond(
 
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
-
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_inputs_and_outputs(&workflow, true).await {
+        match validate_webhook_input_and_response(&workflow_version.flow_definition, true) {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
 
-    let flow_session_id = Uuid::new_v4().to_string();
+    let flow_session_id = Uuid::new_v4();
+
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
-        &flow_session_id,
+        &flow_session_id.to_string(),
         Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
         Some(&serde_json::to_value(&trigger_node.input).unwrap()),
         false,
@@ -153,20 +152,27 @@ pub async fn run_workflow_and_respond(
         return response.into_response();
     }
 
+    // Validate request method
+    if let Some(response) = validate_request_method(&rendered_inputs, &method.to_string()) {
+        return response.into_response();
+    }
+
+    let processed_payload = convert_request_to_payload(method.clone(), query, body);
+
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
     let task = CreateTaskInput {
         account_id: account_id.to_string(),
         processing_order: 0,
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version.flow_version_id.to_string(),
         action_label: trigger_node.label.clone(),
         trigger_id: trigger_node.action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
-        flow_session_id,
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+        flow_session_id: flow_session_id.to_string(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
@@ -175,69 +181,75 @@ pub async fn run_workflow_and_respond(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": payload.clone(),
+            "body": processed_payload.clone(),
+            "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
-    let _create_task_response = match state
-        .anything_client
-        .from("tasks")
-        .auth(supabase_service_role_api_key)
-        .insert(serde_json::to_string(&task).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => {
-            println!("[WEBHOOK API] Response from task creation: {:?}", response);
-            response
-        }
-        Err(err) => {
-            println!("[WEBHOOK API] Failed to execute request: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response();
-        }
-    };
-
-    // If we need to wait for a response
-    //    if needs_response {
-    println!("[WEBHOOK API] Waiting for workflow completion");
+    println!("[WEBHOOK API] Creating processor message");
 
     // Create a channel for receiving the completion result
     let (tx, rx) = oneshot::channel();
 
     // Store the sender in the state
-    state.flow_completions.lock().await.insert(
-        task.flow_session_id.clone(),
-        FlowCompletion {
-            sender: tx,
-            needs_response: true,
-        },
-    );
+    {
+        let mut completions = state.flow_completions.lock().await;
+        completions.insert(
+            flow_session_id.to_string(),
+            FlowCompletion {
+                sender: tx,
+                needs_response: true,
+            },
+        );
+    }
 
-    // Send signal to task engine to process the new task
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("[WEBHOOK API] Failed to send task signal: {:?}", err);
+    //Set the flow data in the cache of the processor so we don't do it again
+    let flow_session_data = FlowSessionData {
+        workflow: Some(workflow_version.clone()),
+        tasks: HashMap::new(),
+        flow_session_id: flow_session_id,
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        workflow_version_id: Some(workflow_version.flow_version_id),
+    };
+
+    println!("[TEST WORKFLOW] Setting flow session data in cache");
+    // Set the flow session data in cache
+    {
+        let mut cache = state.flow_session_cache.write().await;
+        cache.set(&flow_session_id, flow_session_data);
+    }
+
+    // Send message to processor to start the workflow
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        version_id: Some(workflow_version.flow_version_id),
+        flow_session_id: flow_session_id,
+        trigger_task: Some(task),
+    };
+
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "Failed to initiate workflow"})),
+            format!("Failed to send message to processor: {}", e),
         )
             .into_response();
     }
 
+    println!("[WEBHOOK API] Waiting for workflow completion");
+
     // Wait for the result with a timeout
-    match timeout(Duration::from_secs(30), rx).await {
+    match timeout(Duration::from_secs(WEBHOOK_TIMEOUT), rx).await {
         Ok(Ok(result)) => {
             println!("[WEBHOOK API] Received workflow result");
-            (StatusCode::OK, Json(result)).into_response()
+            parse_response_action_response_into_api_response(result).into_response()
         }
         Ok(Err(_)) => {
             println!("[WEBHOOK API] Workflow channel closed unexpectedly");
@@ -245,7 +257,7 @@ pub async fn run_workflow_and_respond(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({
                     "error": "Workflow execution channel closed unexpectedly",
-                    "workflow_session_id": task.flow_session_id
+                    "workflow_session_id": flow_session_id
                 })),
             )
                 .into_response()
@@ -257,13 +269,12 @@ pub async fn run_workflow_and_respond(
                 .flow_completions
                 .lock()
                 .await
-                .remove(&task.flow_session_id);
+                .remove(&flow_session_id.to_string());
             (
                 StatusCode::REQUEST_TIMEOUT,
                 Json(json!({
                     "error": "Workflow execution timed out",
-                    "workflow_session_id": task.flow_session_id,
-                    "message": "You can query the workflow status using the flow_session_id"
+                    "workflow_session_id": flow_session_id
                 })),
             )
                 .into_response()
@@ -272,13 +283,15 @@ pub async fn run_workflow_and_respond(
 }
 
 pub async fn run_workflow_version_and_respond(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>, // Changed to tuple extraction
+    method: Method,
+    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-    Json(payload): Json<Value>,
+    query: Option<Query<HashMap<String, String>>>,
+    body: Option<Json<Value>>,
 ) -> impl IntoResponse {
     println!("[WEBHOOK API] Handling run workflow and respond");
-    println!("[WEBHOOK API] Payload: {:?}", payload);
+    println!("[WEBHOOK API] Payload: {:?}", body);
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id);
 
@@ -311,7 +324,7 @@ pub async fn run_workflow_version_and_respond(
         }
     };
 
-    let body = match response.text().await {
+    let response_body = match response.text().await {
         Ok(body) => {
             println!("[WEBHOOK API] Response body: {}", body);
             body
@@ -326,7 +339,7 @@ pub async fn run_workflow_version_and_respond(
         }
     };
 
-    let workflow_version: FlowVersion = match serde_json::from_str(&body) {
+    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
         Ok(version) => version,
         Err(_) => {
             println!("[WEBHOOK API] No published workflow found");
@@ -341,35 +354,24 @@ pub async fn run_workflow_version_and_respond(
     // Get account_id from workflow_version
     let account_id = workflow_version.account_id.clone();
 
-    // Parse the flow definition into a Workflow
-    println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
-
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_inputs_and_outputs(&workflow, true).await {
+        match validate_webhook_input_and_response(&workflow_version.flow_definition, true) {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
 
     let flow_session_id = Uuid::new_v4().to_string();
 
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
+
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
@@ -398,20 +400,27 @@ pub async fn run_workflow_version_and_respond(
         return response.into_response();
     }
 
+    // Validate request method
+    if let Some(response) = validate_request_method(&rendered_inputs, &method.to_string()) {
+        return response.into_response();
+    }
+
+    let processed_payload = convert_request_to_payload(method.clone(), query, body);
+
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
     let task = CreateTaskInput {
         account_id: account_id.to_string(),
         processing_order: 0,
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version.flow_version_id.to_string(),
         action_label: trigger_node.label.clone(),
         trigger_id: trigger_node.action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
-        flow_session_id,
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+        flow_session_id: flow_session_id.clone(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
@@ -420,69 +429,76 @@ pub async fn run_workflow_version_and_respond(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": payload.clone(),
+            "body": processed_payload.clone(),
+            "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
-
-    let _create_task_response = match state
-        .anything_client
-        .from("tasks")
-        .auth(supabase_service_role_api_key)
-        .insert(serde_json::to_string(&task).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => {
-            println!("[WEBHOOK API] Response from task creation: {:?}", response);
-            response
-        }
-        Err(err) => {
-            println!("[WEBHOOK API] Failed to execute request: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response();
-        }
-    };
-
-    // If we need to wait for a response
-    //    if needs_response {
-    println!("[WEBHOOK API] Waiting for workflow completion");
 
     // Create a channel for receiving the completion result
     let (tx, rx) = oneshot::channel();
 
     // Store the sender in the state
-    state.flow_completions.lock().await.insert(
-        task.flow_session_id.clone(),
-        FlowCompletion {
-            sender: tx,
-            needs_response: true,
-        },
-    );
+    {
+        let mut completions = state.flow_completions.lock().await;
+        completions.insert(
+            flow_session_id.clone(),
+            FlowCompletion {
+                sender: tx,
+                needs_response: true,
+            },
+        );
+    }
 
-    // Send signal to task engine to process the new task
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("[WEBHOOK API] Failed to send task signal: {:?}", err);
+    //Set the flow data in the cache of the processor so we don't do it again
+    let flow_session_data = FlowSessionData {
+        workflow: Some(workflow_version.clone()),
+        tasks: HashMap::new(),
+        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        workflow_version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
+    };
+
+    println!("[TEST WORKFLOW] Setting flow session data in cache");
+    // Set the flow session data in cache
+    {
+        let mut cache = state.flow_session_cache.write().await;
+        cache.set(
+            &Uuid::parse_str(&flow_session_id).unwrap(),
+            flow_session_data,
+        );
+    }
+
+    // Send message to processor to start the workflow
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
+        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        trigger_task: Some(task.clone()),
+    };
+
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "Failed to initiate workflow"})),
+            format!("Failed to send message to processor: {}", e),
         )
             .into_response();
     }
 
+    println!("[WEBHOOK API] Waiting for workflow completion");
+
     // Wait for the result with a timeout
-    match timeout(Duration::from_secs(30), rx).await {
+    match timeout(Duration::from_secs(WEBHOOK_TIMEOUT), rx).await {
         Ok(Ok(result)) => {
             println!("[WEBHOOK API] Received workflow result");
-            (StatusCode::OK, Json(result)).into_response()
+            parse_response_action_response_into_api_response(result).into_response()
         }
         Ok(Err(_)) => {
             println!("[WEBHOOK API] Workflow channel closed unexpectedly");
@@ -507,8 +523,7 @@ pub async fn run_workflow_version_and_respond(
                 StatusCode::REQUEST_TIMEOUT,
                 Json(json!({
                     "error": "Workflow execution timed out",
-                    "workflow_session_id": task.flow_session_id,
-                    "message": "You can query the workflow status using the flow_session_id"
+                    "workflow_session_id": task.flow_session_id
                 })),
             )
                 .into_response()
@@ -517,13 +532,15 @@ pub async fn run_workflow_version_and_respond(
 }
 
 pub async fn run_workflow(
-    Path(workflow_id): Path<String>, // Changed to tuple extraction
+    method: Method,
+    Path(workflow_id): Path<String>,
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-    Json(payload): Json<Value>,
+    query: Option<Query<HashMap<String, String>>>,
+    body: Option<Json<Value>>,
 ) -> impl IntoResponse {
     println!("[WEBHOOK API] Handling run workflow and respond");
-    println!("[WEBHOOK API] Payload: {:?}", payload);
+    println!("[WEBHOOK API] Payload: {:?}", body);
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id);
 
@@ -556,7 +573,7 @@ pub async fn run_workflow(
         }
     };
 
-    let body = match response.text().await {
+    let response_body = match response.text().await {
         Ok(body) => {
             println!("[WEBHOOK API] Response body: {}", body);
             body
@@ -571,7 +588,7 @@ pub async fn run_workflow(
         }
     };
 
-    let workflow_version: FlowVersion = match serde_json::from_str(&body) {
+    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
         Ok(version) => version,
         Err(_) => {
             println!("[WEBHOOK API] No published workflow found");
@@ -586,35 +603,24 @@ pub async fn run_workflow(
     // Get account_id from workflow_version
     let account_id = workflow_version.account_id.clone();
 
-    // Parse the flow definition into a Workflow
-    println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
-
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_inputs_and_outputs(&workflow, true).await {
+        match validate_webhook_input_and_response(&workflow_version.flow_definition, false) {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
 
     let flow_session_id = Uuid::new_v4().to_string();
 
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
+
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
@@ -643,20 +649,27 @@ pub async fn run_workflow(
         return response.into_response();
     }
 
+    // Validate request method
+    if let Some(response) = validate_request_method(&rendered_inputs, &method.to_string()) {
+        return response.into_response();
+    }
+
+    let processed_payload = convert_request_to_payload(method.clone(), query, body);
+
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
     let task = CreateTaskInput {
         account_id: account_id.to_string(),
         processing_order: 0,
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version.flow_version_id.to_string(),
         action_label: trigger_node.label.clone(),
         trigger_id: trigger_node.action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
-        flow_session_id,
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+        flow_session_id: flow_session_id.clone(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
@@ -665,44 +678,50 @@ pub async fn run_workflow(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": payload.clone(),
+            "body": processed_payload.clone(),
+            "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
-    let _create_task_response = match state
-        .anything_client
-        .from("tasks")
-        .auth(supabase_service_role_api_key)
-        .insert(serde_json::to_string(&task).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => {
-            println!("[WEBHOOK API] Response from task creation: {:?}", response);
-            response
-        }
-        Err(err) => {
-            println!("[WEBHOOK API] Failed to execute request: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response();
-        }
+    //Set the flow data in the cache of the processor so we don't do it again
+    let flow_session_data = FlowSessionData {
+        workflow: Some(workflow_version.clone()),
+        tasks: HashMap::new(),
+        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        workflow_version_id: Some(workflow_version.flow_version_id),
     };
 
-    // Send signal to task engine to process the new task
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("[WEBHOOK API] Failed to send task signal: {:?}", err);
+    println!("[TEST WORKFLOW] Setting flow session data in cache");
+    // Set the flow session data in cache
+    {
+        let mut cache = state.flow_session_cache.write().await;
+        cache.set(
+            &Uuid::parse_str(&flow_session_id).unwrap(),
+            flow_session_data,
+        );
+    }
+
+    // Send message to processor to start the workflow
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        version_id: Some(workflow_version.flow_version_id),
+        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        trigger_task: Some(task.clone()),
+    };
+
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "Failed to initiate workflow"})),
+            format!("Failed to send message to processor: {}", e),
         )
             .into_response();
     }
@@ -710,7 +729,7 @@ pub async fn run_workflow(
     println!("[WEBHOOK API] Task created successfully");
     Json(serde_json::json!({
         "success": true,
-        "message": "Webhook was successfull",
+        "message": "Workflow started!",
         "workflow_session_id": task.flow_session_id,
         "workflow_id": workflow_id,
         "workflow_version_id": workflow_version.flow_version_id
@@ -719,13 +738,15 @@ pub async fn run_workflow(
 }
 
 pub async fn run_workflow_version(
-    Path((workflow_id, workflow_version_id)): Path<(String, String)>, // Changed to tuple extraction
+    method: Method,
+    Path((workflow_id, workflow_version_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-    Json(payload): Json<Value>,
+    query: Option<Query<HashMap<String, String>>>,
+    body: Option<Json<Value>>,
 ) -> impl IntoResponse {
     println!("[WEBHOOK API] Handling run workflow and respond");
-    println!("[WEBHOOK API] Payload: {:?}", payload);
+    println!("[WEBHOOK API] Payload: {:?}", body);
 
     println!("[WEBHOOK API] Workflow ID: {}: ", workflow_id);
 
@@ -758,7 +779,7 @@ pub async fn run_workflow_version(
         }
     };
 
-    let body = match response.text().await {
+    let response_body = match response.text().await {
         Ok(body) => {
             println!("[WEBHOOK API] Response body: {}", body);
             body
@@ -773,7 +794,7 @@ pub async fn run_workflow_version(
         }
     };
 
-    let workflow_version: FlowVersion = match serde_json::from_str(&body) {
+    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
         Ok(version) => version,
         Err(_) => {
             println!("[WEBHOOK API] No published workflow found");
@@ -788,38 +809,27 @@ pub async fn run_workflow_version(
     // Get account_id from workflow_version
     let account_id = workflow_version.account_id.clone();
 
-    // Parse the flow definition into a Workflow
-    println!("[WEBHOOK API] Parsing workflow definition");
-    let workflow: Workflow = match serde_json::from_value(workflow_version.flow_definition) {
-        Ok(workflow) => workflow,
-        Err(err) => {
-            println!(
-                "[WEBHOOK API] Failed to parse workflow definition: {:?}",
-                err
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse workflow definition",
-            )
-                .into_response();
-        }
-    };
-
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_inputs_and_outputs(&workflow, true).await {
+        match validate_webhook_input_and_response(&workflow_version.flow_definition, false) {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
 
-    let flow_session_id = Uuid::new_v4().to_string();
+    let flow_session_id = Uuid::new_v4();
+
+    let task_config: Value = json!({
+        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
+        "input": serde_json::to_value(&trigger_node.input).unwrap()
+    });
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context(
+    let rendered_inputs = match bundle_context_from_parts(
+        state.clone(),
         &state.anything_client,
         &account_id.to_string(),
-        &flow_session_id,
+        &flow_session_id.to_string(),
         Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
         Some(&serde_json::to_value(&trigger_node.input).unwrap()),
         false,
@@ -845,20 +855,27 @@ pub async fn run_workflow_version(
         return response.into_response();
     }
 
+    // Validate request method
+    if let Some(response) = validate_request_method(&rendered_inputs, &method.to_string()) {
+        return response.into_response();
+    }
+
+    let processed_payload = convert_request_to_payload(method.clone(), query, body);
+
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
     let task = CreateTaskInput {
         account_id: account_id.to_string(),
         processing_order: 0,
-        task_status: TaskStatus::Pending.as_str().to_string(),
+        task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version.flow_version_id.to_string(),
         action_label: trigger_node.label.clone(),
         trigger_id: trigger_node.action_id.clone(),
         trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
-        flow_session_id,
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+        flow_session_id: flow_session_id.to_string(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
         plugin_id: trigger_node.plugin_id.clone(),
@@ -867,44 +884,47 @@ pub async fn run_workflow_version(
         } else {
             Stage::Testing.as_str().to_string()
         },
-        config: json!({}),
+        config: task_config,
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": payload.clone(),
+            "body": processed_payload.clone(),
+            "method": method.to_string(),
         })),
         test_config: None,
+        started_at: Some(Utc::now()),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
-    let _create_task_response = match state
-        .anything_client
-        .from("tasks")
-        .auth(supabase_service_role_api_key)
-        .insert(serde_json::to_string(&task).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => {
-            println!("[WEBHOOK API] Response from task creation: {:?}", response);
-            response
-        }
-        Err(err) => {
-            println!("[WEBHOOK API] Failed to execute request: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response();
-        }
+    //Set the flow data in the cache of the processor so we don't do it again
+    let flow_session_data = FlowSessionData {
+        workflow: Some(workflow_version.clone()),
+        tasks: HashMap::new(),
+        flow_session_id: flow_session_id,
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        workflow_version_id: Some(workflow_version.flow_version_id),
     };
 
-    // Send signal to task engine to process the new task
-    if let Err(err) = state.task_engine_signal.send(()) {
-        println!("[WEBHOOK API] Failed to send task signal: {:?}", err);
+    println!("[TEST WORKFLOW] Setting flow session data in cache");
+    // Set the flow session data in cache
+    {
+        let mut cache = state.flow_session_cache.write().await;
+        cache.set(&flow_session_id, flow_session_data);
+    }
+
+    // Send message to processor to start the workflow
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        version_id: Some(workflow_version.flow_version_id),
+        flow_session_id: flow_session_id,
+        trigger_task: Some(task),
+    };
+
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "Failed to initiate workflow"})),
+            format!("Failed to send message to processor: {}", e),
         )
             .into_response();
     }
@@ -912,8 +932,8 @@ pub async fn run_workflow_version(
     println!("[WEBHOOK API] Task created successfully");
     Json(serde_json::json!({
         "success": true,
-        "message": "Webhook was successfull",
-        "workflow_session_id": task.flow_session_id,
+        "message": "Workflow started!",
+        "workflow_session_id": flow_session_id.to_string(),
         "workflow_id": workflow_id,
         "workflow_version_id": workflow_version.flow_version_id
     }))

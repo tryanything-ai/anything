@@ -3,11 +3,14 @@ use axum::{
         header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
     }, middleware::{self},
     response::{Html, IntoResponse},
-      routing::{delete, get, post, put}, Router
+      routing::{any, delete, get, post, put}, Router
 };
  
+use bundler::{accounts::accounts_cache::AccountsCache, secrets::secrets_cache::SecretsCache};
 use dotenv::dotenv;
+use processor::processor::ProcessorMessage;
 use postgrest::Postgrest;
+use reqwest::Client;
 use serde_json::Value;
 use std::{collections::HashMap, time::Duration};
 use std::env;
@@ -16,6 +19,10 @@ use tokio::sync::RwLock;
 use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
+use tokio::sync::mpsc; 
+
+use tokio::signal::unix::{signal, SignalKind};
+use tokio::time::sleep;
 
 mod workflow_types;
 use regex::Regex;
@@ -26,6 +33,8 @@ extern crate slugify;
 use auth::init::AuthState;
 
 mod system_actions; 
+mod processor;
+mod system_variables;
 mod workflows; 
 mod actions; 
 mod tasks; 
@@ -41,7 +50,6 @@ mod secrets;
 mod supabase_jwt_middleware;
 mod api_key_middleware;
 mod account_auth_middleware;
-mod task_engine;
 mod task_types;
 mod templater;
 mod testing; 
@@ -49,6 +57,7 @@ mod trigger_engine;
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
+use std::sync::atomic::AtomicBool;
 
 // Add this struct to store completion channels
 pub struct FlowCompletion {
@@ -66,13 +75,19 @@ pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
     public_client: Arc<Postgrest>,
-    semaphore: Arc<Semaphore>,
+    http_client: Arc<Client>,
+    workflow_processor_semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
-    task_engine_signal: watch::Sender<()>,
     trigger_engine_signal: watch::Sender<String>,
+    processor_sender: mpsc::Sender<ProcessorMessage>,
+    processor_receiver: Mutex<mpsc::Receiver<ProcessorMessage>>, 
     flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
     api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
+    bundler_secrets_cache: RwLock<SecretsCache>,
+    bundler_accounts_cache: RwLock<AccountsCache>,
+    flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
+    shutdown_signal: Arc<AtomicBool>,
 }
 
 #[tokio::main]
@@ -158,22 +173,31 @@ async fn main() {
         HeaderValue::from_static("*"),
     );
 
-    let (task_engine_signal, _) = watch::channel(());
+
     let (trigger_engine_signal, _) = watch::channel("".to_string());
+    let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
         public_client: public_client.clone(),
+        http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
-        semaphore: Arc::new(Semaphore::new(5)),
-        task_engine_signal,
+
+        workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
+
         trigger_engine_signal,
+        processor_sender: processor_tx,
+        processor_receiver: Mutex::new(processor_rx),
         flow_completions: Arc::new(Mutex::new(HashMap::new())),
         api_key_cache: Arc::new(RwLock::new(HashMap::new())),
         account_access_cache: Arc::new(RwLock::new(
-            account_auth_middleware::AccountAccessCache::new(Duration::from_secs(3600))
-        ))
+            account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400))
+        )),
+        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
+        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
+        flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
+        shutdown_signal: Arc::new(AtomicBool::new(false)),
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -210,10 +234,10 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
 
     // API Routes for running workflows - some protection done at api.rs vs route level
-    .route("/api/v1/workflow/:workflow_id/start/respond", post(system_actions::webhook_trigger::run_workflow_and_respond))
-    .route("/api/v1/workflow/:workflow_id/start", post(system_actions::webhook_trigger::run_workflow))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", post(system_actions::webhook_trigger::run_workflow_version))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", post(system_actions::webhook_trigger::run_workflow_version_and_respond));
+    .route("/api/v1/workflow/:workflow_id/start/respond", any(system_actions::webhook_trigger::run_workflow_and_respond))
+    .route("/api/v1/workflow/:workflow_id/start", any(system_actions::webhook_trigger::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", any(system_actions::webhook_trigger::run_workflow_version))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_actions::webhook_trigger::run_workflow_version_and_respond));
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
@@ -304,6 +328,10 @@ pub async fn root() -> impl IntoResponse {
         )
         .route( "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
         get(variables::get_flow_version_variables))
+        .route(
+            "/account/:account_id/testing/system_variables",
+            get(system_variables::get_system_variables_handler))
+        
         //Test Actions
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
@@ -318,24 +346,13 @@ pub async fn root() -> impl IntoResponse {
 
     let app = Router::new()
         .merge(public_routes) // Public routes
-        // .merge(api_routes) // API routes
         .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)
         .with_state(state.clone());
-
-    // let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
-    // let manifest = Manifest::new([url]);
-    // let plugin = Arc::new(Mutex::new(
-    //     Plugin::new(&manifest, [], true).unwrap()
-    // ));
-
-    // Create a semaphore to limit the number of concurrent tasks
-    // let semaphore = Arc::new(Semaphore::new(5));
-
-    // Spawn task processing loop
-    // Keeps making progress on work that is meant to be down now.
-    tokio::spawn(task_engine::task_processing_loop(state.clone()));
+    
+    // Spawn processor
+    tokio::spawn(processor::processor(state.clone()));
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
@@ -348,6 +365,23 @@ pub async fn root() -> impl IntoResponse {
 
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
+    tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
+
+    // Spawn the hydrate processor
+    tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
+
+
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        let mut sigterm = signal(SignalKind::terminate()).unwrap();
+        sigterm.recv().await;
+        println!("Received SIGTERM signal");
+        // Set the shutdown signal
+        state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
+        
+        // Give time for in-flight operations to complete
+        sleep(Duration::from_secs(2)).await;
+    });
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();

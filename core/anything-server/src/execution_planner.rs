@@ -1,3 +1,4 @@
+use chrono::Utc;
 use postgrest::Postgrest;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -7,9 +8,13 @@ use dotenv::dotenv;
 use std::env;
 
 use crate::task_types::FlowSessionStatus;
+use crate::task_types::Task;
 use crate::task_types::TaskStatus;
 use crate::task_types::{ActionType, TriggerSessionStatus};
-use crate::workflow_types::{Action, CreateTaskInput, FlowVersion, Task, TaskConfig, Workflow};
+use crate::workflow_types::{
+    Action, CreateTaskInput, FlowVersion, TaskConfig, WorkflowVersionDefinition,
+};
+
 pub async fn process_trigger_task(
     client: &Postgrest,
     task: &Task,
@@ -90,10 +95,11 @@ async fn create_execution_plan(
     println!("[EXECUTION_PLANNER] Creating execution plan");
 
     // Deserialize the flow definition into a Workflow struct
-    let workflow: Workflow = serde_json::from_value(flow_version.flow_definition).map_err(|e| {
-        println!("[EXECUTION_PLANNER] Error deserializing workflow: {:?}", e);
-        e
-    })?;
+    let workflow: WorkflowVersionDefinition = serde_json::from_value(flow_version.flow_definition)
+        .map_err(|e| {
+            println!("[EXECUTION_PLANNER] Error deserializing workflow: {:?}", e);
+            e
+        })?;
 
     // Traverse the workflow to get the list of actions in BFS order, excluding the trigger
     let result = bfs_traversal(&workflow)?;
@@ -120,11 +126,12 @@ async fn create_execution_plan(
             action_id: action.action_id.clone(),
             r#type: action.r#type.clone(),
             plugin_id: action.plugin_id.clone(),
-            stage: task.stage.clone(),
+            stage: task.stage.clone().as_str().to_string(),
             config: serde_json::json!(task_config),
             result: None,
             test_config: None,
             processing_order: (index + 1) as i32,
+            started_at: Some(Utc::now()),
         };
 
         events.push(event);
@@ -135,7 +142,7 @@ async fn create_execution_plan(
 }
 
 fn bfs_traversal(
-    workflow: &Workflow,
+    workflow: &WorkflowVersionDefinition,
 ) -> Result<Vec<&Action>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[EXECUTION_PLANNER] Starting BFS traversal");
     let mut work_list = Vec::new();

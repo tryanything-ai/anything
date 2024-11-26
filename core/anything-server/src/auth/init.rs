@@ -44,6 +44,11 @@ pub struct AccountAuthProviderAccount {
     pub created_at: Option<DateTime<Utc>>,
     pub updated_by: Option<Uuid>,
     pub created_by: Option<Uuid>,
+    pub failed_at: Option<DateTime<Utc>>,
+    pub failed: bool,
+    pub failed_reason: Option<String>,
+    pub failure_retries: i32,
+    pub last_failure_retry: Option<DateTime<Utc>>
 }
 
 #[derive(Debug, Clone)]
@@ -331,6 +336,13 @@ pub async fn handle_provider_callback(
         "[AUTH INIT] Create Account Response: {:?}",
         create_account_response
     );
+
+    // Invalidate the bundler secrets cache for this account after creating a new secret
+    // Only lock for the minimum time needed
+    {
+        let mut cache = state.bundler_accounts_cache.write().await;
+        cache.invalidate(&auth_state.account_id);
+    }
 
     // Return success response
     if create_account_response.status().is_success() {

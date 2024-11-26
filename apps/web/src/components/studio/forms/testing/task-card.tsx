@@ -1,11 +1,19 @@
 import React from "react";
 import { cn, formatTimeDifference } from "@/lib/utils";
 import { formatDuration, intervalToDuration } from "date-fns";
-import ReactJson from "react-json-view";
+// import ReactJson from "react-json-view";
 import { TaskRow } from "@repo/anything-api";
 import TaskStatus from "./task-status";
 import { Clock } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
+
+import dynamic from 'next/dynamic';
+
+// Dynamically import ReactJson with SSR disabled
+const ReactJson = dynamic(() => import('react-json-view'), {
+  ssr: false,
+  loading: () => <div>Loading...</div>
+});
 
 export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
   return (
@@ -57,14 +65,20 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
       {task.result && (
         <div className="my-2">
           <div className="text-md font-semibold">Results: </div>
-          <ResultComponent result={task.result} />
+          <ResultComponent
+            result={task.result}
+            collapseStringsAfterLength={20}
+          />
         </div>
       )}
     </div>
   );
 });
 
-const ResultComponent = ({ result }: any) => {
+export const ResultComponent = ({
+  result,
+  collapseStringsAfterLength,
+}: any) => {
   let content;
 
   switch (typeof result) {
@@ -83,7 +97,7 @@ const ResultComponent = ({ result }: any) => {
             collapsed={1}
             theme={"shapeshifter:inverted"}
             name={false}
-            collapseStringsAfterLength={20}
+            collapseStringsAfterLength={collapseStringsAfterLength}
             src={parsedJson}
           />
         );
@@ -107,7 +121,7 @@ const ResultComponent = ({ result }: any) => {
               padding: "10px",
             }}
             collapsed={1}
-            collapseStringsAfterLength={20}
+            collapseStringsAfterLength={collapseStringsAfterLength}
             theme={"shapeshifter:inverted"}
             src={result}
           />

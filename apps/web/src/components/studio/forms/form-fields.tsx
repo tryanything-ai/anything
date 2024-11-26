@@ -225,62 +225,74 @@ function FieldAccount({
     accounts: { selectedAccount },
   } = useAnything();
 
-  //TODO:
-  //Load check if user has an account that matches the variable schema
-  //If no matches show a "add an account button" for the user to do teh oauth flow
-  //If the user has an account select teh first one automatically.
-
-  //   console.log("Props in account", props);
+  console.log("[ACCOUNT FORM FIELD] Rendering with props:", {
+    name,
+    value,
+    provider,
+    selectedAccount,
+  });
 
   if (!isVisible) return null;
 
   function handleValueChange(e: any) {
+    console.log("[ACCOUNT FORM FIELD] Value changed:", e);
     if (!touched) setTouched(true);
     onValueChange(e);
   }
 
   const getProviderDetails = async () => {
     try {
-      console.log("provider in form field", provider);
+      console.log(
+        "[ACCOUNT FORM FIELD] Getting provider details for:",
+        provider,
+      );
       if (!selectedAccount) return;
       let res = await api.auth.getProvider(
         selectedAccount.account_id,
         provider,
       );
-      console.log("res for getProviderDetails", res);
+      console.log("[ACCOUNT FORM FIELD] Provider details response:", res);
       setProviderDetails(res[0]);
     } catch (e) {
-      console.log("error in getProvider");
+      console.log("[ACCOUNT FORM FIELD] Error getting provider details:", e);
     }
   };
 
   const getUserAccountsForProvider = async () => {
     try {
       if (!provider || !selectedAccount) return;
+      console.log(
+        "[ACCOUNT FORM FIELD] Getting accounts for provider:",
+        provider,
+      );
       let res = await api.auth.getAuthAccountsForProvider(
         selectedAccount?.account_id,
         provider,
       );
-      console.log("res", res);
+      console.log("[ACCOUNT FORM FIELD] Provider accounts response:", res);
       setAccountsForProvider(res);
       setHydrated(true);
     } catch (e) {
-      console.log("error in getUserAccounts");
+      console.log("[ACCOUNT FORM FIELD] Error getting user accounts:", e);
     }
   };
 
   const connect = async (e: any) => {
     e.preventDefault();
     try {
+      console.log("[ACCOUNT FORM FIELD] Connecting provider:", provider);
       // let res = await api.auth.connectProvider(provider);
       // console.log("res", res);
     } catch (e) {
-      console.log("error in connect");
+      console.log("[ACCOUNT FORM FIELD] Error connecting provider:", e);
     }
   };
 
   useEffect(() => {
-    console.log("provider", provider);
+    console.log(
+      "[ACCOUNT FORM FIELD] Provider changed in useEffect:",
+      provider,
+    );
     if (provider) {
       getProviderDetails();
       getUserAccountsForProvider();
@@ -325,6 +337,11 @@ function FieldAccount({
 
                       <div className="text-lg flex items-center">
                         {option.account_auth_provider_account_label}
+                        {option.failed && (
+                          <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
+                            Broken
+                          </span>
+                        )}
                       </div>
                     </div>
                   </SelectItem>
@@ -339,7 +356,7 @@ function FieldAccount({
                       Connnect New Account
                     </div>
                     <div className="ml-auto">
-                      <Link href="/accounts">
+                      <Link href="/connections">
                         <Button variant="outline">Add Account</Button>
                       </Link>
                     </div>
