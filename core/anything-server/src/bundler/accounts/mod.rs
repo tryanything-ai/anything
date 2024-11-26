@@ -1,90 +1,71 @@
 use crate::auth::init::AccountAuthProviderAccount;
-use crate::{auth, AppState};
+use crate::AppState;
 use chrono::Utc;
-use dotenv::dotenv;
 use postgrest::Postgrest;
-use serde_json::json;
-use std::env;
 use std::sync::Arc;
+use dotenv::dotenv;
+use std::env;
+use serde_json::json;
 use tracing::debug;
 
 pub mod accounts_cache;
 
-pub async fn get_auth_accounts_and_refresh_if_needed(
+use crate::auth::refresh::refresh_accounts;
+
+use std::error::Error;
+
+
+pub async fn fetch_cached_auth_accounts(
     state: Arc<AppState>,
     client: &Postgrest,
     account_id: &str,
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    //Get accounts from cache or db if cache is empty
-    let accounts = get_auth_accounts(state.clone(), client, account_id).await?;
+    refresh_auth: bool,
+) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn Error + Send + Sync>> {
+    println!("[FAST AUTH ACCOUNTS] Fetching cached auth accounts");
 
-    debug!(
-        "[BUNDLER] Starting auth account refresh for account_id: {}",
-        account_id
-    );
-
-    let cached_accounts_need_refresh =
-        accounts_in_cache_need_refresh(state.clone(), account_id).await?;
-
-    if cached_accounts_need_refresh {
-        let accounts = auth::refresh::refresh_accounts(client, account_id).await?;
-
-        debug!(
-            "[BUNDLER] Successfully refreshed {} auth accounts in DB",
-            accounts.len()
-        );
-
-        // Update cache with a write lock
-        {
-            let mut cache = state.bundler_accounts_cache.write().await;
-            cache.set(account_id, accounts.clone());
-            debug!(
-                "[BUNDLER] Updated accounts cache after refresh for account_id: {}",
-                account_id
-            );
-        }
-    }
-
-    Ok(accounts)
-}
-
-pub async fn get_auth_accounts(
-    state: Arc<AppState>,
-    client: &Postgrest,
-    account_id: &str,
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    // Try to get from cache first using a read lock
-    {
+    //Check if accounts are in the the cache
+    let mut accounts: Vec<AccountAuthProviderAccount> = {
         let cache = state.bundler_accounts_cache.read().await;
-        if let Some(cached_accounts) = cache.get(account_id) {
-            debug!(
-                "[BUNDLER] Using cached auth accounts for account_id: {}",
-                account_id
-            );
-            return Ok(cached_accounts);
+        let accounts = cache.get(account_id).unwrap_or_default();
+        accounts
+    };
+
+    //If not, fetch them from the DB
+    if accounts.is_empty() {
+        println!("[FAST AUTH ACCOUNTS] No cached accounts found, fetching from DB");
+        accounts = fetch_accounts_from_db(client, account_id).await?;
+    }
+
+    //If caller needs up to date info
+    //Check if cached accounts need to have access_token refreshed
+    if refresh_auth {
+        let now = Utc::now();
+        let expiry_threshold = now + chrono::Duration::minutes(5);
+        let needs_refresh = accounts.iter().any(|account| {
+            !account.failed
+                && account
+                    .access_token_expires_at
+                    .map(|expires_at| expires_at <= expiry_threshold)
+                    .unwrap_or(false)
+        });
+
+        if !needs_refresh {
+            println!("[FAST AUTH ACCOUNTS] Cached accounts do not need refresh");
+        } else {
+            println!("[FAST AUTH ACCOUNTS] Cached accounts need to have access_token refreshed");
+            accounts = refresh_accounts(client, accounts).await?;
         }
     }
 
-    debug!(
-        "[BUNDLER] Cache miss for auth accounts, fetching from DB for account_id: {}",
-        account_id
-    );
-
-    // If not in cache, fetch from DB
-    let accounts = fetch_accounts_from_db(client, account_id).await?;
-
-    // Update cache with a write lock
+    //Update the cache  
     {
         let mut cache = state.bundler_accounts_cache.write().await;
         cache.set(account_id, accounts.clone());
-        debug!(
-            "[BUNDLER] Updated auth accounts cache for account_id: {}",
-            account_id
-        );
     }
 
     Ok(accounts)
 }
+
 
 async fn fetch_accounts_from_db(
     client: &Postgrest,
@@ -125,30 +106,3 @@ async fn fetch_accounts_from_db(
     Ok(accounts)
 }
 
-pub async fn accounts_in_cache_need_refresh(
-    state: Arc<AppState>,
-    account_id: &str,
-) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-    let now = Utc::now();
-    let expiry_threshold = now + chrono::Duration::minutes(5);
-
-    // Get accounts from cache, releasing lock immediately
-    let accounts = {
-        let cache = state.bundler_accounts_cache.read().await;
-        cache.get(account_id)
-    };
-
-    // If no cached accounts found, return false since there are no accounts to refresh
-    let Some(accounts) = accounts else {
-        return Ok(false);
-    };
-
-    // Check if any account's access token is expiring soon
-    Ok(accounts.iter().any(|account| {
-        if let Some(expires_at) = account.access_token_expires_at {
-            expires_at <= expiry_threshold
-        } else {
-            false
-        }
-    }))
-}

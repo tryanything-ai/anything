@@ -22,33 +22,14 @@ pub struct UpdateAccountAuthProviderAccount {
 
 pub async fn refresh_accounts(
     client: &Postgrest,
-    account_id: &str,
+    accounts: Vec<AccountAuthProviderAccount>,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
-    println!(
-        "[AUTH REFRESH] Starting refresh_accounts for account_id: {}",
-        account_id
-    );
+    let mut accounts = accounts;
 
-    let response = client
-        .rpc(
-            "get_decrypted_account_and_provider",
-            json!({"p_account_id": account_id}).to_string(),
-        )
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await?;
-
-    println!("[AUTH REFRESH] Received response from database");
-
-    let body = response.text().await?;
-
-    println!("[AUTH REFRESH] Response body: {}", body);
-
-    let mut accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
     println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
 
     for account in accounts.iter_mut() {
