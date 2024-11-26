@@ -80,7 +80,7 @@ async fn fetch_accounts_from_db(
 
     let response = client
         .rpc(
-            "get_account_auth_provider_accounts",
+            "get_decrypted_account_and_provider",
             json!({"p_account_id": account_id}).to_string(),
         )
         .auth(supabase_service_role_api_key)
