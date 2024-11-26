@@ -12,7 +12,7 @@ use tracing::debug;
 use crate::templater::Templater;
 
 use crate::bundler::accounts::get_auth_accounts;
-use crate::bundler::accounts::get_refreshed_auth_accounts;
+use crate::bundler::accounts::get_auth_accounts_and_refresh_if_needed;
 use crate::bundler::secrets::get_decrypted_secrets;
 
 use crate::auth::init::AccountAuthProviderAccount;
@@ -146,7 +146,7 @@ async fn fetch_auth_accounts(
     refresh_auth: bool,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn Error + Send + Sync>> {
     if refresh_auth {
-        get_refreshed_auth_accounts(state, client, account_id).await
+        get_auth_accounts_and_refresh_if_needed(state, client, account_id).await
     } else {
         get_auth_accounts(state, client, account_id).await
     }

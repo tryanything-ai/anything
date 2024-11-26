@@ -44,6 +44,11 @@ pub struct AccountAuthProviderAccount {
     pub created_at: Option<DateTime<Utc>>,
     pub updated_by: Option<Uuid>,
     pub created_by: Option<Uuid>,
+    pub failed_at: Option<DateTime<Utc>>,
+    pub failed: bool,
+    pub failed_reason: Option<String>,
+    pub failure_retries: i32,
+    pub last_failure_retry: Option<DateTime<Utc>>
 }
 
 #[derive(Debug, Clone)]

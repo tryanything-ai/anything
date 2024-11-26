@@ -33,7 +33,6 @@ pub async fn refresh_accounts(
         account_id
     );
 
-    //TODO: cache this somewhere and manage the cache with account updates from user
     let response = client
         .rpc(
             "get_decrypted_account_and_provider",
@@ -49,14 +48,23 @@ pub async fn refresh_accounts(
 
     println!("[AUTH REFRESH] Response body: {}", body);
 
-    let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
+    let mut accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
     println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
 
-    for account in &accounts {
+    for account in accounts.iter_mut() {
         println!(
             "[AUTH REFRESH] Processing account: {:?}",
             account.auth_provider_id
         );
+
+        // Skip if failure retries exceeds 3
+        if account.failure_retries >= 3 {
+            println!(
+                "[AUTH REFRESH] Skipping account due to too many failures: {:?}",
+                account.auth_provider_id
+            );
+            continue;
+        }
 
         let auth_provider: AuthProvider = match &account.auth_provider {
             Some(value) => serde_json::from_value(value.clone())?,
@@ -65,7 +73,43 @@ pub async fn refresh_accounts(
                     "[AUTH REFRESH] No auth_provider found for account: {:?}",
                     account.auth_provider_id
                 );
-                continue; // or handle the None case appropriately
+
+                let failed_updates = json!({
+                    "failed": true,
+                    "failed_at": if account.failure_retries == 0 { Some(chrono::Utc::now()) } else { account.failed_at },
+                    "failed_reason": "Service not supported",
+                    "failure_retries": account.failure_retries + 1,
+                    "last_failure_retry": chrono::Utc::now(),
+                });
+
+                let failed_response = client
+                    .from("account_auth_provider_accounts")
+                    .auth(supabase_service_role_api_key.clone())
+                    .update(failed_updates.to_string())
+                    .eq(
+                        "account_auth_provider_account_id",
+                        account.account_auth_provider_account_id.to_string(),
+                    )
+                    .execute()
+                    .await;
+
+                if let Err(e) = failed_response {
+                    println!("[AUTH REFRESH] Failed to mark account as failed: {:?}", e);
+                } else {
+                    println!("[AUTH REFRESH] Successfully marked account as failed");
+                    // Update the in-memory account with failure info
+                    account.failed = true;
+                    account.failed_at = if account.failure_retries == 0 {
+                        Some(Utc::now())
+                    } else {
+                        account.failed_at
+                    };
+                    account.failed_reason = Some("Service no supported".to_string());
+                    account.failure_retries += 1;
+                    account.last_failure_retry = Some(Utc::now());
+                }
+
+                continue;
             }
         };
 
@@ -158,7 +202,7 @@ pub async fn refresh_accounts(
                             account_updates
                         );
 
-                        // Optionally, update the account in the database
+                        // Update the account in the database
                         let update_response = client
                             .from("account_auth_provider_accounts")
                             .auth(supabase_service_role_api_key.clone())
@@ -177,9 +221,51 @@ pub async fn refresh_accounts(
                             );
                         } else {
                             println!("[AUTH REFRESH] Successfully updated account with new token");
+                            // Update the in-memory account with new values
+                            account.access_token = new_token.access_token;
+                            account.refresh_token = new_token.refresh_token;
+                            account.access_token_expires_at = access_token_expires_at;
+                            account.refresh_token_expires_at = refresh_token_expires_at;
                         }
                     }
                     Err((status, msg)) => {
+                        let failed_updates = json!({
+                            "failed": true,
+                            "failed_at": if account.failure_retries == 0 { Some(chrono::Utc::now()) } else { account.failed_at },
+                            "failed_reason": format!("Failed to refresh token: Status: {}, Message: {}", status, msg),
+                            "failure_retries": account.failure_retries + 1,
+                            "last_failure_retry": chrono::Utc::now(),
+                        });
+
+                        let failed_response = client
+                            .from("account_auth_provider_accounts")
+                            .auth(supabase_service_role_api_key.clone())
+                            .update(failed_updates.to_string())
+                            .eq(
+                                "account_auth_provider_account_id",
+                                account.account_auth_provider_account_id.to_string(),
+                            )
+                            .execute()
+                            .await;
+
+                        if let Err(e) = failed_response {
+                            println!("[AUTH REFRESH] Failed to mark account as failed: {:?}", e);
+                        } else {
+                            println!("[AUTH REFRESH] Successfully marked account as failed");
+                            // Update the in-memory account with failure info
+                            account.failed = true;
+                            account.failed_at = if account.failure_retries == 0 {
+                                Some(Utc::now())
+                            } else {
+                                account.failed_at
+                            };
+                            account.failed_reason = Some(format!(
+                                "Failed to refresh token: Status: {}, Message: {}",
+                                status, msg
+                            ));
+                            account.failure_retries += 1;
+                            account.last_failure_retry = Some(Utc::now());
+                        }
                         println!(
                             "[AUTH REFRESH] Failed to refresh access token: Status: {:?}, Message: {:?}",
                             status, msg
@@ -199,23 +285,8 @@ pub async fn refresh_accounts(
             );
         }
     }
-    //TODO: if any accounts refresh fails it will kill all the automations in the whole system
-    //fetch all the newly refreshed accounts
-    let new_response = client
-        .rpc(
-            "get_account_auth_provider_accounts",
-            json!({"p_account_id": account_id}).to_string(),
-        )
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await?;
 
-    let new_body = new_response.text().await?;
-    println!("[AUTH REFRESH] New accounts after refresh:");
-    println!("{}", new_body);
-    let new_accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&new_body)?;
-
-    Ok(new_accounts)
+    Ok(accounts)
 }
 
 pub async fn refresh_access_token(
