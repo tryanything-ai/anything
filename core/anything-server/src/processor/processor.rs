@@ -1,6 +1,5 @@
 use crate::processor::execute_task::execute_task;
 use crate::processor::flow_session_cache::FlowSessionData;
-use crate::processor::hydrate_processor;
 use crate::processor::parsing_utils::get_trigger_node;
 use crate::workflow_types::{CreateTaskInput, WorkflowVersionDefinition};
 use crate::AppState;
@@ -100,15 +99,12 @@ pub async fn processor(
                         );
                         workflow_definition = Some(workflow.clone());
                     }
+                    //When we hydrate old tasks this will have items init from hydrate_processor
                     cached_tasks = Some(session_data.tasks);
                 }
             }
 
-            //TODO: add the option for task hydration if a 3rd party system detects we need to pick up unfinisehd work
-            //Most likely from deploying code or something with eratic shutdowns
-            //Otherwise the service will be unusefull for possibly the longest we allow a run to go with carefull shutdown
-
-            // Only fetch from DB if we didn't find it in cache
+            // Only fetch flow definition from DB if we didn't find it in cache
             if workflow_definition.is_none() {
                 debug!(
                 "[PROCESSOR] No workflow found in cache, fetching from DB for flow_session_id: {}",
@@ -130,6 +126,7 @@ pub async fn processor(
                     };
 
                 // Only update cache if there isn't already data there
+                //TODO: this feels like it could be wrong. In what situation is do we need to fetch worfklow but also no session in cache yet?
                 {
                     let mut cache = state.flow_session_cache.write().await;
                     if cache.get(&flow_session_id).is_none() {
@@ -153,10 +150,6 @@ pub async fn processor(
                 workflow_definition.is_some()
             );
 
-            //TODO: we need to find out how to deal with a workflow that say only gets half processed and we shut down.
-            //How do we recover from that? -> Proper shutdown signal is probably needed.
-            //WE ARE ASSUMING THAT THE WORKFLOW WILL BE COMPLETED IN THIS SINGLE PROCESSOR CALL.
-            // ... existing code ...
             let workflow = match &workflow_definition {
                 Some(w) => w,
                 None => {
@@ -178,7 +171,7 @@ pub async fn processor(
                 // Only create trigger task if there are no existing tasks in cache
                 let initial_task = if let Some(trigger_task) = trigger_task {
                     trigger_task
-                } else {
+                } else { 
                     CreateTaskInput {
                         account_id: workflow.account_id.to_string(),
                         processing_order: 0,
