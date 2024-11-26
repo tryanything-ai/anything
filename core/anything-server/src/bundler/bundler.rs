@@ -11,11 +11,9 @@ use tracing::debug;
 
 use crate::templater::Templater;
 
-use crate::bundler::accounts::get_auth_accounts;
-use crate::bundler::accounts::get_auth_accounts_and_refresh_if_needed;
-use crate::bundler::secrets::get_decrypted_secrets;
+use crate::bundler::accounts::fetch_cached_auth_accounts;
 
-use crate::auth::init::AccountAuthProviderAccount;
+use crate::bundler::secrets::get_decrypted_secrets;
 
 use crate::processor::parsing_utils::get_bundle_context_inputs;
 
@@ -87,8 +85,8 @@ pub async fn bundle_cached_variables(
     // Parallel fetch of secrets, accounts, and cached task results
     let (secrets_result, accounts_result, tasks_result) = tokio::join!(
         get_decrypted_secrets(state.clone(), client, account_id), //cached secrets
-        fetch_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
-        fetch_completed_cached_tasks(state.clone(), flow_session_id)  //cached task results
+        fetch_cached_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
+        fetch_completed_cached_tasks(state.clone(), flow_session_id) //cached task results
     );
 
     // Process accounts
@@ -139,18 +137,6 @@ pub async fn bundle_cached_variables(
     }
 }
 
-async fn fetch_auth_accounts(
-    state: Arc<AppState>,
-    client: &Postgrest,
-    account_id: &str,
-    refresh_auth: bool,
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn Error + Send + Sync>> {
-    if refresh_auth {
-        get_auth_accounts_and_refresh_if_needed(state, client, account_id).await
-    } else {
-        get_auth_accounts(state, client, account_id).await
-    }
-}
 
 async fn fetch_completed_cached_tasks(
     state: Arc<AppState>,
