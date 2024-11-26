@@ -208,6 +208,7 @@ export function JsonSchemaForm({
               description={field.description}
               isVisible={field.isVisible}
               required={field.required}
+              provider={field.provider}
             />
           );
         })}

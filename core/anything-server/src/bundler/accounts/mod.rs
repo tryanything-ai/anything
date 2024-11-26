@@ -1,5 +1,6 @@
 use crate::auth::init::AccountAuthProviderAccount;
 use crate::{auth, AppState};
+use chrono::Utc;
 use dotenv::dotenv;
 use postgrest::Postgrest;
 use serde_json::json;
@@ -9,54 +10,39 @@ use tracing::debug;
 
 pub mod accounts_cache;
 
-pub async fn get_refreshed_auth_accounts(
+pub async fn get_auth_accounts_and_refresh_if_needed(
     state: Arc<AppState>,
     client: &Postgrest,
     account_id: &str,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
+    //Get accounts from cache or db if cache is empty
+    let accounts = get_auth_accounts(state.clone(), client, account_id).await?;
+
     debug!(
         "[BUNDLER] Starting auth account refresh for account_id: {}",
         account_id
     );
 
-    // Refresh accounts in DB - do this outside of any locks
-    let refreshed_accounts = refresh_accounts_in_db(client, account_id).await?;
+    let cached_accounts_need_refresh =
+        accounts_in_cache_need_refresh(state.clone(), account_id).await?;
 
-    // Update cache with a write lock
-    {
-        let mut cache = state.bundler_accounts_cache.write().await;
-        cache.set(account_id, refreshed_accounts.clone());
+    if cached_accounts_need_refresh {
+        let accounts = auth::refresh::refresh_accounts(client, account_id).await?;
+
         debug!(
-            "[BUNDLER] Updated accounts cache after refresh for account_id: {}",
-            account_id
+            "[BUNDLER] Successfully refreshed {} auth accounts in DB",
+            accounts.len()
         );
-    }
 
-    Ok(refreshed_accounts)
-}
-
-async fn refresh_accounts_in_db(
-    client: &Postgrest,
-    account_id: &str,
-) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    debug!(
-        "[BUNDLER] Refreshing auth accounts in DB for account_id: {}",
-        account_id
-    );
-
-    let accounts = auth::refresh::refresh_accounts(client, account_id).await?;
-
-    debug!(
-        "[BUNDLER] Successfully refreshed {} auth accounts in DB",
-        accounts.len()
-    );
-
-    // Log individual account details at debug level
-    for account in &accounts {
-        debug!(
-            "[BUNDLER] Refreshed account: {} (provider: {})",
-            account.account_auth_provider_account_slug, account.auth_provider_id
-        );
+        // Update cache with a write lock
+        {
+            let mut cache = state.bundler_accounts_cache.write().await;
+            cache.set(account_id, accounts.clone());
+            debug!(
+                "[BUNDLER] Updated accounts cache after refresh for account_id: {}",
+                account_id
+            );
+        }
     }
 
     Ok(accounts)
@@ -138,52 +124,31 @@ async fn fetch_accounts_from_db(
 
     Ok(accounts)
 }
-// pub async fn get_refreshed_auth_accounts(
-//     accounts_cache: &mut AccountsCache,
-//     client: &Postgrest,
-//     account_id: &str,
-// ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-//     println!(
-//         "[BUNDLER] Refreshing auth accounts for account_id: {}",
-//         account_id
-//     );
 
-//     let accounts = auth::refresh::refresh_accounts(client, account_id).await?;
+pub async fn accounts_in_cache_need_refresh(
+    state: Arc<AppState>,
+    account_id: &str,
+) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    let now = Utc::now();
+    let expiry_threshold = now + chrono::Duration::minutes(5);
 
-//     println!(
-//         "[BUNDLER] Successfully refreshed {} auth accounts",
-//         accounts.len()
-//     );
+    // Get accounts from cache, releasing lock immediately
+    let accounts = {
+        let cache = state.bundler_accounts_cache.read().await;
+        cache.get(account_id)
+    };
 
-//     Ok(accounts)
-// }
+    // If no cached accounts found, return false since there are no accounts to refresh
+    let Some(accounts) = accounts else {
+        return Ok(false);
+    };
 
-// pub async fn get_auth_accounts(
-//     accounts_cache: &mut AccountsCache,
-//     client: &Postgrest,
-//     account_id: &str,
-// ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-//     dotenv().ok();
-//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-
-//     println!(
-//         "[BUNDLER] Fetching auth accounts for account_id: {}",
-//         account_id
-//     );
-
-//     let response = client
-//         .rpc(
-//             "get_account_auth_provider_accounts",
-//             json!({"p_account_id": account_id}).to_string(),
-//         )
-//         .auth(supabase_service_role_api_key.clone())
-//         .execute()
-//         .await?;
-
-//     let body = response.text().await?;
-//     let accounts: Vec<AccountAuthProviderAccount> = serde_json::from_str(&body)?;
-
-//     println!("[BUNDLER] Retrieved {} auth accounts", accounts.len());
-
-//     Ok(accounts)
-// }
+    // Check if any account's access token is expiring soon
+    Ok(accounts.iter().any(|account| {
+        if let Some(expires_at) = account.access_token_expires_at {
+            expires_at <= expiry_threshold
+        } else {
+            false
+        }
+    }))
+}

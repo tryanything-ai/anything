@@ -10,6 +10,8 @@ struct CachedAccount {
     expires_at: SystemTime,
 }
 
+//IMPROVEMENTS:
+// Way to let the system be aware if a user has no accounts we don't need to keep trying to hydrate the cache for them
 pub struct AccountsCache {
     cache: HashMap<String, Vec<CachedAccount>>, // account_id -> accounts
     ttl: Duration,
