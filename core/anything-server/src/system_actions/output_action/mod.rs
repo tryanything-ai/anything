@@ -15,11 +15,39 @@ pub async fn process_response_task(
         bundled_context
     );
 
-    // Helper function to recursively clean and parse JSON strings
+    // Deep parse JSON to handle common escape issues helpful for all the dirty json we have
     fn deep_parse_json(input: &str) -> Result<Value, serde_json::Error> {
-        // First try parsing directly
-        match serde_json::from_str(input) {
-            Ok(mut parsed) => {
+        // Try multiple parsing strategies in order
+        let attempts = [
+            // 1. Try parsing directly first
+            input.to_string(),
+            // 2. If wrapped in quotes, remove them and unescape
+            if input.starts_with('"') && input.ends_with('"') {
+                let inner = &input[1..input.len() - 1];
+                inner
+                    .replace("\\\"", "\"")
+                    .replace("\\n", "\n")
+                    .replace("\\/", "/")
+                    .replace("\\\\", "\\")
+            } else {
+                input.to_string()
+            },
+            // 3. Try cleaning common escape issues
+            input
+                .replace("\\\"", "\"")
+                .replace("\\n", "\n")
+                .replace("\\/", "/")
+                .replace("\\\\", "\\"),
+        ];
+
+        // Try each cleaning strategy
+        for (i, attempt) in attempts.iter().enumerate() {
+            if let Ok(mut parsed) = serde_json::from_str(attempt) {
+                println!(
+                    "[DEEP PARSE JSON IN RESPONSE] Successfully parsed JSON using strategy {}",
+                    i + 1
+                );
+
                 // Recursively clean any string values that might be JSON
                 fn clean_recursive(value: &mut Value) {
                     match value {
@@ -34,6 +62,7 @@ pub async fn process_response_task(
                             }
                         }
                         Value::String(s) => {
+                            // Use Ok() to unwrap the Result, falling back to the original string
                             if let Ok(parsed) = deep_parse_json(s) {
                                 *value = parsed;
                             }
@@ -41,47 +70,14 @@ pub async fn process_response_task(
                         _ => {}
                     }
                 }
-                clean_recursive(&mut parsed);
-                Ok(parsed)
-            }
-            Err(_) => {
-                // If direct parsing fails, try cleaning the string
-                let cleaned = input
-                    .replace("\\n", "\n")
-                    .replace("\\\"", "\"")
-                    .replace("\\/", "/");
 
-                // Try parsing cleaned string
-                match serde_json::from_str(&cleaned) {
-                    Ok(mut parsed) => {
-                        // Apply same recursive cleaning to cleaned parse result
-                        fn clean_recursive(value: &mut Value) {
-                            match value {
-                                Value::Object(map) => {
-                                    for (_, v) in map.iter_mut() {
-                                        clean_recursive(v);
-                                    }
-                                }
-                                Value::Array(arr) => {
-                                    for v in arr.iter_mut() {
-                                        clean_recursive(v);
-                                    }
-                                }
-                                Value::String(s) => {
-                                    if let Ok(parsed) = deep_parse_json(s) {
-                                        *value = parsed;
-                                    }
-                                }
-                                _ => {}
-                            }
-                        }
-                        clean_recursive(&mut parsed);
-                        Ok(parsed)
-                    }
-                    Err(e) => Err(e),
-                }
+                clean_recursive(&mut parsed);
+                return Ok(parsed);
             }
         }
+
+        // If all parsing attempts fail, return the original input as a string Value
+        Ok(Value::String(input.to_string()))
     }
 
     // Get the required fields from the bundled context
