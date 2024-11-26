@@ -38,6 +38,12 @@ pub async fn processor(
     let number_of_processors_semaphore = state.workflow_processor_semaphore.clone();
 
     while let Some(message) = rx.recv().await {
+        // Check if we received shutdown signal
+        if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
+            debug!("[PROCESSOR] Received shutdown signal, stopping processor");
+            break;
+        }
+
         let workflow_id = message.workflow_id;
         let version_id = message.version_id;
         let flow_session_id = message.flow_session_id;
@@ -331,22 +337,15 @@ pub async fn processor(
 
             let graph = create_workflow_graph(&workflow_def);
 
-            // // let mut processing_order = 1;
-            // let mut processing_order = cached_tasks
-            //     .as_ref()
-            //     .map(|t| {
-            //         t.values()
-            //             .map(|task| task.processing_order)
-            //             .max()
-            //             .unwrap_or(0)
-            //     })
-            //     .unwrap_or(0)
-            //     + 1;
-
-            // Process tasks until workflow completion
+            // Process tasks until workflow completion or shutdown
             while let Some(task) = current_task {
+                // Check for shutdown signal after creating new task
+                if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
+                    debug!("[PROCESSOR] Received shutdown signal, stopping task processing");
+                    break;
+                }
+
                 // Execute the current task and handle its result
-                // if task.task_status != TaskStatus::Completed {
                 debug!("[PROCESSOR] Executing task: {}", task.task_id);
 
                 let processing_order = task.processing_order;

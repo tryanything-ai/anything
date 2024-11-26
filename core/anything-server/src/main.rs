@@ -21,6 +21,9 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
 
+use tokio::signal::unix::{signal, SignalKind};
+use tokio::time::sleep;
+
 mod workflow_types;
 use regex::Regex;
 
@@ -54,6 +57,7 @@ mod trigger_engine;
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
+use std::sync::atomic::AtomicBool;
 
 // Add this struct to store completion channels
 pub struct FlowCompletion {
@@ -83,6 +87,7 @@ pub struct AppState {
     bundler_secrets_cache: RwLock<SecretsCache>,
     bundler_accounts_cache: RwLock<AccountsCache>,
     flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
+    shutdown_signal: Arc<AtomicBool>,
 }
 
 #[tokio::main]
@@ -192,6 +197,7 @@ async fn main() {
         bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
         bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
         flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
+        shutdown_signal: Arc::new(AtomicBool::new(false)),
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -363,6 +369,19 @@ pub async fn root() -> impl IntoResponse {
 
     // Spawn the hydrate processor
     tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
+
+
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        let mut sigterm = signal(SignalKind::terminate()).unwrap();
+        sigterm.recv().await;
+        println!("Received SIGTERM signal");
+        // Set the shutdown signal
+        state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
+        
+        // Give time for in-flight operations to complete
+        sleep(Duration::from_secs(2)).await;
+    });
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();

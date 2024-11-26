@@ -97,10 +97,10 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                         }
 
                         // Check if any nodes in graph are missing from our tasks
-                        let mut missing_actions = false;
+                        let mut finished_processing_graph = true;
                         for (action_id, _) in &graph {
                             if !seen_actions.contains(action_id) {
-                                missing_actions = true;
+                                finished_processing_graph = false;
                                 println!(
                                     "[HYDRATE PROCESSOR] Missing task for action {}",
                                     action_id
@@ -109,13 +109,7 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                             }
                         }
 
-                        if missing_actions {
-                            println!(
-                                "[HYDRATE PROCESSOR] Skipping incomplete flow session {}",
-                                session_id
-                            );
-                            continue;
-                        } else {
+                        if finished_processing_graph {
                             // We have all tasks - mark flow session as completed
                             println!(
                                 "[HYDRATE PROCESSOR] Marking flow session {} as {}",
@@ -126,6 +120,7 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                                     "completed"
                                 }
                             );
+                            //THis is basically cleanup. this should not happen often but if it does this will "cure" it
                             if let Err(e) = update_flow_session_status(
                                 &state,
                                 &Uuid::parse_str(&session_id).unwrap(),
@@ -147,7 +142,13 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                                     e
                                 );
                             }
+                            //get out of loop
                             continue;
+                        } else {
+                            println!(
+                                "[HYDRATE PROCESSOR] Starting up processor for flow session {}",
+                                session_id
+                            );
                         }
                     }
 
