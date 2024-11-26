@@ -1,6 +1,7 @@
 use chrono::Utc;
 use dotenv::dotenv;
 use serde_json::Value;
+use std::collections::HashSet;
 use std::{env, sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
@@ -301,4 +302,63 @@ pub async fn update_flow_session_status(
 
     debug!("[PROCESSOR DB CALLS] Successfully updated flow session status");
     Ok(())
+}
+
+
+pub async fn get_unfinished_flow_sessions(
+    state: Arc<AppState>,
+) -> Result<Vec<String>, String> {
+    debug!("[PROCESSOR DB CALLS] Getting unfinished flow sessions");
+    
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    // Get flow sessions that are in Running or Pending status
+    let response = state
+        .anything_client
+        .from("tasks")
+        .auth(&supabase_service_role_api_key)
+        .or("flow_session_status.eq.running,flow_session_status.eq.pending")
+        .select("flow_session_id")
+        .execute()
+        .await
+        .map_err(|e| {
+            debug!(
+                "[PROCESSOR DB CALLS] Failed to execute unfinished sessions request: {}",
+                e
+            );
+            format!("Failed to execute request: {}", e)
+        })?;
+
+    let body = response.text().await.map_err(|e| {
+        debug!(
+            "[PROCESSOR DB CALLS] Failed to get response body: {}",
+            e
+        );
+        format!("Failed to get response body: {}", e)
+    })?;
+
+    let sessions: Vec<Value> = serde_json::from_str(&body).map_err(|e| {
+        debug!(
+            "[PROCESSOR DB CALLS] Failed to parse response JSON: {}",
+            e
+        );
+        format!("Failed to parse JSON: {}", e)
+    })?;
+
+    // Extract unique flow session IDs
+    let mut flow_session_ids = HashSet::new();
+    for session in sessions {
+        if let Some(id) = session.get("flow_session_id").and_then(|v| v.as_str()) {
+            flow_session_ids.insert(id.to_string());
+        }
+    }
+
+    debug!(
+        "[PROCESSOR DB CALLS] Found {} unfinished flow sessions",
+        flow_session_ids.len()
+    );
+
+    Ok(flow_session_ids.into_iter().collect())
 }

@@ -1,5 +1,6 @@
 use crate::processor::execute_task::execute_task;
 use crate::processor::flow_session_cache::FlowSessionData;
+use crate::processor::hydrate_processor;
 use crate::processor::parsing_utils::get_trigger_node;
 use crate::workflow_types::{CreateTaskInput, WorkflowVersionDefinition};
 use crate::AppState;
@@ -225,13 +226,7 @@ pub async fn processor(
             // Create graph for BFS traversal
             let workflow_def: WorkflowVersionDefinition = workflow.flow_definition.clone();
 
-            let mut graph: HashMap<String, Vec<String>> = HashMap::new();
-            for edge in &workflow_def.edges {
-                graph
-                    .entry(edge.source.clone())
-                    .or_insert_with(Vec::new)
-                    .push(edge.target.clone());
-            }
+            let graph = create_workflow_graph(&workflow_def);
 
             let mut processing_order = 1;
 
@@ -315,7 +310,7 @@ pub async fn processor(
                         state_clone,
                         &task_id,
                         &TaskStatus::Completed,
-                        task_result_clone.clone()
+                        task_result_clone.clone(),
                     )
                     .await
                     {
@@ -459,4 +454,16 @@ pub async fn processor(
     }
 
     Ok(())
+}
+
+/// Creates a graph representation of the workflow
+fn create_workflow_graph(workflow_def: &WorkflowVersionDefinition) -> HashMap<String, Vec<String>> {
+    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
+    for edge in &workflow_def.edges {
+        graph
+            .entry(edge.source.clone())
+            .or_insert_with(Vec::new)
+            .push(edge.target.clone());
+    }
+    graph
 }

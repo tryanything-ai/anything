@@ -345,13 +345,6 @@ pub async fn root() -> impl IntoResponse {
         .layer(preflightlayer)
         .with_state(state.clone());
     
-    //TODO: add JS execution via DENO
-    // let url = Wasm::url("https://github.com/extism/plugins/releases/latest/download/count_vowels.wasm");
-    // let manifest = Manifest::new([url]);
-    // let plugin = Arc::new(Mutex::new(
-    //     Plugin::new(&manifest, [], true).unwrap()
-    // ));
-
     // Spawn processor
     tokio::spawn(processor::processor(state.clone()));
 
@@ -367,6 +360,9 @@ pub async fn root() -> impl IntoResponse {
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
+
+    // Spawn the hydrate processor
+    tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
 
     // Run the API server
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
