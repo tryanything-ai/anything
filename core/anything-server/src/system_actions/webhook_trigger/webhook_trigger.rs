@@ -430,6 +430,7 @@ pub async fn run_workflow_version_and_respond(
             Stage::Testing.as_str().to_string()
         },
         config: task_config,
+        
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
             "body": processed_payload.clone(),

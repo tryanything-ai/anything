@@ -7,7 +7,6 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
-use tracing::debug;
 
 use crate::templater::Templater;
 
@@ -31,6 +30,9 @@ pub async fn bundle_tasks_cached_context(
 
     let (account_id, flow_session_id, variables_config, inputs_config) =
         get_bundle_context_inputs(task);
+
+    println!("[BUNDLER] Got bundle context inputs: account_id={}, flow_session_id={}, variables_config={:?}, inputs_config={:?}",
+        account_id, flow_session_id, variables_config, inputs_config);
 
     let rendered_variables_definition = bundle_cached_variables(
         state,
@@ -77,7 +79,7 @@ pub async fn bundle_cached_variables(
     variables_config: Option<&Value>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    debug!("[BUNDLER] Starting to bundle variables");
+    println!("[BUNDLER] Starting to bundle variables");
 
     // Pre-allocate with known capacity
     let mut render_variables_context = HashMap::with_capacity(4);
@@ -93,7 +95,7 @@ pub async fn bundle_cached_variables(
     let mut accounts = HashMap::new();
     for account in accounts_result? {
         let slug = account.account_auth_provider_account_slug.clone();
-        debug!("[BUNDLER] Inserting account with slug: {}", slug);
+        println!("[BUNDLER] Inserting account with slug: {}", slug);
         accounts.insert(slug, serde_json::to_value(account)?);
     }
     render_variables_context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
@@ -102,7 +104,7 @@ pub async fn bundle_cached_variables(
     let mut secrets = HashMap::new();
     for secret in secrets_result? {
         let secret_name = secret.secret_name.clone();
-        debug!("[BUNDLER] Inserting secret with name: {}", secret_name);
+        println!("[BUNDLER] Inserting secret with name: {}", secret_name);
         secrets.insert(secret_name, serde_json::to_value(secret.secret_value)?);
     }
     render_variables_context.insert("secrets".to_string(), serde_json::to_value(secrets)?);
@@ -129,14 +131,13 @@ pub async fn bundle_cached_variables(
         let context_value = serde_json::to_value(&render_variables_context)?;
         let rendered = templater.render("task_variables_definition", &context_value)?;
 
-        debug!("[BUNDLER] Rendered variables output: {}", rendered);
+        println!("[BUNDLER] Rendered variables output: {}", rendered);
         Ok(rendered)
     } else {
-        debug!("[BUNDLER] No variables found in task config");
+        println!("[BUNDLER] No variables found in task config");
         Ok(json!({}))
     }
 }
-
 
 async fn fetch_completed_cached_tasks(
     state: Arc<AppState>,

@@ -18,7 +18,7 @@ pub struct SecretsCache {
 
 impl SecretsCache {
     pub fn new(ttl: Duration) -> Self {
-        debug!("[BUNDLER] Creating new SecretsCache with TTL: {:?}", ttl);
+        println!("[BUNDLER] Creating new SecretsCache with TTL: {:?}", ttl);
         Self {
             cache: HashMap::new(),
             ttl,
@@ -37,7 +37,7 @@ impl SecretsCache {
     }
 
     pub fn set(&mut self, account_id: &str, secrets: Vec<DecryptedSecret>) {
-        debug!(
+        println!(
             "[BUNDLER] Setting secrets cache for account_id: {}",
             account_id
         );
@@ -50,7 +50,7 @@ impl SecretsCache {
     }
 
     pub fn invalidate(&mut self, account_id: &str) {
-        debug!(
+        println!(
             "[BUNDLER] Invalidating secrets cache for account_id: {}",
             account_id
         );
@@ -58,7 +58,7 @@ impl SecretsCache {
     }
 
     pub fn cleanup(&mut self) {
-        debug!("[BUNDLER] Starting secrets cache cleanup");
+        println!("[BUNDLER] Starting secrets cache cleanup");
         let now = SystemTime::now();
         self.cache
             .retain(|_, entries| entries.iter().any(|entry| entry.expires_at > now));

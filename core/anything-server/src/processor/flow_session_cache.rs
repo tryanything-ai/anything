@@ -29,7 +29,7 @@ pub struct FlowSessionCache {
 
 impl FlowSessionCache {
     pub fn new(ttl: Duration) -> Self {
-        debug!(
+        println!(
             "[PROCESSOR] Creating new FlowSessionCache with TTL: {:?}",
             ttl
         );
@@ -51,7 +51,7 @@ impl FlowSessionCache {
     }
 
     pub fn set(&mut self, flow_session_id: &Uuid, data: FlowSessionData) {
-        debug!(
+        println!(
             "[PROCESSOR] Setting flow session cache for session_id: {}",
             flow_session_id
         );
@@ -96,7 +96,7 @@ impl FlowSessionCache {
     }
 
     pub fn invalidate(&mut self, flow_session_id: &Uuid) {
-        debug!(
+        println!(
             "[PROCESSOR] Invalidating flow session cache for session_id: {}",
             flow_session_id
         );
@@ -104,7 +104,7 @@ impl FlowSessionCache {
     }
 
     pub fn cleanup(&mut self) {
-        debug!("[PROCESSOR] Starting flow session cache cleanup");
+        println!("[PROCESSOR] Starting flow session cache cleanup");
         let now = SystemTime::now();
         self.cache.retain(|_, session| session.expires_at > now);
     }

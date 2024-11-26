@@ -28,7 +28,7 @@ pub async fn get_decrypted_secrets(
     {
         let cache = state.bundler_secrets_cache.read().await;
         if let Some(cached_secrets) = cache.get(account_id) {
-            debug!(
+            println!(
                 "[BUNDLER] Using cached secrets for account_id: {}",
                 account_id
             );
@@ -36,7 +36,7 @@ pub async fn get_decrypted_secrets(
         }
     }
 
-    debug!(
+    println!(
         "[BUNDLER] Cache miss for secrets, fetching from DB for account_id: {}",
         account_id
     );
@@ -48,7 +48,7 @@ pub async fn get_decrypted_secrets(
     {
         let mut cache = state.bundler_secrets_cache.write().await;
         cache.set(account_id, secrets.clone());
-        debug!(
+        println!(
             "[BUNDLER] Updated secrets cache for account_id: {}",
             account_id
         );
