@@ -1,13 +1,20 @@
 use crate::{
-    processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
-    task_types::Task,
+    processor::{
+        create_workflow_graph, db_calls::update_flow_session_status,
+        flow_session_cache::FlowSessionData, processor::ProcessorMessage,
+    },
+    task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
     workflow_types::DatabaseFlowVersion,
     AppState,
 };
 
 use dotenv::dotenv;
 use postgrest::Postgrest;
-use std::{collections::HashMap, env, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    env,
+    sync::Arc,
+};
 use uuid::Uuid;
 
 pub async fn hydrate_processor(state: Arc<AppState>) {
@@ -52,7 +59,10 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
         }
     };
 
-    println!("[HYDRATE PROCESSOR] Found {} running* tasks", tasks.len());
+    println!(
+        "[HYDRATE PROCESSOR] Found {} tasks to manage in hydrate",
+        tasks.len()
+    );
 
     let mut seen_sessions = HashMap::new();
 
@@ -69,6 +79,77 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
             match tokio::try_join!(tasks_future, workflow_future) {
                 Ok((session_tasks, workflow_def)) => {
                     seen_sessions.insert(session_id.clone(), true);
+
+                    let mut workflow_failed = false;
+
+                    // Check if the workflow is completed but for some reason not marked as so
+                    if let Some(workflow) = &workflow_def {
+                        let graph = create_workflow_graph(&workflow.flow_definition);
+                        let mut seen_actions = HashSet::new();
+
+                        // Add all task action_ids we have to seen set
+                        for task in &session_tasks {
+                            if task.task_status == TaskStatus::Failed {
+                                workflow_failed = true;
+                                break;
+                            }
+                            seen_actions.insert(task.action_id.clone());
+                        }
+
+                        // Check if any nodes in graph are missing from our tasks
+                        let mut missing_actions = false;
+                        for (action_id, _) in &graph {
+                            if !seen_actions.contains(action_id) {
+                                missing_actions = true;
+                                println!(
+                                    "[HYDRATE PROCESSOR] Missing task for action {}",
+                                    action_id
+                                );
+                                break;
+                            }
+                        }
+
+                        if missing_actions {
+                            println!(
+                                "[HYDRATE PROCESSOR] Skipping incomplete flow session {}",
+                                session_id
+                            );
+                            continue;
+                        } else {
+                            // We have all tasks - mark flow session as completed
+                            println!(
+                                "[HYDRATE PROCESSOR] Marking flow session {} as {}",
+                                session_id,
+                                if workflow_failed {
+                                    "failed"
+                                } else {
+                                    "completed"
+                                }
+                            );
+                            if let Err(e) = update_flow_session_status(
+                                &state,
+                                &Uuid::parse_str(&session_id).unwrap(),
+                                if workflow_failed {
+                                    &FlowSessionStatus::Failed
+                                } else {
+                                    &FlowSessionStatus::Completed
+                                },
+                                if workflow_failed {
+                                    &TriggerSessionStatus::Failed
+                                } else {
+                                    &TriggerSessionStatus::Completed
+                                },
+                            )
+                            .await
+                            {
+                                println!(
+                                    "[HYDRATE PROCESSOR] Failed to update flow session status: {}",
+                                    e
+                                );
+                            }
+                            continue;
+                        }
+                    }
 
                     //Put workflow in the cache
                     let flow_session_data = FlowSessionData {
@@ -95,7 +176,10 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                     };
 
                     if let Err(e) = state.processor_sender.send(processor_message).await {
-                        println!("[HYDRATE PROCESSOR] Failed to send message to processor: {}", e);
+                        println!(
+                            "[HYDRATE PROCESSOR] Failed to send message to processor: {}",
+                            e
+                        );
                         return;
                     }
                 }

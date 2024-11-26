@@ -83,6 +83,7 @@ pub async fn processor(
             );
 
             let mut workflow_definition = None;
+            let mut cached_tasks = None;
 
             // Try to get from cache first using a read lock
             {
@@ -99,6 +100,7 @@ pub async fn processor(
                         );
                         workflow_definition = Some(workflow.clone());
                     }
+                    cached_tasks = Some(session_data.tasks);
                 }
             }
 
@@ -169,57 +171,165 @@ pub async fn processor(
             // Create initial trigger task
             let trigger_node = get_trigger_node(&workflow.flow_definition).unwrap();
 
-            let initial_task = if let Some(trigger_task) = trigger_task {
-                trigger_task
-            } else {
-                CreateTaskInput {
-                    account_id: workflow.account_id.to_string(),
-                    processing_order: 0,
-                    task_status: TaskStatus::Running.as_str().to_string(),
-                    flow_id: workflow_id.to_string(),
-                    flow_version_id: workflow.flow_version_id.to_string(),
-                    action_label: trigger_node.label.clone(),
-                    trigger_id: trigger_node.action_id.clone(),
-                    trigger_session_id: Uuid::new_v4().to_string(),
-                    trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-                    flow_session_id: flow_session_id.to_string(),
-                    flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-                    action_id: trigger_node.action_id.clone(),
-                    r#type: ActionType::Trigger,
-                    plugin_id: trigger_node.plugin_id.clone(),
-                    stage: if workflow.published {
-                        Stage::Production.as_str().to_string()
-                    } else {
-                        Stage::Testing.as_str().to_string()
-                    },
-                    config: json!({
-                        "variables": serde_json::json!(trigger_node.variables),
-                        "input": serde_json::json!(trigger_node.input),
-                    }),
-                    result: None,
-                    started_at: Some(Utc::now()),
-                    test_config: None,
-                }
-            };
+            //If there are no tasks in cache, we need to create the trigger task
+            let mut current_task = if cached_tasks.is_none()
+                || cached_tasks.as_ref().unwrap().is_empty()
+            {
+                // Only create trigger task if there are no existing tasks in cache
+                let initial_task = if let Some(trigger_task) = trigger_task {
+                    trigger_task
+                } else {
+                    CreateTaskInput {
+                        account_id: workflow.account_id.to_string(),
+                        processing_order: 0,
+                        task_status: TaskStatus::Running.as_str().to_string(),
+                        flow_id: workflow_id.to_string(),
+                        flow_version_id: workflow.flow_version_id.to_string(),
+                        action_label: trigger_node.label.clone(),
+                        trigger_id: trigger_node.action_id.clone(),
+                        trigger_session_id: Uuid::new_v4().to_string(),
+                        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+                        flow_session_id: flow_session_id.to_string(),
+                        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+                        action_id: trigger_node.action_id.clone(),
+                        r#type: ActionType::Trigger,
+                        plugin_id: trigger_node.plugin_id.clone(),
+                        stage: if workflow.published {
+                            Stage::Production.as_str().to_string()
+                        } else {
+                            Stage::Testing.as_str().to_string()
+                        },
+                        config: json!({
+                            "variables": serde_json::json!(trigger_node.variables),
+                            "input": serde_json::json!(trigger_node.input),
+                        }),
+                        result: None,
+                        started_at: Some(Utc::now()),
+                        test_config: None,
+                    }
+                };
 
-            // Start with trigger task
-            let mut current_task = match create_task(state.clone(), &initial_task).await {
-                Ok(task) => {
-                    // Update cache with new task
-                    let mut cache = state.flow_session_cache.write().await;
-                    if cache.add_task(&flow_session_id, task.clone()) {
-                        Some(task)
-                    } else {
-                        debug!(
-                            "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-                            flow_session_id
-                        );
-                        Some(task)
+                // Start with trigger task
+                match create_task(state.clone(), &initial_task).await {
+                    Ok(task) => {
+                        // Update cache with new task
+                        let mut cache = state.flow_session_cache.write().await;
+                        if cache.add_task(&flow_session_id, task.clone()) {
+                            Some(task)
+                        } else {
+                            debug!(
+                                "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+                                flow_session_id
+                            );
+                            Some(task)
+                        }
+                    }
+                    Err(e) => {
+                        debug!("[PROCESSOR] Error creating initial task: {}", e);
+                        None
                     }
                 }
-                Err(e) => {
-                    debug!("[PROCESSOR] Error creating initial task: {}", e);
-                    None
+            } else {
+                // We have existing tasks - find the last incomplete task or the highest processing order
+                let existing_tasks = cached_tasks.as_ref().unwrap();
+
+                // First try to find an incomplete task
+                let incomplete_task = existing_tasks.values().find(|task| {
+                    task.task_status == TaskStatus::Running
+                        || task.task_status == TaskStatus::Pending
+                });
+
+                if let Some(task) = incomplete_task {
+                    debug!(
+                        "[PROCESSOR] Resuming from incomplete task: {}",
+                        task.task_id
+                    );
+
+                    //WE have an incomplete task - process it
+                    Some(task.clone())
+                } else {
+                    // If no incomplete task, get the task with highest processing order
+                    let last_completed_task = existing_tasks
+                        .values()
+                        .max_by_key(|task| task.processing_order);
+
+                    if let Some(task) = last_completed_task {
+                        debug!(
+                            "[PROCESSOR] All existing tasks completed, finding next task after: {}",
+                            task.task_id
+                        );
+                        // Find the next action after this completed task using the graph
+                        let graph = create_workflow_graph(&workflow.flow_definition);
+                        if let Some(neighbors) = graph.get(&task.action_id) {
+                            for neighbor_id in neighbors {
+                                let next_action = workflow
+                                    .flow_definition
+                                    .actions
+                                    .iter()
+                                    .find(|action| &action.action_id == neighbor_id);
+
+                                //We found the next action to run in graph. lets make a task for it
+                                if let Some(action) = next_action {
+                                    // Create the next task
+                                    let next_task_input = CreateTaskInput {
+                                        account_id: workflow.account_id.to_string(),
+                                        processing_order: task.processing_order + 1,
+                                        task_status: TaskStatus::Running.as_str().to_string(),
+                                        flow_id: workflow_id.to_string(),
+                                        flow_version_id: workflow.flow_version_id.to_string(),
+                                        action_label: action.label.clone(),
+                                        trigger_id: action.action_id.clone(),
+                                        trigger_session_id: Uuid::new_v4().to_string(),
+                                        trigger_session_status: TriggerSessionStatus::Running
+                                            .as_str()
+                                            .to_string(),
+                                        flow_session_id: flow_session_id.to_string(),
+                                        flow_session_status: FlowSessionStatus::Running
+                                            .as_str()
+                                            .to_string(),
+                                        action_id: action.action_id.clone(),
+                                        r#type: action.r#type.clone(),
+                                        plugin_id: action.plugin_id.clone(),
+                                        stage: if workflow.published {
+                                            Stage::Production.as_str().to_string()
+                                        } else {
+                                            Stage::Testing.as_str().to_string()
+                                        },
+                                        config: json!({
+                                            "variables": serde_json::json!(action.variables),
+                                            "input": serde_json::json!(action.input),
+                                        }),
+                                        result: None,
+                                        started_at: Some(Utc::now()),
+                                        test_config: None,
+                                    };
+
+                                    match create_task(state.clone(), &next_task_input).await {
+                                        Ok(new_task) => {
+                                            let mut cache = state.flow_session_cache.write().await;
+                                            if cache.add_task(&flow_session_id, new_task.clone()) {
+                                                Some(new_task)
+                                            } else {
+                                                debug!(
+                                                    "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+                                                    flow_session_id
+                                                );
+                                                Some(new_task)
+                                            }
+                                        }
+                                        Err(e) => {
+                                            debug!("[PROCESSOR] Error creating next task: {}", e);
+                                            None
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                        None // No next task found
+                    } else {
+                        debug!("[PROCESSOR] No existing tasks found in cache");
+                        None
+                    }
                 }
             };
 
@@ -228,12 +338,26 @@ pub async fn processor(
 
             let graph = create_workflow_graph(&workflow_def);
 
-            let mut processing_order = 1;
+            // // let mut processing_order = 1;
+            // let mut processing_order = cached_tasks
+            //     .as_ref()
+            //     .map(|t| {
+            //         t.values()
+            //             .map(|task| task.processing_order)
+            //             .max()
+            //             .unwrap_or(0)
+            //     })
+            //     .unwrap_or(0)
+            //     + 1;
 
             // Process tasks until workflow completion
             while let Some(task) = current_task {
                 // Execute the current task and handle its result
+                // if task.task_status != TaskStatus::Completed {
                 debug!("[PROCESSOR] Executing task: {}", task.task_id);
+
+                let processing_order = task.processing_order;
+
                 let task_result = match execute_task(state.clone(), &client, &task).await {
                     Ok(success_value) => {
                         debug!("[PROCESSOR] Task {} completed successfully", task.task_id);
@@ -362,7 +486,7 @@ pub async fn processor(
                 current_task = if let Some(next_action) = next_action {
                     let next_task_input = CreateTaskInput {
                         account_id: workflow.account_id.to_string(),
-                        processing_order,
+                        processing_order: processing_order + 1,
                         task_status: TaskStatus::Running.as_str().to_string(), //we create tasks when we start them
                         flow_id: workflow_id.to_string(),
                         flow_version_id: workflow.flow_version_id.to_string(),
@@ -401,7 +525,7 @@ pub async fn processor(
                                     cache.set(&flow_session_id, session_data);
                                 }
                             } // Lock is dropped here
-                            processing_order += 1;
+                              // processing_order += 1;
                             Some(new_task)
                         }
                         Err(e) => {
@@ -457,7 +581,9 @@ pub async fn processor(
 }
 
 /// Creates a graph representation of the workflow
-fn create_workflow_graph(workflow_def: &WorkflowVersionDefinition) -> HashMap<String, Vec<String>> {
+pub fn create_workflow_graph(
+    workflow_def: &WorkflowVersionDefinition,
+) -> HashMap<String, Vec<String>> {
     let mut graph: HashMap<String, Vec<String>> = HashMap::new();
     for edge in &workflow_def.edges {
         graph
