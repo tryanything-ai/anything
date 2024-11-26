@@ -21,7 +21,17 @@ pub async fn process_response_task(
         let attempts = [
             // 1. Try parsing directly first
             input.to_string(),
-            // 2. If wrapped in quotes, remove them and unescape
+            // 2. If wrapped in quotes and contains escaped quotes, unescape everything
+            if input.contains("\\\"") {
+                input
+                    .replace("\\\"", "\"")
+                    .replace("\\n", "\n")
+                    .replace("\\/", "/")
+                    .replace("\\\\", "\\")
+            } else {
+                input.to_string()
+            },
+            // 3. If wrapped in quotes, remove them and unescape
             if input.starts_with('"') && input.ends_with('"') {
                 let inner = &input[1..input.len() - 1];
                 inner
@@ -32,50 +42,50 @@ pub async fn process_response_task(
             } else {
                 input.to_string()
             },
-            // 3. Try cleaning common escape issues
-            input
-                .replace("\\\"", "\"")
-                .replace("\\n", "\n")
-                .replace("\\/", "/")
-                .replace("\\\\", "\\"),
         ];
-
+    
         // Try each cleaning strategy
         for (i, attempt) in attempts.iter().enumerate() {
-            if let Ok(mut parsed) = serde_json::from_str(attempt) {
-                println!(
-                    "[DEEP PARSE JSON IN RESPONSE] Successfully parsed JSON using strategy {}",
-                    i + 1
-                );
-
-                // Recursively clean any string values that might be JSON
-                fn clean_recursive(value: &mut Value) {
-                    match value {
-                        Value::Object(map) => {
-                            for (_, v) in map.iter_mut() {
-                                clean_recursive(v);
+            match serde_json::from_str(attempt) {
+                Ok(mut parsed) => {
+                    println!(
+                        "[DEEP PARSE JSON IN RESPONSE] Successfully parsed JSON using strategy {}",
+                        i + 1
+                    );
+    
+                    // Recursively clean any string values that might be JSON
+                    fn clean_recursive(value: &mut Value) {
+                        match value {
+                            Value::Object(map) => {
+                                for (_, v) in map.iter_mut() {
+                                    clean_recursive(v);
+                                }
                             }
-                        }
-                        Value::Array(arr) => {
-                            for v in arr.iter_mut() {
-                                clean_recursive(v);
+                            Value::Array(arr) => {
+                                for v in arr.iter_mut() {
+                                    clean_recursive(v);
+                                }
                             }
-                        }
-                        Value::String(s) => {
-                            // Use Ok() to unwrap the Result, falling back to the original string
-                            if let Ok(parsed) = deep_parse_json(s) {
-                                *value = parsed;
+                            Value::String(s) => {
+                                // Only try to parse if it looks like JSON
+                                if (s.starts_with('{') && s.ends_with('}')) 
+                                    || (s.starts_with('[') && s.ends_with(']')) {
+                                    if let Ok(parsed) = serde_json::from_str(s) {
+                                        *value = parsed;
+                                    }
+                                }
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
+    
+                    clean_recursive(&mut parsed);
+                    return Ok(parsed);
                 }
-
-                clean_recursive(&mut parsed);
-                return Ok(parsed);
+                Err(_) => continue,
             }
         }
-
+    
         // If all parsing attempts fail, return the original input as a string Value
         Ok(Value::String(input.to_string()))
     }
