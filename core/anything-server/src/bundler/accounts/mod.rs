@@ -73,7 +73,7 @@ async fn fetch_accounts_from_db(
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
 
-    debug!(
+    println!(
         "[BUNDLER] Fetching auth accounts from DB for account_id: {}",
         account_id
     );
@@ -91,13 +91,13 @@ async fn fetch_accounts_from_db(
     let accounts: Vec<AccountAuthProviderAccount> = match serde_json::from_str(&body) {
         Ok(parsed) => parsed,
         Err(e) => {
-            debug!("[BUNDLER] Error parsing auth accounts: {}", e);
-            debug!("[BUNDLER] Response body: {}", body);
+            println!("[BUNDLER] Error parsing auth accounts: {}", e);
+            println!("[BUNDLER] Response body: {}", body);
             return Err(Box::new(e));
         }
     };
 
-    debug!(
+    println!(
         "[BUNDLER] Successfully retrieved {} auth accounts from DB",
         accounts.len()
     );

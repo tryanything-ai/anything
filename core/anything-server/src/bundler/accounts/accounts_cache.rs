@@ -19,7 +19,7 @@ pub struct AccountsCache {
 
 impl AccountsCache {
     pub fn new(ttl: Duration) -> Self {
-        debug!("[BUNDLER] Creating new AccountsCache with TTL: {:?}", ttl);
+       println!("[BUNDLER] Creating new AccountsCache with TTL: {:?}", ttl);
         Self {
             cache: HashMap::new(),
             ttl,
@@ -38,7 +38,7 @@ impl AccountsCache {
     }
 
     pub fn set(&mut self, account_id: &str, accounts: Vec<AccountAuthProviderAccount>) {
-        debug!(
+       println!(
             "[BUNDLER] Setting accounts cache for account_id: {}",
             account_id
         );
@@ -54,7 +54,7 @@ impl AccountsCache {
     }
 
     pub fn invalidate(&mut self, account_id: &str) {
-        debug!(
+       println!(
             "[BUNDLER] Invalidating accounts cache for account_id: {}",
             account_id
         );
@@ -62,7 +62,7 @@ impl AccountsCache {
     }
 
     pub fn cleanup(&mut self) {
-        debug!("[BUNDLER] Starting accounts cache cleanup");
+       println!("[BUNDLER] Starting accounts cache cleanup");
         let now = SystemTime::now();
         self.cache
             .retain(|_, entries| entries.iter().any(|entry| entry.expires_at > now));

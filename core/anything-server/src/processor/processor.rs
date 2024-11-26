@@ -28,7 +28,7 @@ pub struct ProcessorMessage {
 pub async fn processor(
     state: Arc<AppState>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    debug!("[PROCESSOR] Starting processor");
+    println!("[PROCESSOR] Starting processor");
 
     // Create a shared set to track active flow sessions
     let active_flow_sessions = Arc::new(Mutex::new(HashSet::new()));
@@ -39,8 +39,11 @@ pub async fn processor(
 
     while let Some(message) = rx.recv().await {
         // Check if we received shutdown signal
-        if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
-            debug!("[PROCESSOR] Received shutdown signal, stopping processor");
+        if state
+            .shutdown_signal
+            .load(std::sync::atomic::Ordering::SeqCst)
+        {
+            println!("[PROCESSOR] Received shutdown signal, stopping processor");
             break;
         }
 
@@ -56,13 +59,13 @@ pub async fn processor(
             // Use a scope block to automatically drop the lock when done
             let mut active_sessions = active_flow_sessions.lock().await;
             if !active_sessions.insert(flow_session_id) {
-                debug!(
+                println!(
                     "[PROCESSOR] Flow session {} is already being processed, skipping",
                     flow_session_id
                 );
                 continue;
             }
-            debug!(
+            println!(
                 "[PROCESSOR] Added flow session {} to active sessions",
                 flow_session_id
             );
@@ -82,7 +85,7 @@ pub async fn processor(
         // Spawn a new task for this workflow
         //SPAWN NEW PROCESSOR FOR EACH WORKFLOW
         tokio::spawn(async move {
-            debug!(
+            println!(
                 "[PROCESSOR] Starting workflow processing for {}",
                 flow_session_id
             );
@@ -93,13 +96,13 @@ pub async fn processor(
             // Try to get from cache first using a read lock
             {
                 let cache = state.flow_session_cache.read().await;
-                debug!(
+                println!(
                     "[PROCESSOR] Checking cache for flow_session_id: {}",
                     flow_session_id
                 );
                 if let Some(session_data) = cache.get(&flow_session_id) {
                     if let Some(workflow) = &session_data.workflow {
-                        debug!(
+                        println!(
                             "[PROCESSOR] Found workflow in cache for flow_session_id: {}",
                             flow_session_id
                         );
@@ -112,7 +115,7 @@ pub async fn processor(
 
             // Only fetch flow definition from DB if we didn't find it in cache
             if workflow_definition.is_none() {
-                debug!(
+                println!(
                 "[PROCESSOR] No workflow found in cache, fetching from DB for flow_session_id: {}",
                 flow_session_id
             );
@@ -122,11 +125,11 @@ pub async fn processor(
                         .await
                     {
                         Ok(w) => {
-                            debug!("[PROCESSOR] Successfully fetched workflow from DB");
+                            println!("[PROCESSOR] Successfully fetched workflow from DB");
                             w
                         }
                         Err(e) => {
-                            debug!("[PROCESSOR] Error getting workflow definition: {}", e);
+                            println!("[PROCESSOR] Error getting workflow definition: {}", e);
                             return;
                         }
                     };
@@ -136,7 +139,7 @@ pub async fn processor(
                 {
                     let mut cache = state.flow_session_cache.write().await;
                     if cache.get(&flow_session_id).is_none() {
-                        debug!("[PROCESSOR] Creating new session data in cache");
+                        println!("[PROCESSOR] Creating new session data in cache");
                         let session_data = FlowSessionData {
                             workflow: Some(workflow.clone()),
                             tasks: HashMap::new(),
@@ -151,7 +154,7 @@ pub async fn processor(
                 workflow_definition = Some(workflow);
             }
 
-            debug!(
+            println!(
                 "[PROCESSOR] Workflow definition status: {:?}",
                 workflow_definition.is_some()
             );
@@ -159,13 +162,13 @@ pub async fn processor(
             let workflow = match &workflow_definition {
                 Some(w) => w,
                 None => {
-                    debug!("[PROCESSOR] No workflow definition found");
+                    println!("[PROCESSOR] No workflow definition found");
                     //This should never happen
                     return;
                 }
             };
 
-            debug!("[PROCESSOR] Starting workflow execution");
+            println!("[PROCESSOR] Starting workflow execution");
 
             // Create initial trigger task
             let trigger_node = get_trigger_node(&workflow.flow_definition).unwrap();
@@ -177,7 +180,7 @@ pub async fn processor(
                 // Only create trigger task if there are no existing tasks in cache
                 let initial_task = if let Some(trigger_task) = trigger_task {
                     trigger_task
-                } else { 
+                } else {
                     CreateTaskInput {
                         account_id: workflow.account_id.to_string(),
                         processing_order: 0,
@@ -216,7 +219,7 @@ pub async fn processor(
                         if cache.add_task(&flow_session_id, task.clone()) {
                             Some(task)
                         } else {
-                            debug!(
+                            println!(
                                 "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
                                 flow_session_id
                             );
@@ -224,7 +227,7 @@ pub async fn processor(
                         }
                     }
                     Err(e) => {
-                        debug!("[PROCESSOR] Error creating initial task: {}", e);
+                        println!("[PROCESSOR] Error creating initial task: {}", e);
                         None
                     }
                 }
@@ -239,7 +242,7 @@ pub async fn processor(
                 });
 
                 if let Some(task) = incomplete_task {
-                    debug!(
+                    println!(
                         "[PROCESSOR] Resuming from incomplete task: {}",
                         task.task_id
                     );
@@ -253,7 +256,7 @@ pub async fn processor(
                         .max_by_key(|task| task.processing_order);
 
                     if let Some(task) = last_completed_task {
-                        debug!(
+                        println!(
                             "[PROCESSOR] All existing tasks completed, finding next task after: {}",
                             task.task_id
                         );
@@ -309,7 +312,7 @@ pub async fn processor(
                                             if cache.add_task(&flow_session_id, new_task.clone()) {
                                                 Some(new_task)
                                             } else {
-                                                debug!(
+                                                println!(
                                                     "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
                                                     flow_session_id
                                                 );
@@ -317,7 +320,7 @@ pub async fn processor(
                                             }
                                         }
                                         Err(e) => {
-                                            debug!("[PROCESSOR] Error creating next task: {}", e);
+                                            println!("[PROCESSOR] Error creating next task: {}", e);
                                             None
                                         }
                                     };
@@ -326,7 +329,7 @@ pub async fn processor(
                         }
                         None // No next task found
                     } else {
-                        debug!("[PROCESSOR] No existing tasks found in cache");
+                        println!("[PROCESSOR] No existing tasks found in cache");
                         None
                     }
                 }
@@ -340,23 +343,26 @@ pub async fn processor(
             // Process tasks until workflow completion or shutdown
             while let Some(task) = current_task {
                 // Check for shutdown signal after creating new task
-                if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
-                    debug!("[PROCESSOR] Received shutdown signal, stopping task processing");
+                if state
+                    .shutdown_signal
+                    .load(std::sync::atomic::Ordering::SeqCst)
+                {
+                    println!("[PROCESSOR] Received shutdown signal, stopping task processing");
                     break;
                 }
 
                 // Execute the current task and handle its result
-                debug!("[PROCESSOR] Executing task: {}", task.task_id);
+                println!("[PROCESSOR] Executing task: {}", task.task_id);
 
                 let processing_order = task.processing_order;
 
                 let task_result = match execute_task(state.clone(), &client, &task).await {
                     Ok(success_value) => {
-                        debug!("[PROCESSOR] Task {} completed successfully", task.task_id);
+                        println!("[PROCESSOR] Task {} completed successfully", task.task_id);
                         success_value
                     }
                     Err(error) => {
-                        debug!("[PROCESSOR] Task {} failed: {:?}", task.task_id, error);
+                        println!("[PROCESSOR] Task {} failed: {:?}", task.task_id, error);
 
                         // Update task status to failed
                         let state_clone = state.clone();
@@ -371,7 +377,7 @@ pub async fn processor(
                             )
                             .await
                             {
-                                debug!("[PROCESSOR] Failed to update task status: {}", e);
+                                println!("[PROCESSOR] Failed to update task status: {}", e);
                             }
                         });
 
@@ -387,7 +393,7 @@ pub async fn processor(
                             )
                             .await
                             {
-                                debug!("[PROCESSOR] Failed to update flow session status: {}", e);
+                                println!("[PROCESSOR] Failed to update flow session status: {}", e);
                             }
                         });
 
@@ -401,7 +407,7 @@ pub async fn processor(
                             let _ = cache.update_task(&flow_session_id, task_copy);
                         }
 
-                        debug!("[PROCESSOR] Workflow failed: {}", flow_session_id);
+                        println!("[PROCESSOR] Workflow failed: {}", flow_session_id);
 
                         // Send error response to webhook if needed
                         let mut completions = state.flow_completions.lock().await;
@@ -430,7 +436,7 @@ pub async fn processor(
                     )
                     .await
                     {
-                        debug!("[PROCESSOR] Failed to update task status: {}", e);
+                        println!("[PROCESSOR] Failed to update task status: {}", e);
                     }
                 });
 
@@ -521,7 +527,7 @@ pub async fn processor(
                             Some(new_task)
                         }
                         Err(e) => {
-                            debug!("[PROCESSOR] Error creating next task: {}", e);
+                            println!("[PROCESSOR] Error creating next task: {}", e);
                             None
                         }
                     }
@@ -538,16 +544,16 @@ pub async fn processor(
                         )
                         .await
                         {
-                            debug!("[PROCESSOR] Failed to update flow session status: {}", e);
+                            println!("[PROCESSOR] Failed to update flow session status: {}", e);
                         }
                     });
 
-                    debug!("[PROCESSOR] Workflow completed: {}", flow_session_id);
+                    println!("[PROCESSOR] Workflow completed: {}", flow_session_id);
                     None
                 };
             }
 
-            debug!(
+            println!(
                 "[PROCESSOR] Completed workflow processing for {}",
                 flow_session_id
             );
@@ -556,7 +562,7 @@ pub async fn processor(
             {
                 let mut cache = state.flow_session_cache.write().await;
                 cache.invalidate(&flow_session_id);
-                debug!(
+                println!(
                     "[PROCESSOR] Removed flow session {} from cache",
                     flow_session_id
                 );
