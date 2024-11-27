@@ -44,8 +44,8 @@ pnpm dev
 
 ### Authentication and Authorization
 
-- [x] User Mangement via [Supabase](https://supabase.com/)
-- [x] User Oauth Integration Mangement
+- [x] User Management via [Supabase](https://supabase.com/)
+- [x] User Oauth Integration Management
 - [x] Team Auth and Billing System using [BaseJump](https://usebasejump.com/) open source template based on Postgres [Row Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
 
 ### Workflow Studio
