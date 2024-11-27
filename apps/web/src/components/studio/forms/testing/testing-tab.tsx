@@ -6,10 +6,14 @@ import { TaskResult } from "./task-card";
 import { formatDuration, intervalToDuration } from "date-fns";
 
 export default function TestingTab(): JSX.Element {
-  const { testing, workflow: { getActionIcon } } = useAnything();
+  const {
+    testing,
+    workflow: { getActionIcon, setShowExplorer },
+  } = useAnything();
 
   const runWorkflow = async () => {
     try {
+      setShowExplorer(false);
       testing.testWorkflow();
     } catch {
       console.error("Error testing workflow");
@@ -44,11 +48,7 @@ export default function TestingTab(): JSX.Element {
           ) : null}
         </div>
         {testing.worklowTestingSessionTasks.map((task, index) => (
-          <TaskResult
-            key={index}
-            task={task}
-            getActionIcon={getActionIcon}
-          />
+          <TaskResult key={index} task={task} getActionIcon={getActionIcon} />
         ))}
       </div>
     </div>
