@@ -6,6 +6,7 @@ use std::{env, sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
 
+use crate::system_actions::process_http_task::parse_headers;
 use crate::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
 use crate::workflow_types::{CreateTaskInput, DatabaseFlowVersion};
 use crate::AppState;
@@ -27,6 +28,8 @@ pub struct UpdateTaskInput {
     pub ended_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<Value>,
 }
 
 pub async fn get_workflow_definition(
@@ -201,6 +204,7 @@ pub async fn update_task_status(
     state: Arc<AppState>,
     task_id: &Uuid,
     status: &TaskStatus,
+    context: Option<Value>,
     result: Option<Value>,
 ) -> Result<(), String> {
     println!(
@@ -224,11 +228,19 @@ pub async fn update_task_status(
         None
     };
 
+    //Remove sensitive headers from context
+    let cleaned_context = if let Some(context) = context {
+        Some(redact_headers_from_context(&context))
+    } else {
+        None
+    };
+
     let input = UpdateTaskInput {
         task_status: status.as_str().to_string(),
         started_at,
         ended_at,
         result,
+        context: cleaned_context,
     };
 
     state
@@ -304,52 +316,26 @@ pub async fn update_flow_session_status(
     Ok(())
 }
 
-pub async fn get_unfinished_flow_sessions(state: Arc<AppState>) -> Result<Vec<String>, String> {
-    println!("[PROCESSOR DB CALLS] Getting unfinished flow sessions");
+pub fn redact_headers_from_context(context: &Value) -> Value {
+    let mut new_context = context.clone();
+    
+    // Parse headers using parse_headers helper
+    let headers = parse_headers(context);
+    
+    // Create redacted headers object
+    let redacted_headers = headers.into_iter().map(|(key, _value)| {
+        (key, "REDACTED_FROM_VIEWING_HERE_FOR_SECURITY_REASONS_BY_ANYTHING".to_string())
+    }).collect::<Vec<_>>();
 
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    // Convert back to Value object
+    let headers_obj = redacted_headers.into_iter()
+        .map(|(k, v)| (k, Value::String(v)))
+        .collect();
 
-    // Get flow sessions that are in Running or Pending status
-    let response = state
-        .anything_client
-        .from("tasks")
-        .auth(&supabase_service_role_api_key)
-        .or("flow_session_status.eq.running,flow_session_status.eq.pending")
-        .select("flow_session_id")
-        .execute()
-        .await
-        .map_err(|e| {
-            println!(
-                "[PROCESSOR DB CALLS] Failed to execute unfinished sessions request: {}",
-                e
-            );
-            format!("Failed to execute request: {}", e)
-        })?;
-
-    let body = response.text().await.map_err(|e| {
-        println!("[PROCESSOR DB CALLS] Failed to get response body: {}", e);
-        format!("Failed to get response body: {}", e)
-    })?;
-
-    let sessions: Vec<Value> = serde_json::from_str(&body).map_err(|e| {
-        println!("[PROCESSOR DB CALLS] Failed to parse response JSON: {}", e);
-        format!("Failed to parse JSON: {}", e)
-    })?;
-
-    // Extract unique flow session IDs
-    let mut flow_session_ids = HashSet::new();
-    for session in sessions {
-        if let Some(id) = session.get("flow_session_id").and_then(|v| v.as_str()) {
-            flow_session_ids.insert(id.to_string());
-        }
+    // Update the context with redacted headers
+    if let Some(headers) = new_context.get_mut("headers") {
+        *headers = Value::Object(headers_obj);
     }
 
-    println!(
-        "[PROCESSOR DB CALLS] Found {} unfinished flow sessions",
-        flow_session_ids.len()
-    );
-
-    Ok(flow_session_ids.into_iter().collect())
+    new_context
 }

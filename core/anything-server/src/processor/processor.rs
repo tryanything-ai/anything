@@ -356,82 +356,92 @@ pub async fn processor(
 
                 let processing_order = task.processing_order;
 
-                let task_result = match execute_task(state.clone(), &client, &task).await {
-                    Ok(success_value) => {
-                        println!("[PROCESSOR] Task {} completed successfully", task.task_id);
-                        success_value
-                    }
-                    Err(error) => {
-                        println!("[PROCESSOR] Task {} failed: {:?}", task.task_id, error);
-
-                        // Update task status to failed
-                        let state_clone = state.clone();
-                        let task_id = task.task_id.clone();
-                        let error_clone = error.clone();
-                        tokio::spawn(async move {
-                            if let Err(e) = update_task_status(
-                                state_clone,
-                                &task_id,
-                                &TaskStatus::Failed,
-                                Some(error_clone),
-                            )
-                            .await
-                            {
-                                println!("[PROCESSOR] Failed to update task status: {}", e);
-                            }
-                        });
-
-                        // Update flow session status to failed
-                        let state_clone = state.clone();
-                        let flow_session_id_clone = flow_session_id.clone();
-                        tokio::spawn(async move {
-                            if let Err(e) = update_flow_session_status(
-                                &state_clone,
-                                &flow_session_id_clone,
-                                &FlowSessionStatus::Failed,
-                                &TriggerSessionStatus::Failed,
-                            )
-                            .await
-                            {
-                                println!("[PROCESSOR] Failed to update flow session status: {}", e);
-                            }
-                        });
-
-                        // Update cache
-                        {
-                            let mut cache = state.flow_session_cache.write().await;
-                            let mut task_copy = task.clone();
-                            task_copy.result = Some(error.clone());
-                            task_copy.task_status = TaskStatus::Failed;
-                            task_copy.ended_at = Some(Utc::now());
-                            let _ = cache.update_task(&flow_session_id, task_copy);
+                let (task_result, bundled_context) =
+                    match execute_task(state.clone(), &client, &task).await {
+                        Ok(success_value) => {
+                            println!("[PROCESSOR] Task {} completed successfully", task.task_id);
+                            success_value
                         }
+                        Err(error) => {
+                            println!("[PROCESSOR] Task {} failed: {:?}", task.task_id, error);
 
-                        println!("[PROCESSOR] Workflow failed: {}", flow_session_id);
+                            // Update task status to failed
+                            let state_clone = state.clone();
+                            let task_id = task.task_id.clone();
+                            let error_clone = error.clone();
+                            tokio::spawn(async move {
+                                if let Err(e) = update_task_status(
+                                    state_clone,
+                                    &task_id,
+                                    &TaskStatus::Failed,
+                                    Some(error_clone.context),
+                                    Some(error_clone.error),
+                                )
+                                .await
+                                {
+                                    println!("[PROCESSOR] Failed to update task status: {}", e);
+                                }
+                            });
 
-                        // Send error response to webhook if needed
-                        let mut completions = state.flow_completions.lock().await;
-                        if let Some(completion) = completions.remove(&flow_session_id.to_string()) {
-                            if completion.needs_response {
-                                println!(
+                            // Update flow session status to failed
+                            let state_clone = state.clone();
+                            let flow_session_id_clone = flow_session_id.clone();
+                            tokio::spawn(async move {
+                                if let Err(e) = update_flow_session_status(
+                                    &state_clone,
+                                    &flow_session_id_clone,
+                                    &FlowSessionStatus::Failed,
+                                    &TriggerSessionStatus::Failed,
+                                )
+                                .await
+                                {
+                                    println!(
+                                        "[PROCESSOR] Failed to update flow session status: {}",
+                                        e
+                                    );
+                                }
+                            });
+
+                            // Update cache
+                            {
+                                let mut cache = state.flow_session_cache.write().await;
+                                let mut task_copy = task.clone();
+                                task_copy.result = Some(error.error.clone());
+                                task_copy.context = Some(error.context.clone());
+                                task_copy.task_status = TaskStatus::Failed;
+                                task_copy.ended_at = Some(Utc::now());
+                                let _ = cache.update_task(&flow_session_id, task_copy);
+                            }
+
+                            println!("[PROCESSOR] Workflow failed: {}", flow_session_id);
+
+                            // Send error response to webhook if needed
+                            let mut completions = state.flow_completions.lock().await;
+                            if let Some(completion) =
+                                completions.remove(&flow_session_id.to_string())
+                            {
+                                if completion.needs_response {
+                                    println!(
                                     "[PROCESSOR] Sending error response through completion channel"
                                 );
-                                let _ = completion.sender.send(error);
+                                    let _ = completion.sender.send(error.error.clone());
+                                }
                             }
+                            break; // Exit the while loop
                         }
-                        break; // Exit the while loop
-                    }
-                };
+                    };
 
                 // Spawn task status update to DB asynchronously
                 let state_clone = state.clone();
                 let task_id = task.task_id.clone();
                 let task_result_clone = task_result.clone();
+                let bundled_context_clone = bundled_context.clone();
                 tokio::spawn(async move {
                     if let Err(e) = update_task_status(
                         state_clone,
                         &task_id,
                         &TaskStatus::Completed,
+                        Some(bundled_context_clone),
                         task_result_clone.clone(),
                     )
                     .await
@@ -445,6 +455,7 @@ pub async fn processor(
                     let mut cache = state.flow_session_cache.write().await;
                     let mut task_copy = task.clone();
                     task_copy.result = task_result;
+                    task_copy.context = Some(bundled_context);
                     task_copy.task_status = TaskStatus::Completed;
                     task_copy.ended_at = Some(Utc::now());
                     let _ = cache.update_task(&flow_session_id, task_copy);
