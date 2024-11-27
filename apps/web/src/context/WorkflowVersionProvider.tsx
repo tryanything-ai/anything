@@ -95,6 +95,7 @@ export interface WorkflowVersionContextInterface {
   updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
   updateWorkflow: (args: UpdateWorklowArgs) => Promise<void>;
   publishWorkflowVersion: () => Promise<void>;
+  getActionIcon: (action_id: string) => string;
 }
 
 export const WorkflowVersionContext =
@@ -137,6 +138,7 @@ export const WorkflowVersionContext =
     updateNodeData: async () => false,
     updateWorkflow: async () => {},
     publishWorkflowVersion: async () => {},
+    getActionIcon: () => "",
   });
 
 export const useWorkflowVersion = () => useContext(WorkflowVersionContext);
@@ -300,6 +302,11 @@ export const WorkflowVersionProvider = ({
 
     setNodes(updatedNodes);
     setEdges(updatedEdges);
+  };
+
+  const getActionIcon = (action_id: string) => {
+    const node = nodes.find((node) => node.id === action_id);
+    return node?.data?.icon || "";
   };
 
   const updateWorkflow = async (args: UpdateWorklowArgs) => {
@@ -784,6 +791,7 @@ export const WorkflowVersionProvider = ({
   return (
     <WorkflowVersionContext.Provider
       value={{
+        getActionIcon,
         db_flow_id: dbFlowId,
         db_flow_version_id: dbFlowVersionId,
         db_flow: dbFlow,

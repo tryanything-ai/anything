@@ -6,7 +6,7 @@ import { TaskResult } from "./task-card";
 import { formatDuration, intervalToDuration } from "date-fns";
 
 export default function TestingTab(): JSX.Element {
-  const { testing } = useAnything();
+  const { testing, workflow: { getActionIcon } } = useAnything();
 
   const runWorkflow = async () => {
     try {
@@ -44,7 +44,11 @@ export default function TestingTab(): JSX.Element {
           ) : null}
         </div>
         {testing.worklowTestingSessionTasks.map((task, index) => (
-          <TaskResult key={index} task={task} />
+          <TaskResult
+            key={index}
+            task={task}
+            getActionIcon={getActionIcon}
+          />
         ))}
       </div>
     </div>
