@@ -3,24 +3,30 @@ import Link from "next/link";
 import api, { DBFlowTemplate } from "@repo/anything-api";
 
 import { Avatar } from "@/components/avatar";
+import { ErrorBoundary } from "@/components/errorBoundary";
+import { Suspense } from "react";
 
 export default async function WorkflowTemplates() {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<div>Loading templates...</div>}>
+        <WorkflowTemplatesContent />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+async function WorkflowTemplatesContent() {
   let workflowTemplates: DBFlowTemplate[] = [];
   let error = null;
 
   try {
     const templates =
       await api.marketplace.getWorkflowTemplatesForMarketplace();
-    if (templates && templates.length > 0) {
-      workflowTemplates = templates;
-    } else {
-      console.log("No templates found");
-    }
+    workflowTemplates = templates ?? [];
   } catch (err) {
-    const errorMessage =
-      err instanceof Error ? err.message : "An unknown error occurred";
-    error = errorMessage;
-    console.error("Error fetching action templates:", errorMessage);
+    error = err instanceof Error ? err.message : "An unknown error occurred";
+    console.error("Error fetching action templates:", error);
   }
 
   return (
