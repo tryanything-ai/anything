@@ -6,6 +6,12 @@ import { TaskRow } from "@repo/anything-api";
 import TaskStatus from "./task-status";
 
 import dynamic from "next/dynamic";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@repo/ui/components/ui/tabs";
 
 // Dynamically import ReactJson with SSR disabled
 const ReactJson = dynamic(() => import("react-json-view"), {
@@ -24,49 +30,43 @@ export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
       <div className="pb-4">
         <div className="text-xl font-bold">{task.action_label} </div>
       </div>
-      <div>
-        <TaskStatus
-          status={task.task_status}
-          started_at={task.started_at ? task.started_at : ""}
-          ended_at={task.ended_at}
-        />
-      </div>
-      {/* {task.started_at && task.ended_at && (
-        <div>{formatTimeDifference(task.started_at, task.ended_at)}</div>
-      )} */}
-
-      {/* <div>Start Time: {task.started_at}</div>
-      <div>End Time: {task.ended_at}</div> */}
-      {/* {task.started_at && task.ended_at && (
-        <div className="m-4 p-2 rounded-lg bg-green-400">
-          Run Time:{" "}
-          {formatDuration(
-            intervalToDuration({
-              start: new Date(task.started_at),
-              end: new Date(task.ended_at),
-            })
-          )}
-        </div>
-      )} */}
-      {/* {event.config && (
-          <div className="">
-            <div className="text-md">Action Config: </div>
-            <ResultComponent result={event.config} />
-          </div>
-        )} */}
-      {/* {task.context && (
-        <div>
-          <div className="text-md">Generated Context: </div>
-          <ResultComponent result={task.context} />
-        </div>
-      )} */}
-      {task.result && (
-        <div className="my-2">
-          <div className="text-md font-semibold">Results: </div>
-          <ResultComponent
-            result={task.result}
-            collapseStringsAfterLength={20}
-          />
+      {(task.result || task.context) && (
+        <div className="my-4">
+          <Tabs defaultValue="result" className="w-full">
+            <div className="flex items-center">
+              <TabsList className="mr-2">
+                <TabsTrigger value="result">Results</TabsTrigger>
+                <TabsTrigger value="context">Config</TabsTrigger>
+              </TabsList>
+              <TaskStatus
+                status={task.task_status}
+                started_at={task.started_at ? task.started_at : ""}
+                ended_at={task.ended_at}
+              />
+            </div>
+            <TabsContent value="result">
+              {task.result && (
+                <div>
+                  {/* <div className="text-md font-semibold">Results: </div> */}
+                  <ResultComponent
+                    result={task.result}
+                    collapseStringsAfterLength={20}
+                  />
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="context">
+              {task.context && (
+                <div>
+                  {/* <div className="text-md font-semibold">Context: </div> */}
+                  <ResultComponent
+                    result={task.context}
+                    collapseStringsAfterLength={20}
+                  />
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>
