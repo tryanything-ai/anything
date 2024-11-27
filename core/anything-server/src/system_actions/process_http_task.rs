@@ -39,42 +39,10 @@ pub async fn process_http_task(
         let mut request_builder = http_client.request(method, url);
 
         println!("[TASK_ENGINE] Processing headers");
-        if let Some(headers) = bundled_context.get("headers") {
-            match headers {
-                Value::Object(headers_obj) => {
-                    println!("[TASK_ENGINE] Headers are an object: {:?}", headers_obj);
-                    for (key, value) in headers_obj {
-                        if let Some(value_str) = value.as_str() {
-                            println!("[TASK_ENGINE] Adding header: {} = {}", key, value_str);
-                            request_builder = request_builder.header(key.as_str(), value_str);
-                        }
-                    }
-                }
-                Value::String(headers_str) => {
-                    println!("[TASK_ENGINE] Headers are a string: {}", headers_str);
-                    match serde_json::from_str::<Value>(headers_str) {
-                        Ok(Value::Object(parsed_headers)) => {
-                            println!("[TASK_ENGINE] Parsed headers: {:?}", parsed_headers);
-                            for (key, value) in parsed_headers {
-                                if let Some(value_str) = value.as_str() {
-                                    println!(
-                                        "[TASK_ENGINE] Adding header: {} = {}",
-                                        key, value_str
-                                    );
-                                    request_builder =
-                                        request_builder.header(key.as_str(), value_str);
-                                }
-                            }
-                        }
-                        _ => {
-                            println!("[TASK_ENGINE] Failed to parse headers string as JSON object")
-                        }
-                    }
-                }
-                _ => println!("[TASK_ENGINE] Headers are neither an object nor a string"),
-            }
-        } else {
-            println!("[TASK_ENGINE] No headers found in bundled context");
+        let headers = parse_headers(bundled_context);
+        for (key, value) in headers {
+            println!("[TASK_ENGINE] Adding header: {} = {}", key, value);
+            request_builder = request_builder.header(key, value);
         }
 
         if let Some(body) = bundled_context.get("body") {
@@ -158,4 +126,45 @@ pub async fn process_http_task(
         println!("[TASK_ENGINE] Missing required fields (method, url) in task context");
         Err("HTTP Missing required fields (method, url) in task context.".into())
     }
+}
+
+pub fn parse_headers(bundled_context: &Value) -> Vec<(String, String)> {
+    println!("[TASK_ENGINE] Processing headers");
+    let mut headers = Vec::new();
+
+    if let Some(headers_value) = bundled_context.get("headers") {
+        match headers_value {
+            Value::Object(headers_obj) => {
+                println!("[TASK_ENGINE] Headers are an object: {:?}", headers_obj);
+                for (key, value) in headers_obj {
+                    if let Some(value_str) = value.as_str() {
+                        println!("[TASK_ENGINE] Adding header: {} = {}", key, value_str);
+                        headers.push((key.to_string(), value_str.to_string()));
+                    }
+                }
+            }
+            Value::String(headers_str) => {
+                println!("[TASK_ENGINE] Headers are a string: {}", headers_str);
+                match serde_json::from_str::<Value>(headers_str) {
+                    Ok(Value::Object(parsed_headers)) => {
+                        println!("[TASK_ENGINE] Parsed headers: {:?}", parsed_headers);
+                        for (key, value) in parsed_headers {
+                            if let Some(value_str) = value.as_str() {
+                                println!("[TASK_ENGINE] Adding header: {} = {}", key, value_str);
+                                headers.push((key.to_string(), value_str.to_string()));
+                            }
+                        }
+                    }
+                    _ => {
+                        println!("[TASK_ENGINE] Failed to parse headers string as JSON object")
+                    }
+                }
+            }
+            _ => println!("[TASK_ENGINE] Headers are neither an object nor a string"),
+        }
+    } else {
+        println!("[TASK_ENGINE] No headers found in bundled context");
+    }
+
+    headers
 }

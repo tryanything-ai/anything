@@ -99,10 +99,23 @@ export function TaskTable({ tasks }: { tasks: TaskRow[] }): JSX.Element {
               {expandedTaskIds.has(task.task_id) && task.result && (
                 <TableRow>
                   <TableCell colSpan={7} className="bg-gray-50">
-                    <div className="p-4 text-left">
+                    <div className="p-4 text-left h-full">
+                      <div className="text-md font-semibold mb-2">
+                        Configuration:
+                      </div>
+                      {/* Add a client-side only wrapper if needed */}
+                      <div suppressHydrationWarning className="h-full">
+                        <ResultComponent
+                          collapsed={true}
+                          result={task.context}
+                          collapseStringsAfterLength={1000}
+                        />
+                      </div>
+                    </div>
+                    <div className="p-4 text-left h-full">
                       <div className="text-md font-semibold mb-2">Results:</div>
                       {/* Add a client-side only wrapper if needed */}
-                      <div suppressHydrationWarning>
+                      <div suppressHydrationWarning className="h-full">
                         <ResultComponent
                           result={task.result}
                           collapseStringsAfterLength={1000}

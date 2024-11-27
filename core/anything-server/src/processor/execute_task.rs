@@ -17,11 +17,15 @@ use serde_json::{json, Value};
 
 use crate::task_types::ActionType;
 
-pub async fn execute_task(
-    state: Arc<AppState>,
-    client: &Postgrest,
-    task: &Task,
-) -> Result<Option<Value>, Value> {
+#[derive(Debug, Clone)]
+pub struct TaskError {
+    pub error: Value,
+    pub context: Value,
+}
+
+pub type TaskResult = Result<(Option<Value>, Value), TaskError>;
+
+pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Clone state before using it in join
@@ -59,126 +63,23 @@ pub async fn execute_task(
             };
 
             match task_result {
-                Ok(result) => Ok(result),
-                Err(e) => Err(json!({
-                    "error": e.to_string()
-                })),
+                Ok(result) => Ok((result, bundled_context)),
+                Err(e) => Err(TaskError {
+                    error: json!({ "message": e.to_string() }),
+                    context: bundled_context,
+                }),
             }
         }
-        Err(e) => Err(json!({
-            "error": format!("Failed to bundle task context: {}", e)
-        })),
+        Err(e) => {
+            // Create empty context since bundling failed
+            let empty_context = json!({});
+            Err(TaskError {
+                error: json!({ "message": format!("Failed to bundle task context: {}", e) }),
+                context: empty_context,
+            })
+        }
     }
 }
-
-// pub async fn execute_task(
-//     state: Arc<AppState>,
-//     client: &Postgrest,
-//     task: &Task,
-// ) -> Result<Option<Value>, Value> {
-//     println!("[PROCESS TASK] Processing task {}", task.task_id);
-
-//     // Clone state before using it in join
-//     let state_clone = Arc::clone(&state);
-
-//     //Bundle context with results from cache
-//     let bundled_context = bundle_tasks_cached_context(state, client, task, true).await;
-
-//     let http_client = state_clone.http_client.clone();
-
-//     match bundled_context {
-//         Ok(bundled_context) => {
-//             if task.r#type == ActionType::Trigger.as_str().to_string() {
-//                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
-//                 process_trigger_task(&bundled_context)
-//             } else {
-//                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
-//                 match &task.plugin_id {
-//                     Some(plugin_id) => match plugin_id.as_str() {
-//                         "http" => process_http_task(&http_client, &bundled_context).await,
-//                         "response" => {
-//                             process_response_task(
-//                                 state_clone,
-//                                 task.flow_session_id.clone(),
-//                                 &bundled_context,
-//                             )
-//                             .await
-//                         }
-//                         "format_text" => process_text_task(&bundled_context).await,
-//                         "format_date" => process_date_task(&bundled_context).await,
-//                         _ => Ok(Some(json!({
-//                             "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
-//                         }))),
-//                     },
-//                     None => Ok(Some(json!({
-//                         "message": format!("Processed task {} with no plugin_id", task.task_id)
-//                     }))),
-//                 }
-//             }
-//         }
-//         Err(e) => Err(json!({
-//             "error": format!("Failed to bundle task context: {}", e)
-//         })),
-//     }
-// }
-
-//this worked
-// pub async fn execute_task(
-//     state: Arc<AppState>,
-//     client: &Postgrest,
-//     task: &Task,
-// ) -> Result<Option<Value>, Value> {
-//     println!("[PROCESS TASK] Processing task {}", task.task_id);
-
-//     // Clone state before using it in join
-//     let state_clone = Arc::clone(&state);
-
-//     //Bundle context with results from cache
-//     let bundled_context = bundle_tasks_cached_context(state, client, task, true).await;
-
-//     let http_client = state_clone.http_client.clone();
-
-//     let result = match bundled_context {
-//         Ok(bundled_context) => {
-//             let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
-//                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
-//                 process_trigger_task(&bundled_context)
-//             } else {
-//                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
-//                 match &task.plugin_id {
-//                     Some(plugin_id) => match plugin_id.as_str() {
-//                         "http" => process_http_task(&http_client, &bundled_context).await,
-//                         "response" => {
-//                             process_response_task(
-//                                 state_clone,
-//                                 task.flow_session_id.clone(),
-//                                 &bundled_context,
-//                             )
-//                             .await
-//                         }
-//                         "format_text" => process_text_task(&bundled_context).await,
-//                         "format_date" => process_date_task(&bundled_context).await,
-//                         _ => Ok(Some(json!({
-//                             "message": format!("Processed task {} with plugin_id {}", task.task_id, plugin_id)
-//                         }))),
-//                     },
-//                 }
-//             };
-
-//             match task_result {
-//                 Ok(result) => Ok(result.unwrap_or(json!(null))),
-//                 Err(e) => Err(json!({
-//                     "error": e.to_string()
-//                 })),
-//             }
-//         }
-//         Err(e) => Err(json!({
-//             "error": format!("Failed to bundle task context: {}", e)
-//         })),
-//     };
-
-//     result
-// }
 
 pub fn process_missing_plugin(
     plugin_id: &str,
