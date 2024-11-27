@@ -12,6 +12,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@repo/ui/components/ui/tabs";
+import { SvgRenderer } from "../../nodes/node-icon";
 
 // Dynamically import ReactJson with SSR disabled
 const ReactJson = dynamic(() => import("react-json-view"), {
@@ -19,59 +20,70 @@ const ReactJson = dynamic(() => import("react-json-view"), {
   loading: () => <div>Loading...</div>,
 });
 
-export const TaskResult = React.memo(({ task }: { task: TaskRow }) => {
-  return (
-    <div
-      key={task.task_id}
-      className={cn(
-        "h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content",
-      )}
-    >
-      <div className="pb-4">
-        <div className="text-xl font-bold">{task.action_label} </div>
-      </div>
-      {(task.result || task.context) && (
-        <div className="my-4">
-          <Tabs defaultValue="result" className="w-full">
-            <div className="flex items-center">
-              <TabsList className="mr-2">
-                <TabsTrigger value="result">Results</TabsTrigger>
-                <TabsTrigger value="context">Config</TabsTrigger>
-              </TabsList>
-              <TaskStatus
-                status={task.task_status}
-                started_at={task.started_at ? task.started_at : ""}
-                ended_at={task.ended_at}
-              />
+export const TaskResult = React.memo(
+  ({
+    task,
+    getActionIcon,
+  }: {
+    task: TaskRow;
+    getActionIcon: (action_id: string) => string;
+  }) => {
+    return (
+      <div
+        key={task.task_id}
+        className={cn(
+          "h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 border rounded-md p-3 text-primary-content",
+        )}
+      >
+        <div className="pb-2">
+          <div className="text-xl font-bold flex flex-row items-center">
+            <div className="h-6 w-6 mr-2">
+              <SvgRenderer icon={getActionIcon(task.action_id)} />
             </div>
-            <TabsContent value="result">
-              {task.result && (
-                <div>
-                  {/* <div className="text-md font-semibold">Results: </div> */}
-                  <ResultComponent
-                    result={task.result}
-                    collapseStringsAfterLength={20}
-                  />
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="context">
-              {task.context && (
-                <div>
-                  {/* <div className="text-md font-semibold">Context: </div> */}
-                  <ResultComponent
-                    result={task.context}
-                    collapseStringsAfterLength={20}
-                  />
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+            {task.action_label}
+          </div>
         </div>
-      )}
-    </div>
-  );
-});
+        {(task.result || task.context) && (
+          <div className="">
+            <Tabs defaultValue="result" className="w-full">
+              <div className="flex items-center">
+                <TabsList className="mr-2">
+                  <TabsTrigger value="result">Results</TabsTrigger>
+                  <TabsTrigger value="context">Config</TabsTrigger>
+                </TabsList>
+                <TaskStatus
+                  status={task.task_status}
+                  started_at={task.started_at ? task.started_at : ""}
+                  ended_at={task.ended_at}
+                />
+              </div>
+              <TabsContent value="result">
+                {task.result && (
+                  <div>
+                    <ResultComponent
+                      result={task.result}
+                      collapseStringsAfterLength={20}
+                    />
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="context">
+                {task.context && (
+                  <div>
+                    <ResultComponent
+                      result={task.context}
+                      collapseStringsAfterLength={20}
+                    />
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+      </div>
+    );
+  },
+);
 
 export const ResultComponent = ({
   result,

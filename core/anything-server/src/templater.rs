@@ -96,25 +96,63 @@ impl Templater {
                 if current.is_array() {
                     current = current.get(index)?;
                 } else {
-                    return None; // Not an array when we expected one
+                    return None;
                 }
             } else {
                 current = current.get(part)?;
             }
 
+            // Try to parse string values as JSON for nested traversal
             if let Value::String(s) = current {
-                if let Ok(parsed) = serde_json::from_str(s) {
+                if let Ok(parsed) = Self::try_parse_json(s) {
                     if i < parts.len() - 1 {
-                        // If not the last part, continue traversing
                         return Self::get_value_from_path(&parsed, &parts[i + 1..].join("."));
                     } else {
-                        // If it's the last part, return the parsed value
                         return Some(parsed);
                     }
                 }
             }
         }
         Some(current.clone())
+    }
+
+    fn try_parse_json(s: &str) -> Result<Value, serde_json::Error> {
+        // Try parsing with various cleaning steps
+        let attempts = vec![
+            s.to_string(),
+            s.replace("\n", "").replace("\r", ""),
+            s.replace("\n", "").replace("\r", "").replace(" ", ""),
+        ];
+
+        for attempt in attempts {
+            if let Ok(parsed) = serde_json::from_str(&attempt) {
+                return Ok(parsed);
+            }
+        }
+
+        // If all attempts fail, return the original parsing error
+        serde_json::from_str(s)
+    }
+
+    fn deep_clean_value(value: Value) -> Value {
+        match value {
+            Value::String(s) => {
+                if let Ok(parsed) = Self::try_parse_json(&s) {
+                    Self::deep_clean_value(parsed)
+                } else {
+                    Value::String(s)
+                }
+            }
+            Value::Array(arr) => {
+                Value::Array(arr.into_iter().map(Self::deep_clean_value).collect())
+            }
+            Value::Object(map) => Value::Object(
+                map.into_iter()
+                    .map(|(k, v)| (k, Self::deep_clean_value(v)))
+                    .collect(),
+            ),
+            _ => value,
+        }
     }
 
     pub fn render(&self, template_name: &str, context: &Value) -> Result<Value, TemplateError> {
@@ -126,7 +164,9 @@ impl Templater {
                 variable: template_name.to_string(),
             })?;
 
-        self.render_value(template, context)
+        // Clean the context first
+        let cleaned_context = Self::deep_clean_value(context.clone());
+        self.render_value(template, &cleaned_context)
     }
 
     fn render_value(&self, value: &Value, context: &Value) -> Result<Value, TemplateError> {
@@ -152,13 +192,18 @@ impl Templater {
             }
             Value::String(s) => {
                 println!("[TEMPLATER] Rendering string: {}", s);
-                
+
+                // Try to parse the string as JSON first
+                if let Ok(parsed_value) = Self::try_parse_json(s) {
+                    println!("[TEMPLATER] Successfully parsed string as JSON");
+                    return self.render_value(&parsed_value, context);
+                }
+
                 // Special case: if the string is exactly "{{variables}}" (or any other full variable),
                 // return the raw value instead of string conversion
                 if s.trim().starts_with("{{") && s.trim().ends_with("}}") {
                     let variable = s.trim()[2..s.trim().len() - 2].trim();
                     if !variable.contains('.') {
-                        // Only for top-level variables
                         if let Some(value) = Self::get_value_from_path(context, variable) {
                             return Ok(value);
                         }
@@ -198,21 +243,7 @@ impl Templater {
                 }
 
                 println!("[TEMPLATER] Rendered string: {}", result);
-
-                // Try to parse the result as JSON
-                // match serde_json::from_str(&result) {
-                //     Ok(json_value) => {
-                //         println!("[TEMPLATER] Parsed as JSON: {:?}", json_value);
-                //         Ok(json_value)
-                //     }
-                //     Err(_) => {
-                //         println!("[TEMPLATER] Not valid JSON, returning as string");
-                //         Ok(Value::String(result))
-                //     }
-                // }
-                //TODO: doing this like this helps make context items that a strings work. so our OAUTH right now
-                // But Maybe it prevents from json that has markdown in it working
-                Ok(Value::String(result)) //--> this one might work better for text inside json.
+                Ok(Value::String(result))
             }
             _ => {
                 println!("[TEMPLATER] Returning value as-is: {:?}", value);
