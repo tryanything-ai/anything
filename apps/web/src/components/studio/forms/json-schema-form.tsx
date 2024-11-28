@@ -173,8 +173,13 @@ export function JsonSchemaForm({
   }, []);
 
   return (
-    <form name={name} onSubmit={handleSubmit} noValidate>
-      <div>
+    <form
+      name={name}
+      onSubmit={handleSubmit}
+      noValidate
+      className="w-full overflow-hidden"
+    >
+      <div className="w-full overflow-hidden">
         {fields?.map((field: any) => {
           const { name: fieldName, inputType } = field;
           console.log("[DEBUG] Field mapping:", {
@@ -187,32 +192,33 @@ export function JsonSchemaForm({
           console.log("Field Value: ", fieldName, " ", values?.[fieldName]);
 
           return (
-            <FieldComponent
-              key={fieldName}
-              value={values?.[fieldName]}
-              error={errors[fieldName]}
-              submited={submited}
-              type={field.type}
-              onChange={handleFieldChange}
-              onFocus={() => handleFieldFocus(fieldName)}
-              onSelect={(e: any) => handleCursorChange(e, fieldName)}
-              onClick={(e: any) => handleCursorChange(e, fieldName)}
-              onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
-              onValueChange={(value: any) =>
-                handleFieldChange(fieldName, value)
-              }
-              disabled={disabled}
-              name={field.name}
-              label={field.label}
-              options={field.options}
-              description={field.description}
-              isVisible={field.isVisible}
-              required={field.required}
-              provider={field.provider}
-            />
+            <div className="w-full overflow-hidden" key={fieldName}>
+              <FieldComponent
+                value={values?.[fieldName]}
+                error={errors[fieldName]}
+                submited={submited}
+                type={field.type}
+                onChange={handleFieldChange}
+                onFocus={() => handleFieldFocus(fieldName)}
+                onSelect={(e: any) => handleCursorChange(e, fieldName)}
+                onClick={(e: any) => handleCursorChange(e, fieldName)}
+                onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
+                onValueChange={(value: any) =>
+                  handleFieldChange(fieldName, value)
+                }
+                disabled={disabled}
+                name={field.name}
+                label={field.label}
+                options={field.options}
+                description={field.description}
+                isVisible={field.isVisible}
+                required={field.required}
+                provider={field.provider}
+              />
+            </div>
           );
         })}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-2">
           <Button type="submit" variant={"default"} disabled={disabled}>
             Submit
           </Button>

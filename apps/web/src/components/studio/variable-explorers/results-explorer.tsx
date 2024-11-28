@@ -105,11 +105,11 @@ export function ResultsExplorer(): JSX.Element {
             results.map((task: TaskRow) => (
               <div
                 key={task.task_id}
-                className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md"
+                className="h-auto w-full mb-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md"
               >
                 <div className="p-3">
-                  <div 
-                    className="flex items-center mb-2 cursor-pointer" 
+                  <div
+                    className="flex items-center mb-2 cursor-pointer"
                     onClick={() => toggleTaskExpansion(task.task_id)}
                   >
                     <div className="p-0 h-6 w-6 mr-1 flex items-center justify-center">

@@ -99,7 +99,7 @@ export function SecretsExplorer(): JSX.Element {
             </div>
           )}
           {secrets && secrets.length > 0 && (
-            <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
+            <div className="h-auto w-full flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
               <div className="p-3">
                 <div className="flex-1 font-bold mb-2">Secrets</div>
                 <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">

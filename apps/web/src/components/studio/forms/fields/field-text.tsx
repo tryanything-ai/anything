@@ -47,9 +47,9 @@ export default function FieldText({
   }
 
   return (
-    <div className="grid gap-3 my-4">
+    <div className="grid gap-3 my-2 w-full overflow-hidden">
       <Label htmlFor={name}>{label}</Label>
-      <div className="relative">
+      <div className="relative w-full overflow-hidden">
         <Editor
           // {...props}
           id={name}
@@ -77,8 +77,20 @@ export default function FieldText({
           }}
           padding={10}
           disabled={disabled}
+          style={{
+            minHeight: "2.5rem",
+            maxHeight: "300px",
+            height: "auto",
+            width: "100%",
+            maxWidth: "100%",
+            overflow: "auto",
+            whiteSpace: "pre-wrap",
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+            boxSizing: "border-box",
+          }}
           className={cn(
-            "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
             className,
           )}
           // {...props} //order matters here which is kinda wild!

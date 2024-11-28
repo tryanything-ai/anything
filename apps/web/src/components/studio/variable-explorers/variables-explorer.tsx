@@ -79,7 +79,7 @@ export function VariablesExplorer(): JSX.Element {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <div className="p-2">
+      <div className="pt-2 pl-2">
         <Button
           onClick={() => setShowExplorer(false)}
           variant="outline"
@@ -90,7 +90,7 @@ export function VariablesExplorer(): JSX.Element {
         </Button>
       </div>
       <ScrollArea className="flex-1">
-        <div className="p-2">
+        <div className="px-2">
           {selected_node_data &&
             selected_node_data.type !== ActionType.Trigger && (
               <div className="w-full">
