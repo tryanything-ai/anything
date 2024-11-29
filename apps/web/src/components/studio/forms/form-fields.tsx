@@ -26,6 +26,7 @@ import FieldXml from "./fields/field-xml";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldTextNew,
+  simple_text: FieldText, //old text editor still used in ui some places but not in actually dynamic forms
   json: FieldJson,
   html: FieldHtml,
   xml: FieldXml,

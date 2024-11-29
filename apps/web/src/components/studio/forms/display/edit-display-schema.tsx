@@ -16,6 +16,9 @@ export let EDIT_ACTION_DISPLAY_SCHEMA: any = {
       title: "Icon",
       description: "SVG icon to represent the action. Often a company logo.",
       type: "string",
+      "x-jsf-presentation": {
+        inputType: "simple_text",
+      },
     },
   },
   "x-jsf-order": ["label", "description", "icon"],
