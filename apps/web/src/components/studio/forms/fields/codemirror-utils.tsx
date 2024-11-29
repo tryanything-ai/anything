@@ -1,5 +1,4 @@
-import React from "react";
-import CodeMirror, {
+import {
   Decoration,
   DecorationSet,
   EditorView,
@@ -8,8 +7,6 @@ import CodeMirror, {
   WidgetType,
   MatchDecorator,
 } from "@uiw/react-codemirror";
-import { Label } from "@repo/ui/components/ui/label";
-import { cn } from "@repo/ui/lib/utils";
 
 export class PropWidget extends WidgetType {
   private static activeWidgets = new Set<HTMLElement>();

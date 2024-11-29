@@ -21,10 +21,14 @@ import { useAnything } from "@/context/AnythingContext";
 import FieldText from "./fields/field-text";
 import FieldJson from "./fields/field-json";
 import FieldTextNew from "./fields/field-text-new";
+import FieldHtml from "./fields/field-html";
+import FieldXml from "./fields/field-xml";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldTextNew,
   json: FieldJson,
+  html: FieldHtml,
+  xml: FieldXml,
   account: FieldAccount,
   number: FieldNumber,
   radio: FieldRadio,
@@ -35,7 +39,7 @@ export const fieldsMap: { [key: string]: any } = {
 
 function FieldNumber(props: any) {
   return (
-    <FieldText
+    <FieldTextNew
       inputMode="decimal"
       // accepts numbers and dots (eg 10, 15.50)
       pattern="^[0-9.]*$"

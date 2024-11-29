@@ -30,10 +30,7 @@ export default function FieldJson({
 }: any) {
   const [editorValue, setEditorValue] = React.useState(value || "{}");
   const [isValidJson, setIsValidJson] = React.useState(true);
-
-  if (!isVisible) {
-    return null;
-  }
+  const editorRef = React.useRef<any>(null);
 
   const handleChange = React.useCallback(
     (val: string) => {
@@ -60,6 +57,18 @@ export default function FieldJson({
     }
   }, [value]);
 
+  const handleCursorActivity = React.useCallback(
+    (viewUpdate: any) => {
+      if (viewUpdate.view) {
+        const pos = viewUpdate.view.state.selection.main.head;
+        if (onSelect) {
+          onSelect({ target: { selectionStart: pos, selectionEnd: pos } });
+        }
+      }
+    },
+    [onSelect],
+  );
+
   const jsonLinter = linter((view) => {
     const doc = view.state.doc.toString();
     try {
@@ -67,7 +76,6 @@ export default function FieldJson({
       return [];
     } catch (e) {
       const error = e as SyntaxError;
-      // Extract line and character position from the error message
       const match = error.message.match(/at position (\d+)/);
       const pos = match ? parseInt(match[1]!) : 0;
 
@@ -82,40 +90,23 @@ export default function FieldJson({
     }
   });
 
-  const handleCursorActivity = React.useCallback(
-    (view: any) => {
-      const selection = view.state.selection.main;
-      console.log("[JSON CURSOR]", selection.from);
-
-      // Create synthetic event matching the expected format
-      const target = {
-        selectionStart: selection.from,
-        selectionEnd: selection.to,
-      };
-      const syntheticEvent = {
-        target,
-        type: "select",
-      };
-
-      // Pass to parent form handler
-      onSelect?.(syntheticEvent);
-    },
-    [onSelect],
-  );
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <div className="grid gap-3 my-2 w-full">
       <Label htmlFor={name}>{label}</Label>
       <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
         <CodeMirror
+          ref={editorRef}
           value={editorValue}
           onChange={handleChange}
           onFocus={onFocus}
           onClick={onClick}
           onKeyUp={onKeyUp}
-          onSelect={onSelect}
-          readOnly={disabled}
           onUpdate={handleCursorActivity}
+          readOnly={disabled}
           extensions={[json(), lintGutter(), jsonLinter, propsPlugin]}
           basicSetup={{
             lineNumbers: false,

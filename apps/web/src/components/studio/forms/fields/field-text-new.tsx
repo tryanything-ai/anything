@@ -31,10 +31,7 @@ export default function FieldTextNew({
   required,
 }: any) {
   const [editorValue, setEditorValue] = React.useState(value || "");
-
-  if (!isVisible) {
-    return null;
-  }
+  const editorRef = React.useRef<any>(null);
 
   const handleChange = React.useCallback(
     (val: string) => {
@@ -44,45 +41,41 @@ export default function FieldTextNew({
     [name, onChange],
   );
 
+  const handleCursorActivity = React.useCallback(
+    (viewUpdate: any) => {
+      if (viewUpdate.view) {
+        const pos = viewUpdate.view.state.selection.main.head;
+        if (onSelect) {
+          onSelect({ target: { selectionStart: pos, selectionEnd: pos } });
+        }
+      }
+    },
+    [onSelect],
+  );
+
   React.useEffect(() => {
     if (value !== editorValue) {
       setEditorValue(value || "");
     }
   }, [value]);
 
-  const handleCursorActivity = React.useCallback(
-    (view: any) => {
-      const selection = view.state.selection.main;
-
-      // Create synthetic event matching the expected format
-      const target = {
-        selectionStart: selection.from,
-        selectionEnd: selection.to,
-      };
-      const syntheticEvent = {
-        target,
-        type: "select",
-      };
-
-      // Pass to parent form handler
-      onSelect?.(syntheticEvent);
-    },
-    [onSelect],
-  );
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <div className="grid gap-3 my-2 w-full">
       <Label htmlFor={name}>{label}</Label>
       <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
         <CodeMirror
+          ref={editorRef}
           value={editorValue}
           onChange={handleChange}
           onFocus={onFocus}
           onClick={onClick}
           onKeyUp={onKeyUp}
-          onSelect={onSelect}
-          readOnly={disabled}
           onUpdate={handleCursorActivity}
+          readOnly={disabled}
           extensions={[propsPlugin]}
           basicSetup={{
             lineNumbers: false,
