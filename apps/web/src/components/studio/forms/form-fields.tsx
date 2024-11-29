@@ -20,9 +20,10 @@ import Link from "next/link";
 import { useAnything } from "@/context/AnythingContext";
 import FieldText from "./fields/field-text";
 import FieldJson from "./fields/field-json";
+import FieldTextNew from "./fields/field-text-new";
 
 export const fieldsMap: { [key: string]: any } = {
-  text: FieldText,
+  text: FieldTextNew,
   json: FieldJson,
   account: FieldAccount,
   number: FieldNumber,

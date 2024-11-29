@@ -34,6 +34,9 @@ export function JsonSchemaForm({
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
   const [submited, setSubmitted] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [invalidJsonFields, setInvalidJsonFields] = useState<Set<string>>(
+    new Set(),
+  );
 
   const valuesRef = useRef(values);
 
@@ -58,22 +61,31 @@ export function JsonSchemaForm({
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
-  const handleFieldChange = (fieldName: any, value: any) => {
+  const handleFieldChange = (fieldName: any, value: any, isValid?: boolean) => {
     if (disabled) return;
-    console.log(
-      `[JSON SCHEMA FORM] [HANDLE FIELD CHANGE] ${fieldName}:`,
-      value,
-    );
+
+    // Update invalid JSON fields tracking
+    setInvalidJsonFields((prev) => {
+      const newSet = new Set(prev);
+      if (isValid === false) {
+        newSet.add(fieldName);
+      } else {
+        newSet.delete(fieldName);
+      }
+      return newSet;
+    });
+
     setValues((prevValues) => {
       const newValues = {
         ...prevValues,
         [fieldName]: value,
       };
-      console.log("[NEW VALUES]", newValues);
 
-      // Add validation on field change
-      const { errors, jsonValues } = handleInternalValidation(newValues);
-      setErrors(errors);
+      // Only validate if all JSON fields are valid
+      if (isValid !== false) {
+        const { errors, jsonValues } = handleInternalValidation(newValues);
+        setErrors(errors);
+      }
 
       return newValues;
     });
@@ -172,6 +184,8 @@ export function JsonSchemaForm({
     };
   }, []);
 
+  const isSubmitDisabled = disabled || invalidJsonFields.size > 0;
+
   return (
     <form
       name={name}
@@ -219,13 +233,18 @@ export function JsonSchemaForm({
           );
         })}
         <div className="flex items-center gap-2 mt-2">
-          <Button type="submit" variant={"default"} disabled={disabled}>
+          <Button type="submit" variant={"default"} disabled={isSubmitDisabled}>
             Submit
           </Button>
+          {/* {invalidJsonFields.size > 0 && (
+            <span className="text-red-500">
+              Please fix invalid JSON before submitting
+            </span>
+          )} */}
           {hasUnsavedChanges && (
             <>
               <TriangleAlertIcon className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm ">Unsaved changes</span>
+              <span className="text-sm">Unsaved changes</span>
             </>
           )}
         </div>

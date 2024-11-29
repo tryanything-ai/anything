@@ -1,9 +1,18 @@
 import React from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, {
+  Decoration,
+  DecorationSet,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  WidgetType,
+  MatchDecorator,
+} from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { linter, lintGutter } from "@codemirror/lint";
+import { propsPlugin } from "./codemirror-utils";
 
 export default function FieldJson({
   name,
@@ -20,6 +29,7 @@ export default function FieldJson({
   className,
 }: any) {
   const [editorValue, setEditorValue] = React.useState(value || "{}");
+  const [isValidJson, setIsValidJson] = React.useState(true);
 
   if (!isVisible) {
     return null;
@@ -27,8 +37,19 @@ export default function FieldJson({
 
   const handleChange = React.useCallback(
     (val: string) => {
-      setEditorValue(val);
-      onChange(name, val);
+      try {
+        // Try to parse and format the JSON
+        const parsed = JSON.parse(val);
+        const formatted = JSON.stringify(parsed, null, 2);
+        setEditorValue(formatted);
+        setIsValidJson(true);
+        onChange(name, formatted, true);
+      } catch (e) {
+        // If it's not valid JSON, update with raw value but mark as invalid
+        setEditorValue(val);
+        setIsValidJson(false);
+        onChange(name, val, false);
+      }
     },
     [name, onChange],
   );
@@ -85,13 +106,7 @@ export default function FieldJson({
   return (
     <div className="grid gap-3 my-2 w-full">
       <Label htmlFor={name}>{label}</Label>
-      <div
-      // className={cn(
-      //   "w-full rounded-md border border-input bg-background ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-      //   disabled && "opacity-50 cursor-not-allowed",
-      //   className,
-      // )}
-      >
+      <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
         <CodeMirror
           value={editorValue}
           onChange={handleChange}
@@ -101,7 +116,7 @@ export default function FieldJson({
           onSelect={onSelect}
           readOnly={disabled}
           onUpdate={handleCursorActivity}
-          extensions={[json(), lintGutter(), jsonLinter]}
+          extensions={[json(), lintGutter(), jsonLinter, propsPlugin]}
           basicSetup={{
             lineNumbers: false,
             foldGutter: false,
@@ -114,9 +129,9 @@ export default function FieldJson({
             overflow: "auto",
             wordWrap: "break-word",
             overflowWrap: "break-word",
+            whiteSpace: "pre-wrap",
             boxSizing: "border-box",
             fontFamily: "monospace",
-            whiteSpace: "pre",
           }}
           className={cn(
             "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
@@ -124,6 +139,7 @@ export default function FieldJson({
           )}
         />
       </div>
+      {!isValidJson && <div className="text-red-500">Invalid JSON</div>}
       {error && <div className="text-red-500">{error}</div>}
     </div>
   );

@@ -12,7 +12,9 @@
     "gen-anything-supabase-types": "supabase gen types typescript --local > src/types/generated/supabase-anything-generated.ts"
   },
   "dependencies": {
+    "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/lint": "^6.8.4",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-dropdown-menu": "^2.0.6",

@@ -8,24 +8,27 @@ import CodeMirror, {
   WidgetType,
   MatchDecorator,
 } from "@uiw/react-codemirror";
-import { html } from "@codemirror/lang-html";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { propsPlugin } from "./codemirror-utils";
 
-export default function FieldHtml({
+export default function FieldTextNew({
+  type,
   name,
   label,
+  description,
+  className,
   value,
   isVisible,
   error,
+  submited,
+  onFocus,
   disabled,
   onChange,
   onSelect,
   onClick,
   onKeyUp,
-  onFocus,
-  className,
+  required,
 }: any) {
   const [editorValue, setEditorValue] = React.useState(value || "");
 
@@ -80,7 +83,7 @@ export default function FieldHtml({
           onSelect={onSelect}
           readOnly={disabled}
           onUpdate={handleCursorActivity}
-          extensions={[html(), propsPlugin]}
+          extensions={[propsPlugin]}
           basicSetup={{
             lineNumbers: false,
             foldGutter: false,
@@ -97,6 +100,7 @@ export default function FieldHtml({
             whiteSpace: "pre-wrap",
             boxSizing: "border-box",
             fontFamily: "monospace",
+            outline: "none",
           }}
           className={cn(
             "w-full overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
@@ -104,7 +108,7 @@ export default function FieldHtml({
           )}
         />
       </div>
-      {error && <div className="text-red-500">{error}</div>}
+      {error && submited && <div className="text-red-500">{error}</div>}
     </div>
   );
 }
