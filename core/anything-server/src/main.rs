@@ -173,7 +173,6 @@ async fn main() {
         HeaderValue::from_static("*"),
     );
 
-
     let (trigger_engine_signal, _) = watch::channel("".to_string());
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
@@ -256,6 +255,7 @@ pub async fn root() -> impl IntoResponse {
             put(workflows::publish_workflow_version),
         )
         .route("/account/:account_id/workflow", post(workflows::create_workflow))
+        .route("/account/:account_id/workflow/json", post(workflows::create_workflow_from_json))
         .route("/account/:account_id/workflow/:id", delete(workflows::delete_workflow))
         .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
         .route("/account/:account_id/actions", get(actions::get_actions))

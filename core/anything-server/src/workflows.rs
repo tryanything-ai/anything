@@ -5,19 +5,18 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value; 
+use serde_json::Value;
 use std::sync::Arc;
 
-use crate::workflow_types:: WorkflowVersionDefinition; 
-use crate::AppState;
 use crate::supabase_jwt_middleware::User;
+use crate::workflow_types::WorkflowVersionDefinition;
+use crate::AppState;
 use uuid::Uuid;
 
 use dotenv::dotenv;
 use std::env;
 
 use chrono::Utc;
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
@@ -28,7 +27,16 @@ pub struct BaseFlowVersionInput {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateWorkflowHandleInput {
+    name: Option<String>,
+    description: Option<String>,
     flow_id: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateWorkflowFromJsonInput {
+    flow_id: String,
+    name: Option<String>,
+    flow_template: Value,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -271,8 +279,8 @@ pub async fn create_workflow(
 
     let input = CreateWorkflowInput {
         flow_id: payload.flow_id.clone(),
-        flow_name: "New Default Flow".to_string(),
-        description: "New Default Flow".to_string(),
+        flow_name: payload.name.unwrap_or("New Workflow".to_string()),
+        description: payload.description.unwrap_or("".to_string()),
         account_id: account_id.clone(),
     };
 
@@ -338,6 +346,137 @@ pub async fn create_workflow(
         }
     };
 
+    Json(body).into_response()
+}
+
+pub async fn create_workflow_from_json(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+    _headers: HeaderMap,
+    Json(payload): Json<CreateWorkflowFromJsonInput>,
+) -> impl IntoResponse {
+    println!("[WORKFLOW FROM JSON] Handling create_workflow_from_json request");
+
+    // Extract and validate required fields
+    let name = match payload.name {
+        Some(name) if !name.trim().is_empty() => name,
+        _ => {
+            println!("[WORKFLOW FROM JSON] Name field validation failed - empty or missing name");
+            return (StatusCode::BAD_REQUEST, "Name field is required").into_response()
+        },
+    };
+
+    // Validate the flow template can be parsed
+    println!("[WORKFLOW FROM JSON] Attempting to parse flow template");
+    let flow_definition: Result<WorkflowVersionDefinition, _> =
+        serde_json::from_value(payload.flow_template.clone());
+
+    if let Err(e) = flow_definition {
+        println!("[WORKFLOW FROM JSON] Flow template parsing failed: {}", e);
+        return (
+            StatusCode::BAD_REQUEST,
+            format!("Invalid flow template format: {}", e),
+        )
+            .into_response();
+    }
+    println!("[WORKFLOW FROM JSON] Flow template successfully parsed");
+
+    let flow_id = payload.flow_id;
+    println!("[WORKFLOW FROM JSON] Using flow_id: {}", flow_id);
+
+    let client = &state.anything_client;
+
+    // Create the workflow
+    let input = CreateWorkflowInput {
+        flow_id: flow_id.clone(),
+        flow_name: name.clone(),
+        description: "".to_string(),
+        account_id: account_id.clone(),
+    };
+    println!("[WORKFLOW FROM JSON] Creating workflow with name: {}", name);
+
+    let _response = match client
+        .from("flows")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&input).unwrap())
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[WORKFLOW FROM JSON] Successfully created workflow");
+            response
+        },
+        Err(e) => {
+            println!("[WORKFLOW FROM JSON] Failed to create workflow: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create workflow",
+            )
+                .into_response()
+        }
+    };
+
+    // Create the flow version with the template
+    println!("[WORKFLOW FROM JSON] Creating flow version");
+    let version_input = BaseFlowVersionInput {
+        account_id: account_id.clone(),
+        flow_id: flow_id.clone(),
+        flow_definition: payload.flow_template,
+    };
+
+    let version_response = match client
+        .from("flow_versions")
+        .auth(user.jwt.clone())
+        .insert(serde_json::to_string(&version_input).unwrap())
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[WORKFLOW FROM JSON] Flow version creation response: {:?}", response);
+            response
+        }
+        Err(e) => {
+            println!("[WORKFLOW FROM JSON] Failed to create workflow version: {:?}", e);
+            println!("[WORKFLOW FROM JSON] Attempting to cleanup failed workflow");
+            // Delete the flow since version creation failed
+            let _cleanup = client
+                .from("flows")
+                .auth(user.jwt.clone())
+                .eq("flow_id", &flow_id)
+                .eq("account_id", &account_id)
+                .delete()
+                .execute()
+                .await;
+            println!("[WORKFLOW FROM JSON] Cleanup completed");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create workflow version",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match version_response.json::<serde_json::Value>().await {
+        Ok(body) => {
+            println!("[WORKFLOW FROM JSON] Successfully parsed version response");
+            serde_json::json!({
+                "workflow_id": flow_id,
+                "workflow_version_id": body["flow_version_id"].as_str().unwrap_or("")
+            })
+        },
+        Err(e) => {
+            println!("[WORKFLOW FROM JSON] Failed to parse version response: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response()
+        }
+    };
+
+    println!("[WORKFLOW FROM JSON] Successfully completed workflow creation");
     Json(body).into_response()
 }
 

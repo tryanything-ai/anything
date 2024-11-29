@@ -61,7 +61,7 @@ export const getFlowVersionById = async (account_id: string, workflowId: string,
   }
 }
 
-export const createFlow = async (account_id: string) => {
+export const createFlow = async (account_id: string, name: string, description: string) => {
   try {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -77,7 +77,40 @@ export const createFlow = async (account_id: string) => {
           Authorization: `${session.access_token}`,
         },
         body: JSON.stringify({
-          flow_id
+          flow_id,
+          name,
+          description,
+        }),
+      });
+      const data = await response.json();
+      console.log('Data from /api/workflows POST:', data);
+      return data;
+    }
+  } catch (error) {
+    console.error('Error creating Workflow:', error);
+  } finally {
+  }
+};
+
+export const createFlowFromJson = async (account_id: string, name: string, flow_template: any) => {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Creating Workflow');
+
+    if (session) {
+      let flow_id = uuidv4();
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${session.access_token}`,
+        },
+        body: JSON.stringify({
+          flow_id,
+          name,
+          flow_template,
         }),
       });
       const data = await response.json();
