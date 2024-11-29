@@ -192,7 +192,7 @@ export function JsonSchemaForm({
           console.log("Field Value: ", fieldName, " ", values?.[fieldName]);
 
           return (
-            <div className="w-full overflow-hidden" key={fieldName}>
+            <div className="w-full overflow-hidden px-1" key={fieldName}>
               <FieldComponent
                 value={values?.[fieldName]}
                 error={errors[fieldName]}

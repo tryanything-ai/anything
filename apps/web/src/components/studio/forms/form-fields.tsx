@@ -19,9 +19,11 @@ import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
 import { useAnything } from "@/context/AnythingContext";
 import FieldText from "./fields/field-text";
+import FieldJson from "./fields/field-json";
 
 export const fieldsMap: { [key: string]: any } = {
   text: FieldText,
+  json: FieldJson,
   account: FieldAccount,
   number: FieldNumber,
   radio: FieldRadio,

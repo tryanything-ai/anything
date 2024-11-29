@@ -74,6 +74,10 @@ export default function InputVariablesForm(): JSX.Element {
     jsonValues: any,
     { formValues }: any,
   ) {
+    console.log("[INPUT VARIABLES FORM] Submitting!", {
+      formValues,
+      jsonValues,
+    });
     await updateNodeData(["variables"], [formValues]);
     console.log("Submitted!", { formValues, jsonValues });
   }
