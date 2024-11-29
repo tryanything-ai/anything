@@ -1,13 +1,5 @@
 import React from "react";
-import CodeMirror, {
-  Decoration,
-  DecorationSet,
-  EditorView,
-  ViewPlugin,
-  ViewUpdate,
-  WidgetType,
-  MatchDecorator,
-} from "@uiw/react-codemirror";
+import CodeMirror from "@uiw/react-codemirror";
 import { html } from "@codemirror/lang-html";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";

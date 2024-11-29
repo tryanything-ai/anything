@@ -235,7 +235,13 @@ impl Templater {
                     println!("[TEMPLATER] Variable value: {:?}", value);
 
                     let replacement = match value {
-                        Value::String(s) => s.clone(),
+                        Value::String(s) => {
+                            if self.is_json_string_context(&result, open_idx) {
+                                s.clone() // Inside JSON string - use value as-is
+                            } else {
+                                format!("\"{}\"", s) // Outside JSON string - add quotes
+                            }
+                        }
                         _ => value.to_string(),
                     };
                     result.replace_range(open_idx..close_idx + 2, &replacement);
@@ -250,5 +256,20 @@ impl Templater {
                 Ok(value.clone())
             }
         }
+    }
+
+    fn is_json_string_context(&self, s: &str, pos: usize) -> bool {
+        let before = &s[..pos];
+        let mut in_string = false;
+        let mut escape = false;
+
+        for c in before.chars() {
+            match c {
+                '\\' => escape = !escape,
+                '"' if !escape => in_string = !in_string,
+                _ => escape = false,
+            }
+        }
+        in_string
     }
 }

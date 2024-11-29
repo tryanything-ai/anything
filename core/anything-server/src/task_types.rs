@@ -10,6 +10,15 @@ pub enum Stage {
     Testing,
 }
 
+impl ToString for Stage {
+    fn to_string(&self) -> String {
+        match self {
+            Stage::Production => "production".to_string(),
+            Stage::Testing => "testing".to_string(),
+        }
+    }
+}
+
 impl Stage {
     pub fn as_str(&self) -> &str {
         match self {

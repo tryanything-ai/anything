@@ -22,7 +22,7 @@ export default function ActionSettingsForm(): JSX.Element {
     <div className="flex flex-col h-full w-full">
       {workflow.selected_node_data && workflow.selected_action_id ? (
         <div className="grid w-full items-start gap-6">
-          <div className="grid gap-6">
+          <div className="grid gap-2">
             <VariablesFormLayout />
             <ConfigurationForm />
           </div>
