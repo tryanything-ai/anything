@@ -32,7 +32,7 @@ export default function FieldJson({
         const formatted = JSON.stringify(parsed, null, 2);
         setEditorValue(formatted);
         setIsValidJson(true);
-        onChange(name, formatted, true);
+        onChange(name, parsed, true);
       } catch (e) {
         // If it's not valid JSON, update with raw value but mark as invalid
         setEditorValue(val);

@@ -24,6 +24,7 @@ export default function WorkflowSettingsTab(): JSX.Element {
     formState: { errors },
   } = useForm<Inputs>();
 
+  //BUG: This is not downloading the latest version of the workflow
   const downloadWorkflowJson = () => {
     const jsonString = JSON.stringify(
       workflow.flow_version_definition,
@@ -90,7 +91,7 @@ export default function WorkflowSettingsTab(): JSX.Element {
                 navigator.clipboard.writeText(
                   `${process.env.NEXT_PUBLIC_ANYTHING_API_URL}/api/v1/workflow/${workflow.db_flow_id}/version/${workflow.db_flow_version_id}/start`,
                 );
-              }}  
+              }}
             >
               Copy
             </Button>

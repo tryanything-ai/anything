@@ -574,24 +574,54 @@ export const WorkflowVersionProvider = ({
   };
   //TODO: INVESTIGATE THIS - I think we should have ACTIONS managed more seperate then NODES.
   //This is likely where we are causing weird issues with state.
+  const parseJsonRecursively = (value: any): any => {
+    // If it's a string, try to parse it as JSON
+    if (typeof value === 'string') {
+      try {
+        return parseJsonRecursively(JSON.parse(value));
+      } catch (e) {
+        // If parsing fails, it's not JSON, return original value
+        return value;
+      }
+    }
+    
+    // If it's an array, parse each element
+    if (Array.isArray(value)) {
+      return value.map(item => parseJsonRecursively(item));
+    }
+    
+    // If it's an object, parse each value
+    if (value && typeof value === 'object') {
+      const parsed: { [key: string]: any } = {};
+      for (const key in value) {
+        parsed[key] = parseJsonRecursively(value[key]);
+      }
+      return parsed;
+    }
+    
+    // For all other types (number, boolean, null, undefined)
+    return value;
+  };
+
   const updateNodeData = async (
     update_key: string[],
     data: any[],
   ): Promise<boolean> => {
     try {
-      console.log("[UPDATE NODE DATA SYNC]", update_key, data);
+      console.log("[UPDATE NODE DATA SYNC] Before parsing:", update_key, data);
 
-      // setNodes((prevNodes) => {
       const newNodes = cloneDeep(nodes);
-
       let updatedNodes = newNodes.map((node) => {
         if (node.id === selectedNodeId) {
           update_key.forEach((key, index) => {
+            // Parse any stringified JSON recursively
+            const parsedValue = parseJsonRecursively(data[index]);
+            
             console.log(
               `[UPDATING NODE DATA] Updating Node Data in updateNodeData for ${node.id}:${key} with:`,
-              data[index],
+              parsedValue
             );
-            node.data[key] = data[index];
+            node.data[key] = parsedValue;
           });
           console.log("NEW_DATA_FOR_NODE", node.data);
           setSelectedNodeId(node.id);
@@ -611,7 +641,7 @@ export const WorkflowVersionProvider = ({
     } catch (error) {
       console.log(
         "error writing node config in WorkflowVersionProvider",
-        error,
+        error
       );
       return false;
     }

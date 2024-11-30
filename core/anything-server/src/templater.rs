@@ -96,63 +96,25 @@ impl Templater {
                 if current.is_array() {
                     current = current.get(index)?;
                 } else {
-                    return None;
+                    return None; // Not an array when we expected one
                 }
             } else {
                 current = current.get(part)?;
             }
 
-            // Try to parse string values as JSON for nested traversal
             if let Value::String(s) = current {
-                if let Ok(parsed) = Self::try_parse_json(s) {
+                if let Ok(parsed) = serde_json::from_str(s) {
                     if i < parts.len() - 1 {
+                        // If not the last part, continue traversing
                         return Self::get_value_from_path(&parsed, &parts[i + 1..].join("."));
                     } else {
+                        // If it's the last part, return the parsed value
                         return Some(parsed);
                     }
                 }
             }
         }
         Some(current.clone())
-    }
-
-    fn try_parse_json(s: &str) -> Result<Value, serde_json::Error> {
-        // Try parsing with various cleaning steps
-        let attempts = vec![
-            s.to_string(),
-            s.replace("\n", "").replace("\r", ""),
-            s.replace("\n", "").replace("\r", "").replace(" ", ""),
-        ];
-
-        for attempt in attempts {
-            if let Ok(parsed) = serde_json::from_str(&attempt) {
-                return Ok(parsed);
-            }
-        }
-
-        // If all attempts fail, return the original parsing error
-        serde_json::from_str(s)
-    }
-
-    fn deep_clean_value(value: Value) -> Value {
-        match value {
-            Value::String(s) => {
-                if let Ok(parsed) = Self::try_parse_json(&s) {
-                    Self::deep_clean_value(parsed)
-                } else {
-                    Value::String(s)
-                }
-            }
-            Value::Array(arr) => {
-                Value::Array(arr.into_iter().map(Self::deep_clean_value).collect())
-            }
-            Value::Object(map) => Value::Object(
-                map.into_iter()
-                    .map(|(k, v)| (k, Self::deep_clean_value(v)))
-                    .collect(),
-            ),
-            _ => value,
-        }
     }
 
     pub fn render(&self, template_name: &str, context: &Value) -> Result<Value, TemplateError> {
@@ -164,9 +126,7 @@ impl Templater {
                 variable: template_name.to_string(),
             })?;
 
-        // Clean the context first
-        let cleaned_context = Self::deep_clean_value(context.clone());
-        self.render_value(template, &cleaned_context)
+        self.render_value(template, context)
     }
 
     fn render_value(&self, value: &Value, context: &Value) -> Result<Value, TemplateError> {
@@ -193,20 +153,12 @@ impl Templater {
             Value::String(s) => {
                 println!("[TEMPLATER] Rendering string: {}", s);
 
-                // Try to parse the string as JSON first
-                if let Ok(parsed_value) = Self::try_parse_json(s) {
-                    println!("[TEMPLATER] Successfully parsed string as JSON");
-                    return self.render_value(&parsed_value, context);
-                }
-
                 // Special case: if the string is exactly "{{variables}}" (or any other full variable),
                 // return the raw value instead of string conversion
                 if s.trim().starts_with("{{") && s.trim().ends_with("}}") {
                     let variable = s.trim()[2..s.trim().len() - 2].trim();
-                    if !variable.contains('.') {
-                        if let Some(value) = Self::get_value_from_path(context, variable) {
-                            return Ok(value);
-                        }
+                    if let Some(value) = Self::get_value_from_path(context, variable) {
+                        return Ok(value);
                     }
                 }
 
@@ -235,13 +187,7 @@ impl Templater {
                     println!("[TEMPLATER] Variable value: {:?}", value);
 
                     let replacement = match value {
-                        Value::String(s) => {
-                            if self.is_json_string_context(&result, open_idx) {
-                                s.clone() // Inside JSON string - use value as-is
-                            } else {
-                                format!("\"{}\"", s) // Outside JSON string - add quotes
-                            }
-                        }
+                        Value::String(s) => s.clone(),
                         _ => value.to_string(),
                     };
                     result.replace_range(open_idx..close_idx + 2, &replacement);
@@ -249,6 +195,7 @@ impl Templater {
                 }
 
                 println!("[TEMPLATER] Rendered string: {}", result);
+
                 Ok(Value::String(result))
             }
             _ => {
@@ -257,19 +204,195 @@ impl Templater {
             }
         }
     }
+}
 
-    fn is_json_string_context(&self, s: &str, pos: usize) -> bool {
-        let before = &s[..pos];
-        let mut in_string = false;
-        let mut escape = false;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
 
-        for c in before.chars() {
-            match c {
-                '\\' => escape = !escape,
-                '"' if !escape => in_string = !in_string,
-                _ => escape = false,
+    #[test]
+    fn test_simple_object_variable_replacement() {
+        let mut templater = Templater::new();
+
+        // Create template with single key-value pair
+        let template = json!({
+            "greeting": "Hello {{name}}"
+        });
+
+        templater.add_template("test_template", template);
+
+        // Create context with replacement value
+        let context = json!({
+            "name": "World"
+        });
+
+        // Render template with context
+        let result = templater.render("test_template", &context).unwrap();
+
+        // Check the rendered result
+        assert_eq!(
+            result,
+            json!({
+                "greeting": "Hello World"
+            })
+        );
+    }
+
+    #[test]
+    fn test_deeply_nested_variable_replacement() {
+        let mut templater = Templater::new();
+
+        // Create template that uses deeply nested variable
+        let template = json!({
+            "message": "Value is: {{data.items[0].details[2].value}}"
+        });
+
+        templater.add_template("nested_template", template);
+
+        // Create context with nested data structure
+        let context = json!({
+            "data": {
+                "items": [
+                    {
+                        "details": [
+                            {"value": "first"},
+                            {"value": "second"},
+                            {"value": "third"},
+                            {"value": "fourth"}
+                        ]
+                    }
+                ]
             }
-        }
-        in_string
+        });
+
+        // Render template with context
+        let result = templater.render("nested_template", &context).unwrap();
+
+        // Check the rendered result
+        assert_eq!(
+            result,
+            json!({
+                "message": "Value is: third"
+            })
+        );
+    }
+
+    #[test]
+    fn test_object_replacement_in_nested_path_inside_string() {
+        let mut templater = Templater::new();
+
+        // Create template that uses nested path with object replacement
+        let template = json!({
+            "message": "Value is: {{data.items[0].details}}"
+        });
+
+        templater.add_template("object_template", template);
+
+        // Create context with nested data structure
+        let context = json!({
+            "data": {
+                "items": [
+                    {
+                        "details": {
+                            "id": 123,
+                            "name": "test item",
+                            "values": ["a", "b", "c"]
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Render template with context
+        let result = templater.render("object_template", &context).unwrap();
+
+        // Check the rendered result includes the full object
+        assert_eq!(
+            result,
+            json!({
+                "message": "Value is: {\"id\":123,\"name\":\"test item\",\"values\":[\"a\",\"b\",\"c\"]}"
+            })
+        );
+    }
+
+     #[test]
+    fn test_object_replacement_in_nested_path_as_object() {
+        let mut templater = Templater::new();
+
+        // Create template that uses nested path with object replacement
+        let template = json!({
+            "details": "{{data.items[0].details}}"
+        });
+
+        templater.add_template("details_object_template", template);
+
+        // Create context with nested data structure
+        let context = json!({
+            "data": {
+                "items": [
+                    {
+                        "details": {
+                            "id": 123,
+                            "name": "test item",
+                            "values": ["a", "b", "c"]
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Render template with context
+        let result = templater
+            .render("details_object_template", &context)
+            .unwrap();
+
+        // Check the rendered result includes the full object as an object
+        assert_eq!(
+            result,
+            json!({
+                "details": {
+                    "id": 123,
+                    "name": "test item",
+                    "values": ["a", "b", "c"]
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_string_replacement_in_nested_path() {
+        let mut templater = Templater::new();
+
+        // Create template that uses nested path with string replacement
+        let template = json!({
+            "details": "{{data.items[0].name}}"
+        });
+
+        templater.add_template("details_string_template", template);
+
+        // Create context with nested data structure
+        let context = json!({
+            "data": {
+                "items": [
+                    {
+                        "name": "test item"
+                    }
+                ]
+            }
+        });
+
+        // Render template with context
+        let result = templater
+            .render("details_string_template", &context)
+            .unwrap();
+
+        // Check the rendered result includes the string value
+        assert_eq!(
+            result,
+            json!({
+                "details": "test item"
+            })
+        );
     }
 }
