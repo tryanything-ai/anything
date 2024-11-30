@@ -6,6 +6,19 @@ import { cn } from "@repo/ui/lib/utils";
 import { linter, lintGutter } from "@codemirror/lint";
 import { propsPlugin } from "./codemirror-utils";
 
+function ensureStringValue(value: any): string {
+  if (value === null || value === undefined) {
+    return "{}";
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value, null, 2);
+  }
+  return String(value);
+}
+
 export default function FieldJson({
   name,
   label,
@@ -20,7 +33,7 @@ export default function FieldJson({
   onFocus,
   className,
 }: any) {
-  const [editorValue, setEditorValue] = React.useState(value || "{}");
+  const [editorValue, setEditorValue] = React.useState(ensureStringValue(value));
   const [isValidJson, setIsValidJson] = React.useState(true);
   const editorRef = React.useRef<any>(null);
 
@@ -45,7 +58,7 @@ export default function FieldJson({
 
   React.useEffect(() => {
     if (value !== editorValue) {
-      setEditorValue(value || "{}");
+      setEditorValue(ensureStringValue(value));
     }
   }, [value]);
 

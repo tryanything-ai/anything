@@ -16,19 +16,6 @@ let GLOBAL_CURSOR_LOCATION = 0;
 let GLOBAL_ACTIVE_FIELD = "";
 let GLOBAL_ACTIVE_FORM_NAME = "";
 
-function ensureStringValue(value: any): string {
-  if (value === null || value === undefined) {
-    return "{}";
-  }
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (typeof value === 'object') {
-    return JSON.stringify(value, null, 2);
-  }
-  return String(value);
-}
-
 export function JsonSchemaForm({
   name,
   fields,
@@ -216,17 +203,10 @@ export function JsonSchemaForm({
           }); // Add this debug line
           const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
 
-          // Ensure JSON fields receive string values
-          const fieldValue = inputType === 'json' 
-            ? ensureStringValue(values?.[fieldName])
-            : values?.[fieldName];
-
-          console.log("Field Value: ", fieldName, " ", fieldValue);
-
           return (
             <div className="w-full overflow-hidden px-1" key={fieldName}>
               <FieldComponent
-                value={fieldValue}
+                value={values?.[fieldName]}
                 error={errors[fieldName]}
                 submited={submited}
                 type={field.type}
