@@ -73,7 +73,7 @@
           "description": "Headers for request",
           "type": "object",
           "x-jsf-presentation": {
-            "inputType": "json"
+            "inputType": "object"
           }
         },
         "body": {
@@ -81,7 +81,7 @@
           "description": "Body for request",
           "type": "object",
           "x-jsf-presentation": {
-            "inputType": "json"
+            "inputType": "object"
           }
         }
       },
@@ -951,7 +951,7 @@
             "description": "Content to send in response body",
             "type": "object",
             "x-jsf-presentation": {
-              "inputType": "json"
+              "inputType": "object"
             }
           },
           "text_body": {

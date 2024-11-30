@@ -1,6 +1,6 @@
 import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import {
-  EDIT_VARIABLES_SCHEMA,
+  CREATE_VARIABLE_SCHEMA,
   EDIT_VARIABLES_VARIABLES,
 } from "./edit-variable-schema";
 import { JsonSchemaForm } from "../json-schema-form";
@@ -26,7 +26,7 @@ function extractObjectValues(
 }
 
 // Edit a single variable
-export default function EditVariableForm(): JSX.Element {
+export default function CreateVariableForm(): JSX.Element {
   const { workflow, variables } = useAnything();
 
   let the_variable = {
@@ -45,19 +45,18 @@ export default function EditVariableForm(): JSX.Element {
   ) {
     //Trick from into thining we cannot edit Title.
     //We don't really want users changing it. Seems it might make things more brittle
-    EDIT_VARIABLES_SCHEMA.properties.title.default =
+    CREATE_VARIABLE_SCHEMA.properties.title.default =
       variables.selectedProperty.title;
-    EDIT_VARIABLES_SCHEMA.properties.title.const =
+    CREATE_VARIABLE_SCHEMA.properties.title.const =
       variables.selectedProperty.title;
     //https://json-schema-form.vercel.app/?path=/docs/guides-concepts-forced-values--docs
   } else {
-    delete EDIT_VARIABLES_SCHEMA.properties.title.default;
-    delete EDIT_VARIABLES_SCHEMA.properties.title.const;
+    delete CREATE_VARIABLE_SCHEMA.properties.title.default;
+    delete CREATE_VARIABLE_SCHEMA.properties.title.const;
   }
 
-
   const { fields, handleValidation } = useMemo(() => {
-    return createHeadlessForm(EDIT_VARIABLES_SCHEMA, {
+    return createHeadlessForm(CREATE_VARIABLE_SCHEMA, {
       strictInputType: false, // so you don't need to pass presentation.inputType,
       initialValues: the_variable,
     });

@@ -1,4 +1,4 @@
-export let EDIT_VARIABLES_SCHEMA: any = {
+export let CREATE_VARIABLE_SCHEMA: any = {
     type: "object",
     properties: {
         "title": {
@@ -21,6 +21,18 @@ export let EDIT_VARIABLES_SCHEMA: any = {
                     "title": "Text"
                 },
                 {
+                    "value": "number", 
+                    "title": "Number"
+                },
+                {
+                    "value": "boolean",
+                    "title": "Boolean"
+                },
+                {
+                    "value": "object",
+                    "title": "Object"
+                },
+                {
                     "value": "account",
                     "title": "Account"
                 }
@@ -37,10 +49,6 @@ export let EDIT_VARIABLES_SCHEMA: any = {
                 {
                     "value": "airtable",
                     "title": "Airtable"
-                },
-                {
-                    "value": "gmail",
-                    "title": "Gmail"
                 }
             ],
             "x-jsf-presentation": {

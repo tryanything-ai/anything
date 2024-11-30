@@ -27,7 +27,7 @@ import FieldXml from "./fields/field-xml";
 export const fieldsMap: { [key: string]: any } = {
   text: FieldTextNew,
   simple_text: FieldText, //old text editor still used in ui some places but not in actually dynamic forms
-  json: FieldJson,
+  object: FieldJson,
   html: FieldHtml,
   xml: FieldXml,
   account: FieldAccount,
@@ -38,12 +38,15 @@ export const fieldsMap: { [key: string]: any } = {
   error: FieldUnknown,
 };
 
+// All fields must be understood to basically return text
+// This allows users to pass in variables as text for types that might be number, boolean etc 
+
 function FieldNumber(props: any) {
   return (
     <FieldTextNew
-      inputMode="decimal"
+      // inputMode="decimal"
       // accepts numbers and dots (eg 10, 15.50)
-      pattern="^[0-9.]*$"
+      // pattern="^[0-9.]*$"
       {...props}
     />
   );
