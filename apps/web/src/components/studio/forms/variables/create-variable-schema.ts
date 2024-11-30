@@ -1,3 +1,61 @@
+//This is a little tricky. 
+
+//Json schema form uses the value form this dropdown as the "type" key.
+//Type keys are used for form validation.
+//Since forms need to validate successfull with {{variables}} in them we need it to be text
+//Even if the undelying goals is number, boolean etc.
+//We need to be json compliant and form compliant so we use the inputType to determine the form field and proper server parsing of
+//Numbers, booleans, etc, everything on client is text unless its object. 
+
+export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
+    text: {
+        type: "string",  //used for validation in JSForm
+        "x-jsf-presentation": {
+            inputType: "text", //Used to pick UI element on client
+        },
+        "x-any-validation": {
+            type: "string", //Used to assist template renderer on server give correct types from variables
+        }
+    },
+    number: {
+        type: "text",
+        "x-jsf-presentation": {
+            inputType: "number_or_variable",
+        },
+        "x-any-validation": {
+            type: "number",
+        }
+    },
+    boolean: {
+        type: "string", 
+        "x-jsf-presentation": {
+            inputType: "boolean_or_variable",
+        },
+        "x-any-validation": {
+            type: "boolean",
+        }
+    },
+    object: {
+        type: "object",
+        "x-jsf-presentation": { 
+            inputType: "object",
+        },
+        "x-any-validation": {
+            type: "object",
+        }
+    },
+    account: {
+        type: "account",
+        "x-jsf-presentation": {
+            inputType: "account",
+        },
+        "x-any-validation": {   
+            type: "object",
+        }
+    }
+}
+
+
 export let CREATE_VARIABLE_SCHEMA: any = {
     type: "object",
     properties: {
@@ -6,11 +64,6 @@ export let CREATE_VARIABLE_SCHEMA: any = {
             "description": "The name of the variable",
             "type": "string"
         },
-        "description": {
-            "title": "Description",
-            "description": "A description of the variable",
-            "type": "string",
-        },
         "type": {
             "title": "Type",
             "description": "The type of the variable",
@@ -18,10 +71,11 @@ export let CREATE_VARIABLE_SCHEMA: any = {
             "oneOf": [
                 {
                     "value": "text",
-                    "title": "Text"
+                    "title": "Text",
+                   
                 },
-                {
-                    "value": "number", 
+                { 
+                    "value": "number",
                     "title": "Number"
                 },
                 {
@@ -51,12 +105,12 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                     "title": "Airtable"
                 }
             ],
-            "x-jsf-presentation": {
+            "x-jsf-presentation": { 
                 "inputType": "select"
             }
         }
     },
-    "x-jsf-order": ["title", "description", "type", "provider"],
+    "x-jsf-order": ["title", "type", "provider"],
     "required": ["title", "type"],
     "allOf": [
     {

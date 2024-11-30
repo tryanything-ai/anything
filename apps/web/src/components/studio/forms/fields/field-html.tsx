@@ -5,7 +5,7 @@ import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { propsPlugin } from "./codemirror-utils";
 
-export default function FieldHtml({
+export default function CodeMirrorFieldHtml({
   name,
   label,
   value,

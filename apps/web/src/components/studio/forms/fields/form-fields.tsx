@@ -14,43 +14,33 @@ import {
 } from "@repo/ui/components/ui/select";
 
 import api from "@repo/anything-api";
-import { BaseNodeIcon, BaseSelectIcon } from "../nodes/node-icon";
+import { BaseNodeIcon, BaseSelectIcon } from "../../nodes/node-icon";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
 import { useAnything } from "@/context/AnythingContext";
-import FieldText from "./fields/field-text";
-import FieldJson from "./fields/field-json";
-import FieldTextNew from "./fields/field-text-new";
-import FieldHtml from "./fields/field-html";
-import FieldXml from "./fields/field-xml";
+import ReactSimpleCodeEditorFieldText from "./field-text";
+import CodeMirrorFieldJson from "./field-json";
+import CodeMirrorFieldText from "./field-text-new";
+import CodeMirrorFieldHtml from "./field-html";
+import CodemirrorFieldXml from "./field-xml";
+import CodeMirrorFieldNumber from "./field-number";
 
 export const fieldsMap: { [key: string]: any } = {
-  text: FieldTextNew,
-  simple_text: FieldText, //old text editor still used in ui some places but not in actually dynamic forms
-  object: FieldJson,
-  html: FieldHtml,
-  xml: FieldXml,
+  text: CodeMirrorFieldText,
+  simple_text: ReactSimpleCodeEditorFieldText, //old text editor still used in ui some places but not in actually dynamic forms
+  object: CodeMirrorFieldJson,
+  html: CodeMirrorFieldHtml,
+  xml: CodemirrorFieldXml,
   account: FieldAccount,
-  number: FieldNumber,
-  radio: FieldRadio,
+  number_or_variable: CodeMirrorFieldNumber,
+  // boolean_or_variable: CodeMirrorFieldBoolean,
+  // radio: FieldRadio,
   select: FieldSelect,
-  checkbox: FieldCheckbox,
+  // checkbox: FieldCheckbox,
   error: FieldUnknown,
 };
 
 // All fields must be understood to basically return text
-// This allows users to pass in variables as text for types that might be number, boolean etc 
-
-function FieldNumber(props: any) {
-  return (
-    <FieldTextNew
-      // inputMode="decimal"
-      // accepts numbers and dots (eg 10, 15.50)
-      // pattern="^[0-9.]*$"
-      {...props}
-    />
-  );
-}
 
 function FieldRadio({
   name,
@@ -77,7 +67,12 @@ function FieldRadio({
   return (
     <fieldset key={name}>
       {/* A11Y errors: https://blog.tenon.io/accessible-validation-of-checkbox-and-radiobutton-groups/ */}
-      <Label aria-label={`${label} ${displayError}`}>{label}</Label>
+      <Label aria-label={`${label} ${displayError}`}>
+        {label}{" "}
+        <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+          radio
+        </span>
+      </Label>
       {description && <div>{description}</div>}
       <div onChange={handleChange}>
         {options.map((opt: any) => (
@@ -122,7 +117,12 @@ function FieldCheckbox({
   return (
     <div key={name} className="grid gap-2 my-4">
       <div className="flex flex-col gap-1">
-        <Label htmlFor={name}>{label}</Label>
+        <Label htmlFor={name}>
+          {label}{" "}
+          <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+            checkbox
+          </span>
+        </Label>
         <div className="flex items-center gap-2 pt-2">
           <Switch
             id={name}
@@ -190,7 +190,12 @@ function FieldSelect({
 
   return (
     <div className="grid gap-3 my-4">
-      <Label htmlFor={name}>{label}</Label>
+      <Label htmlFor={name}>
+        {label}{" "}
+        {/* <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+          select
+        </span> */}
+      </Label>
       <Select value={value} onValueChange={handleValueChange}>
         <SelectTrigger>
           <SelectValue placeholder={description} />
@@ -312,7 +317,12 @@ function FieldAccount({
 
   return (
     <div className="grid gap-3 my-4">
-      <Label htmlFor={name}>{label}</Label>
+      <Label htmlFor={name}>
+        {label}{" "}
+        <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+          account
+        </span>
+      </Label>
       {!hydrated ? (
         <div>Loading...</div>
       ) : (

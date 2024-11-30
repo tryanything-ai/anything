@@ -1,66 +1,48 @@
 import React from "react";
 import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
-import { linter, lintGutter } from "@codemirror/lint";
 import { propsPlugin } from "./codemirror-utils";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
-    return "{}";
-  }
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (typeof value === 'object') {
-    return JSON.stringify(value, null, 2);
+    return "";
   }
   return String(value);
 }
 
-export default function FieldJson({
+export default function CodeMirrorFieldNumber({
+  type,
   name,
   label,
+  description,
+  className,
   value,
   isVisible,
   error,
+  submited,
+  onFocus,
   disabled,
   onChange,
   onSelect,
   onClick,
   onKeyUp,
-  onFocus,
-  className,
+  required,
 }: any) {
-  const [editorValue, setEditorValue] = React.useState(ensureStringValue(value));
-  const [isValidJson, setIsValidJson] = React.useState(true);
+  const [editorValue, setEditorValue] = React.useState(
+    ensureStringValue(value),
+  );
+
   const editorRef = React.useRef<any>(null);
 
   const handleChange = React.useCallback(
     (val: string) => {
-      try {
-        // Try to parse and format the JSON
-        const parsed = JSON.parse(val);
-        const formatted = JSON.stringify(parsed, null, 2);
-        setEditorValue(formatted);
-        setIsValidJson(true);
-        onChange(name, parsed, true);
-      } catch (e) {
-        // If it's not valid JSON, update with raw value but mark as invalid
-        setEditorValue(val);
-        setIsValidJson(false);
-        onChange(name, val, false);
-      }
+      setEditorValue(val);
+
+      onChange(name, val, true);
     },
     [name, onChange],
   );
-
-  React.useEffect(() => {
-    if (value !== editorValue) {
-      setEditorValue(ensureStringValue(value));
-    }
-  }, [value]);
 
   const handleCursorActivity = React.useCallback(
     (viewUpdate: any) => {
@@ -74,26 +56,11 @@ export default function FieldJson({
     [onSelect],
   );
 
-  const jsonLinter = linter((view) => {
-    const doc = view.state.doc.toString();
-    try {
-      JSON.parse(doc);
-      return [];
-    } catch (e) {
-      const error = e as SyntaxError;
-      const match = error.message.match(/at position (\d+)/);
-      const pos = match ? parseInt(match[1]!) : 0;
-
-      return [
-        {
-          from: pos,
-          to: pos + 1,
-          severity: "error",
-          message: error.message,
-        },
-      ];
+  React.useEffect(() => {
+    if (value !== editorValue) {
+      setEditorValue(ensureStringValue(value));
     }
-  });
+  }, [value]);
 
   if (!isVisible) {
     return null;
@@ -101,12 +68,14 @@ export default function FieldJson({
 
   return (
     <div className="grid gap-3 my-2 w-full">
+      {/* <Label htmlFor={name}>{label} */}
       <Label htmlFor={name}>
         {label}{" "}
         <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
-          json
+          number
         </span>
       </Label>
+      {/* </Label> */}
       <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
         <CodeMirror
           ref={editorRef}
@@ -117,10 +86,11 @@ export default function FieldJson({
           onKeyUp={onKeyUp}
           onUpdate={handleCursorActivity}
           readOnly={disabled}
-          extensions={[json(), lintGutter(), jsonLinter, propsPlugin]}
+          extensions={[propsPlugin]}
           basicSetup={{
             lineNumbers: false,
             foldGutter: false,
+            highlightActiveLine: false,
           }}
           style={{
             minHeight: "2.5rem",
@@ -133,15 +103,15 @@ export default function FieldJson({
             whiteSpace: "pre-wrap",
             boxSizing: "border-box",
             fontFamily: "monospace",
+            outline: "none",
           }}
           className={cn(
-            "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
             className,
           )}
         />
       </div>
-      {!isValidJson && <div className="text-red-500">Invalid JSON</div>}
-      {error && <div className="text-red-500">{error}</div>}
+      {error && submited && <div className="text-red-500">{error}</div>}
     </div>
   );
 }

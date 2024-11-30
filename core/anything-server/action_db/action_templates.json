@@ -18,8 +18,8 @@
     "input": {
       "method": "GET",
       "url": "",
-      "headers": "",
-      "body": "" 
+      "headers": "{}",
+      "body": "{}" 
     },
     "input_locked": false,
     "input_schema": {

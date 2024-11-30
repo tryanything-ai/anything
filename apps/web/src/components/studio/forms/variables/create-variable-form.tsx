@@ -2,7 +2,7 @@ import { createHeadlessForm } from "@remoteoss/json-schema-form";
 import {
   CREATE_VARIABLE_SCHEMA,
   EDIT_VARIABLES_VARIABLES,
-} from "./edit-variable-schema";
+} from "./create-variable-schema";
 import { JsonSchemaForm } from "../json-schema-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";

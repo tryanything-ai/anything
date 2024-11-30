@@ -4,7 +4,7 @@ import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { propsPlugin } from "./codemirror-utils";
 
-export default function FieldTextNew({
+export default function CodeMirrorFieldText({
   type,
   name,
   label,
@@ -22,7 +22,9 @@ export default function FieldTextNew({
   onKeyUp,
   required,
 }: any) {
-  const [editorValue, setEditorValue] = React.useState(value || "");
+  // Convert value to string if it isn't already
+  const initialValue = typeof value === 'string' ? value : String(value || '');
+  const [editorValue, setEditorValue] = React.useState(initialValue);
   const editorRef = React.useRef<any>(null);
 
   const handleChange = React.useCallback(
@@ -46,8 +48,10 @@ export default function FieldTextNew({
   );
 
   React.useEffect(() => {
-    if (value !== editorValue) {
-      setEditorValue(value || "");
+    // Convert new value to string if it isn't already
+    const newValue = typeof value === 'string' ? value : String(value || '');
+    if (newValue !== editorValue) {
+      setEditorValue(newValue);
     }
   }, [value]);
 
@@ -57,7 +61,12 @@ export default function FieldTextNew({
 
   return (
     <div className="grid gap-3 my-2 w-full">
-      <Label htmlFor={name}>{label}</Label>
+      <Label htmlFor={name}>
+        {label}{" "}
+        <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+          text
+        </span>
+      </Label>
       <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
         <CodeMirror
           ref={editorRef}

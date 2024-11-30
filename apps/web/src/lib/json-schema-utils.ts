@@ -12,6 +12,7 @@ import set from "lodash/set";
  * etc....
  */
 export function formValuesToJsonValues(fields: any, values: any) {
+    
     const fieldTypeTransform: any = {
         number: (val: any) => (val === "" ? val : +val),
         text: (val: any) => val,
@@ -31,6 +32,7 @@ export function formValuesToJsonValues(fields: any, values: any) {
         } else if (!isVisible) {
             // Omit invisible (conditional) fields to avoid erro:
             // eg { account: "personal", team_size: 3 } -> The "team_size" is invalid
+
         } else {
             set(jsonValues, name, transformedValue);
         }

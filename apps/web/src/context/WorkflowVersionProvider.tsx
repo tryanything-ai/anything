@@ -575,14 +575,19 @@ export const WorkflowVersionProvider = ({
   //TODO: INVESTIGATE THIS - I think we should have ACTIONS managed more seperate then NODES.
   //This is likely where we are causing weird issues with state.
   const parseJsonRecursively = (value: any): any => {
-    // If it's a string, try to parse it as JSON
+    // If it's a string, try to parse it as JSON only if it starts with { or [
     if (typeof value === 'string') {
-      try {
-        return parseJsonRecursively(JSON.parse(value));
-      } catch (e) {
-        // If parsing fails, it's not JSON, return original value
-        return value;
+      const trimmed = value.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          return parseJsonRecursively(JSON.parse(value));
+        } catch (e) {
+          // If parsing fails, it's not valid JSON, return original value
+          return value;
+        }
       }
+      // Return original string value (including numeric strings)
+      return value;
     }
     
     // If it's an array, parse each element

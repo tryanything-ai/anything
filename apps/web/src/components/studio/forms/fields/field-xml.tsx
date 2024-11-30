@@ -91,7 +91,7 @@ const propsPlugin = ViewPlugin.fromClass(
   },
 );
 
-export default function FieldXml({
+export default function CodemirrorFieldXml({
   name,
   label,
   value,

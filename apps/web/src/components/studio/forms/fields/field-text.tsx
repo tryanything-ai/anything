@@ -10,7 +10,7 @@ import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { useState } from "react";
 
-export default function FieldText({
+export default function ReactSimpleCodeEditorFieldText({
   type,
   name,
   label,

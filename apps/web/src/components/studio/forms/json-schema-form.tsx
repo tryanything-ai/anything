@@ -5,7 +5,7 @@ import {
   getDefaultValuesFromFields,
 } from "@/lib/json-schema-utils";
 import { Button } from "@repo/ui/components/ui/button";
-import { fieldsMap } from "./form-fields";
+import { fieldsMap } from "./fields/form-fields";
 import { useAnything } from "@/context/AnythingContext";
 import { TriangleAlertIcon } from "lucide-react";
 
@@ -55,8 +55,15 @@ export function JsonSchemaForm({
   }, [fields, initialValues]);
 
   const handleInternalValidation = (valuesToValidate: any) => {
+    console.log(
+      "[HANDLE INTERNAL VALIDATION] Values to validate:",
+      valuesToValidate,
+    );
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
-
+    console.log(
+      "[HANDLE INTERNAL VALIDATION] Values for JSON validation:",
+      valuesForJson,
+    );
     const { formErrors } = handleValidation(valuesForJson);
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
@@ -201,6 +208,7 @@ export function JsonSchemaForm({
             inputType,
             field,
           }); // Add this debug line
+
           const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
 
           return (
@@ -209,7 +217,7 @@ export function JsonSchemaForm({
                 value={values?.[fieldName]}
                 error={errors[fieldName]}
                 submited={submited}
-                type={field.type}
+                // type={field.type}
                 onChange={handleFieldChange}
                 onFocus={() => handleFieldFocus(fieldName)}
                 onSelect={(e: any) => handleCursorChange(e, fieldName)}
