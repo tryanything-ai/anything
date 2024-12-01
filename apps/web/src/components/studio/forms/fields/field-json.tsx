@@ -10,10 +10,10 @@ function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
     return "{}";
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value;
   }
-  if (typeof value === 'object') {
+  if (typeof value === "object") {
     return JSON.stringify(value, null, 2);
   }
   return String(value);
@@ -33,7 +33,9 @@ export default function FieldJson({
   onFocus,
   className,
 }: any) {
-  const [editorValue, setEditorValue] = React.useState(ensureStringValue(value));
+  const [editorValue, setEditorValue] = React.useState(
+    ensureStringValue(value),
+  );
   const [isValidJson, setIsValidJson] = React.useState(true);
   const editorRef = React.useRef<any>(null);
 
@@ -121,9 +123,14 @@ export default function FieldJson({
           basicSetup={{
             lineNumbers: false,
             foldGutter: false,
+            highlightActiveLine: false,
           }}
+          className={cn(
+            "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
+            className,
+          )}
           style={{
-            minHeight: "2.5rem",
+            minHeight: "2.25rem",
             height: "auto",
             width: "100%",
             maxWidth: "100%",
@@ -133,11 +140,8 @@ export default function FieldJson({
             whiteSpace: "pre-wrap",
             boxSizing: "border-box",
             fontFamily: "monospace",
+            outline: "none",
           }}
-          className={cn(
-            "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-            className,
-          )}
         />
       </div>
       {!isValidJson && <div className="text-red-500">Invalid JSON</div>}

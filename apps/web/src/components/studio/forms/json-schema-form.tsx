@@ -162,26 +162,37 @@ export function JsonSchemaForm({
       return;
     }
 
-    const values = valuesRef.current; // Use the latest values
+    const values = valuesRef.current;
     console.log("Inserting variable:", variable);
     if (!GLOBAL_ACTIVE_FIELD || GLOBAL_CURSOR_LOCATION === null) {
       console.log("No active field or cursor position");
       return;
     }
 
-    console.log("[INSERT VARIABLE] Cursor location:", GLOBAL_CURSOR_LOCATION);
-    console.log("[INSERT VARIABLE] Active field:", GLOBAL_ACTIVE_FIELD);
-    console.log("[INSERT VARIABLE] Values:", values);
-
-    const currentValue = values[GLOBAL_ACTIVE_FIELD] || "";
+    const currentValue = values[GLOBAL_ACTIVE_FIELD];
     console.log("[INSERT VARIABLE] Current value:", currentValue);
-    const beforeCursor = currentValue.slice(0, GLOBAL_CURSOR_LOCATION);
-    console.log("[INSERT VARIABLE] Before cursor:", beforeCursor);
-    const afterCursor = currentValue.slice(GLOBAL_CURSOR_LOCATION);
-    console.log("[INSERT VARIABLE] After cursor:", afterCursor);
-    const newValue = beforeCursor + variable + afterCursor;
 
-    handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+    // Handle JSON fields differently
+    const field = fields.find((f: any) => f.name === GLOBAL_ACTIVE_FIELD);
+    if (field?.inputType === "object") {
+      // For JSON fields, we need to work with the string representation
+      const stringValue =
+        typeof currentValue === "string"
+          ? currentValue
+          : JSON.stringify(currentValue, null, 2);
+
+      const beforeCursor = stringValue.slice(0, GLOBAL_CURSOR_LOCATION);
+      const afterCursor = stringValue.slice(GLOBAL_CURSOR_LOCATION);
+      const newValue = beforeCursor + variable + afterCursor;
+      handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+    } else {
+      // Handle regular string fields
+      const stringValue = currentValue?.toString() || "";
+      const beforeCursor = stringValue.slice(0, GLOBAL_CURSOR_LOCATION);
+      const afterCursor = stringValue.slice(GLOBAL_CURSOR_LOCATION);
+      const newValue = beforeCursor + variable + afterCursor;
+      handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+    }
   };
 
   useEffect(() => {

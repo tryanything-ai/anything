@@ -88,7 +88,7 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 },
                 {
                     "value": "object",
-                    "title": "Object"
+                    "title": "JSON"
                 },
                 {
                     "value": "account",
