@@ -24,6 +24,7 @@ import CodeMirrorFieldText from "./field-text-new";
 import CodeMirrorFieldHtml from "./field-html";
 import CodemirrorFieldXml from "./field-xml";
 import CodeMirrorFieldNumber from "./field-number";
+import CodeMirrorFieldBoolean from "./field-boolean";
 
 export const fieldsMap: { [key: string]: any } = {
   text: CodeMirrorFieldText,
@@ -33,7 +34,7 @@ export const fieldsMap: { [key: string]: any } = {
   xml: CodemirrorFieldXml,
   account: FieldAccount,
   number_or_variable: CodeMirrorFieldNumber,
-  // boolean_or_variable: CodeMirrorFieldBoolean,
+  boolean_or_variable: CodeMirrorFieldBoolean,
   // radio: FieldRadio,
   select: FieldSelect,
   // checkbox: FieldCheckbox,

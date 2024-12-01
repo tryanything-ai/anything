@@ -9,6 +9,7 @@
 
 export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
     text: {
+        default: "",
         type: "string",  //used for validation in JSForm
         "x-jsf-presentation": {
             inputType: "text", //Used to pick UI element on client
@@ -18,6 +19,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
         }
     },
     number: {
+        default: 0,    
         type: "text",
         "x-jsf-presentation": {
             inputType: "number_or_variable",
@@ -27,6 +29,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
         }
     },
     boolean: {
+        default: false,
         type: "string", 
         "x-jsf-presentation": {
             inputType: "boolean_or_variable",
@@ -36,6 +39,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
         }
     },
     object: {
+        default: {},
         type: "object",
         "x-jsf-presentation": { 
             inputType: "object",

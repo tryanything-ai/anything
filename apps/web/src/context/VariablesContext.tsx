@@ -150,8 +150,9 @@ export const VariablesProvider = ({
         variables_schema.properties[key] = {
           title: key,
           description: "",
-          type: VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[form_data.type]
-            .type,
+          type: VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+            form_data.type
+          ].type,
           "x-jsf-presentation": {
             ...VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
               form_data.type
@@ -201,7 +202,9 @@ export const VariablesProvider = ({
           );
         }
 
-        new_variables[key] = "";
+        new_variables[key] =
+          VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[form_data.type]
+            .default || "";
         console.log(
           "[VARIABLES CONTEXT] New variables after adding new key: ",
           new_variables,
