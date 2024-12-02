@@ -1,5 +1,5 @@
 use crate::system_variables::get_system_variables;
-use crate::task_types::Task;
+use crate::types::task_types::Task;
 
 use crate::AppState;
 use postgrest::Postgrest;
@@ -16,7 +16,7 @@ use crate::bundler::secrets::get_decrypted_secrets;
 
 use crate::processor::parsing_utils::get_bundle_context_inputs;
 
-use crate::task_types::TaskStatus;
+use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
 

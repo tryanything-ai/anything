@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::{bundler::bundle_cached_variables, supabase_jwt_middleware::User, AppState};
 
-use crate::workflow_types::{FlowVersion, WorkflowVersionDefinition};
+use crate::types::workflow_types::{FlowVersion, WorkflowVersionDefinition};
 
 // Actions
 pub async fn get_flow_version_results(

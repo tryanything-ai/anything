@@ -1,13 +1,12 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
-
-use crate::task_types::ActionType;
-
-use serde_with::{serde_as, DisplayFromStr};
+use serde::{Serialize, Deserialize};
+use crate::types::action_types::ActionType;
+use crate::types::react_flow_types::{Edge, HandleProps, NodePresentation, Position};
+use crate::types::action_types::Action;
+use crate::types::general::Variable;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WorkflowVersionDefinition {
@@ -15,61 +14,6 @@ pub struct WorkflowVersionDefinition {
     pub edges: Vec<Edge>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Action {
-    pub anything_action_version: String,
-    pub r#type: ActionType,
-    pub plugin_id: String,
-    pub action_id: String,
-    pub plugin_version: String,
-    pub label: String,
-    pub description: Option<String>,
-    pub icon: String,
-    pub variables: Variable,
-    pub variables_locked: Option<bool>,
-    pub variables_schema: Variable,
-    pub variables_schema_locked: Option<bool>,
-    pub input: Variable,
-    pub input_locked: Option<bool>,
-    pub input_schema: Variable,
-    pub input_schema_locked: Option<bool>,
-    pub presentation: Option<NodePresentation>,
-    pub handles: Option<Vec<HandleProps>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NodePresentation {
-    pub position: Position,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Position {
-    pub x: f64,
-    pub y: f64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Variable {
-    #[serde(flatten)]
-    pub inner: HashMap<String, serde_json::Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HandleProps {
-    pub id: String,
-    pub r#type: String,
-    pub position: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Edge {
-    pub id: String,
-    pub source: String,
-    pub source_handle: Option<String>,
-    pub target: String,
-    pub target_handle: Option<String>,
-    pub r#type: String,
-}
 
 impl WorkflowVersionDefinition {
     pub fn from_json(json_str: &str) -> Result<Self, serde_json::Error> {
@@ -81,52 +25,6 @@ impl WorkflowVersionDefinition {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct CreateTaskInput {
-    pub account_id: String,
-    pub task_status: String,
-    pub started_at: Option<DateTime<Utc>>,
-    pub flow_id: String,
-    pub flow_version_id: String,
-    pub action_label: String,
-    pub trigger_id: String,
-    pub trigger_session_id: String,
-    pub trigger_session_status: String,
-    pub flow_session_id: String,
-    pub flow_session_status: String,
-    pub action_id: String,
-    pub r#type: ActionType,
-    pub plugin_id: String,
-    pub stage: String,
-    pub config: Value,
-    pub result: Option<Value>,
-    pub test_config: Option<Value>, // deprecate
-    pub processing_order: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TaskConfig {
-    pub variables: Value,
-    pub input: Value,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TestConfig {
-    pub action_id: Option<String>, //if action_id is present, then we are testing just an action
-    pub variables: Value,
-    pub inputs: Value,
-}
-
-
-
-#[serde_as]
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Trigger {
-    pub id: i32,
-    pub cron_expression: String,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub last_run: Option<DateTime<Utc>>,
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FlowVersion {
@@ -147,7 +45,7 @@ pub struct DatabaseFlowVersion {
     pub flow_definition: WorkflowVersionDefinition,
 }
 
-
+//TODO: Upgrade defaults to new action types
 impl Default for WorkflowVersionDefinition {
     fn default() -> Self {
         let action1 = Action {
@@ -347,3 +245,5 @@ impl Default for WorkflowVersionDefinition {
         }
     }
 }
+
+

@@ -24,7 +24,6 @@ use tokio::sync::mpsc;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::sleep;
 
-mod workflow_types;
 use regex::Regex;
 
 #[macro_use]
@@ -44,13 +43,12 @@ mod email;
 mod bundler;
 mod variables; 
 mod charts;
-mod execution_planner;
 mod marketplace;
 mod secrets;
 mod supabase_jwt_middleware;
 mod api_key_middleware;
 mod account_auth_middleware;
-mod task_types;
+mod types;
 mod templater;
 mod testing; 
 mod trigger_engine;

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 import { Label } from "@repo/ui/components/ui/label";
 
-import { ExpandableInput } from "@repo/ui/components/ui/expandable-input";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Switch } from "@repo/ui/components/ui/switch";
 import {
@@ -27,17 +26,18 @@ import CodeMirrorFieldNumber from "./field-number";
 import CodeMirrorFieldBoolean from "./field-boolean";
 
 export const fieldsMap: { [key: string]: any } = {
-  text: CodeMirrorFieldText,
+  //Deprecated inputs
   simple_text: ReactSimpleCodeEditorFieldText, //old text editor still used in ui some places but not in actually dynamic forms
-  object: CodeMirrorFieldJson,
-  html: CodeMirrorFieldHtml,
-  xml: CodemirrorFieldXml,
-  account: FieldAccount,
+  //Complex inputs
   number_or_variable: CodeMirrorFieldNumber,
   boolean_or_variable: CodeMirrorFieldBoolean,
-  // radio: FieldRadio,
+  object_or_variable: CodeMirrorFieldJson,
+  html_or_variable: CodeMirrorFieldHtml,
+  xml_or_variable: CodemirrorFieldXml,
+  //Simple inputs
+  text: CodeMirrorFieldText,
+  account: FieldAccount,
   select: FieldSelect,
-  // checkbox: FieldCheckbox,
   error: FieldUnknown,
 };
 

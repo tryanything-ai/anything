@@ -22,7 +22,7 @@ export function removeWidthHeight(svgString: string) {
   if (!cleanedSvgString.includes('preserveAspectRatio="')) {
     cleanedSvgString = cleanedSvgString.replace(
       "<svg",
-      '<svg preserveAspectRatio="xMidYMid meet"'
+      '<svg preserveAspectRatio="xMidYMid meet"',
     );
   }
 
@@ -40,7 +40,7 @@ export function removeWidthHeight(svgString: string) {
     // Add fill attribute with currentValue
     cleanedSvgString = cleanedSvgString.replace(
       "<svg",
-      '<svg fill="currentColor"'
+      '<svg fill="currentColor"',
     );
   }
 
@@ -65,7 +65,11 @@ export const SvgRenderer: React.FC<IconProps> = ({ icon, className }) => {
   }
 
   // If it's not an SVG, render a fallback (e.g., a default icon or message)
-  return <span className="bg-red-300 p-2 border rounded">🚫</span>;
+  return (
+    <span className="border rounded flex items-center justify-center text-gray-400">
+      ?
+    </span>
+  );
 };
 
 export const BaseNodeIcon: React.FC<IconProps> = ({ icon, className }) => {

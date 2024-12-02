@@ -6,7 +6,10 @@ use dotenv::dotenv;
 use std::env;
 
 use crate::{
-    bundler::bundle_context_from_parts, processor::processor::ProcessorMessage, task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}, AppState
+    bundler::bundle_context_from_parts,
+    processor::processor::ProcessorMessage,
+    types::{action_types::ActionType, task_types::{CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus}},
+    AppState,
 };
 
 use std::collections::HashMap;
@@ -18,8 +21,6 @@ use serde_json::Value;
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::workflow_types::CreateTaskInput;
-
 #[derive(Debug, Clone)]
 pub struct InMemoryTrigger {
     pub account_id: String,
@@ -28,7 +29,7 @@ pub struct InMemoryTrigger {
     pub flow_id: String,
     pub action_label: String,
     pub flow_version_id: String,
-    pub config: Value,
+    pub config: TaskConfig,
     pub last_fired: Option<DateTime<Utc>>,
     pub next_fire: Option<DateTime<Utc>>,
     pub cron_expression: String,
@@ -295,14 +296,13 @@ async fn update_trigger_last_run(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[TRIGGER_ENGINE] Updating trigger last run and next_run time");
 
-    let new_next_fire =
-        match Schedule::from_str(&trigger.cron_expression) {
-            Ok(schedule) => schedule.upcoming(Utc).next(),
-            Err(e) => {
-                println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
-                None
-            }
-        };
+    let new_next_fire = match Schedule::from_str(&trigger.cron_expression) {
+        Ok(schedule) => schedule.upcoming(Utc).next(),
+        Err(e) => {
+            println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
+            None
+        }
+    };
 
     println!("[TRIGGER_ENGINE] New next fire time: {:?}", new_next_fire);
 
@@ -407,14 +407,17 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                         );
                         let input = action.get("input").cloned().unwrap_or_default();
                         let variables = action.get("variables").cloned().unwrap_or_default();
+                        let variables_schema =
+                            action.get("variables_schema").cloned().unwrap_or_default();
 
                         println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
                         println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
 
-                        let task_config = serde_json::json!({
-                            "input": input,
-                            "variables": variables,
-                        });
+                        let task_config: TaskConfig = TaskConfig {
+                            input: Some(input.clone()),
+                            variables: Some(variables.clone()),
+                            variables_schema: Some(variables_schema.clone()),
+                        };
 
                         //Run the templater over the variables and results from last session
                         //Return the templated variables and inputs

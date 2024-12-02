@@ -2,7 +2,7 @@
   "type": "action", 
   "featured": false, 
   "action_template_definition": 
-  { 
+  {
     "anything_action_version": "0.1.0",
     "type": "action",
     "plugin_id": "http",
@@ -61,19 +61,31 @@
             ],
             "x-jsf-presentation": {
               "inputType": "select"
+            }, 
+            "x-any-validation": {
+              "type": "string"
             }
         },
         "url": {
            "title": "URL",
           "description": "URL for request",
-          "type": "string"
+          "type": "string",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
         },
         "headers": {
           "title": "Headers",
           "description": "Headers for request",
           "type": "object",
           "x-jsf-presentation": {
-            "inputType": "object"
+            "inputType": "object_or_variable"
+          },
+          "x-any-validation": {
+            "type": "object"
           }
         },
         "body": {
@@ -81,7 +93,10 @@
           "description": "Body for request",
           "type": "object",
           "x-jsf-presentation": {
-            "inputType": "object"
+            "inputType": "object_or_variable"
+          },
+          "x-any-validation": {
+            "type": "object"
           }
         }
       },
@@ -131,7 +146,13 @@
           "cron_expression": {
             "title": "Cron Expression",
             "description": "When to run the trigger",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           }
         },
         "x-jsf-order": ["cron_expression"],
@@ -149,7 +170,13 @@
           "cron_expression": {
             "title": "Cron Expression",
             "description": "When to run the trigger",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           }
         },
         "x-jsf-order": ["cron_expression"],
@@ -236,6 +263,9 @@
               ],
               "x-jsf-presentation": {
                 "inputType": "select"
+              }, 
+              "x-any-validation": {
+                "type": "string"
               }
           }, 
             "security_model": {
@@ -263,6 +293,9 @@
               "default": "none",
               "x-jsf-presentation": {
                 "inputType": "select"
+              },
+              "x-any-validation": {
+                "type": "string"
               }
             },
             "username": {
@@ -271,6 +304,9 @@
               "type": "string",
               "x-jsf-presentation": {
                 "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
               }
             },
             "password": {
@@ -279,6 +315,9 @@
               "type": "string",
               "x-jsf-presentation": {
                 "inputType": "text"
+                },
+              "x-any-validation": {
+                "type": "string"
               }
             },
             "custom_header_name": {
@@ -287,6 +326,9 @@
               "type": "string",
               "x-jsf-presentation": {
                 "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
               }
             },
             "custom_header_value": {
@@ -295,6 +337,9 @@
               "type": "string",
               "x-jsf-presentation": {
                 "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
               }
             }
           },
@@ -365,7 +410,13 @@
             "request_method": {
               "title": "Request Method",
               "description": "HTTP Method for request",
-              "type": "string"
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
             },
             "security_model": {
               "title": "Security Model",
@@ -375,22 +426,46 @@
             "username": {
               "title": "Username",
               "description": "Username for Basic Authentication",
-              "type": "string"
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
             },
             "password": {
               "title": "Password",
               "description": "Password for Basic Authentication",
-              "type": "string"
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
             },
             "custom_header_name": {
               "title": "Custom Header Name",
               "description": "Name of the custom header",
-              "type": "string"
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
             },
             "custom_header_value": {
               "title": "Custom Header Value",
               "description": "Value of the custom header",
-              "type": "string"
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
             }
           },
           "x-jsf-order": [
@@ -462,6 +537,9 @@
             ],
             "x-jsf-presentation": {
               "inputType": "select"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "input": {
@@ -470,14 +548,20 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "amount": {
             "title": "Amount",
             "description": "Amount to add/subtract for date operations",
-            "type": "number",
+            "type": "string",
             "x-jsf-presentation": {
-              "inputType": "number"
+              "inputType": "number_or_variable"
+            },
+            "x-any-validation": {
+              "type": "number"
             }
           },
           "format": {
@@ -486,6 +570,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "target_timezone": {
@@ -494,6 +581,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "source_timezone": {
@@ -502,6 +592,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           }
         },
@@ -629,36 +722,71 @@
       "input_schema": {
         "type": "object",
         "properties": {
-        
           "operation": {
             "title": "Operation",
             "description": "Formatting operation to perform",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "select"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "input": {
             "title": "Input",
             "description": "Value to format",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "amount": {
             "title": "Amount",
             "description": "Amount to add/subtract for date operations",
-            "type": "number"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "number_or_variable"
+            },
+            "x-any-validation": {
+              "type": "number"
+            }
           },
           "format": {
             "title": "Format",
             "description": "Date format string",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "source_timezone": {
             "title": "Source Timezone",
             "description": "Source timezone for conversion",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "target_timezone": {
             "title": "Target Timezone",
             "description": "Target timezone for conversion",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           }
         },
         "required": ["operation", "input"],
@@ -729,6 +857,9 @@
             ],
             "x-jsf-presentation": {
               "inputType": "select"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "input": {
@@ -737,6 +868,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "pattern": {
@@ -745,6 +879,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "replacement": {
@@ -753,17 +890,32 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "start_index": {
             "title": "Start Index",
             "description": "Start index for substring operation",
-            "type": "number"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "number_or_variable"
+            },
+            "x-any-validation": {
+              "type": "number"
+            }
           },
           "end_index": {
             "title": "End Index",
             "description": "End index for substring operation",
-            "type": "number"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "number_or_variable"
+            },
+            "x-any-validation": {
+              "type": "number"
+            }
           }
         },
         "required": ["operation", "input"],
@@ -929,6 +1081,9 @@
             "default": "200",
             "x-jsf-presentation": {
               "inputType": "select"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "content_type": {
@@ -944,6 +1099,9 @@
             "default": "application/json",
             "x-jsf-presentation": {
               "inputType": "select"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "json_body": {
@@ -952,6 +1110,9 @@
             "type": "object",
             "x-jsf-presentation": {
               "inputType": "object"
+            },
+            "x-any-validation": {
+              "type": "object"
             }
           },
           "text_body": {
@@ -960,6 +1121,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           }, 
           "html_body": {
@@ -968,6 +1132,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "html"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           },
           "xml_body": {
@@ -976,6 +1143,9 @@
             "type": "string",
             "x-jsf-presentation": {
               "inputType": "xml"
+            },
+            "x-any-validation": {
+              "type": "string"
             }
           }
         },
@@ -1060,30 +1230,66 @@
           "status_code": {
             "title": "Status Code",
             "description": "HTTP status code for the response",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "content_type": {
             "title": "Content Type",
             "description": "Content type of the response",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "text_body": {
             "title": "Response Body as text", 
             "description": "Content to send in response body",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "json_body": {
             "title": "Response Body as JSON", 
             "description": "Content to send in response body",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "object_or_variable"
+            },
+            "x-any-validation": {
+              "type": "object"
+            }
           },
           "html_body": {
             "title": "Response Body as HTML", 
             "description": "Content to send in response body",
             "type": "string",
-            "xml_body": {
-              "title": "Response Body as XML", 
-              "description": "Content to send in response body",
+            "x-jsf-presentation": {
+              "inputType": "html"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "xml_body": {
+            "title": "Response Body as XML", 
+            "description": "Content to send in response body",
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "xml"
+            },
+            "x-any-validation": {
               "type": "string"
             }
           }

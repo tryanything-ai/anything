@@ -1,20 +1,25 @@
 use crate::processor::execute_task::execute_task;
 use crate::processor::flow_session_cache::FlowSessionData;
 use crate::processor::parsing_utils::get_trigger_node;
-use crate::workflow_types::{CreateTaskInput, WorkflowVersionDefinition};
 use crate::AppState;
 use chrono::Utc;
-use serde_json::json;
+
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::debug;
+
 use uuid::Uuid;
 
 use crate::processor::db_calls::{
     create_task, get_workflow_definition, update_flow_session_status, update_task_status,
 };
-use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
+use crate::types::{
+    action_types::ActionType,
+    task_types::{
+        CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+    },
+    workflow_types::WorkflowVersionDefinition,
+};
 
 // Add this near your other type definitions
 #[derive(Debug, Clone)]
@@ -201,10 +206,13 @@ pub async fn processor(
                         } else {
                             Stage::Testing.as_str().to_string()
                         },
-                        config: json!({
-                            "variables": serde_json::json!(trigger_node.variables),
-                            "input": serde_json::json!(trigger_node.input),
-                        }),
+                        config: TaskConfig {
+                            input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+                            variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
+                            variables_schema: Some(
+                                serde_json::to_value(&trigger_node.variables_schema).unwrap(),
+                            ),
+                        },
                         result: None,
                         started_at: Some(Utc::now()),
                         test_config: None,
@@ -297,10 +305,18 @@ pub async fn processor(
                                         } else {
                                             Stage::Testing.as_str().to_string()
                                         },
-                                        config: json!({
-                                            "variables": serde_json::json!(action.variables),
-                                            "input": serde_json::json!(action.input),
-                                        }),
+                                        config: TaskConfig {
+                                            variables: Some(
+                                                serde_json::to_value(&action.variables).unwrap(),
+                                            ),
+                                            input: Some(
+                                                serde_json::to_value(&action.input).unwrap(),
+                                            ),
+                                            variables_schema: Some(
+                                                serde_json::to_value(&action.variables_schema)
+                                                    .unwrap(),
+                                            ),
+                                        },
                                         result: None,
                                         started_at: Some(Utc::now()),
                                         test_config: None,
@@ -513,10 +529,13 @@ pub async fn processor(
                         } else {
                             Stage::Testing.as_str().to_string()
                         },
-                        config: json!({
-                            "variables": serde_json::json!(next_action.variables),
-                            "input": serde_json::json!(next_action.input),
-                        }),
+                        config: TaskConfig {
+                            variables: Some(serde_json::to_value(&next_action.variables).unwrap()),
+                            input: Some(serde_json::to_value(&next_action.input).unwrap()),
+                            variables_schema: Some(
+                                serde_json::to_value(&next_action.variables_schema).unwrap(),
+                            ),
+                        },
                         result: None,
                         test_config: None,
                         started_at: Some(Utc::now()),

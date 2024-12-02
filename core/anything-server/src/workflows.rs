@@ -9,7 +9,7 @@ use serde_json::Value;
 use std::sync::Arc;
 
 use crate::supabase_jwt_middleware::User;
-use crate::workflow_types::WorkflowVersionDefinition;
+use crate::types::workflow_types::WorkflowVersionDefinition;
 use crate::AppState;
 use uuid::Uuid;
 

@@ -13,14 +13,16 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
-use crate::{bundler::bundle_context_from_parts, task_types::{FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus}, AppState};
+use crate::{
+    bundler::bundle_context_from_parts,
+    types::{action_types::ActionType, task_types::{CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus}},
+    AppState, FlowCompletion,
+};
 
 use crate::{
     processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
-    workflow_types::{CreateTaskInput, DatabaseFlowVersion},
+    types::workflow_types::DatabaseFlowVersion,
 };
-
-use crate::{task_types::ActionType, FlowCompletion};
 
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -115,10 +117,11 @@ pub async fn run_workflow_and_respond(
 
     let flow_session_id = Uuid::new_v4();
 
-    let task_config: Value = json!({
-        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
-        "input": serde_json::to_value(&trigger_node.input).unwrap()
-    });
+    let task_config: TaskConfig = TaskConfig {
+        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
+        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
+        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+    };
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
@@ -363,10 +366,11 @@ pub async fn run_workflow_version_and_respond(
 
     let flow_session_id = Uuid::new_v4().to_string();
 
-    let task_config: Value = json!({
-        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
-        "input": serde_json::to_value(&trigger_node.input).unwrap()
-    });
+    let task_config: TaskConfig = TaskConfig {
+        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
+        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
+        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+    };
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
@@ -430,7 +434,7 @@ pub async fn run_workflow_version_and_respond(
             Stage::Testing.as_str().to_string()
         },
         config: task_config,
-        
+
         result: Some(json!({
             "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
             "body": processed_payload.clone(),
@@ -613,10 +617,11 @@ pub async fn run_workflow(
 
     let flow_session_id = Uuid::new_v4().to_string();
 
-    let task_config: Value = json!({
-        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
-        "input": serde_json::to_value(&trigger_node.input).unwrap()
-    });
+    let task_config: TaskConfig = TaskConfig {
+        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
+        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
+        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+    };
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");
@@ -819,10 +824,11 @@ pub async fn run_workflow_version(
 
     let flow_session_id = Uuid::new_v4();
 
-    let task_config: Value = json!({
-        "variables": serde_json::to_value(&trigger_node.variables).unwrap(),
-        "input": serde_json::to_value(&trigger_node.input).unwrap()
-    });
+    let task_config: TaskConfig = TaskConfig {
+        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
+        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
+        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+    };
 
     // Bundle the context for the trigger node
     println!("[WEBHOOK API] Bundling context for trigger node");

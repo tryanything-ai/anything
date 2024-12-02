@@ -4,8 +4,8 @@ use std::time::{Duration, SystemTime};
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::task_types::Task;
-use crate::workflow_types::DatabaseFlowVersion;
+use crate::types::task_types::Task;
+use crate::types::workflow_types::DatabaseFlowVersion;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FlowSessionData {

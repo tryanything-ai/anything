@@ -11,10 +11,13 @@ use std::collections::HashMap;
 
 use std::sync::Arc;
 
-use crate::{secrets::get_secret_by_secret_value, workflow_types::WorkflowVersionDefinition, CachedApiKey};
-use crate::{workflow_types::Action, AppState};
-
-use crate::task_types::ActionType;
+use crate::{
+    secrets::get_secret_by_secret_value,
+    types::action_types::{Action, ActionType},
+    types::workflow_types::WorkflowVersionDefinition,
+    AppState, 
+    CachedApiKey,
+};
 
 pub fn validate_webhook_input_and_response(
     workflow: &WorkflowVersionDefinition,
@@ -464,7 +467,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             if let Some(body) = stored_result.get("body").and_then(Value::as_str) {
                 headers.insert(
                     HeaderName::from_static("content-type"),
-                HeaderValue::from_static("text/plain"),
+                    HeaderValue::from_static("text/plain"),
                 );
                 println!("[WEBHOOK API] [CREATE RESPONSE] Returning plain text response with status {}: {}", status_code, body);
                 (
@@ -493,7 +496,7 @@ pub fn parse_response_action_response_into_api_response(stored_result: Value) ->
             (
                 StatusCode::from_u16(status_code).unwrap_or(StatusCode::OK),
                 headers,
-                Json(body), 
+                Json(body),
             )
                 .into_response()
         }
