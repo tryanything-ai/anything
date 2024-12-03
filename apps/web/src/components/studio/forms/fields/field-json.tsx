@@ -33,43 +33,68 @@ export default function FieldJson({
   onFocus,
   className,
 }: any) {
+  const editorRef = React.useRef<any>(null);
   const [editorValue, setEditorValue] = React.useState(
     ensureStringValue(value),
   );
-  const [isValidJson, setIsValidJson] = React.useState(true);
-  const editorRef = React.useRef<any>(null);
+  const [isValidInput, setIsValidInput] = React.useState(true);
+
+  React.useEffect(() => {
+    const newValue = ensureStringValue(value);
+    if (newValue !== editorValue) {
+      try {
+        // Check for variable pattern first
+        if (/^{{.*}}$/.test(newValue.trim())) {
+          setEditorValue(newValue);
+          setIsValidInput(true);
+          onChange(name, newValue, true);
+        } else {
+          const parsed = JSON.parse(newValue);
+          const formatted = JSON.stringify(parsed, null, 2);
+          setEditorValue(formatted);
+          setIsValidInput(true);
+          onChange(name, formatted, true);
+        }
+      } catch {
+        setEditorValue(newValue);
+        // Only mark as invalid if it's not a partial variable pattern
+        const isPartialVariable = /{{.*/.test(newValue.trim());
+        setIsValidInput(isPartialVariable);
+        onChange(name, newValue, isPartialVariable);
+      }
+    }
+  }, [value]);
 
   const handleChange = React.useCallback(
     (val: string) => {
       try {
-        // First try to parse as regular JSON
+        // Check for complete or partial variable pattern
+        const isCompleteVariable = /^{{.*}}$/.test(val.trim());
+        const isPartialVariable = /{{.*/.test(val.trim());
+        
+        if (isCompleteVariable || isPartialVariable) {
+          console.log("[FIELD JSON] [HANDLE CHANGE] Valid variable pattern");
+          setEditorValue(val);
+          setIsValidInput(true);
+          onChange(name, val, true);
+          return;
+        }
+
+        // Then try to parse as regular JSON
+        console.log("[FIELD JSON] [HANDLE CHANGE] Parsing JSON:", val);
         JSON.parse(val);
         setEditorValue(val);
-        setIsValidJson(true);
+        setIsValidInput(true);
         onChange(name, val, true);
       } catch (e) {
-        // If JSON parsing fails, check if it's a valid variable pattern
-        const isVariablePattern = /^{{.*}}$/.test(val.trim());
-        if (isVariablePattern) {
-          setEditorValue(val);
-          setIsValidJson(true);
-          onChange(name, val, true);
-        } else {
-          // If neither valid JSON nor variable pattern, mark as invalid
-          setEditorValue(val);
-          setIsValidJson(false);
-          onChange(name, val, false);
-        }
+        console.log("[FIELD JSON] [HANDLE CHANGE] Invalid JSON:", e);
+        setEditorValue(val);
+        setIsValidInput(false);
+        onChange(name, val, false);
       }
     },
     [name, onChange],
   );
-
-  React.useEffect(() => {
-    if (value !== editorValue) {
-      setEditorValue(ensureStringValue(value));
-    }
-  }, [value]);
 
   const handleCursorActivity = React.useCallback(
     (viewUpdate: any) => {
@@ -85,18 +110,17 @@ export default function FieldJson({
 
   const jsonLinter = linter((view) => {
     const doc = view.state.doc.toString();
+    
+    // Check for variable pattern first
+    const isVariablePattern = /^{{.*}}$/.test(doc.trim());
+    if (isVariablePattern) {
+      return [];
+    }
+
     try {
-      // First try to parse as regular JSON
       JSON.parse(doc);
       return [];
     } catch (e) {
-      // If JSON parsing fails, check if it's a valid variable pattern
-      const isVariablePattern = /^{{.*}}$/.test(doc.trim());
-      if (isVariablePattern) {
-        return [];
-      }
-
-      // If neither valid JSON nor variable pattern, show error
       const error = e as SyntaxError;
       const match = error.message.match(/at position (\d+)/);
       const pos = match ? parseInt(match[1]!) : 0;
@@ -159,7 +183,7 @@ export default function FieldJson({
           }}
         />
       </div>
-      {!isValidJson && <div className="text-red-500">Invalid JSON</div>}
+      {!isValidInput && <div className="text-red-500">Invalid Input</div>}
       {error && <div className="text-red-500">{error}</div>}
     </div>
   );
