@@ -42,17 +42,24 @@ export default function FieldJson({
   const handleChange = React.useCallback(
     (val: string) => {
       try {
-        // Try to parse and format the JSON
-        const parsed = JSON.parse(val);
-        const formatted = JSON.stringify(parsed, null, 2);
-        setEditorValue(formatted);
-        setIsValidJson(true);
-        onChange(name, parsed, true);
-      } catch (e) {
-        // If it's not valid JSON, update with raw value but mark as invalid
+        // First try to parse as regular JSON
+        JSON.parse(val);
         setEditorValue(val);
-        setIsValidJson(false);
-        onChange(name, val, false);
+        setIsValidJson(true);
+        onChange(name, val, true);
+      } catch (e) {
+        // If JSON parsing fails, check if it's a valid variable pattern
+        const isVariablePattern = /^{{.*}}$/.test(val.trim());
+        if (isVariablePattern) {
+          setEditorValue(val);
+          setIsValidJson(true);
+          onChange(name, val, true);
+        } else {
+          // If neither valid JSON nor variable pattern, mark as invalid
+          setEditorValue(val);
+          setIsValidJson(false);
+          onChange(name, val, false);
+        }
       }
     },
     [name, onChange],
@@ -79,9 +86,17 @@ export default function FieldJson({
   const jsonLinter = linter((view) => {
     const doc = view.state.doc.toString();
     try {
+      // First try to parse as regular JSON
       JSON.parse(doc);
       return [];
     } catch (e) {
+      // If JSON parsing fails, check if it's a valid variable pattern
+      const isVariablePattern = /^{{.*}}$/.test(doc.trim());
+      if (isVariablePattern) {
+        return [];
+      }
+
+      // If neither valid JSON nor variable pattern, show error
       const error = e as SyntaxError;
       const match = error.message.match(/at position (\d+)/);
       const pos = match ? parseInt(match[1]!) : 0;
