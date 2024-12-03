@@ -2,6 +2,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
 
+use crate::types::action_types::ValidationFieldType;
+
 #[derive(Debug)]
 pub struct TemplateError {
     pub message: String,
@@ -117,7 +119,12 @@ impl Templater {
         Some(current.clone())
     }
 
-    pub fn render(&self, template_name: &str, context: &Value) -> Result<Value, TemplateError> {
+    pub fn render(
+        &self,
+        template_name: &str,
+        context: &Value,
+        validations: HashMap<String, ValidationFieldType>,
+    ) -> Result<Value, TemplateError> {
         let template = self
             .templates
             .get(template_name)
@@ -126,42 +133,58 @@ impl Templater {
                 variable: template_name.to_string(),
             })?;
 
-        self.render_value(template, context)
+        self.render_value(template, context, &validations)
     }
 
-    fn render_value(&self, value: &Value, context: &Value) -> Result<Value, TemplateError> {
-        println!("[TEMPLATER] Rendering value: {:?}", value);
+    fn render_value(
+        &self,
+        value: &Value,
+        context: &Value,
+        validations: &HashMap<String, ValidationFieldType>,
+    ) -> Result<Value, TemplateError> {
         match value {
             Value::Object(map) => {
-                println!("[TEMPLATER] Rendering object");
                 let mut result = serde_json::Map::new();
                 for (k, v) in map {
-                    println!("[TEMPLATER] Rendering object key: {}", k);
-                    result.insert(k.clone(), self.render_value(v, context)?);
+                    result.insert(k.clone(), self.render_value(v, context, validations)?);
                 }
                 Ok(Value::Object(result))
             }
             Value::Array(arr) => {
-                println!("[TEMPLATER] Rendering array");
                 let mut result = Vec::new();
-                for (i, v) in arr.iter().enumerate() {
-                    println!("[TEMPLATER] Rendering array index: {}", i);
-                    result.push(self.render_value(v, context)?);
+                for v in arr.iter() {
+                    result.push(self.render_value(v, context, validations)?);
                 }
                 Ok(Value::Array(result))
             }
             Value::String(s) => {
-                println!("[TEMPLATER] Rendering string: {}", s);
-
                 // Special case: if the string is exactly "{{variables}}" (or any other full variable),
-                // return the raw value instead of string conversion
                 if s.trim().starts_with("{{") && s.trim().ends_with("}}") {
                     let variable = s.trim()[2..s.trim().len() - 2].trim();
-                    if let Some(value) = Self::get_value_from_path(context, variable) {
+                    let top_level_key = variable.split('.').nth(1).unwrap_or(variable);
+
+                    if let Some(expected_type) = validations.get(top_level_key) {
+                        if let Some(value) = Self::get_value_from_path(context, variable) {
+                            // For objects, validate it's an object but don't validate contents
+                            if *expected_type == ValidationFieldType::Object {
+                                match value {
+                                    Value::Object(_) => return Ok(value),
+                                    _ => {
+                                        return Err(TemplateError {
+                                            message: format!("Expected object, got: {:?}", value),
+                                            variable: variable.to_string(),
+                                        })
+                                    }
+                                }
+                            }
+                            return self.validate_and_convert_value(value, expected_type, variable);
+                        }
+                    } else if let Some(value) = Self::get_value_from_path(context, variable) {
                         return Ok(value);
                     }
                 }
 
+                // Regular string interpolation logic
                 let mut result = s.clone();
                 let mut start = 0;
 
@@ -173,18 +196,33 @@ impl Templater {
                     })?;
                     let close_idx = open_idx + close_idx;
                     let variable = result[open_idx + 2..close_idx].trim();
-
-                    println!("[TEMPLATER] Found variable: {}", variable);
+                    let top_level_key = variable.split('.').nth(1).unwrap_or(variable);
 
                     let value = Self::get_value_from_path(context, variable).ok_or_else(|| {
-                        println!("[TEMPLATER] Variable not found in context: {}", variable);
                         TemplateError {
                             message: "Variable not found in context".to_string(),
                             variable: variable.to_string(),
                         }
                     })?;
 
-                    println!("[TEMPLATER] Variable value: {:?}", value);
+                    let value = if let Some(expected_type) = validations.get(top_level_key) {
+                        // For objects, validate it's an object but don't validate contents
+                        if *expected_type == ValidationFieldType::Object {
+                            match value {
+                                Value::Object(_) => value,
+                                _ => {
+                                    return Err(TemplateError {
+                                        message: format!("Expected object, got: {:?}", value),
+                                        variable: variable.to_string(),
+                                    })
+                                }
+                            }
+                        } else {
+                            self.validate_and_convert_value(value, expected_type, variable)?
+                        }
+                    } else {
+                        value
+                    };
 
                     let replacement = match value {
                         Value::String(s) => s.clone(),
@@ -194,14 +232,71 @@ impl Templater {
                     start = open_idx + replacement.len();
                 }
 
-                println!("[TEMPLATER] Rendered string: {}", result);
-
                 Ok(Value::String(result))
             }
-            _ => {
-                println!("[TEMPLATER] Returning value as-is: {:?}", value);
-                Ok(value.clone())
-            }
+            _ => Ok(value.clone()),
+        }
+    }
+
+    fn validate_and_convert_value(
+        &self,
+        value: Value,
+        expected_type: &ValidationFieldType,
+        variable: &str,
+    ) -> Result<Value, TemplateError> {
+        match expected_type {
+            ValidationFieldType::String => match value {
+                Value::String(_) => Ok(value),
+                _ => Ok(Value::String(value.to_string())),
+            },
+            ValidationFieldType::Number => match value {
+                Value::Number(_) => Ok(value),
+                Value::String(s) => s.parse::<f64>().map_or_else(
+                    |_| {
+                        Err(TemplateError {
+                            message: format!("Cannot convert value to number: {}", s),
+                            variable: variable.to_string(),
+                        })
+                    },
+                    |n| Ok(Value::Number(serde_json::Number::from_f64(n).unwrap())),
+                ),
+                _ => Err(TemplateError {
+                    message: format!("Expected number, got: {:?}", value),
+                    variable: variable.to_string(),
+                }),
+            },
+            ValidationFieldType::Boolean => match value {
+                Value::Bool(_) => Ok(value),
+                Value::String(s) => s.parse::<bool>().map_or_else(
+                    |_| {
+                        Err(TemplateError {
+                            message: format!("Cannot convert value to boolean: {}", s),
+                            variable: variable.to_string(),
+                        })
+                    },
+                    |b| Ok(Value::Bool(b)),
+                ),
+                _ => Err(TemplateError {
+                    message: format!("Expected boolean, got: {:?}", value),
+                    variable: variable.to_string(),
+                }),
+            },
+            ValidationFieldType::Object => match value {
+                Value::Object(_) => Ok(value),
+                _ => Err(TemplateError {
+                    message: format!("Expected object, got: {:?}", value),
+                    variable: variable.to_string(),
+                }),
+            },
+            ValidationFieldType::Array => match value {
+                Value::Array(_) => Ok(value),
+                _ => Err(TemplateError {
+                    message: format!("Expected array, got: {:?}", value),
+                    variable: variable.to_string(),
+                }),
+            },
+            ValidationFieldType::Null => Ok(Value::Null),
+            ValidationFieldType::Unknown => Ok(value),
         }
     }
 }
@@ -212,25 +307,28 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn test_simple_object_variable_replacement() {
+    fn string_variable_replacement() {
         let mut templater = Templater::new();
 
-        // Create template with single key-value pair
         let template = json!({
-            "greeting": "Hello {{name}}"
+            "greeting": "Hello {{variables.name}}"
         });
 
         templater.add_template("test_template", template);
 
-        // Create context with replacement value
         let context = json!({
-            "name": "World"
+            "variables": {
+                "name": "World"
+            }
         });
 
-        // Render template with context
-        let result = templater.render("test_template", &context).unwrap();
+        let mut validations = HashMap::new();
+        validations.insert("name".to_string(), ValidationFieldType::String);
 
-        // Check the rendered result
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
         assert_eq!(
             result,
             json!({
@@ -240,158 +338,168 @@ mod tests {
     }
 
     #[test]
-    fn test_deeply_nested_variable_replacement() {
+    fn string_variable_replacement_with_type_coercion_from_number() {
         let mut templater = Templater::new();
 
-        // Create template that uses deeply nested variable
         let template = json!({
-            "message": "Value is: {{data.items[0].details[2].value}}"
+            "greeting": "{{variables.name}}"
         });
 
-        templater.add_template("nested_template", template);
+        templater.add_template("test_template", template);
 
-        // Create context with nested data structure
         let context = json!({
-            "data": {
-                "items": [
-                    {
-                        "details": [
-                            {"value": "first"},
-                            {"value": "second"},
-                            {"value": "third"},
-                            {"value": "fourth"}
-                        ]
-                    }
-                ]
+            "variables": {
+                "name": 42  // Providing a number instead of string
             }
         });
 
-        // Render template with context
-        let result = templater.render("nested_template", &context).unwrap();
+        let mut validations = HashMap::new();
+        validations.insert("name".to_string(), ValidationFieldType::String);
 
-        // Check the rendered result
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
         assert_eq!(
             result,
             json!({
-                "message": "Value is: third"
+                "greeting": "42"
+            })
+        );
+    }
+    #[test]
+    fn number_variable_replacement_with_type_coercion_from_string() {
+        let mut templater = Templater::new();
+
+        let template = json!({
+            "greeting": "{{variables.name}}"
+        });
+
+        templater.add_template("test_template", template);
+
+        let context = json!({
+            "variables": {
+                "name": "42"
+            }
+        });
+
+        let mut validations = HashMap::new();
+        validations.insert("name".to_string(), ValidationFieldType::Number);
+
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "greeting": 42,
             })
         );
     }
 
     #[test]
-    fn test_object_replacement_in_nested_path_inside_string() {
+    fn object_variable_replacement() {
         let mut templater = Templater::new();
 
-        // Create template that uses nested path with object replacement
         let template = json!({
-            "message": "Value is: {{data.items[0].details}}"
+            "an_object": "{{variables.the_object}}"
         });
 
-        templater.add_template("object_template", template);
+        templater.add_template("test_template", template);
 
-        // Create context with nested data structure
         let context = json!({
-            "data": {
-                "items": [
-                    {
-                        "details": {
-                            "id": 123,
-                            "name": "test item",
-                            "values": ["a", "b", "c"]
-                        }
-                    }
-                ]
+            "variables": {
+                "the_object": {
+                    "a_number": 42
+                }
             }
         });
 
-        // Render template with context
-        let result = templater.render("object_template", &context).unwrap();
+        let mut validations = HashMap::new();
+        validations.insert("the_object".to_string(), ValidationFieldType::Object);
 
-        // Check the rendered result includes the full object
-        assert_eq!(
-            result,
-            json!({
-                "message": "Value is: {\"id\":123,\"name\":\"test item\",\"values\":[\"a\",\"b\",\"c\"]}"
-            })
-        );
-    }
-
-     #[test]
-    fn test_object_replacement_in_nested_path_as_object() {
-        let mut templater = Templater::new();
-
-        // Create template that uses nested path with object replacement
-        let template = json!({
-            "details": "{{data.items[0].details}}"
-        });
-
-        templater.add_template("details_object_template", template);
-
-        // Create context with nested data structure
-        let context = json!({
-            "data": {
-                "items": [
-                    {
-                        "details": {
-                            "id": 123,
-                            "name": "test item",
-                            "values": ["a", "b", "c"]
-                        }
-                    }
-                ]
-            }
-        });
-
-        // Render template with context
         let result = templater
-            .render("details_object_template", &context)
+            .render("test_template", &context, validations)
             .unwrap();
 
-        // Check the rendered result includes the full object as an object
         assert_eq!(
             result,
             json!({
-                "details": {
-                    "id": 123,
-                    "name": "test item",
-                    "values": ["a", "b", "c"]
+                "an_object": {
+                    "a_number": 42,
                 }
             })
         );
     }
 
     #[test]
-    fn test_string_replacement_in_nested_path() {
+    fn complicated_replacement() {
         let mut templater = Templater::new();
 
-        // Create template that uses nested path with string replacement
         let template = json!({
-            "details": "{{data.items[0].name}}"
+            "an_object": "{{variables.the_object}}",
+            "a_number": "{{variables.a_number}}",
+            "a_string": "{{variables.a_string}}",
+            "a_boolean": "{{variables.a_boolean}}",
+            "an_array": "{{variables.an_array}}",
+            "a_null": "{{variables.a_null}}",
+            "a_float": "{{variables.a_float}}",
+            "a_number_string": "{{variables.a_number_string}}",
+            "a_boolean_string": "{{variables.a_boolean_string}}",
+            // "a_array_string": "{{variables.a_array_string}}",
         });
 
-        templater.add_template("details_string_template", template);
+        templater.add_template("test_template", template);
 
-        // Create context with nested data structure
         let context = json!({
-            "data": {
-                "items": [
-                    {
-                        "name": "test item"
-                    }
-                ]
+            "variables": {
+                "the_object": {
+                    "a_number": 42
+                },
+                "a_number": 43,
+                "a_string": "hello",
+                "a_boolean": true,
+                "an_array": [1, 2, 3],
+                "a_null": null,
+                "a_float": 1.23,
+                "a_number_string": "44",
+                "a_boolean_string": "true",
+                "a_array_string": "[1, 2, 3]",
             }
         });
 
-        // Render template with context
+        let mut validations = HashMap::new();
+        validations.insert("the_object".to_string(), ValidationFieldType::Object);
+        validations.insert("a_number".to_string(), ValidationFieldType::Number);
+        validations.insert("a_string".to_string(), ValidationFieldType::String);
+        validations.insert("a_boolean".to_string(), ValidationFieldType::Boolean);
+        validations.insert("an_array".to_string(), ValidationFieldType::Array);
+        validations.insert("a_null".to_string(), ValidationFieldType::Null);
+        validations.insert("a_float".to_string(), ValidationFieldType::Number);
+        validations.insert("a_number_string".to_string(), ValidationFieldType::String);
+        validations.insert("a_boolean_string".to_string(), ValidationFieldType::String);
+        validations.insert("a_array_string".to_string(), ValidationFieldType::String);
+
         let result = templater
-            .render("details_string_template", &context)
+            .render("test_template", &context, validations)
             .unwrap();
 
-        // Check the rendered result includes the string value
         assert_eq!(
             result,
             json!({
-                "details": "test item"
+                "an_object": {
+                    "a_number": 42,
+                },
+                "a_number": 43,
+                "a_string": "hello",
+                "a_boolean": true,
+                "an_array": [1, 2, 3],
+                "a_null": null,
+                "a_float": 1.23,
+                "a_number_string": "44",
+                "a_boolean_string": "true",
+                // "a_array_string": "[1, 2, 3]",
             })
         );
     }

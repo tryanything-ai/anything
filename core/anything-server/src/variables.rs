@@ -342,13 +342,13 @@ pub async fn get_flow_version_variables(
     // Get the variables, variables_schema, input and input_schema
     let variables = action.variables.clone();
     let variables_schema = action.variables_schema.clone();
-    let input = action.input.clone();
-    let input_schema = action.input_schema.clone();
+    // let input = action.input.clone();
+    // let input_schema = action.input_schema.clone();
 
     println!("[VARIABLES] Found variables: {:?}", variables);
     println!("[VARIABLES] Found variables_schema: {:?}", variables_schema);
-    println!("[VARIABLES] Found input: {:?}", input);
-    println!("[VARIABLES] Found input_schema: {:?}", input_schema);
+    // println!("[VARIABLES] Found input: {:?}", input);
+    // println!("[VARIABLES] Found input_schema: {:?}", input_schema);
 
     //Run the templater over the variables and results from last session
     //Return the templated variables
@@ -359,8 +359,8 @@ pub async fn get_flow_version_variables(
         &session_id,
         Some(&variables),
         Some(&variables_schema),
-        Some(&input),
-        Some(&input_schema),
+        // Some(&input),
+        // Some(&input_schema),
         false,
     )
     .await

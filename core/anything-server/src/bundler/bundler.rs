@@ -43,8 +43,8 @@ pub async fn bundle_tasks_cached_context(
         &flow_session_id,
         variables,
         variables_schema,
-        input,
-        input_schema,
+        // input,
+        // input_schema,
         refresh_auth,
     )
     .await?;
@@ -72,8 +72,8 @@ pub async fn bundle_context_from_parts(
         flow_session_id,
         variables,
         variables_schema,
-        input,
-        input_schema,
+        // input,
+        // input_schema,
         refresh_auth,
     )
     .await?;
@@ -88,8 +88,8 @@ pub async fn bundle_cached_variables(
     flow_session_id: &str,
     variables: Option<&Value>,
     variables_schema: Option<&JsonSchema>,
-    input: Option<&Value>,
-    input_schema: Option<&JsonSchema>,
+    // input: Option<&Value>,
+    // input_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle variables");
@@ -138,18 +138,13 @@ pub async fn bundle_cached_variables(
 
     // Extract and set validations from schemas
     let mut templater = Templater::new();
+
     if let Some(variables) = variables {
         templater.add_template("task_variables_definition", variables.clone());
-    }
 
-    let variable_validations = extract_validation_types_from_schema(variables_schema);
-    let input_validations = extract_validation_types_from_schema(input_schema);
-    // templater.set_validations([variable_validations, input_validations].concat());
-
-    // Process variables config if present
-    if let Some(variables) = variables {
+        let variable_validations = extract_validation_types_from_schema(variables_schema);
         let context_value = serde_json::to_value(&render_variables_context)?;
-        let rendered = templater.render("task_variables_definition", &context_value)?;
+        let rendered = templater.render("task_variables_definition", &context_value, variable_validations)?;
 
         println!("[BUNDLER] Rendered variables output: {}", rendered);
         Ok(rendered)
@@ -197,9 +192,10 @@ pub fn bundle_inputs(
         println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
         templater.add_template("task_inputs_definition", inputs.clone());
 
+        let input_validations = extract_validation_types_from_schema(input_schema);
         // Render the task definition with the context
         let rendered_inputs_definition =
-            templater.render("task_inputs_definition", &inputs_context_value)?;
+            templater.render("task_inputs_definition", &inputs_context_value, input_validations)?;
         println!(
             "[BUNDLER] Rendered inputs output: {}",
             rendered_inputs_definition
