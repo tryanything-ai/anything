@@ -35,7 +35,6 @@ export default function ConfigurationForm(): JSX.Element {
       console.log("Selected Node Input:", selected_node_input);
       console.log("Selected Node Input Schema:", selected_node_input_schema);
       const result = createHeadlessForm(selected_node_input_schema, {
-        strictInputType: false, // so you don't need to pass presentation.inputType,
         initialValues: selected_node_input,
       });
 

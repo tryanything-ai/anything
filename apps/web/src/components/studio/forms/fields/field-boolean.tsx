@@ -26,7 +26,12 @@ export default function CodeMirrorFieldBoolean({
     return val === "true" || val === "false";
   };
 
-  const [isVariable, setIsVariable] = useState(!isValidBoolean(value));
+  // Initialize isVariable based on the opposite of isValidBoolean
+  const [isVariable, setIsVariable] = useState(() => {
+    // Show toggle first if it's a valid boolean
+    return !isValidBoolean(value);
+  });
+
   const [editorValue, setEditorValue] = React.useState(value || "");
   const editorRef = React.useRef<any>(null);
 

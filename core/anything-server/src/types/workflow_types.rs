@@ -8,12 +8,13 @@ use crate::types::react_flow_types::{Edge, HandleProps, NodePresentation, Positi
 use crate::types::action_types::Action;
 use crate::types::general::Variable;
 
+use super::action_types::{InputFieldType, JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType};
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WorkflowVersionDefinition {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
-
 
 impl WorkflowVersionDefinition {
     pub fn from_json(json_str: &str) -> Result<Self, serde_json::Error> {
@@ -24,7 +25,6 @@ impl WorkflowVersionDefinition {
         serde_json::to_string(self)
     }
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FlowVersion {
@@ -65,22 +65,26 @@ impl Default for WorkflowVersionDefinition {
                 },
             },
             variables_locked: Some(false),
-            variables_schema: Variable {
-                inner: {
+            variables_schema: JsonSchema {
+                r#type: "object".to_string(),
+                properties: {
                     let mut map = HashMap::new();
-                    map.insert("type".to_string(), serde_json::json!("object"));
-                    map.insert("properties".to_string(), serde_json::json!({
-                        "cron_expression": {
-                            "title": "Cron Expression",
-                            "description": "When to run the trigger",
-                            "type": "string"
-                        }
-                    }));
-                    map.insert("x-jsf-order".to_string(), serde_json::json!(["cron_expression"]));
-                    map.insert("required".to_string(), serde_json::json!(["cron_expression"]));
-                    map.insert("additionalProperties".to_string(), serde_json::json!(false));
+                    map.insert("cron_expression".to_string(), JsonSchemaProperty {
+                        title: Some("Cron Expression".to_string()),
+                        description: Some("When to run the trigger".to_string()),
+                        r#type: Some("string".to_string()),
+                        one_of: None,
+                        all_of: None,
+                        x_any_validation: Some(ValidationField {
+                            r#type: ValidationFieldType::String,
+                        }),
+                        x_jsf_presentation: None,
+                    });
                     map
                 },
+                required: Some(vec!["cron_expression".to_string()]),
+                x_jsf_order: Some(vec!["cron_expression".to_string()]),
+                additional_properties: Some(false),
             },
             variables_schema_locked: Some(true),
             input: Variable {
@@ -91,22 +95,24 @@ impl Default for WorkflowVersionDefinition {
                 },
             },
             input_locked: Some(true),
-            input_schema: Variable {
-                inner: {
+            input_schema: JsonSchema {
+                r#type: "object".to_string(),
+                properties: {
                     let mut map = HashMap::new();
-                    map.insert("type".to_string(), serde_json::json!("object"));
-                    map.insert("properties".to_string(), serde_json::json!({
-                        "cron_expression": {
-                            "title": "Cron Expression", 
-                            "description": "When to run the trigger",
-                            "type": "string"
-                        }
-                    }));
-                    map.insert("x-jsf-order".to_string(), serde_json::json!(["cron_expression"]));
-                    map.insert("required".to_string(), serde_json::json!(["cron_expression"]));
-                    map.insert("additionalProperties".to_string(), serde_json::json!(false));
+                    map.insert("cron_expression".to_string(), JsonSchemaProperty {
+                        title: Some("Cron Expression".to_string()),
+                        description: Some("When to run the trigger".to_string()),
+                        r#type: Some("string".to_string()),
+                        one_of: None,
+                        all_of: None,
+                        x_any_validation: None,
+                        x_jsf_presentation: None,
+                    });
                     map
                 },
+                required: Some(vec!["cron_expression".to_string()]),
+                x_jsf_order: Some(vec!["cron_expression".to_string()]),
+                additional_properties: Some(false),
             },
             input_schema_locked: Some(true),
             presentation: Some(NodePresentation {
@@ -132,8 +138,12 @@ impl Default for WorkflowVersionDefinition {
                 inner: HashMap::new(),
             },
             variables_locked: Some(false),
-            variables_schema: Variable {
-                inner: HashMap::new(),
+            variables_schema: JsonSchema {
+                r#type: "object".to_string(),
+                properties: HashMap::new(),
+                required: None,
+                x_jsf_order: None,
+                additional_properties: None,
             },
             variables_schema_locked: Some(false),
             input: Variable {
@@ -141,74 +151,96 @@ impl Default for WorkflowVersionDefinition {
                     let mut map = HashMap::new();
                     map.insert("method".to_string(), serde_json::json!("GET"));
                     map.insert("url".to_string(), serde_json::json!("https://hp-api.onrender.com/api/character/9e3f7ce4-b9a7-4244-b709-dae5c1f1d4a8"));
-                    map.insert("headers".to_string(), serde_json::json!(""));
-                    map.insert("body".to_string(), serde_json::json!(""));
+                    map.insert("headers".to_string(), serde_json::json!("{}"));
+                    map.insert("body".to_string(), serde_json::json!("{}"));
                     map
                 },
             },
             input_locked: Some(false),
-            input_schema: Variable {
-                inner: {
+            input_schema: JsonSchema {
+                r#type: "object".to_string(),
+                required: Some(vec!["method".to_string(), "url".to_string()]),
+                x_jsf_order: Some(vec!["method".to_string(), "url".to_string(), "headers".to_string(), "body".to_string()]),
+                additional_properties: Some(false), 
+                properties: {
                     let mut map = HashMap::new();
-                    map.insert("type".to_string(), serde_json::json!("object"));
-                    map.insert("properties".to_string(), serde_json::json!({
-                        "method": {
-                            "title": "Method",
-                            "description": "HTTP Method for request",
-                            "type": "string",
-                            "oneOf": [
-                                        {
-                                            "value": "GET",
-                                            "title": "GET"
-                                        },
-                                        {
-                                            "value": "POST",
-                                            "title": "POST"
-                                        },
-                                        {
-                                            "value": "PUT",
-                                            "title": "PUT"
-                                        },
-                                        {
-                                            "value": "DELETE",
-                                            "title": "DELETE"
-                                        },
-                                        {
-                                            "value": "HEAD",
-                                            "title": "HEAD"
-                                        },
-                                        { 
-                                            "value": "OPTIONS",
-                                            "title": "OPTIONS"
-                                        },
-                                        {
-                                            "value": "PATCH", 
-                                            "title": "PATCH"
-                                        }
-                                    ],
-                            "x-jsf-presentation": {
-                                "inputType": "select"
-                            }
-                        },
-                        "url": {
-                            "title": "URL",
-                            "description": "URL for request",
-                            "type": "string"
-                        },
-                        "headers": {
-                            "title": "Headers",
-                            "description": "Headers for request",
-                            "type": "string"
-                        },
-                        "body": {
-                            "title": "Body",
-                            "description": "Body for request",
-                            "type": "string"
-                        }
-                    }));
-                    map.insert("x-jsf-order".to_string(), serde_json::json!(["url", "method", "headers", "body"]));
-                    map.insert("required".to_string(), serde_json::json!(["method", "url"]));
-                    map.insert("additionalProperties".to_string(), serde_json::json!(false));
+                    map.insert("method".to_string(), JsonSchemaProperty {
+                        title: Some("Method".to_string()),
+                        description: Some("HTTP Method for request".to_string()),
+                        r#type: Some("string".to_string()),
+                        one_of: Some(vec![
+                            serde_json::json!({
+                                "value": "GET",
+                                "title": "GET"
+                            }),
+                            serde_json::json!({
+                                "value": "POST",
+                                "title": "POST"
+                            }),
+                            serde_json::json!({
+                                "value": "PUT",
+                                "title": "PUT"
+                            }),
+                            serde_json::json!({
+                                "value": "DELETE",
+                                "title": "DELETE"
+                            }),
+                            serde_json::json!({
+                                "value": "HEAD",
+                                "title": "HEAD"
+                            }),
+                            serde_json::json!({
+                                "value": "OPTIONS",
+                                "title": "OPTIONS"
+                            }),
+                            serde_json::json!({
+                                "value": "PATCH",
+                                "title": "PATCH"
+                            }),
+                        ]),
+                        all_of: None,
+                        x_any_validation: None,
+                        x_jsf_presentation: Some(PresentationField {
+                            input_type: InputFieldType::SelectOrVariable,
+                        }),
+                    });
+                    map.insert("url".to_string(), JsonSchemaProperty {
+                        title: Some("URL".to_string()),
+                        description: Some("URL for request".to_string()),
+                        r#type: Some("string".to_string()),
+                        one_of: None,
+                        all_of: None,
+                        x_any_validation: None,
+                        x_jsf_presentation: Some(PresentationField {
+                            input_type: InputFieldType::Text,
+                        }),
+                    });
+                    map.insert("headers".to_string(), JsonSchemaProperty {
+                        title: Some("Headers".to_string()),
+                        description: Some("Headers for request".to_string()),
+                        r#type: Some("object".to_string()),
+                        one_of: None,
+                        all_of: None,
+                        x_any_validation: Some(ValidationField {
+                            r#type: ValidationFieldType::Object,
+                        }),
+                        x_jsf_presentation: Some(PresentationField {
+                            input_type: InputFieldType::ObjectOrVariable,
+                        }),
+                    });
+                    map.insert("body".to_string(), JsonSchemaProperty {
+                        title: Some("Body".to_string()),
+                        description: Some("Body for request".to_string()),
+                        r#type: Some("object".to_string()),
+                        one_of: None,
+                        all_of: None,
+                        x_any_validation: Some(ValidationField {
+                            r#type: ValidationFieldType::Object,
+                        }),
+                        x_jsf_presentation: Some(PresentationField {
+                            input_type: InputFieldType::ObjectOrVariable,
+                        }),
+                    });                 
                     map
                 },
             },

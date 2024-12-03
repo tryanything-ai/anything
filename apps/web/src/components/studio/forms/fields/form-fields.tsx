@@ -34,10 +34,11 @@ export const fieldsMap: { [key: string]: any } = {
   object_or_variable: CodeMirrorFieldJson,
   html_or_variable: CodeMirrorFieldHtml,
   xml_or_variable: CodemirrorFieldXml,
+  select_or_variable: FieldSelect, //these don't all actually take varaibles
+  //but want them all to in the future so want to start the naming convention now
   //Simple inputs
   text: CodeMirrorFieldText,
   account: FieldAccount,
-  select: FieldSelect,
   error: FieldUnknown,
 };
 

@@ -60,7 +60,7 @@
               }
             ],
             "x-jsf-presentation": {
-              "inputType": "select"
+              "inputType": "select_or_variable"
             }, 
             "x-any-validation": {
               "type": "string"
@@ -262,7 +262,7 @@
                 }
               ],
               "x-jsf-presentation": {
-                "inputType": "select"
+                "inputType": "select_or_variable"
               }, 
               "x-any-validation": {
                 "type": "string"
@@ -292,7 +292,7 @@
               ],
               "default": "none",
               "x-jsf-presentation": {
-                "inputType": "select"
+                "inputType": "select_or_variable"
               },
               "x-any-validation": {
                 "type": "string"
@@ -536,7 +536,7 @@
               {"const": "from_unix", "title": "Convert from Unix Timestamp"}
             ],
             "x-jsf-presentation": {
-              "inputType": "select"
+              "inputType": "select_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -727,7 +727,7 @@
             "description": "Formatting operation to perform",
             "type": "string",
             "x-jsf-presentation": {
-              "inputType": "select"
+              "inputType": "select_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -856,7 +856,7 @@
               {"const": "substring", "title": "Substring"}
             ],
             "x-jsf-presentation": {
-              "inputType": "select"
+              "inputType": "select_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -1080,7 +1080,7 @@
             ],
             "default": "200",
             "x-jsf-presentation": {
-              "inputType": "select"
+              "inputType": "select_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -1098,7 +1098,7 @@
             ],
             "default": "application/json",
             "x-jsf-presentation": {
-              "inputType": "select"
+              "inputType": "select_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -1109,7 +1109,7 @@
             "description": "Content to send in response body",
             "type": "object",
             "x-jsf-presentation": {
-              "inputType": "object"
+              "inputType": "object_or_variable"
             },
             "x-any-validation": {
               "type": "object"
@@ -1131,7 +1131,7 @@
             "description": "Content to send in response body",
             "type": "string",
             "x-jsf-presentation": {
-              "inputType": "html"
+              "inputType": "html_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -1142,7 +1142,7 @@
             "description": "Content to send in response body",
             "type": "string",
             "x-jsf-presentation": {
-              "inputType": "xml"
+              "inputType": "xml_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -1263,7 +1263,7 @@
           "json_body": {
             "title": "Response Body as JSON", 
             "description": "Content to send in response body",
-            "type": "string",
+            "type": "object",
             "x-jsf-presentation": {
               "inputType": "object_or_variable"
             },
@@ -1276,7 +1276,7 @@
             "description": "Content to send in response body",
             "type": "string",
             "x-jsf-presentation": {
-              "inputType": "html"
+              "inputType": "html_or_variable"
             },
             "x-any-validation": {
               "type": "string"
@@ -1287,7 +1287,7 @@
             "description": "Content to send in response body",
             "type": "string",
             "x-jsf-presentation": {
-              "inputType": "xml"
+              "inputType": "xml_or_variable"
             },
             "x-any-validation": {
               "type": "string"

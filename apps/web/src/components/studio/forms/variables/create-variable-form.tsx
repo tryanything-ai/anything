@@ -57,7 +57,6 @@ export default function CreateVariableForm(): JSX.Element {
 
   const { fields, handleValidation } = useMemo(() => {
     return createHeadlessForm(CREATE_VARIABLE_SCHEMA, {
-      strictInputType: false, // so you don't need to pass presentation.inputType,
       initialValues: the_variable,
     });
   }, [the_variable]);

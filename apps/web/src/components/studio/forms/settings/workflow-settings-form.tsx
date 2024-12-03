@@ -20,7 +20,6 @@ export default function WorkflowSettingsForm(): JSX.Element {
 
   const { fields, handleValidation } = useMemo(() => {
     return createHeadlessForm(EDIT_FLOW_SCHEMA, {
-      strictInputType: false, // so you don't need to pass presentation.inputType,
       initialValues: input,
     });
   }, [input]);

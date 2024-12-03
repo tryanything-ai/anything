@@ -9,7 +9,6 @@ export default function ActionDisplayForm(): JSX.Element {
     workflow: { selected_node_data, updateNodeData },
   } = useAnything();
 
-
   //TODO: Create input
   let input = {
     label: selected_node_data?.label,
@@ -18,14 +17,10 @@ export default function ActionDisplayForm(): JSX.Element {
   };
 
   const { fields, handleValidation } = useMemo(() => {
-   return createHeadlessForm(
-        EDIT_ACTION_DISPLAY_SCHEMA,
-        {
-          strictInputType: false, // so you don't need to pass presentation.inputType,
-          initialValues: input,
-        }); 
+    return createHeadlessForm(EDIT_ACTION_DISPLAY_SCHEMA, {
+      initialValues: input,
+    });
   }, [input]);
-
 
   async function handleOnSubmit(jsonValues: any, { formValues }: any) {
     await updateNodeData(

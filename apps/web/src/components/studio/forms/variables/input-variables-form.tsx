@@ -41,7 +41,6 @@ export default function InputVariablesForm(): JSX.Element {
       );
 
       const result = createHeadlessForm(selected_node_variables_schema, {
-        strictInputType: false,
         initialValues: selected_node_variables,
       });
 

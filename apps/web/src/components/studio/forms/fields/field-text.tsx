@@ -40,38 +40,10 @@ export default function ReactSimpleCodeEditorFieldText({
 
   const displayError = submited || touched ? error : null;
 
-  ///TODO: get rid of this. not the right direction
-  function cleanAndParseValue(val: string) {
-    try {
-      // Remove escaped characters and newlines
-      const cleaned = val
-        .replace(/\\n/g, " ")
-        .replace(/\\/g, "")
-        .replace(/\n/g, " ")
-        .trim();
-
-      // Attempt to parse as JSON if it looks like JSON
-      if (cleaned.startsWith("{") || cleaned.startsWith("[")) {
-        try {
-          const parsed = JSON.parse(cleaned);
-          return JSON.stringify(parsed);
-        } catch (e) {
-          // If JSON parsing fails, return cleaned string
-          return cleaned;
-        }
-      }
-      return cleaned;
-    } catch (e) {
-      console.error("Error cleaning value:", e);
-      return val;
-    }
-  }
-
   function handleChange(value: any) {
     if (!touched) setTouched(true);
-    const cleanedValue = cleanAndParseValue(value);
-    console.log(`[FIELD TEXT FIELD] [HANDLE CHANGE] ${name}:`, cleanedValue);
-    onChange(name, cleanedValue);
+    console.log(`[FIELD TEXT FIELD] [HANDLE CHANGE] ${name}:`, value);
+    onChange(name, value);
   }
 
   return (

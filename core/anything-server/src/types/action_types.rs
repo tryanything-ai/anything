@@ -1,6 +1,75 @@
+use std::collections::HashMap;
+
 use super::react_flow_types::{HandleProps, NodePresentation};
 use crate::types::general::Variable;
 use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ValidationFieldType {
+    String,
+    Number,
+    Object,
+    Boolean,
+    Array,
+    Null,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum InputFieldType {
+    SimpleText,
+    NumberOrVariable,
+    BooleanOrVariable,
+    ObjectOrVariable,
+    HtmlOrVariable,
+    XmlOrVariable,
+    SelectOrVariable,
+    Text,
+    Account,
+    Error,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct ValidationField {
+    pub r#type: ValidationFieldType,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct PresentationField {
+    #[serde(rename = "inputType")]
+    pub input_type: InputFieldType,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JsonSchemaProperty {
+    #[serde(rename = "x-any-validation")]
+    pub x_any_validation: Option<ValidationField>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub r#type: Option<String>,
+    #[serde(rename = "oneOf")]
+    pub one_of: Option<Vec<serde_json::Value>>,
+    #[serde(rename = "allOf")]
+    pub all_of: Option<Vec<serde_json::Value>>,
+    #[serde(rename = "x-jsf-presentation")]
+    pub x_jsf_presentation: Option<PresentationField>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JsonSchema {
+    pub r#type: String,
+    pub properties: HashMap<String, JsonSchemaProperty>,
+    pub required: Option<Vec<String>>,
+    #[serde(rename = "x-jsf-order")]
+    pub x_jsf_order: Option<Vec<String>>,
+    #[serde(rename = "additionalProperties")]
+    pub additional_properties: Option<bool>,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Action {
@@ -14,11 +83,11 @@ pub struct Action {
     pub icon: String,
     pub variables: Variable,
     pub variables_locked: Option<bool>,
-    pub variables_schema: Variable,
+    pub variables_schema: JsonSchema,
     pub variables_schema_locked: Option<bool>,
     pub input: Variable,
     pub input_locked: Option<bool>,
-    pub input_schema: Variable,
+    pub input_schema: JsonSchema,
     pub input_schema_locked: Option<bool>,
     pub presentation: Option<NodePresentation>,
     pub handles: Option<Vec<HandleProps>>,

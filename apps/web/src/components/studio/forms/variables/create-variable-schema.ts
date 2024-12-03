@@ -29,7 +29,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
         }
     },
     boolean: {
-        default: false,
+        default: true,
         type: "string", 
         "x-jsf-presentation": {
             inputType: "boolean_or_variable",
@@ -42,7 +42,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
         default: {},
         type: "object",
         "x-jsf-presentation": { 
-            inputType: "object",
+            inputType: "object_or_variable",
         },
         "x-any-validation": {
             type: "object",
@@ -66,7 +66,13 @@ export let CREATE_VARIABLE_SCHEMA: any = {
         "title": {
             "title": "Name",
             "description": "The name of the variable",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+                "inputType": "simple_text"
+            },
+            "x-any-validation": {
+                "type": "string"
+            }
         },
         "type": {
             "title": "Type",
@@ -96,7 +102,10 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 }
             ],
             "x-jsf-presentation": {
-                "inputType": "select"
+                "inputType": "select_or_variable"
+            },
+            "x-any-validation": {
+                "type": "string"
             }
         }, 
         "provider": {
@@ -110,7 +119,10 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 }
             ],
             "x-jsf-presentation": { 
-                "inputType": "select"
+                "inputType": "select_or_variable"
+            },
+            "x-any-validation": {
+                "type": "string"
             }
         }
     },
