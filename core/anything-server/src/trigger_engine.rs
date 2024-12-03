@@ -13,6 +13,7 @@ use crate::{
         task_types::{
             CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
         },
+        workflow_types::DatabaseFlowVersion,
     },
     AppState,
 };
@@ -22,7 +23,6 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use cron::Schedule;
-use serde_json::Value;
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -129,7 +129,7 @@ async fn update_triggers_for_workflow(
         .await?;
 
     let body = response.text().await?;
-    let flow_versions: Vec<Value> = serde_json::from_str(&body)?;
+    let flow_versions: Vec<DatabaseFlowVersion> = serde_json::from_str(&body)?;
 
     let mut new_triggers = HashMap::new();
 
@@ -208,7 +208,7 @@ pub async fn hydrate_triggers(
         }
     };
 
-    let flow_versions: Vec<Value> = match serde_json::from_str(&body) {
+    let flow_versions: Vec<DatabaseFlowVersion> = match serde_json::from_str(&body) {
         Ok(flow_versions) => flow_versions,
         Err(e) => {
             println!("[TRIGGER_ENGINE] Error parsing JSON: {:?}", e);
@@ -386,130 +386,116 @@ async fn create_trigger_task(
 
 pub async fn create_in_memory_triggers_from_flow_definition(
     state: Arc<AppState>,
-    flow_version: &Value,
+    flow_version: &DatabaseFlowVersion,
     client: &Postgrest,
 ) -> HashMap<String, InMemoryTrigger> {
     let mut triggers = HashMap::new();
 
-    println!("[TRIGGER_ENGINE] Processing flow_version: {}", flow_version);
-    if let (Some(flow_id), Some(flow_version_id), Some(flow_definition), Some(account_id)) = (
-        flow_version.get("flow_id").and_then(|v| v.as_str()),
-        flow_version.get("flow_version_id").and_then(|v| v.as_str()),
-        flow_version.get("flow_definition"),
-        flow_version.get("account_id").and_then(|v| v.as_str()),
-    ) {
-        if let Some(actions) = flow_definition.get("actions").and_then(|v| v.as_array()) {
-            for action in actions {
-                if let (Some(plugin_id), Some(r#type), Some(action_id)) = (
-                    action.get("plugin_id").and_then(|v| v.as_str()),
-                    action.get("type").and_then(|v| v.as_str()),
-                    action.get("action_id").and_then(|v| v.as_str()),
-                ) {
-                    if r#type == "trigger" && plugin_id == "cron" {
-                        println!(
-                            "[TRIGGER ENGINE] Processing trigger action with ID: {}",
-                            action_id
-                        );
-                        let input = action.get("input").cloned().unwrap_or_default();
-                        let variables = action.get("variables").cloned().unwrap_or_default();
-                        let variables_schema =
-                            action.get("variables_schema").cloned().unwrap_or_default();
-                        let input_schema = action.get("input_schema").cloned().unwrap_or_default();
+    println!(
+        "[TRIGGER_ENGINE] Processing flow_version: {:?}",
+        flow_version
+    );
+    let (flow_id, flow_version_id, flow_definition, account_id) = (
+        flow_version.flow_id.to_string(),
+        flow_version.flow_version_id.to_string(),
+        flow_version.flow_definition.clone(),
+        flow_version.account_id.to_string(),
+    );
 
-                        println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
-                        println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
-
-                        let task_config: TaskConfig = TaskConfig {
-                            variables: Some(variables.clone()),
-                            variables_schema: Some(variables_schema.clone()),
-                            input: Some(input.clone()),
-                            input_schema: Some(input_schema.clone()),
-                        };
-
-                        //Run the templater over the variables and results from last session
-                        //Return the templated variables and inputs
-                        println!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
-                        let rendered_input = match bundle_context_from_parts(
-                            state.clone(),
-                            client,
-                            &account_id,
-                            &Uuid::new_v4().to_string(),
-                            Some(&variables),
-                            Some(&input),
-                            false,
-                        )
-                        .await
-                        {
-                            Ok(vars) => {
-                                println!(
-                                    "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
-                                    vars
-                                );
-                                vars
-                            }
-                            Err(e) => {
-                                println!("[TRIGGER ENGINE] Failed to bundle variables: {:?}", e);
-                                continue;
-                            }
-                        };
-
-                        let cron_expression = rendered_input["cron_expression"]
-                            .as_str()
-                            .unwrap_or("* * * * *");
-
-                        println!(
-                            "[TRIGGER ENGINE] Using cron expression: {}",
-                            cron_expression
-                        );
-
-                        let next_fire = match Schedule::from_str(cron_expression) {
-                            Ok(schedule) => {
-                                let next = schedule.upcoming(Utc).next();
-                                println!("[TRIGGER ENGINE] Calculated next fire time: {:?}", next);
-                                next
-                            }
-                            Err(e) => {
-                                println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
-                                None
-                            }
-                        };
-
-                        let trigger = InMemoryTrigger {
-                            action_id: action_id.to_string(),
-                            account_id: account_id.to_string(),
-                            trigger_id: plugin_id.to_string(),
-                            flow_id: flow_id.to_string(),
-                            action_label: action
-                                .get("label")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("")
-                                .to_string(),
-                            flow_version_id: flow_version_id.to_string(),
-                            config: task_config, // figure out how this is used and where to fix it
-                            last_fired: None,
-                            next_fire,
-                            cron_expression: cron_expression.to_string(),
-                        };
-
-                        triggers.insert(flow_id.to_string(), trigger);
-                    } else {
-                        println!("[TRIGGER_ENGINE] Found an action that's not a cron trigger.");
-                    }
-                } else {
-                    println!(
-                        "[TRIGGER_ENGINE] Missing required fields in action: {:?}",
-                        action
-                    );
-                }
-            }
-        } else {
-            println!("[TRIGGER_ENGINE] No actions found in flow_definition");
-        }
-    } else {
-        println!(
-            "[TRIGGER_ENGINE] Missing required fields in flow_version: {:?}",
-            flow_version
+    let actions = flow_definition.actions;
+    for action in actions {
+        let (plugin_id, r#type, action_id) = (
+            action.plugin_id.clone(),
+            action.r#type.clone(),
+            action.action_id.clone(),
         );
+        if r#type == ActionType::Trigger && plugin_id == "cron" {
+            println!(
+                "[TRIGGER ENGINE] Processing trigger action with ID: {}",
+                action_id
+            );
+            let input = action.input.clone();
+            let variables = action.variables.clone();
+            let variables_schema = action.variables_schema.clone();
+            let input_schema = action.input_schema.clone();
+
+            println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
+            println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
+
+            let task_config: TaskConfig = TaskConfig {
+                variables: Some(variables.clone()),
+                variables_schema: Some(variables_schema.clone()),
+                input: Some(input.clone()),
+                input_schema: Some(input_schema.clone()),
+            };
+
+            //Run the templater over the variables and results from last session
+            //Return the templated variables and inputs
+            println!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
+            let rendered_input = match bundle_context_from_parts(
+                state.clone(),
+                client,
+                &account_id,
+                &Uuid::new_v4().to_string(),
+                Some(&variables),
+                Some(&variables_schema),
+                Some(&input),
+                Some(&input_schema),
+                false,
+            )
+            .await
+            {
+                Ok(vars) => {
+                    println!(
+                        "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
+                        vars
+                    );
+                    vars
+                }
+                Err(e) => {
+                    println!("[TRIGGER ENGINE] Failed to bundle variables: {:?}", e);
+                    continue;
+                }
+            };
+
+            let cron_expression = rendered_input["cron_expression"]
+                .as_str()
+                .unwrap_or("* * * * *");
+
+            println!(
+                "[TRIGGER ENGINE] Using cron expression: {}",
+                cron_expression
+            );
+
+            let next_fire = match Schedule::from_str(cron_expression) {
+                Ok(schedule) => {
+                    let next = schedule.upcoming(Utc).next();
+                    println!("[TRIGGER ENGINE] Calculated next fire time: {:?}", next);
+                    next
+                }
+                Err(e) => {
+                    println!("[TRIGGER_ENGINE] Error parsing cron expression: {}", e);
+                    None
+                }
+            };
+
+            let trigger = InMemoryTrigger {
+                action_id: action_id.to_string(),
+                account_id: account_id.to_string(),
+                trigger_id: plugin_id.to_string(),
+                flow_id: flow_id.to_string(),
+                action_label: action.label.clone(),
+                flow_version_id: flow_version_id.to_string(),
+                config: task_config, // figure out how this is used and where to fix it
+                last_fired: None,
+                next_fire,
+                cron_expression: cron_expression.to_string(),
+            };
+
+            triggers.insert(flow_id.to_string(), trigger);
+        } else {
+            println!("[TRIGGER_ENGINE] Found an action that's not a cron trigger.");
+        }
     }
 
     triggers

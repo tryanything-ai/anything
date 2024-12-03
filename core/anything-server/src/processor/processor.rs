@@ -207,14 +207,10 @@ pub async fn processor(
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-                            variables_schema: Some(
-                                serde_json::to_value(&trigger_node.variables_schema).unwrap(),
-                            ),
-                            input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
-                            input_schema: Some(
-                                serde_json::to_value(&trigger_node.input_schema).unwrap(),
-                            ),
+                            variables: Some(trigger_node.variables.clone()),
+                            variables_schema: Some(trigger_node.variables_schema.clone()),
+                            input: Some(trigger_node.input.clone()),
+                            input_schema: Some(trigger_node.input_schema.clone()),
                         },
                         result: None,
                         started_at: Some(Utc::now()),
@@ -309,19 +305,10 @@ pub async fn processor(
                                             Stage::Testing.as_str().to_string()
                                         },
                                         config: TaskConfig {
-                                            variables: Some(
-                                                serde_json::to_value(&action.variables).unwrap(),
-                                            ),
-                                            variables_schema: Some(
-                                                serde_json::to_value(&action.variables_schema)
-                                                    .unwrap(),
-                                            ),
-                                            input: Some(
-                                                serde_json::to_value(&action.input).unwrap(),
-                                            ),
-                                            input_schema: Some(
-                                                serde_json::to_value(&action.input_schema).unwrap(),
-                                            ),
+                                            variables: Some(action.variables.clone()),
+                                            variables_schema: Some(action.variables_schema.clone()),
+                                            input: Some(action.input.clone()),
+                                            input_schema: Some(action.input_schema.clone()),
                                         },
                                         result: None,
                                         started_at: Some(Utc::now()),
@@ -536,14 +523,10 @@ pub async fn processor(
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            variables: Some(serde_json::to_value(&next_action.variables).unwrap()),
-                            variables_schema: Some(
-                                serde_json::to_value(&next_action.variables_schema).unwrap(),
-                            ),
-                            input: Some(serde_json::to_value(&next_action.input).unwrap()),
-                            input_schema: Some(
-                                serde_json::to_value(&next_action.input_schema).unwrap(),
-                            ),
+                            variables: Some(next_action.variables.clone()),
+                            variables_schema: Some(next_action.variables_schema.clone()),
+                            input: Some(next_action.input.clone()),
+                            input_schema: Some(next_action.input_schema.clone()),
                         },
                         result: None,
                         test_config: None,

@@ -123,10 +123,10 @@ pub async fn run_workflow_and_respond(
     let flow_session_id = Uuid::new_v4();
 
     let task_config: TaskConfig = TaskConfig {
-        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
-        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
-        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
+        variables: Some(trigger_node.variables.clone()),
+        variables_schema: Some(trigger_node.variables_schema.clone()),
+        input: Some(trigger_node.input.clone()),
+        input_schema: Some(trigger_node.input_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -136,8 +136,10 @@ pub async fn run_workflow_and_respond(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id.to_string(),
-        Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
-        Some(&serde_json::to_value(&trigger_node.input).unwrap()),
+        Some(&trigger_node.variables.clone()),
+        Some(&trigger_node.variables_schema.clone()),
+        Some(&trigger_node.input.clone()),
+        Some(&trigger_node.input_schema.clone()),
         false,
     )
     .await
@@ -374,9 +376,9 @@ pub async fn run_workflow_version_and_respond(
 
     let task_config: TaskConfig = TaskConfig {
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
-        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
-        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
+        variables_schema: Some(trigger_node.variables_schema.clone()),
+        input: Some(trigger_node.input.clone()),
+        input_schema: Some(trigger_node.input_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -386,8 +388,10 @@ pub async fn run_workflow_version_and_respond(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
-        Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
-        Some(&serde_json::to_value(&trigger_node.input).unwrap()),
+        Some(&trigger_node.variables.clone()),
+        Some(&trigger_node.variables_schema.clone()),
+        Some(&trigger_node.input.clone()),
+        Some(&trigger_node.input_schema.clone()),
         false,
     )
     .await
@@ -626,9 +630,9 @@ pub async fn run_workflow(
 
     let task_config: TaskConfig = TaskConfig {
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
-        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
-        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
+        variables_schema: Some(trigger_node.variables_schema.clone()),
+        input: Some(trigger_node.input.clone()),
+        input_schema: Some(trigger_node.input_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -638,8 +642,10 @@ pub async fn run_workflow(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
-        Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
-        Some(&serde_json::to_value(&trigger_node.input).unwrap()),
+        Some(&trigger_node.variables.clone()),
+        Some(&trigger_node.variables_schema.clone()),
+        Some(&trigger_node.input.clone()),
+        Some(&trigger_node.input_schema.clone()),
         false,
     )
     .await
@@ -834,9 +840,9 @@ pub async fn run_workflow_version(
 
     let task_config: TaskConfig = TaskConfig {
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
-        input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
-        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
+        variables_schema: Some(trigger_node.variables_schema.clone()),
+        input: Some(trigger_node.input.clone()),
+        input_schema: Some(trigger_node.input_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -846,8 +852,10 @@ pub async fn run_workflow_version(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id.to_string(),
-        Some(&serde_json::to_value(&trigger_node.variables).unwrap()),
-        Some(&serde_json::to_value(&trigger_node.input).unwrap()),
+        Some(&trigger_node.variables.clone()),
+        Some(&trigger_node.variables_schema.clone()),
+        Some(&trigger_node.input.clone()),
+        Some(&trigger_node.input_schema.clone()),
         false,
     )
     .await

@@ -1,10 +1,6 @@
-
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use uuid::Uuid;
-use crate::types::general::Variable;
-use crate::types::workflow_types::WorkflowVersionDefinition;
+
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodePresentation {
     pub position: Position,
@@ -15,7 +11,6 @@ pub struct Position {
     pub x: f64,
     pub y: f64,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HandleProps {

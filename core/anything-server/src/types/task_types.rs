@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-use super::action_types::ActionType;
+use super::action_types::{ActionType, JsonSchema};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -105,8 +105,6 @@ impl TriggerSessionStatus {
     }
 }
 
-
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Task {
     pub task_id: Uuid,
@@ -125,7 +123,7 @@ pub struct Task {
     pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
     pub stage: Stage,
     pub test_config: Option<Value>,
-    pub config: Value,
+    pub config: TaskConfig,
     pub context: Option<Value>,
     pub started_at: Option<DateTime<Utc>>,
     pub ended_at: Option<DateTime<Utc>>,
@@ -139,13 +137,12 @@ pub struct Task {
     pub processing_order: i32,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TaskConfig {
     pub variables: Option<Value>,
-    pub variables_schema: Option<Value>,
+    pub variables_schema: Option<JsonSchema>,
     pub input: Option<Value>,
-    pub input_schema: Option<Value>,
+    pub input_schema: Option<JsonSchema>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -170,7 +167,6 @@ pub struct CreateTaskInput {
     pub test_config: Option<Value>, // deprecate
     pub processing_order: i32,
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TestConfig {

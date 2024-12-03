@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use super::react_flow_types::{HandleProps, NodePresentation};
-use crate::types::general::Variable;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -83,11 +83,11 @@ pub struct Action {
     pub label: String,
     pub description: Option<String>,
     pub icon: String,
-    pub variables: Variable,
+    pub variables: Value,
     pub variables_locked: Option<bool>,
     pub variables_schema: JsonSchema,
     pub variables_schema_locked: Option<bool>,
-    pub input: Variable,
+    pub input: Value,
     pub input_locked: Option<bool>,
     pub input_schema: JsonSchema,
     pub input_schema_locked: Option<bool>,

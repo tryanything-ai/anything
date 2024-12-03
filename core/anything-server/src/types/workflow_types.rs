@@ -6,7 +6,6 @@ use serde::{Serialize, Deserialize};
 use crate::types::action_types::ActionType;
 use crate::types::react_flow_types::{Edge, HandleProps, NodePresentation, Position};
 use crate::types::action_types::Action;
-use crate::types::general::Variable;
 
 use super::action_types::{InputFieldType, JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType};
 
@@ -26,14 +25,6 @@ impl WorkflowVersionDefinition {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct FlowVersion {
-    pub flow_version_id: Uuid,
-    pub flow_id: Uuid,
-    pub published: bool,
-    pub account_id: Uuid,
-    pub flow_definition: Value,
-}
 
 //DUPLICATING INTO NEW NAME FOR NEW PROCESSOR
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -57,13 +48,9 @@ impl Default for WorkflowVersionDefinition {
             label: "Every Hour".to_string(),
             description: Some("Cron Trigger to run workflow every hour".to_string()),
             icon: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>".to_string(),
-            variables: Variable {
-                inner: {
-                    let mut map = HashMap::new();
-                    map.insert("cron_expression".to_string(), serde_json::json!("0 0 * * * *"));
-                    map
-                },
-            },
+            variables: serde_json::json!({
+                "cron_expression": "0 0 * * * *"
+            }),
             variables_locked: Some(false),
             variables_schema: JsonSchema {
                 r#type: "object".to_string(),
@@ -89,13 +76,9 @@ impl Default for WorkflowVersionDefinition {
                 additional_properties: Some(false),
             },
             variables_schema_locked: Some(true),
-            input: Variable {
-                inner: {
-                    let mut map = HashMap::new();
-                    map.insert("cron_expression".to_string(), serde_json::json!("{{variables.cron_expression}}"));
-                    map
-                },
-            },
+            input: serde_json::json!({
+                "cron_expression": "{{variables.cron_expression}}"
+            }),
             input_locked: Some(true),
             input_schema: JsonSchema {
                 r#type: "object".to_string(),
@@ -140,9 +123,7 @@ impl Default for WorkflowVersionDefinition {
             label: "Call External System".to_string(),
             description: Some("Use HTTP to call another system".to_string()),
             icon: "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 32 32\" id=\"icon\" xmlns=\"http://www.w3.org/2000/svg\"><defs><style>.cls-1{fill:none;}</style></defs><title>HTTP</title><path d=\"M30,11H25V21h2V18h3a2.0027,2.0027,0,0,0,2-2V13A2.0023,2.0023,0,0,0,30,11Zm-3,5V13h3l.001,3Z\" transform=\"translate(0 0)\"/><polygon points=\"10 13 12 13 12 21 14 21 14 13 16 13 16 11 10 11 10 13\"/><polygon points=\"23 11 17 11 17 13 19 13 19 21 21 21 21 13 23 13 23 11\"/><polygon points=\"6 11 6 15 3 15 3 11 1 11 1 21 3 21 3 17 6 17 6 21 8 21 8 11 6 11\"/><rect id=\"_Transparent_Rectangle_\" data-name=\"&lt;Transparent Rectangle&gt;\" class=\"cls-1\" width=\"32\" height=\"32\"/></svg>".to_string(),
-            variables: Variable {
-                inner: HashMap::new(),
-            },
+            variables: serde_json::json!({}),
             variables_locked: Some(false),
             variables_schema: JsonSchema {
                 r#type: "object".to_string(),
@@ -153,16 +134,12 @@ impl Default for WorkflowVersionDefinition {
                 additional_properties: None,
             },
             variables_schema_locked: Some(false),
-            input: Variable {
-                inner: {
-                    let mut map = HashMap::new();
-                    map.insert("method".to_string(), serde_json::json!("GET"));
-                    map.insert("url".to_string(), serde_json::json!("https://hp-api.onrender.com/api/character/9e3f7ce4-b9a7-4244-b709-dae5c1f1d4a8"));
-                    map.insert("headers".to_string(), serde_json::json!("{}"));
-                    map.insert("body".to_string(), serde_json::json!("{}"));
-                    map
-                },
-            },
+            input: serde_json::json!({
+                "method": "GET",
+                "url": "https://hp-api.onrender.com/api/character/9e3f7ce4-b9a7-4244-b709-dae5c1f1d4a8",
+                "headers": "{}",
+                "body": "{}"
+            }),
             input_locked: Some(false),
             input_schema: JsonSchema {
                 r#type: "object".to_string(),

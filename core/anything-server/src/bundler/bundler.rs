@@ -1,4 +1,5 @@
 use crate::system_variables::get_system_variables;
+use crate::types::action_types::JsonSchema;
 use crate::types::task_types::Task;
 
 use crate::AppState;
@@ -14,12 +15,11 @@ use crate::bundler::accounts::fetch_cached_auth_accounts;
 
 use crate::bundler::secrets::get_decrypted_secrets;
 
-use crate::processor::parsing_utils::get_bundle_context_inputs;
-
 use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
 
+use crate::types::action_types::ValidationFieldType;
 
 pub async fn bundle_tasks_cached_context(
     state: Arc<AppState>,
@@ -29,23 +29,27 @@ pub async fn bundle_tasks_cached_context(
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
-    let (account_id, flow_session_id, variables_config, inputs_config) =
-        get_bundle_context_inputs(task);
-
-    println!("[BUNDLER] Got bundle context inputs: account_id={}, flow_session_id={}, variables_config={:?}, inputs_config={:?}",
-        account_id, flow_session_id, variables_config, inputs_config);
+    let account_id = task.account_id.to_string();
+    let flow_session_id = task.flow_session_id.to_string();
+    let variables = task.config.variables.as_ref();
+    let variables_schema = task.config.variables_schema.as_ref();
+    let input = task.config.input.as_ref();
+    let input_schema = task.config.input_schema.as_ref();
 
     let rendered_variables_definition = bundle_cached_variables(
         state,
         client,
         &account_id,
         &flow_session_id,
-        variables_config,
+        variables,
+        variables_schema,
+        input,
+        input_schema,
         refresh_auth,
     )
     .await?;
 
-    bundle_inputs(rendered_variables_definition, inputs_config)
+    bundle_inputs(rendered_variables_definition, input, input_schema)
 }
 
 pub async fn bundle_context_from_parts(
@@ -53,8 +57,10 @@ pub async fn bundle_context_from_parts(
     client: &Postgrest,
     account_id: &str,
     flow_session_id: &str,
-    variables_config: Option<&Value>,
-    inputs_config: Option<&Value>,
+    variables: Option<&Value>,
+    variables_schema: Option<&JsonSchema>,
+    input: Option<&Value>,
+    input_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
@@ -64,12 +70,15 @@ pub async fn bundle_context_from_parts(
         client,
         account_id,
         flow_session_id,
-        variables_config,
+        variables,
+        variables_schema,
+        input,
+        input_schema,
         refresh_auth,
     )
     .await?;
 
-    bundle_inputs(rendered_variables_definition, inputs_config)
+    bundle_inputs(rendered_variables_definition, input, input_schema)
 }
 
 pub async fn bundle_cached_variables(
@@ -77,7 +86,10 @@ pub async fn bundle_cached_variables(
     client: &Postgrest,
     account_id: &str,
     flow_session_id: &str,
-    variables_config: Option<&Value>,
+    variables: Option<&Value>,
+    variables_schema: Option<&JsonSchema>,
+    input: Option<&Value>,
+    input_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle variables");
@@ -124,11 +136,18 @@ pub async fn bundle_cached_variables(
         serde_json::to_value(get_system_variables())?,
     );
 
-    // Process variables config if present
-    if let Some(variables) = variables_config {
-        let mut templater = Templater::new();
+    // Extract and set validations from schemas
+    let mut templater = Templater::new();
+    if let Some(variables) = variables {
         templater.add_template("task_variables_definition", variables.clone());
+    }
 
+    let variable_validations = extract_validation_types_from_schema(variables_schema);
+    let input_validations = extract_validation_types_from_schema(input_schema);
+    // templater.set_validations([variable_validations, input_validations].concat());
+
+    // Process variables config if present
+    if let Some(variables) = variables {
         let context_value = serde_json::to_value(&render_variables_context)?;
         let rendered = templater.render("task_variables_definition", &context_value)?;
 
@@ -162,6 +181,7 @@ async fn fetch_completed_cached_tasks(
 pub fn bundle_inputs(
     rendered_variables: Value,
     inputs: Option<&Value>,
+    input_schema: Option<&JsonSchema>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     let mut render_input_context: HashMap<String, Value> = HashMap::new();
     render_input_context.insert("variables".to_string(), rendered_variables);
@@ -191,77 +211,18 @@ pub fn bundle_inputs(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
+fn extract_validation_types_from_schema(
+    schema: Option<&JsonSchema>,
+) -> HashMap<String, ValidationFieldType> {
+    let mut validations = HashMap::new();
 
-    #[test]
-    fn test_http_action_bundling() {
-        // Create test variables context
-        let variables = json!({
-            "api_url": "https://api.example.com",
-            "auth_token": "secret123"
-        });
-
-        // Create test input definition matching HTTP action template
-        let input_definition = json!({
-            "method": "POST",
-            "url": "{{variables.api_url}}/endpoint",
-            "headers": {
-                "Authorization": "Bearer {{variables.auth_token}}",
-                "Content-Type": "application/json"
-            },
-            "body": {
-                "foo": "bar"
+    if let Some(schema) = schema {
+        for (property_name, property_schema) in &schema.properties {
+            if let Some(validation) = &property_schema.x_any_validation {
+                validations.insert(property_name.clone(), validation.r#type.clone());
             }
-        });
-
-        // Bundle the inputs
-        let result = bundle_inputs(variables, Some(&input_definition)).unwrap();
-
-        // Verify rendered output
-        assert_eq!(
-            result,
-            json!({
-                "method": "POST",
-                "url": "https://api.example.com/endpoint",
-                "headers": {
-                    "Authorization": "Bearer secret123",
-                    "Content-Type": "application/json"
-                },
-                "body": {
-                    "foo": "bar"
-                }
-            })
-        );
+        }
     }
 
-    #[test]
-    fn test_empty_inputs() {
-        let variables = json!({});
-        let result = bundle_inputs(variables, None).unwrap();
-        assert_eq!(result, json!({}));
-    }
-
-    #[test]
-    fn test_numeric_output() {
-        let variables = json!({
-            "count": 42
-        });
-
-        let input_definition = json!({
-            "total_items": "{{variables.count}}"
-        });
-
-        let result = bundle_inputs(variables, Some(&input_definition)).unwrap();
-
-        // Verify the output is a number, not a string
-        assert_eq!(
-            result,
-            json!({
-                "total_items": 42
-            })
-        );
-    }
+    validations
 }

@@ -8,9 +8,15 @@ use axum::{
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::{bundler::bundle_cached_variables, supabase_jwt_middleware::User, AppState};
-
-use crate::types::workflow_types::{FlowVersion, WorkflowVersionDefinition};
+use crate::{
+    bundler::bundle_cached_variables,
+    supabase_jwt_middleware::User,
+    types::{
+        task_types::Task,
+        workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
+    },
+    AppState,
+};
 
 // Actions
 pub async fn get_flow_version_results(
@@ -70,7 +76,7 @@ pub async fn get_flow_version_results(
         }
     };
 
-    let task: Value = match serde_json::from_str::<Vec<Value>>(&body) {
+    let task: Task = match serde_json::from_str::<Vec<Task>>(&body) {
         Ok(tasks) => {
             if tasks.is_empty() {
                 println!("[VARIABLES] No tasks found");
@@ -85,17 +91,7 @@ pub async fn get_flow_version_results(
         }
     };
 
-    let session_id = match task.get("flow_session_id") {
-        Some(id) => id.as_str().unwrap_or("").to_string(),
-        None => {
-            println!("[VARIABLES] Failed to get flow_session_id from task");
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get flow_session_id",
-            )
-                .into_response();
-        }
-    };
+    let session_id = task.flow_session_id;
 
     println!("[VARIABLES] Found session_id: {}", session_id);
     println!("[VARIABLES] Fetching tasks for session");
@@ -135,7 +131,7 @@ pub async fn get_flow_version_results(
         }
     };
 
-    let items: Value = match serde_json::from_str(&body) {
+    let items: Vec<Task> = match serde_json::from_str(&body) {
         Ok(items) => {
             println!("[VARIABLES] Parsed items: {:?}", items);
             items
@@ -148,14 +144,9 @@ pub async fn get_flow_version_results(
 
     // Find the processing order of the target action
     let target_processing_order = items
-        .as_array()
-        .and_then(|tasks| {
-            tasks
-                .iter()
-                .find(|task| task.get("action_id").and_then(|id| id.as_str()) == Some(&action_id))
-        })
-        .and_then(|task| task.get("processing_order"))
-        .and_then(|order| order.as_i64());
+        .iter()
+        .find(|task| task.action_id == action_id)
+        .map(|task| task.processing_order);
 
     println!(
         "[VARIABLES] Found target processing order: {:?}",
@@ -164,19 +155,11 @@ pub async fn get_flow_version_results(
 
     // Filter tasks to only include those with lower processing order
     let filtered_items = match target_processing_order {
-        Some(target_order) => Value::Array(
-            items
-                .as_array()
-                .unwrap_or(&Vec::new())
-                .iter()
-                .filter(|task| {
-                    task.get("processing_order")
-                        .and_then(|order| order.as_i64())
-                        .map_or(false, |order| order < target_order)
-                })
-                .cloned()
-                .collect(),
-        ),
+        Some(target_order) => items
+            .iter()
+            .filter(|task| task.processing_order < target_order)
+            .cloned()
+            .collect(),
         None => items,
     };
 
@@ -310,7 +293,7 @@ pub async fn get_flow_version_variables(
         }
     };
 
-    let flow_version = match serde_json::from_str::<Vec<FlowVersion>>(&body) {
+    let flow_version = match serde_json::from_str::<Vec<DatabaseFlowVersion>>(&body) {
         Ok(versions) => match versions.into_iter().next() {
             Some(version) => {
                 print!("Found flow version: {:?}", version);
@@ -335,37 +318,37 @@ pub async fn get_flow_version_variables(
     };
 
     // Parse the flow definition into a Workflow struct
-    let workflow: WorkflowVersionDefinition =
-        match serde_json::from_value(flow_version.flow_definition) {
-            Ok(workflow) => {
-                print!("[VARIABLES] Parsed workflow: {:?}", workflow);
-                workflow
-            }
-            Err(e) => {
-                println!("[VARIABLES] Error parsing workflow definition: {:?}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to parse workflow definition",
-                )
-                    .into_response();
-            }
-        };
+    let workflow: WorkflowVersionDefinition = flow_version.flow_definition;
 
-    // Find the action in the workflow and get its variables as a JSON object
-    let variables = workflow
+    // Find the action in the workflow
+    let action = match workflow
         .actions
         .iter()
         .find(|action| action.action_id == action_id)
-        .map(|action| {
-            print!(
+    {
+        Some(action) => {
+            println!(
                 "[VARIABLES] Found action with correct action id: {:?}",
                 action
             );
-            serde_json::to_value(&action.variables.inner).unwrap_or(serde_json::json!({}))
-        })
-        .unwrap_or(serde_json::json!({}));
+            action
+        }
+        None => {
+            println!("[VARIABLES] No action found with id: {}", action_id);
+            return (StatusCode::NOT_FOUND, "Action not found").into_response();
+        }
+    };
+
+    // Get the variables, variables_schema, input and input_schema
+    let variables = action.variables.clone();
+    let variables_schema = action.variables_schema.clone();
+    let input = action.input.clone();
+    let input_schema = action.input_schema.clone();
 
     println!("[VARIABLES] Found variables: {:?}", variables);
+    println!("[VARIABLES] Found variables_schema: {:?}", variables_schema);
+    println!("[VARIABLES] Found input: {:?}", input);
+    println!("[VARIABLES] Found input_schema: {:?}", input_schema);
 
     //Run the templater over the variables and results from last session
     //Return the templated variables
@@ -375,6 +358,9 @@ pub async fn get_flow_version_variables(
         &account_id,
         &session_id,
         Some(&variables),
+        Some(&variables_schema),
+        Some(&input),
+        Some(&input_schema),
         false,
     )
     .await

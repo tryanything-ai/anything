@@ -85,15 +85,11 @@ pub async fn test_workflow(
         variables: Some(serde_json::json!(
             workflow_version.flow_definition.actions[0].variables
         )),
-        variables_schema: Some(serde_json::json!(
-            workflow_version.flow_definition.actions[0].variables_schema
-        )),
-        input: Some(serde_json::json!(
-            workflow_version.flow_definition.actions[0].input
-        )),
-        input_schema: Some(serde_json::json!(
-            workflow_version.flow_definition.actions[0].input_schema
-        )),
+        variables_schema: Some(workflow_version.flow_definition.actions[0]
+            .variables_schema
+            .clone()),
+        input: Some(workflow_version.flow_definition.actions[0].input.clone()),
+        input_schema: Some(workflow_version.flow_definition.actions[0].input_schema.clone()),
     };
 
     let trigger_session_id = Uuid::new_v4().to_string();
@@ -280,10 +276,10 @@ pub async fn test_action(
     // println!("Workflow Definition {:#?}", workflow);
 
     let task_config = TaskConfig {
-        variables: Some(serde_json::json!(workflow.actions[0].variables)),
-        variables_schema: Some(serde_json::json!(workflow.actions[0].variables_schema)),
-        input: Some(serde_json::json!(workflow.actions[0].input)),
-        input_schema: Some(serde_json::json!(workflow.actions[0].input_schema)),
+        variables: Some(workflow.actions[0].variables.clone()),
+        variables_schema: Some(workflow.actions[0].variables_schema.clone()),
+        input: Some(workflow.actions[0].input.clone()),
+        input_schema: Some(workflow.actions[0].input_schema.clone()),
     };
 
     let test_config = TestConfig {
