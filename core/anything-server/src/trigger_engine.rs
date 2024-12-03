@@ -8,7 +8,12 @@ use std::env;
 use crate::{
     bundler::bundle_context_from_parts,
     processor::processor::ProcessorMessage,
-    types::{action_types::ActionType, task_types::{CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus}},
+    types::{
+        action_types::ActionType,
+        task_types::{
+            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+        },
+    },
     AppState,
 };
 
@@ -409,14 +414,16 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                         let variables = action.get("variables").cloned().unwrap_or_default();
                         let variables_schema =
                             action.get("variables_schema").cloned().unwrap_or_default();
+                        let input_schema = action.get("input_schema").cloned().unwrap_or_default();
 
                         println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
                         println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
 
                         let task_config: TaskConfig = TaskConfig {
-                            input: Some(input.clone()),
                             variables: Some(variables.clone()),
                             variables_schema: Some(variables_schema.clone()),
+                            input: Some(input.clone()),
+                            input_schema: Some(input_schema.clone()),
                         };
 
                         //Run the templater over the variables and results from last session

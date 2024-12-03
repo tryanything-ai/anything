@@ -15,7 +15,12 @@ use uuid::Uuid;
 
 use crate::{
     bundler::bundle_context_from_parts,
-    types::{action_types::ActionType, task_types::{CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus}},
+    types::{
+        action_types::ActionType,
+        task_types::{
+            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+        },
+    },
     AppState, FlowCompletion,
 };
 
@@ -121,6 +126,7 @@ pub async fn run_workflow_and_respond(
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
         variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
         input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
     };
 
     // Bundle the context for the trigger node
@@ -370,6 +376,7 @@ pub async fn run_workflow_version_and_respond(
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
         variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
         input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
     };
 
     // Bundle the context for the trigger node
@@ -621,6 +628,7 @@ pub async fn run_workflow(
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
         variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
         input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
     };
 
     // Bundle the context for the trigger node
@@ -828,6 +836,7 @@ pub async fn run_workflow_version(
         variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
         variables_schema: Some(serde_json::to_value(&trigger_node.variables_schema).unwrap()),
         input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+        input_schema: Some(serde_json::to_value(&trigger_node.input_schema).unwrap()),
     };
 
     // Bundle the context for the trigger node

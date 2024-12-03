@@ -67,6 +67,7 @@ impl Default for WorkflowVersionDefinition {
             variables_locked: Some(false),
             variables_schema: JsonSchema {
                 r#type: "object".to_string(),
+                all_of: None,
                 properties: {
                     let mut map = HashMap::new();
                     map.insert("cron_expression".to_string(), JsonSchemaProperty {
@@ -74,11 +75,12 @@ impl Default for WorkflowVersionDefinition {
                         description: Some("When to run the trigger".to_string()),
                         r#type: Some("string".to_string()),
                         one_of: None,
-                        all_of: None,
                         x_any_validation: Some(ValidationField {
                             r#type: ValidationFieldType::String,
                         }),
-                        x_jsf_presentation: None,
+                        x_jsf_presentation: Some(PresentationField {
+                            input_type: InputFieldType::Text,
+                        }),
                     });
                     map
                 },
@@ -97,6 +99,7 @@ impl Default for WorkflowVersionDefinition {
             input_locked: Some(true),
             input_schema: JsonSchema {
                 r#type: "object".to_string(),
+                all_of: None,
                 properties: {
                     let mut map = HashMap::new();
                     map.insert("cron_expression".to_string(), JsonSchemaProperty {
@@ -104,9 +107,12 @@ impl Default for WorkflowVersionDefinition {
                         description: Some("When to run the trigger".to_string()),
                         r#type: Some("string".to_string()),
                         one_of: None,
-                        all_of: None,
-                        x_any_validation: None,
-                        x_jsf_presentation: None,
+                        x_any_validation: Some(ValidationField {
+                            r#type: ValidationFieldType::String,
+                        }),
+                        x_jsf_presentation: Some(PresentationField {
+                            input_type: InputFieldType::Text,
+                        }),
                     });
                     map
                 },
@@ -142,6 +148,7 @@ impl Default for WorkflowVersionDefinition {
                 r#type: "object".to_string(),
                 properties: HashMap::new(),
                 required: None,
+                all_of: None,
                 x_jsf_order: None,
                 additional_properties: None,
             },
@@ -162,6 +169,7 @@ impl Default for WorkflowVersionDefinition {
                 required: Some(vec!["method".to_string(), "url".to_string()]),
                 x_jsf_order: Some(vec!["method".to_string(), "url".to_string(), "headers".to_string(), "body".to_string()]),
                 additional_properties: Some(false), 
+                all_of: None,
                 properties: {
                     let mut map = HashMap::new();
                     map.insert("method".to_string(), JsonSchemaProperty {
@@ -198,7 +206,6 @@ impl Default for WorkflowVersionDefinition {
                                 "title": "PATCH"
                             }),
                         ]),
-                        all_of: None,
                         x_any_validation: None,
                         x_jsf_presentation: Some(PresentationField {
                             input_type: InputFieldType::SelectOrVariable,
@@ -209,7 +216,6 @@ impl Default for WorkflowVersionDefinition {
                         description: Some("URL for request".to_string()),
                         r#type: Some("string".to_string()),
                         one_of: None,
-                        all_of: None,
                         x_any_validation: None,
                         x_jsf_presentation: Some(PresentationField {
                             input_type: InputFieldType::Text,
@@ -220,7 +226,6 @@ impl Default for WorkflowVersionDefinition {
                         description: Some("Headers for request".to_string()),
                         r#type: Some("object".to_string()),
                         one_of: None,
-                        all_of: None,
                         x_any_validation: Some(ValidationField {
                             r#type: ValidationFieldType::Object,
                         }),
@@ -233,7 +238,6 @@ impl Default for WorkflowVersionDefinition {
                         description: Some("Body for request".to_string()),
                         r#type: Some("object".to_string()),
                         one_of: None,
-                        all_of: None,
                         x_any_validation: Some(ValidationField {
                             r#type: ValidationFieldType::Object,
                         }),

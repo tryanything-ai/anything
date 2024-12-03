@@ -53,9 +53,8 @@ pub struct JsonSchemaProperty {
     pub description: Option<String>,
     pub r#type: Option<String>,
     #[serde(rename = "oneOf")]
+    //Used for select fields
     pub one_of: Option<Vec<serde_json::Value>>,
-    #[serde(rename = "allOf")]
-    pub all_of: Option<Vec<serde_json::Value>>,
     #[serde(rename = "x-jsf-presentation")]
     pub x_jsf_presentation: Option<PresentationField>,
 }
@@ -65,6 +64,9 @@ pub struct JsonSchema {
     pub r#type: String,
     pub properties: HashMap<String, JsonSchemaProperty>,
     pub required: Option<Vec<String>>,
+    //Used for conditional fields
+    #[serde(rename = "allOf")]
+    pub all_of: Option<Vec<serde_json::Value>>,
     #[serde(rename = "x-jsf-order")]
     pub x_jsf_order: Option<Vec<String>>,
     #[serde(rename = "additionalProperties")]

@@ -12,7 +12,14 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{
     processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
     supabase_jwt_middleware::User,
-    types::{action_types::ActionType, task_types::{CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TestConfig, TriggerSessionStatus}, workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition}},
+    types::{
+        action_types::ActionType,
+        task_types::{
+            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TestConfig,
+            TriggerSessionStatus,
+        },
+        workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
+    },
     AppState,
 };
 use uuid::Uuid;
@@ -83,6 +90,9 @@ pub async fn test_workflow(
         )),
         input: Some(serde_json::json!(
             workflow_version.flow_definition.actions[0].input
+        )),
+        input_schema: Some(serde_json::json!(
+            workflow_version.flow_definition.actions[0].input_schema
         )),
     };
 
@@ -273,6 +283,7 @@ pub async fn test_action(
         variables: Some(serde_json::json!(workflow.actions[0].variables)),
         variables_schema: Some(serde_json::json!(workflow.actions[0].variables_schema)),
         input: Some(serde_json::json!(workflow.actions[0].input)),
+        input_schema: Some(serde_json::json!(workflow.actions[0].input_schema)),
     };
 
     let test_config = TestConfig {

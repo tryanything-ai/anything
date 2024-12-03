@@ -145,6 +145,7 @@ pub struct TaskConfig {
     pub variables: Option<Value>,
     pub variables_schema: Option<Value>,
     pub input: Option<Value>,
+    pub input_schema: Option<Value>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

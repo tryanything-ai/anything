@@ -207,10 +207,13 @@ pub async fn processor(
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
                             variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
                             variables_schema: Some(
                                 serde_json::to_value(&trigger_node.variables_schema).unwrap(),
+                            ),
+                            input: Some(serde_json::to_value(&trigger_node.input).unwrap()),
+                            input_schema: Some(
+                                serde_json::to_value(&trigger_node.input_schema).unwrap(),
                             ),
                         },
                         result: None,
@@ -309,12 +312,15 @@ pub async fn processor(
                                             variables: Some(
                                                 serde_json::to_value(&action.variables).unwrap(),
                                             ),
-                                            input: Some(
-                                                serde_json::to_value(&action.input).unwrap(),
-                                            ),
                                             variables_schema: Some(
                                                 serde_json::to_value(&action.variables_schema)
                                                     .unwrap(),
+                                            ),
+                                            input: Some(
+                                                serde_json::to_value(&action.input).unwrap(),
+                                            ),
+                                            input_schema: Some(
+                                                serde_json::to_value(&action.input_schema).unwrap(),
                                             ),
                                         },
                                         result: None,
@@ -531,9 +537,12 @@ pub async fn processor(
                         },
                         config: TaskConfig {
                             variables: Some(serde_json::to_value(&next_action.variables).unwrap()),
-                            input: Some(serde_json::to_value(&next_action.input).unwrap()),
                             variables_schema: Some(
                                 serde_json::to_value(&next_action.variables_schema).unwrap(),
+                            ),
+                            input: Some(serde_json::to_value(&next_action.input).unwrap()),
+                            input_schema: Some(
+                                serde_json::to_value(&next_action.input_schema).unwrap(),
                             ),
                         },
                         result: None,
