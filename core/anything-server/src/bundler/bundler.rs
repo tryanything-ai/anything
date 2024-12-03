@@ -142,7 +142,7 @@ pub async fn bundle_cached_variables(
     if let Some(variables) = variables {
         templater.add_template("task_variables_definition", variables.clone());
 
-        let variable_validations = extract_validation_types_from_schema(variables_schema);
+        let variable_validations = extract_template_key_validations_from_schema(variables_schema);
         let context_value = serde_json::to_value(&render_variables_context)?;
         let rendered = templater.render(
             "task_variables_definition",
@@ -196,7 +196,7 @@ pub fn bundle_inputs(
         println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
         templater.add_template("task_inputs_definition", inputs.clone());
 
-        let input_validations = extract_validation_types_from_schema(input_schema);
+        let input_validations = extract_template_key_validations_from_schema(input_schema);
         // Render the task definition with the context
         let rendered_inputs_definition = templater.render(
             "task_inputs_definition",
@@ -214,18 +214,18 @@ pub fn bundle_inputs(
     }
 }
 
-fn extract_validation_types_from_schema(
+fn extract_template_key_validations_from_schema(
     schema: Option<&JsonSchema>,
 ) -> HashMap<String, ValidationFieldType> {
-    let mut validations = HashMap::new();
+    let mut template_key_validations = HashMap::new();
 
     if let Some(schema) = schema {
         for (property_name, property_schema) in &schema.properties {
             if let Some(validation) = &property_schema.x_any_validation {
-                validations.insert(format!("variables.{}", property_name), validation.r#type.clone());
+                template_key_validations.insert(property_name.clone(), validation.r#type.clone());
             }
         }
     }
 
-    validations
+    template_key_validations
 }
