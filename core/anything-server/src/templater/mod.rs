@@ -160,10 +160,21 @@ impl Templater {
                 for (k, v) in map {
                     let mut current_path = path.to_vec();
                     current_path.push(k.clone());
-                    result.insert(
-                        k.clone(),
-                        self.render_value(v, context, validations, &current_path)?,
-                    );
+                    if path.is_empty() {
+                        let validation_type = validations.get(k).ok_or_else(|| TemplateError {
+                            message: format!("Validation not found for key '{}'", k),
+                            variable: k.clone(),
+                        })?;
+                        let rendered = self.render_value(v, context, validations, &current_path)?;
+                        let validated =
+                            self.validate_and_convert_value(rendered, validation_type, k)?;
+                        result.insert(k.clone(), validated);
+                    } else {
+                        result.insert(
+                            k.clone(),
+                            self.render_value(v, context, validations, &current_path)?,
+                        );
+                    }
                 }
                 Ok(Value::Object(result))
             }
@@ -178,34 +189,40 @@ impl Templater {
                 let trimmed = s.trim();
                 if trimmed.starts_with("{{") && trimmed.ends_with("}}") {
                     let variable = trimmed[2..trimmed.len() - 2].trim();
-                    // Retrieve the full path as the validation key
-                    let validation_key = if !path.is_empty() {
-                        path.join(".")
-                    } else {
-                        variable.to_string()
-                    };
-
-                    let expected_type =
-                        validations
-                            .get(&validation_key)
+                    // Only validate if this is a top-level path
+                    if path.is_empty() {
+                        let validation_key = variable.to_string();
+                        let expected_type =
+                            validations
+                                .get(&validation_key)
+                                .ok_or_else(|| TemplateError {
+                                    message: format!(
+                                        "Validation not found for key '{}'",
+                                        validation_key
+                                    ),
+                                    variable: validation_key.clone(),
+                                })?;
+                        let value = Self::get_value_from_path(context, variable, expected_type)
                             .ok_or_else(|| TemplateError {
-                                message: format!(
-                                    "Validation not found for key '{}'",
-                                    validation_key.clone()
-                                ),
-                                variable: validation_key.clone(),
+                                message: format!("Variable not found in context: {}", variable),
+                                variable: variable.to_string(),
                             })?;
-
-                    let value = Self::get_value_from_path(context, variable, expected_type)
+                        let value =
+                            self.validate_and_convert_value(value, expected_type, &validation_key)?;
+                        return Ok(value);
+                    } else {
+                        // For nested variables, just get the value without validation
+                        let value = Self::get_value_from_path(
+                            context,
+                            variable,
+                            &ValidationFieldType::Unknown,
+                        )
                         .ok_or_else(|| TemplateError {
                             message: format!("Variable not found in context: {}", variable),
                             variable: variable.to_string(),
                         })?;
-
-                    let value =
-                        self.validate_and_convert_value(value, expected_type, &validation_key)?;
-
-                    return Ok(value);
+                        return Ok(value);
+                    }
                 }
 
                 // Regular string interpolation logic
@@ -220,31 +237,34 @@ impl Templater {
                     })?;
                     let close_idx = open_idx + close_idx;
                     let variable = result[open_idx + 2..close_idx].trim();
-                    let validation_key = if !path.is_empty() {
-                        path.join(".")
-                    } else {
-                        variable.to_string()
-                    };
 
-                    let expected_type =
-                        validations
-                            .get(&validation_key)
+                    // Only validate if this is a top-level path
+                    let value = if path.is_empty() {
+                        let validation_key = variable.to_string();
+                        let expected_type =
+                            validations
+                                .get(&validation_key)
+                                .ok_or_else(|| TemplateError {
+                                    message: format!(
+                                        "Validation not found for key '{}'",
+                                        validation_key
+                                    ),
+                                    variable: validation_key.clone(),
+                                })?;
+                        let value = Self::get_value_from_path(context, variable, expected_type)
                             .ok_or_else(|| TemplateError {
-                                message: format!(
-                                    "Validation not found for key '{}'",
-                                    validation_key
-                                ),
-                                variable: validation_key.clone(),
+                                message: "Variable not found in context".to_string(),
+                                variable: variable.to_string(),
                             })?;
-
-                    let value = Self::get_value_from_path(context, variable, expected_type)
-                        .ok_or_else(|| TemplateError {
-                            message: "Variable not found in context".to_string(),
-                            variable: variable.to_string(),
-                        })?;
-
-                    let value =
-                        self.validate_and_convert_value(value, expected_type, &validation_key)?;
+                        self.validate_and_convert_value(value, expected_type, &validation_key)?
+                    } else {
+                        // For nested variables, just get the value without validation
+                        Self::get_value_from_path(context, variable, &ValidationFieldType::Unknown)
+                            .ok_or_else(|| TemplateError {
+                                message: "Variable not found in context".to_string(),
+                                variable: variable.to_string(),
+                            })?
+                    };
 
                     let replacement = match value {
                         Value::String(s) => s.clone(),
@@ -522,7 +542,7 @@ mod tests {
                 "a_float": 1.23,
                 "a_number_string": "44",
                 "a_boolean_string": "true",
-                "a_array_string": "[1, 2, 3]",
+                "a_array_string": "[1,2,3]", //DANGER ZONE. Be careful with this. It's a string. and serde makes the spaces go away
             })
         );
     }
@@ -579,6 +599,94 @@ mod tests {
                     ]
                 },
                 "obj_as_string": "{\"subitems\":[{\"value\":\"first\"},{\"value\":\"second\"},{\"value\":42}]}"
+            })
+        );
+    }
+
+    #[test]
+    fn test_string_interpolation() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "message": "Hello {{variables.user.name}}, your score is {{variables.user.score}}!",
+                "description": "User {{variables.user.id}} ({{variables.user.name}}) joined on {{variables.user.date}}"
+            }),
+        );
+
+        let context = json!({
+            "variables": {
+                "user": {
+                    "name": "Alice",
+                    "score": 95,
+                    "id": "usr_123",
+                    "date": "2023-10-15"
+                }
+            }
+        });
+
+        let mut template_key_validations = HashMap::new();
+        template_key_validations.insert("message".to_string(), ValidationFieldType::String);
+        template_key_validations.insert("description".to_string(), ValidationFieldType::String);
+
+        let result = templater
+            .render("test_template", &context, template_key_validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "message": "Hello Alice, your score is 95!",
+                "description": "User usr_123 (Alice) joined on 2023-10-15"
+            })
+        );
+    }
+
+    #[test]
+    fn test_object_key_interpolation() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "user": {
+                    "name": "{{variables.user.name}}",
+                    "role": "{{variables.user.role}}",
+                    "active": true,
+                    "data": "{{variables.user}}"
+                }
+            }),
+        );
+
+        let context = json!({
+            "variables": {
+                "user": {
+                    "id": "usr_456",
+                    "name": "Bob",
+                    "role": "admin"
+                }
+            }
+        });
+
+        let mut template_key_validations = HashMap::new();
+        template_key_validations.insert("user".to_string(), ValidationFieldType::Object);
+
+        let result = templater
+            .render("test_template", &context, template_key_validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "user": {
+                    "name": "Bob",
+                    "role": "admin",
+                    "active": true,
+                    "data": {
+                        "id": "usr_456",
+                        "name": "Bob",
+                        "role": "admin"
+                    }
+                }
             })
         );
     }
