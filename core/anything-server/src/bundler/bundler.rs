@@ -144,7 +144,11 @@ pub async fn bundle_cached_variables(
 
         let variable_validations = extract_validation_types_from_schema(variables_schema);
         let context_value = serde_json::to_value(&render_variables_context)?;
-        let rendered = templater.render("task_variables_definition", &context_value, variable_validations)?;
+        let rendered = templater.render(
+            "task_variables_definition",
+            &context_value,
+            variable_validations,
+        )?;
 
         println!("[BUNDLER] Rendered variables output: {}", rendered);
         Ok(rendered)
@@ -194,8 +198,11 @@ pub fn bundle_inputs(
 
         let input_validations = extract_validation_types_from_schema(input_schema);
         // Render the task definition with the context
-        let rendered_inputs_definition =
-            templater.render("task_inputs_definition", &inputs_context_value, input_validations)?;
+        let rendered_inputs_definition = templater.render(
+            "task_inputs_definition",
+            &inputs_context_value,
+            input_validations,
+        )?;
         println!(
             "[BUNDLER] Rendered inputs output: {}",
             rendered_inputs_definition
@@ -215,7 +222,7 @@ fn extract_validation_types_from_schema(
     if let Some(schema) = schema {
         for (property_name, property_schema) in &schema.properties {
             if let Some(validation) = &property_schema.x_any_validation {
-                validations.insert(property_name.clone(), validation.r#type.clone());
+                validations.insert(format!("variables.{}", property_name), validation.r#type.clone());
             }
         }
     }

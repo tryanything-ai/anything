@@ -84,7 +84,11 @@ impl Templater {
         Ok(variables)
     }
 
-    fn get_value_from_path(context: &Value, path: &str) -> Option<Value> {
+    fn get_value_from_path(
+        context: &Value,
+        path: &str,
+        expected_type: &ValidationFieldType,
+    ) -> Option<Value> {
         let mut current = context;
         let parts: Vec<&str> = path.split('.').collect();
 
@@ -105,13 +109,20 @@ impl Templater {
             }
 
             if let Value::String(s) = current {
-                if let Ok(parsed) = serde_json::from_str(s) {
-                    if i < parts.len() - 1 {
-                        // If not the last part, continue traversing
-                        return Self::get_value_from_path(&parsed, &parts[i + 1..].join("."));
-                    } else {
-                        // If it's the last part, return the parsed value
-                        return Some(parsed);
+                // Only parse JSON if the expected type is not String
+                if *expected_type != ValidationFieldType::String {
+                    if let Ok(parsed) = serde_json::from_str(s) {
+                        if i < parts.len() - 1 {
+                            // If not the last part, continue traversing
+                            return Self::get_value_from_path(
+                                &parsed,
+                                &parts[i + 1..].join("."),
+                                expected_type,
+                            );
+                        } else {
+                            // If it's the last part, return the parsed value
+                            return Some(parsed);
+                        }
                     }
                 }
             }
@@ -158,30 +169,37 @@ impl Templater {
                 Ok(Value::Array(result))
             }
             Value::String(s) => {
-                // Special case: if the string is exactly "{{variables}}" (or any other full variable),
-                if s.trim().starts_with("{{") && s.trim().ends_with("}}") {
-                    let variable = s.trim()[2..s.trim().len() - 2].trim();
+                //For when the variable =  "{{variables.stuff}}" with nothing around it.
+                let trimmed = s.trim();
+                if trimmed.starts_with("{{") && trimmed.ends_with("}}") {
+                    let variable = trimmed[2..trimmed.len() - 2].trim();
                     let top_level_key = variable.split('.').nth(1).unwrap_or(variable);
 
-                    if let Some(expected_type) = validations.get(top_level_key) {
-                        if let Some(value) = Self::get_value_from_path(context, variable) {
-                            // For objects, validate it's an object but don't validate contents
-                            if *expected_type == ValidationFieldType::Object {
-                                match value {
-                                    Value::Object(_) => return Ok(value),
-                                    _ => {
-                                        return Err(TemplateError {
-                                            message: format!("Expected object, got: {:?}", value),
-                                            variable: variable.to_string(),
-                                        })
-                                    }
-                                }
-                            }
-                            return self.validate_and_convert_value(value, expected_type, variable);
-                        }
-                    } else if let Some(value) = Self::get_value_from_path(context, variable) {
-                        return Ok(value);
-                    }
+                    let value = Self::get_value_from_path(
+                        context,
+                        variable,
+                        validations
+                            .get(top_level_key)
+                            .ok_or_else(|| TemplateError {
+                                message: format!(
+                                    "Validation not found for variable '{}'",
+                                    variable
+                                ),
+                                variable: variable.to_string(),
+                            })?,
+                    )
+                    .ok_or_else(|| TemplateError {
+                        message: format!("Variable not found in context: {}", variable),
+                        variable: variable.to_string(),
+                    })?;
+
+                    let value = if let Some(expected_type) = validations.get(top_level_key) {
+                        self.validate_and_convert_value(value, expected_type, variable)?
+                    } else {
+                        value
+                    };
+
+                    return Ok(value);
                 }
 
                 // Regular string interpolation logic
@@ -198,28 +216,18 @@ impl Templater {
                     let variable = result[open_idx + 2..close_idx].trim();
                     let top_level_key = variable.split('.').nth(1).unwrap_or(variable);
 
-                    let value = Self::get_value_from_path(context, variable).ok_or_else(|| {
-                        TemplateError {
-                            message: "Variable not found in context".to_string(),
-                            variable: variable.to_string(),
-                        }
+                    let value = Self::get_value_from_path(
+                        context,
+                        variable,
+                        validations.get(top_level_key).unwrap(),
+                    )
+                    .ok_or_else(|| TemplateError {
+                        message: "Variable not found in context".to_string(),
+                        variable: variable.to_string(),
                     })?;
 
                     let value = if let Some(expected_type) = validations.get(top_level_key) {
-                        // For objects, validate it's an object but don't validate contents
-                        if *expected_type == ValidationFieldType::Object {
-                            match value {
-                                Value::Object(_) => value,
-                                _ => {
-                                    return Err(TemplateError {
-                                        message: format!("Expected object, got: {:?}", value),
-                                        variable: variable.to_string(),
-                                    })
-                                }
-                            }
-                        } else {
-                            self.validate_and_convert_value(value, expected_type, variable)?
-                        }
+                        self.validate_and_convert_value(value, expected_type, variable)?
                     } else {
                         value
                     };
@@ -447,7 +455,7 @@ mod tests {
             "a_float": "{{variables.a_float}}",
             "a_number_string": "{{variables.a_number_string}}",
             "a_boolean_string": "{{variables.a_boolean_string}}",
-            // "a_array_string": "{{variables.a_array_string}}",
+            "a_array_string": "{{variables.a_array_string}}",
         });
 
         templater.add_template("test_template", template);
@@ -499,7 +507,52 @@ mod tests {
                 "a_float": 1.23,
                 "a_number_string": "44",
                 "a_boolean_string": "true",
-                // "a_array_string": "[1, 2, 3]",
+                "a_array_string": "[1, 2, 3]",
+            })
+        );
+    }
+
+    #[test]
+    fn test_deep_array_path() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "result": "{{variables.data.items[0].subitems[1].value}}"
+            }),
+        );
+
+        let context = json!({
+            "variables": {
+                "data": {
+                    "items": [
+                    {
+                        "subitems": [
+                            {"value": "first"},
+                            {"value": "second"},
+                            {"value": "third"}
+                        ]
+                    },
+                    {
+                        "subitems": [
+                            {"value": "other"}
+                        ]
+                    }
+                ]
+            }
+        }});
+
+        let mut validations = HashMap::new();
+        validations.insert("data".to_string(), ValidationFieldType::String);
+
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "result": "second"
             })
         );
     }
