@@ -527,48 +527,59 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn test_deep_array_path() {
-    //     let mut templater = Templater::new();
-    //     templater.add_template(
-    //         "test_template",
-    //         json!({
-    //             "result": "{{variables.data.items[0].subitems[1].value}}"
-    //         }),
-    //     );
+    #[test]
+    fn test_deep_array_path() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "result": "{{variables.data.items[0].subitems[1].value}}",
+                "obj_results": "{{variables.data.items[0]}}",
+                "obj_as_string": "{{variables.data.items[0]}}"
+            }),
+        );
 
-    //     let context = json!({
-    //         "variables": {
-    //             "data": {
-    //                 "items": [
-    //                 {
-    //                     "subitems": [
-    //                         {"value": "first"},
-    //                         {"value": "second"},
-    //                         {"value": "third"}
-    //                     ]
-    //                 },
-    //                 {
-    //                     "subitems": [
-    //                         {"value": "other"}
-    //                     ]
-    //                 }
-    //             ]
-    //         }
-    //     }});
+        let context = json!({
+            "variables": {
+                "data": {
+                    "items": [
+                    {
+                        "subitems": [
+                            {"value": "first"},
+                            {"value": "second"},
+                            {"value": 42}
+                        ]
+                    },
+                    {
+                        "subitems": [
+                            {"value": "other"}
+                        ]
+                    }
+                ]
+            }
+        }});
 
-    //     let mut validations = HashMap::new();
-    //     validations.insert("data".to_string(), ValidationFieldType::String);
+        let mut template_key_validations = HashMap::new();
+        template_key_validations.insert("result".to_string(), ValidationFieldType::String);
+        template_key_validations.insert("obj_results".to_string(), ValidationFieldType::Object);
+        template_key_validations.insert("obj_as_string".to_string(), ValidationFieldType::String);
+        let result = templater
+            .render("test_template", &context, template_key_validations)
+            .unwrap();
 
-    //     let result = templater
-    //         .render("test_template", &context, validations)
-    //         .unwrap();
-
-    //     assert_eq!(
-    //         result,
-    //         json!({
-    //             "result": "second"
-    //         })
-    //     );
-    // }
+        assert_eq!(
+            result,
+            json!({
+                "result": "second",
+                "obj_results": {
+                    "subitems": [
+                        {"value": "first"},
+                        {"value": "second"},
+                        {"value": 42}
+                    ]
+                },
+                "obj_as_string": "{\"subitems\":[{\"value\":\"first\"},{\"value\":\"second\"},{\"value\":42}]}"
+            })
+        );
+    }
 }
