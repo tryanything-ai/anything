@@ -423,8 +423,8 @@ pub async fn create_in_memory_triggers_from_flow_definition(
             println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
 
             let task_config: TaskConfig = TaskConfig {
-                variables: Some(variables.clone()),
-                variables_schema: Some(variables_schema.clone()),
+                variables: Some(variables.clone().unwrap()),
+                variables_schema: Some(variables_schema.clone().unwrap()),
                 input: Some(input.clone()),
                 input_schema: Some(input_schema.clone()),
             };
@@ -437,10 +437,10 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                 client,
                 &account_id,
                 &Uuid::new_v4().to_string(),
-                Some(&variables),
-                Some(&variables_schema),
-                Some(&input),
-                Some(&input_schema),
+                Some(&variables.clone().unwrap()),
+                Some(&variables_schema.clone().unwrap()),
+                Some(&input.clone()),
+                Some(&input_schema.clone()),
                 false,
             )
             .await

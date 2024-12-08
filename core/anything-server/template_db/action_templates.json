@@ -421,7 +421,13 @@
             "security_model": {
               "title": "Security Model",
               "description": "Select the security model for the webhook",
-              "type": "string"
+              "type": "string",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
             },
             "username": {
               "title": "Username",

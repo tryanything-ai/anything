@@ -74,7 +74,7 @@ pub async fn get_actions(
     println!("Parsing response body as JSON");
     let mut db_items: Value = match serde_json::from_str(&body) {
         Ok(items) => {
-            println!("Successfully parsed JSON: {:?}", items);
+            // println!("Successfully parsed JSON: {:?}", items);
             items
         }
         Err(err) => {
@@ -175,7 +175,7 @@ pub async fn get_actions(
     let reader = BufReader::new(file);
     let json_items: Value = match serde_json::from_reader(reader) {
         Ok(items) => {
-            println!("Successfully parsed JSON file: {:?}", items);
+            // println!("Successfully parsed JSON file: {:?}", items);
             items
         }
         Err(err) => {
@@ -266,7 +266,7 @@ pub async fn get_triggers(
     let reader = BufReader::new(file);
     let json_items: Value = match serde_json::from_reader(reader) {
         Ok(items) => {
-            println!("Successfully parsed JSON file: {:?}", items);
+            // println!("Successfully parsed JSON file: {:?}", items);
             items
         }
         Err(err) => {
@@ -345,7 +345,7 @@ pub async fn get_other_actions(
     let reader = BufReader::new(file);
     let json_items: Value = match serde_json::from_reader(reader) {
         Ok(items) => {
-            println!("Successfully parsed JSON file: {:?}", items);
+            // println!("Successfully parsed JSON file: {:?}", items);
             items
         }
         Err(err) => {

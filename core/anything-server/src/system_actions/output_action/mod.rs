@@ -96,10 +96,29 @@ pub async fn process_response_task(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    let body = bundled_context
-        .get("body")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    // Get body based on content type
+    let body = match content_type {
+        "application/json" => bundled_context
+            .get("json_body")
+            .and_then(|v| v.as_str())
+            .unwrap_or("{}"),
+        "text/plain" => bundled_context
+            .get("text_body")
+            .and_then(|v| v.as_str())
+            .unwrap_or(""),
+        "text/html" => bundled_context
+            .get("html_body")
+            .and_then(|v| v.as_str())
+            .unwrap_or(""),
+        "text/xml" => bundled_context
+            .get("xml_body")
+            .and_then(|v| v.as_str())
+            .unwrap_or(""),
+        _ => bundled_context
+            .get("json_body")
+            .and_then(|v| v.as_str())
+            .unwrap_or("{}"),
+    };
 
     // Build response object
     let mut response = serde_json::Map::new();

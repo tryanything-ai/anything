@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use super::react_flow_types::{HandleProps, NodePresentation};
+use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -61,10 +62,9 @@ pub struct JsonSchemaProperty {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JsonSchema {
-    pub r#type: String,
-    pub properties: HashMap<String, JsonSchemaProperty>,
+    pub r#type: Option<String>,
+    pub properties: Option<HashMap<String, JsonSchemaProperty>>,
     pub required: Option<Vec<String>>,
-    //Used for conditional fields
     #[serde(rename = "allOf")]
     pub all_of: Option<Vec<serde_json::Value>>,
     #[serde(rename = "x-jsf-order")]
@@ -83,9 +83,9 @@ pub struct Action {
     pub label: String,
     pub description: Option<String>,
     pub icon: String,
-    pub variables: Value,
+    pub variables: Option<Value>,
     pub variables_locked: Option<bool>,
-    pub variables_schema: JsonSchema,
+    pub variables_schema: Option<JsonSchema>,
     pub variables_schema_locked: Option<bool>,
     pub input: Value,
     pub input_locked: Option<bool>,

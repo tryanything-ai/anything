@@ -207,8 +207,8 @@ pub async fn processor(
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            variables: Some(trigger_node.variables.clone()),
-                            variables_schema: Some(trigger_node.variables_schema.clone()),
+                            variables: Some(trigger_node.variables.clone().unwrap()),
+                            variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
                             input: Some(trigger_node.input.clone()),
                             input_schema: Some(trigger_node.input_schema.clone()),
                         },
@@ -305,8 +305,8 @@ pub async fn processor(
                                             Stage::Testing.as_str().to_string()
                                         },
                                         config: TaskConfig {
-                                            variables: Some(action.variables.clone()),
-                                            variables_schema: Some(action.variables_schema.clone()),
+                                            variables: Some(action.variables.clone().unwrap()),
+                                            variables_schema: Some(action.variables_schema.clone().unwrap()),
                                             input: Some(action.input.clone()),
                                             input_schema: Some(action.input_schema.clone()),
                                         },
@@ -523,8 +523,8 @@ pub async fn processor(
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            variables: Some(next_action.variables.clone()),
-                            variables_schema: Some(next_action.variables_schema.clone()),
+                            variables: Some(next_action.variables.clone().unwrap()),
+                            variables_schema: Some(next_action.variables_schema.clone().unwrap()),
                             input: Some(next_action.input.clone()),
                             input_schema: Some(next_action.input_schema.clone()),
                         },

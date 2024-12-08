@@ -48,12 +48,12 @@ impl Default for WorkflowVersionDefinition {
             label: "Every Hour".to_string(),
             description: Some("Cron Trigger to run workflow every hour".to_string()),
             icon: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>".to_string(),
-            variables: serde_json::json!({
+            variables: Some(serde_json::json!({
                 "cron_expression": "0 0 * * * *"
-            }),
+            })),
             variables_locked: Some(false),
-            variables_schema: JsonSchema {
-                r#type: "object".to_string(),
+            variables_schema: Some(JsonSchema {
+                r#type: Some("object".to_string()),
                 all_of: None,
                 properties: {
                     let mut map = HashMap::new();
@@ -69,19 +69,19 @@ impl Default for WorkflowVersionDefinition {
                             input_type: InputFieldType::Text,
                         }),
                     });
-                    map
+                    Some(map)
                 },
                 required: Some(vec!["cron_expression".to_string()]),
                 x_jsf_order: Some(vec!["cron_expression".to_string()]),
                 additional_properties: Some(false),
-            },
+            }),
             variables_schema_locked: Some(true),
             input: serde_json::json!({
                 "cron_expression": "{{variables.cron_expression}}"
             }),
             input_locked: Some(true),
             input_schema: JsonSchema {
-                r#type: "object".to_string(),
+                r#type: Some("object".to_string()),
                 all_of: None,
                 properties: {
                     let mut map = HashMap::new();
@@ -97,7 +97,7 @@ impl Default for WorkflowVersionDefinition {
                             input_type: InputFieldType::Text,
                         }),
                     });
-                    map
+                    Some(map)
                 },
                 required: Some(vec!["cron_expression".to_string()]),
                 x_jsf_order: Some(vec!["cron_expression".to_string()]),
@@ -123,16 +123,16 @@ impl Default for WorkflowVersionDefinition {
             label: "Call External System".to_string(),
             description: Some("Use HTTP to call another system".to_string()),
             icon: "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 32 32\" id=\"icon\" xmlns=\"http://www.w3.org/2000/svg\"><defs><style>.cls-1{fill:none;}</style></defs><title>HTTP</title><path d=\"M30,11H25V21h2V18h3a2.0027,2.0027,0,0,0,2-2V13A2.0023,2.0023,0,0,0,30,11Zm-3,5V13h3l.001,3Z\" transform=\"translate(0 0)\"/><polygon points=\"10 13 12 13 12 21 14 21 14 13 16 13 16 11 10 11 10 13\"/><polygon points=\"23 11 17 11 17 13 19 13 19 21 21 21 21 13 23 13 23 11\"/><polygon points=\"6 11 6 15 3 15 3 11 1 11 1 21 3 21 3 17 6 17 6 21 8 21 8 11 6 11\"/><rect id=\"_Transparent_Rectangle_\" data-name=\"&lt;Transparent Rectangle&gt;\" class=\"cls-1\" width=\"32\" height=\"32\"/></svg>".to_string(),
-            variables: serde_json::json!({}),
+            variables: Some(serde_json::json!({})),
             variables_locked: Some(false),
-            variables_schema: JsonSchema {
-                r#type: "object".to_string(),
-                properties: HashMap::new(),
+            variables_schema: Some(JsonSchema {
+                r#type: Some("object".to_string()),
+                properties: Some(HashMap::new()),
                 required: None,
                 all_of: None,
                 x_jsf_order: None,
                 additional_properties: None,
-            },
+            }),
             variables_schema_locked: Some(false),
             input: serde_json::json!({
                 "method": "GET",
@@ -142,7 +142,7 @@ impl Default for WorkflowVersionDefinition {
             }),
             input_locked: Some(false),
             input_schema: JsonSchema {
-                r#type: "object".to_string(),
+                r#type: Some("object".to_string()),
                 required: Some(vec!["method".to_string(), "url".to_string()]),
                 x_jsf_order: Some(vec!["method".to_string(), "url".to_string(), "headers".to_string(), "body".to_string()]),
                 additional_properties: Some(false), 
@@ -222,7 +222,7 @@ impl Default for WorkflowVersionDefinition {
                             input_type: InputFieldType::ObjectOrVariable,
                         }),
                     });                 
-                    map
+                    Some(map)
                 },
             },
             input_schema_locked: Some(true),

@@ -220,9 +220,11 @@ fn extract_template_key_validations_from_schema(
     let mut template_key_validations = HashMap::new();
 
     if let Some(schema) = schema {
-        for (property_name, property_schema) in &schema.properties {
-            if let Some(validation) = &property_schema.x_any_validation {
-                template_key_validations.insert(property_name.clone(), validation.r#type.clone());
+        if let Some(properties) = &schema.properties {
+            for (property_name, property_schema) in properties {
+                if let Some(validation) = &property_schema.x_any_validation {
+                    template_key_validations.insert(property_name.clone(), validation.r#type.clone());
+                }
             }
         }
     }

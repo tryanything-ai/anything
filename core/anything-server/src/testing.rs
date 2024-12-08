@@ -73,9 +73,10 @@ pub async fn test_workflow(
 
     let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&body) {
         Ok(dbflowversion) => dbflowversion,
-        Err(_) => {
-            println!("[TEST WORKFLOW] Failed to parse workflow version JSON");
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        Err(e) => {
+            println!("[TEST WORKFLOW] Failed to parse workflow version JSON: {}", e);
+            println!("[TEST WORKFLOW] Raw JSON body: {}", body);
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to parse JSON: {}", e)).into_response();
         }
     };
 
@@ -87,7 +88,7 @@ pub async fn test_workflow(
         )),
         variables_schema: Some(workflow_version.flow_definition.actions[0]
             .variables_schema
-            .clone()),
+            .clone().unwrap()),
         input: Some(workflow_version.flow_definition.actions[0].input.clone()),
         input_schema: Some(workflow_version.flow_definition.actions[0].input_schema.clone()),
     };
@@ -276,8 +277,8 @@ pub async fn test_action(
     // println!("Workflow Definition {:#?}", workflow);
 
     let task_config = TaskConfig {
-        variables: Some(workflow.actions[0].variables.clone()),
-        variables_schema: Some(workflow.actions[0].variables_schema.clone()),
+        variables: Some(workflow.actions[0].variables.clone().unwrap()),
+        variables_schema: Some(workflow.actions[0].variables_schema.clone().unwrap()),
         input: Some(workflow.actions[0].input.clone()),
         input_schema: Some(workflow.actions[0].input_schema.clone()),
     };
