@@ -325,6 +325,22 @@ impl Templater {
             },
             ValidationFieldType::Object => match value {
                 Value::Object(_) => Ok(value),
+                Value::String(s) => {
+                    // Try to parse string as JSON object
+                    match serde_json::from_str(&s) {
+                        Ok(parsed) => match parsed {
+                            Value::Object(_) => Ok(parsed),
+                            _ => Err(TemplateError {
+                                message: format!("String parsed but not an object: {}", s),
+                                variable: variable.to_string(),
+                            }),
+                        },
+                        Err(_) => Err(TemplateError {
+                            message: format!("Cannot parse string as object: {}", s),
+                            variable: variable.to_string(),
+                        }),
+                    }
+                }
                 _ => Err(TemplateError {
                     message: format!("Expected object, got: {:?}", value),
                     variable: variable.to_string(),
@@ -332,6 +348,22 @@ impl Templater {
             },
             ValidationFieldType::Array => match value {
                 Value::Array(_) => Ok(value),
+                Value::String(s) => {
+                    // Try to parse string as JSON array
+                    match serde_json::from_str(&s) {
+                        Ok(parsed) => match parsed {
+                            Value::Array(_) => Ok(parsed),
+                            _ => Err(TemplateError {
+                                message: format!("String parsed but not an array: {}", s),
+                                variable: variable.to_string(),
+                            }),
+                        },
+                        Err(_) => Err(TemplateError {
+                            message: format!("Cannot parse string as array: {}", s),
+                            variable: variable.to_string(),
+                        }),
+                    }
+                }
                 _ => Err(TemplateError {
                     message: format!("Expected array, got: {:?}", value),
                     variable: variable.to_string(),
@@ -687,6 +719,41 @@ mod tests {
                         "role": "admin"
                     }
                 }
+            })
+        );
+    }
+
+    #[test]
+    fn test_string_json_conversion() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "object_field": "{{variables.string_object}}",
+                "array_field": "{{variables.string_array}}"
+            }),
+        );
+
+        let context = json!({
+            "variables": {
+                "string_object": "{}",
+                "string_array": "[]"
+            }
+        });
+
+        let mut validations = HashMap::new();
+        validations.insert("object_field".to_string(), ValidationFieldType::Object);
+        validations.insert("array_field".to_string(), ValidationFieldType::Array);
+
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "object_field": {},
+                "array_field": []
             })
         );
     }

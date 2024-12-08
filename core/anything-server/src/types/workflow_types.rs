@@ -126,8 +126,8 @@ impl Default for WorkflowVersionDefinition {
             variables: Some(serde_json::json!({})),
             variables_locked: Some(false),
             variables_schema: Some(JsonSchema {
-                r#type: Some("object".to_string()),
-                properties: Some(HashMap::new()),
+                r#type: None,
+                properties: None,
                 required: None,
                 all_of: None,
                 x_jsf_order: None,
@@ -183,7 +183,9 @@ impl Default for WorkflowVersionDefinition {
                                 "title": "PATCH"
                             }),
                         ]),
-                        x_any_validation: None,
+                        x_any_validation: Some(ValidationField {
+                            r#type: ValidationFieldType::String,
+                        }),
                         x_jsf_presentation: Some(PresentationField {
                             input_type: InputFieldType::SelectOrVariable,
                         }),
@@ -193,7 +195,9 @@ impl Default for WorkflowVersionDefinition {
                         description: Some("URL for request".to_string()),
                         r#type: Some("string".to_string()),
                         one_of: None,
-                        x_any_validation: None,
+                        x_any_validation: Some(ValidationField {
+                            r#type: ValidationFieldType::String,
+                        }),
                         x_jsf_presentation: Some(PresentationField {
                             input_type: InputFieldType::Text,
                         }),

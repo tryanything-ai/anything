@@ -100,25 +100,34 @@ pub async fn process_response_task(
     let body = match content_type {
         "application/json" => bundled_context
             .get("json_body")
-            .and_then(|v| v.as_str())
-            .unwrap_or("{}"),
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "{}".to_string()),
         "text/plain" => bundled_context
             .get("text_body")
             .and_then(|v| v.as_str())
-            .unwrap_or(""),
+            .unwrap_or("")
+            .to_string(),
         "text/html" => bundled_context
             .get("html_body")
             .and_then(|v| v.as_str())
-            .unwrap_or(""),
+            .unwrap_or("")
+            .to_string(),
         "text/xml" => bundled_context
             .get("xml_body")
             .and_then(|v| v.as_str())
-            .unwrap_or(""),
+            .unwrap_or("")
+            .to_string(),
         _ => bundled_context
             .get("json_body")
             .and_then(|v| v.as_str())
-            .unwrap_or("{}"),
+            .unwrap_or("{}")
+            .to_string(),
     };
+
+    println!("[PROCESS RESPONSE] Status code: {}", status_code);
+    println!("[PROCESS RESPONSE] Content type: {}", content_type);
+    println!("[PROCESS RESPONSE] Headers: {}", headers);
+    println!("[PROCESS RESPONSE] Body: {}", body);
 
     // Build response object
     let mut response = serde_json::Map::new();
@@ -157,7 +166,7 @@ pub async fn process_response_task(
     // Parse and add body if present
     if !body.is_empty() {
         if content_type == "application/json" {
-            match deep_parse_json(body) {
+            match deep_parse_json(&body) {
                 Ok(parsed_body) => {
                     response.insert("body".to_string(), parsed_body);
                 }
