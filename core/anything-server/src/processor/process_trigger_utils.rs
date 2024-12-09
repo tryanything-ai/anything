@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::task_types::Task;
+use crate::types::task_types::Task;
 
 pub fn process_trigger_task(
     task: &Task,

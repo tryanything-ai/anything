@@ -36,8 +36,7 @@ export default function TestingTab(): JSX.Element {
             <Play size={16} className="ml-2" />
           </Button>
           {testing.testFinishedTime ? (
-            <div className="p-2 rounded-lg bg-green-200">
-              Run Time:{" "}
+            <div className="p-2 rounded-lg bg-gray-200">
               {formatDuration(
                 intervalToDuration({
                   start: testing.testStartedTime,

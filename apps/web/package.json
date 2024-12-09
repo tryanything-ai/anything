@@ -12,6 +12,10 @@
     "gen-anything-supabase-types": "supabase gen types typescript --local > src/types/generated/supabase-anything-generated.ts"
   },
   "dependencies": {
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-xml": "^6.1.0",
+    "@codemirror/lint": "^6.8.4",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@remoteoss/json-schema-form": "0.9.1-beta.0",
@@ -19,6 +23,7 @@
     "@repo/ui": "workspace:*",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@uiw/react-codemirror": "^4.23.6",
     "@usebasejump/shared": "^0.0.3",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -49,6 +54,7 @@
     "@next/eslint-plugin-next": "14.2.4",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/json-parse-better-errors": "^1.0.3",
     "@types/lodash": "^4.17.5",
     "@types/node": "^20",
     "@types/prismjs": "^1.26.5",

@@ -1,5 +1,6 @@
 use crate::system_variables::get_system_variables;
-use crate::task_types::Task;
+use crate::types::action_types::JsonSchema;
+use crate::types::task_types::Task;
 
 use crate::AppState;
 use postgrest::Postgrest;
@@ -14,11 +15,11 @@ use crate::bundler::accounts::fetch_cached_auth_accounts;
 
 use crate::bundler::secrets::get_decrypted_secrets;
 
-use crate::processor::parsing_utils::get_bundle_context_inputs;
-
-use crate::task_types::TaskStatus;
+use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
+
+use crate::types::action_types::ValidationFieldType;
 
 pub async fn bundle_tasks_cached_context(
     state: Arc<AppState>,
@@ -28,23 +29,27 @@ pub async fn bundle_tasks_cached_context(
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
-    let (account_id, flow_session_id, variables_config, inputs_config) =
-        get_bundle_context_inputs(task);
-
-    println!("[BUNDLER] Got bundle context inputs: account_id={}, flow_session_id={}, variables_config={:?}, inputs_config={:?}",
-        account_id, flow_session_id, variables_config, inputs_config);
+    let account_id = task.account_id.to_string();
+    let flow_session_id = task.flow_session_id.to_string();
+    let variables = task.config.variables.as_ref();
+    let variables_schema = task.config.variables_schema.as_ref();
+    let input = task.config.input.as_ref();
+    let input_schema = task.config.input_schema.as_ref();
 
     let rendered_variables_definition = bundle_cached_variables(
         state,
         client,
         &account_id,
         &flow_session_id,
-        variables_config,
+        variables,
+        variables_schema,
+        // input,
+        // input_schema,
         refresh_auth,
     )
     .await?;
 
-    bundle_inputs(rendered_variables_definition, inputs_config)
+    bundle_inputs(rendered_variables_definition, input, input_schema)
 }
 
 pub async fn bundle_context_from_parts(
@@ -52,8 +57,10 @@ pub async fn bundle_context_from_parts(
     client: &Postgrest,
     account_id: &str,
     flow_session_id: &str,
-    variables_config: Option<&Value>,
-    inputs_config: Option<&Value>,
+    variables: Option<&Value>,
+    variables_schema: Option<&JsonSchema>,
+    input: Option<&Value>,
+    input_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
@@ -63,12 +70,15 @@ pub async fn bundle_context_from_parts(
         client,
         account_id,
         flow_session_id,
-        variables_config,
+        variables,
+        variables_schema,
+        // input,
+        // input_schema,
         refresh_auth,
     )
     .await?;
 
-    bundle_inputs(rendered_variables_definition, inputs_config)
+    bundle_inputs(rendered_variables_definition, input, input_schema)
 }
 
 pub async fn bundle_cached_variables(
@@ -76,7 +86,10 @@ pub async fn bundle_cached_variables(
     client: &Postgrest,
     account_id: &str,
     flow_session_id: &str,
-    variables_config: Option<&Value>,
+    variables: Option<&Value>,
+    variables_schema: Option<&JsonSchema>,
+    // input: Option<&Value>,
+    // input_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle variables");
@@ -123,13 +136,19 @@ pub async fn bundle_cached_variables(
         serde_json::to_value(get_system_variables())?,
     );
 
-    // Process variables config if present
-    if let Some(variables) = variables_config {
-        let mut templater = Templater::new();
+    // Extract and set validations from schemas
+    let mut templater = Templater::new();
+
+    if let Some(variables) = variables {
         templater.add_template("task_variables_definition", variables.clone());
 
+        let variable_validations = extract_template_key_validations_from_schema(variables_schema);
         let context_value = serde_json::to_value(&render_variables_context)?;
-        let rendered = templater.render("task_variables_definition", &context_value)?;
+        let rendered = templater.render(
+            "task_variables_definition",
+            &context_value,
+            variable_validations,
+        )?;
 
         println!("[BUNDLER] Rendered variables output: {}", rendered);
         Ok(rendered)
@@ -161,6 +180,7 @@ async fn fetch_completed_cached_tasks(
 pub fn bundle_inputs(
     rendered_variables: Value,
     inputs: Option<&Value>,
+    input_schema: Option<&JsonSchema>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     let mut render_input_context: HashMap<String, Value> = HashMap::new();
     render_input_context.insert("variables".to_string(), rendered_variables);
@@ -176,9 +196,13 @@ pub fn bundle_inputs(
         println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
         templater.add_template("task_inputs_definition", inputs.clone());
 
+        let input_validations = extract_template_key_validations_from_schema(input_schema);
         // Render the task definition with the context
-        let rendered_inputs_definition =
-            templater.render("task_inputs_definition", &inputs_context_value)?;
+        let rendered_inputs_definition = templater.render(
+            "task_inputs_definition",
+            &inputs_context_value,
+            input_validations,
+        )?;
         println!(
             "[BUNDLER] Rendered inputs output: {}",
             rendered_inputs_definition
@@ -188,4 +212,22 @@ pub fn bundle_inputs(
         println!("[BUNDLER] No inputs found in task config, returning empty object");
         Ok(json!({}))
     }
+}
+
+fn extract_template_key_validations_from_schema(
+    schema: Option<&JsonSchema>,
+) -> HashMap<String, ValidationFieldType> {
+    let mut template_key_validations = HashMap::new();
+
+    if let Some(schema) = schema {
+        if let Some(properties) = &schema.properties {
+            for (property_name, property_schema) in properties {
+                if let Some(validation) = &property_schema.x_any_validation {
+                    template_key_validations.insert(property_name.clone(), validation.r#type.clone());
+                }
+            }
+        }
+    }
+
+    template_key_validations
 }

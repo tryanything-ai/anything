@@ -3,8 +3,10 @@ use crate::{
         create_workflow_graph, db_calls::update_flow_session_status,
         flow_session_cache::FlowSessionData, processor::ProcessorMessage,
     },
-    task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
-    workflow_types::DatabaseFlowVersion,
+    types::{
+        task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
+        workflow_types::DatabaseFlowVersion,
+    },
     AppState,
 };
 

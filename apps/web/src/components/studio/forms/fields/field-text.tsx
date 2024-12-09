@@ -10,7 +10,7 @@ import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { useState } from "react";
 
-export default function FieldText({
+export default function ReactSimpleCodeEditorFieldText({
   type,
   name,
   label,
@@ -36,7 +36,7 @@ export default function FieldText({
     return null;
   }
 
-  console.log("[FIELDTEXT]: ", name, " = ", value, " and props: ", props);
+  console.log("[FIELDTEXT]:", value);
 
   const displayError = submited || touched ? error : null;
 
@@ -47,13 +47,11 @@ export default function FieldText({
   }
 
   return (
-    <div className="grid gap-3 my-4">
+    <div className="grid gap-3 my-2 w-full overflow-hidden">
       <Label htmlFor={name}>{label}</Label>
-      <div className="relative">
+      <div className="relative w-full overflow-hidden">
         <Editor
-          // {...props}
           id={name}
-          // defaultValue={value}
           onFocus={onFocus}
           aria-invalid={!!error}
           aria-describedby={`${name}-error ${name}-description`}
@@ -62,7 +60,7 @@ export default function FieldText({
           onSelect={onSelect}
           onClick={onClick}
           onKeyUp={onKeyUp}
-          onValueChange={handleChange} //being shadowed by props i think
+          onValueChange={handleChange}
           highlight={(code) => {
             if (!code || code.length === 0) {
               console.log("No code to highlight");
@@ -72,16 +70,28 @@ export default function FieldText({
               return highlight(code, languages.handlebars, "handlebars");
             } catch (e) {
               console.error("Highlighting error:", e);
-              return code; // Fallback to plain text if highlighting fails
+              return code;
             }
           }}
           padding={10}
           disabled={disabled}
+          style={{
+            minHeight: "2.5rem",
+            // maxHeight: "300px",
+            height: "auto",
+            width: "100%",
+            maxWidth: "100%",
+            overflow: "auto",
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+            boxSizing: "border-box",
+            fontFamily: "monospace",
+            whiteSpace: "pre",
+          }}
           className={cn(
-            "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
             className,
           )}
-          // {...props} //order matters here which is kinda wild!
         />
       </div>
       {displayError && <div className="text-red-500">{displayError}</div>}

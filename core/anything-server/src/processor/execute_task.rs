@@ -10,12 +10,12 @@ use crate::system_actions::formatter_actions::{
 use crate::system_actions::output_action::process_response_task;
 
 use crate::system_actions::process_http_task::process_http_task;
-use crate::task_types::Task;
+use crate::types::task_types::Task;
 use crate::AppState;
 
 use serde_json::{json, Value};
 
-use crate::task_types::ActionType;
+use crate::types::action_types::ActionType;
 
 #[derive(Debug, Clone)]
 pub struct TaskError {

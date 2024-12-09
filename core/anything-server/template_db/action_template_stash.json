@@ -1,0 +1,168 @@
+[
+
+    { 
+      "type": "output", 
+      "featured": false, 
+      "action_template_definition": 
+      {
+        "anything_action_version": "0.1.0",
+        "type": "output",
+        "plugin_id": "output",
+        "action_id": "output",
+        "plugin_version": "0.1.0",
+        "label": "Output",
+        "description": "Structure Output for Workflow",
+        "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
+        "variables": {}, 
+        "variables_locked": false,
+        "variables_schema": {},
+        "variables_schema_locked": false,
+        "input": {
+          "output": "{{variables}}"
+        },
+        "input_locked": true, 
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "title": "Output",
+              "description": "Output for Workflow",
+              "type": "string"
+            }
+          },
+          "x-jsf-order": ["output"],
+          "required": ["output"],
+          "additionalProperties": false
+        },
+        "input_schema_locked": true,
+        "presentation": {
+          "position": {
+            "x": 300,
+            "y": 100
+          }
+        },
+        "handles": [
+          {
+            "id": "a", 
+            "type": "target",
+            "position": "top"
+          }
+        ]
+      }},
+      {
+        "type": "response",
+        "featured": false,
+        "action_template_definition": {
+          "anything_action_version": "0.1.0", 
+          "type": "response",
+          "plugin_id": "response",
+          "action_id": "response",
+          "plugin_version": "0.1.0",
+          "label": "Webhook Response",
+          "description": "Send HTTP response with custom status code, headers and body",
+          "deprecated": true,
+          "deprecation_date": "Nov 29, 2024",
+          "deprecation_note": "Using new one that has different types of form fields for all inputs",
+          "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
+          "variables": {
+            "status_code": "200",
+            "content_type": "application/json",
+            "body": "{}"
+          },
+          "variables_locked": false,
+          "variables_schema": {
+            "type": "object",
+            "properties": {
+              "status_code": {
+                "title": "Status Code",
+                "description": "HTTP status code for the response",
+                "type": "string",
+                "oneOf": [ 
+                  {"value": "200", "title": "200 - OK"},
+                  {"value": "201", "title": "201 - Created"},
+                  {"value": "202", "title": "202 - Accepted"},
+                  {"value": "204", "title": "204 - No Content"},
+                  {"value": "400", "title": "400 - Bad Request"},
+                  {"value": "401", "title": "401 - Unauthorized"},
+                  {"value": "403", "title": "403 - Forbidden"},
+                  {"value": "404", "title": "404 - Not Found"},
+                  {"value": "500", "title": "500 - Internal Server Error"},
+                  {"value": "503", "title": "503 - Service Unavailable"}
+                ],
+                "x-jsf-presentation": {
+                  "inputType": "select"
+                }
+              },
+              "content_type": {
+                "title": "Content Type",
+                "description": "Content type of the response",
+                "type": "string",
+                "oneOf": [
+                  {"value": "application/json", "title": "JSON"},
+                  {"value": "text/plain", "title": "Plain Text"},
+                  {"value": "text/html", "title": "HTML"},
+                  {"value": "text/xml", "title": "XML"},
+                  {"value": "application/x-www-form-urlencoded", "title": "Form URL Encoded"}
+                ],
+                "x-jsf-presentation": {
+                  "inputType": "select"
+                }
+              },
+              "body": {
+                "title": "Response Body",
+                "description": "Content to send in response body",
+                "type": "string",
+                "x-jsf-presentation": {
+                  "inputType": "text"
+                }
+              }
+            },
+            "required": ["status_code", "content_type"],
+            "x-jsf-order": ["status_code", "content_type", "body"]
+          },
+          "variables_schema_locked": true,
+          "input": {
+            "status_code": "{{variables.status_code}}",
+            "content_type": "{{variables.content_type}}",
+            "body": "{{variables.body}}"
+          },
+          "input_locked": true,
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "status_code": {
+                "title": "Status Code",
+                "description": "HTTP status code for the response",
+                "type": "string"
+              },
+              "content_type": {
+                "title": "Content Type",
+                "description": "Content type of the response",
+                "type": "string"
+              },
+              "body": {
+                "title": "Response Body", 
+                "description": "Content to send in response body",
+                "type": "string"
+              }
+            },
+            "required": ["status_code", "content_type"],
+            "x-jsf-order": ["status_code", "content_type", "body"]
+          },
+          "input_schema_locked": true,
+          "presentation": {
+            "position": {
+              "x": 300,
+              "y": 100
+            }
+          },
+          "handles": [
+            {
+              "id": "a",
+              "type": "target",
+              "position": "top"
+            }
+          ]
+        }
+      }
+    ]

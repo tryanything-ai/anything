@@ -5,7 +5,7 @@ import {
   getDefaultValuesFromFields,
 } from "@/lib/json-schema-utils";
 import { Button } from "@repo/ui/components/ui/button";
-import { fieldsMap } from "./form-fields";
+import { fieldsMap } from "./fields/form-fields";
 import { useAnything } from "@/context/AnythingContext";
 import { TriangleAlertIcon } from "lucide-react";
 
@@ -34,6 +34,9 @@ export function JsonSchemaForm({
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
   const [submited, setSubmitted] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [invalidJsonFields, setInvalidJsonFields] = useState<Set<string>>(
+    new Set(),
+  );
 
   const valuesRef = useRef(values);
 
@@ -52,28 +55,44 @@ export function JsonSchemaForm({
   }, [fields, initialValues]);
 
   const handleInternalValidation = (valuesToValidate: any) => {
+    console.log(
+      "[HANDLE INTERNAL VALIDATION] Values to validate:",
+      valuesToValidate,
+    );
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
-
+    console.log(
+      "[HANDLE INTERNAL VALIDATION] Values for JSON validation:",
+      valuesForJson,
+    );
     const { formErrors } = handleValidation(valuesForJson);
     return { errors: formErrors || {}, jsonValues: valuesForJson };
   };
 
-  const handleFieldChange = (fieldName: any, value: any) => {
+  const handleFieldChange = (fieldName: any, value: any, isValid?: boolean) => {
     if (disabled) return;
-    console.log(
-      `[JSON SCHEMA FORM] [HANDLE FIELD CHANGE] ${fieldName}:`,
-      value,
-    );
+
+    // Update invalid JSON fields tracking
+    setInvalidJsonFields((prev) => {
+      const newSet = new Set(prev);
+      if (isValid === false) {
+        newSet.add(fieldName);
+      } else {
+        newSet.delete(fieldName);
+      }
+      return newSet;
+    });
+
     setValues((prevValues) => {
       const newValues = {
         ...prevValues,
         [fieldName]: value,
       };
-      console.log("[NEW VALUES]", newValues);
 
-      // Add validation on field change
-      const { errors, jsonValues } = handleInternalValidation(newValues);
-      setErrors(errors);
+      // Only validate if all JSON fields are valid
+      if (isValid !== false) {
+        const { errors, jsonValues } = handleInternalValidation(newValues);
+        setErrors(errors);
+      }
 
       return newValues;
     });
@@ -143,26 +162,37 @@ export function JsonSchemaForm({
       return;
     }
 
-    const values = valuesRef.current; // Use the latest values
+    const values = valuesRef.current;
     console.log("Inserting variable:", variable);
     if (!GLOBAL_ACTIVE_FIELD || GLOBAL_CURSOR_LOCATION === null) {
       console.log("No active field or cursor position");
       return;
     }
 
-    console.log("[INSERT VARIABLE] Cursor location:", GLOBAL_CURSOR_LOCATION);
-    console.log("[INSERT VARIABLE] Active field:", GLOBAL_ACTIVE_FIELD);
-    console.log("[INSERT VARIABLE] Values:", values);
-
-    const currentValue = values[GLOBAL_ACTIVE_FIELD] || "";
+    const currentValue = values[GLOBAL_ACTIVE_FIELD];
     console.log("[INSERT VARIABLE] Current value:", currentValue);
-    const beforeCursor = currentValue.slice(0, GLOBAL_CURSOR_LOCATION);
-    console.log("[INSERT VARIABLE] Before cursor:", beforeCursor);
-    const afterCursor = currentValue.slice(GLOBAL_CURSOR_LOCATION);
-    console.log("[INSERT VARIABLE] After cursor:", afterCursor);
-    const newValue = beforeCursor + variable + afterCursor;
 
-    handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+    // Handle JSON fields differently
+    const field = fields.find((f: any) => f.name === GLOBAL_ACTIVE_FIELD);
+    if (field?.inputType === "object") {
+      // For JSON fields, we need to work with the string representation
+      const stringValue =
+        typeof currentValue === "string"
+          ? currentValue
+          : JSON.stringify(currentValue, null, 2);
+
+      const beforeCursor = stringValue.slice(0, GLOBAL_CURSOR_LOCATION);
+      const afterCursor = stringValue.slice(GLOBAL_CURSOR_LOCATION);
+      const newValue = beforeCursor + variable + afterCursor;
+      handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+    } else {
+      // Handle regular string fields
+      const stringValue = currentValue?.toString() || "";
+      const beforeCursor = stringValue.slice(0, GLOBAL_CURSOR_LOCATION);
+      const afterCursor = stringValue.slice(GLOBAL_CURSOR_LOCATION);
+      const newValue = beforeCursor + variable + afterCursor;
+      handleFieldChange(GLOBAL_ACTIVE_FIELD, newValue);
+    }
   };
 
   useEffect(() => {
@@ -172,9 +202,16 @@ export function JsonSchemaForm({
     };
   }, []);
 
+  const isSubmitDisabled = disabled || invalidJsonFields.size > 0;
+
   return (
-    <form name={name} onSubmit={handleSubmit} noValidate>
-      <div>
+    <form
+      name={name}
+      onSubmit={handleSubmit}
+      noValidate
+      className="w-full overflow-hidden"
+    >
+      <div className="w-full overflow-hidden">
         {fields?.map((field: any) => {
           const { name: fieldName, inputType } = field;
           console.log("[DEBUG] Field mapping:", {
@@ -182,44 +219,49 @@ export function JsonSchemaForm({
             inputType,
             field,
           }); // Add this debug line
+
           const FieldComponent = fieldsMap[inputType] || fieldsMap.error;
 
-          console.log("Field Value: ", fieldName, " ", values?.[fieldName]);
-
           return (
-            <FieldComponent
-              key={fieldName}
-              value={values?.[fieldName]}
-              error={errors[fieldName]}
-              submited={submited}
-              type={field.type}
-              onChange={handleFieldChange}
-              onFocus={() => handleFieldFocus(fieldName)}
-              onSelect={(e: any) => handleCursorChange(e, fieldName)}
-              onClick={(e: any) => handleCursorChange(e, fieldName)}
-              onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
-              onValueChange={(value: any) =>
-                handleFieldChange(fieldName, value)
-              }
-              disabled={disabled}
-              name={field.name}
-              label={field.label}
-              options={field.options}
-              description={field.description}
-              isVisible={field.isVisible}
-              required={field.required}
-              provider={field.provider}
-            />
+            <div className="w-full overflow-hidden px-1" key={fieldName}>
+              <FieldComponent
+                value={values?.[fieldName]}
+                error={errors[fieldName]}
+                submited={submited}
+                // type={field.type}
+                onChange={handleFieldChange}
+                onFocus={() => handleFieldFocus(fieldName)}
+                onSelect={(e: any) => handleCursorChange(e, fieldName)}
+                onClick={(e: any) => handleCursorChange(e, fieldName)}
+                onKeyUp={(e: any) => handleCursorChange(e, fieldName)}
+                onValueChange={(value: any) =>
+                  handleFieldChange(fieldName, value)
+                }
+                disabled={disabled}
+                name={field.name}
+                label={field.label}
+                options={field.options}
+                description={field.description}
+                isVisible={field.isVisible}
+                required={field.required}
+                provider={field.provider}
+              />
+            </div>
           );
         })}
-        <div className="flex items-center gap-2">
-          <Button type="submit" variant={"default"} disabled={disabled}>
+        <div className="flex items-center gap-2 mt-2">
+          <Button type="submit" variant={"default"} disabled={isSubmitDisabled}>
             Submit
           </Button>
+          {/* {invalidJsonFields.size > 0 && (
+            <span className="text-red-500">
+              Please fix invalid JSON before submitting
+            </span>
+          )} */}
           {hasUnsavedChanges && (
             <>
               <TriangleAlertIcon className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm ">Unsaved changes</span>
+              <span className="text-sm">Unsaved changes</span>
             </>
           )}
         </div>

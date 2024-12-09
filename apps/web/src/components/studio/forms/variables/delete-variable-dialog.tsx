@@ -12,7 +12,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Trash2 } from "lucide-react";
-import { VariableProperty } from "./edit-variable-schema";
+import { VariableProperty } from "./create-variable-schema";
 
 export default function DeleteVariableDialog({
   variable,

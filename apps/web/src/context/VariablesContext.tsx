@@ -13,7 +13,8 @@ import { useWorkflowVersion } from "./WorkflowVersionProvider";
 import {
   DEFAULT_VARIABLES_SCHEMA,
   isValidVariablesSchema,
-} from "@/components/studio/forms/variables/edit-variable-schema";
+  VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION,
+} from "@/components/studio/forms/variables/create-variable-schema";
 export enum EditVariableFormMode {
   INPUT = "input",
   DELETE = "delete",
@@ -61,12 +62,14 @@ export const VariablesProvider = ({
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
 
-  const updateVariablesProperty = async (form_data: any) => {
+  const updateVariablesSchemaProperties = async (form_data: any) => {
     try {
       console.log(
         "[VARIABLES CONTEXT] Selected property -> ",
         selectedProperty,
       );
+
+      console.log("[VARIABLES CONTEXT] Form Data: ", form_data);
 
       if (selectedProperty) {
         console.log("[VARIABLES CONTEXT] Updating existing property");
@@ -76,21 +79,47 @@ export const VariablesProvider = ({
 
         let new_schema = cloneDeep(selected_node_variables_schema);
 
-        console.log("[VARIABLES CONTEXT] Current Variables Schema to update: ", new_schema);
+        console.log(
+          "[VARIABLES CONTEXT] Current Variables Schema to update: ",
+          new_schema,
+        );
 
-        //Merge incoming data with existing property
+        //Merge incoming data with existing property and get x-jsf-presentation from VARIABLE_TYPES
         new_schema.properties[selectedProperty.key] = {
           ...new_schema.properties[selectedProperty.key],
-          ...form_data,
+          type: VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+            form_data.type
+          ].type,
+          "x-jsf-presentation": {
+            ...VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+              form_data.type
+            ]["x-jsf-presentation"],
+          },
+          "x-any-validation": {
+            ...VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+              form_data.type
+            ]["x-any-validation"],
+          },
         };
 
-        if (form_data.inputType !== "account") {
+        //Manage Account Provider
+        if (form_data.type === "account") {
+          console.log(
+            "[VARIABLES CONTEXT] Adding provider to x-jsf-presentation",
+          );
+          new_schema.properties[selectedProperty.key]["x-jsf-presentation"][
+            "provider"
+          ] = form_data.provider;
+        } else {
           delete new_schema.properties[selectedProperty.key][
             "x-jsf-presentation"
           ]["provider"];
         }
 
-        console.log("[VARIABLES CONTEXT] Updated Variables Schema: ", new_schema);
+        console.log(
+          "[VARIABLES CONTEXT] Updated Variables Schema: ",
+          new_schema,
+        );
 
         //update to Anyting Context and Db
         await updateNodeData(["variables_schema"], [new_schema]);
@@ -111,14 +140,29 @@ export const VariablesProvider = ({
         let key = slugify(form_data.title, {
           replacement: "_", // replace spaces with replacement character, defaults to `-`
         });
-        console.log("[VARIABLES CONTEXT] Generated key for new property: ", key);
+        console.log(
+          "[VARIABLES CONTEXT] Generated key for new property: ",
+          key,
+        );
 
         console.log("[VARIABLES CONTEXT] Form Data: ", form_data);
         // Create new property
         variables_schema.properties[key] = {
           title: key,
-          description: form_data.description,
-          type: form_data.type,
+          description: "",
+          type: VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+            form_data.type
+          ].type,
+          "x-jsf-presentation": {
+            ...VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+              form_data.type
+            ]["x-jsf-presentation"],
+          },
+          "x-any-validation": {
+            ...VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
+              form_data.type
+            ]["x-any-validation"],
+          },
         };
 
         console.log(
@@ -135,12 +179,14 @@ export const VariablesProvider = ({
         );
 
         //Add input type to let users select Accounts for example
-        variables_schema.properties[key]["x-jsf-presentation"] = {
-          inputType: form_data.type,
-        };
+        // variables_schema.properties[key]["x-jsf-presentation"] = {
+        //   inputType: form_data["x-jsf-presentation"].inputType,
+        // };
 
         if (form_data.type === "account") {
-          console.log("[VARIABLES CONTEXT] Adding provider to x-jsf-presentation");
+          console.log(
+            "[VARIABLES CONTEXT] Adding provider to x-jsf-presentation",
+          );
           variables_schema.properties[key]["x-jsf-presentation"]["provider"] =
             form_data.provider;
         }
@@ -150,11 +196,19 @@ export const VariablesProvider = ({
         // If we already have variables add to them.
         if (selected_node_variables) {
           new_variables = cloneDeep(selected_node_variables);
-          console.log("[VARIABLES CONTEXT] Cloned existing variables: ", new_variables);
+          console.log(
+            "[VARIABLES CONTEXT] Cloned existing variables: ",
+            new_variables,
+          );
         }
 
-        new_variables[key] = "";
-        console.log("[VARIABLES CONTEXT] New variables after adding new key: ", new_variables);
+        new_variables[key] =
+          VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[form_data.type]
+            .default || "";
+        console.log(
+          "[VARIABLES CONTEXT] New variables after adding new key: ",
+          new_variables,
+        );
 
         // Update to Anything Context and Db
         console.log(
@@ -204,8 +258,14 @@ export const VariablesProvider = ({
         updated_schema.required.splice(reqIndex, 1);
       }
 
-      console.log("[VARIABLES CONTEXT] Variables after deleteVariable: ", updated_variables);
-      console.log("[VARIABLES CONTEXT] Updated Schema after delete: ", updated_schema);
+      console.log(
+        "[VARIABLES CONTEXT] Variables after deleteVariable: ",
+        updated_variables,
+      );
+      console.log(
+        "[VARIABLES CONTEXT] Updated Schema after delete: ",
+        updated_schema,
+      );
 
       // Update the database
       await updateNodeData(
@@ -234,7 +294,7 @@ export const VariablesProvider = ({
         setSelectedProperty,
         isFormVisible,
         setIsFormVisible,
-        updateVariablesProperty,
+        updateVariablesProperty: updateVariablesSchemaProperties,
         deleteVariable,
       }}
     >

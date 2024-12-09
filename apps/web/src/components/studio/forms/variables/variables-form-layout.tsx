@@ -1,7 +1,7 @@
 import InputVariablesForm from "./input-variables-form";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
-import EditVariableForm from "./edit-variable-form";
+import CreateVariableForm from "./create-variable-form";
 import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@repo/ui/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -40,23 +40,30 @@ export function VariablesFormLayout(): JSX.Element {
     }
 
     return (
-      <div className="flex flex-row items-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mr-2"
-          onClick={() => variables.setIsFormVisible(!variables.isFormVisible)}
-        >
-          <ChevronRight
-            className={`h-4 w-4 transition-transform ${
-              variables.isFormVisible ? "rotate-90" : ""
-            }`}
-          />
-        </Button>
+      <div
+        className="flex flex-row items-center cursor-pointer"
+        onClick={(e) => {
+          // Prevent click from bubbling to parent elements
+          e.stopPropagation();
+          variables.setIsFormVisible(!variables.isFormVisible);
+        }}
+      >
+        <ChevronRight
+          className={`h-4 w-4 transition-transform mr-2 ${
+            variables.isFormVisible ? "rotate-90" : ""
+          }`}
+        />
         <div className="font-bold">{header_title}</div>
         <div className="flex-1" />
         {!workflow?.selected_node_data?.variables_schema_locked ? (
-          <Button variant={"link"} onClick={action}>
+          <Button
+            variant={"link"}
+            className="h-auto p-0"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent collapse/expand when clicking link
+              action();
+            }}
+          >
             {link_button_text}
           </Button>
         ) : (
@@ -70,7 +77,7 @@ export function VariablesFormLayout(): JSX.Element {
   const renderEditor = () => {
     switch (variables.editingMode) {
       case EditVariableFormMode.EDIT:
-        return <EditVariableForm />;
+        return <CreateVariableForm />;
       case EditVariableFormMode.DELETE:
         return <EditVariablesForm />;
       case EditVariableFormMode.INPUT:
@@ -83,9 +90,11 @@ export function VariablesFormLayout(): JSX.Element {
   return (
     <>
       {workflow && workflow.selected_node_data && (
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg border p-4 w-full overflow-hidden">
           <Header />
-          {variables.isFormVisible && renderEditor()}
+          <div className="w-full overflow-hidden">
+            {variables.isFormVisible && renderEditor()}
+          </div>
         </div>
       )}
     </>

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use reqwest::Client;
 
-use serde_json::{json, Value};
+use serde_json::Value;
 
 pub async fn process_http_task(
     http_client: &Client,
@@ -75,10 +75,6 @@ pub async fn process_http_task(
         );
         let status = response.status();
         let headers = response.headers().clone();
-        let _content_type = response
-            .headers()
-            .get("content-type")
-            .map(|v| v.to_str().unwrap_or(""));
 
         // Try to parse the response as JSON, if it fails, return the raw text
         let body = match response.text().await {

@@ -10,7 +10,9 @@ export function SystemVariablesExplorer(): JSX.Element {
     explorer: { insertVariable },
   } = useAnything();
 
-  const [systemVariables, setSystemVariables] = useState<Record<string, any>>({});
+  const [systemVariables, setSystemVariables] = useState<Record<string, any>>(
+    {},
+  );
   const [loading, setLoading] = useState(false);
   const { selectedAccount } = useAccounts();
 
@@ -53,7 +55,7 @@ export function SystemVariablesExplorer(): JSX.Element {
             </div>
           )}
           {Object.keys(systemVariables).length > 0 && (
-            <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
+            <div className="h-auto w-full flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
               <div className="p-3">
                 <div className="flex-1 font-bold mb-2">System Variables</div>
                 <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">

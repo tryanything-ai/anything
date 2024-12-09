@@ -10,15 +10,18 @@ use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    processor::flow_session_cache::FlowSessionData,
-    workflow_types::{CreateTaskInput, TaskConfig, TestConfig, WorkflowVersionDefinition},
-};
-use crate::{processor::processor::ProcessorMessage, task_types::Stage};
-use crate::{
+    processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
     supabase_jwt_middleware::User,
-    task_types::{ActionType, FlowSessionStatus, TaskStatus, TriggerSessionStatus},
+    types::{
+        action_types::ActionType,
+        task_types::{
+            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TestConfig,
+            TriggerSessionStatus,
+        },
+        workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
+    },
+    AppState,
 };
-use crate::{workflow_types::DatabaseFlowVersion, AppState};
 use uuid::Uuid;
 
 use dotenv::dotenv;
@@ -70,17 +73,24 @@ pub async fn test_workflow(
 
     let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&body) {
         Ok(dbflowversion) => dbflowversion,
-        Err(_) => {
-            println!("[TEST WORKFLOW] Failed to parse workflow version JSON");
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        Err(e) => {
+            println!("[TEST WORKFLOW] Failed to parse workflow version JSON: {}", e);
+            println!("[TEST WORKFLOW] Raw JSON body: {}", body);
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to parse JSON: {}", e)).into_response();
         }
     };
 
     println!("[TEST WORKFLOW] Successfully retrieved workflow version");
 
     let task_config = TaskConfig {
-        variables: serde_json::json!(workflow_version.flow_definition.actions[0].variables),
-        input: serde_json::json!(workflow_version.flow_definition.actions[0].input),
+        variables: Some(serde_json::json!(
+            workflow_version.flow_definition.actions[0].variables
+        )),
+        variables_schema: Some(workflow_version.flow_definition.actions[0]
+            .variables_schema
+            .clone().unwrap()),
+        input: Some(workflow_version.flow_definition.actions[0].input.clone()),
+        input_schema: Some(workflow_version.flow_definition.actions[0].input_schema.clone()),
     };
 
     let trigger_session_id = Uuid::new_v4().to_string();
@@ -108,7 +118,7 @@ pub async fn test_workflow(
             .plugin_id
             .clone(),
         stage: Stage::Testing.as_str().to_string(),
-        config: serde_json::json!(task_config),
+        config: task_config,
         result: Some(serde_json::json!({
             "message": format!("Successfully triggered task"),
             "created_at": Utc::now()
@@ -267,8 +277,10 @@ pub async fn test_action(
     // println!("Workflow Definition {:#?}", workflow);
 
     let task_config = TaskConfig {
-        variables: serde_json::json!(workflow.actions[0].variables),
-        input: serde_json::json!(workflow.actions[0].input),
+        variables: Some(workflow.actions[0].variables.clone().unwrap()),
+        variables_schema: Some(workflow.actions[0].variables_schema.clone().unwrap()),
+        input: Some(workflow.actions[0].input.clone()),
+        input_schema: Some(workflow.actions[0].input_schema.clone()),
     };
 
     let test_config = TestConfig {
@@ -292,7 +304,7 @@ pub async fn test_action(
         r#type: workflow.actions[0].r#type.clone(),
         plugin_id: workflow.actions[0].plugin_id.clone(),
         stage: Stage::Testing.as_str().to_string(),
-        config: serde_json::json!(task_config),
+        config: task_config,
         result: None,
         test_config: Some(serde_json::json!(test_config)),
         processing_order: 0,

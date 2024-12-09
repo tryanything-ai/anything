@@ -4,25 +4,27 @@ export let EDIT_FLOW_SCHEMA: any = {
         "flow_name": {
             "title": "Name",
             "description": "Short name of Workflow.",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+                "inputType": "simple_text"
+            },
+            "x-any-validation": {
+                "type": "string"
+            }
         },
         "description": {
             "title": "Description",
             "description": "Longer description of what the flow does.",
             "type": "string",
-        },
-        // "active": {
-        //     "title": "Flow Active",
-        //     "description": "Turns the flow on or off.",
-        //     "type": "boolean",
-        //     "x-jsf-presentation": {
-        //         "inputType": "checkbox"
-        //     }
-        // }
+            "x-jsf-presentation": {
+                "inputType": "simple_text"
+            },
+            "x-any-validation": {
+                "type": "string"
+            }
+        }
     },
-    "x-jsf-order": ["flow_name", "description",
-        //  "active"
-        ],
+    "x-jsf-order": ["flow_name", "description"],
     "required": ["flow_name", "description"],
     "additionalProperties": false
 }

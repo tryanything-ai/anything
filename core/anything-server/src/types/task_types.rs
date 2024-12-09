@@ -3,11 +3,22 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
+use super::action_types::{ActionType, JsonSchema};
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum Stage {
     Production,
     Testing,
+}
+
+impl ToString for Stage {
+    fn to_string(&self) -> String {
+        match self {
+            Stage::Production => "production".to_string(),
+            Stage::Testing => "testing".to_string(),
+        }
+    }
 }
 
 impl Stage {
@@ -94,34 +105,6 @@ impl TriggerSessionStatus {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum ActionType {
-    Trigger,  // Trigger action
-    Action,   // General action
-    Loop,     // Loop action
-    Decision, // Decision action
-    Filter,   // Filter action
-    Response, // Response action for making api endpoints
-    Input,    // Input action for subflows
-    Output,   // Output action for subflows
-}
-
-impl ActionType {
-    pub fn as_str(&self) -> &str {
-        match self {
-            ActionType::Input => "input",
-            ActionType::Trigger => "trigger",
-            ActionType::Response => "response",
-            ActionType::Action => "action",
-            ActionType::Loop => "loop",
-            ActionType::Decision => "decision",
-            ActionType::Filter => "filter",
-            ActionType::Output => "output",
-        }
-    }
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Task {
     pub task_id: Uuid,
@@ -140,7 +123,7 @@ pub struct Task {
     pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
     pub stage: Stage,
     pub test_config: Option<Value>,
-    pub config: Value,
+    pub config: TaskConfig,
     pub context: Option<Value>,
     pub started_at: Option<DateTime<Utc>>,
     pub ended_at: Option<DateTime<Utc>>,
@@ -152,4 +135,42 @@ pub struct Task {
     pub updated_by: Option<Uuid>,
     pub created_by: Option<Uuid>,
     pub processing_order: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TaskConfig {
+    pub variables: Option<Value>,
+    pub variables_schema: Option<JsonSchema>,
+    pub input: Option<Value>,
+    pub input_schema: Option<JsonSchema>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CreateTaskInput {
+    pub account_id: String,
+    pub task_status: String,
+    pub started_at: Option<DateTime<Utc>>,
+    pub flow_id: String,
+    pub flow_version_id: String,
+    pub action_label: String,
+    pub trigger_id: String,
+    pub trigger_session_id: String,
+    pub trigger_session_status: String,
+    pub flow_session_id: String,
+    pub flow_session_status: String,
+    pub action_id: String,
+    pub r#type: ActionType,
+    pub plugin_id: String,
+    pub stage: String,
+    pub config: TaskConfig,
+    pub result: Option<Value>,
+    pub test_config: Option<Value>, // deprecate
+    pub processing_order: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TestConfig {
+    pub action_id: Option<String>, //if action_id is present, then we are testing just an action
+    pub variables: Value,
+    pub inputs: Value,
 }

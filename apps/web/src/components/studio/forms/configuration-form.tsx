@@ -35,7 +35,6 @@ export default function ConfigurationForm(): JSX.Element {
       console.log("Selected Node Input:", selected_node_input);
       console.log("Selected Node Input Schema:", selected_node_input_schema);
       const result = createHeadlessForm(selected_node_input_schema, {
-        strictInputType: false, // so you don't need to pass presentation.inputType,
         initialValues: selected_node_input,
       });
 
@@ -74,18 +73,13 @@ export default function ConfigurationForm(): JSX.Element {
         Object.keys(selected_node_input_schema).length > 0 &&
         Object.keys(selected_node_input).length > 0 && ( */}
       <div className="rounded-lg border p-4">
-        <div className="flex flex-row items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mr-2"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            <ChevronRight
-              className={`h-4 w-4 transition-transform ${!isCollapsed ? "rotate-90" : ""}`}
-            />
-          </Button>
-
+        <div
+          className="flex flex-row items-center cursor-pointer"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          <ChevronRight
+            className={`h-4 w-4 transition-transform mr-2 ${!isCollapsed ? "rotate-90" : ""}`}
+          />
           <div className="font-bold">Configuration</div>
           <div className="flex-1" />
           {selected_node_data?.input_locked && (

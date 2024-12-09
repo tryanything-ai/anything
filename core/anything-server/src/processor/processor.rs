@@ -1,20 +1,25 @@
 use crate::processor::execute_task::execute_task;
 use crate::processor::flow_session_cache::FlowSessionData;
 use crate::processor::parsing_utils::get_trigger_node;
-use crate::workflow_types::{CreateTaskInput, WorkflowVersionDefinition};
 use crate::AppState;
 use chrono::Utc;
-use serde_json::json;
+
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::debug;
+
 use uuid::Uuid;
 
 use crate::processor::db_calls::{
     create_task, get_workflow_definition, update_flow_session_status, update_task_status,
 };
-use crate::task_types::{ActionType, FlowSessionStatus, Stage, TaskStatus, TriggerSessionStatus};
+use crate::types::{
+    action_types::ActionType,
+    task_types::{
+        CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+    },
+    workflow_types::WorkflowVersionDefinition,
+};
 
 // Add this near your other type definitions
 #[derive(Debug, Clone)]
@@ -201,10 +206,12 @@ pub async fn processor(
                         } else {
                             Stage::Testing.as_str().to_string()
                         },
-                        config: json!({
-                            "variables": serde_json::json!(trigger_node.variables),
-                            "input": serde_json::json!(trigger_node.input),
-                        }),
+                        config: TaskConfig {
+                            variables: Some(trigger_node.variables.clone().unwrap()),
+                            variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
+                            input: Some(trigger_node.input.clone()),
+                            input_schema: Some(trigger_node.input_schema.clone()),
+                        },
                         result: None,
                         started_at: Some(Utc::now()),
                         test_config: None,
@@ -297,10 +304,12 @@ pub async fn processor(
                                         } else {
                                             Stage::Testing.as_str().to_string()
                                         },
-                                        config: json!({
-                                            "variables": serde_json::json!(action.variables),
-                                            "input": serde_json::json!(action.input),
-                                        }),
+                                        config: TaskConfig {
+                                            variables: Some(action.variables.clone().unwrap()),
+                                            variables_schema: Some(action.variables_schema.clone().unwrap()),
+                                            input: Some(action.input.clone()),
+                                            input_schema: Some(action.input_schema.clone()),
+                                        },
                                         result: None,
                                         started_at: Some(Utc::now()),
                                         test_config: None,
@@ -513,10 +522,12 @@ pub async fn processor(
                         } else {
                             Stage::Testing.as_str().to_string()
                         },
-                        config: json!({
-                            "variables": serde_json::json!(next_action.variables),
-                            "input": serde_json::json!(next_action.input),
-                        }),
+                        config: TaskConfig {
+                            variables: Some(next_action.variables.clone().unwrap()),
+                            variables_schema: Some(next_action.variables_schema.clone().unwrap()),
+                            input: Some(next_action.input.clone()),
+                            input_schema: Some(next_action.input_schema.clone()),
+                        },
                         result: None,
                         test_config: None,
                         started_at: Some(Utc::now()),

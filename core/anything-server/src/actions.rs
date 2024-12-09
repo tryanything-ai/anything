@@ -74,7 +74,7 @@ pub async fn get_actions(
     println!("Parsing response body as JSON");
     let mut db_items: Value = match serde_json::from_str(&body) {
         Ok(items) => {
-            println!("Successfully parsed JSON: {:?}", items);
+            // println!("Successfully parsed JSON: {:?}", items);
             items
         }
         Err(err) => {
@@ -154,7 +154,7 @@ pub async fn get_actions(
     };
 
     // Load data from the JSON file
-    let json_file_path = current_dir.join("action_db/action_templates.json");
+    let json_file_path = current_dir.join("template_db/action_templates.json");
     println!("Loading data from the JSON file at {:?}", json_file_path);
     let file = match File::open(&json_file_path) {
         Ok(file) => {
@@ -175,7 +175,7 @@ pub async fn get_actions(
     let reader = BufReader::new(file);
     let json_items: Value = match serde_json::from_reader(reader) {
         Ok(items) => {
-            println!("Successfully parsed JSON file: {:?}", items);
+            // println!("Successfully parsed JSON file: {:?}", items);
             items
         }
         Err(err) => {
@@ -189,14 +189,19 @@ pub async fn get_actions(
     };
 
     // Filter JSON items to only include "action" types
-    let json_items: Value = json_items.as_array()
-        .map(|arr| arr.iter()
-            .filter(|item| item.get("type")
-                .and_then(|t| t.as_str()) 
-                .map(|t| t == "action")
-                .unwrap_or(false))
-            .cloned()
-            .collect::<Vec<_>>())
+    let json_items: Value = json_items
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter(|item| {
+                    item.get("type")
+                        .and_then(|t| t.as_str())
+                        .map(|t| t == "action")
+                        .unwrap_or(false)
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        })
         .map(|filtered| Value::Array(filtered))
         .unwrap_or(Value::Array(vec![]));
 
@@ -213,7 +218,6 @@ pub async fn get_actions(
 
     Json(db_items).into_response()
 }
-
 
 // Actions
 pub async fn get_triggers(
@@ -241,7 +245,7 @@ pub async fn get_triggers(
     };
 
     // Load data from the JSON file
-    let json_file_path = current_dir.join("action_db/action_templates.json");
+    let json_file_path = current_dir.join("template_db/action_templates.json");
     println!("Loading data from the JSON file at {:?}", json_file_path);
     let file = match File::open(&json_file_path) {
         Ok(file) => {
@@ -262,7 +266,7 @@ pub async fn get_triggers(
     let reader = BufReader::new(file);
     let json_items: Value = match serde_json::from_reader(reader) {
         Ok(items) => {
-            println!("Successfully parsed JSON file: {:?}", items);
+            // println!("Successfully parsed JSON file: {:?}", items);
             items
         }
         Err(err) => {
@@ -276,20 +280,24 @@ pub async fn get_triggers(
     };
 
     // Filter JSON items to only include "trigger" types
-    let filtered_items = json_items.as_array()
-        .map(|arr| arr.iter()
-            .filter(|item| item.get("type")
-                .and_then(|t| t.as_str()) 
-                .map(|t| t == "trigger")
-                .unwrap_or(false))
-            .cloned()
-            .collect::<Vec<_>>())
+    let filtered_items = json_items
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter(|item| {
+                    item.get("type")
+                        .and_then(|t| t.as_str())
+                        .map(|t| t == "trigger")
+                        .unwrap_or(false)
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        })
         .map(|filtered| Value::Array(filtered))
         .unwrap_or(Value::Array(vec![]));
 
     Json(filtered_items).into_response()
 }
-
 
 pub async fn get_other_actions(
     Path(account_id): Path<String>,
@@ -316,7 +324,7 @@ pub async fn get_other_actions(
     };
 
     // Load data from the JSON file
-    let json_file_path = current_dir.join("action_db/action_templates.json");
+    let json_file_path = current_dir.join("template_db/action_templates.json");
     println!("Loading data from the JSON file at {:?}", json_file_path);
     let file = match File::open(&json_file_path) {
         Ok(file) => {
@@ -337,7 +345,7 @@ pub async fn get_other_actions(
     let reader = BufReader::new(file);
     let json_items: Value = match serde_json::from_reader(reader) {
         Ok(items) => {
-            println!("Successfully parsed JSON file: {:?}", items);
+            // println!("Successfully parsed JSON file: {:?}", items);
             items
         }
         Err(err) => {
@@ -351,14 +359,19 @@ pub async fn get_other_actions(
     };
 
     // Filter JSON items to exclude "action" and "trigger" types
-    let filtered_items = json_items.as_array()
-        .map(|arr| arr.iter()
-            .filter(|item| item.get("type")
-                .and_then(|t| t.as_str())
-                .map(|t| t != "action" && t != "trigger")
-                .unwrap_or(true))
-            .cloned()
-            .collect::<Vec<_>>())
+    let filtered_items = json_items
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter(|item| {
+                    item.get("type")
+                        .and_then(|t| t.as_str())
+                        .map(|t| t != "action" && t != "trigger")
+                        .unwrap_or(true)
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        })
         .map(|filtered| Value::Array(filtered))
         .unwrap_or(Value::Array(vec![]));
 

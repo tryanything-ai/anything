@@ -24,7 +24,6 @@ use tokio::sync::mpsc;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::sleep;
 
-mod workflow_types;
 use regex::Regex;
 
 #[macro_use]
@@ -44,13 +43,12 @@ mod email;
 mod bundler;
 mod variables; 
 mod charts;
-mod execution_planner;
 mod marketplace;
 mod secrets;
 mod supabase_jwt_middleware;
 mod api_key_middleware;
 mod account_auth_middleware;
-mod task_types;
+mod types;
 mod templater;
 mod testing; 
 mod trigger_engine;
@@ -173,7 +171,6 @@ async fn main() {
         HeaderValue::from_static("*"),
     );
 
-
     let (trigger_engine_signal, _) = watch::channel("".to_string());
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
@@ -256,6 +253,7 @@ pub async fn root() -> impl IntoResponse {
             put(workflows::publish_workflow_version),
         )
         .route("/account/:account_id/workflow", post(workflows::create_workflow))
+        .route("/account/:account_id/workflow/json", post(workflows::create_workflow_from_json))
         .route("/account/:account_id/workflow/:id", delete(workflows::delete_workflow))
         .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
         .route("/account/:account_id/actions", get(actions::get_actions))

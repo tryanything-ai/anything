@@ -7,8 +7,10 @@ use tracing::debug;
 use uuid::Uuid;
 
 use crate::system_actions::process_http_task::parse_headers;
-use crate::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
-use crate::workflow_types::{CreateTaskInput, DatabaseFlowVersion};
+use crate::types::{
+    task_types::{CreateTaskInput, FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
+    workflow_types::DatabaseFlowVersion,
+};
 use crate::AppState;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
@@ -318,17 +320,24 @@ pub async fn update_flow_session_status(
 
 pub fn redact_headers_from_context(context: &Value) -> Value {
     let mut new_context = context.clone();
-    
+
     // Parse headers using parse_headers helper
     let headers = parse_headers(context);
-    
+
     // Create redacted headers object
-    let redacted_headers = headers.into_iter().map(|(key, _value)| {
-        (key, "REDACTED_FROM_VIEWING_HERE_FOR_SECURITY_REASONS_BY_ANYTHING".to_string())
-    }).collect::<Vec<_>>();
+    let redacted_headers = headers
+        .into_iter()
+        .map(|(key, _value)| {
+            (
+                key,
+                "REDACTED_FROM_VIEWING_HERE_FOR_SECURITY_REASONS_BY_ANYTHING".to_string(),
+            )
+        })
+        .collect::<Vec<_>>();
 
     // Convert back to Value object
-    let headers_obj = redacted_headers.into_iter()
+    let headers_obj = redacted_headers
+        .into_iter()
         .map(|(k, v)| (k, Value::String(v)))
         .collect();
 
