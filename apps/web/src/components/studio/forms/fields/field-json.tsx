@@ -47,20 +47,17 @@ export default function FieldJson({
         if (/^{{.*}}$/.test(newValue.trim())) {
           setEditorValue(newValue);
           setIsValidInput(true);
-          onChange(name, newValue, true);
         } else {
           const parsed = JSON.parse(newValue);
           const formatted = JSON.stringify(parsed, null, 2);
           setEditorValue(formatted);
           setIsValidInput(true);
-          onChange(name, formatted, true);
         }
       } catch {
         setEditorValue(newValue);
         // Only mark as invalid if it's not a partial variable pattern
         const isPartialVariable = /{{.*/.test(newValue.trim());
         setIsValidInput(isPartialVariable);
-        onChange(name, newValue, isPartialVariable);
       }
     }
   }, [value]);
@@ -80,12 +77,13 @@ export default function FieldJson({
           return;
         }
 
-        // Then try to parse as regular JSON
+        // Try to parse as regular JSON and format it
         console.log("[FIELD JSON] [HANDLE CHANGE] Parsing JSON:", val);
-        JSON.parse(val);
-        setEditorValue(val);
+        const parsed = JSON.parse(val);
+        const formatted = JSON.stringify(parsed, null, 2);
+        setEditorValue(formatted);
         setIsValidInput(true);
-        onChange(name, val, true);
+        onChange(name, formatted, true);
       } catch (e) {
         console.log("[FIELD JSON] [HANDLE CHANGE] Invalid JSON:", e);
         setEditorValue(val);

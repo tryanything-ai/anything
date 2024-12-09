@@ -12,12 +12,29 @@ import set from "lodash/set";
  * etc....
  */
 export function formValuesToJsonValues(fields: any, values: any) {
+    console.log("[JSON SCHEMA UTILS] Starting form values conversion", { fields, values });
     
     const fieldTypeTransform: any = {
         number: (val: any) => (val === "" ? val : +val),
         text: (val: any) => val,
-        select: (val: any) => val
-        // TODO support all types
+        select: (val: any) => val,
+        object_or_variable: (val: any) => {
+            //This allows 
+            // Handle variable pattern by wrapping it in an object
+            if (typeof val === "string" && /^{{.*}}$/.test(val.trim())) {
+                console.log("[JSON SCHEMA UTILS] Detected variable pattern, wrapping in object", { val });
+                return { variable: val };
+            }
+            // Handle regular JSON objects
+            try {
+                const parsed = typeof val === "string" ? JSON.parse(val) : val;
+                console.log("[JSON SCHEMA UTILS] Successfully parsed JSON object", { val, parsed });
+                return parsed;
+            } catch {
+                console.log("[JSON SCHEMA UTILS] Failed to parse JSON, returning original value", { val });
+                return val;
+            }
+        }
     };
 
     const jsonValues = {};
@@ -25,19 +42,24 @@ export function formValuesToJsonValues(fields: any, values: any) {
     fields.forEach(({ name, type, isVisible }: any) => {
         const formValue = values[name];
         const transformedValue: any = fieldTypeTransform[type]?.(formValue) || formValue;
+        console.log("[JSON SCHEMA UTILS] Processing field", { name, type, isVisible, formValue, transformedValue });
 
         if (transformedValue === "") {
+            console.log("[JSON SCHEMA UTILS] Omitting empty field to avoid type error", { name });
             // Omit empty fields from payload to avoid type error.
             // eg { team_size: "" } -> The value ("") must be a number.
         } else if (!isVisible) {
+            console.log("[JSON SCHEMA UTILS] Omitting invisible conditional field", { name });
             // Omit invisible (conditional) fields to avoid erro:
             // eg { account: "personal", team_size: 3 } -> The "team_size" is invalid
 
         } else {
+            console.log("[JSON SCHEMA UTILS] Setting field value", { name, transformedValue });
             set(jsonValues, name, transformedValue);
         }
     });
 
+    console.log("[JSON SCHEMA UTILS] Finished converting form values", { jsonValues });
     return jsonValues;
 }
 
