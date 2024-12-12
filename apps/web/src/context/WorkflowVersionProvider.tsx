@@ -229,7 +229,7 @@ export const WorkflowVersionProvider = ({
     console.log("Node Data", node_data);
     //set action_id
     if (node_data) {
-      planned_action_id = node_data.action_id;
+      planned_action_id = node_data.plugin_id;
     }
 
     if (!position) {
@@ -379,7 +379,7 @@ export const WorkflowVersionProvider = ({
 
     const { source, target } = edge;
 
-    const planned_action_id = action_template.action_id;
+    const planned_action_id = action_template.plugin_id;
     const conflictFreeId = findConflictFreeId(newNodes, planned_action_id);
 
     const sourceNode = newNodes.find((node) => node.id === source);
@@ -576,9 +576,9 @@ export const WorkflowVersionProvider = ({
   //This is likely where we are causing weird issues with state.
   const parseJsonRecursively = (value: any): any => {
     // If it's a string, try to parse it as JSON only if it starts with { or [
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       const trimmed = value.trim();
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
         try {
           return parseJsonRecursively(JSON.parse(value));
         } catch (e) {
@@ -589,21 +589,21 @@ export const WorkflowVersionProvider = ({
       // Return original string value (including numeric strings)
       return value;
     }
-    
+
     // If it's an array, parse each element
     if (Array.isArray(value)) {
-      return value.map(item => parseJsonRecursively(item));
+      return value.map((item) => parseJsonRecursively(item));
     }
-    
+
     // If it's an object, parse each value
-    if (value && typeof value === 'object') {
+    if (value && typeof value === "object") {
       const parsed: { [key: string]: any } = {};
       for (const key in value) {
         parsed[key] = parseJsonRecursively(value[key]);
       }
       return parsed;
     }
-    
+
     // For all other types (number, boolean, null, undefined)
     return value;
   };
@@ -621,10 +621,10 @@ export const WorkflowVersionProvider = ({
           update_key.forEach((key, index) => {
             // Parse any stringified JSON recursively
             const parsedValue = parseJsonRecursively(data[index]);
-            
+
             console.log(
               `[UPDATING NODE DATA] Updating Node Data in updateNodeData for ${node.id}:${key} with:`,
-              parsedValue
+              parsedValue,
             );
             node.data[key] = parsedValue;
           });
@@ -646,7 +646,7 @@ export const WorkflowVersionProvider = ({
     } catch (error) {
       console.log(
         "error writing node config in WorkflowVersionProvider",
-        error
+        error,
       );
       return false;
     }

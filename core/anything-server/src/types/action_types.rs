@@ -40,10 +40,26 @@ pub struct ValidationField {
     pub r#type: ValidationFieldType,
 }
 
+impl Default for ValidationField {
+    fn default() -> Self {
+        ValidationField {
+            r#type: ValidationFieldType::Unknown,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PresentationField {
     #[serde(rename = "inputType")]
     pub input_type: InputFieldType,
+}
+
+impl Default for PresentationField {
+    fn default() -> Self {
+        PresentationField {
+            input_type: InputFieldType::Unknown,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
