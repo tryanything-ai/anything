@@ -992,32 +992,68 @@
           "operation": {
             "title": "Operation",
             "description": "Text formatting operation to perform",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "input": {
             "title": "Input",
             "description": "Text to format",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "pattern": {
             "title": "Pattern",
             "description": "Pattern to match for replace/extract operations",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "replacement": {
             "title": "Replacement",
             "description": "Replacement text for replace operation",
-            "type": "string"
+            "type": "string",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
           },
           "start_index": {
             "title": "Start Index",
             "description": "Start index for substring operation",
-            "type": "number"
+            "type": "number",
+            "x-jsf-presentation": {
+              "inputType": "number_or_variable"
+            },
+            "x-any-validation": {
+              "type": "number"
+            }
           },
           "end_index": {
             "title": "End Index",
             "description": "End index for substring operation",
-            "type": "number"
+            "type": "number",
+            "x-jsf-presentation": {
+              "inputType": "number_or_variable"
+            },
+            "x-any-validation": {
+              "type": "number"
+            }
           }
         },
         "required": ["operation", "input"],
