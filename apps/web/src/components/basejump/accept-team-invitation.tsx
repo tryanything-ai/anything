@@ -10,7 +10,7 @@ type Props = {
 export default async function AcceptTeamInvitation({
   token,
 }: Props): Promise<JSX.Element> {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: invitation }: any = await supabaseClient.rpc(
     "lookup_invitation",
      // @ts-ignore

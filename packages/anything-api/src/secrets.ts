@@ -1,10 +1,9 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export async function createSecret(account_id: string, secret_name: string, secret_value: string, secret_description: string) {
+export async function createSecret(supabase: SupabaseClient, account_id: string, secret_name: string, secret_value: string, secret_description: string) {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Creating Secret');
@@ -37,11 +36,8 @@ export async function createSecret(account_id: string, secret_name: string, secr
 }
 
 
-export const getSecrets = async (account_id: string) => {
+export const getSecrets = async (supabase: SupabaseClient, account_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -62,11 +58,8 @@ export const getSecrets = async (account_id: string) => {
     }
 }
 
-export const getAnythingApiKeys = async (account_id: string) => {
+export const getAnythingApiKeys = async (supabase: SupabaseClient, account_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -87,9 +80,8 @@ export const getAnythingApiKeys = async (account_id: string) => {
     }
 }
 
-export async function createAnythingApiKey(account_id: string, secret_name: string, secret_description: string) {
+export async function createAnythingApiKey(supabase: SupabaseClient, account_id: string, secret_name: string, secret_description: string) {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Creating Api Key');
@@ -121,9 +113,8 @@ export async function createAnythingApiKey(account_id: string, secret_name: stri
 }
 
 
-export async function deleteAnythingApiKey(account_id: string, secret_id: string) {
+export async function deleteAnythingApiKey(supabase: SupabaseClient, account_id: string, secret_id: string) {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Deleting Api Key');
@@ -149,9 +140,8 @@ export async function deleteAnythingApiKey(account_id: string, secret_id: string
 }
 
 
-export async function deleteSecret(account_id: string, secret_id: string) {
+export async function deleteSecret(supabase: SupabaseClient, account_id: string, secret_id: string) {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Deleting Secret');
@@ -176,9 +166,8 @@ export async function deleteSecret(account_id: string, secret_id: string) {
     }
 }
 
-export async function updateSecret(account_id: string, secret_id: string, secret_vault_id: string, secret_value: string, secret_description: string) {
+export async function updateSecret(supabase: SupabaseClient, account_id: string, secret_id: string, secret_vault_id: string, secret_value: string, secret_description: string) {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Updating Secret');

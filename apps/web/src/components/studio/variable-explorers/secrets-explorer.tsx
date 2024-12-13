@@ -5,6 +5,7 @@ import api from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";
 import { Button } from "@repo/ui/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Secret {
   secret_id: string;
@@ -69,7 +70,10 @@ export function SecretsExplorer(): JSX.Element {
         console.error("No account selected");
         return;
       }
-      const response = await api.secrets.getSecrets(selectedAccount.account_id);
+      const response = await api.secrets.getSecrets(
+        await createClient(),
+        selectedAccount.account_id,
+      );
       if (response.length === 0) {
         setSecrets([]);
         return;

@@ -4,7 +4,7 @@ import { createContext, ReactNode, useEffect, useState } from "react";
 import { useAccounts } from "./AccountsContext";
 import api from "@repo/anything-api";
 import { useRouter, useParams } from "next/navigation";
-
+import { createClient } from "@/lib/supabase/client";
 export interface WorkflowVersionControlContextInterface {
   versions: any[];
   refresh: () => void;
@@ -32,6 +32,7 @@ export const WorkflowVersionControlProvider = ({
     try {
       if (!selectedAccount) return;
       const versions = await api.flows.getFlowVersionsForWorkflowId(
+        await createClient(),
         selectedAccount.account_id,
         params.workflowId,
       );

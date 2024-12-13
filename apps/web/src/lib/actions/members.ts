@@ -9,7 +9,7 @@ export async function removeTeamMember(prevState: any, formData: FormData) {
     const userId = formData.get("userId") as string;
     const accountId = formData.get("accountId") as string;
     const returnUrl = formData.get("returnUrl") as string;
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { error }: any = await supabase.rpc('remove_account_member', 
          // @ts-ignore

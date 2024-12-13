@@ -26,6 +26,7 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Label } from "@repo/ui/components/ui/label";
 import { ExpandableInput } from "@repo/ui/components/ui/expandable-input";
+import { createClient } from "@/lib/supabase/client";
 
 export function StudioActionsSheet(): JSX.Element {
   const {
@@ -54,6 +55,7 @@ export function StudioActionsSheet(): JSX.Element {
         return;
       }
       const res = await api.action_templates.getActionTemplatesForAccount(
+        await createClient(),
         selectedAccount.account_id,
       );
       console.log("action sheet templates res:", res);
@@ -70,6 +72,7 @@ export function StudioActionsSheet(): JSX.Element {
         return;
       }
       const res = await api.action_templates.getTriggerTemplatesForAccount(
+        await createClient(),
         selectedAccount.account_id,
       );
       console.log("action sheet trigger templates res:", res);
@@ -86,6 +89,7 @@ export function StudioActionsSheet(): JSX.Element {
         return;
       }
       const res = await api.action_templates.getOtherActionTemplatesForAccount(
+        await createClient(),
         selectedAccount.account_id,
       );
       console.log("action sheet trigger templates res:", res);

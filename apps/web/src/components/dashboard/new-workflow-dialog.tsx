@@ -16,7 +16,7 @@ import api from "@repo/anything-api";
 import { useRouter } from "next/navigation";
 import { useAnything } from "@/context/AnythingContext";
 import FieldJson from "@/components/studio/forms/fields/field-json";
-
+import { createClient } from "@/lib/supabase/client";
 interface NewWorkflowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,6 +61,7 @@ export default function NewWorkflowDialog({
       const parsedJson = JSON.parse(workflowJson);
 
       let res = await api.flows.createFlowFromJson(
+        await createClient(),
         selectedAccount.account_id,
         name,
         parsedJson,
@@ -98,7 +99,9 @@ export default function NewWorkflowDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={
-          showJsonInput ? "w-4/5 h-4/5 max-w-none overflow-y-auto" : "w-1/2 max-w-none"
+          showJsonInput
+            ? "w-4/5 h-4/5 max-w-none overflow-y-auto"
+            : "w-1/2 max-w-none"
         }
       >
         <DialogHeader>

@@ -7,7 +7,7 @@ import { JsonExplorer } from "./json-explorer";
 import { Button } from "@repo/ui/components/ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { SvgRenderer } from "../nodes/node-icon";
-
+import { createClient } from "@/lib/supabase/client";
 export function ResultsExplorer(): JSX.Element {
   const {
     workflow: {
@@ -51,6 +51,7 @@ export function ResultsExplorer(): JSX.Element {
       });
 
       const result = await api.variables.getWorkflowVersionResults(
+        await createClient(),
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,

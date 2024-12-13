@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAnything } from "@/context/AnythingContext";
 import { useState } from "react";
 import NewWorkflowDialog from "@/components/dashboard/new-workflow-dialog";
-
+import { createClient } from "@/lib/supabase/client";
 export default function Workflows(): JSX.Element {
   const router = useRouter();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -27,6 +27,7 @@ export default function Workflows(): JSX.Element {
 
     try {
       let res = await api.flows.createFlow(
+        await createClient(),
         selectedAccount.account_id,
         name.trim(),
         description.trim(),

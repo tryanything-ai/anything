@@ -1,14 +1,10 @@
 import { Action, Workflow } from "./types/workflows";
-import { createClient } from "./supabase/client";
-
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getTasks = async (account_id: string) => {
+export const getTasks = async (supabase: SupabaseClient, account_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -29,11 +25,8 @@ export const getTasks = async (account_id: string) => {
     }
 }
 
-export const getTasksForWorkflow = async (account_id: string, workflow_id: string) => {
+export const getTasksForWorkflow = async (supabase: SupabaseClient, account_id: string, workflow_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -54,11 +47,8 @@ export const getTasksForWorkflow = async (account_id: string, workflow_id: strin
 }
 
 //A single run of a whole workflow is called a "session" for now i think
-export const getTasksForSession = async (account_id: string, session_id: string) => {
+export const getTasksForSession = async (supabase: SupabaseClient, account_id: string, session_id: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);

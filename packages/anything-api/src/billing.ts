@@ -1,10 +1,9 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getAccountStatus = async (account_id: string) => {
+export const getAccountStatus = async (supabase: SupabaseClient, account_id: string) => {
     try {
-      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
   
       console.log('Session:', session);
@@ -25,9 +24,8 @@ export const getAccountStatus = async (account_id: string) => {
     }
   }
 
-export const getCheckoutLink = async (account_id: string, return_url: string) => {
+export const getCheckoutLink = async (supabase: SupabaseClient, account_id: string, return_url: string) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
     
         console.log('Session:', session);
@@ -51,9 +49,8 @@ export const getCheckoutLink = async (account_id: string, return_url: string) =>
       }
 }
 
-export const getBillingPortalLink = async (account_id: string, return_url: string) => {
+export const getBillingPortalLink = async (supabase: SupabaseClient, account_id: string, return_url: string) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
     
         console.log('Session:', session);

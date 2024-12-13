@@ -7,7 +7,7 @@ export async function setupNewSubscription(prevState: any, formData: FormData) {
 
     const accountId = formData.get("accountId") as string;
     const returnUrl = formData.get("returnUrl") as string;
-    const supabaseClient = createClient();
+    const supabaseClient = await createClient();
 
     const { data, error } = await supabaseClient.functions.invoke('billing-functions', {
         body: {

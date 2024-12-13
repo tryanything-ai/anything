@@ -30,7 +30,7 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
+    const supabase = await createClient();
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({

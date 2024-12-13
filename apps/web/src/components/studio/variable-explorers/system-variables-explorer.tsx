@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import api from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";
 import { JsonExplorer } from "./json-explorer";
-
+import { createClient } from "@/lib/supabase/client";
 export function SystemVariablesExplorer(): JSX.Element {
   const {
     workflow: { selected_node_data },
@@ -24,6 +24,7 @@ export function SystemVariablesExplorer(): JSX.Element {
         return;
       }
       const response = await api.variables.getSystemVariables(
+        await createClient(),
         selectedAccount.account_id,
       );
       if (!response) {

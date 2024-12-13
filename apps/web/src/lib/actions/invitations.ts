@@ -11,7 +11,7 @@ export async function createInvitation(prevState: any, formData: FormData): Prom
     const accountId = formData.get("accountId") as string;
     const accountRole = formData.get("accountRole") as string;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data, error }: any = await supabase.rpc('create_invitation', 
          // @ts-ignore

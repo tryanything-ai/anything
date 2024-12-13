@@ -15,7 +15,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import WorkflowStatusComponent from "./workflow-status";
 import api from "@repo/anything-api";
 import { useAnything } from "@/context/AnythingContext";
-
+import { createClient } from "@/lib/supabase/client";
 export default function ManageWorkflows(): JSX.Element {
   let {
     accounts: { selectedAccount },
@@ -27,7 +27,10 @@ export default function ManageWorkflows(): JSX.Element {
     console.log("Getting Flows from API");
     try {
       if (!selectedAccount) return;
-      let res: any = await api.flows.getFlows(selectedAccount.account_id);
+      let res: any = await api.flows.getFlows(
+        await createClient(),
+        selectedAccount.account_id,
+      );
       console.log("getFlows:", res);
       if (res.length > 0) {
         setWorkflows(res);

@@ -7,6 +7,7 @@ import { JsonExplorer } from "./json-explorer";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Button } from "@repo/ui/components/ui/button";
 import { Send, XIcon } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export function VariablesExplorer(): JSX.Element {
   const {
@@ -49,6 +50,7 @@ export function VariablesExplorer(): JSX.Element {
       });
 
       const result = await api.variables.getWorkflowVersionVariables(
+        await createClient(),
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,

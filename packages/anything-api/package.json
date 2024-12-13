@@ -18,7 +18,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "reactflow": "^11.11.3",
     "slugify": "^1.6.6",

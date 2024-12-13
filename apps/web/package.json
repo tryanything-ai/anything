@@ -21,7 +21,6 @@
     "@remoteoss/json-schema-form": "0.9.1-beta.0",
     "@repo/anything-api": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@sentry/nextjs": "^8",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@uiw/react-codemirror": "^4.23.6",

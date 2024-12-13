@@ -1,13 +1,12 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getProvider = async (account_id: string, provider_name: string) => {
+export const getProvider = async (supabase: SupabaseClient, account_id: string, provider_name: string) => {
     try {
         console.log('getting provider_name in anything_api/auth:', provider_name);
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-
+ 
         console.log('Session:', session);
 
         if (session) {
@@ -25,9 +24,8 @@ export const getProvider = async (account_id: string, provider_name: string) => 
     } 
 }
 
-export const getAuthAccounts = async (account_id: string) => {
+export const getAuthAccounts = async (supabase: SupabaseClient, account_id: string) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -47,10 +45,9 @@ export const getAuthAccounts = async (account_id: string) => {
     } 
 }
 
-export const getAuthAccountsForProvider = async (account_id: string, provider_name: string) => {
+export const getAuthAccountsForProvider = async (supabase: SupabaseClient, account_id: string, provider_name: string) => {
     try {
         console.log('getting auth accounts for provider: ', provider_name);
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -71,9 +68,8 @@ export const getAuthAccountsForProvider = async (account_id: string, provider_na
     } 
 }
 
-export const getProviders = async (account_id: string) => {
+export const getProviders = async (supabase: SupabaseClient, account_id: string) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -93,10 +89,9 @@ export const getProviders = async (account_id: string) => {
     } 
 }
 
-export const handleCallbackForProvider = async ({account_id, provider_name, code, state}: {account_id: string, provider_name: string, code: any, state: any}) => {
+export const handleCallbackForProvider = async (supabase: SupabaseClient, {account_id, provider_name, code, state}: {account_id: string, provider_name: string, code: any, state: any}) => {
     try {
         console.log('handling callback for provider: ', provider_name);
-        const supabase = createClient();
         const userData = await supabase.auth.getUser(); 
         console.log('User Data:', userData);
 
@@ -129,9 +124,8 @@ export const handleCallbackForProvider = async ({account_id, provider_name, code
     } 
 }
 
-export const initiateProviderAuth = async (account_id: string, provider_name: string) => {
+export const initiateProviderAuth = async (supabase: SupabaseClient, account_id: string, provider_name: string) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);

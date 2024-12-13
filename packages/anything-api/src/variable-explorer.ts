@@ -1,10 +1,15 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL;
 
-export const getWorkflowVersionResults = async (account_id: string, workflow_id: string, workflow_version_id: string, action_id: string) => {
+export const getWorkflowVersionResults = async (
+    supabase: SupabaseClient,
+    account_id: string,
+    workflow_id: string,
+    workflow_version_id: string,
+    action_id: string
+) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -26,10 +31,14 @@ export const getWorkflowVersionResults = async (account_id: string, workflow_id:
     }
 }
 
-
-export const getWorkflowVersionVariables = async (account_id: string, workflow_id: string, workflow_version_id: string, action_id: string) => {
+export const getWorkflowVersionVariables = async (
+    supabase: SupabaseClient,
+    account_id: string,
+    workflow_id: string,
+    workflow_version_id: string,
+    action_id: string
+) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -51,9 +60,11 @@ export const getWorkflowVersionVariables = async (account_id: string, workflow_i
     }
 }
 
-export const getSystemVariables = async (account_id: string) => {
+export const getSystemVariables = async (
+    supabase: SupabaseClient,
+    account_id: string
+) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);

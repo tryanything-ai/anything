@@ -2,7 +2,7 @@ import EditPersonalAccountName from "@/components/basejump/edit-personal-account
 import {createClient} from "@/lib/supabase/server";
 
 export default async function PersonalAccountSettingsPage(): Promise<JSX.Element> {
-    const supabaseClient = createClient();
+    const supabaseClient = await createClient();
     const {data: personalAccount}: any = await supabaseClient.rpc('get_personal_account');
 
     return (
