@@ -2,7 +2,6 @@
 
 import { Separator } from "@repo/ui/components/ui/separator";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
 import { TaskRow, TimeUnit } from "@repo/anything-api";
 import api from "@repo/anything-api";
@@ -10,66 +9,80 @@ import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { useAnything } from "@/context/AnythingContext";
 import { createClient } from "@/lib/supabase/client";
+import useSWR from "swr";
+
 export default function WorkflowManager(): JSX.Element {
-  const [workflow, setWorkflow] = useState<any | undefined>(undefined);
-  const [tasks, setTasks] = useState<TaskRow[]>([]);
-  const [chartData, setChartData] = useState<any | undefined>(undefined);
   const params = useParams<{ workflowId: string }>();
   const {
     accounts: { selectedAccount },
   } = useAnything();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log("params in useEffect", params);
-      if (params.workflowId && selectedAccount) {
-        let flow = await api.flows.getFlow(
-          await createClient(),
-          selectedAccount.account_id,
-          params.workflowId,
-        );
-        console.log("flow", flow);
-        if (flow && flow.length > 0) {
-          setWorkflow(flow[0]);
-        }
-        let tasks = await api.tasks.getTasksForWorkflow(
-          await createClient(),
-          selectedAccount.account_id,
-          params.workflowId,
-        );
-        console.log("tasks", tasks);
-        setTasks(tasks);
+  const endDate = new Date().toISOString();
+  const startDate = new Date(
+    new Date().setDate(new Date().getDate() - 30),
+  ).toISOString();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const endDate = new Date().toISOString();
-        const startDate = new Date(
-          new Date().setDate(new Date().getDate() - 30),
-        ).toISOString();
-        // Get the user's timezone
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const workflowFetcher = async () => {
+    if (!selectedAccount || !params.workflowId) return null;
+    const supabase = await createClient();
+    const flow = await api.flows.getFlow(
+      supabase,
+      selectedAccount.account_id,
+      params.workflowId,
+    );
+    return flow?.[0];
+  };
 
-        console.log("Timezone:", timezone);
+  const tasksFetcher = async () => {
+    if (!selectedAccount || !params.workflowId) return [];
+    const supabase = await createClient();
+    return api.tasks.getTasksForWorkflow(
+      supabase,
+      selectedAccount.account_id,
+      params.workflowId,
+    );
+  };
 
-        console.log("Start Date:", startDate);
-        console.log("End Date:", endDate);
-        let chardDataRes = await api.charts.getTasksChartForWorkflow(
-          await createClient(),
-          selectedAccount.account_id,
-          params.workflowId,
-          startDate,
-          endDate,
-          TimeUnit.Day,
-          encodeURIComponent(timezone),
-        );
+  const chartDataFetcher = async () => {
+    if (!selectedAccount || !params.workflowId) return null;
+    const supabase = await createClient();
+    const chartData = await api.charts.getTasksChartForWorkflow(
+      supabase,
+      selectedAccount.account_id,
+      params.workflowId,
+      startDate,
+      endDate,
+      TimeUnit.Day,
+      encodeURIComponent(timezone),
+    );
+    return chartData.chartData;
+  };
 
-        console.log("chart data for " + params.workflowId, chardDataRes);
-        setChartData(chardDataRes.chartData);
-      }
-    };
+  const { data: workflow } = useSWR(
+    selectedAccount ? [`workflow`, selectedAccount.account_id, params.workflowId] : null,
+    workflowFetcher,
+    {
+      revalidateOnFocus: true,
+    }
+  );
 
-    fetchData();
-  }, [params.workflowId, selectedAccount]);
+  const { data: tasks = [] } = useSWR(
+    selectedAccount ? [`tasks`, selectedAccount.account_id, params.workflowId] : null,
+    tasksFetcher,
+    {
+      revalidateOnFocus: true,
+    }
+  );
 
-  console.log("workflow", workflow);
+  const { data: chartData } = useSWR(
+    selectedAccount ? [`chartData`, selectedAccount.account_id, params.workflowId] : null,
+    chartDataFetcher,
+    {
+      revalidateOnFocus: true,
+    }
+  );
+
   return (
     <>
       {workflow ? (

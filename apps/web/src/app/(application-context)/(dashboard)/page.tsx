@@ -2,7 +2,6 @@
 
 import { Separator } from "@repo/ui/components/ui/separator";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import DashboardTitleWithNavigation from "@/components/workflows/dahsbloard-title-with-navigation";
 import { TaskRow, TimeUnit } from "@repo/anything-api";
 import api from "@repo/anything-api";
@@ -10,48 +9,54 @@ import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { useAnything } from "@/context/AnythingContext";
 import { createClient } from "@/lib/supabase/client";
+import useSWR from "swr";
+
 export default function MainDashboard(): JSX.Element {
-  const [tasks, setTasks] = useState<TaskRow[]>([]);
-  const [chartData, setChartData] = useState<any | undefined>(undefined);
   const {
     accounts: { selectedAccount },
   } = useAnything();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (selectedAccount) {
-        let tasks = await api.tasks.getTasks(await createClient(), selectedAccount.account_id);
-        console.log("tasks", tasks);
-        setTasks(tasks);
+  const endDate = new Date().toISOString();
+  const startDate = new Date(
+    new Date().setDate(new Date().getDate() - 30),
+  ).toISOString();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const endDate = new Date().toISOString();
-        const startDate = new Date(
-          new Date().setDate(new Date().getDate() - 30),
-        ).toISOString();
-        // Get the user's timezone
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tasksFetcher = async () => {
+    if (!selectedAccount) return [];
+    const supabase = await createClient();
+    return api.tasks.getTasks(supabase, selectedAccount.account_id);
+  };
 
-        console.log("Timezone:", timezone);
+  const chartDataFetcher = async () => {
+    if (!selectedAccount) return null;
+    const supabase = await createClient();
+    const chartData = await api.charts.getTasksChartForAccount(
+      supabase,
+      selectedAccount.account_id,
+      startDate,
+      endDate,
+      TimeUnit.Day,
+      encodeURIComponent(timezone),
+    );
+    return chartData.chartData;
+  };
 
-        console.log("Start Date:", startDate);
-        console.log("End Date:", endDate);
+  const { data: tasks = [] } = useSWR(
+    selectedAccount ? [`tasks`, selectedAccount.account_id] : null,
+    tasksFetcher,
+    {
+      revalidateOnFocus: true,
+    }
+  );
 
-        let chardDataRes = await api.charts.getTasksChartForAccount(
-          await createClient(),
-          selectedAccount.account_id,
-          startDate,
-          endDate,
-          TimeUnit.Day,
-          encodeURIComponent(timezone)
-        );
-
-        console.log("chart data", chardDataRes);
-        setChartData(chardDataRes.chartData);
-      }
-    };
-
-    fetchData();
-  }, [selectedAccount]);
+  const { data: chartData } = useSWR(
+    selectedAccount ? [`chartData`, selectedAccount.account_id] : null,
+    chartDataFetcher,
+    {
+      revalidateOnFocus: true,
+    }
+  );
 
   return (
     <>
