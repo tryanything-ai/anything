@@ -12,7 +12,7 @@ pnpm dev --filter=web
 ```bash
 supabase db reset
 ```
-
+  
 # Supabase guide on local development
 
 https://supabase.com/docs/guides/cli/local-development

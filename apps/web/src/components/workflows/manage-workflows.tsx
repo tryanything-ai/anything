@@ -84,7 +84,7 @@ export default function ManageWorkflows(): JSX.Element {
             className="mt-2 flex flex-row hover:border-green-500"
           >
             <Link
-              href={`/workflows/${flow.flow_id}/${flow_version.flow_version_id}/editor`}
+              href={`/workflows/${flow.flow_id}/${flow_version?.flow_version_id}/editor`}
               // href={`/workflows/${flow.flow_id}`}
               className="flex-1 flex"
             >

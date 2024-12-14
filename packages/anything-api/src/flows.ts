@@ -16,6 +16,8 @@ export const getFlows = async (supabase: SupabaseClient, account_id: string) => 
   }
   console.log('ANYTHING_API_URL:', ANYTHING_API_URL);
 
+  console.log('account_id:', account_id);
+
   try {
     const { data: { session } } = await supabase.auth.getSession();
 
