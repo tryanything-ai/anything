@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import api from "@repo/anything-api";
 import { Loader2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
-
+import { createClient } from "@/lib/supabase/client";
 export default function TemplateLoadingPage() {
   const router = useRouter();
   const params = useParams();
@@ -32,6 +32,7 @@ export default function TemplateLoadingPage() {
         flow_id: string;
         flow_version_id: string;
       } = await api.marketplace.cloneWorkflowTemplate(
+        await createClient(),
         selectedAccount.account_id,
         templateId,
       );

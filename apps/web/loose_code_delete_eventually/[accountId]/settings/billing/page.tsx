@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import AccountBillingStatus from "@/components/basejump/account-billing-status";
+import { createClient } from "@/lib/supabase/server";
 import { Alert } from "@repo/ui/components/ui/alert";
 
 export default async function TeamBillingPage({
@@ -7,7 +7,7 @@ export default async function TeamBillingPage({
 }: {
   params: { accountSlug: string };
 }): Promise<JSX.Element> {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: teamAccount }: any = await supabaseClient.rpc(
     "get_account_by_slug",
     // @ts-ignore

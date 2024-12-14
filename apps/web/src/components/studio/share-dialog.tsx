@@ -16,6 +16,7 @@ import api from "@repo/anything-api";
 import { ShareIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export function ShareDialog(): JSX.Element {
   const {
@@ -52,6 +53,7 @@ export function ShareDialog(): JSX.Element {
       }
 
       let res = await api.marketplace.publishFlowTemplateToMarketplace(
+        await createClient(),
         selectedAccount.account_id,
         params.workflowId,
         params.workflowVersionId,

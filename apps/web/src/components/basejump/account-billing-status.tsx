@@ -11,6 +11,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import api from "@repo/anything-api";
+import { createClient } from "@/lib/supabase/client";
 
 const returnUrl: string = process.env.NEXT_PUBLIC_HOSTED_URL || "";
 
@@ -33,6 +34,7 @@ export default function AccountBillingStatus(): JSX.Element {
     );
     try {
       const res = await api.billing.getBillingPortalLink(
+        await createClient(),
         selectedAccount.account_id,
         returnUrl,
       );
@@ -67,6 +69,7 @@ export default function AccountBillingStatus(): JSX.Element {
         selectedAccount.account_id,
       );
       const res = await api.billing.getCheckoutLink(
+        await createClient(),
         selectedAccount.account_id,
         returnUrl,
       );

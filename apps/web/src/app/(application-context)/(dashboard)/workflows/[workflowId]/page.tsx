@@ -9,7 +9,7 @@ import api from "@repo/anything-api";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { useAnything } from "@/context/AnythingContext";
-
+import { createClient } from "@/lib/supabase/client";
 export default function WorkflowManager(): JSX.Element {
   const [workflow, setWorkflow] = useState<any | undefined>(undefined);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
@@ -24,6 +24,7 @@ export default function WorkflowManager(): JSX.Element {
       console.log("params in useEffect", params);
       if (params.workflowId && selectedAccount) {
         let flow = await api.flows.getFlow(
+          await createClient(),
           selectedAccount.account_id,
           params.workflowId,
         );
@@ -32,6 +33,7 @@ export default function WorkflowManager(): JSX.Element {
           setWorkflow(flow[0]);
         }
         let tasks = await api.tasks.getTasksForWorkflow(
+          await createClient(),
           selectedAccount.account_id,
           params.workflowId,
         );
@@ -50,6 +52,7 @@ export default function WorkflowManager(): JSX.Element {
         console.log("Start Date:", startDate);
         console.log("End Date:", endDate);
         let chardDataRes = await api.charts.getTasksChartForWorkflow(
+          await createClient(),
           selectedAccount.account_id,
           params.workflowId,
           startDate,

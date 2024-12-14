@@ -7,7 +7,7 @@ export default async function TeamSettingsPage({
 }: {
   params: { accountSlug: string };
 }): Promise<JSX.Element> {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
   const { data: teamAccount }: any = await supabaseClient.rpc(
     "get_account_by_slug",
     // @ts-ignore

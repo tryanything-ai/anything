@@ -1,5 +1,5 @@
 import { Workflow } from "./types/workflows";
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from "uuid";
 
 export type UpdateFlowArgs = {
@@ -9,15 +9,16 @@ export type UpdateFlowArgs = {
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const getFlows = async (account_id: string) => {
+export const getFlows = async (supabase: SupabaseClient, account_id: string) => {
   if (!ANYTHING_API_URL) {
     console.error('ANYTHING_API_URL is not defined');
     throw new Error('ANYTHING_API_URL is not defined');
   }
   console.log('ANYTHING_API_URL:', ANYTHING_API_URL);
 
+  console.log('account_id:', account_id);
+
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Session in @repo/anything-api:', session);
@@ -38,9 +39,8 @@ export const getFlows = async (account_id: string) => {
   }
 }
 
-export const getFlowVersionById = async (account_id: string, workflowId: string, versionId: string) => {
+export const getFlowVersionById = async (supabase: SupabaseClient, account_id: string, workflowId: string, versionId: string) => {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Session:', session);
@@ -61,9 +61,8 @@ export const getFlowVersionById = async (account_id: string, workflowId: string,
   }
 }
 
-export const createFlow = async (account_id: string, name: string, description: string) => {
+export const createFlow = async (supabase: SupabaseClient, account_id: string, name: string, description: string) => {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Creating Workflow');
@@ -92,9 +91,8 @@ export const createFlow = async (account_id: string, name: string, description: 
   }
 };
 
-export const createFlowFromJson = async (account_id: string, name: string, flow_template: any) => {
+export const createFlowFromJson = async (supabase: SupabaseClient, account_id: string, name: string, flow_template: any) => {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Creating Workflow');
@@ -123,9 +121,8 @@ export const createFlowFromJson = async (account_id: string, name: string, flow_
   }
 };
 
-export async function updateFlow(account_id: string, flow_id: string, args: UpdateFlowArgs) {
+export async function updateFlow(supabase: SupabaseClient, account_id: string, flow_id: string, args: UpdateFlowArgs) {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Updating Workflow:', flow_id, "with args: ", args);
@@ -151,9 +148,8 @@ export async function updateFlow(account_id: string, flow_id: string, args: Upda
   }
 }
 
-export async function updateFlowVersion(account_id: string, flow_id: string, flow_version_id: string, flow_definition: Workflow) {
+export async function updateFlowVersion(supabase: SupabaseClient, account_id: string, flow_id: string, flow_version_id: string, flow_definition: Workflow) {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Updating Workflow');
@@ -178,9 +174,8 @@ export async function updateFlowVersion(account_id: string, flow_id: string, flo
   }
 }
 
-export async function deleteFlow(account_id: string, flowId: string) {
+export async function deleteFlow(supabase: SupabaseClient, account_id: string, flowId: string) {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Deleting Workflow');
@@ -205,9 +200,8 @@ export async function deleteFlow(account_id: string, flowId: string) {
   }
 }
 
-export const getFlow = async (account_id: string, flowId: string) => {
+export const getFlow = async (supabase: SupabaseClient, account_id: string, flowId: string) => {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Fetching Workflow by ID');
@@ -232,9 +226,8 @@ export const getFlow = async (account_id: string, flowId: string) => {
   }
 };
 
-export async function publishFlowVersion(account_id: string, flow_id: string, flow_version_id: string) {
+export async function publishFlowVersion(supabase: SupabaseClient, account_id: string, flow_id: string, flow_version_id: string) {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Publishing Workflow');
@@ -258,9 +251,8 @@ export async function publishFlowVersion(account_id: string, flow_id: string, fl
   } 
 }
 
-export const getFlowVersionsForWorkflowId = async (account_id: string, workflowId: string) => {
+export const getFlowVersionsForWorkflowId = async (supabase: SupabaseClient, account_id: string, workflowId: string) => {
   try {
-    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     console.log('Session:', session);

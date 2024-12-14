@@ -1,20 +1,17 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
 export enum TimeUnit {
     Minute = "minute",
-    Hour = "hour",
+    Hour = "hour", 
     Day = "day",
     Week = "week",
     Month = "month"
 }
 
-export const getTasksChartForWorkflow = async (account_id: string, workflow_id: string, start_date: string, end_date: string, time_unit: TimeUnit, timezone: string) => {
+export const getTasksChartForWorkflow = async (supabase: SupabaseClient, account_id: string, workflow_id: string, start_date: string, end_date: string, time_unit: TimeUnit, timezone: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -34,11 +31,8 @@ export const getTasksChartForWorkflow = async (account_id: string, workflow_id: 
     } 
 }
 
-export const getTasksChartForAccount = async (account_id: string, start_date: string, end_date: string, time_unit: TimeUnit, timezone: string) => {
+export const getTasksChartForAccount = async (supabase: SupabaseClient, account_id: string, start_date: string, end_date: string, time_unit: TimeUnit, timezone: string) => {
     try {
-        // Get JWT from supabase to pass to the API
-        // API conforms to RLS policies on behalf of users for external API
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);

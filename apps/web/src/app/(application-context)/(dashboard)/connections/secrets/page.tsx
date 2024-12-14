@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Trash2, Edit2, Eye, EyeOff } from "lucide-react";
 import api from "@repo/anything-api";
 import { Button } from "@repo/ui/components/ui/button";
-
+import { createClient } from "@/lib/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +55,10 @@ export default function AccountsPage(): JSX.Element {
         console.error("No account selected");
         return;
       }
-      const response = await api.secrets.getSecrets(selectedAccount.account_id);
+      const response = await api.secrets.getSecrets(
+        await createClient(),
+        selectedAccount.account_id,
+      );
       if (response.length === 0) {
         setSecrets([]);
         return;
@@ -78,6 +81,7 @@ export default function AccountsPage(): JSX.Element {
         return;
       }
       await api.secrets.updateSecret(
+        await createClient(),
         selectedAccount.account_id,
         secret_id,
         secret_name,
@@ -107,9 +111,13 @@ export default function AccountsPage(): JSX.Element {
         return;
       }
 
-      await api.secrets.deleteSecret(selectedAccount.account_id, secretIdToDelete);
+      await api.secrets.deleteSecret(
+        await createClient(),
+        selectedAccount.account_id,
+        secretIdToDelete,
+      );
       setSecretIdToDelete("");
-      
+
       fetchSecrets();
     } catch (error) {
       console.error("Error deleting secret:", error);
@@ -130,6 +138,7 @@ export default function AccountsPage(): JSX.Element {
         return;
       }
       await api.secrets.createSecret(
+        await createClient(),
         selectedAccount.account_id,
         secret_name,
         secret_value,

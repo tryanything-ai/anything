@@ -37,7 +37,7 @@ import { Action, Workflow } from "@/types/workflows";
 import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useAccounts } from "./AccountsContext";
 import { useWorkflowVersionControl } from "./WorkflowVersionControlContext";
-
+import { createClient } from "@/lib/supabase/client";
 export enum PanelTab {
   SETTINGS = "settings",
   CONFIG = "config",
@@ -317,7 +317,12 @@ export const WorkflowVersionProvider = ({
 
       //TODO: show same saving status in header as other places
       //Save to cloud
-      await api.flows.updateFlow(selectedAccount.account_id, dbFlowId, args);
+      await api.flows.updateFlow(
+        await createClient(),
+        selectedAccount.account_id,
+        dbFlowId,
+        args,
+      );
 
       //Update state here
       setDbFlow((prevFlow: any) => {
@@ -343,6 +348,7 @@ export const WorkflowVersionProvider = ({
 
       //Save to cloud
       await api.flows.publishFlowVersion(
+        await createClient(),
         selectedAccount?.account_id,
         dbFlowId,
         dbFlowVersionId,
@@ -691,6 +697,7 @@ export const WorkflowVersionProvider = ({
       }
 
       const res: any = await api.flows.updateFlowVersion(
+        await createClient(),
         selectedAccount.account_id,
         dbFlowId,
         dbFlowVersionId,
@@ -741,8 +748,13 @@ export const WorkflowVersionProvider = ({
       if (!workflowId || !selectedAccount || !workflowVersionId) return;
 
       const [workflow_response, version] = await Promise.all([
-        api.flows.getFlow(selectedAccount.account_id, workflowId),
+        api.flows.getFlow(
+          await createClient(),
+          selectedAccount.account_id,
+          workflowId,
+        ),
         api.flows.getFlowVersionById(
+          await createClient(),
           selectedAccount.account_id,
           workflowId,
           workflowVersionId,

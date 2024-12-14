@@ -13,7 +13,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { useRouter } from "next/navigation";
 import api from "@repo/anything-api";
-
+import { createClient } from "@/lib/supabase/client";
 export default function DeleteFlowDialog({
   workflowId,
 }: {
@@ -28,7 +28,11 @@ export default function DeleteFlowDialog({
     try {
       console.log("Deleting Flow in DeleteFlowDialog");
       if (!selectedAccount) return;
-      await api.flows.deleteFlow(selectedAccount.account_id, workflowId);
+      await api.flows.deleteFlow(
+        await createClient(),
+        selectedAccount.account_id,
+        workflowId,
+      );
       navigate.push("/workflows");
     } catch (error) {
       console.error(error);

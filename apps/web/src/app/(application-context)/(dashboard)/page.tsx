@@ -9,7 +9,7 @@ import api from "@repo/anything-api";
 import { TaskTable } from "@/components/tasks/task-table";
 import { TaskChart } from "@/components/tasks/task-chart";
 import { useAnything } from "@/context/AnythingContext";
-
+import { createClient } from "@/lib/supabase/client";
 export default function MainDashboard(): JSX.Element {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [chartData, setChartData] = useState<any | undefined>(undefined);
@@ -20,7 +20,7 @@ export default function MainDashboard(): JSX.Element {
   useEffect(() => {
     const fetchData = async () => {
       if (selectedAccount) {
-        let tasks = await api.tasks.getTasks(selectedAccount.account_id);
+        let tasks = await api.tasks.getTasks(await createClient(), selectedAccount.account_id);
         console.log("tasks", tasks);
         setTasks(tasks);
 
@@ -37,6 +37,7 @@ export default function MainDashboard(): JSX.Element {
         console.log("End Date:", endDate);
 
         let chardDataRes = await api.charts.getTasksChartForAccount(
+          await createClient(),
           selectedAccount.account_id,
           startDate,
           endDate,

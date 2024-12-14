@@ -21,6 +21,7 @@ import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { format } from "date-fns";
 import NewAccountDialog from "@/components/secrets/new-account-dialog";
 import { useAnything } from "@/context/AnythingContext";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AccountsPage(): JSX.Element {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -31,7 +32,10 @@ export default function AccountsPage(): JSX.Element {
   const fetchAccounts = async () => {
     try {
       if (!selectedAccount) return;
-      let res = await api.auth.getAuthAccounts(selectedAccount.account_id);
+      let res = await api.auth.getAuthAccounts(
+        await createClient(),
+        selectedAccount.account_id
+      );
       console.log("accounts res:", res);
       setAccounts(res);
     } catch (error) {

@@ -9,6 +9,7 @@ import {
   WorklfowTestSessionResult,
 } from "@repo/anything-api";
 import { useAccounts } from "./AccountsContext";
+import { createClient } from "@/lib/supabase/client";
 
 export enum TestingMode {
   ACTION = "action",
@@ -92,6 +93,7 @@ export const WorkflowTestingProvider = ({
 
       const result: WorklfowTestSessionResult =
         await api.testing.getTestingResults(
+          await createClient(),
           selectedAccount.account_id,
           flowId,
           versionId,
@@ -140,6 +142,7 @@ export const WorkflowTestingProvider = ({
       }
 
       let results: StartWorkflowTestResult = await api.testing.testWorkflow(
+        await createClient(),
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,
@@ -171,6 +174,7 @@ export const WorkflowTestingProvider = ({
       setTestingMode(TestingMode.ACTION);
       setPanelTab("testing");
       await api.testing.testAction(
+        await createClient(),
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,

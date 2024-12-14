@@ -13,13 +13,16 @@ import { useAnything } from "@/context/AnythingContext";
 import { useState } from "react";
 import api from "@repo/anything-api";
 import { ActionType } from "@/types/workflows";
-
+import { createClient } from "@/lib/supabase/client";
 interface PublishActionDialogProps {
   show: boolean;
   onClose: () => void;
 }
 
-export default function PublishActionDialog({ show, onClose }: PublishActionDialogProps): JSX.Element {
+export default function PublishActionDialog({
+  show,
+  onClose,
+}: PublishActionDialogProps): JSX.Element {
   const {
     accounts: { selectedAccount },
     workflow: { selected_node_data },
@@ -58,6 +61,7 @@ export default function PublishActionDialog({ show, onClose }: PublishActionDial
       console.log("Updated selected_node_data:", selected_node_data);
 
       let res = await api.action_templates.publishActionTemplate(
+        await createClient(),
         selectedAccount.account_id,
         selected_node_data,
         publishToTeam,
@@ -148,7 +152,9 @@ export default function PublishActionDialog({ show, onClose }: PublishActionDial
                   </p>
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel onClick={onClose}>
+                    Cancel
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handlePublish}
                     disabled={
@@ -176,10 +182,12 @@ export default function PublishActionDialog({ show, onClose }: PublishActionDial
                   </a>
                 )}
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => {
-                    setSuccess(false);
-                    onClose();
-                  }}>
+                  <AlertDialogCancel
+                    onClick={() => {
+                      setSuccess(false);
+                      onClose();
+                    }}
+                  >
                     Close
                   </AlertDialogCancel>
                 </AlertDialogFooter>

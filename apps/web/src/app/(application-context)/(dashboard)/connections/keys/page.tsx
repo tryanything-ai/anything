@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Trash2, Eye, EyeOff } from "lucide-react";
 import api from "@repo/anything-api";
 import { Button } from "@repo/ui/components/ui/button";
-
+import { createClient } from "@/lib/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +56,7 @@ export default function AccountsPage(): JSX.Element {
         return;
       }
       const response = await api.secrets.getAnythingApiKeys(
+        await createClient(),
         selectedAccount.account_id,
       );
       if (response.length === 0) {
@@ -86,6 +87,7 @@ export default function AccountsPage(): JSX.Element {
       }
 
       await api.secrets.deleteAnythingApiKey(
+        await createClient(),
         selectedAccount.account_id,
         secretIdToDelete,
       );
@@ -110,6 +112,7 @@ export default function AccountsPage(): JSX.Element {
         return;
       }
       await api.secrets.createAnythingApiKey(
+        await createClient(),
         selectedAccount.account_id,
         secret_name,
         secret_description,

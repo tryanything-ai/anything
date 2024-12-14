@@ -19,6 +19,7 @@ import {
 } from "@repo/ui/components/ui/table";
 import { BaseNodeIcon } from "../studio/nodes/node-icon";
 import { useAnything } from "@/context/AnythingContext";
+import { createClient } from "@/lib/supabase/client";
 // Helper function to generate a random string
 const generateRandomString = (length: number) => {
   const charset =
@@ -51,7 +52,10 @@ const NewAccountDialog = (): JSX.Element => {
   const fetchAccounts = async () => {
     try {
       if (!selectedAccount) return;
-      const res = await api.auth.getProviders(selectedAccount.account_id);
+      const res = await api.auth.getProviders(
+        await createClient(),
+        selectedAccount.account_id,
+      );
       console.log("providers res:", res);
       setProviders(res);
     } catch (error) {
@@ -74,6 +78,7 @@ const NewAccountDialog = (): JSX.Element => {
     try {
       if (!selectedAccount) return;
       let { url } = await api.auth.initiateProviderAuth(
+        await createClient(),
         selectedAccount?.account_id,
         provider.provider_name,
       );

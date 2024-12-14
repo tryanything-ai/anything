@@ -24,11 +24,11 @@ type Props = {
 export default async function ManageTeamInvitations({
   accountId,
 }: Props): Promise<JSX.Element> {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
 
   const { data: invitations }: any = await supabaseClient.rpc(
     "get_account_invitations",
-     // @ts-ignore
+    // @ts-ignore
     {
       account_id: accountId,
     } as any,

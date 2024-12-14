@@ -1,6 +1,7 @@
 import { Inter as FontSans } from "next/font/google";
 import "@repo/ui/globals.css";
 import { cn } from "@/lib/utils";
+import { PostHogProvider } from "../posthog/provider";
 
 const defaultUrl: string = process.env.NEXT_PUBLIC_HOSTED_URL!;
 
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
       )}
     >
       <body className="bg-background text-foreground">
-        <main className="min-h-screen">{children}</main>
+        <main className="min-h-screen">
+          <PostHogProvider>{children}</PostHogProvider>
+        </main>
       </body>
     </html>
   );

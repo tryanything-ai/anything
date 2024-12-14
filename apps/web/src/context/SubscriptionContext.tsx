@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useAccounts } from "./AccountsContext";
 import api from "@repo/anything-api";
-
+import { createClient } from "@/lib/supabase/client";
 export interface SubscriptionContextInterface {
   stripe_customer_id: string | null;
   stripe_data: any | null;
@@ -92,6 +92,7 @@ export const SubscriptionProvider = ({
     }
     try {
       const account_data = await api.billing.getAccountStatus(
+        await createClient(),
         selectedAccount.account_id,
       );
       console.log("Account data:", account_data);

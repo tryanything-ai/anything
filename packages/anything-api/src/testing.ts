@@ -1,4 +1,4 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface TaskRow {
     task_id: string;
@@ -33,9 +33,14 @@ export interface TaskRow {
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
-export const testAction = async (account_id: string, workflow_id: string, workflow_version_id: string, action_id: string) => {
+export const testAction = async (
+    supabase: SupabaseClient,
+    account_id: string,
+    workflow_id: string,
+    workflow_version_id: string,
+    action_id: string
+) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -61,9 +66,13 @@ export type StartWorkflowTestResult = {
     trigger_session_id: string;
 } | undefined; 
 
-export const testWorkflow = async (account_id: string, workflow_id: string, workflow_version_id: string): Promise<StartWorkflowTestResult> => {
+export const testWorkflow = async (
+    supabase: SupabaseClient,
+    account_id: string,
+    workflow_id: string,
+    workflow_version_id: string
+): Promise<StartWorkflowTestResult> => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);
@@ -89,9 +98,14 @@ export type WorklfowTestSessionResult = {
 } | undefined;
 
 
-export const getTestingResults = async (account_id: string, workflow_id: string, workflow_version_id: string, workflow_session_id: string) => {
+export const getTestingResults = async (
+    supabase: SupabaseClient,
+    account_id: string,
+    workflow_id: string,
+    workflow_version_id: string,
+    workflow_session_id: string
+) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('Session:', session);

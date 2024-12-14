@@ -23,11 +23,11 @@ type Props = {
 export default async function ManageTeamMembers({
   accountId,
 }: Props): Promise<JSX.Element> {
-  const supabaseClient = createClient();
+  const supabaseClient = await createClient();
 
   const { data: members }: any = await supabaseClient.rpc(
     "get_account_members",
-     // @ts-ignore
+    // @ts-ignore
     {
       account_id: accountId,
     } as any,

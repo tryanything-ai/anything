@@ -24,6 +24,7 @@ import CodeMirrorFieldHtml from "./field-html";
 import CodemirrorFieldXml from "./field-xml";
 import CodeMirrorFieldNumber from "./field-number";
 import CodeMirrorFieldBoolean from "./field-boolean";
+import { createClient } from "@/lib/supabase/client";
 
 export const fieldsMap: { [key: string]: any } = {
   //Deprecated inputs
@@ -266,6 +267,7 @@ function FieldAccount({
       );
       if (!selectedAccount) return;
       let res = await api.auth.getProvider(
+        await createClient(),
         selectedAccount.account_id,
         provider,
       );
@@ -284,6 +286,7 @@ function FieldAccount({
         provider,
       );
       let res = await api.auth.getAuthAccountsForProvider(
+        await createClient(),
         selectedAccount?.account_id,
         provider,
       );

@@ -1,4 +1,4 @@
-import { createClient } from "./supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
@@ -41,9 +41,8 @@ export const getWorkflowTemplateBySlugForMarketplace = async (slug: string) => {
     }
 }
 
-export const publishFlowTemplateToMarketplace = async (account_id: string, workflow_id: string, workflow_version_id: string,  publish_to_marketplace_anonymously: boolean) => {
+export const publishFlowTemplateToMarketplace = async (supabase: SupabaseClient, account_id: string, workflow_id: string, workflow_version_id: string, publish_to_marketplace_anonymously: boolean) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('[MARKETPLACE.TS] Session:', session);
@@ -73,11 +72,8 @@ export const publishFlowTemplateToMarketplace = async (account_id: string, workf
     }
 }
 
-
-
-export const cloneWorkflowTemplate = async (account_id: string, template_id: string) => {
+export const cloneWorkflowTemplate = async (supabase: SupabaseClient, account_id: string, template_id: string) => {
     try {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         console.log('[MARKETPLACE.TS] Session:', session);

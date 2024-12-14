@@ -5,8 +5,8 @@ export default async function PersonalAccountDashboard({
   children,
 }: {
   children: React.ReactNode;
-}): Promise<JSX.Element> {
-  const supabaseClient = createClient();
+}): Promise<JSX.Element> {  
+  const supabaseClient = await createClient();
 
   const { data: personalAccount, error }: any = await supabaseClient.rpc(
     "get_personal_account",
