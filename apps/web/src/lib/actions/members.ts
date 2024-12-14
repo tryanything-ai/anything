@@ -37,7 +37,7 @@ export async function updateTeamMemberRole(prevState: any, formData: FormData) {
     const returnUrl = formData.get("returnUrl") as string;
     const makePrimaryOwner = formData.get("makePrimaryOwner");
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { error }: any = await supabase.rpc('update_account_user_role', 
          // @ts-ignore
