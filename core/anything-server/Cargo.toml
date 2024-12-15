@@ -32,3 +32,5 @@ tracing = "0.1.40"
 pulldown-cmark = "0.12.2"
 html2md = "0.2.14"
 async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
+deno_core = "0.324.0"
+deno_runtime = "0.191.0"

@@ -12,6 +12,7 @@ use processor::processor::ProcessorMessage;
 use postgrest::Postgrest;
 use reqwest::Client;
 use serde_json::Value;
+use system_actions::deno::processor::{run_deno_processor, DenoTask};
 use std::{collections::HashMap, time::Duration};
 use std::env;
 use std::sync::Arc;
@@ -86,6 +87,7 @@ pub struct AppState {
     bundler_secrets_cache: RwLock<SecretsCache>,
     bundler_accounts_cache: RwLock<AccountsCache>,
     flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
+    deno_task_sender: mpsc::Sender<DenoTask>,
     shutdown_signal: Arc<AtomicBool>,
 }
 
@@ -174,6 +176,8 @@ async fn main() {
 
     let (trigger_engine_signal, _) = watch::channel("".to_string());
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
+    let (deno_tx, deno_rx) = tokio::sync::mpsc::channel(100);
+
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -195,6 +199,7 @@ async fn main() {
         bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
         bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
         flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
+        deno_task_sender: deno_tx,
         shutdown_signal: Arc::new(AtomicBool::new(false)),
     });
 
@@ -369,6 +374,8 @@ pub async fn root() -> impl IntoResponse {
     // Spawn the hydrate processor
     tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
 
+    // Spawn the Deno processor
+run_deno_processor(deno_rx); 
 
     let state_clone = state.clone();
     tokio::spawn(async move {
