@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use deno_core::error::AnyError;
 use deno_core::op2;
+use deno_core::v8;
 use deno_core::FsModuleLoader;
 use deno_core::ModuleSpecifier;
 use deno_runtime::deno_fs::RealFs;
@@ -18,6 +19,7 @@ use deno_runtime::worker::WorkerServiceOptions;
 use env_logger::{Builder, Target};
 use log::{debug, error, info};
 use serde_json::Value;
+use serde_v8;
 use tokio::time::Instant;
 
 pub mod module_loader;
@@ -93,48 +95,50 @@ pub async fn process_deno_js_task(
 
     let context_script = create_execution_context(code, bundled_context);
 
-    // Execute as module if it contains imports
-    if code.contains("import ") {
-        worker.execute_main_module(&main_module).await?;
-    } else {
-        worker.execute_script("[anon]", context_script.into())?;
-    }
+    // Execute and get the result
+    worker.execute_main_module(&main_module).await?;
 
+    // Run the event loop
     worker.run_event_loop(false).await?;
+
+    // Extract the result from the global object
+    let mut scope = worker.js_runtime.handle_scope();
+    let global = scope.get_current_context().global(&mut scope);
+    let result_key = v8::String::new(&mut scope, "result").unwrap();
+    let value = global.get(&mut scope, result_key.into()).unwrap();
+
+    // Convert V8 value to Rust Value
+    let result = serde_v8::from_v8::<Value>(&mut scope, value)?;
 
     println!("[TASK_ENGINE] JavaScript execution successful");
     println!("[SPEED] Deno task processing took {:?}", start.elapsed());
 
-    Ok(None)
+    Ok(Some(result))
 }
 
 // Helper function to create execution environment
 fn create_execution_context(code: &str, context: &Value) -> String {
-    // Check if the code contains import statements
-    if code.contains("import ") {
-        // For ESM, return the code directly
-        code.to_string()
-    } else {
-        // For regular scripts, use the IIFE wrapper
-        format!(
-            r#"
-            (async function() {{
-                const context = {};
-                try {{
-                    const result = await (async () => {{
-                        {}
-                    }})();
-                    return result;
-                }} catch (error) {{
-                    console.log("[ERROR] " + error.toString());
-                    return {{ error: error.toString() }};
-                }}
-            }})();
-            "#,
-            serde_json::to_string(context).unwrap(),
-            code
-        )
-    }
+    format!(
+        r#"
+        // Make context available as a module-level constant
+        const context = {};
+
+        // Your code wrapped in a module-level async function
+        export default async function() {{
+            try {{
+                const result = await (async () => {{
+                    {}
+                }})();
+                return result === undefined ? null : result;
+            }} catch (error) {{
+                console.log("[ERROR] " + error.toString());
+                return {{ error: error.toString() }};
+            }}
+        }}
+        "#,
+        serde_json::to_string(context).unwrap(),
+        code
+    )
 }
 
 #[cfg(test)]
