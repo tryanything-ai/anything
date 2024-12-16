@@ -19,6 +19,7 @@ type SourceMapStore = Rc<RefCell<HashMap<String, Vec<u8>>>>;
 
 pub struct TypescriptModuleLoader {
     pub source_maps: SourceMapStore,
+    pub main_code: Option<String>,
 }
 
 impl ModuleLoader for TypescriptModuleLoader {
@@ -39,19 +40,24 @@ impl ModuleLoader for TypescriptModuleLoader {
         _requested_module_type: RequestedModuleType,
     ) -> ModuleLoadResponse {
         let source_maps = self.source_maps.clone();
+        let main_code = self.main_code.clone();
+
         fn load(
             source_maps: SourceMapStore,
+            main_code: Option<String>,
             module_specifier: &ModuleSpecifier,
         ) -> Result<ModuleSource, AnyError> {
             println!("👀 load: {}", module_specifier);
 
-            if module_specifier.as_str() == "file:///anon.js" {
-                return Ok(ModuleSource::new(
-                    ModuleType::JavaScript,
-                    ModuleSourceCode::String(String::new().into()),
-                    module_specifier,
-                    None,
-                ));
+            if module_specifier.as_str() == "file:///main.ts" {
+                if let Some(code) = main_code {
+                    return Ok(ModuleSource::new(
+                        ModuleType::JavaScript,
+                        ModuleSourceCode::String(code.into()),
+                        module_specifier,
+                        None,
+                    ));
+                }
             }
 
             let (code, should_transpile, media_type, module_type) =
@@ -85,7 +91,8 @@ impl ModuleLoader for TypescriptModuleLoader {
                     )
                 } else if module_specifier.scheme() == "https" {
                     let url = module_specifier.to_string();
-                    let response = ureq::get(&url).call()?.into_string()?;
+                    let client = reqwest::blocking::Client::new();
+                    let response = client.get(&url).send()?.text()?;
 
                     (
                         response,
@@ -137,7 +144,7 @@ impl ModuleLoader for TypescriptModuleLoader {
             ))
         }
 
-        ModuleLoadResponse::Sync(load(source_maps, module_specifier))
+        ModuleLoadResponse::Sync(load(source_maps, main_code, module_specifier))
     }
 
     fn get_source_map(&self, specifier: &str) -> Option<Vec<u8>> {

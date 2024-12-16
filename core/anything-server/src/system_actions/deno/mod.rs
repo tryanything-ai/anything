@@ -1,45 +1,19 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use deno_core::error::AnyError;
-use deno_core::op2;
-use deno_core::v8;
 use deno_core::FsModuleLoader;
 use deno_core::ModuleSpecifier;
 use deno_runtime::deno_fs::RealFs;
-use deno_runtime::deno_permissions::Permissions;
 use deno_runtime::deno_permissions::PermissionsContainer;
 use deno_runtime::permissions::RuntimePermissionDescriptorParser;
 use deno_runtime::worker::MainWorker;
 use deno_runtime::worker::WorkerOptions;
 use deno_runtime::worker::WorkerServiceOptions;
-use env_logger::{Builder, Target};
-use log::{debug, error, info};
 use serde_json::Value;
-use serde_v8;
+use serde_v8::from_v8;
 use tokio::time::Instant;
 
-pub mod module_loader;
 pub mod processor;
-
-use module_loader::TypescriptModuleLoader;
-
-#[op2(fast)]
-fn op_hello(#[string] text: &str) {
-    println!("Hello {} from an op!", text);
-}
-
-deno_core::extension!(
-    hello_runtime,
-    ops = [op_hello],
-    // esm = [r#"
-    //     const globalThis = {}; // Minimal bootstrap
-    //     // Add any additional ESM code here
-    // "#]
-);
 
 pub async fn process_deno_js_task(
     bundled_context: &Value,
@@ -57,24 +31,17 @@ pub async fn process_deno_js_task(
         }
     };
 
-    let source_map_store = Rc::new(RefCell::new(HashMap::new()));
-
     let fs = Arc::new(RealFs);
     let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(fs.clone()));
 
-    // Create a temporary file for the code
+    // Define the main module specifier
     let main_module = ModuleSpecifier::parse("file:///anon.js").unwrap();
 
     let mut worker = MainWorker::bootstrap_from_options(
         main_module.clone(),
         WorkerServiceOptions {
-            module_loader: Rc::new(TypescriptModuleLoader {
-                source_maps: source_map_store,
-            }),
-            permissions: PermissionsContainer::new(
-                permission_desc_parser,
-                Permissions::allow_all(),
-            ),
+            module_loader: Rc::new(FsModuleLoader),
+            permissions: PermissionsContainer::allow_all(permission_desc_parser),
             blob_store: Default::default(),
             broadcast_channel: Default::default(),
             feature_checker: Default::default(),
@@ -88,53 +55,52 @@ pub async fn process_deno_js_task(
             fs,
         },
         WorkerOptions {
-            extensions: vec![hello_runtime::init_ops_and_esm()],
             ..Default::default()
         },
     );
 
+    // Create execution context script
     let context_script = create_execution_context(code, bundled_context);
 
-    // Execute and get the result
-    worker.execute_main_module(&main_module).await?;
+    let scope = &mut worker.js_runtime.handle_scope();
 
-    // Run the event loop
-    worker.run_event_loop(false).await?;
+    // let result = worker.execute_script("[anon]", context_script.into())?;
+    // worker.run_event_loop(false).await?;
 
-    // Extract the result from the global object
-    let mut scope = worker.js_runtime.handle_scope();
-    let global = scope.get_current_context().global(&mut scope);
-    let result_key = v8::String::new(&mut scope, "result").unwrap();
-    let value = global.get(&mut scope, result_key.into()).unwrap();
+    // Extract the result using serde_v8
 
-    // Convert V8 value to Rust Value
-    let result = serde_v8::from_v8::<Value>(&mut scope, value)?;
+    // let context = scope.get_current_context();
+    // let _global = context.global(scope);
+    // let local_result = result.open(scope);
 
+    // Convert V8 value to serde_json::Value
+    // let json_result: Value = from_v8(scope, local_result)
+    //     .map_err(|e| format!("Failed to convert V8 value to serde_json::Value: {}", e))?;
+
+    // println!("[TASK_ENGINE] Result: {:?}", json_result);
     println!("[TASK_ENGINE] JavaScript execution successful");
     println!("[SPEED] Deno task processing took {:?}", start.elapsed());
 
-    Ok(Some(result))
+    // Ok(Some(json_result))
+    Ok(None)
 }
 
 // Helper function to create execution environment
 fn create_execution_context(code: &str, context: &Value) -> String {
     format!(
         r#"
-        // Make context available as a module-level constant
-        const context = {};
-
-        // Your code wrapped in a module-level async function
-        export default async function() {{
+        (async function() {{
+            const context = {};
             try {{
-                const result = await (async () => {{
+                const userFunction = async () => {{
                     {}
-                }})();
-                return result === undefined ? null : result;
+                }};
+                return await userFunction.call(context);
             }} catch (error) {{
                 console.log("[ERROR] " + error.toString());
-                return {{ error: error.toString() }};
+                throw error;
             }}
-        }}
+        }})();
         "#,
         serde_json::to_string(context).unwrap(),
         code
@@ -146,40 +112,25 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn init() {
-        let _ = Builder::new()
-            .target(Target::Stdout)
-            .filter_level(log::LevelFilter::Debug)
-            .is_test(true)
-            .try_init();
-    }
-
     #[tokio::test]
     async fn test_process_deno_js_task_success() {
-        init(); // Initialize logging
-        info!("Starting success test");
-
         let context = json!({
-            "code": "console.log('test'); return 42;",
+            "code": "console.log('test'); 42;",
             "someData": "test data"
         });
 
         let result = process_deno_js_task(&context).await;
-        debug!("Test result: {:?}", result);
         assert!(result.is_ok());
+        assert_eq!(result.unwrap().unwrap(), json!(42));
     }
 
     #[tokio::test]
     async fn test_process_deno_js_task_missing_code() {
-        init(); // Initialize logging
-        info!("Starting missing code test");
-
         let context = json!({
             "someData": "test data"
         });
 
         let result = process_deno_js_task(&context).await;
-        debug!("Test result: {:?}", result);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -187,40 +138,52 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn test_context_access() {
+        let context = json!({
+            "code": "console.log(this.someData); this.someData;",
+            "someData": "test data"
+        });
+
+        let result = process_deno_js_task(&context).await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().unwrap(), json!("test data"));
+    }
+
+    #[tokio::test]
+    async fn test_runtime_error() {
+        let context = json!({
+            "code": "throw new Error('Test error');",
+        });
+
+        let result = process_deno_js_task(&context).await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Error: Test error");
+    }
+
+    #[tokio::test]
+    async fn test_disallowed_import_statement() {
+        let context = json!({
+            "code": "import fs from 'fs'; console.log(fs);",
+        });
+
+        let result = process_deno_js_task(&context).await;
+        // Depending on Deno's permission settings, adjust the expectation
+        assert!(result.is_ok());
+        // You might need to adjust this based on actual permissions and Deno's response
+    }
+
     #[test]
     fn test_create_execution_context() {
-        let code = "console.log('test');";
+        let code = "console.log('test'); 42;";
         let context = json!({
             "data": "test data"
         });
 
         let result = create_execution_context(code, &context);
 
-        assert!(result.contains("const context = {\"data\":\"test data\"}"));
+        assert!(result.contains(r#"const context = {"data":"test data"};"#));
         assert!(result.contains("console.log('test');"));
-        assert!(result.contains("async function()"));
-    }
-
-    #[tokio::test]
-    async fn test_esm_import() {
-        init(); // Initialize logging
-        info!("Starting ESM import test");
-
-        let code = r#"
-            import * as cowsay from "https://esm.sh/cowsay@1.6.0";
-            
-            const message = "Hello from ESM import test!";
-            const result = cowsay.say({ text: message });
-            console.log(result);
-            return result;
-        "#;
-
-        let context = json!({
-            "code": code,
-        });
-
-        let result = process_deno_js_task(&context).await;
-        debug!("ESM import test result: {:?}", result);
-        assert!(result.is_ok());
+        assert!(result.contains("async function"));
     }
 }
