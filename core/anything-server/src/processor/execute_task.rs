@@ -11,7 +11,7 @@ use crate::system_actions::output_action::process_response_task;
 
 // use crate::system_actions::deno::process_deno_js_task;
 use crate::system_actions::process_http_task::process_http_task;
-// use crate::system_actions::rustyscript::process_js_task;
+use crate::system_actions::rustyscript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
 
@@ -48,7 +48,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                 match &task.plugin_id {
                     Some(plugin_id) => match plugin_id.as_str() {
                         "http" => process_http_task(&http_client, &bundled_context).await,
-                        // "javascript" => process_js_task(&bundled_context).await,
+                        "javascript" => process_js_task(&bundled_context),
                         "response" => {
                             process_response_task(
                                 state_clone,

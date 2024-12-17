@@ -1,15 +1,10 @@
-use rustyscript::{json_args, Runtime, Module, Error};
+use rustyscript::{json_args, Error, Module, Runtime, RuntimeOptions};
 use serde_json::Value;
 use std::time::Duration;
-use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time::Instant;
 
-pub struct RustyScriptTask {
-    pub context: Value,
-    pub response_channel: Sender<Result<Option<Value>, String>>,
-}
 
-fn process_js_task(
+pub fn process_js_task(
     bundled_context: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
@@ -51,9 +46,12 @@ fn process_js_task(
     let script_start = Instant::now();
     let result = Runtime::execute_module(
         &module,
-        vec![],  // No additional modules needed
-        Default::default(),
-        json_args!()  // No arguments needed since we inject via globalThis
+        vec![], // No additional modules needed
+        RuntimeOptions {
+            timeout: Duration::from_secs(1),
+            ..Default::default()
+        },
+        json_args!(), // No arguments needed since we inject via globalThis
     )?;
 
     println!("[SPEED] JS execution took {:?}", script_start.elapsed());
