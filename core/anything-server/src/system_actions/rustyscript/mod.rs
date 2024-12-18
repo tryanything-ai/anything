@@ -3,7 +3,6 @@ use serde_json::Value;
 use std::time::Duration;
 use tokio::time::Instant;
 
-
 pub fn process_js_task(
     bundled_context: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
@@ -48,7 +47,7 @@ pub fn process_js_task(
         &module,
         vec![], // No additional modules needed
         RuntimeOptions {
-            timeout: Duration::from_secs(1),
+            timeout: Duration::from_secs(1), //TODO: this actually does not prevent script from long runs
             ..Default::default()
         },
         json_args!(), // No arguments needed since we inject via globalThis
