@@ -3,8 +3,14 @@ import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
-import { linter, lintGutter } from "@codemirror/lint";
-import { propsPlugin } from "./codemirror-utils";
+
+import {
+  autocompletion,
+  CompletionContext,
+  completionKeymap,
+  CompletionResult,
+} from "@codemirror/autocomplete";
+import { javascriptLanguage } from "@codemirror/lang-javascript";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -35,6 +41,17 @@ export default function CodemirrorFieldJs({
     ensureStringValue(value),
   );
   const [isValidInput, setIsValidInput] = React.useState(true);
+
+  const variables = {
+    test: "test",
+    test2: "test2",
+    things: {
+      test3: "test3",
+    },
+    things2: {
+      test4: 4,
+    },
+  };
 
   React.useEffect(() => {
     const newValue = ensureStringValue(value);
@@ -90,18 +107,87 @@ export default function CodemirrorFieldJs({
     [onSelect],
   );
 
-  const jsLinter = linter((view) => {
-    const doc = view.state.doc.toString();
+  const createCompletions = React.useCallback(
+    (context: CompletionContext): CompletionResult | null => {
+      // Match 'var' or 'variables' partially
+      const word = context.matchBefore(/\w+\.?/);
+      if (!word) return null;
 
-    // Check for variable pattern first
-    if (/^{{.*}}$/.test(doc.trim())) {
-      return [];
-    }
+      const text = word.text.toLowerCase();
 
-    // Basic JS syntax validation could be added here
-    // For now we return no errors
-    return [];
-  });
+      // Return early if text doesn't start with 'v' or 'var'
+      if (!text.startsWith("v")) return null;
+
+      if (text.includes(".")) {
+        // Handle property completions after 'variables.'
+        const word = context.matchBefore(/variables\./);
+        if (!word) return null;
+
+        // Convert variables object into completion items (same as before)
+        const completions = Object.entries(variables || {}).flatMap(
+          ([name, value]) => {
+            if (typeof value === "object") {
+              const nestedCompletions = Object.entries(value).map(
+                ([subName, subValue]) => ({
+                  label: `${name}.${subName}`,
+                  type: typeof subValue,
+                  detail: String(subValue),
+                  info: `Type: ${typeof subValue}`,
+                  apply: `variables.${name}.${subName}`,
+                }),
+              );
+              return [
+                {
+                  label: name,
+                  type: "variable",
+                  detail: JSON.stringify(value),
+                  info: "Object",
+                  apply: `variables.${name}`,
+                },
+                ...nestedCompletions,
+              ];
+            }
+            return [
+              {
+                label: name,
+                type: typeof value,
+                detail: String(value),
+                info: `Type: ${typeof value}`,
+                apply: `variables.${name}`,
+              },
+            ];
+          },
+        );
+
+        return {
+          from: word.from,
+          options: completions,
+          validFor: /^variables\..*$/,
+        };
+      } else {
+        // Suggest 'variables' when typing 'v' or 'var'
+        return {
+          from: word.from,
+          options: [
+            {
+              label: "variables",
+              type: "variable",
+              detail: "Access variables object",
+              apply: "variables.",
+            },
+          ],
+          validFor: /^v\w*$/,
+        };
+      }
+    },
+    [variables],
+  );
+
+  const completionExtension = React.useMemo(() => {
+    return autocompletion({
+      override: [createCompletions],
+    });
+  }, [createCompletions]);
 
   if (!isVisible) {
     return null;
@@ -125,10 +211,12 @@ export default function CodemirrorFieldJs({
           onKeyUp={onKeyUp}
           onUpdate={handleCursorActivity}
           readOnly={disabled}
-          extensions={[javascript(), lintGutter(), jsLinter, propsPlugin]}
+          extensions={[javascript(), completionExtension]}
           basicSetup={{
+            autocompletion: false,
             lineNumbers: false,
             foldGutter: false,
+            completionKeymap: true,
             highlightActiveLine: false,
           }}
           className={cn(
