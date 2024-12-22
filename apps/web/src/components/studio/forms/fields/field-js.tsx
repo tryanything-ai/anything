@@ -11,6 +11,9 @@ import {
   CompletionResult,
 } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
+import { linter, Diagnostic, Severity } from "@codemirror/lint";
+import { snippets } from "@codemirror/lang-javascript";
+import { localCompletionSource } from "@codemirror/lang-javascript";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -109,72 +112,70 @@ export default function CodemirrorFieldJs({
 
   const createCompletions = React.useCallback(
     (context: CompletionContext): CompletionResult | null => {
-      // Match 'var' or 'variables' partially
-      const word = context.matchBefore(/\w+\.?/);
+      // Try local completions first (variables in scope)
+      const localResult = localCompletionSource(context);
+      if (localResult) return localResult;
+
+      // Then try our variables object completions
+      const word = context.matchBefore(/[\w.]+/);
       if (!word) return null;
 
       const text = word.text.toLowerCase();
-
-      // Return early if text doesn't start with 'v' or 'var'
       if (!text.startsWith("v")) return null;
 
       if (text.includes(".")) {
-        // Handle property completions after 'variables.'
-        const word = context.matchBefore(/variables\./);
-        if (!word) return null;
+        const parts = text.split(".") || [];
+        let currentObj: any = variables;
 
-        // Convert variables object into completion items (same as before)
-        const completions = Object.entries(variables || {}).flatMap(
-          ([name, value]) => {
-            if (typeof value === "object") {
-              const nestedCompletions = Object.entries(value).map(
-                ([subName, subValue]) => ({
-                  label: `${name}.${subName}`,
-                  type: typeof subValue,
-                  detail: String(subValue),
-                  info: `Type: ${typeof subValue}`,
-                  apply: `variables.${name}.${subName}`,
-                }),
-              );
-              return [
-                {
-                  label: name,
-                  type: "variable",
-                  detail: JSON.stringify(value),
-                  info: "Object",
-                  apply: `variables.${name}`,
-                },
-                ...nestedCompletions,
-              ];
-            }
-            return [
-              {
-                label: name,
-                type: typeof value,
-                detail: String(value),
-                info: `Type: ${typeof value}`,
-                apply: `variables.${name}`,
-              },
-            ];
+        // Navigate through the object up to the last complete part
+        for (let i = 1; i < parts.length - 1; i++) {
+          if (!currentObj || typeof currentObj !== "object") return null;
+          let part = parts[i];
+          if (part) {
+            currentObj = currentObj[part];
+          } else {
+            return null;
+          }
+        }
+
+        // Generate completions for the current level
+        const completions = Object.entries(currentObj || {}).map(
+          ([key, value]) => {
+            const valueType = typeof value;
+            const displayValue =
+              valueType === "object" ? "{ ... }" : JSON.stringify(value);
+
+            return {
+              label: key,
+              type: valueType === "object" ? "class" : "property",
+              detail: displayValue,
+              boost: valueType === "object" ? 2 : 1, // Prioritize objects in the list
+              info: valueType === "object" ? "Object" : `Type: ${valueType}`,
+              apply: valueType === "object" ? `${key}.` : key,
+            };
           },
         );
 
         return {
           from: word.from,
           options: completions,
-          validFor: /^variables\..*$/,
+          validFor: /^[\w.]*$/,
+          //   span: /^[\w.]*$/,
         };
       } else {
-        // Suggest 'variables' when typing 'v' or 'var'
         return {
           from: word.from,
           options: [
             {
               label: "variables",
-              type: "variable",
-              detail: "Access variables object",
+              type: "class",
+              detail: "{ ... }",
+              info: "Variables object containing all available values",
               apply: "variables.",
+              boost: 4,
             },
+            // Add JavaScript snippets to the completion
+            ...snippets,
           ],
           validFor: /^v\w*$/,
         };
@@ -184,9 +185,36 @@ export default function CodemirrorFieldJs({
   );
 
   const completionExtension = React.useMemo(() => {
-    return autocompletion({
-      override: [createCompletions],
-    });
+    return [
+      autocompletion({
+        override: [createCompletions],
+        defaultKeymap: true,
+        // closeBrackets: true,
+        closeOnBlur: true,
+      }),
+      javascript({
+        jsx: false, // Set to true if you need JSX support
+        typescript: false,
+      }),
+      // Add basic JavaScript linting
+      linter((view) => {
+        const diagnostics: Diagnostic[] = [];
+        try {
+          // Basic syntax validation
+          new Function(view.state.doc.toString());
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            diagnostics.push({
+              from: 0,
+              to: view.state.doc.length,
+              severity: "error" as Severity,
+              message: e.message,
+            });
+          }
+        }
+        return diagnostics;
+      }),
+    ];
   }, [createCompletions]);
 
   if (!isVisible) {
@@ -211,13 +239,15 @@ export default function CodemirrorFieldJs({
           onKeyUp={onKeyUp}
           onUpdate={handleCursorActivity}
           readOnly={disabled}
-          extensions={[javascript(), completionExtension]}
+          extensions={completionExtension}
           basicSetup={{
             autocompletion: false,
             lineNumbers: false,
             foldGutter: false,
-            completionKeymap: true,
             highlightActiveLine: false,
+            closeBrackets: true,
+            bracketMatching: true,
+            indentOnInput: true,
           }}
           className={cn(
             "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
