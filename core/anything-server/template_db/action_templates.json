@@ -1380,7 +1380,7 @@
         "type": "object",
         "properties": {
           "code": {
-             "title": "JavaScript Code",
+             "title": "Code",
               "description": "JavaScript code to run",
               "type": "string",
               "x-jsf-presentation": {

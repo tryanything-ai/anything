@@ -11,11 +11,12 @@ import {
   CompletionSource,
 } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
-import { linter, Diagnostic, Severity } from "@codemirror/lint";
+import { linter, Diagnostic } from "@codemirror/lint";
 import {
   localCompletionSource,
   scopeCompletionSource,
 } from "@codemirror/lang-javascript";
+import { useAnything } from "@/context/AnythingContext";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -40,6 +41,7 @@ interface CodemirrorFieldJsProps {
   onKeyUp?: () => void;
   onFocus?: () => void;
   className?: string;
+  actionId?: string;
 }
 
 export default function CodemirrorFieldJs({
@@ -56,31 +58,25 @@ export default function CodemirrorFieldJs({
   onFocus,
   className,
 }: CodemirrorFieldJsProps) {
+  const {
+    workflow: { selected_node_variables },
+  } = useAnything();
   const editorRef = React.useRef<any>(null);
   const [editorValue, setEditorValue] = React.useState(
     ensureStringValue(value),
   );
   const [isValidInput, setIsValidInput] = React.useState(true);
 
-  // Dynamic variables object
-  const [variables, setVariables] = React.useState({
-    variables: {
-      test: "test",
-      test2: "test2",
-      things: {
-        test3: "test3",
-      },
-      things2: {
-        test4: 4,
-      },
-    },
-  });
+  // Replace the static variables with dynamic ones from the context
+//   const [variables, setVariables] = React.useState({});
 
-  // Example: Update variables dynamically (You can replace this with your actual logic)
-  React.useEffect(() => {
-    // Fetch or compute variables here and update using setVariables
-    // For demonstration, we're keeping it static
-  }, []);
+//   React.useEffect(() => {
+//     if (actionId) {
+//       const actionVariables = getActionVariables(actionId);
+//       console.log("[FIELD JS] actionVariables", actionVariables);
+//       setVariables(actionVariables);
+//     }
+//   }, [actionId, getActionVariables]);
 
   React.useEffect(() => {
     const newValue = ensureStringValue(value);
@@ -141,8 +137,9 @@ export default function CodemirrorFieldJs({
    */
   const variablesCompletionSource: CompletionSource = React.useMemo(() => {
     // Create a scoped completion source for the 'variables' object
-    return scopeCompletionSource(variables);
-  }, [variables]);
+    //Prefix with variables key so we access via variables.test for example
+    return scopeCompletionSource({ variables: selected_node_variables });
+  }, [selected_node_variables]);
 
   const completionExtension = React.useMemo(() => {
     return [
@@ -171,7 +168,7 @@ export default function CodemirrorFieldJs({
             diagnostics.push({
               from: 0,
               to: view.state.doc.length,
-              severity: "error" as Severity,
+              severity: "error",
               message: e.message,
             });
           }
