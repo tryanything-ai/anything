@@ -48,7 +48,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                 match &task.plugin_id {
                     Some(plugin_id) => match plugin_id.as_str() {
                         "http" => process_http_task(&http_client, &bundled_context).await,
-                        "javascript" => process_js_task(&bundled_context),
+                        "javascript" => process_js_task(&bundled_context).await,
                         "response" => {
                             process_response_task(
                                 state_clone,
