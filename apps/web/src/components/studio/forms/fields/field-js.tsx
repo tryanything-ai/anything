@@ -7,13 +7,15 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   autocompletion,
   CompletionContext,
-  completionKeymap,
   CompletionResult,
+  CompletionSource,
 } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
 import { linter, Diagnostic, Severity } from "@codemirror/lint";
-import { snippets } from "@codemirror/lang-javascript";
-import { localCompletionSource } from "@codemirror/lang-javascript";
+import {
+  localCompletionSource,
+  scopeCompletionSource,
+} from "@codemirror/lang-javascript";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -23,6 +25,21 @@ function ensureStringValue(value: any): string {
     return value;
   }
   return String(value);
+}
+
+interface CodemirrorFieldJsProps {
+  name: string;
+  label: string;
+  value: any;
+  isVisible: boolean;
+  error?: string;
+  disabled?: boolean;
+  onChange: (name: string, value: any, isValid: boolean) => void;
+  onSelect?: (event: any) => void;
+  onClick?: () => void;
+  onKeyUp?: () => void;
+  onFocus?: () => void;
+  className?: string;
 }
 
 export default function CodemirrorFieldJs({
@@ -38,23 +55,32 @@ export default function CodemirrorFieldJs({
   onKeyUp,
   onFocus,
   className,
-}: any) {
+}: CodemirrorFieldJsProps) {
   const editorRef = React.useRef<any>(null);
   const [editorValue, setEditorValue] = React.useState(
     ensureStringValue(value),
   );
   const [isValidInput, setIsValidInput] = React.useState(true);
 
-  const variables = {
-    test: "test",
-    test2: "test2",
-    things: {
-      test3: "test3",
+  // Dynamic variables object
+  const [variables, setVariables] = React.useState({
+    variables: {
+      test: "test",
+      test2: "test2",
+      things: {
+        test3: "test3",
+      },
+      things2: {
+        test4: 4,
+      },
     },
-    things2: {
-      test4: 4,
-    },
-  };
+  });
+
+  // Example: Update variables dynamically (You can replace this with your actual logic)
+  React.useEffect(() => {
+    // Fetch or compute variables here and update using setVariables
+    // For demonstration, we're keeping it static
+  }, []);
 
   React.useEffect(() => {
     const newValue = ensureStringValue(value);
@@ -110,86 +136,24 @@ export default function CodemirrorFieldJs({
     [onSelect],
   );
 
-  const createCompletions = React.useCallback(
-    (context: CompletionContext): CompletionResult | null => {
-      // Try local completions first (variables in scope)
-      const localResult = localCompletionSource(context);
-      if (localResult) return localResult;
-
-      // Then try our variables object completions
-      const word = context.matchBefore(/[\w.]+/);
-      if (!word) return null;
-
-      const text = word.text.toLowerCase();
-      if (!text.startsWith("v")) return null;
-
-      if (text.includes(".")) {
-        const parts = text.split(".") || [];
-        let currentObj: any = variables;
-
-        // Navigate through the object up to the last complete part
-        for (let i = 1; i < parts.length - 1; i++) {
-          if (!currentObj || typeof currentObj !== "object") return null;
-          let part = parts[i];
-          if (part) {
-            currentObj = currentObj[part];
-          } else {
-            return null;
-          }
-        }
-
-        // Generate completions for the current level
-        const completions = Object.entries(currentObj || {}).map(
-          ([key, value]) => {
-            const valueType = typeof value;
-            const displayValue =
-              valueType === "object" ? "{ ... }" : JSON.stringify(value);
-
-            return {
-              label: key,
-              type: valueType === "object" ? "class" : "property",
-              detail: displayValue,
-              boost: valueType === "object" ? 2 : 1, // Prioritize objects in the list
-              info: valueType === "object" ? "Object" : `Type: ${valueType}`,
-              apply: valueType === "object" ? `${key}.` : key,
-            };
-          },
-        );
-
-        return {
-          from: word.from,
-          options: completions,
-          validFor: /^[\w.]*$/,
-          //   span: /^[\w.]*$/,
-        };
-      } else {
-        return {
-          from: word.from,
-          options: [
-            {
-              label: "variables",
-              type: "class",
-              detail: "{ ... }",
-              info: "Variables object containing all available values",
-              apply: "variables.",
-              boost: 4,
-            },
-            // Add JavaScript snippets to the completion
-            ...snippets,
-          ],
-          validFor: /^v\w*$/,
-        };
-      }
-    },
-    [variables],
-  );
+  /**
+   * Custom completion source integrating the dynamic 'variables' object.
+   */
+  const variablesCompletionSource: CompletionSource = React.useMemo(() => {
+    // Create a scoped completion source for the 'variables' object
+    return scopeCompletionSource(variables);
+  }, [variables]);
 
   const completionExtension = React.useMemo(() => {
     return [
       autocompletion({
-        override: [createCompletions],
+        override: [
+          // Prioritize the scoped completion for 'variables'
+          variablesCompletionSource,
+          // Fallback to local completions
+          localCompletionSource,
+        ],
         defaultKeymap: true,
-        // closeBrackets: true,
         closeOnBlur: true,
       }),
       javascript({
@@ -215,7 +179,7 @@ export default function CodemirrorFieldJs({
         return diagnostics;
       }),
     ];
-  }, [createCompletions]);
+  }, [variablesCompletionSource]);
 
   if (!isVisible) {
     return null;
