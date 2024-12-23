@@ -157,8 +157,18 @@ export function JsonSchemaForm({
 
   const insertVariable = (variable: string) => {
     if (disabled) return;
+
     if (GLOBAL_ACTIVE_FORM_NAME !== name) {
       console.log("Not the active form");
+      return;
+    }
+
+    // Add check for JavaScript field type
+    const activeField = fields.find((f: any) => f.name === GLOBAL_ACTIVE_FIELD);
+    if (activeField?.inputType === "javascript_or_variable") {
+      alert(
+        "Variable insertion not supported for JavaScript fields. Use variables.variable_name in the javascript editor instead.",
+      );
       return;
     }
 
