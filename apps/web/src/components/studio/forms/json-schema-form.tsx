@@ -25,6 +25,8 @@ export function JsonSchemaForm({
   onFocus,
   // onBlur,
   disabled = false,
+  showVariablesExplorer = false,
+  showResultsExplorer = false,
 }: any): JSX.Element {
   const {
     explorer: { registerCallback, unRegisterCallback },
@@ -58,7 +60,7 @@ export function JsonSchemaForm({
     console.log(
       "[HANDLE INTERNAL VALIDATION] Values to validate:",
       valuesToValidate,
-    );
+    ); 
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
     console.log(
       "[HANDLE INTERNAL VALIDATION] Values for JSON validation:",
@@ -255,6 +257,8 @@ export function JsonSchemaForm({
                 isVisible={field.isVisible}
                 required={field.required}
                 provider={field.provider}
+                showVariablesExplorer={showVariablesExplorer}
+                showResultsExplorer={showResultsExplorer}
               />
             </div>
           );

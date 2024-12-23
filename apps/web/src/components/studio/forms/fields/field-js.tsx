@@ -14,6 +14,7 @@ import {
 import { useAnything } from "@/context/AnythingContext";
 import { Button } from "@repo/ui/components/ui/button";
 import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
+import { BaseVariablesExplorer } from "@/components/studio/variable-explorers/variables-explorer";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -54,6 +55,8 @@ export default function CodemirrorFieldJs({
   onKeyUp,
   onFocus,
   className,
+  showVariablesExplorer,
+  showResultsExplorer,
 }: CodemirrorFieldJsProps) {
   const {
     workflow: { selected_node_variables },
@@ -246,18 +249,30 @@ export default function CodemirrorFieldJs({
                 </span>
               </Label>
             </div>
-            <CodeMirror
-              {...codeEditorProps}
-              className={cn(
-                "w-full h-full overflow-hidden rounded-md border border-input bg-background text-sm",
-                className,
+            {/* Add flex container for side-by-side layout in expanded mode */}
+            <div className="flex gap-4 h-[95%]">
+              {/* Variables Explorer Panel */}
+              {showVariablesExplorer && (
+                <div className="w-1/4 border px-2 rounded-md bg-background">
+                  <BaseVariablesExplorer />
+                </div>
               )}
-              style={{
-                height: "95%",
-                width: "100%",
-                fontFamily: "monospace",
-              }}
-            />
+              {/* Editor Container */}
+              <div className="flex-1">
+                <CodeMirror
+                  {...codeEditorProps}
+                  className={cn(
+                    "w-full h-full overflow-hidden rounded-md border border-input bg-background text-sm",
+                    className,
+                  )}
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    fontFamily: "monospace",
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
