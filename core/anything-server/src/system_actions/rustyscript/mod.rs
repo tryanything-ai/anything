@@ -35,9 +35,25 @@ pub async fn process_js_task(
             // Inject variables into globalThis.variables to match autocomplete
             Object.assign(globalThis, {{ variables: {} }});
 
-            // Export the user's code as default function 
+            // Export the user's code as default function and wrap the return value
             export default () => {{
-                {js_code}
+                try {{
+                    const result = (() => {{
+                        {js_code}
+                    }})();
+                    
+                    return {{
+                        success: true,
+                        result: result,
+                        error: null
+                    }};
+                }} catch (error) {{
+                    return {{
+                        success: false,
+                        result: null,
+                        error: error.toString()
+                    }};
+                }}
             }}
             "#,
             serde_json::to_string(&bundled_variables_clone)?
