@@ -58,9 +58,9 @@ export default function ConfigurationForm(): JSX.Element {
     return { fields: undefined, handleValidation: undefined };
   }, [selected_node_input, selected_node_input_schema]);
 
-  async function handleOnSubmit(jsonValues: any, { formValues }: any) {
+  async function handleOnSubmit(formValues: any) {
     await updateNodeData(["input"], [formValues]);
-    console.log("[CONFIGURATION FORM] Submitted!", { formValues, jsonValues });
+    console.log("[CONFIGURATION FORM] Submitted!", formValues);
   }
 
   console.log("[RENDERING INPUTS FORM]");

@@ -24,10 +24,9 @@ export default function WorkflowSettingsForm(): JSX.Element {
     });
   }, [input]);
 
-  async function handleOnSubmit(jsonValues: any, { formValues }: any) {
+  async function handleOnSubmit(formValues: any) {
     await updateWorkflow(formValues);
-    // await updateNodeData(["label", "description", "icon"], [formValues.label, formValues.description, formValues.icon])
-    console.log("Submitted!", { formValues, jsonValues });
+    console.log("Submitted!", formValues);
   }
 
   return (

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 import {
+  applyDefaultValuesToEmptyFields,
   formValuesToJsonValues,
   getDefaultValuesFromFields,
 } from "@/lib/json-schema-utils";
@@ -60,7 +61,7 @@ export function JsonSchemaForm({
     console.log(
       "[HANDLE INTERNAL VALIDATION] Values to validate:",
       valuesToValidate,
-    ); 
+    );
     const valuesForJson = formValuesToJsonValues(fields, valuesToValidate);
     console.log(
       "[HANDLE INTERNAL VALIDATION] Values for JSON validation:",
@@ -113,7 +114,18 @@ export function JsonSchemaForm({
         "[JSON SCHEMA FORM - SUBMIT] No errors, submitting:",
         jsonValues,
       );
-      onSubmit(jsonValues, { formValues: values });
+
+      // const valuesWithDefaults = applyDefaultValuesToEmptyFields(
+      //   fields,
+      //   values,
+      // );
+
+      // console.log(
+      //   "[JSON SCHEMA FORM - SUBMIT] Values with defaults:",
+      //   valuesWithDefaults,
+      // );
+
+      onSubmit(values);
       setHasUnsavedChanges(false);
     }
   };

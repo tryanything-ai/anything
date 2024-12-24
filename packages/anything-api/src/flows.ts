@@ -152,7 +152,7 @@ export async function updateFlowVersion(supabase: SupabaseClient, account_id: st
   try {
     const { data: { session } } = await supabase.auth.getSession();
 
-    console.log('Updating Workflow');
+    console.log('[UPDATE FLOW VERSION]: ', flow_id, 'version: ', flow_version_id, "with definition: ", flow_definition);
 
     if (session) {
       const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/workflow/${flow_id}/version/${flow_version_id}`, {
