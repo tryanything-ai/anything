@@ -40,6 +40,8 @@ interface CodemirrorFieldJsProps {
   onFocus?: () => void;
   className?: string;
   actionId?: string;
+  showVariablesExplorer?: boolean;
+  showResultsExplorer?: boolean;
 }
 
 export default function CodemirrorFieldJs({
