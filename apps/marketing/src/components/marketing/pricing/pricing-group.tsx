@@ -13,11 +13,11 @@ const tiers = [
   {
     name: "Pay As You Go",
     id: "payg",
-    href: `https://app.${process.env.NEXT_PUBLIC_HOSTED_URL?.replace(/^https?:\/\//, '').replace('www.', '')}/signup`,
-    price: { monthly: "$9.99", annually: "$50" },
+    href: `https://app.${process.env.NEXT_PUBLIC_HOSTED_URL?.replace(/^https?:\/\//, "").replace("www.", "")}/signup`,
+    price: { monthly: "$0", annually: "$50" },
     description: "A plan that scales to Anything.",
     features: [
-      "7 Day Free Trial",
+      // "7 Day Free Trial",
       "10K included tasks",
       "$0.99 / 1k tasks after that",
       "Unlimited users",
@@ -31,7 +31,7 @@ const tiers = [
     name: "Done For You",
     id: "dfy",
     href: "https://airtable.com/app4pkbS50GcnTaeA/pagORjCMLKMkvk9mh/form",
-    price: "Custom",
+    price: "$,$$$",
     description:
       "Our team works hand in hand to implement automations for your business.",
     features: [
