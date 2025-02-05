@@ -59,11 +59,11 @@ const navigation = {
         </svg>
       ),
     },
-    {
-      name: "Discord",
-      href: "https://discord.gg/VRBKaqjprE",
-      icon: (props: any) => <FaDiscord className="h-6 w-6" />,
-    },
+    // {
+    //   name: "Discord",
+    //   href: "https://discord.gg/VRBKaqjprE",
+    //   icon: (props: any) => <FaDiscord className="h-6 w-6" />,
+    // },
     // {
     //   name: 'YouTube',
     //   href: '#',

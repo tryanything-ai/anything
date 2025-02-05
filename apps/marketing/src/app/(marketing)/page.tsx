@@ -7,6 +7,10 @@ import PricingGroup from "@/components/marketing/pricing/pricing-group";
 import Image from "next/image";
 
 import HeroVideoDialog from "@repo/ui/components/magicui/hero-video-dialog";
+import ShimmerButton from "@repo/ui/components/magicui/shimmer-button";
+import Link from "next/link";
+
+const ConsultingLink = "https://calendar.app.google/9gWy5xtDv3YkujAi7";
 
 export default function IndexPage() {
   const headerList = headers();
@@ -22,7 +26,8 @@ export default function IndexPage() {
           Easily build AI automations for your business.
         </p>
       </div>
-      <div className="max-w-7xl mx-auto px-5 mt-10">
+
+      <div className="max-w-7xl mx-auto px-5 mt-10">  
         <HeroVideoDialog
           className="dark:hidden block"
           animationStyle="from-center"
@@ -30,6 +35,32 @@ export default function IndexPage() {
           thumbnailSrc="/anything_screenshot.png"
           thumbnailAlt="Anything Screenshot"
         />
+      </div>
+
+      <div className="overflow-hidden bg-white py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto lg:text-center text-left max-w-2xl">
+            <h2 className="text-base font-semibold leading-7 text-purple-600">
+              Expert Guidance
+            </h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Not sure where to start with AI?
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              Book a free consultation with our AI experts. We'll help you
+              identify opportunities to implement AI in your business even if
+              that means recommending you use our competitor's product.
+            </p>
+            <div className="mt-10 flex justify-center gap-4">
+              <Link
+                href={ConsultingLink}
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors"
+              >
+                Book Free Consultation
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="overflow-hidden bg-white py-12 sm:py-32">
@@ -66,7 +97,8 @@ export default function IndexPage() {
                     </dt>
                     <dd className="inline">
                       {" "}
-                      Build workflows visually with our intuitive drag-and-drop interface. No coding required.
+                      Build workflows visually with our intuitive drag-and-drop
+                      interface. No coding required.
                     </dd>
                   </div>
                   <div className="relative pl-9">
@@ -83,7 +115,8 @@ export default function IndexPage() {
                     </dt>
                     <dd className="inline">
                       {" "}
-                      Deploy tested workflows to production instantly with a single click.
+                      Deploy tested workflows to production instantly with a
+                      single click.
                     </dd>
                   </div>
                 </dl>
@@ -122,7 +155,9 @@ export default function IndexPage() {
                   Configure once, use everywhere
                 </p>
                 <p className="mt-6 text-lg leading-8 text-gray-600">
-                  Create configured components that can be reused across all your workflows. Save time by setting up integrations once and reusing them wherever needed.
+                  Create configured components that can be reused across all
+                  your workflows. Save time by setting up integrations once and
+                  reusing them wherever needed.
                 </p>
                 <dl className="mt-10 max-w-xl space-y-8 text-base leading-7 text-gray-600 lg:max-w-none">
                   <div className="relative pl-9">
@@ -142,7 +177,8 @@ export default function IndexPage() {
                     </dt>
                     <dd className="inline">
                       {" "}
-                      Configure components once and maintain consistent settings across all workflows.
+                      Configure components once and maintain consistent settings
+                      across all workflows.
                     </dd>
                   </div>
                 </dl>
@@ -164,7 +200,9 @@ export default function IndexPage() {
                   Share and collaborate
                 </p>
                 <p className="mt-6 text-lg leading-8 text-gray-600">
-                  Share your actions and workflow templates with your team. Collaborate on automation projects and maintain consistency across your organization.
+                  Share your actions and workflow templates with your team.
+                  Collaborate on automation projects and maintain consistency
+                  across your organization.
                 </p>
                 <dl className="mt-10 max-w-xl space-y-8 text-base leading-7 text-gray-600 lg:max-w-none">
                   <div className="relative pl-9">
@@ -180,7 +218,8 @@ export default function IndexPage() {
                     </dt>
                     <dd className="inline">
                       {" "}
-                      Build a library of reusable actions and templates that your entire team can access.
+                      Build a library of reusable actions and templates that
+                      your entire team can access.
                     </dd>
                   </div>
                 </dl>
@@ -219,7 +258,9 @@ export default function IndexPage() {
                   Track automation performance
                 </p>
                 <p className="mt-6 text-lg leading-8 text-gray-600">
-                  Monitor your automation performance in real-time. Get detailed insights into workflow execution, errors, and optimization opportunities.
+                  Monitor your automation performance in real-time. Get detailed
+                  insights into workflow execution, errors, and optimization
+                  opportunities.
                 </p>
                 <dl className="mt-10 max-w-xl space-y-8 text-base leading-7 text-gray-600 lg:max-w-none">
                   <div className="relative pl-9">
@@ -235,7 +276,8 @@ export default function IndexPage() {
                     </dt>
                     <dd className="inline">
                       {" "}
-                      Get instant visibility into your automation performance and execution metrics.
+                      Get instant visibility into your automation performance
+                      and execution metrics.
                     </dd>
                   </div>
                 </dl>
