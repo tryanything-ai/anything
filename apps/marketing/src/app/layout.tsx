@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { ReactNode, Suspense, JSX } from "react";
 import { siteConfig } from "../config/site";
 import { cn } from "@/lib/utils";
-import { PHProvider, PostHogPageview } from "./providers";
+import { PostHogProvider } from "../posthog/provider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -65,10 +65,6 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <Suspense>
-        <PostHogPageview />
-      </Suspense>
-      {/* RB2B Script */}
       <Script
         id="reb2b-script"
         strategy="afterInteractive"
@@ -77,9 +73,9 @@ export default function RootLayout({
         }}
       />
       <body className="bg-background text-foreground">
-        <PHProvider>
-          <main className="min-h-screen">{children}</main>
-        </PHProvider>
+        <main className="min-h-screen">
+          <PostHogProvider>{children} </PostHogProvider>
+        </main>
       </body>
     </html>
   );
