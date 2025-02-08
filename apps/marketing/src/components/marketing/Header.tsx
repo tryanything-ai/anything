@@ -4,7 +4,7 @@ import { Dialog } from "@headlessui/react";
 import Link from "next/link";
 import { useState } from "react";
 import { VscClose, VscMenu } from "react-icons/vsc";
-import { FaDiscord } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
 import { Stargazer } from "@/components/ui/Stargazer";
 import ShimmerButton from "@repo/ui/components/magicui/shimmer-button";
 import { Button } from "@repo/ui/components/ui/button";
@@ -30,9 +30,9 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
     window.location.href = `https://app.${window.location.hostname.replace('www.', '')}/signup`;
   };
 
-  const handleDiscord = () => {
-    posthog.capture(MARKETING_EVENTS.DISCORD_CLICK);
-    window.location.href = "https://discord.gg/VRBKaqjprE";
+  const handleGithub = () => {
+    posthog.capture(MARKETING_EVENTS.GITHUB_CLICK);
+    window.location.href = "https://github.com/tryanything-ai/anything";
   };
 
   return (
@@ -70,7 +70,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             <Stargazer count={stargazers_count} />
           </div>
 
-          <Link
+          {/* <Link
             href="/templates/workflows"
             className="-m-1.5 p-1.5 lg:flex hidden"
             onClick={() => handleLinkClick(MARKETING_EVENTS.TEMPLATE_VIEW)}
@@ -89,7 +89,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             <div className="flex gap-2 ml-4">
               <span className="text-base font-medium">Integrations</span>
             </div>
-          </Link>
+          </Link> */}
         </div>
 
         <div className="flex items-center ml-auto">
@@ -142,7 +142,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               <VscClose className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <div className="flex items-center justify-between mt-10">
+          {/* <div className="flex items-center justify-between mt-10">
             <Link
               href="/templates/workflows"
               className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
@@ -165,9 +165,26 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
                 <span className="text-base font-medium">Integrations</span>
               </div>
             </Link>
-          </div>
+          </div> */}
 
-          <div className="flex items-center justify-between mt-10">
+   <div className="flex items-center justify-between mt-10">
+            <a
+              href="https://github.com/tryanything-ai/anything"
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
+              role="button"
+              tabIndex={0}
+              onClick={handleGithub}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleGithub();
+                }
+              }}
+            >
+              <span className="sr-only">GitHub</span>
+              <FaGithub className="h-6 w-6" aria-hidden="true" />
+            </a>
+          </div>
+          {/* <div className="flex items-center justify-between mt-10">
             <a
               href="https://discord.gg/VRBKaqjprE"
               className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
@@ -183,7 +200,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               <span className="sr-only">Discord</span>
               <FaDiscord className="h-6 w-6" aria-hidden="true" />
             </a>
-          </div>
+          </div> */}
         </Dialog.Panel>
       </Dialog>
     </header>

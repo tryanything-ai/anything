@@ -10,7 +10,6 @@ import HeroVideoDialog from "@repo/ui/components/magicui/hero-video-dialog";
 
 export default function IndexPage() {
   const headerList = headers();
-  const referringDomain = headerList.get("referer");
 
   return (
     <>

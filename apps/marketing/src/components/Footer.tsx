@@ -59,11 +59,11 @@ const navigation = {
         </svg>
       ),
     },
-    {
-      name: "Discord",
-      href: "https://discord.gg/VRBKaqjprE",
-      icon: (props: any) => <FaDiscord className="h-6 w-6" />,
-    },
+    // {
+    //   name: "Discord",
+    //   href: "https://discord.gg/VRBKaqjprE",
+    //   icon: (props: any) => <FaDiscord className="h-6 w-6" />,
+    // },
     // {
     //   name: 'YouTube',
     //   href: '#',
@@ -108,7 +108,7 @@ export function Footer() {
           ))}
         </div>
         <p className="mt-10 text-center text-xs leading-5 text-gray-500">
-          &copy; 2024 Anything Inc.
+          &copy; 2025 Anything Inc.
         </p>
       </div>
     </footer>
