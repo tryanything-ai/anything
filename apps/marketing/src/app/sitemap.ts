@@ -7,18 +7,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: any = [];
 
   //TODO: works for more than 1000? 100? idk
-  const templateResult = await api.marketplace.getWorkflowTemplatesForMarketplace();
+  // const templateResult = await api.marketplace.getWorkflowTemplatesForMarketplace();
 
-  if (templateResult) {
-    templateResult.forEach((template: any) =>
-      routes.push({
-        url: `${base_url}/templates/${template.slug}`,
-        lastModified: new Date(template.created_at),
-        changeFrequency: "monthly",
-        priority: 0.3,
-      })
-    );
-  }
+  // if (templateResult) {
+  //   templateResult.forEach((template: any) =>
+  //     routes.push({
+  //       url: `${base_url}/templates/${template.slug}`,
+  //       lastModified: new Date(template.created_at),
+  //       changeFrequency: "monthly",
+  //       priority: 0.3,
+  //     })
+  //   );
+  // }
 
   // const profileResult = await fetchProfiles();
 
@@ -42,20 +42,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   //templates
-  routes.push({
-    url: `${base_url}/templates/workflows`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.8,
-  });
+  // routes.push({
+  //   url: `${base_url}/templates/workflows`,
+  //   lastModified: new Date(),
+  //   changeFrequency: "weekly",
+  //   priority: 0.8,
+  // });
 
   //integrations aka action templates
-   routes.push({
-    url: `${base_url}/templates/actions`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.8,
-  });
+  //  routes.push({
+  //   url: `${base_url}/templates/actions`,
+  //   lastModified: new Date(),
+  //   changeFrequency: "weekly",
+  //   priority: 0.8,
+  // });
 
   return [...routes];
 }
