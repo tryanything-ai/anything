@@ -14,7 +14,6 @@ const ConsultingLink = "https://calendar.app.google/9gWy5xtDv3YkujAi7";
 
 export default function IndexPage() {
   const headerList = headers();
-  const referringDomain = headerList.get("referer");
 
   return (
     <>

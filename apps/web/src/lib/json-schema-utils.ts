@@ -83,3 +83,50 @@ export function getDefaultValuesFromFields(fields: any, initialValues: any) {
         };
     }, {});
 }
+
+
+/**
+ * Takes form fields and their values, returns a new object with default values applied
+ * where values are empty, null, or undefined
+ */
+export function applyDefaultValuesToEmptyFields(fields: any[], values: any) {
+    if (!Array.isArray(fields)) {
+        return values;
+    }
+
+    console.log("[APPLY DEFAULTS] Processing values:", { values });
+ 
+    let valuesWithDefaults = fields.reduce((acc: any, field: any) => {
+        const currentValue = values[field.name];
+        
+        // Check if value is empty/null/undefined
+        const isEmpty = currentValue === "" || currentValue === null || currentValue === undefined;
+        
+        console.log("[APPLY DEFAULTS] Processing field:", {
+            name: field.name,
+            currentValue,
+            isEmpty,
+            default: field.default
+        });
+
+        // If empty and has default, use default value
+        // Otherwise keep current value or empty string
+        const valueToUse = isEmpty && field.default !== undefined 
+            ? field.default 
+            : (currentValue || "");
+
+        console.log("[APPLY DEFAULTS] Setting value:", {
+            name: field.name,
+            valueToUse
+        });
+
+        return {
+            ...acc,
+            [field.name]: valueToUse
+        };
+    }, {});
+
+    console.log("[APPLY DEFAULTS] Values with defaults:", { valuesWithDefaults });
+    return valuesWithDefaults;
+}
+

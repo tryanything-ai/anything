@@ -1,7 +1,6 @@
 # How to start
 
 ```bash
-cd apps/web
 supabase start
 cd ...
 pnpm dev --filter=web

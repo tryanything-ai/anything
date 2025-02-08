@@ -58,9 +58,9 @@ export default function ConfigurationForm(): JSX.Element {
     return { fields: undefined, handleValidation: undefined };
   }, [selected_node_input, selected_node_input_schema]);
 
-  async function handleOnSubmit(jsonValues: any, { formValues }: any) {
+  async function handleOnSubmit(formValues: any) {
     await updateNodeData(["input"], [formValues]);
-    console.log("Submitted!", { formValues, jsonValues });
+    console.log("[CONFIGURATION FORM] Submitted!", formValues);
   }
 
   console.log("[RENDERING INPUTS FORM]");
@@ -91,6 +91,9 @@ export default function ConfigurationForm(): JSX.Element {
             name="configuration-form"
             onSubmit={handleOnSubmit}
             fields={fields}
+            formContext="configuration"
+            showVariablesExplorer={true}
+            showResultsExplorer={false}
             onFocus={(fieldName: string) => {
               if (explorerTab !== "variables") {
                 setExplorerTab("variables");

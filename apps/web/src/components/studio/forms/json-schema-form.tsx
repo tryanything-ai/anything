@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 import {
+  applyDefaultValuesToEmptyFields,
   formValuesToJsonValues,
   getDefaultValuesFromFields,
 } from "@/lib/json-schema-utils";
@@ -25,6 +26,8 @@ export function JsonSchemaForm({
   onFocus,
   // onBlur,
   disabled = false,
+  showVariablesExplorer = false,
+  showResultsExplorer = false,
 }: any): JSX.Element {
   const {
     explorer: { registerCallback, unRegisterCallback },
@@ -111,7 +114,18 @@ export function JsonSchemaForm({
         "[JSON SCHEMA FORM - SUBMIT] No errors, submitting:",
         jsonValues,
       );
-      onSubmit(jsonValues, { formValues: values });
+
+      // const valuesWithDefaults = applyDefaultValuesToEmptyFields(
+      //   fields,
+      //   values,
+      // );
+
+      // console.log(
+      //   "[JSON SCHEMA FORM - SUBMIT] Values with defaults:",
+      //   valuesWithDefaults,
+      // );
+
+      onSubmit(values);
       setHasUnsavedChanges(false);
     }
   };
@@ -157,8 +171,18 @@ export function JsonSchemaForm({
 
   const insertVariable = (variable: string) => {
     if (disabled) return;
+
     if (GLOBAL_ACTIVE_FORM_NAME !== name) {
       console.log("Not the active form");
+      return;
+    }
+
+    // Add check for JavaScript field type
+    const activeField = fields.find((f: any) => f.name === GLOBAL_ACTIVE_FIELD);
+    if (activeField?.inputType === "javascript_or_variable") {
+      alert(
+        "Variable insertion not supported for JavaScript fields. Use variables.variable_name in the javascript editor instead.",
+      );
       return;
     }
 
@@ -245,6 +269,8 @@ export function JsonSchemaForm({
                 isVisible={field.isVisible}
                 required={field.required}
                 provider={field.provider}
+                showVariablesExplorer={showVariablesExplorer}
+                showResultsExplorer={showResultsExplorer}
               />
             </div>
           );

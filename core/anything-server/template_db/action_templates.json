@@ -59,6 +59,7 @@
                 "title": "PATCH"
               }
             ],
+            "default": "GET",
             "x-jsf-presentation": {
               "inputType": "select_or_variable"
             }, 
@@ -70,6 +71,7 @@
            "title": "URL",
           "description": "URL for request",
           "type": "string",
+          "default": "",
           "x-jsf-presentation": {
             "inputType": "text"
           },
@@ -81,6 +83,7 @@
           "title": "Headers",
           "description": "Headers for request",
           "type": "object",
+          "default": "{}",
           "x-jsf-presentation": {
             "inputType": "object_or_variable"
           },
@@ -92,6 +95,7 @@
           "title": "Body",
           "description": "Body for request",
           "type": "object",
+          "default": "{}",
           "x-jsf-presentation": {
             "inputType": "object_or_variable"
           },
@@ -147,6 +151,7 @@
             "title": "Cron Expression",
             "description": "When to run the trigger",
             "type": "string",
+            "default": "0 0 * * * *",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -171,6 +176,7 @@
             "title": "Cron Expression",
             "description": "When to run the trigger",
             "type": "string",
+            "default": "{{variables.cron_expression}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -261,6 +267,7 @@
                   "title": "PATCH"
                 }
               ],
+              "default": "POST",
               "x-jsf-presentation": {
                 "inputType": "select_or_variable"
               }, 
@@ -302,6 +309,7 @@
               "title": "Username",
               "description": "Username for Basic Authentication",
               "type": "string",
+              "default": "",
               "x-jsf-presentation": {
                 "inputType": "text"
               },
@@ -313,6 +321,7 @@
               "title": "Password",
               "description": "Password for Basic Authentication",
               "type": "string",
+              "default": "",
               "x-jsf-presentation": {
                 "inputType": "text"
                 },
@@ -324,6 +333,7 @@
               "title": "Custom Header Name",
               "description": "Name of the custom header",
               "type": "string",
+              "default": "",
               "x-jsf-presentation": {
                 "inputType": "text"
               },
@@ -335,6 +345,7 @@
               "title": "Custom Header Value",
               "description": "Value of the custom header",
               "type": "string",
+              "default": "",
               "x-jsf-presentation": {
                 "inputType": "text"
               },
@@ -541,6 +552,7 @@
               {"const": "to_unix", "title": "Convert to Unix Timestamp"},
               {"const": "from_unix", "title": "Convert from Unix Timestamp"}
             ],
+            "default": "add_days",
             "x-jsf-presentation": {
               "inputType": "select_or_variable"
             },
@@ -552,6 +564,7 @@
             "title": "Date",
             "description": "Value to format",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -563,6 +576,7 @@
             "title": "Amount",
             "description": "Amount to add/subtract for date operations",
             "type": "string",
+            "default": 0,
             "x-jsf-presentation": {
               "inputType": "number_or_variable"
             },
@@ -574,6 +588,7 @@
             "title": "Format",
             "description": "Date format string",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -585,6 +600,7 @@
             "title": "Target Timezone",
             "description": "Target timezone for conversion",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -596,6 +612,7 @@
             "title": "Source Timezone",
             "description": "Source timezone for conversion",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -732,6 +749,7 @@
             "title": "Operation",
             "description": "Formatting operation to perform",
             "type": "string",
+            "default": "{{variables.operation}}",
             "x-jsf-presentation": {
               "inputType": "select_or_variable"
             },
@@ -743,6 +761,7 @@
             "title": "Input",
             "description": "Value to format",
             "type": "string",
+            "default": "{{variables.input}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -754,6 +773,7 @@
             "title": "Amount",
             "description": "Amount to add/subtract for date operations",
             "type": "string",
+            "default": "{{variables.amount}}",
             "x-jsf-presentation": {
               "inputType": "number_or_variable"
             },
@@ -765,6 +785,7 @@
             "title": "Format",
             "description": "Date format string",
             "type": "string",
+            "default": "{{variables.format}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -776,6 +797,7 @@
             "title": "Source Timezone",
             "description": "Source timezone for conversion",
             "type": "string",
+            "default": "{{variables.source_timezone}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -787,6 +809,7 @@
             "title": "Target Timezone",
             "description": "Target timezone for conversion",
             "type": "string",
+            "default": "{{variables.target_timezone}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -861,6 +884,7 @@
               {"const": "replace", "title": "Replace Text"},
               {"const": "substring", "title": "Substring"}
             ],
+            "default": "capitalize",
             "x-jsf-presentation": {
               "inputType": "select_or_variable"
             },
@@ -872,6 +896,7 @@
             "title": "Text",
             "description": "Text to format",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -883,6 +908,7 @@
             "title": "Pattern",
             "description": "Pattern to match for replace/extract operations",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -894,6 +920,7 @@
             "title": "Replacement",
             "description": "Replacement text for replace operation",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -905,6 +932,7 @@
             "title": "Start Index",
             "description": "Start index for substring operation",
             "type": "string",
+            "default": 0,
             "x-jsf-presentation": {
               "inputType": "number_or_variable"
             },
@@ -916,6 +944,7 @@
             "title": "End Index",
             "description": "End index for substring operation",
             "type": "string",
+            "default": 0,
             "x-jsf-presentation": {
               "inputType": "number_or_variable"
             },
@@ -993,6 +1022,7 @@
             "title": "Operation",
             "description": "Text formatting operation to perform",
             "type": "string",
+            "default": "{{variables.operation}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1004,6 +1034,7 @@
             "title": "Input",
             "description": "Text to format",
             "type": "string",
+            "default": "{{variables.input}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1015,6 +1046,7 @@
             "title": "Pattern",
             "description": "Pattern to match for replace/extract operations",
             "type": "string",
+            "default": "{{variables.pattern}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1026,6 +1058,7 @@
             "title": "Replacement",
             "description": "Replacement text for replace operation",
             "type": "string",
+            "default": "{{variables.replacement}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1037,6 +1070,7 @@
             "title": "Start Index",
             "description": "Start index for substring operation",
             "type": "number",
+            "default": "{{variables.start_index}}",
             "x-jsf-presentation": {
               "inputType": "number_or_variable"
             },
@@ -1048,6 +1082,7 @@
             "title": "End Index",
             "description": "End index for substring operation",
             "type": "number",
+            "default": "{{variables.end_index}}",
             "x-jsf-presentation": {
               "inputType": "number_or_variable"
             },
@@ -1150,6 +1185,7 @@
             "title": "Response Body",
             "description": "Content to send in response body",
             "type": "object",
+            "default": "{}",
             "x-jsf-presentation": {
               "inputType": "object_or_variable"
             },
@@ -1161,6 +1197,7 @@
             "title": "Response Body as text",
             "description": "Content to send in response body",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1172,6 +1209,7 @@
             "title": "Response Body as HTML",
             "description": "Content to send in response body",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "html_or_variable"
             },
@@ -1183,6 +1221,7 @@
             "title": "Response Body as XML",
             "description": "Content to send in response body",
             "type": "string",
+            "default": "",
             "x-jsf-presentation": {
               "inputType": "xml_or_variable"
             },
@@ -1273,6 +1312,7 @@
             "title": "Status Code",
             "description": "HTTP status code for the response",
             "type": "string",
+            "default": "{{variables.status_code}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1284,6 +1324,7 @@
             "title": "Content Type",
             "description": "Content type of the response",
             "type": "string",
+            "default": "{{variables.content_type}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1295,6 +1336,7 @@
             "title": "Response Body as text", 
             "description": "Content to send in response body",
             "type": "string",
+            "default": "{{variables.text_body}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -1306,6 +1348,7 @@
             "title": "Response Body as JSON", 
             "description": "Content to send in response body",
             "type": "object",
+            "default": "{{variables.json_body}}",
             "x-jsf-presentation": {
               "inputType": "object_or_variable"
             },
@@ -1317,6 +1360,7 @@
             "title": "Response Body as HTML", 
             "description": "Content to send in response body",
             "type": "string",
+            "default": "{{variables.html_body}}",
             "x-jsf-presentation": {
               "inputType": "html_or_variable"
             },
@@ -1328,6 +1372,7 @@
             "title": "Response Body as XML", 
             "description": "Content to send in response body",
             "type": "string",
+            "default": "{{variables.xml_body}}",
             "x-jsf-presentation": {
               "inputType": "xml_or_variable"
             },
@@ -1354,5 +1399,66 @@
         }
       ]
     }
-  }
+  },
+  {
+    "type": "action", 
+    "featured": false, 
+    "action_template_definition": 
+    {
+      "anything_action_version": "0.1.0",
+      "type": "action",
+      "plugin_id": "javascript",
+      "action_id": "javascript",
+      "plugin_version": "0.1.0",
+      "label": "JavaScript",
+      "description": "Run JavaScript code",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" aria-label=\"JavaScript\" role=\"img\" viewBox=\"0 0 512 512\"><rect width=\"512\" height=\"512\" rx=\"15%\" fill=\"#f7df1e\"/><path d=\"M324 370c10 17 24 29 47 29c20 0 33-10 33-24c0-16-13-22-35-32l-12-5c-35-15-58-33-58-72c0-36 27-64 70-64c31 0 53 11 68 39l-37 24c-8-15-17-21-31-21c-14 0-23 9-23 21c0 14 9 20 30 29l12 5c41 18 64 35 64 76c0 43-34 67-80 67c-45 0-74-21-88-49zm-170 4c8 13 14 25 31 25c16 0 26-6 26-30V203h48v164c0 50-29 72-72 72c-39 0-61-20-72-44z\"/></svg>",
+      "variables": {},
+      "variables_locked": false,
+      "variables_schema": {},
+      "variables_schema_locked": false,
+      "input": {
+        "code": ""
+      },
+      "input_locked": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+             "title": "Code",
+              "description": "JavaScript code to run",
+              "type": "string",
+              "default": "",
+              "x-jsf-presentation": {
+                "inputType": "javascript_or_variable"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
+          }
+        },
+        "x-jsf-order": ["code"],
+        "required": ["code"],
+        "additionalProperties": false
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a", 
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }}
   ]

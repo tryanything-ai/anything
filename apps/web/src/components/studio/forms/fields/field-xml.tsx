@@ -11,6 +11,9 @@ import CodeMirror, {
 import { xml } from "@codemirror/lang-xml";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
+import { Fullscreen } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
+import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
 
 class PropWidget extends WidgetType {
   private static activeWidgets = new Set<HTMLElement>();
@@ -107,6 +110,7 @@ export default function CodemirrorFieldXml({
 }: any) {
   const [editorValue, setEditorValue] = React.useState(value || "");
   const editorRef = React.useRef<any>(null);
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   const handleChange = React.useCallback(
     (val: string) => {
@@ -134,31 +138,57 @@ export default function CodemirrorFieldXml({
     }
   }, [value]);
 
+  // Add shared CodeMirror component config
+  const codeEditorProps = {
+    ref: editorRef,
+    value: editorValue,
+    onChange: handleChange,
+    onFocus: onFocus,
+    onClick: onClick,
+    onKeyUp: onKeyUp,
+    onUpdate: handleCursorActivity,
+    readOnly: disabled,
+    extensions: [xml(), propsPlugin],
+    basicSetup: {
+      lineNumbers: false,
+      foldGutter: false,
+      highlightActiveLine: false,
+    },
+  };
+
   if (!isVisible) {
     return null;
   }
 
   return (
     <div className="grid gap-3 my-2 w-full">
-      <Label htmlFor={name}>{label}</Label>
+      <div className="flex items-center justify-between">
+        <Label htmlFor={name}>
+          {label}{" "}
+          <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+            xml
+          </span>
+        </Label>
+      </div>
+
+      {/* Regular inline editor */}
       <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(true)}
+          className="absolute right-0 top-0 z-10"
+        >
+          <Fullscreen size={16} />
+        </Button>
         <CodeMirror
-          ref={editorRef}
-          value={editorValue}
-          onChange={handleChange}
-          onFocus={onFocus}
-          onClick={onClick}
-          onKeyUp={onKeyUp}
-          onUpdate={handleCursorActivity}
-          readOnly={disabled}
-          extensions={[xml(), propsPlugin]}
-          basicSetup={{
-            lineNumbers: false,
-            foldGutter: false,
-            highlightActiveLine: false,
-          }}
+          {...codeEditorProps}
+          className={cn(
+            "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
+            className,
+          )}
           style={{
-            minHeight: "2.5rem",
+            minHeight: "2.25rem",
             height: "auto",
             width: "100%",
             maxWidth: "100%",
@@ -168,13 +198,39 @@ export default function CodemirrorFieldXml({
             whiteSpace: "pre-wrap",
             boxSizing: "border-box",
             fontFamily: "monospace",
+            outline: "none",
           }}
-          className={cn(
-            "w-full overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-            className,
-          )}
         />
       </div>
+
+      {/* Expanded modal editor */}
+      <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+        <DialogContent className="max-w-[90vw] h-[90vh]">
+          <div className="h-full w-full">
+            <div className="flex items-center justify-between mb-3">
+              <Label htmlFor={name}>
+                {label}{" "}
+                <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+                  xml
+                </span>
+              </Label>
+            </div>
+            <CodeMirror
+              {...codeEditorProps}
+              className={cn(
+                "w-full h-full overflow-hidden rounded-md border border-input bg-background text-sm",
+                className,
+              )}
+              style={{
+                height: "95%",
+                width: "100%",
+                fontFamily: "monospace",
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {error && <div className="text-red-500">{error}</div>}
     </div>
   );

@@ -581,36 +581,55 @@ export const WorkflowVersionProvider = ({
   //TODO: INVESTIGATE THIS - I think we should have ACTIONS managed more seperate then NODES.
   //This is likely where we are causing weird issues with state.
   const parseJsonRecursively = (value: any): any => {
+    console.log(
+      "[UPDATE NODE DATA] Starting parseJsonRecursively with value:",
+      value,
+    );
+
     // If it's a string, try to parse it as JSON only if it starts with { or [
     if (typeof value === "string") {
+      console.log("[UPDATE NODE DATA] Processing string value:", value);
       const trimmed = value.trim();
       if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
         try {
-          return parseJsonRecursively(JSON.parse(value));
+          console.log("[UPDATE NODE DATA] Attempting to parse JSON string");
+          const parsed = parseJsonRecursively(JSON.parse(value));
+          console.log("[UPDATE NODE DATA] Successfully parsed JSON:", parsed);
+          return parsed;
         } catch (e) {
-          // If parsing fails, it's not valid JSON, return original value
+          console.log(
+            "[UPDATE NODE DATA] Failed to parse JSON, returning original string",
+          );
           return value;
         }
+      } else {
+        console.log("[UPDATE NODE DATA] Returning non-JSON string value");
+        return value;
       }
-      // Return original string value (including numeric strings)
-      return value;
     }
 
     // If it's an array, parse each element
     if (Array.isArray(value)) {
-      return value.map((item) => parseJsonRecursively(item));
+      console.log("[UPDATE NODE DATA] Processing array:", value);
+      const result = value.map((item) => parseJsonRecursively(item));
+      console.log("[UPDATE NODE DATA] Processed array result:", result);
+      return result;
     }
 
     // If it's an object, parse each value
     if (value && typeof value === "object") {
+      console.log("[UPDATE NODE DATA] Processing object:", value);
       const parsed: { [key: string]: any } = {};
       for (const key in value) {
+        console.log("[UPDATE NODE DATA] Processing object key:", key);
         parsed[key] = parseJsonRecursively(value[key]);
       }
+      console.log("[UPDATE NODE DATA] Processed object result:", parsed);
       return parsed;
     }
 
     // For all other types (number, boolean, null, undefined)
+    console.log("[UPDATE NODE DATA] Returning primitive value:", value);
     return value;
   };
 
@@ -619,28 +638,30 @@ export const WorkflowVersionProvider = ({
     data: any[],
   ): Promise<boolean> => {
     try {
-      console.log("[UPDATE NODE DATA SYNC] Before parsing:", update_key, data);
-
       const newNodes = cloneDeep(nodes);
       let updatedNodes = newNodes.map((node) => {
         if (node.id === selectedNodeId) {
           update_key.forEach((key, index) => {
+            console.log(
+              `[UPDATE NODE DATA] Before parsing ${key}:`,
+              data[index],
+            );
             // Parse any stringified JSON recursively
             const parsedValue = parseJsonRecursively(data[index]);
 
             console.log(
-              `[UPDATING NODE DATA] Updating Node Data in updateNodeData for ${node.id}:${key} with:`,
+              `[UPDATE NODE DATA] After parsing ${key}:`,
               parsedValue,
             );
             node.data[key] = parsedValue;
           });
-          console.log("NEW_DATA_FOR_NODE", node.data);
-          setSelectedNodeId(node.id);
+          console.log("[UPDATE NODE DATA] NEW_DATA_FOR_NODE", node.data);
+          // setSelectedNodeId(node.id);
         }
         return node;
       });
 
-      console.log("ALL_NEW_NODE_DATA", updatedNodes);
+      console.log("[UPDATE NODE DATA] ALL_NEW_NODE_DATA", updatedNodes);
 
       // Call saveFlowVersion with the latest state
       saveFlowVersionImmediate(updatedNodes, edges);
@@ -651,7 +672,7 @@ export const WorkflowVersionProvider = ({
       return true;
     } catch (error) {
       console.log(
-        "error writing node config in WorkflowVersionProvider",
+        "[UPDATE NODE DATA] error writing node config in WorkflowVersionProvider",
         error,
       );
       return false;
@@ -681,13 +702,13 @@ export const WorkflowVersionProvider = ({
     }
   };
 
-  const saveFlowVersionImmediate = (nodes: any, edges: any) => {
-    const workflow = makeUpdateFlow(nodes, edges);
+  const saveFlowVersionImmediate = (_nodes: any, _edges: any) => {
+    const _workflow = makeUpdateFlow(_nodes, _edges);
     setSavingStatus(SavingStatus.SAVING);
-    _saveFlowVersion(workflow);
+    _saveFlowVersion(_workflow);
   };
 
-  const _saveFlowVersion = async (workflow: Workflow) => {
+  const _saveFlowVersion = async (_workflow: Workflow) => {
     try {
       if (!dbFlowId || !dbFlowVersionId || !selectedAccount) {
         console.log(
@@ -701,7 +722,7 @@ export const WorkflowVersionProvider = ({
         selectedAccount.account_id,
         dbFlowId,
         dbFlowVersionId,
-        workflow,
+        _workflow,
       );
 
       console.log("Flow Version Saved!");

@@ -61,14 +61,13 @@ export default function CreateVariableForm(): JSX.Element {
     });
   }, [the_variable]);
 
-  async function handleOnSubmit(jsonValues: any, { formValues }: any) {
+  async function handleOnSubmit(formValues: any) {
     console.log(
       "[VARIABLES CONTEXT FORM]Submitting newly created variables",
-      jsonValues,
       formValues,
     );
     await variables.updateVariablesProperty(formValues);
-    console.log("Submitted!", { formValues, jsonValues });
+    console.log("Submitted!", formValues);
     variables.setEditingMode(EditVariableFormMode.INPUT);
   }
 

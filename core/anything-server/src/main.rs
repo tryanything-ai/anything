@@ -175,6 +175,7 @@ async fn main() {
     let (trigger_engine_signal, _) = watch::channel("".to_string());
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
+
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
@@ -368,7 +369,6 @@ pub async fn root() -> impl IntoResponse {
 
     // Spawn the hydrate processor
     tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
-
 
     let state_clone = state.clone();
     tokio::spawn(async move {
