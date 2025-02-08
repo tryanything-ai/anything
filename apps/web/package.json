@@ -12,7 +12,9 @@
     "gen-anything-supabase-types": "supabase gen types typescript --local > src/types/generated/supabase-anything-generated.ts"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.18.4",
     "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/lint": "^6.8.4",

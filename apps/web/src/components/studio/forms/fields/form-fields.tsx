@@ -24,12 +24,14 @@ import CodeMirrorFieldHtml from "./field-html";
 import CodemirrorFieldXml from "./field-xml";
 import CodeMirrorFieldNumber from "./field-number";
 import CodeMirrorFieldBoolean from "./field-boolean";
+import CodemirrorFieldJs from "./field-js";
 import { createClient } from "@/lib/supabase/client";
 
 export const fieldsMap: { [key: string]: any } = {
   //Deprecated inputs
   simple_text: ReactSimpleCodeEditorFieldText, //old text editor still used in ui some places but not in actually dynamic forms
   //Complex inputs
+  javascript_or_variable: CodemirrorFieldJs,
   number_or_variable: CodeMirrorFieldNumber,
   boolean_or_variable: CodeMirrorFieldBoolean,
   object_or_variable: CodeMirrorFieldJson,

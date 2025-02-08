@@ -9,14 +9,10 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Send, XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export function VariablesExplorer(): JSX.Element {
+// Base component that just handles the variables display
+export function BaseVariablesExplorer(): JSX.Element {
   const {
-    workflow: {
-      db_flow_id,
-      db_flow_version_id,
-      selected_node_data,
-      setShowExplorer,
-    },
+    workflow: { db_flow_id, db_flow_version_id, selected_node_data },
     explorer: { insertVariable },
   } = useAnything();
 
@@ -25,6 +21,7 @@ export function VariablesExplorer(): JSX.Element {
   const [loading, setLoading] = useState(false);
 
   const { selectedAccount } = useAccounts();
+
   const fetchResults = async () => {
     try {
       setLoading(true);
@@ -80,6 +77,45 @@ export function VariablesExplorer(): JSX.Element {
   }, [selected_node_data?.action_id]);
 
   return (
+    <div className="w-full">
+      {selected_node_data && selected_node_data.type !== ActionType.Trigger && (
+        <div className="w-full">
+          {loading && <div>Loading...</div>}
+          {!variables && !loading && (
+            <div className="text-muted-foreground">
+              Run Workflow Test Access Variables
+            </div>
+          )}
+          {renderedVariables && (
+            <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
+              <div className="p-3">
+                <div className="flex-1 font-bold mb-2">Variables</div>
+                <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
+                  <JsonExplorer
+                    parentPath={"variables."}
+                    data={renderedVariables}
+                    onSelect={(v) => {
+                      console.log(v);
+                      insertVariable(`{{${v}}}`);
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Wrapper component with layout controls
+export function VariablesExplorer(): JSX.Element {
+  const {
+    workflow: { setShowExplorer },
+  } = useAnything();
+
+  return (
     <div className="h-full w-full flex flex-col">
       <div className="pt-2 pl-2">
         <Button
@@ -93,38 +129,7 @@ export function VariablesExplorer(): JSX.Element {
       </div>
       <ScrollArea className="flex-1">
         <div className="px-2">
-          {selected_node_data &&
-            selected_node_data.type !== ActionType.Trigger && (
-              <div className="w-full">
-                {/* <Header /> */}
-                {loading && <div>Loading...</div>}
-                {!variables && !loading && (
-                  <div className="text-muted-foreground">
-                    Run Workflow Test Access Variables
-                  </div>
-                )}
-                {/* TODO: probably actually loop through the keys of variables and have an explorer for each */}
-                {renderedVariables && (
-                  <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
-                    <div className="p-3">
-                      <div className="flex-1 font-bold mb-2">Variables</div>
-                      <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
-                        <JsonExplorer
-                          parentPath={"variables."}
-                          data={renderedVariables}
-                          onSelect={(v) => {
-                            console.log(v);
-                            insertVariable(
-                              `{{${v}}}`, // Or whatever field name you're targeting
-                            );
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+          <BaseVariablesExplorer />
         </div>
       </ScrollArea>
     </div>

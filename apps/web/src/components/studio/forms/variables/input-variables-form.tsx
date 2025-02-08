@@ -69,16 +69,10 @@ export default function InputVariablesForm(): JSX.Element {
   }, [selected_node_variables, selected_node_variables_schema]);
 
   //Update Configuration
-  async function handleVariableInputSubmit(
-    jsonValues: any,
-    { formValues }: any,
-  ) {
-    console.log("[INPUT VARIABLES FORM] Submitting!", {
-      formValues,
-      jsonValues,
-    });
+  async function handleOnSubmit(formValues: any) {
+    console.log("[INPUT VARIABLES FORM] Submitting!", formValues);
+
     await updateNodeData(["variables"], [formValues]);
-    console.log("Submitted!", { formValues, jsonValues });
   }
 
   return (
@@ -89,7 +83,7 @@ export default function InputVariablesForm(): JSX.Element {
       ) : (
         <JsonSchemaForm
           name="input-variables-form"
-          onSubmit={handleVariableInputSubmit}
+          onSubmit={handleOnSubmit}
           fields={fields}
           onFocus={(fieldName: string) => {
             if (explorerTab !== "results") {
@@ -101,6 +95,8 @@ export default function InputVariablesForm(): JSX.Element {
           }}
           initialValues={selected_node_variables}
           handleValidation={handleValidation}
+          showVariablesExplorer={false}
+          showResultsExplorer={true}
         />
       )}
     </>

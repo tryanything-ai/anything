@@ -9,12 +9,9 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
 
-use crate::templater::Templater;
-
 use crate::bundler::accounts::fetch_cached_auth_accounts;
-
 use crate::bundler::secrets::get_decrypted_secrets;
-
+use crate::templater::Templater;
 use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
@@ -26,6 +23,26 @@ pub async fn bundle_tasks_cached_context(
     client: &Postgrest,
     task: &Task,
     refresh_auth: bool,
+) -> Result<(Value, Value), Box<dyn Error + Send + Sync>> {
+    println!("[BUNDLER] Starting to bundle context from parts");
+
+    let rendered_variables_definition =
+        bundle_tasks_cached_variables(state, client, task, refresh_auth).await?;
+
+    let input = task.config.input.as_ref();
+    let input_schema = task.config.input_schema.as_ref();
+
+    let rendered_inputs_definition =
+        bundle_inputs(rendered_variables_definition.clone(), input, input_schema)?;
+
+    Ok((rendered_variables_definition, rendered_inputs_definition))
+}
+
+pub async fn bundle_tasks_cached_variables(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    task: &Task,
+    refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
@@ -33,8 +50,6 @@ pub async fn bundle_tasks_cached_context(
     let flow_session_id = task.flow_session_id.to_string();
     let variables = task.config.variables.as_ref();
     let variables_schema = task.config.variables_schema.as_ref();
-    let input = task.config.input.as_ref();
-    let input_schema = task.config.input_schema.as_ref();
 
     let rendered_variables_definition = bundle_cached_variables(
         state,
@@ -43,13 +58,11 @@ pub async fn bundle_tasks_cached_context(
         &flow_session_id,
         variables,
         variables_schema,
-        // input,
-        // input_schema,
         refresh_auth,
     )
     .await?;
 
-    bundle_inputs(rendered_variables_definition, input, input_schema)
+    Ok(rendered_variables_definition)
 }
 
 pub async fn bundle_context_from_parts(
@@ -223,7 +236,8 @@ fn extract_template_key_validations_from_schema(
         if let Some(properties) = &schema.properties {
             for (property_name, property_schema) in properties {
                 if let Some(validation) = &property_schema.x_any_validation {
-                    template_key_validations.insert(property_name.clone(), validation.r#type.clone());
+                    template_key_validations
+                        .insert(property_name.clone(), validation.r#type.clone());
                 }
             }
         }
