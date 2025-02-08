@@ -20,18 +20,18 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
     posthog.capture(eventName);
   };
 
-  const handleLogin = () => {
-    posthog.capture(MARKETING_EVENTS.LOGIN_CLICK);
+  const handleLogin = async () => {
+    await posthog.capture(MARKETING_EVENTS.LOGIN_CLICK);
     window.location.href = `https://app.${window.location.hostname.replace("www.", "")}/login`;
   };
 
-  const handleSignup = () => {
-    posthog.capture(MARKETING_EVENTS.SIGNUP_CLICK);
+  const handleSignup = async () => {
+    await posthog.capture(MARKETING_EVENTS.SIGNUP_CLICK);
     window.location.href = `https://app.${window.location.hostname.replace("www.", "")}/signup`;
   };
 
-  const handleGithub = () => {
-    posthog.capture(MARKETING_EVENTS.GITHUB_CLICK);
+  const handleGithub = async () => {
+    await posthog.capture(MARKETING_EVENTS.GITHUB_CLICK);
     window.location.href = "https://github.com/tryanything-ai/anything";
   };
 
