@@ -1,28 +1,28 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { usePostHog } from "posthog-js/react";
+import { AUTH_EVENTS } from "@/posthog/events";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import OrbitingCirclesIntegrations from "@repo/ui/components/magicui/orbiting-circles-integrations";
 
-export const description =
-  "A login page with two columns. The first column has the login form with email and password. There's a Forgot your password link and a link to sign up if you do not have an account. The second column has a cover image.";
-
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const returnUrl = searchParams.get("returnUrl");
+  const posthog = usePostHog();
 
   useEffect(() => {
     setIsLogin(pathname === "/login");
@@ -30,20 +30,27 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
     const supabase = await createClient();
 
     if (isLogin) {
+      posthog.capture(AUTH_EVENTS.LOGIN_ATTEMPT, { email });
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        setIsLoading(false);
         setMessage("Could not authenticate user");
+        posthog.capture(AUTH_EVENTS.LOGIN_ERROR, { error: error.message });
       } else {
+        posthog.capture(AUTH_EVENTS.LOGIN_SUCCESS, { email });
         router.push(returnUrl || "/");
       }
     } else {
+      posthog.capture(AUTH_EVENTS.SIGNUP_ATTEMPT, { email });
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -53,11 +60,16 @@ const AuthPage = () => {
       });
 
       if (error) {
+        setIsLoading(false);
         setMessage("Could not create user");
+        posthog.capture(AUTH_EVENTS.SIGNUP_ERROR, { error: error.message });
       } else {
+        setIsLoading(false);
         setMessage("Check email to continue sign in process");
+        posthog.capture(AUTH_EVENTS.EMAIL_VERIFICATION_SENT, { email });
       }
     }
+   
   };
 
   return (
@@ -98,8 +110,15 @@ const AuthPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
-              {isLogin ? "Login" : "Sign Up"}
+            <Button disabled={isLoading} type="submit" className="w-full">
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  {isLogin ? "Logging in..." : "Signing up..."}
+                </div>
+              ) : (
+                <>{isLogin ? "Login" : "Sign Up"}</>
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
