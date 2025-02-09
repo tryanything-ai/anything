@@ -233,8 +233,8 @@ pub async fn root() -> impl IntoResponse {
     .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
 
     // API Routes for running workflows - some protection done at api.rs vs route level
-    .route("/api/v1/workflow/:workflow_id/start/respond", any(system_actions::webhook_trigger::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/start", any(system_actions::webhook_trigger::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/start/respond", any(system_actions::webhook_trigger::run_workflow_and_respond))
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", any(system_actions::webhook_trigger::run_workflow_version))
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_actions::webhook_trigger::run_workflow_version_and_respond));
 

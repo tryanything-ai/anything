@@ -4,6 +4,8 @@ use serde_json::Value;
 
 use crate::AppState;
 
+//TODO: Something in here I thik is what makes it so we can only support returning JSON from webhooks.
+//For now just going to make webhooks only return json
 pub async fn process_response_task(
     state: Arc<AppState>,
     flow_session_id: String,
@@ -43,7 +45,7 @@ pub async fn process_response_task(
                 input.to_string()
             },
         ];
-    
+
         // Try each cleaning strategy
         for (i, attempt) in attempts.iter().enumerate() {
             match serde_json::from_str(attempt) {
@@ -52,7 +54,7 @@ pub async fn process_response_task(
                         "[DEEP PARSE JSON IN RESPONSE] Successfully parsed JSON using strategy {}",
                         i + 1
                     );
-    
+
                     // Recursively clean any string values that might be JSON
                     fn clean_recursive(value: &mut Value) {
                         match value {
@@ -68,8 +70,9 @@ pub async fn process_response_task(
                             }
                             Value::String(s) => {
                                 // Only try to parse if it looks like JSON
-                                if (s.starts_with('{') && s.ends_with('}')) 
-                                    || (s.starts_with('[') && s.ends_with(']')) {
+                                if (s.starts_with('{') && s.ends_with('}'))
+                                    || (s.starts_with('[') && s.ends_with(']'))
+                                {
                                     if let Ok(parsed) = serde_json::from_str(s) {
                                         *value = parsed;
                                     }
@@ -78,14 +81,14 @@ pub async fn process_response_task(
                             _ => {}
                         }
                     }
-    
+
                     clean_recursive(&mut parsed);
                     return Ok(parsed);
                 }
                 Err(_) => continue,
             }
         }
-    
+
         // If all parsing attempts fail, return the original input as a string Value
         Ok(Value::String(input.to_string()))
     }

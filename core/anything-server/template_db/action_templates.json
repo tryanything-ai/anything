@@ -1168,10 +1168,7 @@
             "description": "Content type of the response",
             "type": "string",
             "oneOf": [
-              {"value": "text/plain", "title": "Plain Text"},
-              {"value": "application/json", "title": "JSON"},
-              {"value": "text/html", "title": "HTML"},
-              {"value": "text/xml", "title": "XML"}
+              {"value": "application/json", "title": "JSON"}
             ],
             "default": "application/json",
             "x-jsf-presentation": {

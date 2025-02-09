@@ -25,7 +25,7 @@ use crate::types::{
 #[derive(Debug, Clone)]
 pub struct ProcessorMessage {
     pub workflow_id: Uuid,
-    pub version_id: Option<Uuid>, //When we are calling a workflow from a webhook, we don't have a version id
+    pub version_id: Option<Uuid>, 
     pub flow_session_id: Uuid,
     pub trigger_task: Option<CreateTaskInput>,
 }
