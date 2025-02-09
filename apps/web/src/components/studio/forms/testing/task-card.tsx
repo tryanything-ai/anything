@@ -43,12 +43,16 @@ export const TaskResult = React.memo(
             {task.action_label}
           </div>
         </div>
-        {(task.result || task.context) && (
+        {(task.result || task.error || task.context) && (
           <div className="">
-            <Tabs defaultValue="result" className="w-full">
+            <Tabs defaultValue={task.error ? "error" : "result"} className="w-full">
               <div className="flex items-center">
                 <TabsList className="mr-2">
-                  <TabsTrigger value="result">Results</TabsTrigger>
+                  {task.error ? (
+                    <TabsTrigger value="error">Error</TabsTrigger>
+                  ) : (
+                    <TabsTrigger value="result">Results</TabsTrigger>
+                  )}
                   <TabsTrigger value="context">Config</TabsTrigger>
                 </TabsList>
                 <TaskStatus
@@ -57,16 +61,27 @@ export const TaskResult = React.memo(
                   ended_at={task.ended_at}
                 />
               </div>
-              <TabsContent value="result">
-                {task.result && (
+              {task.error ? (
+                <TabsContent value="error">
                   <div>
                     <ResultComponent
-                      result={task.result}
+                      result={task.error}
                       collapseStringsAfterLength={20}
                     />
                   </div>
-                )}
-              </TabsContent>
+                </TabsContent>
+              ) : (
+                <TabsContent value="result">
+                  {task.result && (
+                    <div>
+                      <ResultComponent
+                        result={task.result}
+                        collapseStringsAfterLength={20}
+                      />
+                    </div>
+                  )}
+                </TabsContent>
+              )}
               <TabsContent value="context">
                 {task.context && (
                   <div>

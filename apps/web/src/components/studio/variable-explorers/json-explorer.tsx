@@ -73,9 +73,11 @@ function JsonValue({
             {keyName}
           </Button>
           <span className="ml-2 text-gray-400">
-            {Array.isArray(value)
-              ? `[${value.length} item${value.length !== 1 ? "s" : ""}]`
-              : `{${Object.keys(value).length} value${Object.keys(value).length !== 1 ? "s" : ""}}`}
+            {Array.isArray(value) 
+              ? `[${value.length} item${value.length === 1 ? "" : "s"}]`
+              : value === null || value === undefined
+                ? "{empty}"
+                : `{${Object.keys(value).length} value${Object.keys(value).length === 1 ? "" : "s"}}`}
           </span>
         </div>
         {isExpanded && (

@@ -23,6 +23,7 @@ export interface TaskRow {
     ended_at?: string;
     debug_result?: Record<string, any>;
     result?: Record<string, any>;
+    error?: Record<string, any>;
     archived: boolean;
     updated_at?: string;
     created_at?: string;

@@ -32,6 +32,8 @@ pub struct UpdateTaskInput {
     pub result: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<Value>,
 }
 
 pub async fn get_workflow_definition(
@@ -208,6 +210,7 @@ pub async fn update_task_status(
     status: &TaskStatus,
     context: Option<Value>,
     result: Option<Value>,
+    error: Option<Value>,
 ) -> Result<(), String> {
     println!(
         "[PROCESSOR DB CALLS] Updating task {} status to {}",
@@ -243,6 +246,7 @@ pub async fn update_task_status(
         ended_at,
         result,
         context: cleaned_context,
+        error,
     };
 
     state

@@ -25,7 +25,7 @@ use crate::types::{
 #[derive(Debug, Clone)]
 pub struct ProcessorMessage {
     pub workflow_id: Uuid,
-    pub version_id: Option<Uuid>, 
+    pub version_id: Option<Uuid>,
     pub flow_session_id: Uuid,
     pub trigger_task: Option<CreateTaskInput>,
 }
@@ -384,6 +384,7 @@ pub async fn processor(
                                     &task_id,
                                     &TaskStatus::Failed,
                                     Some(error_clone.context),
+                                    None,
                                     Some(error_clone.error),
                                 )
                                 .await
@@ -452,6 +453,7 @@ pub async fn processor(
                         &TaskStatus::Completed,
                         Some(bundled_context_clone),
                         task_result_clone.clone(),
+                        None,
                     )
                     .await
                     {
