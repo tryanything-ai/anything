@@ -63,7 +63,11 @@ function JsonValue({
             className="p-0 h-6 w-6 mr-1"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
           </Button>
           <Button
             variant="ghost"
@@ -73,7 +77,7 @@ function JsonValue({
             {keyName}
           </Button>
           <span className="ml-2 text-gray-400">
-            {Array.isArray(value) 
+            {Array.isArray(value)
               ? `[${value.length} item${value.length === 1 ? "" : "s"}]`
               : value === null || value === undefined
                 ? "{empty}"
@@ -129,7 +133,9 @@ export function JsonExplorer({
 
   return (
     <>
-      {Object.entries(data).length === 0 ? (
+      {!data ? (
+        <div className="text-gray-400">{"No data"}</div>
+      ) : Object.entries(data).length === 0 ? (
         <div className="text-gray-400">{"No results"}</div>
       ) : (
         Object.entries(data).map(([key, value]) => (

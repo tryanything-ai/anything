@@ -35,23 +35,29 @@ pub async fn process_js_task(
             // Inject variables into globalThis.variables to match autocomplete
             Object.assign(globalThis, {{ variables: {} }});
 
-            // Export the user's code as default function and wrap the return value
+            // Export the user's code as default function and let errors propagate
             export default () => {{
                 try {{
                     const result = (() => {{
                         {js_code}
                     }})();
                     
-                    return {{
-                        success: true,
-                        result: result,
-                        error: null
-                    }};
+                    // Ensure the user returned a value
+                    if (result === undefined) {{
+                        return {{ internal_error: 'Please explicitly return a value in your code' }};
+                    }}
+
+                    // If result is not an object, wrap it in an object
+                    if (result === null || typeof result !== 'object') {{
+                        return {{ result }};
+                    }}
+                    
+                    return result;
                 }} catch (error) {{
-                    return {{
-                        success: false,
-                        result: null,
-                        error: error.toString()
+                    return {{ 
+                        internal_error: `JavaScript execution error: ${{error.message}}`,
+                        error_type: error.name,
+                        error_stack: error.stack
                     }};
                 }}
             }}
@@ -69,7 +75,7 @@ pub async fn process_js_task(
         let script_start = Instant::now();
         println!("[RUSTYSCRIPT] Starting script execution");
 
-        let result = Runtime::execute_module(
+        let result: Value = Runtime::execute_module(
             &module,
             vec![], // No additional modules needed
             RuntimeOptions {
@@ -78,6 +84,13 @@ pub async fn process_js_task(
             },
             json_args!(), // No arguments needed since we inject via globalThis
         )?;
+
+        // Check if the result is our error object and convert it to a Rust error
+        if let Some(error) = result.get("internal_error") {
+            if let Some(error_msg) = error.as_str() {
+                return Err(error_msg.into());
+            }
+        }
 
         println!(
             "[RUSTYSCRIPT] Script execution completed in {:?}",

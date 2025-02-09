@@ -33,7 +33,8 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
     let state_clone = Arc::clone(&state);
 
     // Bundle context with results from cache
-    let bundled_context_result = bundle_tasks_cached_context(state, client, task, true).await;
+    let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
+        bundle_tasks_cached_context(state, client, task, true).await;
 
     let http_client = state_clone.http_client.clone();
 
