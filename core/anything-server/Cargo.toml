@@ -20,7 +20,7 @@ slugify = "0.1.0"
 tokio = { version = "1.38.0", features = ["full"] }
 tower-http = { version = "0.5.0", features = ["cors", "set-header"] }
 reqwest = { version = "0.11", features = ["json"] }
-openssl = { version = "0.10", features = ["vendored"] }
+openssl = "0.10"
 openssl-sys = "0.9"
 regex = "1.10.6"
 rand = "0.8.5"
@@ -31,8 +31,11 @@ tracing = "0.1.40"
 pulldown-cmark = "0.12.2"
 html2md = "0.2.14"
 async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
+deno_core = "0.324.0"
+deno_runtime = "0.191.0"
 env_logger = "0.11.5"
 log = "0.4.22"
+deno_ast =  { version = "0.43.1", features = ["transpiling"] }
 anyhow = "1.0.94"
 serde_v8 = "0.235.0"
 rustyscript = "0.11.0"
