@@ -1,6 +1,10 @@
 [phases.install]
 env = { V8_FROM_SOURCE = "1", RUSTY_V8_MIRROR = "https://github.com/denoland/rusty_v8/releases/download" }
 aptPkgs = ["pkg-config", "libssl-dev", "build-essential", "python3", "curl", "git", "unzip", "libc6"]
+cmds = [
+    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
+    "source $HOME/.cargo/env"
+]
 
 providers = [
   "rust", 
@@ -9,3 +13,6 @@ providers = [
 
 [phases.setup]
 nixPkgs = ["glibc"]
+
+[phases.build]
+cmds = ["cargo build --release"]
