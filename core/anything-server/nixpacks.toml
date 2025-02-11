@@ -1,0 +1,23 @@
+[phases.setup]
+aptPkgs = [
+  "pkg-config",
+  "libssl-dev",
+  "build-essential",
+  "curl",
+  "git",
+  "python3",
+  "python3-pip",
+  "nodejs",
+  "npm"
+]
+
+[phases.build]
+cmds = [
+  "ln -s /usr/bin/python3 /usr/bin/python",
+  "cargo build --release"
+]
+
+[variables]
+RUSTY_V8_MIRROR = "https://github.com/denoland/rusty_v8/releases/download"
+V8_FROM_SOURCE = "1"
+RUST_BACKTRACE = "1"
