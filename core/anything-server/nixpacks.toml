@@ -1,23 +1,31 @@
 [phases.setup]
-aptPkgs = [
+nixPkgs = [
   "pkg-config",
-  "libssl-dev",
-  "build-essential",
+  "openssl.dev",
+  "gcc",
   "curl",
   "git",
   "python3",
-  "python3-pip",
-  "nodejs",
-  "npm"
+  "nodejs-18_x",
+]
+
+[phases.install]
+cmds = [
+  "ln -sf /usr/bin/python3 /usr/bin/python"
 ]
 
 [phases.build]
 cmds = [
-  "ln -s /usr/bin/python3 /usr/bin/python",
   "cargo build --release"
 ]
+
+[start]
+cmd = "./target/release/anything-server"
 
 [variables]
 RUSTY_V8_MIRROR = "https://github.com/denoland/rusty_v8/releases/download"
 V8_FROM_SOURCE = "1"
 RUST_BACKTRACE = "1"
+OPENSSL_DIR = "/nix/store"
+OPENSSL_LIB_DIR = "/nix/store"
+OPENSSL_INCLUDE_DIR = "/nix/store"
