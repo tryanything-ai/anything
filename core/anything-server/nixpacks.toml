@@ -1,7 +1,11 @@
 [phases.install]
-env = { V8_FROM_SOURCE = "1" }
+env = { V8_FROM_SOURCE = "1", RUSTY_V8_MIRROR = "https://github.com/denoland/rusty_v8/releases/download" }
+aptPkgs = ["pkg-config", "libssl-dev", "build-essential", "python3", "curl", "git", "unzip", "libc6"]
 
 providers = [
   "rust", 
   "python"
 ]
+
+[phases.setup]
+nixPkgs = ["glibc"]
