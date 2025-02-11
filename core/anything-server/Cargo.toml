@@ -31,11 +31,8 @@ tracing = "0.1.40"
 pulldown-cmark = "0.12.2"
 html2md = "0.2.14"
 async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
-deno_core = "0.324.0"
-deno_runtime = "0.191.0"
 env_logger = "0.11.5"
 log = "0.4.22"
-deno_ast =  { version = "0.43.1", features = ["transpiling"] }
 anyhow = "1.0.94"
 serde_v8 = "0.235.0"
 rustyscript = "0.11.0"
