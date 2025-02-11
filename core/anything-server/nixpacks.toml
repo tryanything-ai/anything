@@ -3,6 +3,7 @@ ENV = {
   "V8_FROM_SOURCE" = "1"
 }
 
-packages = [
-  "python3"
+providers = [
+  "rust", 
+  "python"
 ]
