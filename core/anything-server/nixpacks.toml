@@ -1,7 +1,5 @@
 [phases.install]
-ENV = {
-  "V8_FROM_SOURCE" = "1"
-}
+env = { V8_FROM_SOURCE = "1" }
 
 providers = [
   "rust", 
