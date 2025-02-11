@@ -1,0 +1,8 @@
+[phases.install]
+ENV = {
+  "V8_FROM_SOURCE" = "1"
+}
+
+packages = [
+  "python3"
+]
