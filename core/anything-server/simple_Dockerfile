@@ -1,0 +1,19 @@
+FROM rust:1.83.0-bullseye as builder
+
+RUN cargo new  --bin anything-server
+WORKDIR ./anything-server
+
+COPY ./Cargo.toml ./Cargo.toml
+
+COPY ./src ./src
+
+RUN cargo build --release
+
+COPY ./src ./src
+
+RUN cargo build --release
+
+FROM centos:latest
+
+COPY --from=builder /anything-server/target/release/anything-server ./anything-server
+CMD ["./anything-server"]
