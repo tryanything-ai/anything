@@ -33,11 +33,11 @@ RUN cargo build --release
 FROM debian:bullseye-slim
 
 
-
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -47,6 +47,9 @@ COPY --from=builder /usr/src/app/target/release/anything-server /app/anything-se
 
 # Expose the port your server listens on
 EXPOSE 3001
+
+# Add environment variable for CORS
+ENV CORS_ALLOWED_ORIGIN="https://app.tryanything.xyz"
 
 # Set the binary as the entrypoint
 ENTRYPOINT ["/app/anything-server"]
