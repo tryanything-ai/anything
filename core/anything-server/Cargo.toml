@@ -2,6 +2,7 @@
 name = "anything-server"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.83.0" 
 
 [dependencies]
 axum = "0.7.5"
