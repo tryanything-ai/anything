@@ -95,8 +95,7 @@ async fn main() {
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
     let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
-    let port = env::var("PORT").unwrap_or_else(|_| "3001".to_string());
-    let bind_address = format!("0.0.0.0:{}", port);
+    let bind_address = "0.0.0.0:3001".to_string();
 
     //Anything Schema for Application
     let anything_client = Arc::new(
