@@ -43,5 +43,8 @@ WORKDIR /app
 # Copy the binary from builder
 COPY --from=builder /usr/src/app/target/release/anything-server /app/anything-server
 
+# Expose the port your server listens on
+EXPOSE 3001
+
 # Set the binary as the entrypoint
 ENTRYPOINT ["/app/anything-server"]
