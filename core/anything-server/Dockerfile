@@ -9,11 +9,9 @@ COPY ./src ./src
 
 RUN cargo build --release
 
-COPY ./src ./src
+FROM debian:bullseye-slim
 
-RUN cargo build --release
-
-FROM centos:latest
+RUN apt-get update && apt-get install -y libssl1.1 ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /anything-server/target/release/anything-server ./anything-server
 CMD ["./anything-server"]
