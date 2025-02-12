@@ -17,3 +17,5 @@ FROM centos:latest
 
 COPY --from=builder /anything-server/target/release/anything-server ./anything-server
 CMD ["./anything-server"]
+
+EXPOSE 3001
