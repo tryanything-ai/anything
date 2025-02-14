@@ -267,10 +267,10 @@ export const WorkflowVersionProvider = ({
 
     //New triggger node old position
     let updatedTriggerNode: Node = {
-      id: new_trigger.plugin_id,
+      id: new_trigger.action_id,
       type: "anything",
       position: triggerNode.position,
-      data: { ...new_trigger, action_id: new_trigger.plugin_id },
+      data: { ...new_trigger, },
     };
 
     console.log("[CHANGE TRIGGER] New Trigger Node", updatedTriggerNode);

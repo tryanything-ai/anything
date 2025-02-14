@@ -15,9 +15,6 @@ RUN apt-get update && apt-get install -y libssl1.1 ca-certificates && rm -rf /va
 # Copy the binary from builder
 COPY --from=builder /anything-server/target/release/anything-server ./anything-server
 
-# Copy the template_db directory
-COPY ./template_db ./template_db
-
 CMD ["./anything-server"]
 
 EXPOSE 3001

@@ -6,7 +6,7 @@ use crate::AppState;
 
 //TODO: Something in here I thik is what makes it so we can only support returning JSON from webhooks.
 //For now just going to make webhooks only return json
-pub async fn process_response_task(
+pub async fn process_webhook_response_task(
     state: Arc<AppState>,
     flow_session_id: String,
     bundled_context: &Value,

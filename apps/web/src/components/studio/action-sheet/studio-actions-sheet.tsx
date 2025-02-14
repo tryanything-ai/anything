@@ -151,7 +151,7 @@ export function StudioActionsSheet(): JSX.Element {
             <TabsList>
               <TabsTrigger value="triggers">Triggers</TabsTrigger>
               <TabsTrigger value="actions">Actions</TabsTrigger>
-              <TabsTrigger value="other">Other</TabsTrigger>
+              <TabsTrigger value="responses">Responses</TabsTrigger>
             </TabsList>
 
             {addingJson ? (
@@ -272,7 +272,7 @@ export function StudioActionsSheet(): JSX.Element {
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="other" className="h-full">
+                <TabsContent value="responses" className="h-full">
                   <ScrollArea className="h-full pr-4 pb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {other &&

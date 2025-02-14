@@ -11,11 +11,6 @@ use std::sync::Arc;
 use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 
-use std::env;
-
-use std::fs::File;
-use std::io::BufReader;
-
 use crate::system_plugins::registry;
 
 // Actions
@@ -138,57 +133,6 @@ pub async fn get_actions(
         }
     };
 
-    // Log the current working directory
-    // println!("Logging the current working directory");
-    // let current_dir = match env::current_dir() {
-    //     Ok(path) => {
-    //         println!("Current directory: {}", path.display());
-    //         path
-    //     }
-    //     Err(e) => {
-    //         println!("Failed to get current directory: {}", e);
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to get current directory",
-    //         )
-    //             .into_response();
-    //     }
-    // };
-
-    // Load data from the JSON file
-    // let json_file_path = current_dir.join("template_db/action_templates.json");
-    // println!("Loading data from the JSON file at {:?}", json_file_path);
-    // let file = match File::open(&json_file_path) {
-    //     Ok(file) => {
-    //         println!("Successfully opened JSON file");
-    //         file
-    //     }
-    //     Err(err) => {
-    //         eprintln!("Failed to open JSON file: {:?}", err);
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to open JSON file",
-    //         )
-    //             .into_response();
-    //     }
-    // };
-
-    // println!("Reading JSON file");
-    // let reader = BufReader::new(file);
-    // let json_items: Value = match serde_json::from_reader(reader) {
-    //     Ok(items) => {
-    //         // println!("Successfully parsed JSON file: {:?}", items);
-    //         items
-    //     }
-    //     Err(err) => {
-    //         eprintln!("Failed to parse JSON file: {:?}", err);
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to parse JSON file",
-    //         )
-    //             .into_response();
-    //     }
-    // };
 
     // Load schema templates from the registry
     let json_items = match registry::load_schema_templates() {
@@ -245,53 +189,17 @@ pub async fn get_triggers(
 ) -> impl IntoResponse {
     println!("Handling a get_actions");
 
-    // Log the current working directory
-    println!("Logging the current working directory");
-    let current_dir = match env::current_dir() {
-        Ok(path) => {
-            println!("Current directory: {}", path.display());
-            path
-        }
-        Err(e) => {
-            println!("Failed to get current directory: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get current directory",
-            )
-                .into_response();
-        }
-    };
-
-    // Load data from the JSON file
-    let json_file_path = current_dir.join("template_db/action_templates.json");
-    println!("Loading data from the JSON file at {:?}", json_file_path);
-    let file = match File::open(&json_file_path) {
-        Ok(file) => {
-            println!("Successfully opened JSON file");
-            file
+      // Load schema templates from the registry
+      let json_items = match registry::load_schema_templates() {
+        Ok(templates) => {
+            println!("Successfully loaded schema templates");
+            Value::Array(templates)
         }
         Err(err) => {
-            eprintln!("Failed to open JSON file: {:?}", err);
+            eprintln!("Failed to load schema templates: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to open JSON file",
-            )
-                .into_response();
-        }
-    };
-
-    println!("Reading JSON file");
-    let reader = BufReader::new(file);
-    let json_items: Value = match serde_json::from_reader(reader) {
-        Ok(items) => {
-            // println!("Successfully parsed JSON file: {:?}", items);
-            items
-        }
-        Err(err) => {
-            eprintln!("Failed to parse JSON file: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse JSON file",
+                "Failed to load schema templates",
             )
                 .into_response();
         }
@@ -323,54 +231,17 @@ pub async fn get_other_actions(
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!("Handling get_other_actions");
-
-    // Log the current working directory
-    println!("Logging the current working directory");
-    let current_dir = match env::current_dir() {
-        Ok(path) => {
-            println!("Current directory: {}", path.display());
-            path
-        }
-        Err(e) => {
-            println!("Failed to get current directory: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get current directory",
-            )
-                .into_response();
-        }
-    };
-
-    // Load data from the JSON file
-    let json_file_path = current_dir.join("template_db/action_templates.json");
-    println!("Loading data from the JSON file at {:?}", json_file_path);
-    let file = match File::open(&json_file_path) {
-        Ok(file) => {
-            println!("Successfully opened JSON file");
-            file
+      // Load schema templates from the registry
+      let json_items = match registry::load_schema_templates() {
+        Ok(templates) => {
+            println!("Successfully loaded schema templates");
+            Value::Array(templates)
         }
         Err(err) => {
-            eprintln!("Failed to open JSON file: {:?}", err);
+            eprintln!("Failed to load schema templates: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to open JSON file",
-            )
-                .into_response();
-        }
-    };
-
-    println!("Reading JSON file");
-    let reader = BufReader::new(file);
-    let json_items: Value = match serde_json::from_reader(reader) {
-        Ok(items) => {
-            // println!("Successfully parsed JSON file: {:?}", items);
-            items
-        }
-        Err(err) => {
-            eprintln!("Failed to parse JSON file: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse JSON file",
+                "Failed to load schema templates",
             )
                 .into_response();
         }

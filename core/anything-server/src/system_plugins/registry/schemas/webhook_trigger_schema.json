@@ -4,7 +4,7 @@
     "action_template_definition": {
       "anything_action_version": "0.1.0",
       "type": "trigger",
-      "plugin_name": "@anything/webhook",
+    "plugin_name": "@anything/webhook",
       "plugin_version": "0.1.0",
       "action_id": "webhook",
       "label": "Webhook Trigger",

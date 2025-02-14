@@ -53,11 +53,9 @@ pub fn validate_webhook_input_and_response(
     // Check for output node if required
     if require_response {
         println!("[WEBHOOK API] Looking for output node in workflow");
-        output_node = match workflow
-            .actions
-            .iter()
-            .find(|action| action.plugin_name == PluginName::new("@anything/response".to_string()).unwrap())
-        {
+        output_node = match workflow.actions.iter().find(|action| {
+            action.plugin_name == PluginName::new("@anything/webhook_response".to_string()).unwrap()
+        }) {
             Some(output) => Some(Box::new(output)),
             None => {
                 println!("[WEBHOOK API] No output node found in workflow");

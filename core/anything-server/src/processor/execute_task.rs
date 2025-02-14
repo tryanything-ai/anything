@@ -7,7 +7,7 @@ use crate::processor::process_trigger_utils::process_trigger_task;
 use crate::system_plugins::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
 };
-use crate::system_plugins::webhook_response::process_response_task;
+use crate::system_plugins::webhook_response::process_webhook_response_task;
 
 use crate::system_plugins::http::http_plugin::process_http_task;
 use crate::system_plugins::javascript::process_js_task;
@@ -47,14 +47,16 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_name {
                     Some(plugin_name) => match plugin_name.as_str() {
-                        "@anything/http" => process_http_task(&http_client, &bundled_plugin_cofig).await,
+                        "@anything/http" => {
+                            process_http_task(&http_client, &bundled_plugin_cofig).await
+                        }
                         //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
                         //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.
                         "@anything/javascript" => {
                             process_js_task(&bundled_inputs, &bundled_plugin_cofig).await
                         }
-                        "@anything/response" => {
-                            process_response_task(
+                        "@anything/webhook_response" => {
+                            process_webhook_response_task(
                                 state_clone,
                                 task.flow_session_id.clone(),
                                 &bundled_plugin_cofig,
