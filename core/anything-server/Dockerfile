@@ -6,9 +6,6 @@ WORKDIR ./anything-server
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
 
-# Static Files used to serve base action templates
-COPY ./template_db ./template_db 
-
 RUN cargo build --release
 
 FROM debian:bullseye-slim
