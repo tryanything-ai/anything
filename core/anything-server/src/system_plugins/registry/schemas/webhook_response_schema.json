@@ -4,13 +4,13 @@
     "action_template_definition": {
       "anything_action_version": "0.1.0", 
       "type": "response",
-      "plugin_id": "response",
-      "action_id": "response",
+      "plugin_name": "@anything/response",
       "plugin_version": "0.1.0",
+      "action_id": "response",
       "label": "Webhook Response",
       "description": "Send HTTP response with custom status code, headers and body",
       "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
-      "variables": {
+      "inputs": {
         "status_code": "200",
         "content_type": "application/json",
         "json_body": "{}",
@@ -18,8 +18,8 @@
         "html_body": "",
         "xml_body": ""
       },
-      "variables_locked": false,
-      "variables_schema": {
+      "inputs_locked": false,
+      "inputs_schema": {
         "type": "object",
         "properties": {
           "status_code": {
@@ -175,24 +175,24 @@
           }
         ]
       },
-      "variables_schema_locked": true,
-      "input": {
-        "status_code": "{{variables.status_code}}",
-        "content_type": "{{variables.content_type}}",
-        "json_body": "{{variables.json_body}}",
-        "text_body": "{{variables.text_body}}",
-        "html_body": "{{variables.html_body}}",
-        "xml_body": "{{variables.xml_body}}"
+      "inputs_schema_locked": true,
+      "plugin_config": {
+        "status_code": "{{inputs.status_code}}",
+        "content_type": "{{inputs.content_type}}",
+        "json_body": "{{inputs.json_body}}",
+        "text_body": "{{inputs.text_body}}",
+        "html_body": "{{inputs.html_body}}",
+        "xml_body": "{{inputs.xml_body}}"
       },
-      "input_locked": true,
-      "input_schema": {
+      "plugin_config_locked": true,
+      "plugin_config_schema": {
         "type": "object",
         "properties": {
           "status_code": {
             "title": "Status Code",
             "description": "HTTP status code for the response",
             "type": "string",
-            "default": "{{variables.status_code}}",
+            "default": "{{inputs.status_code}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -204,7 +204,7 @@
             "title": "Content Type",
             "description": "Content type of the response",
             "type": "string",
-            "default": "{{variables.content_type}}",
+            "default": "{{inputs.content_type}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -216,7 +216,7 @@
             "title": "Response Body as text", 
             "description": "Content to send in response body",
             "type": "string",
-            "default": "{{variables.text_body}}",
+            "default": "{{inputs.text_body}}",
             "x-jsf-presentation": {
               "inputType": "text"
             },
@@ -228,7 +228,7 @@
             "title": "Response Body as JSON", 
             "description": "Content to send in response body",
             "type": "object",
-            "default": "{{variables.json_body}}",
+            "default": "{{inputs.json_body}}",
             "x-jsf-presentation": {
               "inputType": "object_or_variable"
             },
@@ -240,7 +240,7 @@
             "title": "Response Body as HTML", 
             "description": "Content to send in response body",
             "type": "string",
-            "default": "{{variables.html_body}}",
+            "default": "{{inputs.html_body}}",
             "x-jsf-presentation": {
               "inputType": "html_or_variable"
             },
@@ -252,7 +252,7 @@
             "title": "Response Body as XML", 
             "description": "Content to send in response body",
             "type": "string",
-            "default": "{{variables.xml_body}}",
+            "default": "{{inputs.xml_body}}",
             "x-jsf-presentation": {
               "inputType": "xml_or_variable"
             },
@@ -264,7 +264,7 @@
         "required": ["status_code", "content_type", "json_body", "text_body", "html_body", "xml_body"],
         "x-jsf-order": ["status_code", "content_type", "json_body", "text_body", "html_body", "xml_body"]
       },
-      "input_schema_locked": true,
+      "plugin_config_schema_locked": true,
       "presentation": {
         "position": {
           "x": 300,

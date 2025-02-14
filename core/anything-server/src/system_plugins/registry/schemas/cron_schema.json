@@ -4,17 +4,17 @@
     "action_template_definition": {
       "anything_action_version": "0.1.0",
       "type": "trigger", 
-      "plugin_id": "cron",
-      "action_id": "cron",
+      "plugin_name": "@anything/cron",
       "plugin_version": "0.1.0",
+      "action_id": "cron",
       "label": "Schedule Trigger",
       "description": "Run workflow on a schedule",
       "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>",
-      "variables": {
+      "inputs": {
         "cron_expression": "0 0 * * * *"
       },
-      "variables_locked": false,
-      "variables_schema": {
+      "inputs_locked": false,
+      "inputs_schema": {
         "type": "object",
         "properties": {
           "cron_expression": {
@@ -34,12 +34,12 @@
         "required": ["cron_expression"],
         "additionalProperties": false
       },
-      "variables_schema_locked": true,
-      "input": {
-        "cron_expression": "{{variables.cron_expression}}"
+      "inputs_schema_locked": true,
+      "plugin_config": {
+        "cron_expression": "{{inputs.cron_expression}}"
       },
-      "input_locked": true,
-      "input_schema": {
+      "plugin_config_locked": true,
+      "plugin_config_schema": {
         "type": "object",
         "properties": {
           "cron_expression": {
@@ -59,7 +59,7 @@
         "required": ["cron_expression"],
         "additionalProperties": false
       },
-      "input_schema_locked": true,
+      "plugin_config_schema_locked": true,
       "presentation": {
         "position": {
           "x": 300,
