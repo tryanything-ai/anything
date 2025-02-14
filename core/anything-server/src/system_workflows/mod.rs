@@ -20,9 +20,14 @@ pub fn create_cron_http_workflow() -> Result<WorkflowVersionDefinition, Box<dyn 
         .find(|t| t["action_template_definition"]["plugin_name"] == "@anything/http")
         .ok_or("HTTP template not found")?;
 
-    // Convert templates to Actions
-    let cron_action: Value = cron_template["action_template_definition"].clone();
-    let http_action: Value = http_template["action_template_definition"].clone();
+    // Convert templates to Actions and set positions
+    let mut cron_action: Value = cron_template["action_template_definition"].clone();
+    cron_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    cron_action["presentation"]["position"]["y"] = serde_json::json!(100);
+
+    let mut http_action: Value = http_template["action_template_definition"].clone();
+    http_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    http_action["presentation"]["position"]["y"] = serde_json::json!(250);
 
     // Create edge connecting them
     let edge = Edge {
@@ -69,10 +74,18 @@ pub fn create_webhook_js_workflow() -> Result<WorkflowVersionDefinition, Box<dyn
         .find(|t| t["action_template_definition"]["plugin_name"] == "@anything/response")
         .ok_or("Response template not found")?;
 
-    // Convert templates to Actions
-    let webhook_action: Value = webhook_template["action_template_definition"].clone();
-    let js_action: Value = js_template["action_template_definition"].clone();
-    let response_action: Value = response_template["action_template_definition"].clone();
+    // Convert templates to Actions and set positions
+    let mut webhook_action: Value = webhook_template["action_template_definition"].clone();
+    webhook_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    webhook_action["presentation"]["position"]["y"] = serde_json::json!(100);
+
+    let mut js_action: Value = js_template["action_template_definition"].clone();
+    js_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    js_action["presentation"]["position"]["y"] = serde_json::json!(250);
+
+    let mut response_action: Value = response_template["action_template_definition"].clone();
+    response_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    response_action["presentation"]["position"]["y"] = serde_json::json!(400);
 
     // Create edges connecting them
     let webhook_to_js = Edge {
@@ -133,11 +146,22 @@ pub fn create_input_output_workflow(
         .find(|t| t["action_template_definition"]["plugin_name"] == "@anything/output")
         .ok_or("Output template not found")?;
 
-    // Convert templates to Actions
-    let input_action: Value = input_template["action_template_definition"].clone();
-    let http_action: Value = http_template["action_template_definition"].clone();
-    let js_action: Value = js_template["action_template_definition"].clone();
-    let output_action: Value = output_template["action_template_definition"].clone();
+    // Convert templates to Actions and set positions
+    let mut input_action: Value = input_template["action_template_definition"].clone();
+    input_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    input_action["presentation"]["position"]["y"] = serde_json::json!(100);
+
+    let mut http_action: Value = http_template["action_template_definition"].clone();
+    http_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    http_action["presentation"]["position"]["y"] = serde_json::json!(250);
+
+    let mut js_action: Value = js_template["action_template_definition"].clone();
+    js_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    js_action["presentation"]["position"]["y"] = serde_json::json!(400);
+
+    let mut output_action: Value = output_template["action_template_definition"].clone();
+    output_action["presentation"]["position"]["x"] = serde_json::json!(300);
+    output_action["presentation"]["position"]["y"] = serde_json::json!(550);
 
     // Create edges connecting them
     let input_to_http = Edge {

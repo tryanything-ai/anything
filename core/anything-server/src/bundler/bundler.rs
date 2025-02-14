@@ -26,25 +26,25 @@ pub async fn bundle_tasks_cached_context(
 ) -> Result<(Value, Value), Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
-    let rendered_variables_definition =
-        bundle_tasks_cached_variables(state, client, task, refresh_auth).await?;
+    let rendered_inputs_definition =
+        bundle_tasks_cached_inputs(state, client, task, refresh_auth).await?;
 
     let plugin_config = task.config.plugin_config.as_ref();
     let plugin_config_schema = task.config.plugin_config_schema.as_ref();
 
     let rendered_plugin_config_definition = bundle_plugin_config(
-        rendered_variables_definition.clone(),
+        rendered_inputs_definition.clone(),
         plugin_config,
         plugin_config_schema,
     )?;
 
     Ok((
-        rendered_variables_definition,
+        rendered_inputs_definition,
         rendered_plugin_config_definition,
     ))
 }
 
-pub async fn bundle_tasks_cached_variables(
+pub async fn bundle_tasks_cached_inputs(
     state: Arc<AppState>,
     client: &Postgrest,
     task: &Task,
@@ -54,21 +54,21 @@ pub async fn bundle_tasks_cached_variables(
 
     let account_id = task.account_id.to_string();
     let flow_session_id = task.flow_session_id.to_string();
-    let variables = task.config.inputs.as_ref();
-    let variables_schema = task.config.inputs_schema.as_ref();
+    let inputs = task.config.inputs.as_ref();
+    let inputs_schema = task.config.inputs_schema.as_ref();
 
-    let rendered_variables_definition = bundle_cached_variables(
+    let rendered_inputs_definition = bundle_cached_inputs(
         state,
         client,
         &account_id,
         &flow_session_id,
-        variables,
-        variables_schema,
+        inputs,
+        inputs_schema,
         refresh_auth,
     )
     .await?;
 
-    Ok(rendered_variables_definition)
+    Ok(rendered_inputs_definition)
 }
 
 pub async fn bundle_context_from_parts(
@@ -76,49 +76,45 @@ pub async fn bundle_context_from_parts(
     client: &Postgrest,
     account_id: &str,
     flow_session_id: &str,
-    variables: Option<&Value>,
-    variables_schema: Option<&JsonSchema>,
+    inputs: Option<&Value>,
+    inputs_schema: Option<&JsonSchema>,
     plugin_config: Option<&Value>,
     plugin_config_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
-    let rendered_variables_definition = bundle_cached_variables(
+    let rendered_inputs_definition = bundle_cached_inputs(
         state,
         client,
         account_id,
         flow_session_id,
-        variables,
-        variables_schema,
-        // plugin_config,
-        // plugin_config_schema,
+        inputs,
+        inputs_schema,
         refresh_auth,
     )
     .await?;
 
     bundle_plugin_config(
-        rendered_variables_definition,
+        rendered_inputs_definition,
         plugin_config,
         plugin_config_schema,
     )
 }
 
-pub async fn bundle_cached_variables(
+pub async fn bundle_cached_inputs(
     state: Arc<AppState>,
     client: &Postgrest,
     account_id: &str,
     flow_session_id: &str,
-    variables: Option<&Value>,
-    variables_schema: Option<&JsonSchema>,
-    // input: Option<&Value>,
-    // input_schema: Option<&JsonSchema>,
+    inputs: Option<&Value>,
+    inputs_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    println!("[BUNDLER] Starting to bundle variables");
+    println!("[BUNDLER] Starting to bundle inputs");
 
     // Pre-allocate with known capacity
-    let mut render_variables_context = HashMap::with_capacity(4);
+    let mut render_inputs_context = HashMap::with_capacity(4);
 
     // Parallel fetch of secrets, accounts, and cached task results
     let (secrets_result, accounts_result, tasks_result) = tokio::join!(
@@ -134,7 +130,7 @@ pub async fn bundle_cached_variables(
         println!("[BUNDLER] Inserting account with slug: {}", slug);
         accounts.insert(slug, serde_json::to_value(account)?);
     }
-    render_variables_context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
+    render_inputs_context.insert("accounts".to_string(), serde_json::to_value(accounts)?);
 
     // Process secrets
     let mut secrets = HashMap::new();
@@ -143,7 +139,7 @@ pub async fn bundle_cached_variables(
         println!("[BUNDLER] Inserting secret with name: {}", secret_name);
         secrets.insert(secret_name, serde_json::to_value(secret.secret_value)?);
     }
-    render_variables_context.insert("secrets".to_string(), serde_json::to_value(secrets)?);
+    render_inputs_context.insert("secrets".to_string(), serde_json::to_value(secrets)?);
 
     // Process tasks
     let tasks_result = tasks_result?;
@@ -151,10 +147,10 @@ pub async fn bundle_cached_variables(
     for task in tasks_result {
         tasks_map.insert(task.action_id.to_string(), serde_json::to_value(task)?);
     }
-    render_variables_context.insert("actions".to_string(), serde_json::to_value(tasks_map)?);
+    render_inputs_context.insert("actions".to_string(), serde_json::to_value(tasks_map)?);
 
     // Add system variables
-    render_variables_context.insert(
+    render_inputs_context.insert(
         "system".to_string(),
         serde_json::to_value(get_system_variables())?,
     );
@@ -162,21 +158,21 @@ pub async fn bundle_cached_variables(
     // Extract and set validations from schemas
     let mut templater = Templater::new();
 
-    if let Some(variables) = variables {
-        templater.add_template("task_variables_definition", variables.clone());
+    if let Some(inputs) = inputs {
+        templater.add_template("task_inputs_definition", inputs.clone());
 
-        let variable_validations = extract_template_key_validations_from_schema(variables_schema);
-        let context_value = serde_json::to_value(&render_variables_context)?;
+        let input_validations = extract_template_key_validations_from_schema(inputs_schema);
+        let context_value = serde_json::to_value(&render_inputs_context)?;
         let rendered = templater.render(
-            "task_variables_definition",
+            "task_inputs_definition",
             &context_value,
-            variable_validations,
+            input_validations,
         )?;
 
-        println!("[BUNDLER] Rendered variables output: {}", rendered);
+        println!("[BUNDLER] Rendered inputs output: {}", rendered);
         Ok(rendered)
     } else {
-        println!("[BUNDLER] No variables found in task config");
+        println!("[BUNDLER] No inputs found in task config");
         Ok(json!({}))
     }
 }
@@ -201,12 +197,12 @@ async fn fetch_completed_cached_tasks(
 }
 
 pub fn bundle_plugin_config(
-    rendered_variables: Value,
+    rendered_inputs: Value,
     plugin_config: Option<&Value>,
     plugin_config_schema: Option<&JsonSchema>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     let mut render_input_context: HashMap<String, Value> = HashMap::new();
-    render_input_context.insert("variables".to_string(), rendered_variables);
+    render_input_context.insert("inputs".to_string(), rendered_inputs);
 
     // Create a new Templater instance for rendering inputs
     let mut templater = Templater::new();

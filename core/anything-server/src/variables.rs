@@ -9,7 +9,7 @@ use serde_json::Value;
 use std::sync::Arc;
 
 use crate::{
-    bundler::bundle_cached_variables,
+    bundler::bundle_cached_inputs,
     supabase_jwt_middleware::User,
     types::{
         task_types::Task,
@@ -352,7 +352,7 @@ pub async fn get_flow_version_variables(
 
     //Run the templater over the variables and results from last session
     //Return the templated variables
-    let rendered_variables = match bundle_cached_variables(
+    let rendered_variables = match bundle_cached_inputs(
         state.clone(),
         client,
         &account_id,

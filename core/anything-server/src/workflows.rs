@@ -18,6 +18,8 @@ use std::env;
 
 use chrono::Utc;
 
+use crate::system_workflows::create_cron_http_workflow;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
     account_id: String,
@@ -305,11 +307,25 @@ pub async fn create_workflow(
         }
     };
 
+    //TODO: Remove this once we have a way to create a workflow from the UI
+    //create workflow from current action definitions   
+    let workflow = match create_cron_http_workflow() {
+        Ok(workflow) => workflow,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create workflow definition",
+            )
+                .into_response()
+        }
+    };
+
     let version_input = BaseFlowVersionInput {
         account_id: account_id.clone(),
         flow_id: payload.flow_id.clone(),
-        flow_definition: serde_json::json!(WorkflowVersionDefinition::default()),
+        flow_definition: serde_json::to_value(&workflow).unwrap(),
     };
+
     // Create Flow Version
     let version_response = match client
         .from("flow_versions")
@@ -363,8 +379,8 @@ pub async fn create_workflow_from_json(
         Some(name) if !name.trim().is_empty() => name,
         _ => {
             println!("[WORKFLOW FROM JSON] Name field validation failed - empty or missing name");
-            return (StatusCode::BAD_REQUEST, "Name field is required").into_response()
-        },
+            return (StatusCode::BAD_REQUEST, "Name field is required").into_response();
+        }
     };
 
     // Validate the flow template can be parsed
@@ -406,14 +422,14 @@ pub async fn create_workflow_from_json(
         Ok(response) => {
             println!("[WORKFLOW FROM JSON] Successfully created workflow");
             response
-        },
+        }
         Err(e) => {
             println!("[WORKFLOW FROM JSON] Failed to create workflow: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to create workflow",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -434,11 +450,17 @@ pub async fn create_workflow_from_json(
         .await
     {
         Ok(response) => {
-            println!("[WORKFLOW FROM JSON] Flow version creation response: {:?}", response);
+            println!(
+                "[WORKFLOW FROM JSON] Flow version creation response: {:?}",
+                response
+            );
             response
         }
         Err(e) => {
-            println!("[WORKFLOW FROM JSON] Failed to create workflow version: {:?}", e);
+            println!(
+                "[WORKFLOW FROM JSON] Failed to create workflow version: {:?}",
+                e
+            );
             println!("[WORKFLOW FROM JSON] Attempting to cleanup failed workflow");
             // Delete the flow since version creation failed
             let _cleanup = client
@@ -454,7 +476,7 @@ pub async fn create_workflow_from_json(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to create workflow version",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -465,14 +487,17 @@ pub async fn create_workflow_from_json(
                 "workflow_id": flow_id,
                 "workflow_version_id": body["flow_version_id"].as_str().unwrap_or("")
             })
-        },
+        }
         Err(e) => {
-            println!("[WORKFLOW FROM JSON] Failed to parse version response: {:?}", e);
+            println!(
+                "[WORKFLOW FROM JSON] Failed to parse version response: {:?}",
+                e
+            );
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
