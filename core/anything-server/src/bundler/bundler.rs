@@ -1,5 +1,5 @@
 use crate::system_variables::get_system_variables;
-use crate::types::action_types::JsonSchema;
+use crate::types::json_schema::JsonSchema;
 use crate::types::task_types::Task;
 
 use crate::AppState;
@@ -16,7 +16,7 @@ use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
 
-use crate::types::action_types::ValidationFieldType;
+use crate::types::json_schema::ValidationFieldType;
 
 pub async fn bundle_tasks_cached_context(
     state: Arc<AppState>,
@@ -29,13 +29,19 @@ pub async fn bundle_tasks_cached_context(
     let rendered_variables_definition =
         bundle_tasks_cached_variables(state, client, task, refresh_auth).await?;
 
-    let input = task.config.input.as_ref();
-    let input_schema = task.config.input_schema.as_ref();
+    let plugin_config = task.config.plugin_config.as_ref();
+    let plugin_config_schema = task.config.plugin_config_schema.as_ref();
 
-    let rendered_inputs_definition =
-        bundle_inputs(rendered_variables_definition.clone(), input, input_schema)?;
+    let rendered_plugin_config_definition = bundle_plugin_config(
+        rendered_variables_definition.clone(),
+        plugin_config,
+        plugin_config_schema,
+    )?;
 
-    Ok((rendered_variables_definition, rendered_inputs_definition))
+    Ok((
+        rendered_variables_definition,
+        rendered_plugin_config_definition,
+    ))
 }
 
 pub async fn bundle_tasks_cached_variables(
@@ -48,8 +54,8 @@ pub async fn bundle_tasks_cached_variables(
 
     let account_id = task.account_id.to_string();
     let flow_session_id = task.flow_session_id.to_string();
-    let variables = task.config.variables.as_ref();
-    let variables_schema = task.config.variables_schema.as_ref();
+    let variables = task.config.inputs.as_ref();
+    let variables_schema = task.config.inputs_schema.as_ref();
 
     let rendered_variables_definition = bundle_cached_variables(
         state,
@@ -72,8 +78,8 @@ pub async fn bundle_context_from_parts(
     flow_session_id: &str,
     variables: Option<&Value>,
     variables_schema: Option<&JsonSchema>,
-    input: Option<&Value>,
-    input_schema: Option<&JsonSchema>,
+    plugin_config: Option<&Value>,
+    plugin_config_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
@@ -85,13 +91,17 @@ pub async fn bundle_context_from_parts(
         flow_session_id,
         variables,
         variables_schema,
-        // input,
-        // input_schema,
+        // plugin_config,
+        // plugin_config_schema,
         refresh_auth,
     )
     .await?;
 
-    bundle_inputs(rendered_variables_definition, input, input_schema)
+    bundle_plugin_config(
+        rendered_variables_definition,
+        plugin_config,
+        plugin_config_schema,
+    )
 }
 
 pub async fn bundle_cached_variables(
@@ -190,10 +200,10 @@ async fn fetch_completed_cached_tasks(
     Ok(tasks)
 }
 
-pub fn bundle_inputs(
+pub fn bundle_plugin_config(
     rendered_variables: Value,
-    inputs: Option<&Value>,
-    input_schema: Option<&JsonSchema>,
+    plugin_config: Option<&Value>,
+    plugin_config_schema: Option<&JsonSchema>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     let mut render_input_context: HashMap<String, Value> = HashMap::new();
     render_input_context.insert("variables".to_string(), rendered_variables);
@@ -205,24 +215,28 @@ pub fn bundle_inputs(
     let inputs_context_value = serde_json::to_value(render_input_context.clone())?;
 
     // Add the task definition as a template and render if it exists
-    if let Some(inputs) = inputs {
-        println!("[BUNDLER] Task inputs definition: {}", inputs.clone());
-        templater.add_template("task_inputs_definition", inputs.clone());
+    if let Some(plugin_config) = plugin_config {
+        println!(
+            "[BUNDLER] Task plugin config definition: {}",
+            plugin_config.clone()
+        );
+        templater.add_template("task_plugin_config_definition", plugin_config.clone());
 
-        let input_validations = extract_template_key_validations_from_schema(input_schema);
+        let plugin_config_validations =
+            extract_template_key_validations_from_schema(plugin_config_schema);
         // Render the task definition with the context
-        let rendered_inputs_definition = templater.render(
-            "task_inputs_definition",
+        let rendered_plugin_config_definition = templater.render(
+            "task_plugin_config_definition",
             &inputs_context_value,
-            input_validations,
+            plugin_config_validations,
         )?;
         println!(
-            "[BUNDLER] Rendered inputs output: {}",
-            rendered_inputs_definition
+            "[BUNDLER] Rendered plugin config output: {}",
+            rendered_plugin_config_definition
         );
-        Ok(rendered_inputs_definition)
+        Ok(rendered_plugin_config_definition)
     } else {
-        println!("[BUNDLER] No inputs found in task config, returning empty object");
+        println!("[BUNDLER] No plugin config found in task config, returning empty object");
         Ok(json!({}))
     }
 }

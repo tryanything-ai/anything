@@ -1,0 +1,131 @@
+{
+    "type": "action", 
+    "featured": false, 
+    "action_template_definition": 
+    {
+      "anything_action_version": "0.1.0",
+      "type": "action",
+      "plugin_id": "http",
+      "action_id": "http",
+      "plugin_version": "0.1.0",
+      "label": "Call API",
+      "description": "Call any API", 
+      "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 32 32\" id=\"icon\" xmlns=\"http://www.w3.org/2000/svg\"><defs><style>.cls-1{fill:none;}</style></defs><title>HTTP</title><path d=\"M30,11H25V21h2V18h3a2.0027,2.0027,0,0,0,2-2V13A2.0023,2.0023,0,0,0,30,11Zm-3,5V13h3l.001,3Z\" transform=\"translate(0 0)\"/><polygon points=\"10 13 12 13 12 21 14 21 14 13 16 13 16 11 10 11 10 13\"/><polygon points=\"23 11 17 11 17 13 19 13 19 21 21 21 21 13 23 13 23 11\"/><polygon points=\"6 11 6 15 3 15 3 11 1 11 1 21 3 21 3 17 6 17 6 21 8 21 8 11 6 11\"/><rect id=\"_Transparent_Rectangle_\" data-name=\"&lt;Transparent Rectangle&gt;\" class=\"cls-1\" width=\"32\" height=\"32\"/></svg>",
+      "variables": {},
+      "variables_locked": false,
+      "variables_schema": {},
+      "variables_schema_locked": false,
+      "input": {
+        "method": "GET",
+        "url": "",
+        "headers": "{}",
+        "body": "{}" 
+      },
+      "input_locked": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "method": {
+             "title": "Method",
+              "description": "HTTP Method for request",
+              "type": "string",
+              "oneOf": [
+                {
+                  "value": "GET",
+                  "title": "GET"
+                },
+                {
+                  "value": "POST",
+                  "title": "POST"
+                },
+                {
+                  "value": "PUT",
+                  "title": "PUT"
+                },
+                {
+                  "value": "DELETE",
+                  "title": "DELETE"
+                },
+                {
+                  "value": "HEAD",
+                  "title": "HEAD"
+                },
+                {
+                  "value": "OPTIONS",
+                  "title": "OPTIONS"
+                },
+                {
+                  "value": "PATCH",
+                  "title": "PATCH"
+                }
+              ],
+              "default": "GET",
+              "x-jsf-presentation": {
+                "inputType": "select_or_variable"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
+          },
+          "url": {
+             "title": "URL",
+            "description": "URL for request",
+            "type": "string",
+            "default": "",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "headers": {
+            "title": "Headers",
+            "description": "Headers for request",
+            "type": "object",
+            "default": "{}",
+            "x-jsf-presentation": {
+              "inputType": "object_or_variable"
+            },
+            "x-any-validation": {
+              "type": "object"
+            }
+          },
+          "body": {
+            "title": "Body",
+            "description": "Body for request",
+            "type": "object",
+            "default": "{}",
+            "x-jsf-presentation": {
+              "inputType": "object_or_variable"
+            },
+            "x-any-validation": {
+              "type": "object"
+            }
+          }
+        },
+        "x-jsf-order": ["url", "method", "headers", "body"],
+        "required": ["method", "url"],
+        "additionalProperties": false
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a", 
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+}

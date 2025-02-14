@@ -2,7 +2,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
 
-use crate::types::action_types::ValidationFieldType;
+use crate::types::json_schema::ValidationFieldType;
 
 #[derive(Debug)]
 pub struct TemplateError {

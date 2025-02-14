@@ -4,13 +4,13 @@ use postgrest::Postgrest;
 
 use crate::bundler::bundle_tasks_cached_context;
 use crate::processor::process_trigger_utils::process_trigger_task;
-use crate::system_actions::formatter_actions::{
+use crate::system_plugins::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
 };
-use crate::system_actions::output_action::process_response_task;
+use crate::system_plugins::output_action::process_response_task;
 
-use crate::system_actions::process_http_task::process_http_task;
-use crate::system_actions::rustyscript::process_js_task;
+use crate::system_plugins::http::http_plugin::process_http_task;
+use crate::system_plugins::rustyscript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
 
@@ -45,13 +45,15 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                 process_trigger_task(task)
             } else {
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
-                match &task.plugin_id {
-                    Some(plugin_id) => match plugin_id.as_str() {
-                        "http" => process_http_task(&http_client, &bundled_inputs).await,
+                match &task.plugin_name {
+                    Some(plugin_name) => match plugin_name.as_str() {
+                        "@anything/http" => process_http_task(&http_client, &bundled_inputs).await,
                         //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
                         //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.
-                        "javascript" => process_js_task(&bundled_variables, &bundled_inputs).await,
-                        "response" => {
+                        "@anything/javascript" => {
+                            process_js_task(&bundled_variables, &bundled_inputs).await
+                        }
+                        "@anything/response" => {
                             process_response_task(
                                 state_clone,
                                 task.flow_session_id.clone(),
@@ -59,9 +61,11 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                             )
                             .await
                         }
-                        "format_text" => process_text_task(&bundled_inputs),
-                        "format_date" => process_date_task(&bundled_inputs),
-                        _ => process_missing_plugin(plugin_id, &task.task_id.to_string()),
+                        "@anything/format_text" => process_text_task(&bundled_inputs),
+                        "@anything/format_date" => process_date_task(&bundled_inputs),
+                        _ => {
+                            process_missing_plugin(plugin_name.as_str(), &task.task_id.to_string())
+                        }
                     },
                     None => process_no_plugin_id(&task.task_id.to_string()),
                 }

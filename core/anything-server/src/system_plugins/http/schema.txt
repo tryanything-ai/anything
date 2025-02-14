@@ -1,0 +1,121 @@
+use crate::types::plugin_types::{ActionTemplateDefinition, Plugin};
+use crate::types::action_types::ActionType;
+use crate::types::react_flow_types::{HandleProps, NodePresentation, Position};
+use serde_json::json;
+use crate::types::json_schema::{JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType, InputFieldType};
+use node_semver::Version;
+use std::collections::HashMap;
+
+pub const SCHEMA: Plugin = Plugin {
+    r#type: ActionType::Action,
+    featured: false,
+    action_template_definition: ActionTemplateDefinition {
+      anything_action_version: Version::new(0, 1, 0),
+      r#type: ActionType::Action,
+      plugin_name: "@anything/http".to_string(),
+      plugin_version: Version::new(0, 1, 0),
+      action_id: "http".to_string(), 
+      label: "Call API".to_string(),
+      description: Some("Call any API".to_string()),
+      icon: "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 32 32\" id=\"icon\" xmlns=\"http://www.w3.org/2000/svg\"><defs><style>.cls-1{fill:none;}</style></defs><title>HTTP</title><path d=\"M30,11H25V21h2V18h3a2.0027,2.0027,0,0,0,2-2V13A2.0023,2.0023,0,0,0,30,11Zm-3,5V13h3l.001,3Z\" transform=\"translate(0 0)\"/><polygon points=\"10 13 12 13 12 21 14 21 14 13 16 13 16 11 10 11 10 13\"/><polygon points=\"23 11 17 11 17 13 19 13 19 21 21 21 21 13 23 13 23 11\"/><polygon points=\"6 11 6 15 3 15 3 11 1 11 1 21 3 21 3 17 6 17 6 21 8 21 8 11 6 11\"/><rect id=\"_Transparent_Rectangle_\" data-name=\"&lt;Transparent Rectangle&gt;\" class=\"cls-1\" width=\"32\" height=\"32\"/></svg>".to_string(),
+      inputs: Some(json!({
+        "method": "GET",
+        "url": "",
+        "headers": "{}",    
+        "body": "{}"
+      })), 
+      inputs_locked: false,
+      inputs_schema: Some(JsonSchema {
+        r#type: Some("object".to_string()),
+        properties: Some(HashMap::from([
+          ("method".to_string(), JsonSchemaProperty {
+            title: Some("Method".to_string()),
+            description: Some("HTTP Method for request".to_string()),
+            r#type: Some("string".to_string()),
+            one_of: Some(vec![
+              json!({"value": "GET", "title": "GET"}),
+              json!({"value": "POST", "title": "POST"}),
+              json!({"value": "PUT", "title": "PUT"}),
+              json!({"value": "DELETE", "title": "DELETE"}),
+              json!({"value": "HEAD", "title": "HEAD"}),
+              json!({"value": "OPTIONS", "title": "OPTIONS"}),
+              json!({"value": "PATCH", "title": "PATCH"})
+            ]),
+            x_jsf_presentation: Some(PresentationField {
+              input_type: InputFieldType::SelectOrVariable
+            }),
+            x_any_validation: Some(ValidationField {
+              r#type: ValidationFieldType::String
+            })
+          }),
+          ("url".to_string(), JsonSchemaProperty {
+            title: Some("URL".to_string()),
+            description: Some("URL for request".to_string()),
+            r#type: Some("string".to_string()),
+            one_of: None,
+            x_jsf_presentation: Some(PresentationField {
+              input_type: InputFieldType::Text
+            }),
+            x_any_validation: Some(ValidationField {
+              r#type: ValidationFieldType::String
+            })
+          }),
+          ("headers".to_string(), JsonSchemaProperty {
+            title: Some("Headers".to_string()),
+            description: Some("Headers for request".to_string()),
+            r#type: Some("object".to_string()),
+            one_of: None,
+            x_jsf_presentation: Some(PresentationField {
+              input_type: InputFieldType::ObjectOrVariable
+            }),
+            x_any_validation: Some(ValidationField {
+              r#type: ValidationFieldType::Object
+            })
+          }),
+          ("body".to_string(), JsonSchemaProperty {
+            title: Some("Body".to_string()),
+            description: Some("Body for request".to_string()),
+            r#type: Some("object".to_string()),
+            one_of: None,
+            x_jsf_presentation: Some(PresentationField {
+              input_type: InputFieldType::ObjectOrVariable
+            }),
+            x_any_validation: Some(ValidationField {
+              r#type: ValidationFieldType::Object
+            })
+          })
+        ])),
+        required: Some(vec!["method".to_string(), "url".to_string()]),
+        additional_properties: Some(false),
+        x_jsf_order: Some(vec!["url".to_string(), "method".to_string(), "headers".to_string(), "body".to_string()]),
+        all_of: None
+      }),
+      inputs_schema_locked: false,
+      plugin_config: json!({
+        "method": "GET",
+        "url": "",
+        "headers": "{}",
+        "body": "{}"
+      }),
+      plugin_config_locked : false,
+      plugin_config_schema_locked: true,
+      presentation: Some(NodePresentation {
+        position: Position {
+          x: 300.0, 
+          y: 100.0
+          }
+        }),
+      handles: Some(vec![ 
+        HandleProps {
+          id: "a".to_string(),
+          r#type: "target".to_string(),
+          position: "top".to_string()
+        },
+        HandleProps {
+          id: "b".to_string(),
+          r#type: "source".to_string(),
+          position: "bottom".to_string()
+        }
+      ]),
+    }
+};

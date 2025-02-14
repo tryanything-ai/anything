@@ -1,0 +1,77 @@
+{
+    "type": "trigger",
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0",
+      "type": "trigger", 
+      "plugin_id": "cron",
+      "action_id": "cron",
+      "plugin_version": "0.1.0",
+      "label": "Schedule Trigger",
+      "description": "Run workflow on a schedule",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>",
+      "variables": {
+        "cron_expression": "0 0 * * * *"
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "cron_expression": {
+            "title": "Cron Expression",
+            "description": "When to run the trigger",
+            "type": "string",
+            "default": "0 0 * * * *",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          }
+        },
+        "x-jsf-order": ["cron_expression"],
+        "required": ["cron_expression"],
+        "additionalProperties": false
+      },
+      "variables_schema_locked": true,
+      "input": {
+        "cron_expression": "{{variables.cron_expression}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "cron_expression": {
+            "title": "Cron Expression",
+            "description": "When to run the trigger",
+            "type": "string",
+            "default": "{{variables.cron_expression}}",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          }
+        },
+        "x-jsf-order": ["cron_expression"],
+        "required": ["cron_expression"],
+        "additionalProperties": false
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+  }

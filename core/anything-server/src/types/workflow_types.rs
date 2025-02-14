@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-use serde_json::Value;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use crate::types::action_types::ActionType;
 use crate::types::react_flow_types::{Edge, HandleProps, NodePresentation, Position};
 use crate::types::action_types::Action;
+use node_semver::Version; 
 
-use super::action_types::{InputFieldType, JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType};
+use crate::types::json_schema::{InputFieldType, JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType};
+use crate::types::action_types::PluginName;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WorkflowVersionDefinition {
@@ -40,19 +41,19 @@ pub struct DatabaseFlowVersion {
 impl Default for WorkflowVersionDefinition {
     fn default() -> Self {
         let action1 = Action {
-            anything_action_version: "0.1.0".to_string(),
+            anything_action_version: Version::parse("0.1.0").unwrap(),
             r#type: ActionType::Trigger,
-            plugin_id: "cron".to_string(),
+            plugin_name: PluginName::new("@anything/cron".to_string()).unwrap(),
+            plugin_version: Version::parse("0.1.0").unwrap(),
             action_id: "cron".to_string(),
-            plugin_version: "0.1.0".to_string(),
             label: "Every Hour".to_string(),
             description: Some("Cron Trigger to run workflow every hour".to_string()),
             icon: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>".to_string(),
-            variables: Some(serde_json::json!({
+            inputs: Some(serde_json::json!({
                 "cron_expression": "0 0 * * * *"
             })),
-            variables_locked: Some(false),
-            variables_schema: Some(JsonSchema {
+            inputs_locked: Some(false),
+            inputs_schema: Some(JsonSchema {
                 r#type: Some("object".to_string()),
                 all_of: None,
                 properties: {
@@ -75,12 +76,12 @@ impl Default for WorkflowVersionDefinition {
                 x_jsf_order: Some(vec!["cron_expression".to_string()]),
                 additional_properties: Some(false),
             }),
-            variables_schema_locked: Some(true),
-            input: serde_json::json!({
+            inputs_schema_locked: Some(true),
+            plugin_config: serde_json::json!({
                 "cron_expression": "{{variables.cron_expression}}"
             }),
-            input_locked: Some(true),
-            input_schema: JsonSchema {
+            plugin_config_locked: Some(true),
+            plugin_config_schema: JsonSchema {
                 r#type: Some("object".to_string()),
                 all_of: None,
                 properties: {
@@ -103,7 +104,7 @@ impl Default for WorkflowVersionDefinition {
                 x_jsf_order: Some(vec!["cron_expression".to_string()]),
                 additional_properties: Some(false),
             },
-            input_schema_locked: Some(true),
+            plugin_config_schema_locked: Some(true),
             presentation: Some(NodePresentation {
                 position: Position { x: 300.0, y: 100.0 },
             }),
@@ -115,17 +116,17 @@ impl Default for WorkflowVersionDefinition {
         };
 
         let action2 = Action {
-            anything_action_version: "0.1.0".to_string(),
+            anything_action_version: Version::parse("0.1.0").unwrap(),
             r#type: ActionType::Action,
-            plugin_id: "http".to_string(),
+            plugin_name: PluginName::new("@anything/http".to_string()).unwrap(),
+            plugin_version: Version::parse("0.1.0").unwrap(),
             action_id: "http".to_string(),
-            plugin_version: "0.1.0".to_string(),
             label: "Call External System".to_string(),
             description: Some("Use HTTP to call another system".to_string()),
             icon: "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 32 32\" id=\"icon\" xmlns=\"http://www.w3.org/2000/svg\"><defs><style>.cls-1{fill:none;}</style></defs><title>HTTP</title><path d=\"M30,11H25V21h2V18h3a2.0027,2.0027,0,0,0,2-2V13A2.0023,2.0023,0,0,0,30,11Zm-3,5V13h3l.001,3Z\" transform=\"translate(0 0)\"/><polygon points=\"10 13 12 13 12 21 14 21 14 13 16 13 16 11 10 11 10 13\"/><polygon points=\"23 11 17 11 17 13 19 13 19 21 21 21 21 13 23 13 23 11\"/><polygon points=\"6 11 6 15 3 15 3 11 1 11 1 21 3 21 3 17 6 17 6 21 8 21 8 11 6 11\"/><rect id=\"_Transparent_Rectangle_\" data-name=\"&lt;Transparent Rectangle&gt;\" class=\"cls-1\" width=\"32\" height=\"32\"/></svg>".to_string(),
-            variables: Some(serde_json::json!({})),
-            variables_locked: Some(false),
-            variables_schema: Some(JsonSchema {
+            inputs: Some(serde_json::json!({})),
+            inputs_locked: Some(false),
+            inputs_schema: Some(JsonSchema {
                 r#type: None,
                 properties: None,
                 required: None,
@@ -133,15 +134,15 @@ impl Default for WorkflowVersionDefinition {
                 x_jsf_order: None,
                 additional_properties: None,
             }),
-            variables_schema_locked: Some(false),
-            input: serde_json::json!({
+            inputs_schema_locked: Some(false),
+            plugin_config: serde_json::json!({
                 "method": "GET",
                 "url": "https://hp-api.onrender.com/api/character/9e3f7ce4-b9a7-4244-b709-dae5c1f1d4a8",
                 "headers": "{}",
                 "body": "{}"
             }),
-            input_locked: Some(false),
-            input_schema: JsonSchema {
+            plugin_config_locked: Some(false),
+            plugin_config_schema: JsonSchema {
                 r#type: Some("object".to_string()),
                 required: Some(vec!["method".to_string(), "url".to_string()]),
                 x_jsf_order: Some(vec!["method".to_string(), "url".to_string(), "headers".to_string(), "body".to_string()]),
@@ -229,7 +230,7 @@ impl Default for WorkflowVersionDefinition {
                     Some(map)
                 },
             },
-            input_schema_locked: Some(true),
+            plugin_config_schema_locked: Some(true),
             presentation: Some(NodePresentation {
                 position: Position { x: 300.0, y: 300.0 },
             }),

@@ -74,23 +74,41 @@ pub async fn test_workflow(
     let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&body) {
         Ok(dbflowversion) => dbflowversion,
         Err(e) => {
-            println!("[TEST WORKFLOW] Failed to parse workflow version JSON: {}", e);
+            println!(
+                "[TEST WORKFLOW] Failed to parse workflow version JSON: {}",
+                e
+            );
             println!("[TEST WORKFLOW] Raw JSON body: {}", body);
-            return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to parse JSON: {}", e)).into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to parse JSON: {}", e),
+            )
+                .into_response();
         }
     };
 
     println!("[TEST WORKFLOW] Successfully retrieved workflow version");
 
     let task_config = TaskConfig {
-        variables: Some(serde_json::json!(
-            workflow_version.flow_definition.actions[0].variables
+        inputs: Some(serde_json::json!(
+            workflow_version.flow_definition.actions[0].inputs
         )),
-        variables_schema: Some(workflow_version.flow_definition.actions[0]
-            .variables_schema
-            .clone().unwrap()),
-        input: Some(workflow_version.flow_definition.actions[0].input.clone()),
-        input_schema: Some(workflow_version.flow_definition.actions[0].input_schema.clone()),
+        inputs_schema: Some(
+            workflow_version.flow_definition.actions[0]
+                .inputs_schema
+                .clone()
+                .unwrap(),
+        ),
+        plugin_config: Some(
+            workflow_version.flow_definition.actions[0]
+                .plugin_config
+                .clone(),
+        ),
+        plugin_config_schema: Some(
+            workflow_version.flow_definition.actions[0]
+                .plugin_config_schema
+                .clone(),
+        ),
     };
 
     let trigger_session_id = Uuid::new_v4().to_string();
@@ -114,8 +132,11 @@ pub async fn test_workflow(
             .action_id
             .clone(),
         r#type: ActionType::Trigger,
-        plugin_id: workflow_version.flow_definition.actions[0]
-            .plugin_id
+        plugin_name: workflow_version.flow_definition.actions[0]
+            .plugin_name
+            .clone(),
+        plugin_version: workflow_version.flow_definition.actions[0]
+            .plugin_version
             .clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: task_config,
@@ -123,6 +144,7 @@ pub async fn test_workflow(
             "message": format!("Successfully triggered task"),
             "created_at": Utc::now()
         })),
+        error: None,
         test_config: None,
         processing_order: 0,
         started_at: Some(Utc::now()),
@@ -277,10 +299,10 @@ pub async fn test_action(
     // println!("Workflow Definition {:#?}", workflow);
 
     let task_config = TaskConfig {
-        variables: Some(workflow.actions[0].variables.clone().unwrap()),
-        variables_schema: Some(workflow.actions[0].variables_schema.clone().unwrap()),
-        input: Some(workflow.actions[0].input.clone()),
-        input_schema: Some(workflow.actions[0].input_schema.clone()),
+        inputs: Some(workflow.actions[0].inputs.clone().unwrap()),
+        inputs_schema: Some(workflow.actions[0].inputs_schema.clone().unwrap()),
+        plugin_config: Some(workflow.actions[0].plugin_config.clone()),
+        plugin_config_schema: Some(workflow.actions[0].plugin_config_schema.clone()),
     };
 
     let test_config = TestConfig {
@@ -302,10 +324,12 @@ pub async fn test_action(
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: workflow.actions[0].action_id.clone(),
         r#type: workflow.actions[0].r#type.clone(),
-        plugin_id: workflow.actions[0].plugin_id.clone(),
+        plugin_name: workflow.actions[0].plugin_name.clone(),
+        plugin_version: workflow.actions[0].plugin_version.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: task_config,
         result: None,
+        error: None,
         test_config: Some(serde_json::json!(test_config)),
         processing_order: 0,
         started_at: Some(Utc::now()),

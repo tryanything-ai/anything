@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-use super::action_types::{ActionType, JsonSchema};
+use crate::types::action_types::{ActionType, PluginName};
+use crate::types::json_schema::JsonSchema;
+use node_semver::Version;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -120,7 +122,9 @@ pub struct Task {
     pub flow_session_status: FlowSessionStatus,
     pub action_id: String,
     pub r#type: String, //Needed for UI to know what type of thing to show. ( loops vs forks vs triggers vs actions etc )
-    pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
+    // pub plugin_id: Option<String>, //Needed for plugin engine to process it with a plugin.
+    pub plugin_name: Option<PluginName>,
+    pub plugin_version: Option<Version>,
     pub stage: Stage,
     pub test_config: Option<Value>,
     pub config: TaskConfig,
@@ -129,6 +133,7 @@ pub struct Task {
     pub ended_at: Option<DateTime<Utc>>,
     pub debug_result: Option<Value>,
     pub result: Option<Value>,
+    pub error: Option<Value>,
     pub archived: bool,
     pub updated_at: Option<DateTime<Utc>>,
     pub created_at: Option<DateTime<Utc>>,
@@ -139,10 +144,10 @@ pub struct Task {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TaskConfig {
-    pub variables: Option<Value>,
-    pub variables_schema: Option<JsonSchema>,
-    pub input: Option<Value>,
-    pub input_schema: Option<JsonSchema>,
+    pub inputs: Option<Value>,
+    pub inputs_schema: Option<JsonSchema>,
+    pub plugin_config: Option<Value>,
+    pub plugin_config_schema: Option<JsonSchema>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -160,10 +165,12 @@ pub struct CreateTaskInput {
     pub flow_session_status: String,
     pub action_id: String,
     pub r#type: ActionType,
-    pub plugin_id: String,
+    pub plugin_name: PluginName,
+    pub plugin_version: Version,
     pub stage: String,
     pub config: TaskConfig,
     pub result: Option<Value>,
+    pub error: Option<Value>,
     pub test_config: Option<Value>, // deprecate
     pub processing_order: i32,
 }

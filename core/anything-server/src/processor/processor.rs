@@ -200,19 +200,21 @@ pub async fn processor(
                         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
                         action_id: trigger_node.action_id.clone(),
                         r#type: ActionType::Trigger,
-                        plugin_id: trigger_node.plugin_id.clone(),
+                        plugin_name: trigger_node.plugin_name.clone(),
+                        plugin_version: trigger_node.plugin_version.clone(),
                         stage: if workflow.published {
                             Stage::Production.as_str().to_string()
                         } else {
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            variables: Some(trigger_node.variables.clone().unwrap()),
-                            variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
-                            input: Some(trigger_node.input.clone()),
-                            input_schema: Some(trigger_node.input_schema.clone()),
+                            inputs: Some(trigger_node.inputs.clone().unwrap()),
+                            inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+                            plugin_config: Some(trigger_node.plugin_config.clone()),
+                            plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
                         },
                         result: None,
+                        error: None,
                         started_at: Some(Utc::now()),
                         test_config: None,
                     }
@@ -298,19 +300,25 @@ pub async fn processor(
                                             .to_string(),
                                         action_id: action.action_id.clone(),
                                         r#type: action.r#type.clone(),
-                                        plugin_id: action.plugin_id.clone(),
+                                        plugin_name: action.plugin_name.clone(),
+                                        plugin_version: action.plugin_version.clone(),
                                         stage: if workflow.published {
                                             Stage::Production.as_str().to_string()
                                         } else {
                                             Stage::Testing.as_str().to_string()
                                         },
                                         config: TaskConfig {
-                                            variables: Some(action.variables.clone().unwrap()),
-                                            variables_schema: Some(action.variables_schema.clone().unwrap()),
-                                            input: Some(action.input.clone()),
-                                            input_schema: Some(action.input_schema.clone()),
+                                            inputs: Some(action.inputs.clone().unwrap()),
+                                            inputs_schema: Some(
+                                                action.inputs_schema.clone().unwrap(),
+                                            ),
+                                            plugin_config: Some(action.plugin_config.clone()),
+                                            plugin_config_schema: Some(
+                                                action.plugin_config_schema.clone(),
+                                            ),
                                         },
                                         result: None,
+                                        error: None,
                                         started_at: Some(Utc::now()),
                                         test_config: None,
                                     };
@@ -518,19 +526,21 @@ pub async fn processor(
                         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
                         action_id: next_action.action_id,
                         r#type: next_action.r#type,
-                        plugin_id: next_action.plugin_id.clone(),
+                        plugin_name: next_action.plugin_name.clone(),
+                        plugin_version: next_action.plugin_version.clone(),
                         stage: if workflow.published {
                             Stage::Production.as_str().to_string()
                         } else {
                             Stage::Testing.as_str().to_string()
                         },
                         config: TaskConfig {
-                            variables: Some(next_action.variables.clone().unwrap()),
-                            variables_schema: Some(next_action.variables_schema.clone().unwrap()),
-                            input: Some(next_action.input.clone()),
-                            input_schema: Some(next_action.input_schema.clone()),
+                            inputs: Some(next_action.inputs.clone().unwrap()),
+                            inputs_schema: Some(next_action.inputs_schema.clone().unwrap()),
+                            plugin_config: Some(next_action.plugin_config.clone()),
+                            plugin_config_schema: Some(next_action.plugin_config_schema.clone()),
                         },
                         result: None,
+                        error: None,
                         test_config: None,
                         started_at: Some(Utc::now()),
                     };

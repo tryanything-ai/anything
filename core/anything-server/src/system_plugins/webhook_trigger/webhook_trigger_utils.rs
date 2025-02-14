@@ -13,10 +13,9 @@ use std::sync::Arc;
 
 use crate::{
     secrets::get_secret_by_secret_value,
-    types::action_types::{Action, ActionType},
+    types::action_types::{Action, ActionType, PluginName},
     types::workflow_types::WorkflowVersionDefinition,
-    AppState, 
-    CachedApiKey,
+    AppState, CachedApiKey,
 };
 
 pub fn validate_webhook_input_and_response(
@@ -38,10 +37,10 @@ pub fn validate_webhook_input_and_response(
     };
 
     // Check if trigger node has plugin_id of "webhook"
-    if trigger_node.plugin_id != "webhook" {
+    if trigger_node.plugin_name != PluginName::new("@anything/webhook".to_string()).unwrap() {
         println!(
-            "[WEBHOOK API] Invalid trigger type: {}",
-            trigger_node.plugin_id
+            "[WEBHOOK API] Invalid trigger type: {:?}",
+            trigger_node.plugin_name
         );
         return Err((
             StatusCode::BAD_REQUEST,
@@ -57,7 +56,7 @@ pub fn validate_webhook_input_and_response(
         output_node = match workflow
             .actions
             .iter()
-            .find(|action| action.plugin_id == "response")
+            .find(|action| action.plugin_name == PluginName::new("@anything/response".to_string()).unwrap())
         {
             Some(output) => Some(Box::new(output)),
             None => {

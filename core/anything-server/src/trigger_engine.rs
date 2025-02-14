@@ -5,11 +5,13 @@ use tokio::time::{sleep, Duration};
 use dotenv::dotenv;
 use std::env;
 
+use node_semver::Version;
+
 use crate::{
     bundler::bundle_context_from_parts,
     processor::processor::ProcessorMessage,
     types::{
-        action_types::ActionType,
+        action_types::{ActionType, PluginName},
         task_types::{
             CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
         },
@@ -30,7 +32,8 @@ use uuid::Uuid;
 pub struct InMemoryTrigger {
     pub account_id: String,
     pub action_id: String,
-    pub trigger_id: String,
+    pub plugin_name: PluginName,
+    pub plugin_version: Version,
     pub flow_id: String,
     pub action_label: String,
     pub flow_version_id: String,
@@ -76,7 +79,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
                 for (id, trigger) in triggers_to_run {
                     println!(
                         "[TRIGGER_ENGINE] Trigger should run for trigger_id ie workflow_id: {}",
-                        trigger.trigger_id
+                        trigger.plugin_name
                     );
                     if let Err(e) = create_trigger_task(&state, &trigger).await {
                         println!("[TRIGGER_ENGINE] Error creating trigger task: {:?}", e);
@@ -340,20 +343,22 @@ async fn create_trigger_task(
         flow_id: trigger.flow_id.clone(),
         flow_version_id: trigger.flow_version_id.clone(),
         action_label: trigger.action_label.clone(),
-        trigger_id: trigger.trigger_id.clone(),
+        trigger_id: trigger.plugin_name.to_string(),
         trigger_session_id: Uuid::new_v4().to_string(),
         trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
         flow_session_id: Uuid::new_v4().to_string(),
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger.action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_id: trigger.trigger_id.clone(),
+        plugin_name: trigger.plugin_name.clone(),
+        plugin_version: trigger.plugin_version.clone(),
         stage: Stage::Production.as_str().to_string(),
         config: trigger.config.clone(),
         result: Some(serde_json::json!({
             "message": format!("Successfully triggered task"),
             "created_at": Utc::now()
         })),
+        error: None,
         test_config: None,
         processing_order: 0,
         started_at: Some(Utc::now()),
@@ -404,29 +409,32 @@ pub async fn create_in_memory_triggers_from_flow_definition(
 
     let actions = flow_definition.actions;
     for action in actions {
-        let (plugin_id, r#type, action_id) = (
-            action.plugin_id.clone(),
+        let (plugin_name, r#type, action_id) = (
+            action.plugin_name.clone(),
             action.r#type.clone(),
             action.action_id.clone(),
         );
-        if r#type == ActionType::Trigger && plugin_id == "cron" {
+        if r#type == ActionType::Trigger
+            && plugin_name == PluginName::new("@anything/cron".to_string()).unwrap()
+        {
             println!(
                 "[TRIGGER ENGINE] Processing trigger action with ID: {}",
                 action_id
             );
-            let input = action.input.clone();
-            let variables = action.variables.clone();
-            let variables_schema = action.variables_schema.clone();
-            let input_schema = action.input_schema.clone();
 
-            println!("[TRIGGER ENGINE] Trigger input: {:?}", input);
-            println!("[TRIGGER ENGINE] Trigger variables: {:?}", variables);
+            let inputs = action.inputs.clone();
+            let inputs_schema = action.inputs_schema.clone();
+            let plugin_config = action.plugin_config.clone();
+            let plugin_config_schema = action.plugin_config_schema.clone();
+
+            println!("[TRIGGER ENGINE] Trigger input: {:?}", inputs);
+            println!("[TRIGGER ENGINE] Trigger input schema: {:?}", inputs_schema);
 
             let task_config: TaskConfig = TaskConfig {
-                variables: Some(variables.clone().unwrap()),
-                variables_schema: Some(variables_schema.clone().unwrap()),
-                input: Some(input.clone()),
-                input_schema: Some(input_schema.clone()),
+                inputs: Some(inputs.clone().unwrap()),
+                inputs_schema: Some(inputs_schema.clone().unwrap()),
+                plugin_config: Some(plugin_config.clone()),
+                plugin_config_schema: Some(plugin_config_schema.clone()),
             };
 
             //Run the templater over the variables and results from last session
@@ -437,10 +445,10 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                 client,
                 &account_id,
                 &Uuid::new_v4().to_string(),
-                Some(&variables.clone().unwrap()),
-                Some(&variables_schema.clone().unwrap()),
-                Some(&input.clone()),
-                Some(&input_schema.clone()),
+                Some(&inputs.clone().unwrap()),
+                Some(&inputs_schema.clone().unwrap()),
+                Some(&plugin_config.clone()),
+                Some(&plugin_config_schema.clone()),
                 false,
             )
             .await
@@ -482,7 +490,8 @@ pub async fn create_in_memory_triggers_from_flow_definition(
             let trigger = InMemoryTrigger {
                 action_id: action_id.to_string(),
                 account_id: account_id.to_string(),
-                trigger_id: plugin_id.to_string(),
+                plugin_name: plugin_name.clone(),
+                plugin_version: action.plugin_version.clone(),
                 flow_id: flow_id.to_string(),
                 action_label: action.label.clone(),
                 flow_version_id: flow_version_id.to_string(),

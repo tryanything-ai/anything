@@ -1,7 +1,8 @@
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-use crate::types::action_types::{Action, JsonSchema, JsonSchemaProperty};
+use crate::types::action_types::Action;
+use crate::types::json_schema::{JsonSchema, JsonSchemaProperty};
 
 pub fn upgrade_action(plugin_id: &str, action_definition_json: &Value) -> Result<Action, String> {
     // Find existing action template with matching plugin_id
@@ -40,7 +41,7 @@ pub fn upgrade_action(plugin_id: &str, action_definition_json: &Value) -> Result
 
     // Extract variables from provided action definition
     if let Some(vars) = action_definition_json.get("variables") {
-        template_def.variables = Some(vars.clone());
+        template_def.inputs = Some(vars.clone());
     }
 
     // Extract and rebuild variables_schema from provided action definition
@@ -110,7 +111,7 @@ pub fn upgrade_action(plugin_id: &str, action_definition_json: &Value) -> Result
                 .get("additionalProperties")
                 .and_then(|a| a.as_bool()),
         };
-        template_def.variables_schema = Some(new_schema);
+        template_def.inputs_schema = Some(new_schema);
     }
 
     Ok(template_def)
@@ -120,7 +121,6 @@ pub fn upgrade_action(plugin_id: &str, action_definition_json: &Value) -> Result
 pub fn parse_action_json(json_str: &str) -> Result<crate::types::action_types::Action, String> {
     match serde_json::from_str::<crate::types::action_types::Action>(json_str) {
         Ok(action) => Ok(action),
-        Err(e) => Err(format!("Failed to parse action JSON: {}", e))
+        Err(e) => Err(format!("Failed to parse action JSON: {}", e)),
     }
 }
-

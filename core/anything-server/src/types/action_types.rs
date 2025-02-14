@@ -1,112 +1,73 @@
 use std::collections::HashMap;
 
 use super::react_flow_types::{HandleProps, NodePresentation};
+use node_semver::{Range, Version};
 use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum ValidationFieldType {
-    String,
-    Number,
-    Object,
-    Boolean,
-    Array,
-    Null,
-    #[serde(other)]
-    Unknown,
-}
+use crate::types::json_schema::JsonSchema;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum InputFieldType {
-    SimpleText,
-    NumberOrVariable,
-    BooleanOrVariable,
-    ObjectOrVariable,
-    HtmlOrVariable,
-    XmlOrVariable,
-    SelectOrVariable,
-    Text,
-    Account,
-    Error,
-    #[serde(other)]
-    Unknown,
-}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PluginName(String);
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct ValidationField {
-    pub r#type: ValidationFieldType,
-}
-
-impl Default for ValidationField {
-    fn default() -> Self {
-        ValidationField {
-            r#type: ValidationFieldType::Unknown,
+impl PluginName {
+    pub fn new(name: String) -> Result<Self, &'static str> {
+        if name.starts_with('@') && name.contains('/') {
+            Ok(PluginName(name))
+        } else {
+            Err("Plugin name must be in format @namespace/item")
         }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct PresentationField {
-    #[serde(rename = "inputType")]
-    pub input_type: InputFieldType,
-}
-
-impl Default for PresentationField {
-    fn default() -> Self {
-        PresentationField {
-            input_type: InputFieldType::Unknown,
-        }
+impl Serialize for PluginName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.serialize(serializer)
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct JsonSchemaProperty {
-    #[serde(rename = "x-any-validation")]
-    pub x_any_validation: Option<ValidationField>,
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub r#type: Option<String>,
-    #[serde(rename = "oneOf")]
-    //Used for select fields
-    pub one_of: Option<Vec<serde_json::Value>>,
-    #[serde(rename = "x-jsf-presentation")]
-    pub x_jsf_presentation: Option<PresentationField>,
+impl<'de> Deserialize<'de> for PluginName {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let name = String::deserialize(deserializer)?;
+        PluginName::new(name).map_err(de::Error::custom)
+    }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct JsonSchema {
-    pub r#type: Option<String>,
-    pub properties: Option<HashMap<String, JsonSchemaProperty>>,
-    pub required: Option<Vec<String>>,
-    #[serde(rename = "allOf")]
-    pub all_of: Option<Vec<serde_json::Value>>,
-    #[serde(rename = "x-jsf-order")]
-    pub x_jsf_order: Option<Vec<String>>,
-    #[serde(rename = "additionalProperties")]
-    pub additional_properties: Option<bool>,
+impl std::fmt::Display for PluginName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Action {
-    pub anything_action_version: String,
+    pub anything_action_version: Version,
     pub r#type: ActionType,
-    pub plugin_id: String,
-    pub action_id: String,
-    pub plugin_version: String,
+    pub plugin_name: PluginName, //We will use this to fetch current plugin schema etc from database vs in the workflow
+    pub plugin_version: Version,
+    pub action_id: String, // This is a local action_id for in the workflow
     pub label: String,
     pub description: Option<String>,
     pub icon: String,
-    pub variables: Option<Value>,
-    pub variables_locked: Option<bool>,
-    pub variables_schema: Option<JsonSchema>,
-    pub variables_schema_locked: Option<bool>,
-    pub input: Value,
-    pub input_locked: Option<bool>,
-    pub input_schema: JsonSchema,
-    pub input_schema_locked: Option<bool>,
+    pub inputs: Option<Value>,
+    pub inputs_locked: Option<bool>,
+    pub inputs_schema: Option<JsonSchema>,
+    pub inputs_schema_locked: Option<bool>,
+    pub plugin_config: Value,
+    pub plugin_config_locked: Option<bool>,
+    pub plugin_config_schema: JsonSchema,
+    pub plugin_config_schema_locked: Option<bool>,
     pub presentation: Option<NodePresentation>,
     pub handles: Option<Vec<HandleProps>>,
 }

@@ -340,8 +340,8 @@ pub async fn get_flow_version_variables(
     };
 
     // Get the variables, variables_schema, input and input_schema
-    let variables = action.variables.clone();
-    let variables_schema = action.variables_schema.clone();
+    let variables = action.inputs.clone();
+    let variables_schema = action.inputs_schema.clone();
     // let input = action.input.clone();
     // let input_schema = action.input_schema.clone();
 

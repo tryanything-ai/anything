@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+
 use chrono::Utc;
 
 use std::time::Duration;
@@ -123,10 +124,10 @@ pub async fn run_workflow_and_respond(
     let flow_session_id = Uuid::new_v4();
 
     let task_config: TaskConfig = TaskConfig {
-        variables: Some(trigger_node.variables.clone().unwrap()),
-        variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
-        input: Some(trigger_node.input.clone()),
-        input_schema: Some(trigger_node.input_schema.clone()),
+        inputs: Some(trigger_node.inputs.clone().unwrap()),
+        inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+        plugin_config: Some(trigger_node.plugin_config.clone()),
+        plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -136,10 +137,10 @@ pub async fn run_workflow_and_respond(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id.to_string(),
-        Some(&trigger_node.variables.clone().unwrap()),
-        Some(&trigger_node.variables_schema.clone().unwrap()),
-        Some(&trigger_node.input.clone()),
-        Some(&trigger_node.input_schema.clone()),
+        Some(&trigger_node.inputs.clone().unwrap()),
+        Some(&trigger_node.inputs_schema.clone().unwrap()),
+        Some(&trigger_node.plugin_config.clone()),
+        Some(&trigger_node.plugin_config_schema.clone()),
         false,
     )
     .await
@@ -186,7 +187,8 @@ pub async fn run_workflow_and_respond(
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_id: trigger_node.plugin_id.clone(),
+        plugin_name: trigger_node.plugin_name.clone(),
+        plugin_version: trigger_node.plugin_version.clone(),
         stage: if workflow_version.published {
             Stage::Production.as_str().to_string()
         } else {
@@ -198,6 +200,7 @@ pub async fn run_workflow_and_respond(
             "body": processed_payload.clone(),
             "method": method.to_string(),
         })),
+        error: None,
         test_config: None,
         started_at: Some(Utc::now()),
     };
@@ -375,10 +378,10 @@ pub async fn run_workflow_version_and_respond(
     let flow_session_id = Uuid::new_v4().to_string();
 
     let task_config: TaskConfig = TaskConfig {
-        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
-        input: Some(trigger_node.input.clone()),
-        input_schema: Some(trigger_node.input_schema.clone()),
+        inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
+        inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+        plugin_config: Some(trigger_node.plugin_config.clone()),
+        plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -388,10 +391,10 @@ pub async fn run_workflow_version_and_respond(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
-        Some(&trigger_node.variables.clone().unwrap()),
-        Some(&trigger_node.variables_schema.clone().unwrap()),
-        Some(&trigger_node.input.clone()),
-        Some(&trigger_node.input_schema.clone()),
+        Some(&trigger_node.inputs.clone().unwrap()),
+        Some(&trigger_node.inputs_schema.clone().unwrap()),
+        Some(&trigger_node.plugin_config.clone()),
+        Some(&trigger_node.plugin_config_schema.clone()),
         false,
     )
     .await
@@ -438,7 +441,8 @@ pub async fn run_workflow_version_and_respond(
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_id: trigger_node.plugin_id.clone(),
+        plugin_name: trigger_node.plugin_name.clone(),
+        plugin_version: trigger_node.plugin_version.clone(),
         stage: if workflow_version.published {
             Stage::Production.as_str().to_string()
         } else {
@@ -451,6 +455,7 @@ pub async fn run_workflow_version_and_respond(
             "body": processed_payload.clone(),
             "method": method.to_string(),
         })),
+        error: None,
         test_config: None,
         started_at: Some(Utc::now()),
     };
@@ -629,10 +634,10 @@ pub async fn run_workflow(
     let flow_session_id = Uuid::new_v4().to_string();
 
     let task_config: TaskConfig = TaskConfig {
-        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
-        input: Some(trigger_node.input.clone()),
-        input_schema: Some(trigger_node.input_schema.clone()),
+        inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
+        inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+        plugin_config: Some(trigger_node.plugin_config.clone()),
+        plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -642,10 +647,10 @@ pub async fn run_workflow(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id,
-        Some(&trigger_node.variables.clone().unwrap()),
-        Some(&trigger_node.variables_schema.clone().unwrap()),
-        Some(&trigger_node.input.clone()),
-        Some(&trigger_node.input_schema.clone()),
+        Some(&trigger_node.inputs.clone().unwrap()),
+        Some(&trigger_node.inputs_schema.clone().unwrap()),
+        Some(&trigger_node.plugin_config.clone()),
+        Some(&trigger_node.plugin_config_schema.clone()),
         false,
     )
     .await
@@ -692,7 +697,8 @@ pub async fn run_workflow(
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_id: trigger_node.plugin_id.clone(),
+        plugin_name: trigger_node.plugin_name.clone(),
+        plugin_version: trigger_node.plugin_version.clone(),
         stage: if workflow_version.published {
             Stage::Production.as_str().to_string()
         } else {
@@ -704,6 +710,7 @@ pub async fn run_workflow(
             "body": processed_payload.clone(),
             "method": method.to_string(),
         })),
+        error: None,
         test_config: None,
         started_at: Some(Utc::now()),
     };
@@ -839,10 +846,10 @@ pub async fn run_workflow_version(
     let flow_session_id = Uuid::new_v4();
 
     let task_config: TaskConfig = TaskConfig {
-        variables: Some(serde_json::to_value(&trigger_node.variables).unwrap()),
-        variables_schema: Some(trigger_node.variables_schema.clone().unwrap()),
-        input: Some(trigger_node.input.clone()),
-        input_schema: Some(trigger_node.input_schema.clone()),
+        inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
+        inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+        plugin_config: Some(trigger_node.plugin_config.clone()),
+        plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
     };
 
     // Bundle the context for the trigger node
@@ -852,10 +859,10 @@ pub async fn run_workflow_version(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id.to_string(),
-        Some(&trigger_node.variables.clone().unwrap()),
-        Some(&trigger_node.variables_schema.clone().unwrap()),
-        Some(&trigger_node.input.clone()),
-        Some(&trigger_node.input_schema.clone()),
+        Some(&trigger_node.inputs.clone().unwrap()),
+        Some(&trigger_node.inputs_schema.clone().unwrap()),
+        Some(&trigger_node.plugin_config.clone()),
+        Some(&trigger_node.plugin_config_schema.clone()),
         false,
     )
     .await
@@ -902,7 +909,8 @@ pub async fn run_workflow_version(
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: trigger_node.action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_id: trigger_node.plugin_id.clone(),
+        plugin_name: trigger_node.plugin_name.clone(),
+        plugin_version: trigger_node.plugin_version.clone(),
         stage: if workflow_version.published {
             Stage::Production.as_str().to_string()
         } else {
@@ -914,6 +922,7 @@ pub async fn run_workflow_version(
             "body": processed_payload.clone(),
             "method": method.to_string(),
         })),
+        error: None,
         test_config: None,
         started_at: Some(Utc::now()),
     };

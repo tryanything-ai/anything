@@ -6,7 +6,7 @@ use std::{env, sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::system_actions::process_http_task::parse_headers;
+use crate::system_plugins::http::http_plugin::parse_headers;
 use crate::types::{
     task_types::{CreateTaskInput, FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
     workflow_types::DatabaseFlowVersion,

@@ -1,0 +1,46 @@
+use serde_json::Value;
+
+const SCHEMA_VERSIONS: &[Value] = &[
+    serde_json::json!({
+        "version": "0.1.0",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "method": {
+                    "title": "Method",
+                    "description": "HTTP Method for request", 
+                    "type": "string",
+                    "oneOf": [
+                        {"value": "GET", "title": "GET"},
+                        {"value": "POST", "title": "POST"},
+                        {"value": "PUT", "title": "PUT"},
+                        {"value": "DELETE", "title": "DELETE"},
+                        {"value": "HEAD", "title": "HEAD"},
+                        {"value": "OPTIONS", "title": "OPTIONS"},
+                        {"value": "PATCH", "title": "PATCH"}
+                    ],
+                    "default": "GET"
+                },
+                "url": {
+                    "title": "URL",
+                    "description": "URL for request",
+                    "type": "string"
+                },
+                "headers": {
+                    "title": "Headers",
+                    "description": "Headers for request",
+                    "type": "object",
+                    "default": {}
+                },
+                "body": {
+                    "title": "Body",
+                    "description": "Body for request", 
+                    "type": "object",
+                    "default": {}
+                }
+            },
+            "required": ["method", "url"]
+        }
+    })
+];
+
