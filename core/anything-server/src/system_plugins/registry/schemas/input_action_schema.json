@@ -1,0 +1,57 @@
+{
+    "type": "action", 
+    "featured": false, 
+    "action_template_definition": 
+    {
+      "anything_action_version": "0.1.0",
+      "type": "action",
+      "plugin_name": "@anything/input",
+      "plugin_version": "0.1.0",
+      "action_id": "input",
+      "label": "Input",
+      "description": "Input",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-arrow-right\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg>",
+      "inputs": {},
+      "inputs_locked": false,
+      "inputs_schema": {},
+      "inputs_schema_locked": false,
+      "plugin_config": {
+        "json":{}
+      },
+      "plugin_config_locked": true,
+      "plugin_config_schema": {
+        "type": "object",
+        "properties": {
+          "json": {
+             "title": "JSON",
+              "description": "JSON to input",
+              "type": "string",
+              "default": "",
+              "x-jsf-presentation": {
+                "inputType": "json"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
+          }
+        },
+        "x-jsf-order": ["json"],
+        "required": ["json"],
+        "additionalProperties": false
+      },
+      "plugin_config_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a", 
+          "type": "target",
+          "position": "top"
+        }
+      ]
+    }
+}

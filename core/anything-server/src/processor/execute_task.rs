@@ -7,10 +7,10 @@ use crate::processor::process_trigger_utils::process_trigger_task;
 use crate::system_plugins::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
 };
-use crate::system_plugins::output_action::process_response_task;
+use crate::system_plugins::webhook_response::process_response_task;
 
 use crate::system_plugins::http::http_plugin::process_http_task;
-use crate::system_plugins::rustyscript::process_js_task;
+use crate::system_plugins::javascript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
 
