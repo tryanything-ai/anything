@@ -63,27 +63,27 @@ export default function AccountsPage(): JSX.Element {
         <CardContent>
           <Table>
             <TableBody className="border border-gray-300">
-              {accounts.map((account) => (
+              {accounts?.map((account) => (
                 <TableRow
                   key={account.acount_id}
                   className="border-1 rounded-md"
                 >
                   <TableCell>
-                    <BaseNodeIcon icon={account.auth_provider.provider_icon} />
+                    <BaseNodeIcon icon={account?.auth_provider?.provider_icon} />
                   </TableCell>
 
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {account.account_auth_provider_account_label}
+                      {account?.account_auth_provider_account_label}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {account.created_at
+                    {account?.created_at
                       ? format(new Date(account.created_at), "Pp")
                       : "N/A"}
                   </TableCell>
                   <TableCell>
-                    {account.failed && (
+                    {account?.failed && (
                       <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
                         Broken
                       </span>

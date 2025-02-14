@@ -1,10 +1,10 @@
 {
-    "type": "action", 
+    "type": "trigger", 
     "featured": false, 
     "action_template_definition": 
     {
       "anything_action_version": "0.1.0",
-      "type": "action",
+      "type": "trigger",
       "plugin_name": "@anything/input",
       "plugin_version": "0.1.0",
       "action_id": "input",

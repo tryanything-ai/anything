@@ -116,7 +116,7 @@ const NewAccountDialog = (): JSX.Element => {
         </DialogHeader>
         <Table>
           <TableBody className="border border-gray-300">
-            {providers.map((provider) => (
+            {providers?.map((provider) => (
               <TableRow key={provider.account_id}>
                 <TableCell>
                   <BaseNodeIcon icon={provider.provider_icon} />

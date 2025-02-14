@@ -51,8 +51,8 @@ export const VariablesProvider = ({
   children: ReactNode;
 }): JSX.Element => {
   const {
-    selected_node_inputs: selected_node_variables,
-    selected_node_inputs_schema: selected_node_variables_schema,
+    selected_node_inputs,
+    selected_node_inputs_schema,
     selected_action_id,
     updateNodeData,
   } = useWorkflowVersion();
@@ -74,13 +74,13 @@ export const VariablesProvider = ({
       if (selectedProperty) {
         console.log("[VARIABLES CONTEXT] Updating existing property");
 
-        if (!selected_node_variables_schema) return false;
-        if (!selected_node_variables_schema.properties) return false;
+        if (!selected_node_inputs_schema) return false;
+        if (!selected_node_inputs_schema.properties) return false;
 
-        let new_schema = cloneDeep(selected_node_variables_schema);
+        let new_schema = cloneDeep(selected_node_inputs_schema);
 
         console.log(
-          "[VARIABLES CONTEXT] Current Variables Schema to update: ",
+          "[VARIABLES CONTEXT] Current Inputs Schema to update: ",
           new_schema,
         );
 
@@ -122,19 +122,19 @@ export const VariablesProvider = ({
         );
 
         //update to Anyting Context and Db
-        await updateNodeData(["variables_schema"], [new_schema]);
+        await updateNodeData(["inputs_schema"], [new_schema]);
       } else {
         console.log("[VARIABLES CONTEXT] Creating new property");
 
         // Use variable schema or create one if necessary
-        let variables_schema = isValidVariablesSchema(
-          selected_node_variables_schema,
+        let inputs_schema = isValidVariablesSchema(
+          selected_node_inputs_schema,
         )
-          ? selected_node_variables_schema
+          ? selected_node_inputs_schema
           : cloneDeep(DEFAULT_VARIABLES_SCHEMA);
         console.log(
-          "[VARIABLES CONTEXT] Variables schema after checking existing schema or creating new one: ",
-          variables_schema,
+          "[VARIABLES CONTEXT] Inputs schema after checking existing schema or creating new one: ",
+          inputs_schema,
         );
 
         let key = slugify(form_data.title, {
@@ -147,7 +147,7 @@ export const VariablesProvider = ({
 
         console.log("[VARIABLES CONTEXT] Form Data: ", form_data);
         // Create new property
-        variables_schema.properties[key] = {
+        inputs_schema.properties[key] = {
           title: key,
           description: "",
           type: VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[
@@ -166,16 +166,16 @@ export const VariablesProvider = ({
         };
 
         console.log(
-          "[VARIABLES CONTEXT] Variables schema after adding new property: ",
-          variables_schema,
+          "[VARIABLES CONTEXT] Inputs schema after adding new property: ",
+          inputs_schema,
         );
 
         // Make sure we add to order and required
-        variables_schema["x-jsf-order"].push(key);
-        variables_schema.required.push(key);
+        inputs_schema["x-jsf-order"].push(key);
+        inputs_schema.required.push(key);
         console.log(
-          "[VARIABLES CONTEXT] Variables schema after updating order and required fields: ",
-          variables_schema,
+          "[VARIABLES CONTEXT] Inputs schema after updating order and required fields: ",
+          inputs_schema,
         );
 
         //Add input type to let users select Accounts for example
@@ -187,37 +187,34 @@ export const VariablesProvider = ({
           console.log(
             "[VARIABLES CONTEXT] Adding provider to x-jsf-presentation",
           );
-          variables_schema.properties[key]["x-jsf-presentation"]["provider"] =
+          inputs_schema.properties[key]["x-jsf-presentation"]["provider"] =
             form_data.provider;
         }
 
         // Need to add empty version to variables also
-        let new_variables: any = {};
+        let new_inputs: any = {};
         // If we already have variables add to them.
-        if (selected_node_variables) {
-          new_variables = cloneDeep(selected_node_variables);
+        if (selected_node_inputs) {
+          new_inputs = cloneDeep(selected_node_inputs);
           console.log(
-            "[VARIABLES CONTEXT] Cloned existing variables: ",
-            new_variables,
+            "[VARIABLES CONTEXT] Cloned existing inputs: ",
+            new_inputs,
           );
         }
 
-        new_variables[key] =
+        new_inputs[key] =
           VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION[form_data.type]
             .default || "";
         console.log(
-          "[VARIABLES CONTEXT] New variables after adding new key: ",
-          new_variables,
+          "[VARIABLES CONTEXT] New inputs after adding new key: ",
+          new_inputs,
         );
 
         // Update to Anything Context and Db
         console.log(
           "[VARIABLES CONTEXT] Updating node data with new variables schema and variables",
         );
-        await updateNodeData(
-          ["variables_schema", "variables"],
-          [variables_schema, new_variables],
-        );
+        await updateNodeData(["inputs_schema", "inputs"], [inputs_schema, new_inputs]);
         console.log("[VARIABLES CONTEXT] Node data updated successfully");
       }
     } catch (e) {

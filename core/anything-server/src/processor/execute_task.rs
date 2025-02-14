@@ -39,7 +39,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
     let http_client = state_clone.http_client.clone();
 
     match bundled_context_result {
-        Ok((bundled_variables, bundled_inputs)) => {
+        Ok((bundled_inputs, bundled_plugin_cofig)) => {
             let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
                 process_trigger_task(task)
@@ -47,22 +47,22 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_name {
                     Some(plugin_name) => match plugin_name.as_str() {
-                        "@anything/http" => process_http_task(&http_client, &bundled_inputs).await,
+                        "@anything/http" => process_http_task(&http_client, &bundled_plugin_cofig).await,
                         //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
                         //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.
                         "@anything/javascript" => {
-                            process_js_task(&bundled_variables, &bundled_inputs).await
+                            process_js_task(&bundled_inputs, &bundled_plugin_cofig).await
                         }
                         "@anything/response" => {
                             process_response_task(
                                 state_clone,
                                 task.flow_session_id.clone(),
-                                &bundled_inputs,
+                                &bundled_plugin_cofig,
                             )
                             .await
                         }
-                        "@anything/format_text" => process_text_task(&bundled_inputs),
-                        "@anything/format_date" => process_date_task(&bundled_inputs),
+                        "@anything/format_text" => process_text_task(&bundled_plugin_cofig),
+                        "@anything/format_date" => process_date_task(&bundled_plugin_cofig),
                         _ => {
                             process_missing_plugin(plugin_name.as_str(), &task.task_id.to_string())
                         }
@@ -72,10 +72,10 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
             };
 
             match task_result {
-                Ok(result) => Ok((result, bundled_inputs)),
+                Ok(result) => Ok((result, bundled_plugin_cofig)),
                 Err(e) => Err(TaskError {
                     error: json!({ "message": e.to_string() }),
-                    context: bundled_inputs,
+                    context: bundled_plugin_cofig,
                 }),
             }
         }

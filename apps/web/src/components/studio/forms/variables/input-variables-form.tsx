@@ -72,7 +72,7 @@ export default function InputVariablesForm(): JSX.Element {
   async function handleOnSubmit(formValues: any) {
     console.log("[INPUT VARIABLES FORM] Submitting!", formValues);
 
-    await updateNodeData(["variables"], [formValues]);
+    await updateNodeData(["inputs"], [formValues]);
   }
 
   return (

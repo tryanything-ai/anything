@@ -5,35 +5,35 @@ use tokio::task;
 use tokio::time::Instant;
 
 pub async fn process_js_task(
-    bundled_variables: &Value,
     bundled_inputs: &Value,
+    bundled_plugin_config: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
     println!("[RUSTYSCRIPT] Starting process_js_task");
-    println!("[RUSTYSCRIPT] Bundled variables: {:?}", bundled_variables);
+    println!("[RUSTYSCRIPT] Bundled variables: {:?}", bundled_inputs);
 
     // Clone the context since we need to move it to the new thread
+    let bundled_plugin_config_clone = bundled_plugin_config.clone();
     let bundled_inputs_clone = bundled_inputs.clone();
-    let bundled_variables_clone = bundled_variables.clone();
 
     // Spawn blocking task in a separate thread
     let result = task::spawn_blocking(move || {
         // Move the JavaScript execution logic into this closure
-        let js_code = bundled_inputs_clone["code"]
+        let js_code = bundled_plugin_config_clone["code"]
             .as_str()
             .ok_or("JS code not found in context")?;
 
         println!("[RUSTYSCRIPT] Extracted JS code: {:?}", js_code);
         println!(
-            "[RUSTYSCRIPT] Extracted variables: {:?}",
-            bundled_variables_clone
+            "[RUSTYSCRIPT] Extracted inputs: {:?}",
+            bundled_inputs_clone
         );
 
         // Create a module that wraps the user's code with context and exports
         let wrapped_code = format!(
             r#"
-            // Inject variables into globalThis.variables to match autocomplete
-            Object.assign(globalThis, {{ variables: {} }});
+            // Inject variables into globalThis.inputs to match autocomplete
+            Object.assign(globalThis, {{ inputs: {} }});
 
             // Export the user's code as default function and let errors propagate
             export default () => {{
@@ -62,7 +62,7 @@ pub async fn process_js_task(
                 }}
             }}
             "#,
-            serde_json::to_string(&bundled_variables_clone)?
+            serde_json::to_string(&bundled_inputs_clone)?
         );
 
         println!("[RUSTYSCRIPT] Generated wrapped code: {:?}", wrapped_code);
@@ -108,52 +108,3 @@ pub async fn process_js_task(
     );
     Ok(Some(result))
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use serde_json::json;
-
-//     #[test]
-//     fn test_js_with_variables() {
-//         println!("[RUSTYSCRIPT TEST] Running test_js_with_variables");
-//         let context = json!({
-//             "code": "return x + y;",
-//             "variables": {
-//                 "x": 20,
-//                 "y": 22
-//             }
-//         });
-
-//         let result = process_js_task(&context).await.unwrap().unwrap();
-//         assert_eq!(result, json!(42));
-//         println!("[RUSTYSCRIPT TEST] test_js_with_variables completed successfully");
-//     }
-
-//     #[test]
-//     fn test_js_missing_code() {
-//         println!("[RUSTYSCRIPT TEST] Running test_js_missing_code");
-//         let context = json!({
-//             "variables": {
-//                 "x": 20,
-//                 "y": 22
-//             }
-//         });
-
-//         let result = process_js_task(&context);
-//         assert!(result.is_err());
-//         println!("[RUSTYSCRIPT TEST] test_js_missing_code completed successfully");
-//     }
-
-//     #[test]
-//     fn test_js_no_variables() {
-//         println!("[RUSTYSCRIPT TEST] Running test_js_no_variables");
-//         let context = json!({
-//             "code": "return 40 + 2;"
-//         });
-
-//         let result = process_js_task(&context).unwrap().unwrap();
-//         assert_eq!(result, json!(42));
-//         println!("[RUSTYSCRIPT TEST] test_js_no_variables completed successfully");
-//     }
-// }

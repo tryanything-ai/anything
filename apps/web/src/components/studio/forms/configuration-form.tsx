@@ -59,7 +59,7 @@ export default function ConfigurationForm(): JSX.Element {
   }, [selected_node_input, selected_node_input_schema]);
 
   async function handleOnSubmit(formValues: any) {
-    await updateNodeData(["input"], [formValues]);
+    await updateNodeData(["plugin_config"], [formValues]);
     console.log("[CONFIGURATION FORM] Submitted!", formValues);
   }
 
