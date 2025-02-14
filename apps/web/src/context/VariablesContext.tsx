@@ -51,8 +51,8 @@ export const VariablesProvider = ({
   children: ReactNode;
 }): JSX.Element => {
   const {
-    selected_node_variables,
-    selected_node_variables_schema,
+    selected_node_inputs: selected_node_variables,
+    selected_node_inputs_schema: selected_node_variables_schema,
     selected_action_id,
     updateNodeData,
   } = useWorkflowVersion();

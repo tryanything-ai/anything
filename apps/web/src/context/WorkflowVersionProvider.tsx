@@ -64,10 +64,10 @@ export interface WorkflowVersionContextInterface {
   flow_version_definition: any;
   selected_action_id: string;
   selected_node_data: Action | undefined;
-  selected_node_variables: any;
-  selected_node_variables_schema: any;
-  selected_node_input: any;
-  selected_node_input_schema: any;
+  selected_node_inputs: any;
+  selected_node_inputs_schema: any;
+  selected_node_plugin_config: any;
+  selected_node_plugin_config_schema: any;
   panel_tab: string;
   savingStatus: string;
   detailedMode: boolean;
@@ -107,10 +107,10 @@ export const WorkflowVersionContext =
     flow_version_definition: {},
     selected_action_id: "",
     selected_node_data: undefined,
-    selected_node_variables: null,
-    selected_node_variables_schema: null,
-    selected_node_input: null,
-    selected_node_input_schema: null,
+    selected_node_inputs: null,
+    selected_node_inputs_schema: null,
+    selected_node_plugin_config: null,
+    selected_node_plugin_config_schema: null,
     panel_tab: PanelTab.CONFIG,
     savingStatus: SavingStatus.NONE,
     setPanelTab: () => {},
@@ -836,10 +836,10 @@ export const WorkflowVersionProvider = ({
     console.log("[useMemo] Selected Node Info", selectedNode);
     return {
       data: selectedNode?.data,
-      variables: selectedNode?.data?.variables || {},
-      variablesSchema: selectedNode?.data?.variables_schema || {},
-      input: selectedNode?.data?.input || {},
-      inputSchema: selectedNode?.data?.input_schema || {},
+      inputs: selectedNode?.data?.inputs || {},
+      inputsSchema: selectedNode?.data?.inputs_schema || {},
+      pluginConfig: selectedNode?.data?.plugin_config || {},
+      pluginConfigSchema: selectedNode?.data?.plugin_config_schema || {},
     };
   }, [nodes, selectedNodeId]);
 
@@ -867,10 +867,10 @@ export const WorkflowVersionProvider = ({
         flow_version_definition,
         selected_action_id: selectedNodeId,
         selected_node_data: selectedNodeInfo.data,
-        selected_node_variables: selectedNodeInfo.variables,
-        selected_node_variables_schema: selectedNodeInfo.variablesSchema,
-        selected_node_input: selectedNodeInfo.input,
-        selected_node_input_schema: selectedNodeInfo.inputSchema,
+        selected_node_inputs: selectedNodeInfo.inputs,
+        selected_node_inputs_schema: selectedNodeInfo.inputsSchema,
+        selected_node_plugin_config: selectedNodeInfo.pluginConfig,
+        selected_node_plugin_config_schema: selectedNodeInfo.pluginConfigSchema,
         nodes,
         edges,
         savingStatus,

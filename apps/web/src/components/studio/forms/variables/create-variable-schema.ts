@@ -65,7 +65,7 @@ export let CREATE_VARIABLE_SCHEMA: any = {
     properties: {
         "title": {
             "title": "Name",
-            "description": "The name of the variable",
+            "description": "The name of the input",
             "type": "string",
             "x-jsf-presentation": {
                 "inputType": "simple_text"
@@ -76,7 +76,7 @@ export let CREATE_VARIABLE_SCHEMA: any = {
         },
         "type": {
             "title": "Type",
-            "description": "The type of the variable",
+            "description": "The type of the input",
             "type": "string",
             "oneOf": [
                 {

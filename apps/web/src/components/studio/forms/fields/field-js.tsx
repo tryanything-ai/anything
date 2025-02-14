@@ -61,7 +61,7 @@ export default function CodemirrorFieldJs({
   showResultsExplorer,
 }: CodemirrorFieldJsProps) {
   const {
-    workflow: { selected_node_variables },
+    workflow: { selected_node_inputs },
   } = useAnything();
   const editorRef = React.useRef<any>(null);
   const [editorValue, setEditorValue] = React.useState(
@@ -130,8 +130,8 @@ export default function CodemirrorFieldJs({
   const variablesCompletionSource: CompletionSource = React.useMemo(() => {
     // Create a scoped completion source for the 'variables' object
     //Prefix with variables key so we access via variables.test for example
-    return scopeCompletionSource({ variables: selected_node_variables });
-  }, [selected_node_variables]);
+    return scopeCompletionSource({ inputs: selected_node_inputs });
+  }, [selected_node_inputs]);
 
   const completionExtension = React.useMemo(() => {
     return [

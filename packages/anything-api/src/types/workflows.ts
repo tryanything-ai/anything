@@ -21,16 +21,16 @@ export enum ActionType {
 export interface Action {
   anything_action_version: string; //defines compatability so in future we can upgrade actions
   type: ActionType;
-  plugin_id: string;
-  action_id: string; //unique id for react flow. probably generated based on action_id or plugin_id or slug of label
+  plugin_name: string;
   plugin_version: string; //TODO: so we can manage upgrade of plugins
+  action_id: string; //unique id for react flow. probably generated based on action_id or plugin_id or slug of label
   label: string;
   description?: string;
   icon: string;
-  variables: Variable;
-  variables_schema: Variable; //Action Variables. Almost like node level .env
-  input: Variable;
-  input_schema: Variable;
+  inputs: Variable;
+  inputs_schema: Variable; //Action Variables. Almost like node level .env
+  plugin_config: Variable;
+  plugin_config_schema: Variable;
   presentation?: NodePresentation;
   handles?: HandleProps[];
 }

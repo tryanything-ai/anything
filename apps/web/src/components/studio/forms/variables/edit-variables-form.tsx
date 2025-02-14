@@ -8,7 +8,7 @@ import { useEffect } from "react";
 export default function EditVariablesForm(): JSX.Element {
   const {
     variables,
-    workflow: { selected_node_variables_schema },
+    workflow: { selected_node_inputs_schema: selected_node_variables_schema },
   } = useAnything();
 
   const handleEdit = (property: any | undefined) => {

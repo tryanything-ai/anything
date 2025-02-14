@@ -1,6 +1,6 @@
 import { useAnything } from "@/context/AnythingContext";
 import ConfigurationForm from "./configuration-form";
-import { VariablesFormLayout } from "./variables/variables-form-layout";
+import { InputsFormLayout } from "./variables/variables-form-layout";
 import { Play } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import NoNodeSelected from "./no-node-selected";
@@ -23,7 +23,7 @@ export default function ActionSettingsForm(): JSX.Element {
       {workflow.selected_node_data && workflow.selected_action_id ? (
         <div className="grid w-full items-start gap-6">
           <div className="grid gap-2">
-            <VariablesFormLayout />
+            <InputsFormLayout />
             <ConfigurationForm />
           </div>
         </div>

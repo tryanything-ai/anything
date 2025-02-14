@@ -6,8 +6,8 @@ import { useMemo } from "react";
 export default function InputVariablesForm(): JSX.Element {
   const {
     workflow: {
-      selected_node_variables,
-      selected_node_variables_schema,
+      selected_node_inputs: selected_node_variables,
+      selected_node_inputs_schema: selected_node_variables_schema,
       updateNodeData,
       setShowExplorer,
       explorerTab,
@@ -79,7 +79,7 @@ export default function InputVariablesForm(): JSX.Element {
     <>
       {Object.keys(selected_node_variables_schema?.properties || {}).length ===
       0 ? (
-        <div className="text-gray-500 py-2 ml-12">No variables yet</div>
+        <div className="text-gray-500 py-2 ml-12">No inputs yet</div>
       ) : (
         <JsonSchemaForm
           name="input-variables-form"

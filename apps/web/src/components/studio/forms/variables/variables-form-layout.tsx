@@ -6,7 +6,7 @@ import EditVariablesForm from "./edit-variables-form";
 import { Button } from "@repo/ui/components/ui/button";
 import { ChevronRight } from "lucide-react";
 
-export function VariablesFormLayout(): JSX.Element {
+export function InputsFormLayout(): JSX.Element {
   const { variables, workflow } = useAnything();
 
   const Header = () => {
@@ -16,27 +16,26 @@ export function VariablesFormLayout(): JSX.Element {
 
     switch (variables.editingMode) {
       case EditVariableFormMode.EDIT:
-        header_title = "Edit Variable";
+        header_title = "Edit Input";
         link_button_text = "Cancel";
         action = () => variables.setEditingMode(EditVariableFormMode.INPUT);
         break;
       case EditVariableFormMode.DELETE:
-        header_title = "Edit Variables";
+        header_title = "Edit Inputs";
         link_button_text = "Cancel";
         action = () => variables.setEditingMode(EditVariableFormMode.INPUT);
         break;
       case EditVariableFormMode.INPUT:
-        header_title = "Variables";
+        header_title = "Inputs";
         link_button_text =
-          Object.keys(
-            workflow?.selected_node_variables_schema?.properties || {},
-          ).length > 0
+          Object.keys(workflow?.selected_node_inputs_schema?.properties || {})
+            .length > 0
             ? "Edit"
-            : "Add New Variable";
+            : "Add New Input";
         action = () => variables.setEditingMode(EditVariableFormMode.DELETE);
         break;
       default:
-        header_title = "Variables";
+        header_title = "Inputs";
     }
 
     return (
@@ -55,7 +54,7 @@ export function VariablesFormLayout(): JSX.Element {
         />
         <div className="font-bold">{header_title}</div>
         <div className="flex-1" />
-        {!workflow?.selected_node_data?.variables_schema_locked ? (
+        {!workflow?.selected_node_data?.inputs_schema_locked ? (
           <Button
             variant={"link"}
             className="h-auto p-0"

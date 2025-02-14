@@ -10,9 +10,9 @@ import { Button } from "@repo/ui/components/ui/button";
 export default function ConfigurationForm(): JSX.Element {
   const {
     workflow: {
-      selected_node_input,
+      selected_node_plugin_config: selected_node_input,
       selected_node_data,
-      selected_node_input_schema,
+      selected_node_plugin_config_schema: selected_node_input_schema,
       updateNodeData,
       explorerTab,
       setExplorerTab,
@@ -22,7 +22,7 @@ export default function ConfigurationForm(): JSX.Element {
   } = useAnything();
 
   const [isCollapsed, setIsCollapsed] = useState(
-    selected_node_data?.input_locked ?? false,
+    selected_node_data?.plugin_config_locked ?? false,
   );
 
   const { fields, handleValidation } = useMemo(() => {
@@ -82,7 +82,7 @@ export default function ConfigurationForm(): JSX.Element {
           />
           <div className="font-bold">Configuration</div>
           <div className="flex-1" />
-          {selected_node_data?.input_locked && (
+          {selected_node_data?.plugin_config_locked && (
             <Lock size={16} className="text-gray-400" />
           )}
         </div>
@@ -102,7 +102,7 @@ export default function ConfigurationForm(): JSX.Element {
                 setShowExplorer(true);
               }
             }}
-            disabled={selected_node_data?.input_locked}
+            disabled={selected_node_data?.plugin_config_locked}
             initialValues={selected_node_input}
             handleValidation={handleValidation}
           />
