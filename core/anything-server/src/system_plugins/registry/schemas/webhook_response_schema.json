@@ -1,0 +1,282 @@
+{
+    "type": "response",
+    "featured": false,
+    "action_template_definition": {
+      "anything_action_version": "0.1.0", 
+      "type": "response",
+      "plugin_id": "response",
+      "action_id": "response",
+      "plugin_version": "0.1.0",
+      "label": "Webhook Response",
+      "description": "Send HTTP response with custom status code, headers and body",
+      "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
+      "variables": {
+        "status_code": "200",
+        "content_type": "application/json",
+        "json_body": "{}",
+        "text_body": "",
+        "html_body": "",
+        "xml_body": ""
+      },
+      "variables_locked": false,
+      "variables_schema": {
+        "type": "object",
+        "properties": {
+          "status_code": {
+            "title": "Status Code",
+            "description": "HTTP status code for the response",
+            "type": "string",
+            "oneOf": [ 
+              {"value": "200", "title": "200 - OK"},
+              {"value": "201", "title": "201 - Created"},
+              {"value": "202", "title": "202 - Accepted"},
+              {"value": "204", "title": "204 - No Content"},
+              {"value": "400", "title": "400 - Bad Request"},
+              {"value": "401", "title": "401 - Unauthorized"},
+              {"value": "403", "title": "403 - Forbidden"},
+              {"value": "404", "title": "404 - Not Found"},
+              {"value": "500", "title": "500 - Internal Server Error"},
+              {"value": "503", "title": "503 - Service Unavailable"}
+            ],
+            "default": "200",
+            "x-jsf-presentation": {
+              "inputType": "select_or_variable"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "content_type": {
+            "title": "Content Type",
+            "description": "Content type of the response",
+            "type": "string",
+            "oneOf": [
+              {"value": "application/json", "title": "JSON"}
+            ],
+            "default": "application/json",
+            "x-jsf-presentation": {
+              "inputType": "select_or_variable"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "json_body": {
+            "title": "Response Body",
+            "description": "Content to send in response body",
+            "type": "object",
+            "default": "{}",
+            "x-jsf-presentation": {
+              "inputType": "object_or_variable"
+            },
+            "x-any-validation": {
+              "type": "object"
+            }
+          },
+          "text_body": {
+            "title": "Response Body as text",
+            "description": "Content to send in response body",
+            "type": "string",
+            "default": "",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          }, 
+          "html_body": {
+            "title": "Response Body as HTML",
+            "description": "Content to send in response body",
+            "type": "string",
+            "default": "",
+            "x-jsf-presentation": {
+              "inputType": "html_or_variable"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "xml_body": {
+            "title": "Response Body as XML",
+            "description": "Content to send in response body",
+            "type": "string",
+            "default": "",
+            "x-jsf-presentation": {
+              "inputType": "xml_or_variable"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["status_code", "content_type"],
+        "x-jsf-order": ["status_code", "content_type", "json_body", "text_body", "html_body", "xml_body"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "content_type": {"enum": ["text/html"]}
+              }
+            },
+            "then": {
+              "required": ["html_body"]
+            }, 
+            "else": {
+              "properties": {
+                "html_body": ""
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "content_type": {"enum": ["text/xml"]}
+              }
+            },
+            "then": {
+              "required": ["xml_body"]
+            },
+            "else": {
+              "properties": {
+                "xml_body": ""
+              }
+            }
+          }, 
+          {
+            "if": {
+              "properties": {
+                "content_type": {"enum": ["text/plain"]}
+              }
+            },
+            "then": {
+              "required": ["text_body"]
+            },
+            "else": {
+              "properties": {
+                "text_body": ""
+              }
+            }
+          }, 
+          {
+            "if": {
+              "properties": {
+                "content_type": {"enum": ["application/json"]}
+              }
+            },
+            "then": {
+              "required": ["json_body"]
+            },
+            "else": {
+              "properties": {
+                "json_body": ""
+              }
+            }
+          }
+        ]
+      },
+      "variables_schema_locked": true,
+      "input": {
+        "status_code": "{{variables.status_code}}",
+        "content_type": "{{variables.content_type}}",
+        "json_body": "{{variables.json_body}}",
+        "text_body": "{{variables.text_body}}",
+        "html_body": "{{variables.html_body}}",
+        "xml_body": "{{variables.xml_body}}"
+      },
+      "input_locked": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "status_code": {
+            "title": "Status Code",
+            "description": "HTTP status code for the response",
+            "type": "string",
+            "default": "{{variables.status_code}}",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "content_type": {
+            "title": "Content Type",
+            "description": "Content type of the response",
+            "type": "string",
+            "default": "{{variables.content_type}}",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "text_body": {
+            "title": "Response Body as text", 
+            "description": "Content to send in response body",
+            "type": "string",
+            "default": "{{variables.text_body}}",
+            "x-jsf-presentation": {
+              "inputType": "text"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "json_body": {
+            "title": "Response Body as JSON", 
+            "description": "Content to send in response body",
+            "type": "object",
+            "default": "{{variables.json_body}}",
+            "x-jsf-presentation": {
+              "inputType": "object_or_variable"
+            },
+            "x-any-validation": {
+              "type": "object"
+            }
+          },
+          "html_body": {
+            "title": "Response Body as HTML", 
+            "description": "Content to send in response body",
+            "type": "string",
+            "default": "{{variables.html_body}}",
+            "x-jsf-presentation": {
+              "inputType": "html_or_variable"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          },
+          "xml_body": {
+            "title": "Response Body as XML", 
+            "description": "Content to send in response body",
+            "type": "string",
+            "default": "{{variables.xml_body}}",
+            "x-jsf-presentation": {
+              "inputType": "xml_or_variable"
+            },
+            "x-any-validation": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["status_code", "content_type", "json_body", "text_body", "html_body", "xml_body"],
+        "x-jsf-order": ["status_code", "content_type", "json_body", "text_body", "html_body", "xml_body"]
+      },
+      "input_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a",
+          "type": "target",
+          "position": "top"
+        }
+      ]
+    }
+  }
