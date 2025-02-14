@@ -229,7 +229,7 @@ export const WorkflowVersionProvider = ({
     console.log("Node Data", node_data);
     //set action_id
     if (node_data) {
-      planned_action_id = node_data.plugin_id;
+      planned_action_id = node_data.action_id;
     }
 
     if (!position) {
@@ -385,7 +385,7 @@ export const WorkflowVersionProvider = ({
 
     const { source, target } = edge;
 
-    const planned_action_id = action_template.plugin_id;
+    const planned_action_id = action_template.action_id;
     const conflictFreeId = findConflictFreeId(newNodes, planned_action_id);
 
     const sourceNode = newNodes.find((node) => node.id === source);

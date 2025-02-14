@@ -32,20 +32,24 @@ import {
 
 export function findConflictFreeId(nodes: Node[], planned_node_name: string): string {
     console.log("Finding conflict free id for", planned_node_name);
+    
+    // Strip any existing numeric suffixes
+    const baseName = planned_node_name.replace(/_\d+$/, '');
+    
     let suffix = 0;
-    let newId = planned_node_name;
+    let newId = baseName;
 
     // If the id is not used ever just use it
     if (!nodes.some((node: Node) => node.id === newId)) {
-        console.log("No conflict found for", planned_node_name);
-        console.log("Returning", planned_node_name);
+        console.log("No conflict found for", baseName);
+        console.log("Returning", baseName);
         return newId;
     }
 
     // Generate a new ID with an incrementing suffix until we find one that doesn't exist
     while (nodes.some((node: Node) => node.id === newId)) {
         suffix++;
-        newId = `${planned_node_name}_${suffix}`;
+        newId = `${baseName}_${suffix}`;
     }
 
     console.log("Returning conflict free id", newId);
