@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS anything.flow_version_migration_errors (
     flow_definition JSONB
 );
 
+-- Alter the column type from JSON to JSONB
+ALTER TABLE anything.flow_versions 
+ALTER COLUMN flow_definition TYPE JSONB USING flow_definition::JSONB;
+
 -- Create the transformation function with error handling
 CREATE OR REPLACE FUNCTION anything.transform_flow_definition(flow_def JSONB) 
 RETURNS JSONB AS $$
