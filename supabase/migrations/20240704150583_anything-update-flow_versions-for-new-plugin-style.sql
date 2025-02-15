@@ -31,9 +31,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Update the flow_definition column in flow_versions without triggering timestamp updates
-UPDATE anything.flow_versions WITHOUT TRIGGERS
+ALTER TABLE anything.flow_versions DISABLE TRIGGER ALL;
+UPDATE anything.flow_versions 
 SET flow_definition = anything.transform_flow_definition(flow_definition)
 WHERE flow_definition::text LIKE '%plugin_id%';
+ALTER TABLE anything.flow_versions ENABLE TRIGGER ALL;
 
 -- Check for errors
 DO $$
