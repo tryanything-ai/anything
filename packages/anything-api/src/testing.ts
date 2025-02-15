@@ -14,7 +14,8 @@ export interface TaskRow {
     flow_session_status: string;
     action_id: string;
     type: string;
-    plugin_id: string;
+    plugin_name: string;
+    plugin_version: string;
     stage: string;
     test_config?: Record<string, any>;
     config: Record<string, any>;

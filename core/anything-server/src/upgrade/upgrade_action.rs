@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::types::action_types::Action;
 use crate::types::json_schema::{JsonSchema, JsonSchemaProperty};
 
-pub fn upgrade_action(plugin_id: &str, action_definition_json: &Value) -> Result<Action, String> {
+pub fn upgrade_action(plugin_name: &str, action_definition_json: &Value) -> Result<Action, String> {
     // Find existing action template with matching plugin_id
     let current_dir =
         std::env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
@@ -26,9 +26,9 @@ pub fn upgrade_action(plugin_id: &str, action_definition_json: &Value) -> Result
             t.get("action_template_definition")
                 .and_then(|d| d.get("plugin_id"))
                 .and_then(|id| id.as_str())
-                == Some(plugin_id)
+                == Some(plugin_name)
         })
-        .ok_or(format!("No template found for plugin_id: {}", plugin_id))?;
+        .ok_or(format!("No template found for plugin_id: {}", plugin_name))?;
 
     // Get the template definition
     let mut template_def: Action = serde_json::from_value(

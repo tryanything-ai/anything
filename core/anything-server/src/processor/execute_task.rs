@@ -69,7 +69,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                             process_missing_plugin(plugin_name.as_str(), &task.task_id.to_string())
                         }
                     },
-                    None => process_no_plugin_id(&task.task_id.to_string()),
+                    None => process_no_plugin_name(&task.task_id.to_string()),
                 }
             };
 
@@ -101,7 +101,7 @@ pub fn process_missing_plugin(
     })))
 }
 
-pub fn process_no_plugin_id(
+pub fn process_no_plugin_name(
     task_id: &str,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     Ok(Some(json!({
