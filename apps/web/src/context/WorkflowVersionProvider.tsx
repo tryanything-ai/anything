@@ -270,7 +270,7 @@ export const WorkflowVersionProvider = ({
       id: new_trigger.action_id,
       type: "anything",
       position: triggerNode.position,
-      data: { ...new_trigger, },
+      data: { ...new_trigger },
     };
 
     console.log("[CHANGE TRIGGER] New Trigger Node", updatedTriggerNode);
@@ -580,58 +580,58 @@ export const WorkflowVersionProvider = ({
   };
   //TODO: INVESTIGATE THIS - I think we should have ACTIONS managed more seperate then NODES.
   //This is likely where we are causing weird issues with state.
-  const parseJsonRecursively = (value: any): any => {
-    console.log(
-      "[UPDATE NODE DATA] Starting parseJsonRecursively with value:",
-      value,
-    );
+  // const parseJsonRecursively = (value: any): any => {
+  //   console.log(
+  //     "[UPDATE NODE DATA] Starting parseJsonRecursively with value:",
+  //     value,
+  //   );
 
-    // If it's a string, try to parse it as JSON only if it starts with { or [
-    if (typeof value === "string") {
-      console.log("[UPDATE NODE DATA] Processing string value:", value);
-      const trimmed = value.trim();
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        try {
-          console.log("[UPDATE NODE DATA] Attempting to parse JSON string");
-          const parsed = parseJsonRecursively(JSON.parse(value));
-          console.log("[UPDATE NODE DATA] Successfully parsed JSON:", parsed);
-          return parsed;
-        } catch (e) {
-          console.log(
-            "[UPDATE NODE DATA] Failed to parse JSON, returning original string",
-          );
-          return value;
-        }
-      } else {
-        console.log("[UPDATE NODE DATA] Returning non-JSON string value");
-        return value;
-      }
-    }
+  //   // If it's a string, try to parse it as JSON only if it starts with { or [
+  //   if (typeof value === "string") {
+  //     console.log("[UPDATE NODE DATA] Processing string value:", value);
+  //     const trimmed = value.trim();
+  //     if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+  //       try {
+  //         console.log("[UPDATE NODE DATA] Attempting to parse JSON string");
+  //         const parsed = parseJsonRecursively(JSON.parse(value));
+  //         console.log("[UPDATE NODE DATA] Successfully parsed JSON:", parsed);
+  //         return parsed;
+  //       } catch (e) {
+  //         console.log(
+  //           "[UPDATE NODE DATA] Failed to parse JSON, returning original string",
+  //         );
+  //         return value;
+  //       }
+  //     } else {
+  //       console.log("[UPDATE NODE DATA] Returning non-JSON string value");
+  //       return value;
+  //     }
+  //   }
 
-    // If it's an array, parse each element
-    if (Array.isArray(value)) {
-      console.log("[UPDATE NODE DATA] Processing array:", value);
-      const result = value.map((item) => parseJsonRecursively(item));
-      console.log("[UPDATE NODE DATA] Processed array result:", result);
-      return result;
-    }
+  //   // If it's an array, parse each element
+  //   if (Array.isArray(value)) {
+  //     console.log("[UPDATE NODE DATA] Processing array:", value);
+  //     const result = value.map((item) => parseJsonRecursively(item));
+  //     console.log("[UPDATE NODE DATA] Processed array result:", result);
+  //     return result;
+  //   }
 
-    // If it's an object, parse each value
-    if (value && typeof value === "object") {
-      console.log("[UPDATE NODE DATA] Processing object:", value);
-      const parsed: { [key: string]: any } = {};
-      for (const key in value) {
-        console.log("[UPDATE NODE DATA] Processing object key:", key);
-        parsed[key] = parseJsonRecursively(value[key]);
-      }
-      console.log("[UPDATE NODE DATA] Processed object result:", parsed);
-      return parsed;
-    }
+  //   // If it's an object, parse each value
+  //   if (value && typeof value === "object") {
+  //     console.log("[UPDATE NODE DATA] Processing object:", value);
+  //     const parsed: { [key: string]: any } = {};
+  //     for (const key in value) {
+  //       console.log("[UPDATE NODE DATA] Processing object key:", key);
+  //       parsed[key] = parseJsonRecursively(value[key]);
+  //     }
+  //     console.log("[UPDATE NODE DATA] Processed object result:", parsed);
+  //     return parsed;
+  //   }
 
-    // For all other types (number, boolean, null, undefined)
-    console.log("[UPDATE NODE DATA] Returning primitive value:", value);
-    return value;
-  };
+  //   // For all other types (number, boolean, null, undefined)
+  //   console.log("[UPDATE NODE DATA] Returning primitive value:", value);
+  //   return value;
+  // };
 
   const updateNodeData = async (
     update_key: string[],
@@ -639,26 +639,56 @@ export const WorkflowVersionProvider = ({
   ): Promise<boolean> => {
     try {
       const newNodes = cloneDeep(nodes);
-      let updatedNodes = newNodes.map((node) => {
-        if (node.id === selectedNodeId) {
+      const newData = cloneDeep(data);
+
+      let updatedNodes = newNodes.map((newNode) => {
+        if (newNode.id === selectedNodeId) {
           update_key.forEach((key, index) => {
             console.log(
               `[UPDATE NODE DATA] Before parsing ${key}:`,
-              data[index],
+              newData[index],
             );
             // Parse any stringified JSON recursively
-            const parsedValue = parseJsonRecursively(data[index]);
+            // const parsedValue = parseJsonRecursively(data[index]);
+            // const parsedValue = newData[index];
 
-            console.log(
-              `[UPDATE NODE DATA] After parsing ${key}:`,
-              parsedValue,
-            );
-            node.data[key] = parsedValue;
+            // console.log(parsedValue);
+
+            //TODO: This is kinda a hot fix for webhook reponse not allowing the use of other styles of responses
+            // if (
+            //   parsedValue &&
+            //   typeof parsedValue === "object" &&
+            //   "json_body" in parsedValue
+            // ) {
+            //   console.log(
+            //     "Found json_body in parsed value:",
+            //     parsedValue.json_body,
+            //   );
+
+            //   if (
+            //     parsedValue.json_body === "{}" ||
+            //     Object.keys(parsedValue.json_body).length === 0
+            //   ) {
+            //     console.log("json_body is empty, setting to empty object");
+            //     newNode.data[key] = {
+            //       ...parsedValue,
+            //       json_body: "{}",
+            //     };
+
+            //     console.log(
+            //       "Updated node.data[key] for empty json_body",
+            //       newNode.data[key],
+            //     );
+            //   } else {
+            //     newNode.data[key] = parsedValue;
+            //   }
+            // } else {
+            newNode.data[key] = newData[index];
+            // }
           });
-          console.log("[UPDATE NODE DATA] NEW_DATA_FOR_NODE", node.data);
-          // setSelectedNodeId(node.id);
+          console.log("[UPDATE NODE DATA] NEW_DATA_FOR_NODE", newNode.data);
         }
-        return node;
+        return newNode;
       });
 
       console.log("[UPDATE NODE DATA] ALL_NEW_NODE_DATA", updatedNodes);

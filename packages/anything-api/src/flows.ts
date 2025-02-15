@@ -1,4 +1,4 @@
-import { Workflow } from "./types/workflows";
+import { Workflow, fillDefaultInputs } from "./types/workflows";
 import { SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from "uuid";
 
@@ -161,7 +161,7 @@ export async function updateFlowVersion(supabase: SupabaseClient, account_id: st
           'Content-Type': 'application/json',
           Authorization: `${session.access_token}`,
         },
-        body: JSON.stringify(flow_definition),
+        body: JSON.stringify(fillDefaultInputs(flow_definition)),
       });
 
       const data = await response.json();

@@ -115,17 +115,17 @@ export function JsonSchemaForm({
         jsonValues,
       );
 
-      // const valuesWithDefaults = applyDefaultValuesToEmptyFields(
-      //   fields,
-      //   values,
-      // );
+      const valuesWithDefaults = applyDefaultValuesToEmptyFields(
+        fields,
+        values,
+      );
 
-      // console.log(
-      //   "[JSON SCHEMA FORM - SUBMIT] Values with defaults:",
-      //   valuesWithDefaults,
-      // );
+      console.log(
+        "[JSON SCHEMA FORM - SUBMIT] Values with defaults:",
+        valuesWithDefaults,
+      );
 
-      onSubmit(values);
+      onSubmit(valuesWithDefaults);
       setHasUnsavedChanges(false);
     }
   };

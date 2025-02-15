@@ -91,3 +91,34 @@ export type DBFlowTemplateVersion = {
   created_by: string | null;
 };
 
+//TODO: this is kinda an ugly hack but could not get an empty object to not change to null
+//Specifically this was braking @anything/webhook_response when we tried to return anything but JSON.
+//Because without repairing workflwos on save it did not work so we could onlly return jSON. 
+//THis signals tehre are deeper problems in state management in the workflow wich is not surprising!
+//
+export function fillDefaultInputs(workflow: Workflow): Workflow {
+  return {
+    ...workflow,
+    actions: workflow.actions.map(action => ({
+      ...action,
+      inputs: fillDefaultsFromSchema(action.inputs, action.inputs_schema)
+    }))
+  };
+}
+
+function fillDefaultsFromSchema(inputs: Variable, schema: Variable): Variable {
+  const filledInputs = { ...inputs };
+  
+  // Only process if schema has properties
+  if (schema.properties) {
+    // Iterate through schema properties and fill in defaults
+    for (const [key, prop] of Object.entries(schema.properties)) {
+      if (filledInputs[key] === null || filledInputs[key] === undefined) {
+        filledInputs[key] = (prop as { default?: any }).default;
+      }
+    }
+  }
+
+  return filledInputs;
+}
+
