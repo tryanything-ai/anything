@@ -13,45 +13,55 @@ ALTER COLUMN flow_definition TYPE JSONB USING flow_definition::JSONB;
 CREATE OR REPLACE FUNCTION anything.transform_flow_definition(flow_def JSONB) 
 RETURNS JSONB AS $$
 BEGIN
-    -- First transform: inputs -> plugin_config
-    flow_def = flow_def 
-    - 'inputs' - 'inputs_schema' - 'inputs_schema_locked' - 'inputs_locked' ||
-    CASE 
-        WHEN flow_def ? 'inputs' THEN jsonb_build_object('plugin_config', flow_def->'inputs')
-        ELSE '{}'::jsonb
-    END ||
-    CASE 
-        WHEN flow_def ? 'inputs_schema' THEN jsonb_build_object('plugin_config_schema', flow_def->'inputs_schema')
-        ELSE '{}'::jsonb
-    END ||
-    CASE 
-        WHEN flow_def ? 'inputs_schema_locked' THEN jsonb_build_object('plugin_config_schema_locked', flow_def->'inputs_schema_locked')
-        ELSE '{}'::jsonb
-    END ||
-    CASE 
-        WHEN flow_def ? 'inputs_locked' THEN jsonb_build_object('plugin_config_locked', flow_def->'inputs_locked')
-        ELSE '{}'::jsonb
-    END;
-
-    -- Second transform: variables -> inputs
-    RETURN flow_def 
-    - 'variables' - 'variables_schema' - 'variables_schema_locked' - 'variables_locked' ||
-    CASE 
-        WHEN flow_def ? 'variables' THEN jsonb_build_object('inputs', flow_def->'variables')
-        ELSE '{}'::jsonb
-    END ||
-    CASE 
-        WHEN flow_def ? 'variables_schema' THEN jsonb_build_object('inputs_schema', flow_def->'variables_schema')
-        ELSE '{}'::jsonb
-    END ||
-    CASE 
-        WHEN flow_def ? 'variables_schema_locked' THEN jsonb_build_object('inputs_schema_locked', flow_def->'variables_schema_locked')
-        ELSE '{}'::jsonb
-    END ||
-    CASE 
-        WHEN flow_def ? 'variables_locked' THEN jsonb_build_object('inputs_locked', flow_def->'variables_locked')
-        ELSE '{}'::jsonb
-    END;
+    RETURN jsonb_set(
+        flow_def,
+        '{actions}',
+        (
+            SELECT jsonb_agg(
+                CASE 
+                    WHEN action ? 'variables' OR action ? 'input' THEN
+                        action 
+                        - 'input' - 'input_schema' - 'input_schema_locked' - 'input_locked'
+                        - 'variables' - 'variables_schema' - 'variables_schema_locked' - 'variables_locked'
+                        ||
+                        CASE 
+                            WHEN action ? 'input' THEN jsonb_build_object('plugin_config', action->'input')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'input_schema' THEN jsonb_build_object('plugin_config_schema', action->'input_schema')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'input_schema_locked' THEN jsonb_build_object('plugin_config_schema_locked', action->'input_schema_locked')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'input_locked' THEN jsonb_build_object('plugin_config_locked', action->'input_locked')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'variables' THEN jsonb_build_object('inputs', action->'variables')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'variables_schema' THEN jsonb_build_object('inputs_schema', action->'variables_schema')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'variables_schema_locked' THEN jsonb_build_object('inputs_schema_locked', action->'variables_schema_locked')
+                            ELSE '{}'::jsonb
+                        END ||
+                        CASE 
+                            WHEN action ? 'variables_locked' THEN jsonb_build_object('inputs_locked', action->'variables_locked')
+                            ELSE '{}'::jsonb
+                        END
+                    ELSE action
+                END
+            )
+            FROM jsonb_array_elements(flow_def->'actions') action
+        )
+    );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -63,10 +73,10 @@ WHERE flow_definition::text LIKE '%variables%'
    OR flow_definition::text LIKE '%variables_schema%'
    OR flow_definition::text LIKE '%variables_schema_locked%'
    OR flow_definition::text LIKE '%variables_locked%'
-   OR flow_definition::text LIKE '%inputs%'
-   OR flow_definition::text LIKE '%inputs_schema%'
-   OR flow_definition::text LIKE '%inputs_schema_locked%'
-   OR flow_definition::text LIKE '%inputs_locked%';
+   OR flow_definition::text LIKE '%input%'
+   OR flow_definition::text LIKE '%input_schema%'
+   OR flow_definition::text LIKE '%input_schema_locked%'
+   OR flow_definition::text LIKE '%input_locked%';
 SET session_replication_role = DEFAULT;
 
 -- Check for errors
