@@ -229,14 +229,14 @@ export const VariablesProvider = ({
   const deleteVariable = async (variableKey: string) => {
     try {
       console.log("[VARIABLES CONTEXT] Deleting variable: ", variableKey);
-      if (!selected_node_variables) return false;
-      if (!selected_node_variables_schema) return false;
+      if (!selected_node_inputs) return false;
+      if (!selected_node_inputs_schema) return false;
 
       console.log("[VARIABLES CONTEXT] Made it through checks in delete ");
       //deep copy schema
-      let updated_schema = cloneDeep(selected_node_variables_schema);
+      let updated_schema = cloneDeep(selected_node_inputs_schema);
       //deep variables
-      let updated_variables = cloneDeep(selected_node_variables);
+      let updated_variables = cloneDeep(selected_node_inputs);
 
       // Delete the variable from schema
       delete updated_schema.properties[variableKey];
