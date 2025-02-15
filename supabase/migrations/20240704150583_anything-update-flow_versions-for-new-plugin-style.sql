@@ -6,57 +6,33 @@ CREATE TABLE IF NOT EXISTS anything.flow_version_migration_errors (
 );
 
 -- Create the transformation function with error handling
-CREATE OR REPLACE FUNCTION anything.transform_flow_definition(
-    flow_version_id UUID,
-    flow_def JSONB
-) RETURNS JSONB AS $$
+CREATE OR REPLACE FUNCTION anything.transform_flow_definition(flow_def JSONB) 
+RETURNS JSONB AS $$
 BEGIN
-    -- Check for null
-    IF flow_def IS NULL THEN
-        INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
-        VALUES (flow_version_id, 'Flow definition is NULL', NULL);
-        RETURN flow_def;
-    END IF;
-
-    -- Check for actions array
-    IF flow_def->'actions' IS NULL OR jsonb_typeof(flow_def->'actions') != 'array' THEN
-        INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
-        VALUES (flow_version_id, 'No actions array found or invalid type', flow_def);
-        RETURN flow_def;
-    END IF;
-
-    -- Transform each action in the actions array
     RETURN jsonb_set(
         flow_def,
         '{actions}',
         (
             SELECT jsonb_agg(
                 CASE 
-                    WHEN action->>'plugin_id' IS NULL THEN
-                        -- Log error for actions missing plugin_id and return unchanged action
-                        action
-                    ELSE
-                        -- Perform the transformation: only update plugin_name, preserve existing plugin_version
+                    WHEN action->>'plugin_id' IS NOT NULL THEN
                         action - 'plugin_id' || 
                         jsonb_build_object(
                             'plugin_name', '@anything/' || (action->>'plugin_id')
                         )
+                    ELSE
+                        action
                 END
             )
             FROM jsonb_array_elements(flow_def->'actions') action
         )
     );
-EXCEPTION WHEN OTHERS THEN
-    -- Log any other errors
-    INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
-    VALUES (flow_version_id, SQLERRM, flow_def);
-    RETURN flow_def;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Update the flow_definition column in flow_versions without triggering timestamp updates
 UPDATE anything.flow_versions WITHOUT TRIGGERS
-SET flow_definition = anything.transform_flow_definition(id, flow_definition)
+SET flow_definition = anything.transform_flow_definition(flow_definition)
 WHERE flow_definition::text LIKE '%plugin_id%';
 
 -- Check for errors
@@ -69,7 +45,7 @@ BEGIN
     END IF;
 END $$;
 
--- Drop the temporary function
+-- Drop the function after we're done
 DROP FUNCTION anything.transform_flow_definition;
 
 -- Drop the table after we're done
