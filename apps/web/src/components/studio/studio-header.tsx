@@ -53,7 +53,8 @@ export default function StudioHeader(): JSX.Element {
             View History
           </Button>
         </Link>
-        <ShareDialog />
+        {/* TODO: add back when we figure out sharing */}
+        {/* <ShareDialog /> */}
         {workflow &&
         workflow.db_flow_version &&
         workflow.db_flow_version.published ? (

@@ -52,11 +52,11 @@ export default function PublishActionDialog({
       // Update the action_id to match the plugin_id
       // Prevents node access slugs from propogating into marketplace from users local version that has some context
       // of the workflow it was included in like http_4 vs http
-      // if (selected_node_data.plugin_name) {
-      //   selected_node_data.action_id = selected_node_data.plugin_name;
-      // } else {
-      //   console.warn("No plugin_name found for the selected node");
-      // }
+      if (selected_node_data.plugin_id) {
+        selected_node_data.action_id = selected_node_data.plugin_id;
+      } else {
+        console.warn("No plugin_id found for the selected node");
+      }
 
       console.log("Updated selected_node_data:", selected_node_data);
 
@@ -96,7 +96,8 @@ export default function PublishActionDialog({
                 <div className="flex flex-col space-y-4">
                   <p className="text-yellow-600 font-semibold">
                     Before publishing make sure your template has no sensitive
-                    data like API keys hard coded into the templates.
+                    data like API keys hard coded into the templates if you are
+                    publising to marketplace.
                   </p>
                   <label className="flex items-center space-x-2 mt-4">
                     <input
