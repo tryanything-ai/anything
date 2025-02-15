@@ -1,5 +1,5 @@
--- First, create a temporary table to log errors
-CREATE TEMPORARY TABLE flow_version_migration_errors (
+-- First, create a regular table instead of a temporary one
+CREATE TABLE IF NOT EXISTS anything.flow_version_migration_errors (
     flow_version_id UUID,
     error_message TEXT,
     flow_definition JSONB
@@ -13,14 +13,14 @@ CREATE OR REPLACE FUNCTION anything.transform_flow_definition(
 BEGIN
     -- Check for null
     IF flow_def IS NULL THEN
-        INSERT INTO flow_version_migration_errors (flow_version_id, error_message, flow_definition)
+        INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
         VALUES (flow_version_id, 'Flow definition is NULL', NULL);
         RETURN flow_def;
     END IF;
 
     -- Check for actions array
     IF flow_def->'actions' IS NULL OR jsonb_typeof(flow_def->'actions') != 'array' THEN
-        INSERT INTO flow_version_migration_errors (flow_version_id, error_message, flow_definition)
+        INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
         VALUES (flow_version_id, 'No actions array found or invalid type', flow_def);
         RETURN flow_def;
     END IF;
@@ -35,7 +35,7 @@ BEGIN
                     WHEN action->>'plugin_id' IS NULL THEN
                         -- Log error for actions missing plugin_id
                         (SELECT action FROM (
-                            INSERT INTO flow_version_migration_errors (flow_version_id, error_message, flow_definition)
+                            INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
                             VALUES (flow_version_id, 'Action missing plugin_id', action)
                         ) _ RETURNING action)
                     ELSE
@@ -51,7 +51,7 @@ BEGIN
     );
 EXCEPTION WHEN OTHERS THEN
     -- Log any other errors
-    INSERT INTO flow_version_migration_errors (flow_version_id, error_message, flow_definition)
+    INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
     VALUES (flow_version_id, SQLERRM, flow_def);
     RETURN flow_def;
 END;
@@ -65,7 +65,7 @@ WHERE flow_definition::text LIKE '%plugin_id%';
 -- Check for errors
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM flow_version_migration_errors) THEN
+    IF EXISTS (SELECT 1 FROM anything.flow_version_migration_errors) THEN
         RAISE NOTICE 'Migration completed with errors. Check flow_version_migration_errors table.';
     ELSE
         RAISE NOTICE 'Migration completed successfully.';
@@ -75,5 +75,5 @@ END $$;
 -- Drop the temporary function
 DROP FUNCTION anything.transform_flow_definition;
 
--- Keep the error table for review
--- DROP TABLE flow_version_migration_errors; 
+-- Drop the table after we're done
+DROP TABLE anything.flow_version_migration_errors; 
