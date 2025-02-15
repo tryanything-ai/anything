@@ -57,8 +57,8 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Update the flow_definition column in flow_versions
-UPDATE anything.flow_versions
+-- Update the flow_definition column in flow_versions without triggering timestamp updates
+UPDATE anything.flow_versions WITHOUT TRIGGERS
 SET flow_definition = anything.transform_flow_definition(id, flow_definition)
 WHERE flow_definition::text LIKE '%plugin_id%';
 
