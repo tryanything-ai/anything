@@ -31,11 +31,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Update the flow_definition column in flow_versions without triggering timestamp updates
-ALTER TABLE anything.flow_versions DISABLE TRIGGER ALL;
+-- https://stackoverflow.com/a/18709987 -> simple way to stop triggers from firing the updated_at column
+SET session_replication_role = replica;
 UPDATE anything.flow_versions 
 SET flow_definition = anything.transform_flow_definition(flow_definition)
 WHERE flow_definition::text LIKE '%plugin_id%';
-ALTER TABLE anything.flow_versions ENABLE TRIGGER ALL;
+SET session_replication_role = DEFAULT;
 
 -- Check for errors
 DO $$
