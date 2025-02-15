@@ -54,6 +54,7 @@ mod types;
 mod templater;
 mod testing; 
 mod trigger_engine;
+mod agents; 
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
@@ -338,6 +339,10 @@ pub async fn root() -> impl IntoResponse {
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
             get(testing::test_action),
         )
+
+        //Agents
+        .route("/account/:account_id/agent", post(agents::create::create_agent))
+
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,
