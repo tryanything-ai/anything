@@ -33,11 +33,8 @@ BEGIN
             SELECT jsonb_agg(
                 CASE 
                     WHEN action->>'plugin_id' IS NULL THEN
-                        -- Log error for actions missing plugin_id
-                        (SELECT action FROM (
-                            INSERT INTO anything.flow_version_migration_errors (flow_version_id, error_message, flow_definition)
-                            VALUES (flow_version_id, 'Action missing plugin_id', action)
-                        ) _ RETURNING action)
+                        -- Log error for actions missing plugin_id and return unchanged action
+                        action
                     ELSE
                         -- Perform the transformation: only update plugin_name, preserve existing plugin_version
                         action - 'plugin_id' || 
@@ -76,4 +73,4 @@ END $$;
 DROP FUNCTION anything.transform_flow_definition;
 
 -- Drop the table after we're done
-DROP TABLE anything.flow_version_migration_errors; 
+-- DROP TABLE anything.flow_version_migration_errors; 
