@@ -115,16 +115,6 @@ export function JsonSchemaForm({
         jsonValues,
       );
 
-      // const valuesWithDefaults = applyDefaultValuesToEmptyFields(
-      //   fields,
-      //   values,
-      // );
-
-      // console.log(
-      //   "[JSON SCHEMA FORM - SUBMIT] Values with defaults:",
-      //   valuesWithDefaults,
-      // );
-
       onSubmit(values);
       setHasUnsavedChanges(false);
     }

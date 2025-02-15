@@ -122,6 +122,7 @@ pub async fn run_workflow_and_respond(
         };
 
     let flow_session_id = Uuid::new_v4();
+    let trigger_session_id = Uuid::new_v4();
 
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(trigger_node.inputs.clone().unwrap()),
@@ -181,7 +182,7 @@ pub async fn run_workflow_and_respond(
         flow_version_id: workflow_version.flow_version_id.to_string(),
         action_label: trigger_node.label.clone(),
         trigger_id: trigger_node.action_id.clone(),
-        trigger_session_id: Uuid::new_v4().to_string(),
+        trigger_session_id: trigger_session_id.to_string(),
         trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
         flow_session_id: flow_session_id.to_string(),
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
@@ -245,6 +246,7 @@ pub async fn run_workflow_and_respond(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
         flow_session_id: flow_session_id,
+        trigger_session_id: trigger_session_id,
         trigger_task: Some(task),
     };
 
@@ -376,7 +378,7 @@ pub async fn run_workflow_version_and_respond(
         };
 
     let flow_session_id = Uuid::new_v4().to_string();
-
+    let trigger_session_id = Uuid::new_v4();
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -501,6 +503,7 @@ pub async fn run_workflow_version_and_respond(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
         flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        trigger_session_id: trigger_session_id,
         trigger_task: Some(task.clone()),
     };
 
@@ -632,7 +635,7 @@ pub async fn run_workflow(
         };
 
     let flow_session_id = Uuid::new_v4().to_string();
-
+    let trigger_session_id = Uuid::new_v4();
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -741,6 +744,7 @@ pub async fn run_workflow(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
         flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        trigger_session_id: trigger_session_id,
         trigger_task: Some(task.clone()),
     };
 
@@ -844,7 +848,7 @@ pub async fn run_workflow_version(
         };
 
     let flow_session_id = Uuid::new_v4();
-
+    let trigger_session_id = Uuid::new_v4();
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -950,6 +954,7 @@ pub async fn run_workflow_version(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
         flow_session_id: flow_session_id,
+        trigger_session_id: trigger_session_id,
         trigger_task: Some(task),
     };
 

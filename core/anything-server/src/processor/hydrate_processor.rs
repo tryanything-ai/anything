@@ -71,6 +71,7 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
     for task in tasks {
         let session_id = task.flow_session_id;
         let flow_version_id = task.flow_version_id;
+        let trigger_session_id = task.trigger_session_id;
 
         if !seen_sessions.contains_key(&session_id) {
             let tasks_future =
@@ -175,6 +176,7 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                         workflow_id: workflow_def.unwrap().flow_id,
                         version_id: Some(flow_version_id),
                         flow_session_id: Uuid::parse_str(&session_id).unwrap(),
+                        trigger_session_id: Uuid::parse_str(&trigger_session_id).unwrap(),
                         trigger_task: None,
                     };
 

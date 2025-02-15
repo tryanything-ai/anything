@@ -27,6 +27,7 @@ pub struct ProcessorMessage {
     pub workflow_id: Uuid,
     pub version_id: Option<Uuid>,
     pub flow_session_id: Uuid,
+    pub trigger_session_id: Uuid,
     pub trigger_task: Option<CreateTaskInput>,
 }
 
@@ -56,6 +57,8 @@ pub async fn processor(
         let version_id = message.version_id;
         let flow_session_id = message.flow_session_id;
         let trigger_task = message.trigger_task;
+        let trigger_task_id = trigger_task.clone().unwrap().trigger_id;
+        let trigger_session_id = message.trigger_session_id;
 
         println!("[PROCESSOR] Received workflow_id: {}", flow_session_id);
 
@@ -193,8 +196,8 @@ pub async fn processor(
                         flow_id: workflow_id.to_string(),
                         flow_version_id: workflow.flow_version_id.to_string(),
                         action_label: trigger_node.label.clone(),
-                        trigger_id: trigger_node.action_id.clone(),
-                        trigger_session_id: Uuid::new_v4().to_string(),
+                        trigger_id: trigger_task_id.clone(),
+                        trigger_session_id: trigger_session_id.to_string(),
                         trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
                         flow_session_id: flow_session_id.to_string(),
                         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
@@ -289,8 +292,8 @@ pub async fn processor(
                                         flow_id: workflow_id.to_string(),
                                         flow_version_id: workflow.flow_version_id.to_string(),
                                         action_label: action.label.clone(),
-                                        trigger_id: action.action_id.clone(),
-                                        trigger_session_id: Uuid::new_v4().to_string(),
+                                        trigger_id: trigger_task_id.clone(),
+                                        trigger_session_id: trigger_session_id.to_string(),
                                         trigger_session_status: TriggerSessionStatus::Running
                                             .as_str()
                                             .to_string(),
@@ -519,8 +522,8 @@ pub async fn processor(
                         flow_id: workflow_id.to_string(),
                         flow_version_id: workflow.flow_version_id.to_string(),
                         action_label: next_action.label.clone(),
-                        trigger_id: next_action.action_id.clone(),
-                        trigger_session_id: Uuid::new_v4().to_string(),
+                        trigger_id: trigger_task_id.clone(),
+                        trigger_session_id: trigger_session_id.to_string(),
                         trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
                         flow_session_id: flow_session_id.to_string(),
                         flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),

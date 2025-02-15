@@ -156,6 +156,7 @@ pub async fn test_workflow(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
         flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        trigger_session_id: Uuid::parse_str(&trigger_session_id).unwrap(),
         trigger_task: Some(input),
     };
 

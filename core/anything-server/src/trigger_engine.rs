@@ -370,6 +370,7 @@ async fn create_trigger_task(
         workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
         version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
         flow_session_id: Uuid::parse_str(&input.flow_session_id).unwrap(),
+        trigger_session_id: Uuid::parse_str(&input.trigger_session_id).unwrap(),
         trigger_task: Some(input),
     };
 
