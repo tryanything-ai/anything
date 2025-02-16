@@ -30,6 +30,10 @@ export default async function PersonalAccountDashboard({
       href: "/connections",
     },
     {
+      name: "Agents",
+      href: "/agents",
+    },
+    {
       name: "Settings",
       href: "/settings",
     },

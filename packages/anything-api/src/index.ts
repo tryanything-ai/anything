@@ -9,6 +9,7 @@ import * as billing from './billing';
 import * as marketplace from './marketplace';
 import * as profiles from './profiles';
 import * as variables from './variable-explorer'; 
+import * as agents from './agents';
 
 
 const api = {
@@ -22,7 +23,8 @@ const api = {
   billing,
   marketplace, 
   profiles,
-  variables
+  variables,
+  agents
 };
 
 export default api;

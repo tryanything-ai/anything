@@ -342,6 +342,10 @@ pub async fn root() -> impl IntoResponse {
 
         //Agents
         .route("/account/:account_id/agent", post(agents::create::create_agent))
+        .route("/account/:account_id/agents", get(agents::get::get_agents))
+        .route("/account/:account_id/agent/:agent_id", get(agents::get::get_agent))
+        .route("/account/:account_id/agent/:agent_id", put(agents::update::update_agent))
+        .route("/account/:account_id/agent/:agent_id", delete(agents::delete::delete_agent))
 
         .layer(middleware::from_fn_with_state(
             state.clone(),
