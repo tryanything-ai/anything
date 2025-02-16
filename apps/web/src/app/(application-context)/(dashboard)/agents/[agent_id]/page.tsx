@@ -38,6 +38,7 @@ export default function AgentPage() {
   const [greeting, setGreeting] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const {
     accounts: { selectedAccount },
   } = useAnything();
@@ -71,20 +72,24 @@ export default function AgentPage() {
       return;
     }
 
+    setIsSaving(true);
     try {
       let res = await api.agents.updateAgent(
         await createClient(),
         selectedAccount.account_id,
         agent.agent_id,
         {
+          name: agent.agent_name,
           greeting,
-          system_prompt: systemPrompt
-        }
+          system_prompt: systemPrompt,
+        },
       );
       console.log("updated agent", res);
       setIsDirty(false);
     } catch (error) {
       console.error("error updating agent", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -167,8 +172,12 @@ export default function AgentPage() {
               </div>
 
               {isDirty && (
-                <Button onClick={handleSave} className="w-full">
-                  Save Changes
+                <Button
+                  onClick={handleSave}
+                  className="w-full"
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               )}
             </div>

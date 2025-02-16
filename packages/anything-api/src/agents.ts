@@ -68,9 +68,9 @@ export const getAgent = async (supabase: SupabaseClient, account_id: string, age
 };
 
 export const updateAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, updates: {
-  name?: string;
-  greeting?: string;
-  system_prompt?: string;
+  name: string;
+  greeting: string;
+  system_prompt: string;
 }) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();

@@ -10,13 +10,15 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+use crate::agents::vapi::update_vapi_agent;
 use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateAgentInput {
-    greeting: Option<String>,
-    system_prompt: Option<String>,
+    name: String,
+    greeting: String,
+    system_prompt: String,
 }
 
 pub async fn update_agent(
@@ -26,6 +28,25 @@ pub async fn update_agent(
     Json(payload): Json<UpdateAgentInput>,
 ) -> impl IntoResponse {
     let client = &state.anything_client;
+    println!("Updating agent: {}", agent_id);
+    // Update Vapi First
+    let vapi_response = match update_vapi_agent(
+        &agent_id, //We make the agent id and vapi agent ID the same on creation so this should work
+        &payload.name,
+        &payload.greeting,
+        &payload.system_prompt,
+    )
+    .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create VAPI agent",
+            )
+                .into_response()
+        }
+    };  
 
     // Create config update with provided fields
     let config = serde_json::json!({
@@ -34,7 +55,9 @@ pub async fn update_agent(
     });
 
     let agent_update = serde_json::json!({
-        "config": config
+        "agent_name": payload.name,
+        "config": config,
+        "vapi_config": vapi_response
     });
 
     let response = match client
@@ -51,7 +74,7 @@ pub async fn update_agent(
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to update agent record"
+                "Failed to update agent record",
             )
                 .into_response()
         }
@@ -62,7 +85,7 @@ pub async fn update_agent(
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to parse agent response"
+                "Failed to parse agent response",
             )
                 .into_response()
         }
