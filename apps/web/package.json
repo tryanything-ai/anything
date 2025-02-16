@@ -27,6 +27,7 @@
     "@supabase/supabase-js": "^2.47.7",
     "@uiw/react-codemirror": "^4.23.6",
     "@usebasejump/shared": "^0.0.3",
+    "@vapi-ai/web": "^2.2.2",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",

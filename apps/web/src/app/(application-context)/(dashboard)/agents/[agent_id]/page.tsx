@@ -16,6 +16,8 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Input } from "@repo/ui/components/ui/input";
 import DeleteAgentDialog from "@/components/agents/delete-agent-dialog";
+import Vapi from "@vapi-ai/web";
+import { Phone } from "lucide-react";
 
 interface Agent {
   agent_id: string;
@@ -31,6 +33,10 @@ interface Agent {
   updated_at: string;
 }
 
+const vapi = new Vapi(
+    process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!,
+  );
+
 export default function AgentPage() {
   const params = useParams();
   const [agent, setAgent] = useState<Agent | null>(null);
@@ -39,6 +45,7 @@ export default function AgentPage() {
   const [systemPrompt, setSystemPrompt] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCallActive, setIsCallActive] = useState(false);
   const {
     accounts: { selectedAccount },
   } = useAnything();
@@ -93,6 +100,18 @@ export default function AgentPage() {
     }
   };
 
+  const toggleCall = () => {
+    if (!params.agent_id) return;
+    
+    if (isCallActive) {
+      vapi.stop();
+      setIsCallActive(false);
+    } else {
+      vapi.start(params.agent_id as string);
+      setIsCallActive(true);
+    }
+  };
+
   const handleGreetingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGreeting(e.target.value);
     setIsDirty(true);
@@ -124,7 +143,21 @@ export default function AgentPage() {
             Manage and configure your voice agent
           </p>
         </div>
-        <DeleteAgentDialog agentId={agent.agent_id} />
+        <div className="flex gap-2">
+          {isDirty && (
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={toggleCall}
+            className={isCallActive ? "bg-red-500 hover:bg-red-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"}
+          >
+            <Phone className="w-4 h-4 mr-2" />
+            {isCallActive ? "Stop call" : "Start call"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">
@@ -170,19 +203,12 @@ export default function AgentPage() {
                   {new Date(agent.created_at).toLocaleDateString()}
                 </p>
               </div>
-
-              {isDirty && (
-                <Button
-                  onClick={handleSave}
-                  className="w-full"
-                  disabled={isSaving}
-                >
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
+      </div>
+      <div className="flex justify-end mt-6">
+        <DeleteAgentDialog agentId={agent.agent_id} />
       </div>
     </div>
   );
