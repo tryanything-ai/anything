@@ -35,7 +35,7 @@ export default function EditVariablesForm(): JSX.Element {
         className="w-full"
         onClick={() => handleEdit(null)}
       >
-        Add Variable
+        Add Input
       </Button>
       {selected_node_variables_schema &&
         selected_node_variables_schema.properties &&

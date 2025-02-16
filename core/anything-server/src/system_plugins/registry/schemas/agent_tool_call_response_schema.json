@@ -1,0 +1,248 @@
+{
+  "type": "response",
+  "featured": false,
+  "action_template_definition": {
+    "anything_action_version": "0.1.0",
+    "type": "response",
+    "plugin_name": "@anything/agent_tool_call_response",
+    "plugin_version": "0.1.0",
+    "action_id": "agent_tool_call_response",
+    "label": "Tool Call Response",
+    "description": "Send a response to a tool call from an agent",
+    "icon": "<svg fill=\"#000000\" width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.53 5.03a.75.75 0 10-1.06-1.06l-6.25 6.25a.75.75 0 000 1.06l6.25 6.25a.75.75 0 101.06-1.06L5.56 11.5H17a3.248 3.248 0 013.25 3.248v4.502a.75.75 0 001.5 0v-4.502A4.748 4.748 0 0017 10H5.56l4.97-4.97z\"/></svg>",
+    "inputs": {
+      "content_type": "text/plain",
+      "text_body": "",
+      "json_body": "{}",
+      "html_body": "",
+      "xml_body": ""
+    },
+    "inputs_locked": false,
+    "inputs_schema": {
+      "type": "object",
+      "properties": {
+      
+        "content_type": {
+          "title": "Content Type",
+          "description": "Content type of the response",
+          "type": "string",
+          "oneOf": [
+            {"value": "application/json", "title": "JSON"},
+            {"value": "text/plain", "title": "Text"},
+            {"value": "text/html", "title": "HTML"},
+            {"value": "text/xml", "title": "XML"}
+          ],
+          "default": "text/plain",
+          "x-jsf-presentation": {
+            "inputType": "select_or_variable"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        },
+        "json_body": {
+          "title": "Response Body",
+          "description": "Content to send in response body",
+          "type": "object",
+          "default": "{}",
+          "x-jsf-presentation": {
+            "inputType": "object_or_variable"
+          },
+          "x-any-validation": {
+            "type": "object"
+          }
+        },
+        "text_body": {
+          "title": "Response Body as text",
+          "description": "Content to send in response body",
+          "type": "string",
+          "default": "",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        }, 
+        "html_body": {
+          "title": "Response Body as HTML",
+          "description": "Content to send in response body",
+          "type": "string",
+          "default": "",
+          "x-jsf-presentation": {
+            "inputType": "html_or_variable"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        },
+        "xml_body": {
+          "title": "Response Body as XML",
+          "description": "Content to send in response body",
+          "type": "string",
+          "default": "",
+          "x-jsf-presentation": {
+            "inputType": "xml_or_variable"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["content_type"],
+      "x-jsf-order": ["content_type", "json_body", "text_body", "html_body", "xml_body"],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "content_type": {"enum": ["text/html"]}
+            }
+          },
+          "then": {
+            "required": ["html_body"]
+          }, 
+          "else": {
+            "properties": {
+              "html_body": ""
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "content_type": {"enum": ["text/xml"]}
+            }
+          },
+          "then": {
+            "required": ["xml_body"]
+          },
+          "else": {
+            "properties": {
+              "xml_body": ""
+            }
+          }
+        }, 
+        {
+          "if": {
+            "properties": {
+              "content_type": {"enum": ["text/plain"]}
+            }
+          },
+          "then": {
+            "required": ["text_body"]
+          },
+          "else": {
+            "properties": {
+              "text_body": ""
+            }
+          }
+        }, 
+        {
+          "if": {
+            "properties": {
+              "content_type": {"enum": ["application/json"]}
+            }
+          },
+          "then": {
+            "required": ["json_body"]
+          },
+          "else": {
+            "properties": {
+              "json_body": ""
+            }
+          }
+        }
+      ]
+    },
+    "inputs_schema_locked": true,
+    "plugin_config": {
+      "content_type": "{{inputs.content_type}}",
+      "json_body": "{{inputs.json_body}}",
+      "text_body": "{{inputs.text_body}}",
+      "html_body": "{{inputs.html_body}}",
+      "xml_body": "{{inputs.xml_body}}"
+    },
+    "plugin_config_locked": true,
+    "plugin_config_schema": {
+      "type": "object",
+      "properties": {
+        "content_type": {
+          "title": "Content Type",
+          "description": "Content type of the response",
+          "type": "string",
+          "default": "{{inputs.content_type}}",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        },
+        "text_body": {
+          "title": "Response Body as text", 
+          "description": "Content to send in response body",
+          "type": "string",
+          "default": "{{inputs.text_body}}",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        },
+        "json_body": {
+          "title": "Response Body as JSON", 
+          "description": "Content to send in response body",
+          "type": "object",
+          "default": "{{inputs.json_body}}",
+          "x-jsf-presentation": {
+            "inputType": "object_or_variable"
+          },
+          "x-any-validation": {
+            "type": "object"
+          }
+        },
+        "html_body": {
+          "title": "Response Body as HTML", 
+          "description": "Content to send in response body",
+          "type": "string",
+          "default": "{{inputs.html_body}}",
+          "x-jsf-presentation": {
+            "inputType": "html_or_variable"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        },
+        "xml_body": {
+          "title": "Response Body as XML", 
+          "description": "Content to send in response body",
+          "type": "string",
+          "default": "{{inputs.xml_body}}",
+          "x-jsf-presentation": {
+            "inputType": "xml_or_variable"
+          },
+          "x-any-validation": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["content_type", "json_body", "text_body", "html_body", "xml_body"],
+      "x-jsf-order": ["content_type", "json_body", "text_body", "html_body", "xml_body"]
+    },
+    "plugin_config_schema_locked": true,
+    "presentation": {
+      "position": {
+        "x": 300,
+        "y": 100
+      }
+    },
+    "handles": [
+      {
+        "id": "a",
+        "type": "target",
+        "position": "top"
+      }
+    ]
+  }
+}
