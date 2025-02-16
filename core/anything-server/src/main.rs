@@ -347,6 +347,10 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/agent/:agent_id", put(agents::update::update_agent))
         .route("/account/:account_id/agent/:agent_id", delete(agents::delete::delete_agent))
 
+        //Agent Tools
+        .route("/account/:account_id/agent/:agent_id/tool", post(agents::tools::add_tool))
+        .route("/account/:account_id/agent/:agent_id/tool/:tool_id", delete(agents::tools::remove_tool))
+
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,

@@ -199,3 +199,100 @@ pub async fn add_tool(
 
     Json(agent).into_response()
 }
+
+pub async fn remove_tool(
+    Path((account_id, agent_id, tool_id)): Path<(String, String, String)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    let client = &state.anything_client;
+    println!("Removing tool from agent: {}", agent_id);
+
+    // Get VAPI API key
+    let vapi_api_key = match std::env::var("VAPI_API_KEY") {
+        Ok(key) => key,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "VAPI_API_KEY environment variable not found",
+            )
+                .into_response()
+        }
+    };
+
+    let reqwest_client = Client::new();
+
+    // Update VAPI to remove the tool
+    let response = reqwest_client
+        .patch(&format!("https://api.vapi.ai/assistant/{}", agent_id))
+        .header("Authorization", format!("Bearer {}", vapi_api_key))
+        .header("Content-Type", "application/json")
+        .json(&json!({
+            "model": {
+                "tools": [] // Empty array to remove all tools
+            }
+        }))
+        .send()
+        .await
+        .map_err(|_| {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "[VAPI] Failed to send request to VAPI",
+            )
+                .into_response();
+        });
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(err) => return err,
+    };
+
+    let vapi_response = match response.json::<serde_json::Value>().await {
+        Ok(vapi_config) => vapi_config,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse VAPI response",
+            )
+                .into_response()
+        }
+    };
+
+    // Update our database with the new VAPI config
+    let agent_update = serde_json::json!({
+        "vapi_config": vapi_response
+    });
+
+    let response = match client
+        .from("agents")
+        .auth(&user.jwt)
+        .eq("agent_id", agent_id)
+        .eq("account_id", account_id)
+        .update(agent_update.to_string())
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to update agent record",
+            )
+                .into_response()
+        }
+    };
+
+    let agent = match response.json::<serde_json::Value>().await {
+        Ok(agent) => agent,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse agent response",
+            )
+                .into_response()
+        }
+    };
+
+    Json(agent).into_response()
+}
