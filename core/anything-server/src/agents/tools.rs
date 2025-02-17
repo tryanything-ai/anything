@@ -81,7 +81,7 @@ pub async fn add_tool(
     let workflow_response = match client
         .from("flow_versions")
         .auth(&user.jwt)
-        .select("*")
+        .select("*, flow:flows(*)")
         .eq("archived", "false")
         .eq("flow_id", &payload.workflow_id)
         .eq("account_id", &account_id)
@@ -125,9 +125,10 @@ pub async fn add_tool(
         }
     };
 
-    println!("[TOOLS] Workflow version: {:?}", workflow_version);
+    let workflow = workflow_version.clone().flow.unwrap();
+    println!("[TOOLS] Workflow: {:?}", workflow);
 
-    println!("[TOOLS] Workflow: {:?}", workflow_version);
+    println!("[TOOLS] Workflow version: {:?}", workflow_version);
 
     // Get the trigger action from the published version
     let trigger_action: Option<Action> = workflow_version
@@ -151,9 +152,9 @@ pub async fn add_tool(
     let trigger_action = trigger_action.unwrap();
 
     // Get workflow name and slugify it for the function name
-    // let tool_slug = slugify!(workflow_version.flow_definition.flow_name, separator = "_");
+    let tool_slug = slugify!(workflow["flow_name"].as_str().unwrap_or("unnamed-workflow"), separator = "_");
 
-    // let tool_description = workflow_version.flow_definition.description.unwrap_or("");
+    let tool_description = workflow["description"].as_str().unwrap_or("");
 
     let tool_properties = AgentToolProperties::from(
         trigger_action
@@ -162,23 +163,6 @@ pub async fn add_tool(
             .and_then(|schema| schema.properties.clone())
             .unwrap_or_default(),
     );
-
-    // Get input schema from published version and convert to AgentToolProperties
-    // let tool_properties = match serde_json::from_value::<JsonSchema>(trigger_action.inputs_schema.clone().unwrap_or_default()) {
-    //     Ok(schema) => {
-    //         let mut properties = HashMap::new();
-    //         for (key, json_prop) in schema.properties.unwrap_or_default() {
-    //             properties.insert(key, AgentToolProperty {
-    //                 r#type: json_prop.r#type.unwrap_or("string".to_string()),
-    //             });
-    //         }
-    //         AgentToolProperties(properties)
-    //     },
-    //     Err(e) => {
-    //         println!("[TOOLS] Failed to parse input schema: {:?}", e);
-    //         return (StatusCode::BAD_REQUEST, "Failed to parse input schema").into_response();
-    //     }
-    // };
 
     let required = trigger_action
         .inputs_schema
@@ -220,8 +204,8 @@ pub async fn add_tool(
                     {
                         "type": "function",
                         "function": {
-                            "name": "test-slug",
-                            "description": "test-description",
+                            "name": tool_slug,
+                            "description": tool_description,
                             "parameters": {
                                 "type": "object",
                                 "properties": tool_properties,

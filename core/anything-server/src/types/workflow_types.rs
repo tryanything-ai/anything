@@ -6,6 +6,7 @@ use crate::types::action_types::ActionType;
 use crate::types::react_flow_types::{Edge, HandleProps, NodePresentation, Position};
 use crate::types::action_types::Action;
 use node_semver::Version; 
+use serde_json::Value;
 
 use crate::types::json_schema::{InputFieldType, JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType};
 use crate::types::action_types::PluginName;
@@ -32,6 +33,7 @@ impl WorkflowVersionDefinition {
 pub struct DatabaseFlowVersion {
     pub flow_version_id: Uuid,
     pub flow_id: Uuid,
+    pub flow: Option<Value>,
     pub published: bool,
     pub account_id: Uuid,
     pub flow_definition: WorkflowVersionDefinition,
