@@ -61,7 +61,7 @@ export const getFlowVersionById = async (supabase: SupabaseClient, account_id: s
   }
 }
 
-export const createFlow = async (supabase: SupabaseClient, account_id: string, name: string, description: string) => {
+export const createFlow = async (supabase: SupabaseClient, account_id: string, name: string, description: string, template_id?: string) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -79,6 +79,7 @@ export const createFlow = async (supabase: SupabaseClient, account_id: string, n
           flow_id,
           name,
           description,
+          template_id,
         }),
       });
       const data = await response.json();
@@ -269,6 +270,36 @@ export const getFlowVersionsForWorkflowId = async (supabase: SupabaseClient, acc
     }
   } catch (error) {
     console.error('Error fetching workflow versions:', error);
+  } finally {
+  }
+}
+
+export const getToolFlows = async (supabase: SupabaseClient, account_id: string) => {
+  if (!ANYTHING_API_URL) {
+    console.error('ANYTHING_API_URL is not defined');
+    throw new Error('ANYTHING_API_URL is not defined');
+  }
+  console.log('ANYTHING_API_URL:', ANYTHING_API_URL);
+
+  console.log('account_id:', account_id);
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('Session in @repo/anything-api:', session);
+
+    if (session) {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/tools`, {
+        headers: {
+          Authorization: `${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      console.log('Data from /api/tools:', data);
+      return data;
+    }
+  } catch (error) {
+    console.error('Error fetching tools:', error);
   } finally {
   }
 }

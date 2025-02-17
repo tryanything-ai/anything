@@ -18,7 +18,7 @@ use std::env;
 
 use chrono::Utc;
 
-use crate::system_workflows::create_cron_http_workflow;
+use crate::system_workflows::create_workflow_from_template;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
@@ -32,6 +32,7 @@ pub struct CreateWorkflowHandleInput {
     name: Option<String>,
     description: Option<String>,
     flow_id: String,
+    template_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -307,9 +308,7 @@ pub async fn create_workflow(
         }
     };
 
-    //TODO: Remove this once we have a way to create a workflow from the UI
-    //create workflow from current action definitions   
-    let workflow = match create_cron_http_workflow() {
+    let workflow = match create_workflow_from_template(payload.template_id) {
         Ok(workflow) => workflow,
         Err(_) => {
             return (
@@ -977,7 +976,6 @@ pub async fn publish_workflow_version(
     Json(body).into_response()
 }
 
-
 pub async fn get_agent_tool_workflows(
     Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,
@@ -1009,7 +1007,7 @@ pub async fn get_agent_tool_workflows(
     };
 
     if response.status() == 204 {
-        return (StatusCode::NO_CONTENT, "No content").into_response();
+        return Json(Value::Array(vec![])).into_response();
     }
 
     let body = match response.text().await {

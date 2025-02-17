@@ -18,6 +18,15 @@ import { Input } from "@repo/ui/components/ui/input";
 import DeleteAgentDialog from "@/components/agents/delete-agent-dialog";
 import Vapi from "@vapi-ai/web";
 import { Phone } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { AddToolDialog } from "@/components/agents/add-tool-dialog";
+import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 
 interface Agent {
   agent_id: string;
@@ -33,9 +42,7 @@ interface Agent {
   updated_at: string;
 }
 
-const vapi = new Vapi(
-    process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!,
-  );
+const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!);
 
 export default function AgentPage() {
   const params = useParams();
@@ -46,6 +53,9 @@ export default function AgentPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCallActive, setIsCallActive] = useState(false);
+  const [agentTools, setAgentTools] = useState<any[]>([]);
+  const [addToolOpen, setAddToolOpen] = useState(false);
+
   const {
     accounts: { selectedAccount },
   } = useAnything();
@@ -63,6 +73,8 @@ export default function AgentPage() {
         setAgent(data);
         setGreeting(data.config.greeting);
         setSystemPrompt(data.config.system_prompt);
+
+        // TODO: get tools taht are connected to this.
       } catch (error) {
         console.error("Error fetching agent:", error);
       } finally {
@@ -72,6 +84,10 @@ export default function AgentPage() {
 
     fetchAgent();
   }, [selectedAccount, params.agent_id]);
+
+  const handleAddTool = async (toolId: string) => {
+    console.log("Adding tool:", toolId);
+  };
 
   const handleSave = async () => {
     if (!selectedAccount || !agent) {
@@ -102,7 +118,7 @@ export default function AgentPage() {
 
   const toggleCall = () => {
     if (!params.agent_id) return;
-    
+
     if (isCallActive) {
       vapi.stop();
       setIsCallActive(false);
@@ -134,25 +150,47 @@ export default function AgentPage() {
 
   return (
     <div className="py-6 px-6">
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-4 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {agent.agent_name}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage and configure your voice agent
-          </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {agent.agent_name}
+            </h1>
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                agent.active
+                  ? "bg-green-100 text-green-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {agent.active ? "Active" : "Inactive"}
+              {agent.archived ? " (Archived)" : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-muted-foreground">
+              Manage and configure your voice agent
+            </p>
+            <span className="text-muted-foreground">•</span>
+            <p className="text-sm text-muted-foreground">
+              Created {new Date(agent.created_at).toLocaleDateString()}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           {isDirty && (
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           )}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={toggleCall}
-            className={isCallActive ? "bg-red-500 hover:bg-red-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"}
+            className={
+              isCallActive
+                ? "bg-red-500 hover:bg-red-600 text-white"
+                : "bg-green-500 hover:bg-green-600 text-white"
+            }
           >
             <Phone className="w-4 h-4 mr-2" />
             {isCallActive ? "Stop call" : "Start call"}
@@ -160,56 +198,153 @@ export default function AgentPage() {
         </div>
       </div>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Agent Configuration</CardTitle>
-            <CardDescription>
-              Current settings and configuration for your voice agent
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium">Status</h3>
-                <p className="text-sm text-muted-foreground">
-                  {agent.active ? "Active" : "Inactive"}
-                  {agent.archived ? " (Archived)" : ""}
-                </p>
-              </div>
+      <Tabs defaultValue="prompts" className="flex flex-col h-full">
+        <TabsList className="mb-2 w-fit">
+          <TabsTrigger value="prompts">Prompts</TabsTrigger>
+          <TabsTrigger value="tools">Tools</TabsTrigger>
+          <TabsTrigger value="channels">Channels</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
 
-              <div>
-                <h3 className="font-medium">Greeting Message</h3>
-                <Input
-                  value={greeting}
-                  onChange={handleGreetingChange}
-                  className="mt-2"
-                />
-              </div>
+        <TabsContent value="prompts" className="h-full">
+          <ScrollArea>
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent Prompts</CardTitle>
+                <CardDescription>
+                  Configure your agent's greeting and system prompt
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium">Greeting Message</h3>
+                    <Input
+                      value={greeting}
+                      onChange={handleGreetingChange}
+                      className="mt-2"
+                    />
+                  </div>
 
-              <div>
-                <h3 className="font-medium">System Prompt</h3>
-                <Textarea
-                  value={systemPrompt}
-                  onChange={handleSystemPromptChange}
-                  className="mt-2"
-                  rows={8}
-                />
-              </div>
+                  <div>
+                    <h3 className="font-medium">System Prompt</h3>
+                    <Textarea
+                      value={systemPrompt}
+                      onChange={handleSystemPromptChange}
+                      className="mt-2"
+                      rows={15}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollArea>
+        </TabsContent>
 
-              <div>
-                <h3 className="font-medium">Created</h3>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(agent.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="flex justify-end mt-6">
-        <DeleteAgentDialog agentId={agent.agent_id} />
-      </div>
+        <TabsContent value="tools" className="h-full">
+          <ScrollArea>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Agent Tools</CardTitle>
+                  <CardDescription>
+                    Configure the tools available to your agent
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setAddToolOpen(true)}
+                  className="ml-auto"
+                >
+                  Add Tool
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {agentTools.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <p className="text-muted-foreground text-center mb-4">
+                      No tools configured yet. Add tools to enhance your agent's
+                      capabilities.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setAddToolOpen(true)}
+                    >
+                      Add your first tool
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {agentTools.map((tool) => (
+                      <div
+                        key={tool.flow_id}
+                        className="flex items-center justify-between p-4 border rounded"
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* <BaseNodeIcon icon={tool.icon || "tool"} /> */}
+                          <div>
+                            <p className="font-medium">{tool.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {tool.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </ScrollArea>
+          <AddToolDialog
+            open={addToolOpen}
+            onOpenChange={setAddToolOpen}
+            onToolAdd={handleAddTool}
+          />
+        </TabsContent>
+
+        <TabsContent value="channels" className="h-full">
+          <ScrollArea>
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent Channels</CardTitle>
+                <CardDescription>
+                  Manage the channels your agent can communicate through
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-muted-foreground">
+                  Channel configuration coming soon
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="settings" className="h-full">
+          <ScrollArea>
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent Settings</CardTitle>
+                <CardDescription>
+                  Manage your agent's settings and configuration
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-red-600">Danger Zone</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">
+                      Actions here cannot be undone
+                    </p>
+                    <DeleteAgentDialog agentId={agent.agent_id} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
