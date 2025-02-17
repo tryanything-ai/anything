@@ -8,10 +8,57 @@ use axum::{
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use slugify::slugify;
 use std::sync::Arc;
 
 use crate::supabase_jwt_middleware::User;
+use crate::types::action_types::Action;
+use crate::types::action_types::ActionType;
+use crate::types::json_schema::{JsonSchema, JsonSchemaProperty};
+use crate::types::workflow_types::DatabaseFlowVersion;
 use crate::AppState;
+use std::collections::HashMap;
+
+// Define a struct for simplified agent tool properties that only allows basic types
+#[derive(Debug, Serialize)]
+struct AgentToolProperty {
+    r#type: String,
+}
+
+#[derive(Debug, Serialize, Default)]
+struct AgentToolProperties(HashMap<String, AgentToolProperty>);
+
+impl AgentToolProperties {
+    fn new() -> Self {
+        AgentToolProperties(HashMap::new())
+    }
+
+    fn add_property(&mut self, name: String, property_type: &str) {
+        let valid_type = match property_type {
+            "string" | "number" | "boolean" | "null" => property_type,
+            _ => "string",
+        };
+
+        self.0.insert(
+            name,
+            AgentToolProperty {
+                r#type: valid_type.to_string(),
+            },
+        );
+    }
+}
+
+impl From<HashMap<String, JsonSchemaProperty>> for AgentToolProperties {
+    fn from(properties: HashMap<String, JsonSchemaProperty>) -> Self {
+        let mut tool_properties = AgentToolProperties::new();
+
+        for (name, property) in properties {
+            tool_properties.add_property(name, property.r#type.as_deref().unwrap_or("string"));
+        }
+
+        tool_properties
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AddToolInput {
@@ -25,111 +72,164 @@ pub async fn add_tool(
     Json(payload): Json<AddToolInput>,
 ) -> impl IntoResponse {
     let client = &state.anything_client;
-    println!("Adding tool to agent: {}", agent_id);
+    println!("[TOOLS] Adding tool to agent: {}", agent_id);
+    println!("[TOOLS] Workflow ID: {}", payload.workflow_id);
 
     // Get the workflow and its published version
+    println!("[TOOLS] Fetching workflow details from database");
+
     let workflow_response = match client
-        .from("flows")
+        .from("flow_versions")
         .auth(&user.jwt)
+        .select("*")
+        .eq("archived", "false")
         .eq("flow_id", &payload.workflow_id)
         .eq("account_id", &account_id)
-        .select("*,flow_versions(*)")
+        .eq("published", "true")
+        .single()
         .execute()
         .await
     {
         Ok(response) => response,
-        Err(_) => {
+        Err(err) => {
+            println!("Failed to execute request: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to fetch workflow",
+                "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
+    println!("[TOOLS] Workflow response: {:?}", workflow_response);
+
     let body = match workflow_response.text().await {
         Ok(body) => body,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to read response body: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    let workflow: Value = match serde_json::from_str(&body) {
-        Ok(workflow) => workflow,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+    println!("[TOOLS] Body: {:?}", body);
+
+    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&body) {
+        Ok(version) => version,
+        Err(e) => {
+            println!("[TOOLS] Failed to parse workflow version: {:?}", e);
+            return (StatusCode::BAD_REQUEST, "No workflow version found").into_response();
         }
     };
 
-    // Get the published version
-    let published_version = workflow["flow_versions"].as_array().and_then(|versions| {
-        versions
-            .iter()
-            .find(|v| v["published"].as_bool().unwrap_or(false))
-    });
+    println!("[TOOLS] Workflow version: {:?}", workflow_version);
 
-    let published_version = match published_version {
-        Some(version) => version,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                "No published version found for workflow",
-            )
-                .into_response()
-        }
-    };
+    println!("[TOOLS] Workflow: {:?}", workflow_version);
 
-    //TODO: make sure this is a valid Workflow input and output, can introspect variables to give to workflow
-    //Make sure it has correct  input and reponse
+    // Get the trigger action from the published version
+    let trigger_action: Option<Action> = workflow_version
+        .flow_definition
+        .actions
+        .iter()
+        .find(|action| action.r#type == ActionType::Trigger)
+        .cloned();
+
+    println!("[TOOLS] Trigger action: {:?}", trigger_action);
+
+    if trigger_action.is_none() {
+        println!("[TOOLS] No trigger action found in workflow");
+        return (
+            StatusCode::BAD_REQUEST,
+            "No trigger action found in workflow",
+        )
+            .into_response();
+    }
+
+    let trigger_action = trigger_action.unwrap();
+
+    // Get workflow name and slugify it for the function name
+    // let tool_slug = slugify!(workflow_version.flow_definition.flow_name, separator = "_");
+
+    // let tool_description = workflow_version.flow_definition.description.unwrap_or("");
+
+    let tool_properties = AgentToolProperties::from(
+        trigger_action
+            .inputs_schema
+            .as_ref()
+            .and_then(|schema| schema.properties.clone())
+            .unwrap_or_default(),
+    );
+
+    // Get input schema from published version and convert to AgentToolProperties
+    // let tool_properties = match serde_json::from_value::<JsonSchema>(trigger_action.inputs_schema.clone().unwrap_or_default()) {
+    //     Ok(schema) => {
+    //         let mut properties = HashMap::new();
+    //         for (key, json_prop) in schema.properties.unwrap_or_default() {
+    //             properties.insert(key, AgentToolProperty {
+    //                 r#type: json_prop.r#type.unwrap_or("string".to_string()),
+    //             });
+    //         }
+    //         AgentToolProperties(properties)
+    //     },
+    //     Err(e) => {
+    //         println!("[TOOLS] Failed to parse input schema: {:?}", e);
+    //         return (StatusCode::BAD_REQUEST, "Failed to parse input schema").into_response();
+    //     }
+    // };
+
+    let required = trigger_action
+        .inputs_schema
+        .as_ref()
+        .and_then(|schema| schema.required.clone())
+        .unwrap_or_default();
+
+    println!("[TOOLS] Properties: {:?}", tool_properties);
 
     //Update Vapi
+    println!("[TOOLS] Getting VAPI API key");
     let vapi_api_key = match std::env::var("VAPI_API_KEY") {
         Ok(key) => key,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to get VAPI API key: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "VAPI_API_KEY environment variable not found",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let reqwest_client = Client::new();
 
+    //TODO: 
     //Vapi function calling docs
     //https://docs.vapi.ai/server-url/events#function-calling
+    println!("[TOOLS] Sending update to VAPI for agent: {}", agent_id);
     let response = reqwest_client
         .patch(&format!("https://api.vapi.ai/assistant/{}", agent_id))
         .header("Authorization", format!("Bearer {}", vapi_api_key))
         .header("Content-Type", "application/json")
         .json(&json!({
             "model": {
+                "provider": "openai",
+                "model": "gpt-4o-mini",
                 "tools": [
                     {
                         "type": "function",
                         "function": {
-                            "name": "check_customer_identity",
-                            "description": "Check if the customer is a valid customer",
+                            "name": "test-slug",
+                            "description": "test-description",
                             "parameters": {
                                 "type": "object",
-                                "properties": {
-                                    "last_name": { "type": "string" },
-                                    "last_4_ssn": { "type": "string" }
-                                },
-                                "required": ["last_name", "last_4_ssn"]
+                                "properties": tool_properties,
+                                "required": required
                             }
                         },
-                        "server": { //https://docs.vapi.ai/server-url -> in this case a special URL just for the tool. we will need a more top level one for our application too.
+                        "server": {
                             "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", payload.workflow_id),
-                            // "secret": "a-super-secret-key", //x-vapi-secret header
-                            "method": "POST",
-                            // "headers": {
-                            //     "Authorization": "Bearer {{vapi_api_key}}"
-                            // }
                         }
                     }
                 ]
@@ -137,7 +237,8 @@ pub async fn add_tool(
         }))
         .send()
         .await
-        .map_err(|_| {
+        .map_err(|e| {
+            println!("[TOOLS] Failed to send request to VAPI: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "[VAPI] Failed to send request to VAPI",
@@ -150,14 +251,16 @@ pub async fn add_tool(
         Err(err) => return err,
     };
 
+    println!("[TOOLS] Parsing VAPI response");
     let vapi_response = match response.json::<serde_json::Value>().await {
         Ok(vapi_config) => vapi_config,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to parse VAPI response: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse VAPI response",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -166,10 +269,11 @@ pub async fn add_tool(
     });
 
     //Take update and persist to our database
+    println!("[TOOLS] Updating agent record in database");
     let response = match client
         .from("agents")
         .auth(&user.jwt)
-        .eq("agent_id", agent_id)
+        .eq("agent_id", agent_id.clone())
         .eq("account_id", account_id)
         .update(agent_update.to_string())
         .single()
@@ -177,26 +281,56 @@ pub async fn add_tool(
         .await
     {
         Ok(response) => response,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to update agent record: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to update agent record",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let agent = match response.json::<serde_json::Value>().await {
         Ok(agent) => agent,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to parse agent response: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse agent response",
             )
-                .into_response()
+                .into_response();
         }
     };
 
+    let agent_tool = serde_json::json!({
+        "agent_id": agent_id.clone(),
+        "flow_id": payload.workflow_id,
+        "active": true,
+        "archived": false
+    });
+
+    //Persist to our database
+    println!("[TOOLS] Persisting agent tool to database");
+    let response = match client
+        .from("agent_tools")
+        .auth(&user.jwt)
+        .insert(agent_tool.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            println!("[TOOLS] Failed to persist agent tool: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to persist agent tool to database",
+            )
+                .into_response();
+        }
+    };
+
+    println!("[TOOLS] Successfully added tool to agent: {}", agent_id);
     Json(agent).into_response()
 }
 
@@ -206,23 +340,26 @@ pub async fn remove_tool(
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     let client = &state.anything_client;
-    println!("Removing tool from agent: {}", agent_id);
+    println!("[TOOLS] Removing tool {} from agent: {}", tool_id, agent_id);
 
     // Get VAPI API key
+    println!("[TOOLS] Getting VAPI API key");
     let vapi_api_key = match std::env::var("VAPI_API_KEY") {
         Ok(key) => key,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to get VAPI API key: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "VAPI_API_KEY environment variable not found",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let reqwest_client = Client::new();
 
     // Update VAPI to remove the tool
+    println!("[TOOLS] Sending update to VAPI to remove tools");
     let response = reqwest_client
         .patch(&format!("https://api.vapi.ai/assistant/{}", agent_id))
         .header("Authorization", format!("Bearer {}", vapi_api_key))
@@ -234,7 +371,8 @@ pub async fn remove_tool(
         }))
         .send()
         .await
-        .map_err(|_| {
+        .map_err(|e| {
+            println!("[TOOLS] Failed to send request to VAPI: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "[VAPI] Failed to send request to VAPI",
@@ -247,14 +385,16 @@ pub async fn remove_tool(
         Err(err) => return err,
     };
 
+    println!("[TOOLS] Parsing VAPI response");
     let vapi_response = match response.json::<serde_json::Value>().await {
         Ok(vapi_config) => vapi_config,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to parse VAPI response: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse VAPI response",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -263,10 +403,11 @@ pub async fn remove_tool(
         "vapi_config": vapi_response
     });
 
+    println!("[TOOLS] Updating agent record in database");
     let response = match client
         .from("agents")
         .auth(&user.jwt)
-        .eq("agent_id", agent_id)
+        .eq("agent_id", agent_id.clone())
         .eq("account_id", account_id)
         .update(agent_update.to_string())
         .single()
@@ -274,25 +415,31 @@ pub async fn remove_tool(
         .await
     {
         Ok(response) => response,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to update agent record: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to update agent record",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     let agent = match response.json::<serde_json::Value>().await {
         Ok(agent) => agent,
-        Err(_) => {
+        Err(e) => {
+            println!("[TOOLS] Failed to parse agent response: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse agent response",
             )
-                .into_response()
+                .into_response();
         }
     };
 
+    println!(
+        "[TOOLS] Successfully removed tool from agent: {}",
+        agent_id.clone()
+    );
     Json(agent).into_response()
 }

@@ -97,6 +97,7 @@ export const updateAgent = async (supabase: SupabaseClient, account_id: string, 
 export const deleteAgent = async (supabase: SupabaseClient, account_id: string, agentId: string) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
+    
 
     if (session) {
       const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}`, {
@@ -113,4 +114,53 @@ export const deleteAgent = async (supabase: SupabaseClient, account_id: string, 
     console.error('Error deleting agent:', error);
     throw error;
   }
+};
+
+
+export const addToolToAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, workflow_id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+  
+      if (session) {
+        const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}/tool`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `${session.access_token}`,
+          },
+          body: JSON.stringify({
+            workflow_id, 
+          }),
+        });
+        const data = await response.json();
+        console.log('Data from /agent POST:', data);
+        return data;
+      }
+    } catch (error) {
+      console.error('Error adding tool to agent:', error);
+      throw error;
+        }
+    };
+
+
+export const removeToolFromAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, workflow_id: string) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {  
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}/tool/${workflow_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Data from /agent/:id/tool/:toolId DELETE:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error removing tool from agent:', error);
+        throw error;
+    }
 };

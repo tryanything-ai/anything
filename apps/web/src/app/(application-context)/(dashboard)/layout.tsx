@@ -5,7 +5,7 @@ export default async function PersonalAccountDashboard({
   children,
 }: {
   children: React.ReactNode;
-}): Promise<JSX.Element> {  
+}): Promise<JSX.Element> {
   const supabaseClient = await createClient();
 
   const { data: personalAccount, error }: any = await supabaseClient.rpc(
@@ -14,8 +14,12 @@ export default async function PersonalAccountDashboard({
 
   const navigation = [
     {
-      name: "Overview",
+      name: "Dashboard",
       href: "/",
+    },
+    {
+      name: "Agents",
+      href: "/agents",
     },
     {
       name: "Workflows",
@@ -28,10 +32,6 @@ export default async function PersonalAccountDashboard({
     {
       name: "Connections",
       href: "/connections",
-    },
-    {
-      name: "Agents",
-      href: "/agents",
     },
     {
       name: "Settings",

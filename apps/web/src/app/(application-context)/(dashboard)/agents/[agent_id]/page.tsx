@@ -87,6 +87,22 @@ export default function AgentPage() {
 
   const handleAddTool = async (toolId: string) => {
     console.log("Adding tool:", toolId);
+
+    if (!selectedAccount || !agent) {
+        console.error("No account or agent selected");
+        return;
+      }
+
+    try {
+      let res = await api.agents.addToolToAgent(
+        await createClient(),
+        selectedAccount.account_id,
+        agent.agent_id,
+        toolId,
+      );
+    } catch (error) {
+      console.error("Error adding tool:", error);
+    }
   };
 
   const handleSave = async () => {
@@ -270,7 +286,7 @@ export default function AgentPage() {
                       variant="outline"
                       onClick={() => setAddToolOpen(true)}
                     >
-                      Add your first tool
+                      Add a tool to your agent
                     </Button>
                   </div>
                 ) : (

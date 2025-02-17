@@ -36,6 +36,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
   const [isAddingTool, setIsAddingTool] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreatingTool, setIsCreatingTool] = useState(false);
+  const [loadingToolId, setLoadingToolId] = useState<string | null>(null);
   const params = useParams<{ agentId: string }>();
 
   const createTool = async (name: string, description: string) => {
@@ -100,6 +101,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
 
   const handleToolClick = async (toolId: string) => {
     setIsAddingTool(true);
+    setLoadingToolId(toolId);
     try {
       await onToolAdd(toolId);
       onOpenChange(false);
@@ -107,6 +109,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
       console.error("Error adding tool:", error);
     } finally {
       setIsAddingTool(false);
+      setLoadingToolId(null);
     }
   };
 
@@ -151,6 +154,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {tools.map((tool: any) => {
                   let marketplace: boolean = "featured" in tool;
+                  const isLoading = loadingToolId === tool.flow_id;
                   return (
                     <div
                       key={`${tool.flow_id}`}
@@ -162,7 +166,11 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
                         className="flex flex-row gap-4 items-center"
                         key={`content-${tool.flow_id}`}
                       >
-                        <BaseNodeIcon icon={tool.icon || "tool"} />
+                        {isLoading ? (
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                          <BaseNodeIcon icon={tool.icon || "tool"} />
+                        )}
                         <div className="min-w-0">
                           <div className="text-lg font-semibold truncate">
                             {tool.name}
