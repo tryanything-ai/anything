@@ -976,3 +976,86 @@ pub async fn publish_workflow_version(
 
     Json(body).into_response()
 }
+
+
+pub async fn get_agent_tool_workflows(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("Handling get_agent_tool_workflows");
+
+    let client = &state.anything_client;
+
+    let response = match client
+        .from("flows")
+        .auth(&user.jwt)
+        .select("*, published_workflow_versions:flow_versions(*)")
+        .eq("archived", "false")
+        .eq("account_id", &account_id)
+        .eq("published_workflow_versions.published", "true")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(err) => {
+            println!("Failed to execute request: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    if response.status() == 204 {
+        return (StatusCode::NO_CONTENT, "No content").into_response();
+    }
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(err) => {
+            println!("Failed to read response body: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let mut workflows: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(err) => {
+            println!("Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    // Filter workflows to only include those with agent tool trigger
+    if let Value::Array(ref mut items) = workflows {
+        items.retain(|workflow| {
+            if let Some(published_versions) = workflow.get("published_workflow_versions") {
+                if let Some(versions) = published_versions.as_array() {
+                    for version in versions {
+                        if let Some(flow_def) = version.get("flow_definition") {
+                            if let Some(actions) = flow_def.get("actions") {
+                                if let Some(actions_array) = actions.as_array() {
+                                    return actions_array.iter().any(|action| {
+                                        action.get("plugin_name")
+                                            .and_then(Value::as_str)
+                                            .map(|name| name == "@anything/agent_tool_call")
+                                            .unwrap_or(false)
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            false
+        });
+    }
+
+    Json(workflows).into_response()
+}

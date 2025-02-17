@@ -351,6 +351,9 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/agent/:agent_id/tool", post(agents::tools::add_tool))
         .route("/account/:account_id/agent/:agent_id/tool/:tool_id", delete(agents::tools::remove_tool))
 
+        //Fetch Workflows that are tools
+        .route("/account/:account_id/tools", get(workflows::get_agent_tool_workflows))
+
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,
