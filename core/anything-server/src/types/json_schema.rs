@@ -23,6 +23,7 @@ pub enum InputFieldType {
     BooleanOrVariable,
     ObjectOrVariable,
     HtmlOrVariable,
+    JavascriptOrVariable,
     XmlOrVariable,
     SelectOrVariable,
     Text,
