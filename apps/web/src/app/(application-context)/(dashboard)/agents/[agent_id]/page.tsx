@@ -300,35 +300,38 @@ export default function AgentPage() {
                 ) : (
                   <div className="grid gap-4">
                     {agentTools.map((tool) => (
-                      <div
-                        key={tool.flow_id}
-                        className="flex items-center justify-between p-4 border rounded"
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* <BaseNodeIcon icon={tool.icon || "tool"} /> */}
-                          <div>
-                            <p className="font-medium">{tool.name}</p>
-                            <p className="text-sm text-muted-foreground">
+                      <Card key={tool.flow_id} className="mt-2 flex flex-row hover:border-green-500">
+                        <div className="flex-1 flex">
+                          <CardHeader className="w-1/4">
+                            <CardTitle className="truncate leading-tight">
                               {tool.flow.flow_name}
-                            </p>
-                          </div>
+                            </CardTitle>
+                            <CardDescription className="truncate">
+                              {tool.flow.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="flex-1">
+                            <div className="flex flex-row h-full items-end">
+                              <div className="flex-1" />
+                              <div className="flex gap-2">
+                                <Link href={`/workflows/${tool.flow.flow_id}`}>
+                                  <Button>
+                                    <Edit size={16} />
+                                  </Button>
+                                </Link>
+                                <RemoveToolDialog
+                                  agentId={params.agent_id as string}
+                                  toolId={tool.flow_id}
+                                  onRemove={() => {
+                                    // Refresh the tools list
+                                    fetchAgent();
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
                         </div>
-                        <div className="flex gap-2">
-                          <Link href={`/workflows/${tool.flow.flow_id}`}>
-                            <Button>
-                              <Edit size={16} />
-                            </Button>
-                          </Link>
-                          <RemoveToolDialog
-                            agentId={params.agent_id as string}
-                            toolId={tool.flow_id}
-                            onRemove={() => {
-                              // Refresh the tools list
-                              fetchAgent();
-                            }}
-                          />
-                        </div>
-                      </div>
+                      </Card>
                     ))}
                   </div>
                 )}

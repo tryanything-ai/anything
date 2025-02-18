@@ -118,6 +118,8 @@ pub async fn update_vapi_agent(
         return Err(anyhow::anyhow!("[VAPI] Error from VAPI: {}", error));
     }
 
+    
+
     Ok(response_json)
 }
 

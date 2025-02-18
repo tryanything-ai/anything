@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import api from "@repo/anything-api";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import NewToolDialog from "@/components/agents/new-tool-dialog";
 
 interface AddToolDialogProps {
@@ -25,7 +25,11 @@ interface AddToolDialogProps {
   onToolAdd: (toolId: string) => Promise<void>;
 }
 
-export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogProps): JSX.Element {
+export function AddToolDialog({
+  open,
+  onOpenChange,
+  onToolAdd,
+}: AddToolDialogProps): JSX.Element {
   const {
     accounts: { selectedAccount },
   } = useAnything();
@@ -57,7 +61,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
         selectedAccount.account_id,
         name.trim(),
         description.trim(),
-        "tool"
+        "tool",
       );
       console.log("created workflow", res);
       setShowCreateDialog(false);
@@ -80,7 +84,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
       }
       const res = await api.flows.getToolFlows(
         await createClient(),
-        selectedAccount.account_id
+        selectedAccount.account_id,
       );
       console.log("tools res:", res);
       if (res && Array.isArray(res)) {
@@ -123,6 +127,24 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
               Browse and add tools to your agent
             </SheetDescription>
           </div>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            disabled={isCreatingTool}
+            size="sm"
+            className="mt-2"
+          >
+            {isCreatingTool ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Tool
+              </>
+            )}
+          </Button>
         </SheetHeader>
 
         <div className="py-4 flex-grow overflow-hidden">
@@ -136,7 +158,7 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
                 <p className="text-muted-foreground text-center">
                   No tools available. Create your first tool to get started.
                 </p>
-                <Button 
+                <Button
                   onClick={() => setShowCreateDialog(true)}
                   disabled={isCreatingTool}
                 >
@@ -158,9 +180,11 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
                   return (
                     <div
                       key={`${tool.flow_id}`}
-                      onClick={() => !isAddingTool && handleToolClick(tool.flow_id)}
+                      onClick={() =>
+                        !isAddingTool && handleToolClick(tool.flow_id)
+                      }
                       className={`flex flex-col justify-between p-4 border rounded-md border-black 
-                        ${isAddingTool ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-gray-50'}`}
+                        ${isAddingTool ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-gray-50"}`}
                     >
                       <div
                         className="flex flex-row gap-4 items-center"
@@ -169,16 +193,17 @@ export function AddToolDialog({ open, onOpenChange, onToolAdd }: AddToolDialogPr
                         {isLoading ? (
                           <Loader2 className="w-6 h-6 animate-spin" />
                         ) : (
-                          <BaseNodeIcon icon={tool.icon || "tool"} />
+                          // <BaseNodeIcon icon={tool.icon || "tool"} />
+                          <> </>
                         )}
                         <div className="min-w-0">
                           <div className="text-lg font-semibold truncate">
-                            {tool.name}
-                            {!marketplace && (
+                            {tool.flow_name}
+                            {/* {!marketplace && (
                               <Badge className="ml-2" variant="outline">
                                 Team
                               </Badge>
-                            )}
+                            )} */}
                           </div>
                           <div className="text-sm font-normal truncate">
                             {tool.description}
