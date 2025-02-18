@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS anything.agent_tools
     -- ADD YOUR COLUMNS HERE
     agent_id uuid not null references anything.agents(agent_id),
     flow_id uuid not null references anything.flows(flow_id),
+    tool_slug TEXT NOT NULL,
+    tool_name TEXT NOT NULL,
+    tool_description TEXT NOT NULL,
+    tool_parameters jsonb NOT NULL,
     active boolean not null default true,
     archived boolean not null default false,
 

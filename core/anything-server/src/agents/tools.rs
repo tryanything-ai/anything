@@ -107,23 +107,23 @@ pub async fn add_tool(
         .single()
         .execute();
 
-        //Update Vapi
-        println!("[TOOLS] Getting VAPI API key");
-        let vapi_api_key = match std::env::var("VAPI_API_KEY") {
-            Ok(key) => key,
-            Err(e) => {
-                println!("[TOOLS] Failed to get VAPI API key: {:?}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "VAPI_API_KEY environment variable not found",
-                )
-                    .into_response();
-            }
-        };
-    
-        let reqwest_client = Client::new();
-      //get tools definition from vapi
-      let vapi_update_future = async {
+    //Update Vapi
+    println!("[TOOLS] Getting VAPI API key");
+    let vapi_api_key = match std::env::var("VAPI_API_KEY") {
+        Ok(key) => key,
+        Err(e) => {
+            println!("[TOOLS] Failed to get VAPI API key: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "VAPI_API_KEY environment variable not found",
+            )
+                .into_response();
+        }
+    };
+
+    let reqwest_client = Client::new();
+    //get tools definition from vapi
+    let vapi_update_future = async {
         reqwest_client
             .get(&format!("https://api.vapi.ai/assistant/{}", agent_id))
             .header("Authorization", format!("Bearer {}", vapi_api_key))
@@ -140,8 +140,12 @@ pub async fn add_tool(
             })
     };
 
-    let (agent_response, workflow_response, agent_tools_response, vapi_config_response) =
-        tokio::join!(agent_future, workflow_future, agent_tools_future, vapi_update_future);
+    let (agent_response, workflow_response, agent_tools_response, vapi_config_response) = tokio::join!(
+        agent_future,
+        workflow_future,
+        agent_tools_future,
+        vapi_update_future
+    );
 
     // Handle agent response
     let agent_response = match agent_response {
@@ -305,8 +309,8 @@ pub async fn add_tool(
 
     println!("[TOOLS] Properties: {:?}", tool_properties);
 
-       // Handle VAPI response
-       let vapi_config_response = match vapi_config_response {
+    // Handle VAPI response
+    let vapi_config_response = match vapi_config_response {
         Ok(resp) => resp,
         Err(e) => {
             println!("[TOOLS] Failed to send request to VAPI: {:?}", e);
@@ -439,11 +443,20 @@ pub async fn add_tool(
                 .into_response();
         }
     };
+    let properties = json!({"parameters": {
+      "type": "object",
+      "required": required,
+      "properties": tool_properties
+    }});
 
     let agent_tool = serde_json::json!({
         "agent_id": agent_id.clone(),
         "flow_id": payload.workflow_id,
         "account_id": account_id.clone(),
+        "tool_slug": tool_slug,
+        "tool_name": workflow["flow_name"],
+        "tool_description": tool_description,
+        "tool_parameters": properties, 
         "active": true,
         "archived": false
     });
