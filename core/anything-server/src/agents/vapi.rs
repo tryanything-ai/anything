@@ -14,8 +14,6 @@ pub async fn create_vapi_agent(
         .map_err(|_| anyhow::anyhow!("VAPI_API_KEY environment variable not found"))?;
 
     let client = Client::new();
-
-    //Could set account_id in metadata to have something on vapi side too
     println!("[VAPI] Sending request to create assistant");
     let response = client
         .post("https://api.vapi.ai/assistant")
@@ -42,22 +40,17 @@ pub async fn create_vapi_agent(
         .await
         .map_err(|e| anyhow::anyhow!("[VAPI] Failed to send request to VAPI: {}", e))?;
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let error_text = response.text().await.unwrap_or_default();
-        println!("[VAPI] Error creating agent: {} - {}", status, error_text);
-        return Err(anyhow::anyhow!(
-            "VAPI returned error status {}: {}",
-            status,
-            error_text
-        ));
-    }
-
-    println!("[VAPI] Successfully created agent, parsing response");
-    response
+    let response_json = response
         .json::<Value>()
         .await
-        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))
+        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))?;
+
+    if let Some(error) = response_json.get("error") {
+        println!("[VAPI] Error from VAPI: {}", error);
+        return Err(anyhow::anyhow!("[VAPI] Error from VAPI: {}", error));
+    }
+
+    Ok(response_json)
 }
 
 pub async fn update_vapi_agent(
@@ -66,49 +59,66 @@ pub async fn update_vapi_agent(
     greeting: &str,
     system_prompt: &str,
 ) -> Result<Value> {
+
     let vapi_api_key = std::env::var("VAPI_API_KEY")
         .map_err(|_| anyhow::anyhow!("VAPI_API_KEY environment variable not found"))?;
     let client = Client::new();
 
-    println!("[VAPI] Sending request to update assistant {}", vapi_agent_id);
+    let vapi_agent_response = client
+        .get(&format!("https://api.vapi.ai/assistant/{}", vapi_agent_id))
+        .header("Authorization", format!("Bearer {}", vapi_api_key))
+        .header("Content-Type", "application/json")
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to send request to VAPI: {}", e))?;
+
+    let vapi_agent_json = vapi_agent_response
+        .json::<Value>()
+        .await
+        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))?;
+
+    let mut new_vapi_config = vapi_agent_json.clone();
+
+    println!("[VAPI] VAPI agent JSON: {:?}", vapi_agent_json);
+
+    new_vapi_config["model"]["messages"] = serde_json::Value::Array(vec![json!({
+        "role": "system",
+        "content": system_prompt
+    })]);
+
+    new_vapi_config["firstMessage"] = json!(greeting);
+    new_vapi_config["name"] = json!(name);
+
+    println!(
+        "[VAPI] Sending request to update assistant {}",
+        vapi_agent_id
+    );
+
+    println!("[VAPI] New VAPI config: {:?}", new_vapi_config);
+
     let response = client
         .patch(&format!("https://api.vapi.ai/assistant/{}", vapi_agent_id))
         .header("Authorization", format!("Bearer {}", vapi_api_key))
-        .header("Content-Type", "application/json")
         .json(&json!({
-            "name": name,
-            "firstMessage": greeting,
-            "model": {
-                "provider": "openai",
-                "model": "gpt-4o-mini",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": system_prompt
-                    }
-                ]
-            }
+            "firstMessage": new_vapi_config["firstMessage"],
+            "name": new_vapi_config["name"],
+            "model": new_vapi_config["model"]
         }))
         .send()
         .await
         .map_err(|e| anyhow::anyhow!("[VAPI] Failed to send request to VAPI: {}", e))?;
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let error_text = response.text().await.unwrap_or_default();
-        println!("[VAPI] Error updating agent: {} - {}", status, error_text);
-        return Err(anyhow::anyhow!(
-            "VAPI returned error status {}: {}",
-            status,
-            error_text
-        ));
-    }
-
-    println!("[VAPI] Successfully updated agent, parsing response");
-    response
+    let response_json = response
         .json::<Value>()
         .await
-        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))
+        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))?;
+
+    if let Some(error) = response_json.get("error") {
+        println!("[VAPI] Error from VAPI: {}", error);
+        return Err(anyhow::anyhow!("[VAPI] Error from VAPI: {}", error));
+    }
+
+    Ok(response_json)
 }
 
 pub async fn delete_vapi_agent(agent_id: &str) -> Result<()> {

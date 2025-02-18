@@ -75,10 +75,18 @@ pub async fn add_tool(
     println!("[TOOLS] Adding tool to agent: {}", agent_id);
     println!("[TOOLS] Workflow ID: {}", payload.workflow_id);
 
-    // Get the workflow and its published version
-    println!("[TOOLS] Fetching workflow details from database");
+    // Get both the agent and workflow in parallel
+    println!("[TOOLS] Fetching agent and workflow details");
+    let agent_future = client
+        .from("agents")
+        .auth(&user.jwt)
+        .select("*")
+        .eq("agent_id", &agent_id)
+        .eq("account_id", &account_id)
+        .single()
+        .execute();
 
-    let workflow_response = match client
+    let workflow_future = client
         .from("flow_versions")
         .auth(&user.jwt)
         .select("*, flow:flows(*)")
@@ -87,9 +95,42 @@ pub async fn add_tool(
         .eq("account_id", &account_id)
         .eq("published", "true")
         .single()
-        .execute()
-        .await
-    {
+        .execute();
+
+    let (agent_response, workflow_response) = tokio::join!(agent_future, workflow_future);
+
+    // Handle agent response
+    let agent_response = match agent_response {
+        Ok(response) => response,
+        Err(err) => {
+            println!("[TOOLS] Failed to fetch agent: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch agent details",
+            )
+                .into_response();
+        }
+    };
+
+    let agent = match agent_response.json::<Value>().await {
+        Ok(agent) => agent,
+        Err(e) => {
+            println!("[TOOLS] Failed to parse agent response: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse agent details",
+            )
+                .into_response();
+        }
+    };
+
+    if agent.is_null() {
+        println!("[TOOLS] Agent not found");
+        return (StatusCode::NOT_FOUND, "Agent not found").into_response();
+    }
+
+    // Handle workflow response
+    let workflow_response = match workflow_response {
         Ok(response) => response,
         Err(err) => {
             println!("Failed to execute request: {:?}", err);
@@ -152,7 +193,10 @@ pub async fn add_tool(
     let trigger_action = trigger_action.unwrap();
 
     // Get workflow name and slugify it for the function name
-    let tool_slug = slugify!(workflow["flow_name"].as_str().unwrap_or("unnamed-workflow"), separator = "_");
+    let tool_slug = slugify!(
+        workflow["flow_name"].as_str().unwrap_or("unnamed-workflow"),
+        separator = "_"
+    );
 
     let tool_description = workflow["description"].as_str().unwrap_or("");
 
@@ -188,7 +232,35 @@ pub async fn add_tool(
 
     let reqwest_client = Client::new();
 
-    //TODO: 
+    let current_vapi_config = agent["vapi_config"].clone();
+    let mut new_vapi_config = current_vapi_config.clone();
+    // Get existing tools or create empty array
+    let mut tools = current_vapi_config["model"]["tools"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+
+    // Add new tool
+    tools.push(json!({
+        "type": "function",
+        "function": {
+            "name": tool_slug,
+            "description": tool_description,
+            "parameters": {
+                "type": "object", 
+                "properties": tool_properties,
+                "required": required
+            }
+        },
+        "server": {
+            "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", payload.workflow_id),
+        }
+    }));
+
+    println!("[TOOLS] Updated tools array: {:?}", tools);
+
+    new_vapi_config["model"]["tools"] = serde_json::Value::Array(tools);
+    //TODO:
     //Vapi function calling docs
     //https://docs.vapi.ai/server-url/events#function-calling
     println!("[TOOLS] Sending update to VAPI for agent: {}", agent_id);
@@ -197,27 +269,7 @@ pub async fn add_tool(
         .header("Authorization", format!("Bearer {}", vapi_api_key))
         .header("Content-Type", "application/json")
         .json(&json!({
-            "model": {
-                "provider": "openai",
-                "model": "gpt-4o-mini",
-                "tools": [
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": tool_slug,
-                            "description": tool_description,
-                            "parameters": {
-                                "type": "object",
-                                "properties": tool_properties,
-                                "required": required
-                            }
-                        },
-                        "server": {
-                            "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", payload.workflow_id),
-                        }
-                    }
-                ]
-            }
+            "model": new_vapi_config["model"]
         }))
         .send()
         .await
