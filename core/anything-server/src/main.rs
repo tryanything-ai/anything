@@ -355,6 +355,9 @@ pub async fn root() -> impl IntoResponse {
         //Fetch Workflows that are tools
         .route("/account/:account_id/tools", get(workflows::get_agent_tool_workflows))
 
+        //Phone Numbers
+        .route("/account/:account_id/phone_numbers/:country/:area_code", get(agents::twilio::search_phone_numbers))
+
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,

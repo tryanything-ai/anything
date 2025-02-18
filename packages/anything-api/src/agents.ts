@@ -187,6 +187,27 @@ export const getAgentTools = async (supabase: SupabaseClient, account_id: string
     }
 };
 
+export const searchPhoneNumbers = async (supabase: SupabaseClient, account_id: string, country: string, area_code: string) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/phone_numbers/${country}/${area_code}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            }); 
+            const data = await response.json();
+
+            console.log('Data from /phone_numbers/:country/:area_code GET:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error searching phone numbers:', error);
+        throw error;
+    }
+};
 
 export const addPhoneNumberToAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, phoneNumber: string) => {
     try {

@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@repo/ui/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { useAnything } from "@/context/AnythingContext";
-import { createClient } from "@/lib/supabase/client";
 import api from "@repo/anything-api";
 import { useParams } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
@@ -24,6 +23,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 
 interface AddPhoneNumberDialogProps {
   open: boolean;
@@ -51,18 +51,20 @@ export function AddPhoneNumberDialog({
 
   const searchNumbers = async () => {
     if (!selectedAccount) return;
-    
+
     setIsSearching(true);
     try {
+      if (!selectedAccount) return;
       // Stub API call - replace with actual implementation
-      // const numbers = await api.twilio.searchNumbers(selectedCountry, areaCode);
+      const numbers = await api.agents.searchPhoneNumbers(
+        await createClient(),
+        selectedAccount.account_id,
+        selectedCountry,
+        areaCode,
+      );
+      console.log("Numbers:", numbers);
       // Mock response
-      const mockNumbers = [
-        { phoneNumber: "+14155550123", formattedNumber: "(415) 555-0123" },
-        { phoneNumber: "+14155550124", formattedNumber: "(415) 555-0124" },
-        { phoneNumber: "+14155550125", formattedNumber: "(415) 555-0125" },
-      ];
-      setAvailableNumbers(mockNumbers);
+      setAvailableNumbers(numbers);
     } catch (error) {
       console.error("Error searching phone numbers:", error);
     } finally {
@@ -87,14 +89,14 @@ export function AddPhoneNumberDialog({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side={"right"} className="w-[400px]">
-        <SheetHeader>
-          <SheetTitle>Add Phone Number</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add Phone Number</DialogTitle>
+          <DialogDescription>
             Search and purchase a phone number for your agent
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="py-6 space-y-6">
           <div className="space-y-4">
@@ -111,7 +113,7 @@ export function AddPhoneNumberDialog({
                 <SelectContent>
                   <SelectItem value="US">United States</SelectItem>
                   <SelectItem value="CA">Canada</SelectItem>
-                  <SelectItem value="GB">United Kingdom</SelectItem>
+                  {/* <SelectItem value="GB">United Kingdom</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>
@@ -126,7 +128,7 @@ export function AddPhoneNumberDialog({
               />
             </div>
 
-            <Button 
+            <Button
               onClick={searchNumbers}
               disabled={isSearching || !areaCode}
               className="w-full"
@@ -153,9 +155,9 @@ export function AddPhoneNumberDialog({
                 onClick={() => setSelectedNumber(number.phoneNumber)}
               >
                 <div>
-                  <div className="font-medium">{number.formattedNumber}</div>
+                  <div className="font-medium">{number.friendly_name}</div>
                   <div className="text-sm text-muted-foreground">
-                    {number.phoneNumber}
+                    {number.locality}
                   </div>
                 </div>
                 <Button
@@ -173,7 +175,7 @@ export function AddPhoneNumberDialog({
             ))}
           </ScrollArea>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
