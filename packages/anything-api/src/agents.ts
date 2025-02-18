@@ -164,3 +164,25 @@ export const removeToolFromAgent = async (supabase: SupabaseClient, account_id: 
         throw error;
     }
 };
+
+
+export const getAgentTools = async (supabase: SupabaseClient, account_id: string, agentId: string) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}/tools`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Data from /agent/:id/tools GET:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching agent tools:', error);
+        throw error;
+    }
+};

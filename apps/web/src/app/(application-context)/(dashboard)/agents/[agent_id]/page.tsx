@@ -17,7 +17,8 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Input } from "@repo/ui/components/ui/input";
 import DeleteAgentDialog from "@/components/agents/delete-agent-dialog";
 import Vapi from "@vapi-ai/web";
-import { Phone } from "lucide-react";
+import Link from "next/link";
+import { Edit, Phone } from "lucide-react";
 import {
   Tabs,
   TabsContent,
@@ -27,6 +28,7 @@ import {
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { AddToolDialog } from "@/components/agents/add-tool-dialog";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
+import RemoveToolDialog from "@/components/agents/remove-tool-dialog";
 
 interface Agent {
   agent_id: string;
@@ -59,29 +61,34 @@ export default function AgentPage() {
   const {
     accounts: { selectedAccount },
   } = useAnything();
+  const fetchAgent = async () => {
+    if (!selectedAccount || !params.agent_id) return;
+
+    try {
+      const data = await api.agents.getAgent(
+        await createClient(),
+        selectedAccount.account_id,
+        params.agent_id as string,
+      );
+      setAgent(data);
+      setGreeting(data.config.greeting);
+      setSystemPrompt(data.config.system_prompt);
+
+      // TODO: get tools taht are connected to this.
+      const tools = await api.agents.getAgentTools(
+        await createClient(),
+        selectedAccount.account_id,
+        params.agent_id as string,
+      );
+      setAgentTools(tools);
+    } catch (error) {
+      console.error("Error fetching agent:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAgent = async () => {
-      if (!selectedAccount || !params.agent_id) return;
-
-      try {
-        const data = await api.agents.getAgent(
-          await createClient(),
-          selectedAccount.account_id,
-          params.agent_id as string,
-        );
-        setAgent(data);
-        setGreeting(data.config.greeting);
-        setSystemPrompt(data.config.system_prompt);
-
-        // TODO: get tools taht are connected to this.
-      } catch (error) {
-        console.error("Error fetching agent:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchAgent();
   }, [selectedAccount, params.agent_id]);
 
@@ -89,9 +96,9 @@ export default function AgentPage() {
     console.log("Adding tool:", toolId);
 
     if (!selectedAccount || !agent) {
-        console.error("No account or agent selected");
-        return;
-      }
+      console.error("No account or agent selected");
+      return;
+    }
 
     try {
       let res = await api.agents.addToolToAgent(
@@ -100,6 +107,7 @@ export default function AgentPage() {
         agent.agent_id,
         toolId,
       );
+      fetchAgent();
     } catch (error) {
       console.error("Error adding tool:", error);
     }
@@ -301,9 +309,24 @@ export default function AgentPage() {
                           <div>
                             <p className="font-medium">{tool.name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {tool.description}
+                              {tool.flow.flow_name}
                             </p>
                           </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/workflows/${tool.flow.flow_id}`}>
+                            <Button>
+                              <Edit size={16} />
+                            </Button>
+                          </Link>
+                          <RemoveToolDialog
+                            agentId={params.agent_id as string}
+                            toolId={tool.flow_id}
+                            onRemove={() => {
+                              // Refresh the tools list
+                              fetchAgent();
+                            }}
+                          />
                         </div>
                       </div>
                     ))}

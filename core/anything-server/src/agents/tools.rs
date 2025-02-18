@@ -14,7 +14,7 @@ use std::sync::Arc;
 use crate::supabase_jwt_middleware::User;
 use crate::types::action_types::Action;
 use crate::types::action_types::ActionType;
-use crate::types::json_schema::{JsonSchema, JsonSchemaProperty};
+use crate::types::json_schema::JsonSchemaProperty;
 use crate::types::workflow_types::DatabaseFlowVersion;
 use crate::AppState;
 use std::collections::HashMap;
@@ -537,3 +537,61 @@ pub async fn remove_tool(
     );
     Json(agent).into_response()
 }
+
+
+pub async fn get_agent_tools(
+    Path((account_id, agent_id)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("[TOOLS] Handling get_agent_tools for agent {}", agent_id);
+
+    let client = &state.anything_client;
+
+    let response = match client
+        .from("agent_tools")
+        .auth(&user.jwt)
+        .select("*, flow:flows(*)")
+        .eq("agent_id", &agent_id)
+        .eq("account_id", &account_id)
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(err) => {
+            println!("[TOOLS] Failed to execute request: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    if response.status() == 204 {
+        return (StatusCode::NO_CONTENT, "No content").into_response();
+    }
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(err) => {
+            println!("[TOOLS] Failed to read response body: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(err) => {
+            println!("[TOOLS] Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    Json(items).into_response()
+}
+
