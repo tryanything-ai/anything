@@ -319,7 +319,7 @@ export default function AgentPage() {
                                 {tool.tool_parameters?.parameters
                                   ?.properties && (
                                   <div className="text-sm w-full">
-                                    <div className="mb-2">Parameters:</div>
+                                    <div className="mb-2">Inputs:</div>
 
                                     <div className="flex flex-row gap-4 justify-start">
                                       {Object.entries(

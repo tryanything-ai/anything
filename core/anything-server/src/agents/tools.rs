@@ -958,13 +958,19 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
     //TODO: this should be parallelized in future if someone has lots of agents it could be slow or break?
     // Process each agent tool sequentially
     for tool in agent_tools.iter() {
-        let agent_id = tool["agent"]["vapi_assitant_id"]
+        println!("[TOOL] Processing next agent tool in loop");
+        println!("[TOOL] Tool: {:?}", tool);
+        let agent_id = tool["agent"]["vapi_assistant_id"]
             .as_str()
             .unwrap_or_default();
+        println!("[TOOL] Got agent ID: {}", agent_id);
         let vapi_api_key = std::env::var("VAPI_API_KEY").unwrap_or_default();
+        println!("[TOOL] Retrieved VAPI API key");
 
         let reqwest_client = reqwest::Client::new();
+        println!("[TOOL] Created new reqwest client");
         // 1. Get current VAPI assistant config
+        println!("[TOOL] Fetching current VAPI config for agent {}", agent_id);
         let vapi_response = match reqwest_client
             .get(&format!("https://api.vapi.ai/assistant/{}", agent_id))
             .header("Authorization", format!("Bearer {}", vapi_api_key))
@@ -981,6 +987,7 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 continue;
             }
         };
+        println!("[TOOL] Successfully got VAPI response");
 
         let vapi_config = match vapi_response.json::<Value>().await {
             Ok(config) => config,
@@ -992,16 +999,20 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 continue;
             }
         };
+        println!("[TOOL] Successfully parsed VAPI config to JSON");
 
         // 2. Update the tools array in the config
+        println!("[TOOL] Beginning tools array update");
         let mut new_vapi_config = vapi_config.clone();
 
         let mut tools = new_vapi_config["model"]["tools"]
             .as_array()
             .cloned()
             .unwrap_or_default();
+        println!("[TOOL] Current tools array length: {}", tools.len());
 
         //Remove specific tool from vapi config
+        println!("[TOOL] Removing existing tool for workflow {}", workflow_id);
         if let Some(tools) = new_vapi_config["model"]["tools"].as_array() {
             let filtered_tools: Vec<_> = tools
                 .iter()
@@ -1018,10 +1029,12 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 })
                 .cloned()
                 .collect();
+            println!("[TOOL] Filtered tools array length: {}", filtered_tools.len());
             new_vapi_config["model"]["tools"] = serde_json::Value::Array(filtered_tools);
         }
 
         //push the new one on
+        println!("[TOOL] Adding new tool configuration");
         tools.push(json!({
             "type": "function",
             "function": {
@@ -1037,11 +1050,12 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", workflow_id),
             }
         }));
+        println!("[TOOL] New tools array length: {}", tools.len());
 
         new_vapi_config["model"]["tools"] = serde_json::Value::Array(tools);
 
         //https://docs.vapi.ai/server-url/events#function-calling
-        println!("[TOOLS] Sending update to VAPI for agent: {}", agent_id);
+        println!("[TOOL] Sending update to VAPI for agent: {}", agent_id);
         let response = reqwest_client
             .patch(&format!("https://api.vapi.ai/assistant/{}", agent_id))
             .header("Authorization", format!("Bearer {}", vapi_api_key))
@@ -1064,8 +1078,9 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
             Ok(resp) => resp,
             Err(err) => return Err(anyhow::anyhow!("Failed to send request to VAPI")),
         };
+        println!("[TOOL] Successfully sent update to VAPI");
 
-        println!("[TOOLS] Parsing VAPI response");
+        println!("[TOOL] Parsing VAPI response");
         let vapi_response = match response.json::<serde_json::Value>().await {
             Ok(vapi_config) => vapi_config,
             Err(e) => {
@@ -1073,13 +1088,16 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 return Err(anyhow::anyhow!("Failed to parse VAPI response"));
             }
         };
+        println!("[TOOL] Successfully parsed VAPI response");
 
         //Save response to agent table
+        println!("[TOOL] Preparing agent update");
         let agent_update: Value = serde_json::json!({
             "vapi_config": vapi_response
         });
 
         //Update the agent record in the database
+        println!("[TOOL] Updating agent record in database");
         let response = match client
             .from("agents")
             .auth(&user.jwt)
@@ -1095,6 +1113,7 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 return Err(anyhow::anyhow!("Failed to update agent record"));
             }
         };
+        println!("[TOOL] Successfully updated agent record in database");
     }
 
     Ok(json!(agent_tools.len()))

@@ -22,7 +22,7 @@ export default function DeleteVariableDialog({
   const { variables } = useAnything();
 
   const handleDelete = async () => {
-    console.log("Delete Variable: " + variable.key);
+    console.log("Delete Input: " + variable.key);
     if (!variable.key) return;
     await variables.deleteVariable(variable.key);
   };
@@ -47,7 +47,7 @@ export default function DeleteVariableDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete}>
-            Delete Variable
+            Delete Input
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
