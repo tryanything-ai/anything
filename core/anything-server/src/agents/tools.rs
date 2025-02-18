@@ -82,7 +82,7 @@ pub async fn add_tool(
         .auth(&user.jwt)
         .select("*")
         .eq("agent_id", &agent_id)
-        .eq("account_id", &account_id)
+        .eq("account_id", &account_id.clone())
         .single()
         .execute();
 
@@ -92,12 +92,24 @@ pub async fn add_tool(
         .select("*, flow:flows(*)")
         .eq("archived", "false")
         .eq("flow_id", &payload.workflow_id)
-        .eq("account_id", &account_id)
+        .eq("account_id", &account_id.clone())
         .eq("published", "true")
         .single()
         .execute();
 
-    let (agent_response, workflow_response) = tokio::join!(agent_future, workflow_future);
+    let agent_tools_future = client
+        .from("agent_tools")
+        .auth(&user.jwt)
+        .select("*")
+        .eq("agent_id", &agent_id)
+        .eq("flow_id", &payload.workflow_id)
+        .eq("account_id", &account_id.clone())
+        .eq("archived", "false")
+        .single()
+        .execute();
+
+    let (agent_response, workflow_response, agent_tools_response) =
+        tokio::join!(agent_future, workflow_future, agent_tools_future);
 
     // Handle agent response
     let agent_response = match agent_response {
@@ -127,6 +139,49 @@ pub async fn add_tool(
     if agent.is_null() {
         println!("[TOOLS] Agent not found");
         return (StatusCode::NOT_FOUND, "Agent not found").into_response();
+    }
+
+    // Handle agent Tool response
+    let agent_tools_response = match agent_tools_response {
+        Ok(response) => response,
+        Err(err) => {
+            println!("[TOOLS] Failed to fetch agent: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch agent details",
+            )
+                .into_response();
+        }
+    };
+
+    println!("[TOOLS] Agent tools response: {:?}", agent_tools_response);
+
+    let agent_tool = match agent_tools_response.json::<Value>().await {
+        Ok(tools) => {
+            // Check if we got an error response from Supabase
+            if tools.get("code") == Some(&json!("PGRST116")) {
+                // This means no rows were found, which is what we want
+                Value::Null
+            } else {
+                tools
+            }
+        }
+        Err(e) => {
+            println!("[TOOLS] Failed to parse agent tools response: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse agent tools response",
+            )
+                .into_response();
+        }
+    };
+
+    println!("[TOOLS] Agent tool: {:?}", agent_tool);
+
+    //BLOCK Addition of Tool if tool already exists
+    if !agent_tool.is_null() {
+        println!("[TOOLS] Agent tool already exists");
+        return (StatusCode::CONFLICT, "Agent tool already exists").into_response();
     }
 
     // Handle workflow response
@@ -207,6 +262,8 @@ pub async fn add_tool(
             .and_then(|schema| schema.properties.clone())
             .unwrap_or_default(),
     );
+
+    println!("[TOOLS] Tool properties: {:?}", tool_properties);
 
     let required = trigger_action
         .inputs_schema
@@ -310,7 +367,7 @@ pub async fn add_tool(
         .from("agents")
         .auth(&user.jwt)
         .eq("agent_id", agent_id.clone())
-        .eq("account_id", account_id)
+        .eq("account_id", account_id.clone())
         .update(agent_update.to_string())
         .single()
         .execute()
@@ -342,6 +399,7 @@ pub async fn add_tool(
     let agent_tool = serde_json::json!({
         "agent_id": agent_id.clone(),
         "flow_id": payload.workflow_id,
+        "account_id": account_id.clone(),
         "active": true,
         "archived": false
     });
@@ -444,7 +502,7 @@ pub async fn remove_tool(
         .from("agents")
         .auth(&user.jwt)
         .eq("agent_id", agent_id.clone())
-        .eq("account_id", account_id)
+        .eq("account_id", account_id.clone())
         .update(agent_update.to_string())
         .single()
         .execute()
