@@ -300,7 +300,10 @@ export default function AgentPage() {
                 ) : (
                   <div className="grid gap-4">
                     {agentTools.map((tool) => (
-                      <Card key={tool.flow_id} className="mt-2 flex flex-row hover:border-green-500">
+                      <Card
+                        key={tool.flow_id}
+                        className="mt-2 flex flex-row hover:border-green-500"
+                      >
                         <div className="flex-1 flex">
                           <CardHeader className="w-1/4">
                             <CardTitle className="truncate leading-tight">
@@ -311,9 +314,35 @@ export default function AgentPage() {
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="flex-1">
-                            <div className="flex flex-row h-full items-end">
-                              <div className="flex-1" />
-                              <div className="flex gap-2">
+                            <div className="flex flex-row">
+                              <div className="flex-1 flex mt-8">
+                                {tool.tool_parameters?.parameters
+                                  ?.properties && (
+                                  <div className="text-sm w-full">
+                                    <div className="mb-2">Parameters:</div>
+
+                                    <div className="flex flex-row gap-4 justify-start">
+                                      {Object.entries(
+                                        tool.tool_parameters.parameters
+                                          .properties,
+                                      )
+                                        .slice(0, 4)
+                                        .map(([key, value]: [string, any]) => (
+                                          <div
+                                            key={key}
+                                            className="flex items-center"
+                                          >
+                                            <span className="mr-2">{key}</span>
+                                            <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+                                              {value.type}
+                                            </span>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex justify-end gap-2 mt-8">
                                 <Link href={`/workflows/${tool.flow.flow_id}`}>
                                   <Button>
                                     <Edit size={16} />

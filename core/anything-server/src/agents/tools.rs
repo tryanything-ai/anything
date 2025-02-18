@@ -1,3 +1,4 @@
+use anyhow::Result;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -456,7 +457,7 @@ pub async fn add_tool(
         "tool_slug": tool_slug,
         "tool_name": workflow["flow_name"],
         "tool_description": tool_description,
-        "tool_parameters": properties, 
+        "tool_parameters": properties,
         "active": true,
         "archived": false
     });
@@ -805,4 +806,296 @@ pub async fn get_agent_tools(
     };
 
     Json(items).into_response()
+}
+
+pub async fn update_agent_tool_if_needed_on_workflow_publish(
+    workflow_id: String,
+    workflow_version_id: String,
+    account_id: String,
+    state: Arc<AppState>,
+    user: User,
+) -> Result<Value> {
+    let client = &state.anything_client;
+
+    // First check if this workflow is being used as an agent tool
+    let agent_tools_response = match client
+        .from("agent_tools")
+        .auth(&user.jwt)
+        .select("*, agent:agents(*)")
+        .eq("flow_id", &workflow_id)
+        .eq("account_id", &account_id)
+        .eq("archived", "false")
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            println!("[TOOLS] Failed to fetch agent tools: {:?}", e);
+            return Err(anyhow::anyhow!("Failed to fetch agent tools"));
+        }
+    };
+
+    let agent_tools = match agent_tools_response.json::<Vec<Value>>().await {
+        Ok(tools) => tools,
+        Err(e) => {
+            println!("[TOOLS] Failed to parse agent tools response: {:?}", e);
+            return Err(anyhow::anyhow!("Failed to parse agent tools response"));
+        }
+    };
+
+    // If no tools found, this workflow isn't used as an agent tool
+    if agent_tools.is_empty() {
+        return Ok(json!({}));
+    }
+
+    //Turns out we need to update one or many agents on vapi and in our database
+    //Update Vapie Agent
+    //Update Vapi Config in Agents Table
+    //Update Agent Tools table in Database
+
+    // Get the workflow version details
+    let workflow_version_response = match client
+        .from("flow_versions")
+        .auth(&user.jwt)
+        .select("*, flow:flows(*)")
+        .eq("flow_version_id", &workflow_version_id)
+        .single()
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            println!("[TOOLS] Failed to fetch workflow version: {:?}", e);
+            return Err(anyhow::anyhow!("Failed to fetch workflow version"));
+        }
+    };
+
+    let workflow_version = match workflow_version_response
+        .json::<DatabaseFlowVersion>()
+        .await
+    {
+        Ok(version) => version,
+        Err(e) => {
+            println!("[TOOLS] Failed to parse workflow version: {:?}", e);
+            return Err(anyhow::anyhow!("Failed to parse workflow version"));
+        }
+    };
+
+    //Create the new config needed for vapi from the new workflow
+    let workflow = workflow_version.clone().flow.unwrap();
+    println!("[TOOLS] Workflow: {:?}", workflow);
+
+    println!("[TOOLS] Workflow version: {:?}", workflow_version);
+
+    // Get the trigger action from the published version
+    let trigger_action: Option<Action> = workflow_version
+        .flow_definition
+        .actions
+        .iter()
+        .find(|action| action.r#type == ActionType::Trigger)
+        .cloned();
+
+    println!("[TOOLS] Trigger action: {:?}", trigger_action);
+
+    if trigger_action.is_none() {
+        println!("[TOOLS] No trigger action found in workflow");
+        return Err(anyhow::anyhow!("No trigger action found in workflow"));
+    }
+
+    let trigger_action = trigger_action.unwrap();
+
+    let tool_properties = AgentToolProperties::from(
+        trigger_action
+            .inputs_schema
+            .as_ref()
+            .and_then(|schema| schema.properties.clone())
+            .unwrap_or_default(),
+    );
+
+    let tool_slug = slugify!(
+        workflow["flow_name"].as_str().unwrap_or("unnamed-workflow"),
+        separator = "_"
+    );
+
+    let required = trigger_action
+        .inputs_schema
+        .as_ref()
+        .and_then(|schema| schema.required.clone())
+        .unwrap_or_default();
+
+    let tool_description = workflow["description"].as_str().unwrap_or("");
+
+    let properties = json!({"parameters": {
+      "type": "object",
+      "required": required,
+      "properties": tool_properties
+    }});
+
+    let agent_tool_update_input = serde_json::json!({
+        "tool_slug": tool_slug,
+        "tool_name": workflow["flow_name"],
+        "tool_description": tool_description,
+        "tool_parameters": properties,
+    });
+
+    //Update Properties on every agent_tool that uses this workflow
+    let update_all_agent_tools_response = match client
+        .from("agent_tools")
+        .auth(&user.jwt)
+        .eq("flow_id", &workflow_id)
+        .eq("account_id", &account_id)
+        .update(agent_tool_update_input.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            println!("[TOOLS] Failed to update agent tools: {:?}", e);
+            return Err(anyhow::anyhow!("Failed to update agent tools"));
+        }
+    };
+
+    //TODO: this should be parallelized in future if someone has lots of agents it could be slow or break?
+    // Process each agent tool sequentially
+    for tool in agent_tools.iter() {
+        let agent_id = tool["agent"]["vapi_assitant_id"]
+            .as_str()
+            .unwrap_or_default();
+        let vapi_api_key = std::env::var("VAPI_API_KEY").unwrap_or_default();
+
+        let reqwest_client = reqwest::Client::new();
+        // 1. Get current VAPI assistant config
+        let vapi_response = match reqwest_client
+            .get(&format!("https://api.vapi.ai/assistant/{}", agent_id))
+            .header("Authorization", format!("Bearer {}", vapi_api_key))
+            .header("Content-Type", "application/json")
+            .send()
+            .await
+        {
+            Ok(resp) => resp,
+            Err(e) => {
+                println!(
+                    "[TOOLS] Failed to get VAPI config for agent {}: {:?}",
+                    agent_id, e
+                );
+                continue;
+            }
+        };
+
+        let vapi_config = match vapi_response.json::<Value>().await {
+            Ok(config) => config,
+            Err(e) => {
+                println!(
+                    "[TOOLS] Failed to parse VAPI config for agent {}: {:?}",
+                    agent_id, e
+                );
+                continue;
+            }
+        };
+
+        // 2. Update the tools array in the config
+        let mut new_vapi_config = vapi_config.clone();
+
+        let mut tools = new_vapi_config["model"]["tools"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+
+        //Remove specific tool from vapi config
+        if let Some(tools) = new_vapi_config["model"]["tools"].as_array() {
+            let filtered_tools: Vec<_> = tools
+                .iter()
+                .filter(|tool| {
+                    if let Some(server) = tool["server"].as_object() {
+                        if let Some(url) = server["url"].as_str() {
+                            !url.contains(&workflow_id)
+                        } else {
+                            true
+                        }
+                    } else {
+                        true
+                    }
+                })
+                .cloned()
+                .collect();
+            new_vapi_config["model"]["tools"] = serde_json::Value::Array(filtered_tools);
+        }
+
+        //push the new one on
+        tools.push(json!({
+            "type": "function",
+            "function": {
+                "name": tool_slug,
+                "description": tool_description,
+                "parameters": {
+                    "type": "object", 
+                    "properties": tool_properties,
+                    "required": required
+                }
+            },
+            "server": {
+                "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", workflow_id),
+            }
+        }));
+
+        new_vapi_config["model"]["tools"] = serde_json::Value::Array(tools);
+
+        //https://docs.vapi.ai/server-url/events#function-calling
+        println!("[TOOLS] Sending update to VAPI for agent: {}", agent_id);
+        let response = reqwest_client
+            .patch(&format!("https://api.vapi.ai/assistant/{}", agent_id))
+            .header("Authorization", format!("Bearer {}", vapi_api_key))
+            .header("Content-Type", "application/json")
+            .json(&json!({
+                "model": new_vapi_config["model"]
+            }))
+            .send()
+            .await
+            .map_err(|e| {
+                println!("[TOOLS] Failed to send request to VAPI: {:?}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "[VAPI] Failed to send request to VAPI",
+                )
+                    .into_response();
+            });
+
+        let response = match response {
+            Ok(resp) => resp,
+            Err(err) => return Err(anyhow::anyhow!("Failed to send request to VAPI")),
+        };
+
+        println!("[TOOLS] Parsing VAPI response");
+        let vapi_response = match response.json::<serde_json::Value>().await {
+            Ok(vapi_config) => vapi_config,
+            Err(e) => {
+                println!("[TOOLS] Failed to parse VAPI response: {:?}", e);
+                return Err(anyhow::anyhow!("Failed to parse VAPI response"));
+            }
+        };
+
+        //Save response to agent table
+        let agent_update: Value = serde_json::json!({
+            "vapi_config": vapi_response
+        });
+
+        //Update the agent record in the database
+        let response = match client
+            .from("agents")
+            .auth(&user.jwt)
+            .eq("agent_id", agent_id)
+            .eq("account_id", account_id.clone())
+            .update(agent_update.to_string())
+            .execute()
+            .await
+        {
+            Ok(response) => response,
+            Err(e) => {
+                println!("[TOOLS] Failed to update agent record: {:?}", e);
+                return Err(anyhow::anyhow!("Failed to update agent record"));
+            }
+        };
+    }
+
+    Ok(json!(agent_tools.len()))
 }

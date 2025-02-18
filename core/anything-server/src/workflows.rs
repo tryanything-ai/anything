@@ -18,8 +18,8 @@ use std::env;
 
 use chrono::Utc;
 
+use crate::agents::tools::update_agent_tool_if_needed_on_workflow_publish;
 use crate::system_workflows::create_workflow_from_template;
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BaseFlowVersionInput {
     account_id: String,
@@ -950,7 +950,7 @@ pub async fn publish_workflow_version(
     match client
         .from("flows")
         .auth(user.jwt.clone())
-        .eq("flow_id", &workflow_id)
+        .eq("flow_id", &workflow_id.clone())
         .update(update_workflow_json.to_string())
         .execute()
         .await
@@ -969,10 +969,22 @@ pub async fn publish_workflow_version(
         }
     };
     // Signal the trigger processing loop that it needs to hydrate and manage new triggers.
-    if let Err(err) = state.trigger_engine_signal.send(workflow_id) {
+    if let Err(err) = state.trigger_engine_signal.send(workflow_id.clone()) {
         println!("Failed to send trigger signal: {:?}", err);
     }
 
+    //TODO: we need to check if the flow is an agent_tool and if it is we need to update tools in agents
+    if let Err(e) = update_agent_tool_if_needed_on_workflow_publish(
+        workflow_id.clone(),
+        workflow_version_id,
+        account_id,
+        state.clone(),
+        user,
+    )
+    .await
+    {
+        println!("Failed to update agent tool: {:?}", e);
+    }
     Json(body).into_response()
 }
 
@@ -1040,7 +1052,8 @@ pub async fn get_agent_tool_workflows(
                             if let Some(actions) = flow_def.get("actions") {
                                 if let Some(actions_array) = actions.as_array() {
                                     return actions_array.iter().any(|action| {
-                                        action.get("plugin_name")
+                                        action
+                                            .get("plugin_name")
                                             .and_then(Value::as_str)
                                             .map(|name| name == "@anything/agent_tool_call")
                                             .unwrap_or(false)

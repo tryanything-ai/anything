@@ -1,5 +1,3 @@
-use anyhow::Result;
-
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -46,7 +44,7 @@ pub async fn update_agent(
             )
                 .into_response()
         }
-    };  
+    };
 
     // Create config update with provided fields
     let config = serde_json::json!({
@@ -93,3 +91,4 @@ pub async fn update_agent(
 
     Json(agent).into_response()
 }
+
