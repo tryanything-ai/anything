@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -13,6 +14,20 @@ pub enum ValidationFieldType {
     Null,
     #[serde(other)]
     Unknown,
+}
+
+impl ValidationFieldType {
+    pub fn to_string(&self) -> String {
+        match self {
+            ValidationFieldType::String => "string".to_string(),
+            ValidationFieldType::Number => "number".to_string(),
+            ValidationFieldType::Object => "object".to_string(),
+            ValidationFieldType::Boolean => "boolean".to_string(),
+            ValidationFieldType::Array => "array".to_string(),
+            ValidationFieldType::Null => "null".to_string(),
+            ValidationFieldType::Unknown => "unknown".to_string(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

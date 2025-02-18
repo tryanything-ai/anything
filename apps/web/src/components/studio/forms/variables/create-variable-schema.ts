@@ -161,7 +161,7 @@ export const EDIT_VARIABLES_VARIABLES = {
     "type": "",
 }
 
-export type VariableProperty = {
+export type InputProperty = {
     key?: string;
     title: string;
     description: string;
@@ -171,7 +171,7 @@ export type VariableProperty = {
 };
 
 export type SimpleVariablesSchema = {
-    properties: Record<string, VariableProperty>
+    properties: Record<string, InputProperty>
 }
 
 export const DEFAULT_VARIABLES_SCHEMA: any = {

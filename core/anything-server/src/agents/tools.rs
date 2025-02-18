@@ -15,6 +15,7 @@ use crate::supabase_jwt_middleware::User;
 use crate::types::action_types::Action;
 use crate::types::action_types::ActionType;
 use crate::types::json_schema::JsonSchemaProperty;
+use crate::types::json_schema::ValidationField;
 use crate::types::workflow_types::DatabaseFlowVersion;
 use crate::AppState;
 use std::collections::HashMap;
@@ -23,6 +24,7 @@ use std::collections::HashMap;
 #[derive(Debug, Serialize)]
 struct AgentToolProperty {
     r#type: String,
+    description: Option<String>,
 }
 
 #[derive(Debug, Serialize, Default)]
@@ -33,16 +35,17 @@ impl AgentToolProperties {
         AgentToolProperties(HashMap::new())
     }
 
-    fn add_property(&mut self, name: String, property_type: &str) {
-        let valid_type = match property_type {
+    fn add_property(&mut self, name: String, property_type: String, description: Option<String>) {
+        let valid_type = match property_type.as_str() {
             "string" | "number" | "boolean" | "null" => property_type,
-            _ => "string",
+            _ => String::from("string"),
         };
 
         self.0.insert(
             name,
             AgentToolProperty {
-                r#type: valid_type.to_string(),
+                r#type: valid_type,
+                description,
             },
         );
     }
@@ -53,7 +56,15 @@ impl From<HashMap<String, JsonSchemaProperty>> for AgentToolProperties {
         let mut tool_properties = AgentToolProperties::new();
 
         for (name, property) in properties {
-            tool_properties.add_property(name, property.r#type.as_deref().unwrap_or("string"));
+            tool_properties.add_property(
+                name,
+                property
+                    .x_any_validation
+                    .unwrap_or(ValidationField::default())
+                    .r#type
+                    .to_string(),
+                property.description,
+            );
         }
 
         tool_properties
@@ -1029,7 +1040,10 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 })
                 .cloned()
                 .collect();
-            println!("[TOOL] Filtered tools array length: {}", filtered_tools.len());
+            println!(
+                "[TOOL] Filtered tools array length: {}",
+                filtered_tools.len()
+            );
             new_vapi_config["model"]["tools"] = serde_json::Value::Array(filtered_tools);
         }
 

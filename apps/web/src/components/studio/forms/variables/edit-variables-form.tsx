@@ -2,7 +2,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Edit2 } from "lucide-react";
 import { useAnything } from "@/context/AnythingContext";
 import { EditVariableFormMode } from "@/context/VariablesContext";
-import DeleteVariableDialog from "./delete-variable-dialog";
+import DeleteInputDialog from "./delete-input-dialog";
 import { useEffect } from "react";
 
 export default function EditVariablesForm(): JSX.Element {
@@ -62,9 +62,9 @@ export default function EditVariablesForm(): JSX.Element {
               >
                 <Edit2 className="size-5" />
               </Button>
-              <DeleteVariableDialog
+              <DeleteInputDialog
                 key={key}
-                variable={{
+                input={{
                   ...selected_node_variables_schema.properties[key],
                   key,
                 }}

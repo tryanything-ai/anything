@@ -29,7 +29,7 @@ export interface VariablesContextInterface {
   setEditingMode: (mode: EditVariableFormMode) => void;
   setIsFormVisible: (visible: boolean) => void;
   updateVariablesProperty: (data: any) => Promise<boolean>;
-  deleteVariable: (variableKey: string) => Promise<boolean>;
+  deleteInput: (inputKey: string) => Promise<boolean>;
 }
 
 export const VariablesContext = createContext<VariablesContextInterface>({
@@ -40,7 +40,7 @@ export const VariablesContext = createContext<VariablesContextInterface>({
   setEditingMode: () => {},
   setIsFormVisible: () => {},
   updateVariablesProperty: () => Promise.resolve(false),
-  deleteVariable: () => Promise.resolve(false),
+  deleteInput: () => Promise.resolve(false),
 });
 
 export const useVariables = () => useContext(VariablesContext);
@@ -127,9 +127,7 @@ export const VariablesProvider = ({
         console.log("[VARIABLES CONTEXT] Creating new property");
 
         // Use variable schema or create one if necessary
-        let inputs_schema = isValidVariablesSchema(
-          selected_node_inputs_schema,
-        )
+        let inputs_schema = isValidVariablesSchema(selected_node_inputs_schema)
           ? selected_node_inputs_schema
           : cloneDeep(DEFAULT_VARIABLES_SCHEMA);
         console.log(
@@ -214,7 +212,10 @@ export const VariablesProvider = ({
         console.log(
           "[VARIABLES CONTEXT] Updating node data with new variables schema and variables",
         );
-        await updateNodeData(["inputs_schema", "inputs"], [inputs_schema, new_inputs]);
+        await updateNodeData(
+          ["inputs_schema", "inputs"],
+          [inputs_schema, new_inputs],
+        );
         console.log("[VARIABLES CONTEXT] Node data updated successfully");
       }
     } catch (e) {
@@ -226,7 +227,7 @@ export const VariablesProvider = ({
     return true;
   };
 
-  const deleteVariable = async (variableKey: string) => {
+  const deleteInput = async (variableKey: string) => {
     try {
       console.log("[VARIABLES CONTEXT] Deleting variable: ", variableKey);
       if (!selected_node_inputs) return false;
@@ -266,7 +267,7 @@ export const VariablesProvider = ({
 
       // Update the database
       await updateNodeData(
-        ["variables_schema", "variables"],
+        ["inputs_schema", "inputs"],
         [updated_schema, updated_variables],
       );
 
@@ -292,7 +293,7 @@ export const VariablesProvider = ({
         isFormVisible,
         setIsFormVisible,
         updateVariablesProperty: updateVariablesSchemaProperties,
-        deleteVariable,
+        deleteInput,
       }}
     >
       {children}

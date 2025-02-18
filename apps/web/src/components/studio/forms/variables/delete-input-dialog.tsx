@@ -12,19 +12,19 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useAnything } from "@/context/AnythingContext";
 import { Trash2 } from "lucide-react";
-import { VariableProperty } from "./create-variable-schema";
+import { InputProperty } from "./create-variable-schema";
 
-export default function DeleteVariableDialog({
-  variable,
+export default function DeleteInputDialog({
+  input,
 }: {
-  variable: VariableProperty;
+  input: InputProperty;
 }): JSX.Element {
   const { variables } = useAnything();
 
   const handleDelete = async () => {
-    console.log("Delete Input: " + variable.key);
-    if (!variable.key) return;
-    await variables.deleteVariable(variable.key);
+    console.log("Delete Input: " + input.key);
+    if (!input.key) return;
+    await variables.deleteInput(input.key);
   };
 
   return (
