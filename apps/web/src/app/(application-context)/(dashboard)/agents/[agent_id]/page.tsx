@@ -18,7 +18,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import DeleteAgentDialog from "@/components/agents/delete-agent-dialog";
 import Vapi from "@vapi-ai/web";
 import Link from "next/link";
-import { Edit, Phone } from "lucide-react";
+import { Edit, Phone, Plus } from "lucide-react";
 import {
   Tabs,
   TabsContent,
@@ -29,6 +29,7 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { AddToolDialog } from "@/components/agents/add-tool-dialog";
 import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import RemoveToolDialog from "@/components/agents/remove-tool-dialog";
+import { AddPhoneNumberDialog } from "@/components/agents/add-phone-number-dialog";
 
 interface Agent {
   agent_id: string;
@@ -57,6 +58,8 @@ export default function AgentPage() {
   const [isCallActive, setIsCallActive] = useState(false);
   const [agentTools, setAgentTools] = useState<any[]>([]);
   const [addToolOpen, setAddToolOpen] = useState(false);
+  const [addPhoneNumberOpen, setAddPhoneNumberOpen] = useState(false);
+
 
   const {
     accounts: { selectedAccount },
@@ -110,6 +113,28 @@ export default function AgentPage() {
       fetchAgent();
     } catch (error) {
       console.error("Error adding tool:", error);
+    }
+  };
+
+  const handleAddPhoneNumber = async (phoneNumber: string) => {
+    console.log("Adding phone number:", phoneNumber);
+
+    if (!selectedAccount || !agent) {
+      console.error("No account or agent selected");
+      return;
+    }
+
+    try {
+      let res = await api.agents.addPhoneNumberToAgent(
+        await createClient(),
+        selectedAccount.account_id,
+        agent.agent_id,
+        phoneNumber,
+      );  
+      console.log("Added phone number:", res);
+      fetchAgent();
+    } catch (error) {
+      console.error("Error adding phone number:", error);
     }
   };
 
@@ -384,12 +409,26 @@ export default function AgentPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-muted-foreground">
-                  Channel configuration coming soon
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium">Inbound Phone Numbers</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">
+                      Give your agent a phone number your customers can call
+                    </p>
+                    <Button onClick={() => setAddPhoneNumberOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Phone Number
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </ScrollArea>
+          <AddPhoneNumberDialog
+            open={addPhoneNumberOpen}
+            onOpenChange={setAddPhoneNumberOpen}
+            onPhoneNumberAdd={handleAddPhoneNumber}
+          />
         </TabsContent>
 
         <TabsContent value="settings" className="h-full">
