@@ -150,9 +150,9 @@ export function AddPhoneNumberDialog({
           <ScrollArea className="h-[300px] pr-4">
             {availableNumbers.map((number) => (
               <div
-                key={number.phoneNumber}
+                key={number.phone_number}
                 className="flex items-center justify-between p-4 border rounded-md mb-2 hover:border-primary cursor-pointer"
-                onClick={() => setSelectedNumber(number.phoneNumber)}
+                onClick={() => setSelectedNumber(number.phone_number)}
               >
                 <div>
                   <div className="font-medium">{number.friendly_name}</div>
@@ -163,9 +163,9 @@ export function AddPhoneNumberDialog({
                 <Button
                   size="sm"
                   disabled={isPurchasing}
-                  onClick={() => purchaseNumber(number.phoneNumber)}
+                  onClick={() => purchaseNumber(number.phone_number)}
                 >
-                  {isPurchasing && selectedNumber === number.phoneNumber ? (
+                  {isPurchasing && selectedNumber === number.phone_number ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     "Select"
