@@ -16,8 +16,14 @@ import { createClient } from "@/lib/supabase/client";
 import api from "@repo/anything-api";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
-import { Loader2, Plus } from "lucide-react";
+import { AlertTriangle, Loader2, Plus } from "lucide-react";
 import NewToolDialog from "@/components/agents/new-tool-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 interface AddToolDialogProps {
   open: boolean;
@@ -177,40 +183,60 @@ export function AddToolDialog({
                 {tools.map((tool: any) => {
                   let marketplace: boolean = "featured" in tool;
                   const isLoading = loadingToolId === tool.flow_id;
+                  const isPublished = tool.flow_versions?.[0]?.published;
+
                   return (
-                    <div
-                      key={`${tool.flow_id}`}
-                      onClick={() =>
-                        !isAddingTool && handleToolClick(tool.flow_id)
-                      }
-                      className={`flex flex-col justify-between p-4 border rounded-md border-black 
-                        ${isAddingTool ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-gray-50"}`}
-                    >
-                      <div
-                        className="flex flex-row gap-4 items-center"
-                        key={`content-${tool.flow_id}`}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                        ) : (
-                          // <BaseNodeIcon icon={tool.icon || "tool"} />
-                          <> </>
+                    <TooltipProvider key={`${tool.flow_id}`}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            onClick={() =>
+                              !isAddingTool &&
+                              isPublished &&
+                              handleToolClick(tool.flow_id)
+                            }
+                            className={`flex flex-col justify-between p-4 border rounded-md border-black relative
+                              ${isAddingTool || !isPublished ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-gray-50"}`}
+                          >
+                            <div className="flex flex-row gap-4 items-center">
+                              {isLoading ? (
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                              ) : (
+                                <> </>
+                              )}
+                              <div className="min-w-0">
+                                <div className="text-lg font-semibold truncate">
+                                  {tool.flow_name}
+                                </div>
+                                <div className="text-sm font-normal truncate">
+                                  {tool.description}
+                                </div>
+                              </div>
+                            </div>
+                            {!isPublished && (
+                              <div className="absolute top-2 right-2">
+                                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        {!isPublished && (
+                          <TooltipContent>
+                            <p>
+                              To use this tool, you must publish the workflow
+                              first.{" "}
+                              <a
+                                href={`/workflows/${tool.flow_id}`}
+                                className="text-blue-500 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Click here to edit and publish
+                              </a>
+                            </p>
+                          </TooltipContent>
                         )}
-                        <div className="min-w-0">
-                          <div className="text-lg font-semibold truncate">
-                            {tool.flow_name}
-                            {/* {!marketplace && (
-                              <Badge className="ml-2" variant="outline">
-                                Team
-                              </Badge>
-                            )} */}
-                          </div>
-                          <div className="text-sm font-normal truncate">
-                            {tool.description}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      </Tooltip>
+                    </TooltipProvider>
                   );
                 })}
               </div>

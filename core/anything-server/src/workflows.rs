@@ -1000,10 +1000,10 @@ pub async fn get_agent_tool_workflows(
     let response = match client
         .from("flows")
         .auth(&user.jwt)
-        .select("*, published_workflow_versions:flow_versions(*)")
+        .select("*, flow_versions(*)")
         .eq("archived", "false")
         .eq("account_id", &account_id)
-        .eq("published_workflow_versions.published", "true")
+        // .eq("published_workflow_versions.published", "true")
         .execute()
         .await
     {
@@ -1042,24 +1042,39 @@ pub async fn get_agent_tool_workflows(
         }
     };
 
-    // Filter workflows to only include those with agent tool trigger
+    // Filter workflows to only include those with agent tool trigger and include only one version
     if let Value::Array(ref mut items) = workflows {
-        items.retain(|workflow| {
-            if let Some(published_versions) = workflow.get("published_workflow_versions") {
+        items.retain_mut(|workflow| {
+            if let Some(published_versions) = workflow.get_mut("flow_versions") {
                 if let Some(versions) = published_versions.as_array() {
-                    for version in versions {
-                        if let Some(flow_def) = version.get("flow_definition") {
-                            if let Some(actions) = flow_def.get("actions") {
-                                if let Some(actions_array) = actions.as_array() {
-                                    return actions_array.iter().any(|action| {
-                                        action
-                                            .get("plugin_name")
-                                            .and_then(Value::as_str)
-                                            .map(|name| name == "@anything/agent_tool_call")
-                                            .unwrap_or(false)
-                                    });
-                                }
-                            }
+                    // First try to find a published version
+                    let selected_version = versions.iter()
+                        .filter(|v| v.get("published").and_then(Value::as_bool).unwrap_or(false))
+                        .max_by_key(|v| v.get("created_at").and_then(Value::as_str))
+                        // If no published version, get most recent by created_at
+                        .or_else(|| versions.iter().max_by_key(|v| v.get("created_at").and_then(Value::as_str)));
+
+                    if let Some(version) = selected_version {
+                        // Check if this version has the agent tool trigger
+                        let has_agent_tool = version
+                            .get("flow_definition")
+                            .and_then(|def| def.get("actions"))
+                            .and_then(Value::as_array)
+                            .map(|actions| {
+                                actions.iter().any(|action| {
+                                    action
+                                        .get("plugin_name")
+                                        .and_then(Value::as_str)
+                                        .map(|name| name == "@anything/agent_tool_call")
+                                        .unwrap_or(false)
+                                })
+                            })
+                            .unwrap_or(false);
+
+                        if has_agent_tool {
+                            // Replace flow_versions array with just the selected version
+                            *published_versions = serde_json::json!([version]);
+                            return true;
                         }
                     }
                 }
