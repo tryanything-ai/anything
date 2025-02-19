@@ -35,7 +35,7 @@ use tokio::time::timeout;
 
 use super::webhook_trigger_utils::{
     convert_request_to_payload, parse_response_action_response_into_api_response,
-    validate_request_method, validate_security_model, validate_webhook_input_and_response,
+    validate_request_method, validate_required_input_and_response_plugins, validate_security_model,
 };
 
 //One Minute
@@ -115,11 +115,15 @@ pub async fn run_workflow_and_respond(
     // Parse the flow definition into a Workflow
     println!("[WEBHOOK API] Parsing workflow definition");
     // Validate the webhook trigger node and outputs
-    let (trigger_node, _output_node) =
-        match validate_webhook_input_and_response(&workflow_version.flow_definition, true) {
-            Ok((trigger, output)) => (trigger, output),
-            Err(response) => return response.into_response(),
-        };
+    let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
+        &workflow_version.flow_definition,
+        "@anything/webhook".to_string(),
+        "@anything/webhook_response".to_string(),
+        true,
+    ) {
+        Ok((trigger, output)) => (trigger, output),
+        Err(response) => return response.into_response(),
+    };
 
     let flow_session_id = Uuid::new_v4();
     let trigger_session_id = Uuid::new_v4();
@@ -372,7 +376,8 @@ pub async fn run_workflow_version_and_respond(
 
     // Validate the webhook trigger node and outputs
     let (trigger_node, _output_node) =
-        match validate_webhook_input_and_response(&workflow_version.flow_definition, true) {
+        match validate_required_input_and_response_plugins(&workflow_version.flow_definition, "@anything/webhook".to_string(), "@anything/webhook_response".to_string(), true)
+        {
             Ok((trigger, output)) => (trigger, output),
             Err(response) => return response.into_response(),
         };
@@ -628,11 +633,15 @@ pub async fn run_workflow(
     let account_id = workflow_version.account_id.clone();
 
     // Validate the webhook trigger node and outputs
-    let (trigger_node, _output_node) =
-        match validate_webhook_input_and_response(&workflow_version.flow_definition, false) {
-            Ok((trigger, output)) => (trigger, output),
-            Err(response) => return response.into_response(),
-        };
+    let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
+        &workflow_version.flow_definition,
+        "@anything/webhook".to_string(),
+        "@anything/webhook_response".to_string(),
+        false,
+    ) {
+        Ok((trigger, output)) => (trigger, output),
+        Err(response) => return response.into_response(),
+    };
 
     let flow_session_id = Uuid::new_v4().to_string();
     let trigger_session_id = Uuid::new_v4();
@@ -841,11 +850,15 @@ pub async fn run_workflow_version(
     let account_id = workflow_version.account_id.clone();
 
     // Validate the webhook trigger node and outputs
-    let (trigger_node, _output_node) =
-        match validate_webhook_input_and_response(&workflow_version.flow_definition, false) {
-            Ok((trigger, output)) => (trigger, output),
-            Err(response) => return response.into_response(),
-        };
+    let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
+        &workflow_version.flow_definition,
+        "@anything/webhook".to_string(),
+        "@anything/webhook_response".to_string(),
+        false,
+    ) {
+        Ok((trigger, output)) => (trigger, output),
+        Err(response) => return response.into_response(),
+    };
 
     let flow_session_id = Uuid::new_v4();
     let trigger_session_id = Uuid::new_v4();

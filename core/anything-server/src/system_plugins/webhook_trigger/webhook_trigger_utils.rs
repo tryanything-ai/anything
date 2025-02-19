@@ -18,8 +18,10 @@ use crate::{
     AppState, CachedApiKey,
 };
 
-pub fn validate_webhook_input_and_response(
+pub fn validate_required_input_and_response_plugins(
     workflow: &WorkflowVersionDefinition,
+    required_input_plugin_name: String,
+    required_output_plugin_name: String,
     require_response: bool,
 ) -> Result<(Box<&Action>, Option<Box<&Action>>), impl IntoResponse> {
     // Find the trigger action in the workflow
@@ -37,7 +39,7 @@ pub fn validate_webhook_input_and_response(
     };
 
     // Check if trigger node has plugin_id of "webhook"
-    if trigger_node.plugin_name != PluginName::new("@anything/webhook".to_string()).unwrap() {
+    if trigger_node.plugin_name != PluginName::new(required_input_plugin_name).unwrap() {
         println!(
             "[WEBHOOK API] Invalid trigger type: {:?}",
             trigger_node.plugin_name
@@ -54,7 +56,7 @@ pub fn validate_webhook_input_and_response(
     if require_response {
         println!("[WEBHOOK API] Looking for output node in workflow");
         output_node = match workflow.actions.iter().find(|action| {
-            action.plugin_name == PluginName::new("@anything/webhook_response".to_string()).unwrap()
+            action.plugin_name == PluginName::new(required_output_plugin_name.clone()).unwrap()
         }) {
             Some(output) => Some(Box::new(output)),
             None => {
