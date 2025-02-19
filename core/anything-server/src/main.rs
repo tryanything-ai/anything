@@ -363,7 +363,11 @@ pub async fn root() -> impl IntoResponse {
         //Agent Communication Channels
         .route("/account/:account_id/agent/:agent_id/phone_number", post(agents::channels::connect_phone_number_to_agent))
         .route("/account/:account_id/agent/:agent_id/phone_number/:phone_number_id", delete(agents::channels::remove_phone_number_from_agent))
-        
+
+        //Calls
+        .route("/account/:account_id/calls", get(agents::vapi::get_vapi_calls))
+
+
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,

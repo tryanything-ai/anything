@@ -304,3 +304,23 @@ export const getAccountPhoneNumbers = async (supabase: SupabaseClient, account_i
     }
 };
 
+export const getVapiCalls = async (supabase: SupabaseClient, account_id: string) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {  
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/calls`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            }); 
+            const data = await response.json(); 
+            console.log('Data from /calls GET:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching VAPI calls:', error);
+        throw error;
+    }
+};

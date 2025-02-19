@@ -1,8 +1,18 @@
 use crate::AppState;
 use anyhow::Result;
+use axum::{
+    extract::{Extension, Path, State},
+    response::IntoResponse,
+    Json,
+};
+
+use futures::future::join_all;
 use reqwest::Client;
 use serde_json::{json, Value};
 use std::sync::Arc;
+
+use crate::supabase_jwt_middleware::User;
+use axum::http::StatusCode;
 
 pub async fn create_vapi_agent(
     account_id: &str,
@@ -195,7 +205,6 @@ pub async fn create_vapi_phone_number_from_twilio_number(
     Ok(response_json)
 }
 
-
 pub async fn delete_vapi_phone_number(vapi_phone_number_id: &str) -> Result<()> {
     let vapi_api_key = std::env::var("VAPI_API_KEY")?;
     let client = Client::new();
@@ -203,7 +212,10 @@ pub async fn delete_vapi_phone_number(vapi_phone_number_id: &str) -> Result<()> 
     println!("[VAPI] Deleting phone number {}", vapi_phone_number_id);
 
     client
-        .delete(&format!("https://api.vapi.ai/phone-number/{}", vapi_phone_number_id))
+        .delete(&format!(
+            "https://api.vapi.ai/phone-number/{}",
+            vapi_phone_number_id
+        ))
         .header("Authorization", format!("Bearer {}", vapi_api_key))
         .send()
         .await?;
@@ -223,24 +235,197 @@ pub async fn delete_vapi_agent(agent_id: &str) -> Result<()> {
 
     Ok(())
 }
+pub async fn get_vapi_calls(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("[CALLS] Getting calls for account {}", account_id);
 
+    let vapi_api_key = match std::env::var("VAPI_API_KEY") {
+        Ok(key) => {
+            println!("[CALLS] Successfully got VAPI API key");
+            key
+        }
+        Err(_) => {
+            println!("[CALLS] Failed to get VAPI API key from env vars");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get VAPI API key",
+            )
+                .into_response();
+        }
+    };
 
-pub async fn get_vapi_calls(assistant_id: &str) -> Result<Value> {
-    let vapi_api_key = std::env::var("VAPI_API_KEY")?;
-    let client = Client::new();
+    let client = &state.anything_client;
 
-    let response = client
-    
-    .get(&format!("https://api.vapi.ai/call"))
-    .header("Authorization", format!("Bearer {}", vapi_api_key))
-    .query(&[("assistant_id", assistant_id)])
-    .send()
-    .await?
-    .json::<Value>()
-    .await
-    .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))?;
+    println!("[CALLS] Querying Supabase for assistant IDs");
+    // Get all VAPI assistant IDs for this account's agents
+    let assistant_ids_response = match client
+        .from("agents")
+        .auth(&user.jwt)
+        .select("vapi_assistant_id")
+        .eq("account_id", &account_id)
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[CALLS] Successfully queried Supabase for assistant IDs");
+            response
+        }
+        Err(e) => {
+            println!(
+                "[CALLS] Failed to fetch assistant IDs from Supabase: {:?}",
+                e
+            );
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch assistant IDs",
+            )
+                .into_response();
+        }
+    };
 
-    println!("[VAPI] Response JSON: {:?}", response);
+    let assistant_ids_body = match assistant_ids_response.text().await {
+        Ok(body) => {
+            println!("[CALLS] Successfully read assistant IDs response body");
+            body
+        }
+        Err(e) => {
+            println!(
+                "[CALLS] Failed to read assistant IDs response body: {:?}",
+                e
+            );
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read assistant IDs response",
+            )
+                .into_response();
+        }
+    };
 
-    Ok(response)
+    println!("[CALLS] Assistant IDs body: {}", assistant_ids_body);
+
+    let assistant_ids: Value = match serde_json::from_str(&assistant_ids_body) {
+        Ok(ids) => {
+            println!("[CALLS] Successfully parsed assistant IDs JSON");
+            ids
+        }
+        Err(e) => {
+            println!("[CALLS] Failed to parse assistant IDs JSON: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse assistant IDs",
+            )
+                .into_response();
+        }
+    };
+
+    let assistant_ids = match assistant_ids.as_array() {
+        Some(ids) => {
+            println!("[CALLS] Found {} assistant IDs", ids.len());
+            ids
+        }
+        None => {
+            println!("[CALLS] Assistant IDs was not an array");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Invalid assistant IDs format",
+            )
+                .into_response();
+        }
+    };
+
+    let reqwest_client = Client::new();
+
+    let mut all_calls = Vec::new();
+    for assistant in assistant_ids {
+        if let Some(assistant_id) = assistant
+            .get("vapi_assistant_id")
+            .and_then(|id| id.as_str())
+        {
+            println!("[CALLS] Fetching calls for assistant ID: {}", assistant_id);
+            let response = match reqwest_client
+                .get("https://api.vapi.ai/call")
+                .header("Authorization", format!("Bearer {}", vapi_api_key))
+                .query(&[("assistant_id", assistant_id)])
+                .send()
+                .await
+            {
+                Ok(response) => {
+                    println!(
+                        "[CALLS] Successfully got response from VAPI for assistant {}",
+                        assistant_id
+                    );
+                    response
+                }
+                Err(e) => {
+                    println!(
+                        "[CALLS] Failed to fetch VAPI calls for assistant {}: {:?}",
+                        assistant_id, e
+                    );
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to fetch VAPI calls",
+                    )
+                        .into_response();
+                }
+            };
+
+            let calls = match response.json::<Value>().await {
+                Ok(calls) => {
+                    println!(
+                        "[CALLS] Successfully parsed VAPI response for assistant {}",
+                        assistant_id
+                    );
+                    calls
+                }
+                Err(e) => {
+                    println!(
+                        "[CALLS] Failed to parse VAPI response for assistant {}: {:?}",
+                        assistant_id, e
+                    );
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to parse VAPI response",
+                    )
+                        .into_response();
+                }
+            };
+
+            if let Some(calls) = calls.as_array() {
+                println!(
+                    "[CALLS] Found {} calls for assistant {}",
+                    calls.len(),
+                    assistant_id
+                );
+                for call in calls {
+                    all_calls.push(call.clone());
+                }
+            } else {
+                println!(
+                    "[CALLS] No calls array found for assistant {}",
+                    assistant_id
+                );
+            }
+        }
+    }
+
+    println!(
+        "[CALLS] Sorting {} total calls by creation date",
+        all_calls.len()
+    );
+    all_calls.sort_by(|a, b| {
+        b.get("createdAt")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .cmp(&a.get("createdAt").and_then(|v| v.as_str()).unwrap_or(""))
+    });
+
+    println!(
+        "[CALLS] Successfully processed all calls. Returning {} calls",
+        all_calls.len()
+    );
+
+    Json(Value::Array(all_calls)).into_response()
 }

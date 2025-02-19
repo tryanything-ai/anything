@@ -30,7 +30,10 @@ export default async function PersonalAccountDashboard({
     //   href: "/templates",
     // },
     // {
-
+    {
+      name: "Calls",
+      href: "/inbox",
+    },
     {
       name: "Settings",
       href: "/settings",
