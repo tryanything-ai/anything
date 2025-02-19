@@ -1,13 +1,12 @@
-use std::fs;
-use std::path::Path;
 use serde_json::Value;
+use std::env;
+use std::fs;
 use std::fs::File;
 use std::io::BufReader;
-use std::env;
 
 pub fn load_schema_templates() -> Result<Vec<Value>, Box<dyn std::error::Error>> {
     let mut templates = Vec::new();
-    
+
     // Get current directory
     let current_dir = env::current_dir()?;
     let schemas_dir = current_dir.join("src/system_plugins/registry/schemas");
@@ -29,7 +28,7 @@ pub fn load_schema_templates() -> Result<Vec<Value>, Box<dyn std::error::Error>>
 
             // Parse JSON file
             let json: Value = serde_json::from_reader(reader)?;
-            
+
             // Add the JSON object to our templates vector
             templates.push(json);
         }

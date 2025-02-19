@@ -63,6 +63,14 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                             )
                             .await
                         }
+                        "@anything/agent_tool_call_response" => {
+                            process_webhook_response_task(
+                                state_clone,
+                                task.flow_session_id.clone(),
+                                &bundled_plugin_cofig,
+                            )
+                            .await
+                        }
                         "@anything/format_text" => process_text_task(&bundled_plugin_cofig),
                         "@anything/format_date" => process_date_task(&bundled_plugin_cofig),
                         _ => {

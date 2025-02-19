@@ -21,7 +21,6 @@
     "inputs_schema": {
       "type": "object",
       "properties": {
-      
         "content_type": {
           "title": "Content Type",
           "description": "Content type of the response",

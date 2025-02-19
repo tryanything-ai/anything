@@ -108,6 +108,9 @@ export function fillDefaultInputs(workflow: Workflow): Workflow {
 
 function fillDefaultsFromSchema(inputs: Variable, schema: Variable): Variable {
   const filledInputs = { ...inputs };
+
+  console.log('filledInputs', filledInputs);
+  console.log('schema', schema);
   
   // Only process if schema has properties
   if (schema.properties) {
@@ -118,6 +121,7 @@ function fillDefaultsFromSchema(inputs: Variable, schema: Variable): Variable {
       }
     }
   }
+  console.log('filledInputs', filledInputs);
 
   return filledInputs;
 }

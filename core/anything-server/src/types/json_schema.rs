@@ -82,6 +82,7 @@ pub struct JsonSchemaProperty {
     pub title: Option<String>,
     pub description: Option<String>,
     pub r#type: Option<String>,
+    pub default: Option<String>,
     #[serde(rename = "oneOf")]
     //Used for select fields
     pub one_of: Option<Vec<serde_json::Value>>,

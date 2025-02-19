@@ -66,12 +66,12 @@ export default function ConfigurationForm(): JSX.Element {
   console.log("[RENDERING INPUTS FORM]");
   console.log("Fields:", fields);
 
+  if (selected_node_data?.plugin_config_locked) {
+    return <> </>;
+  }
+
   return (
     <>
-      {/* {selected_node_input_schema &&
-        selected_node_input &&
-        Object.keys(selected_node_input_schema).length > 0 &&
-        Object.keys(selected_node_input).length > 0 && ( */}
       <div className="rounded-lg border p-4">
         <div
           className="flex flex-row items-center cursor-pointer"
@@ -82,9 +82,6 @@ export default function ConfigurationForm(): JSX.Element {
           />
           <div className="font-bold">Configuration</div>
           <div className="flex-1" />
-          {selected_node_data?.plugin_config_locked && (
-            <Lock size={16} className="text-gray-400" />
-          )}
         </div>
         {!isCollapsed && (
           <JsonSchemaForm
@@ -102,13 +99,11 @@ export default function ConfigurationForm(): JSX.Element {
                 setShowExplorer(true);
               }
             }}
-            disabled={selected_node_data?.plugin_config_locked}
             initialValues={selected_node_input}
             handleValidation={handleValidation}
           />
         )}
       </div>
-      {/* )} */}
     </>
   );
 }

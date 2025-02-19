@@ -56,7 +56,7 @@ export default function Workflows(): JSX.Element {
             label: "Create New Workflow",
             onClick: () => setShowCreateDialog(true),
           },
-          { label: "Explore Templates", onClick: exploreTemplates },
+          // { label: "Explore Templates", onClick: exploreTemplates },
         ]}
       />
       <Separator />
