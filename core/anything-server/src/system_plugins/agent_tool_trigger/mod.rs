@@ -35,11 +35,13 @@ use crate::{
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 
+use crate::system_plugins::webhook_trigger::webhook_trigger_utils::validate_required_input_and_response_plugins;
+
 //One Minute
 pub const WEBHOOK_TIMEOUT: u64 = 60;
 
 pub async fn run_workflow_as_tool_call_and_respond(
-    Path(workflow_id): Path<String>,
+    Path((agent_id, workflow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     body: Option<Json<Value>>,
@@ -48,6 +50,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
 
     println!("[TOOL_CALL_API] Workflow ID: {}: ", workflow_id);
 
+    //TODO:add tool calls to apent_tool_calls or something that allows us to trace this data
     //Super User Access
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -110,8 +113,10 @@ pub async fn run_workflow_as_tool_call_and_respond(
     // Parse the flow definition into a Workflow
     println!("[TOOL_CALL_API] Parsing workflow definition");
     // Validate the tool is has correct input and oupt nodes. Does not gurantee correct inputs ie rigth arguments
-    let (trigger_node, _output_node) = match utils::validate_agent_tool_input_and_response(
+    let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
         &workflow_version.flow_definition,
+        "@anything/agent_tool_call".to_string(),
+        "@anything/agent_tool_call_response".to_string(),
         true,
     ) {
         Ok((trigger, output)) => (trigger, output),
@@ -121,8 +126,12 @@ pub async fn run_workflow_as_tool_call_and_respond(
     let flow_session_id = Uuid::new_v4();
     let trigger_session_id = Uuid::new_v4();
 
+    //TODO: add agent id to the trigger input
+    let mut inputs = trigger_node.inputs.clone().unwrap();
+    inputs["agent_id"] = json!(agent_id);
+
     let task_config: TaskConfig = TaskConfig {
-        inputs: Some(trigger_node.inputs.clone().unwrap()),
+        inputs: Some(inputs.clone()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
         plugin_config: Some(trigger_node.plugin_config.clone()),
         plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
@@ -135,7 +144,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
         &state.anything_client,
         &account_id.to_string(),
         &flow_session_id.to_string(),
-        Some(&trigger_node.inputs.clone().unwrap()),
+        Some(&inputs),
         Some(&trigger_node.inputs_schema.clone().unwrap()),
         Some(&trigger_node.plugin_config.clone()),
         Some(&trigger_node.plugin_config_schema.clone()),

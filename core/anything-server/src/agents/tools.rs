@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
     Json,
-};
+};  
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -19,6 +19,10 @@ use crate::types::json_schema::ValidationField;
 use crate::types::workflow_types::DatabaseFlowVersion;
 use crate::AppState;
 use std::collections::HashMap;
+
+fn format_tool_url(assistant_id: &str, workflow_id: &str) -> String {
+    format!("https://api.tryanything.xyz/api/v1/agent/{}/tool/{}/start/respond", assistant_id, workflow_id)
+}
 
 // Define a struct for simplified agent tool properties that only allows basic types
 #[derive(Debug, Serialize)]
@@ -370,7 +374,7 @@ pub async fn add_tool(
             }
         },
         "server": {
-            "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", payload.workflow_id),
+            "url": format_tool_url(&agent_id, &payload.workflow_id)
         }
     }));
 
@@ -1061,7 +1065,7 @@ pub async fn update_agent_tool_if_needed_on_workflow_publish(
                 }
             },
             "server": {
-                "url": format!("https://api.tryanything.xyz/api/v1/workflow/{}/start/respond", workflow_id),
+                "url": format_tool_url(&agent_id, &workflow_id),
             }
         }));
         println!("[TOOL] New tools array length: {}", tools.len());

@@ -11,59 +11,6 @@ use crate::{
 
 use serde_json::{json, Value};
 
-pub fn validate_agent_tool_input_and_response(
-    workflow: &WorkflowVersionDefinition,
-    require_response: bool,
-) -> Result<(Box<&Action>, Option<Box<&Action>>), impl IntoResponse> {
-    // Find the trigger action in the workflow
-    println!("[AGENT_TOOL_API] Looking for trigger node in workflow");
-    let trigger_node = match workflow
-        .actions
-        .iter()
-        .find(|action| action.r#type == ActionType::Trigger)
-    {
-        Some(trigger) => trigger,
-        None => {
-            println!("[AGENT_TOOL_API] No trigger found in workflow");
-            return Err((StatusCode::BAD_REQUEST, "No trigger found in workflow").into_response());
-        }
-    };
-
-    // Check if trigger node has plugin_id of "@anything/agent_tool_call"
-    if trigger_node.plugin_name != PluginName::new("@anything/agent_tool_call".to_string()).unwrap()
-    {
-        println!(
-            "[AGENT_TOOL_API] Invalid trigger type: {:?}",
-            trigger_node.plugin_name
-        );
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "Workflow trigger must be an webhook trigger to receive webhook",
-        )
-            .into_response());
-    }
-
-    let mut output_node = None;
-    // Check for output node if required
-    if require_response {
-        println!("[AGENT_TOOL_API] Looking for output node in workflow");
-        output_node = match workflow.actions.iter().find(|action| {
-            action.plugin_name
-                == PluginName::new("@anything/agent_tool_call_response".to_string()).unwrap()
-        }) {
-            Some(output) => Some(Box::new(output)),
-            None => {
-                println!("[AGENT_TOOL_API] No output node found in workflow");
-                return Err(
-                    (StatusCode::BAD_REQUEST, "No output node found in workflow").into_response(),
-                );
-            }
-        };
-    }
-
-    Ok((Box::new(trigger_node), output_node))
-}
-
 pub fn parse_tool_call_request_to_result(body: Option<Json<Value>>) -> (Value, String) {
     match body {
         Some(Json(body)) => {
