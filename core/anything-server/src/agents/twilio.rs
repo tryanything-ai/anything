@@ -257,7 +257,7 @@ pub async fn get_account_phone_numbers(
     let response = match client
         .from("phone_numbers")
         .auth(&user.jwt) // Pass a reference to the JWT
-        .select("*")
+        .select("*, agent_communication_channels(*)")
         .eq("archived", "false")
         .eq("account_id", &account_id)
         .execute()

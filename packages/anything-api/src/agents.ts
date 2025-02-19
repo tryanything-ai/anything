@@ -235,23 +235,23 @@ export const buyPhoneNumber = async (supabase: SupabaseClient, account_id: strin
 };
 
 
-export const addPhoneNumberToAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, phoneNumber: string) => {
+export const addPhoneNumberToAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, phoneNumberId: string) => {
     try {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}/phone-number`, {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}/phone_number`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `${session.access_token}`,
                 },
                 body: JSON.stringify({
-                    phone_number: phoneNumber,
+                    phone_number_id: phoneNumberId,   
                 }),
             });
             const data = await response.json();
-            console.log('Data from /agent/:id/phone-number POST:', data);
+            console.log('Data from /agent/:id/phone_number POST:', data);
             return data;
         }
     } catch (error) {
@@ -259,3 +259,48 @@ export const addPhoneNumberToAgent = async (supabase: SupabaseClient, account_id
         throw error;
     }
 };
+
+export const removePhoneNumberFromAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, phoneNumberId: string) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {  
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/agent/${agentId}/phone_number/${phoneNumberId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            });
+            const data = await response.json();
+            console.log('Data from /agent/:id/phone_number/:phoneNumberId DELETE:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error removing phone number from agent:', error);
+        throw error;
+    }
+};
+
+
+export const getAccountPhoneNumbers = async (supabase: SupabaseClient, account_id: string) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/phone_numbers`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            }); 
+            const data = await response.json();
+            console.log('Data from /phone_numbers GET:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching account phone numbers:', error);
+        throw error;
+    }
+};
+

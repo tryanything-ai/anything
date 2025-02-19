@@ -359,6 +359,10 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/phone_numbers/:country/:area_code", get(agents::twilio::search_available_phone_numbers_on_twilio))
         .route("/account/:account_id/phone_numbers", get(agents::twilio::get_account_phone_numbers))
         .route("/account/:account_id/phone_number", post(agents::twilio::purchase_phone_number))
+
+        //Agent Communication Channels
+        .route("/account/:account_id/agent/:agent_id/phone_number", post(agents::channels::connect_phone_number_to_agent))
+        .route("/account/:account_id/agent/:agent_id/phone_number/:phone_number_id", delete(agents::channels::remove_phone_number_from_agent))
         
         .layer(middleware::from_fn_with_state(
             state.clone(),

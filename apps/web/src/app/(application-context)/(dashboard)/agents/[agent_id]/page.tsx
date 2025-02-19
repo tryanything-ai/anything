@@ -18,7 +18,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import DeleteAgentDialog from "@/components/agents/delete-agent-dialog";
 import Vapi from "@vapi-ai/web";
 import Link from "next/link";
-import { Edit, Phone, Plus } from "lucide-react";
+import { Edit, Loader2, Phone, Plus } from "lucide-react";
 import {
   Tabs,
   TabsContent,
@@ -27,9 +27,9 @@ import {
 } from "@repo/ui/components/ui/tabs";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { AddToolDialog } from "@/components/agents/add-tool-dialog";
-import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import RemoveToolDialog from "@/components/agents/remove-tool-dialog";
 import { AddPhoneNumberDialog } from "@/components/agents/add-phone-number-dialog";
+import RemovePhoneNumberDialog from "@/components/agents/remove-phone-number-dialog";
 
 interface Agent {
   agent_id: string;
@@ -59,7 +59,16 @@ export default function AgentPage() {
   const [agentTools, setAgentTools] = useState<any[]>([]);
   const [addToolOpen, setAddToolOpen] = useState(false);
   const [addPhoneNumberOpen, setAddPhoneNumberOpen] = useState(false);
-
+  const [phoneNumbers, setPhoneNumbers] = useState<any[]>([]);
+  const [connectingPhoneNumber, setConnectingPhoneNumber] = useState<
+    string | null
+  >(null);
+  const [removingPhoneNumber, setRemovingPhoneNumber] = useState<string | null>(
+    null,
+  );
+  const [connectedPhoneNumber, setConnectedPhoneNumber] = useState<
+    string | null
+  >(null);
 
   const {
     accounts: { selectedAccount },
@@ -84,6 +93,22 @@ export default function AgentPage() {
         params.agent_id as string,
       );
       setAgentTools(tools);
+
+      const phoneNumbers = await api.agents.getAccountPhoneNumbers(
+        await createClient(),
+        selectedAccount.account_id,
+      );
+      console.log("phoneNumbers", phoneNumbers);
+      setPhoneNumbers(phoneNumbers);
+
+      setConnectedPhoneNumber(
+        phoneNumbers.find((number: any) =>
+          number.agent_communication_channels.some(
+            (channel: any) => channel.agent_id === params.agent_id,
+          ),
+        )?.phone_number_id || null,
+      );
+      console.log("connectedPhoneNumber", connectedPhoneNumber);
     } catch (error) {
       console.error("Error fetching agent:", error);
     } finally {
@@ -116,6 +141,54 @@ export default function AgentPage() {
     }
   };
 
+  const handleConnectPhoneToAgent = async (phoneNumberId: string) => {
+    console.log("Connecting phone number to agent:", phoneNumberId);
+
+    if (!selectedAccount || !agent) {
+      console.error("No account or agent selected");
+      return;
+    }
+
+    setConnectingPhoneNumber(phoneNumberId);
+    try {
+      let res = await api.agents.addPhoneNumberToAgent(
+        await createClient(),
+        selectedAccount.account_id,
+        agent.agent_id,
+        phoneNumberId,
+      );
+      fetchAgent();
+    } catch (error) {
+      console.error("Error connecting phone number to agent:", error);
+    } finally {
+      setConnectingPhoneNumber(null);
+    }
+  };
+
+  // const handleRemovePhoneFromAgent = async (phoneNumberId: string) => {
+  //   console.log("Removing phone number from agent:", phoneNumberId);
+
+  //   if (!selectedAccount || !agent) {
+  //     console.error("No account or agent selected");
+  //     return;
+  //   }
+
+  //   setRemovingPhoneNumber(phoneNumberId);
+  //   try {
+  //     let res = await api.agents.removePhoneNumberFromAgent(
+  //       await createClient(),
+  //       selectedAccount.account_id,
+  //       agent.agent_id,
+  //       phoneNumberId,
+  //     );
+  //     fetchAgent();
+  //   } catch (error) {
+  //     console.error("Error removing phone number from agent:", error);
+  //   } finally {
+  //     setRemovingPhoneNumber(null);
+  //   }
+  // };
+
   const handleAddPhoneNumber = async (phoneNumber: string) => {
     console.log("Adding phone number:", phoneNumber);
 
@@ -129,7 +202,7 @@ export default function AgentPage() {
         await createClient(),
         selectedAccount.account_id,
         phoneNumber,
-      );  
+      );
       console.log("Added phone number:", res);
       fetchAgent();
     } catch (error) {
@@ -250,7 +323,7 @@ export default function AgentPage() {
         <TabsList className="mb-2 w-fit">
           <TabsTrigger value="prompts">Prompts</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
-          <TabsTrigger value="channels">Channels</TabsTrigger>
+          <TabsTrigger value="phone_number">Phone Number</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -398,26 +471,121 @@ export default function AgentPage() {
           />
         </TabsContent>
 
-        <TabsContent value="channels" className="h-full">
+        <TabsContent value="phone_number" className="h-full">
           <ScrollArea>
             <Card>
-              <CardHeader>
-                <CardTitle>Agent Channels</CardTitle>
-                <CardDescription>
-                  Manage the channels your agent can communicate through
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Phone Number</CardTitle>
+                  <CardDescription>
+                    Manage the phone number your agent can communicate through
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setAddPhoneNumberOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Get New Phone Number
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-medium">Inbound Phone Numbers</h3>
+                    <h3 className="font-medium">Your Phone Numbers</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-4">
                       Give your agent a phone number your customers can call
                     </p>
-                    <Button onClick={() => setAddPhoneNumberOpen(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Phone Number
-                    </Button>
+
+                    {phoneNumbers && phoneNumbers.length > 0 ? (
+                      <div className="mb-4">
+                        {/* Show connected number first */}
+                        {phoneNumbers
+                          .filter(
+                            (number) =>
+                              number.phone_number_id === connectedPhoneNumber,
+                          )
+                          .map((number: any) => (
+                            <div
+                              key={number.phone_number_id}
+                              className="p-4 border rounded-lg mb-2 flex items-center justify-between bg-muted/50"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div>
+                                  <div className="font-medium flex items-center gap-2">
+                                    {number.phone_number}
+                                    <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                      Connected
+                                    </span>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {number.locality}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Created{" "}
+                                    {new Date(
+                                      number.created_at,
+                                    ).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </div>
+                              <RemovePhoneNumberDialog
+                                agentId={agent?.agent_id || ""}
+                                phoneNumberId={number.phone_number_id}
+                                onRemove={fetchAgent}
+                              />
+                            </div>
+                          ))}
+
+                        {/* Show other numbers */}
+                        {phoneNumbers
+                          .filter(
+                            (number) =>
+                              number.phone_number_id !== connectedPhoneNumber,
+                          )
+                          .map((number: any) => (
+                            <div
+                              key={number.phone_number_id}
+                              className="p-4 border rounded-lg mb-2 flex items-center justify-between"
+                            >
+                              <div>
+                                <div className="font-medium">
+                                  {number.phone_number}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {number.locality}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  Created{" "}
+                                  {new Date(
+                                    number.created_at,
+                                  ).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleConnectPhoneToAgent(
+                                    number.phone_number_id,
+                                  )
+                                }
+                                disabled={
+                                  connectingPhoneNumber ===
+                                  number.phone_number_id
+                                }
+                              >
+                                {connectingPhoneNumber ===
+                                number.phone_number_id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  "Use this number"
+                                )}
+                              </Button>
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground mb-4">
+                        No phone numbers
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
