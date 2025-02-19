@@ -384,7 +384,7 @@ function FieldAccount({
                       Connnect New Account
                     </div>
                     <div className="ml-auto">
-                      <Link href="/connections">
+                      <Link href="/settings">
                         <Button variant="outline">Add Account</Button>
                       </Link>
                     </div>

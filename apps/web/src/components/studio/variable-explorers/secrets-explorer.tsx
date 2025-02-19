@@ -1,5 +1,4 @@
 import { useAnything } from "@/context/AnythingContext";
-import { ActionType } from "@/types/workflows";
 import { useEffect, useState } from "react";
 import api from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";

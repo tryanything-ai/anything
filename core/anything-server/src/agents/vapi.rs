@@ -223,3 +223,24 @@ pub async fn delete_vapi_agent(agent_id: &str) -> Result<()> {
 
     Ok(())
 }
+
+
+pub async fn get_vapi_calls(assistant_id: &str) -> Result<Value> {
+    let vapi_api_key = std::env::var("VAPI_API_KEY")?;
+    let client = Client::new();
+
+    let response = client
+    
+    .get(&format!("https://api.vapi.ai/call"))
+    .header("Authorization", format!("Bearer {}", vapi_api_key))
+    .query(&[("assistant_id", assistant_id)])
+    .send()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))?;
+
+    println!("[VAPI] Response JSON: {:?}", response);
+
+    Ok(response)
+}

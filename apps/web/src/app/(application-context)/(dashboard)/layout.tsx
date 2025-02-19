@@ -13,26 +13,24 @@ export default async function PersonalAccountDashboard({
   );
 
   const navigation = [
-    {
-      name: "Dashboard",
-      href: "/",
-    },
+    // {
+    //   name: "Dashboard",
+    //   href: "/",
+    // },
     {
       name: "Agents",
       href: "/agents",
     },
     {
-      name: "Workflows",
+      name: "Automations",
       href: "/workflows",
     },
     // {
     //   name: "Templates",
     //   href: "/templates",
     // },
-    {
-      name: "Connections",
-      href: "/connections",
-    },
+    // {
+
     {
       name: "Settings",
       href: "/settings",
