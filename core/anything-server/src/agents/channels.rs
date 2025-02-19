@@ -1,3 +1,4 @@
+use crate::agents::vapi::create_vapi_phone_number_from_twilio_number;
 use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 use axum::{
@@ -8,6 +9,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use serde_json::Value;
+use crate::agents::vapi::delete_vapi_phone_number;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConnectPhoneToAgent {
@@ -24,20 +27,42 @@ pub async fn connect_phone_number_to_agent(
     println!("[CHANNELS] Agent ID: {}", agent_id);
     println!("[CHANNELS] Phone Number ID: {}", payload.phone_number_id);
 
+    //TODO: check if phone number is already connected to an agent. DOn't let us do this if that is the case.
+    //We don't want lots of duplicates etc in here. that would be bad.
+
+    let vapi_result = match create_vapi_phone_number_from_twilio_number(
+        state.clone(),
+        &payload.phone_number_id,
+        &agent_id,
+    )
+    .await
+    {
+        Ok(json) => json,
+        Err(e) => {
+            eprintln!("[CHANNELS] Error creating VAPI phone number: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create VAPI phone number",
+            )
+                .into_response();
+        }
+    };
+
     let client = &state.anything_client;
 
-    let update_json = serde_json::json!({
+    let insert_json = serde_json::json!({
         "channel_type": "phone",
         "account_id": account_id,
         "agent_id": agent_id,
         "phone_number_id": payload.phone_number_id,
+        "vapi_phone_number_id": vapi_result["id"]
     });
-    println!("[CHANNELS] Update JSON: {:?}", update_json);
+    println!("[CHANNELS] Update JSON: {:?}", insert_json);
 
     let response = match client
         .from("agent_communication_channels")
         .auth(user.jwt)
-        .insert(update_json.to_string())
+        .insert(insert_json.to_string())
         .execute()
         .await
     {
@@ -70,12 +95,9 @@ pub async fn connect_phone_number_to_agent(
         }
     };
 
-    //TODO: add to VAPI
-
     println!("[CHANNELS] Successfully completed operation");
     Json(body).into_response()
 }
-
 
 pub async fn remove_phone_number_from_agent(
     Path((account_id, agent_id, phone_number_id)): Path<(String, String, String)>,
@@ -129,7 +151,22 @@ pub async fn remove_phone_number_from_agent(
         }
     };
 
+    let vapi_phone_number_id = match serde_json::from_str::<Value>(&body) {
+        Ok(json) => json["vapi_phone_number_id"].to_string(),
+        Err(e) => {
+            eprintln!("[CHANNELS] Error parsing response body: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse response body").into_response();
+        }
+    };
+
     //TODO: remove from VAPI
+    let vapi_result = match delete_vapi_phone_number(&vapi_phone_number_id).await {
+        Ok(_) => true,
+        Err(e) => {
+            eprintln!("[CHANNELS] Error deleting VAPI phone number: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete VAPI phone number").into_response();
+        }
+    };
 
     println!("[CHANNELS] Successfully completed operation");
     Json(body).into_response()

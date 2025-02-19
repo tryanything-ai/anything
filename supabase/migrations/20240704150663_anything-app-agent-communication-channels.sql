@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS anything.agent_communication_channels
     agent_id uuid not null references anything.agents(agent_id),
     channel_type TEXT NOT NULL, -- e.g. 'phone', 'web', 'email', etc
     phone_number_id uuid references anything.phone_numbers(phone_number_id),
+    vapi_phone_number_id uuid, -- this is the phone number id from VAPI
     active boolean not null default true,
     archived boolean not null default false,
 
