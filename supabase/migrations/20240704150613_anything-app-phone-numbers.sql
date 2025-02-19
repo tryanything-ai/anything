@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS anything.phone_numbers
     voice_url TEXT,                -- The webhook URL for voice calls
     status TEXT NOT NULL DEFAULT 'pending',  -- Track provisioning status (pending, active, error, etc)
     capabilities JSONB,            -- Store phone number capabilities (voice, SMS, MMS, etc)
+    twilio_properties JSONB Not Null,            -- Store the raw Twilio response
     active BOOLEAN NOT NULL DEFAULT FALSE,
+    archived BOOLEAN NOT NULL DEFAULT FALSE,
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these
     updated_at timestamp with time zone,

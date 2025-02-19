@@ -125,10 +125,9 @@ export default function AgentPage() {
     }
 
     try {
-      let res = await api.agents.addPhoneNumberToAgent(
+      let res = await api.agents.buyPhoneNumber(
         await createClient(),
         selectedAccount.account_id,
-        agent.agent_id,
         phoneNumber,
       );  
       console.log("Added phone number:", res);

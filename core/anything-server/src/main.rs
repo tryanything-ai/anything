@@ -356,8 +356,10 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/tools", get(workflows::get_agent_tool_workflows))
 
         //Phone Numbers
-        .route("/account/:account_id/phone_numbers/:country/:area_code", get(agents::twilio::search_phone_numbers))
-
+        .route("/account/:account_id/phone_numbers/:country/:area_code", get(agents::twilio::search_available_phone_numbers_on_twilio))
+        .route("/account/:account_id/phone_numbers", get(agents::twilio::get_account_phone_numbers))
+        .route("/account/:account_id/phone_number", post(agents::twilio::purchase_phone_number))
+        
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,

@@ -8,6 +8,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 
+use axum::{
+    extract::{Path, State},
+    response::IntoResponse,
+    Json,
+};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TwilioPhoneNumber {
     #[serde(rename = "friendly_name")]
@@ -37,70 +43,139 @@ pub struct PhoneNumberCapabilities {
     pub mms: bool,
 }
 
-// pub async fn provision_twilio_number(target_area_code: &str) -> Result<TwilioPhoneNumber> {
-//     let account_sid = std::env::var("TWILIO_ACCOUNT_SID")?;
-//     let auth_token = std::env::var("TWILIO_AUTH_TOKEN")?;
-//     let client = Client::new();
+#[derive(Debug, Deserialize)]
+pub struct PurchasePhoneNumberInput {
+    phone_number: String,
+}
 
-//     // Search for available numbers in target area code
-//     let mut available_numbers = client
-//         .get(&format!(
-//             "https://api.twilio.com/2010-04-01/Accounts/{}/AvailablePhoneNumbers/US/Local.json",
-//             account_sid
-//         ))
-//         .query(&[("AreaCode", target_area_code)])
-//         .basic_auth(&account_sid, Some(&auth_token))
-//         .send()
-//         .await?
-//         .json::<Value>()
-//         .await?;
+pub async fn purchase_phone_number(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+    Json(payload): Json<PurchasePhoneNumberInput>,
+) -> impl IntoResponse {
+    println!(
+        "[TWILIO] Attempting to purchase phone number: {}",
+        payload.phone_number
+    );
 
-//     // If no numbers found in target area code, search nearby area codes
-//     if available_numbers["available_phone_numbers"]
-//         .as_array()
-//         .map_or(true, |arr| arr.is_empty())
-//     {
-//         available_numbers = client
-//             .get(&format!(
-//                 "https://api.twilio.com/2010-04-01/Accounts/{}/AvailablePhoneNumbers/US/Local.json",
-//                 account_sid
-//             ))
-//             .query(&[("NearNumber", format!("+1{}", target_area_code))])
-//             .basic_auth(&account_sid, Some(&auth_token))
-//             .send()
-//             .await?
-//             .json::<Value>()
-//             .await?;
-//     }
+    // Get Twilio credentials
+    let account_sid = match std::env::var("TWILIO_ACCOUNT_SID") {
+        Ok(sid) => sid,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Missing Twilio account SID",
+            )
+                .into_response()
+        }
+    };
 
-//     let phone_number = available_numbers["available_phone_numbers"][0]["phone_number"]
-//         .as_str()
-//         .ok_or_else(|| anyhow::anyhow!("No available phone numbers found"))?;
+    let auth_token = match std::env::var("TWILIO_AUTH_TOKEN") {
+        Ok(token) => token,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Missing Twilio auth token",
+            )
+                .into_response()
+        }
+    };
 
-//     // Purchase the first available number
-//     let purchased_number = client
-//         .post(&format!(
-//             "https://api.twilio.com/2010-04-01/Accounts/{}/IncomingPhoneNumbers.json",
-//             account_sid
-//         ))
-//         .basic_auth(&account_sid, Some(&auth_token))
-//         .form(&[("PhoneNumber", phone_number)])
-//         .send()
-//         .await?
-//         .json::<Value>()
-//         .await?;
+    let client = Client::new();
 
-// Ok(TwilioPhoneNumber {
-//     phone_number: purchased_number["phone_number"]
-//         .as_str()
-//         .ok_or_else(|| anyhow::anyhow!("Failed to get phone number from response"))?
-//         .to_string(),
-//     sid: purchased_number["sid"]
-//         .as_str()
-//         .ok_or_else(|| anyhow::anyhow!("Failed to get SID from response"))?
-//         .to_string(),
-// })
-// }
+    // Purchase the phone number
+    let response = match client
+        .post(&format!(
+            "https://api.twilio.com/2010-04-01/Accounts/{}/IncomingPhoneNumbers.json",
+            account_sid
+        ))
+        .basic_auth(&account_sid, Some(&auth_token))
+        .form(&[("PhoneNumber", &payload.phone_number)])
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to make Twilio API request",
+            )
+                .into_response()
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read Twilio API response",
+            )
+                .into_response()
+        }
+    };
+
+    let phone_number: Value = match serde_json::from_str(&body) {
+        Ok(number) => number,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse Twilio response",
+            )
+                .into_response()
+        }
+    };
+
+    println!("[TWILIO] Phone number: {:?}", phone_number);
+
+    // Insert the phone number into our database
+    let phone_number_input = serde_json::json!({
+        "account_id": account_id,
+        "phone_number": phone_number["phone_number"].as_str().unwrap_or(""),
+        "twilio_sid": phone_number["sid"].as_str().unwrap_or(""),
+        "twilio_friendly_name": phone_number["friendly_name"].as_str().unwrap_or(""),
+        "voice_url": phone_number["voice_url"].as_str().unwrap_or(""),
+        "status": "active",
+        "twilio_properties": phone_number,
+        "capabilities": phone_number["capabilities"],
+        "active": true
+    });
+
+    let db_client = &state.anything_client;
+
+    let db_response = match db_client
+        .from("phone_numbers")
+        .auth(user.jwt)
+        .insert(phone_number_input.to_string())
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to insert phone number into database",
+            )
+                .into_response()
+        }
+    };
+
+    let _db_body = match db_response.text().await {
+        Ok(body) => body,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read database response",
+            )
+                .into_response()
+        }
+    };
+
+    //TODO: add this number to an agent
+
+    Json(phone_number).into_response()
+}
 
 pub async fn delete_twilio_number(phone_number_sid: &str) -> Result<()> {
     let account_sid = std::env::var("TWILIO_ACCOUNT_SID")?;
@@ -120,14 +195,8 @@ pub async fn delete_twilio_number(phone_number_sid: &str) -> Result<()> {
     Ok(())
 }
 
-use axum::{
-    extract::{Path, State},
-    response::IntoResponse,
-    Json,
-};
-
 //https://www.twilio.com/docs/phone-numbers/api/availablephonenumberlocal-resource
-pub async fn search_phone_numbers(
+pub async fn search_available_phone_numbers_on_twilio(
     Path((account_id, country, area_code)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
@@ -146,7 +215,6 @@ pub async fn search_phone_numbers(
 
     let mut params = vec![];
     params.push(("AreaCode", &area_code));
-    // params.push(("PageSize", "20".to_string()));
 
     println!("[TWILIO] Making API request to search for available numbers");
     let available_numbers = client
@@ -173,4 +241,62 @@ pub async fn search_phone_numbers(
     println!("[TWILIO] Available numbers: {:?}", available_numbers);
 
     Ok(Json(available_numbers["available_phone_numbers"].clone()))
+}
+
+pub async fn get_account_phone_numbers(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("Handling a get_phone_numbers");
+
+    let client = &state.anything_client;
+
+    //Orde_with_options docs
+    //https://github.com/supabase-community/postgrest-rs/blob/d740c1e739547d6c36482af61fc8673e23232fdd/src/builder.rs#L196
+    let response = match client
+        .from("phone_numbers")
+        .auth(&user.jwt) // Pass a reference to the JWT
+        .select("*")
+        .eq("archived", "false")
+        .eq("account_id", &account_id)
+        .execute()
+        .await
+    {
+        Ok(response) => response,
+        Err(err) => {
+            println!("Failed to execute request: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    if response.status() == 204 {
+        return (StatusCode::NO_CONTENT, "No content").into_response();
+    }
+
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(err) => {
+            println!("Failed to read response body: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let items: Value = match serde_json::from_str(&body) {
+        Ok(items) => items,
+        Err(err) => {
+            println!("Failed to parse JSON: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    Json(items).into_response()
 }

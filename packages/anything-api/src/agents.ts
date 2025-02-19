@@ -209,6 +209,32 @@ export const searchPhoneNumbers = async (supabase: SupabaseClient, account_id: s
     }
 };
 
+export const buyPhoneNumber = async (supabase: SupabaseClient, account_id: string, phoneNumber: string) => {
+    try {
+          const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/phone_number`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    phone_number: phoneNumber,
+                }),   
+            });
+            const data = await response.json();
+            console.log('Data from /phone_number POST:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error buying phone number:', error);
+        throw error;
+    }
+};
+
+
 export const addPhoneNumberToAgent = async (supabase: SupabaseClient, account_id: string, agentId: string, phoneNumber: string) => {
     try {
         const { data: { session } } = await supabase.auth.getSession();
