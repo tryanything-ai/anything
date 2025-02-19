@@ -123,7 +123,7 @@ export default function InboxPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
+    <div className="flex h-[calc(100vh-4rem)]">
       {/* Left sidebar - Call list */}
       <div className="w-1/4 overflow-y-auto border-r">
         {calls.map((call) => (
@@ -164,7 +164,7 @@ export default function InboxPage() {
       <div className="w-3/4 overflow-y-auto">
         {selectedCall ? (
           <div className="p-4">
-            <Card className="p-6">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-bold">
@@ -219,7 +219,7 @@ export default function InboxPage() {
                     ))}
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">
