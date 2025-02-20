@@ -165,29 +165,7 @@ export default function AgentPage() {
     }
   };
 
-  // const handleRemovePhoneFromAgent = async (phoneNumberId: string) => {
-  //   console.log("Removing phone number from agent:", phoneNumberId);
 
-  //   if (!selectedAccount || !agent) {
-  //     console.error("No account or agent selected");
-  //     return;
-  //   }
-
-  //   setRemovingPhoneNumber(phoneNumberId);
-  //   try {
-  //     let res = await api.agents.removePhoneNumberFromAgent(
-  //       await createClient(),
-  //       selectedAccount.account_id,
-  //       agent.agent_id,
-  //       phoneNumberId,
-  //     );
-  //     fetchAgent();
-  //   } catch (error) {
-  //     console.error("Error removing phone number from agent:", error);
-  //   } finally {
-  //     setRemovingPhoneNumber(null);
-  //   }
-  // };
 
   const handleAddPhoneNumber = async (phoneNumber: string) => {
     console.log("Adding phone number:", phoneNumber);

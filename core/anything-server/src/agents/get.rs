@@ -69,7 +69,7 @@ pub async fn get_agents(
         .from("agents")
         .auth(user.jwt)
         .eq("account_id", &account_id)
-        .select("*, agent_communication_channels(*)")
+        .select("*, agent_communication_channels(*, phone_numbers(*))")
         .eq("archived", "false")
         .execute()
         .await

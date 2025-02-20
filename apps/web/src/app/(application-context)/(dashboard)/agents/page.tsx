@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import DashboardTitleWithAction from "@/components/workflows/dashboard-title-with-action";
 import NewAgentDialog from "@/components/agents/new-agent-dialog";
+import { Phone } from "lucide-react";
 
 interface Agent {
   agent_id: string;
@@ -25,6 +26,7 @@ interface Agent {
   system_prompt: string;
   created_at: string;
   updated_at: string;
+  agent_communication_channels?: any[];
 }
 
 export default function AgentsPage() {
@@ -94,14 +96,32 @@ export default function AgentsPage() {
                     {agent.agent_name}
                   </CardTitle>
                   <CardDescription className="truncate">
-                    {agent.greeting}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <div className="flex flex-row h-full items-end">
                     <div className="text-sm text-gray-500">
                       Last updated:{" "}
                       {new Date(agent.updated_at).toLocaleDateString()}
+                    </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <div className="flex flex-col h-full justify-center gap-4">
+                    <div className="flex gap-2">
+                      {agent.agent_communication_channels?.map(
+                        (channel) =>
+                          channel.channel_type === "phone" && (
+                            <div
+                              key={channel.channel_id}
+                              className="flex items-center"
+                            >
+                              <div>
+                                <div className=" px-2 py-1  font-medium flex items-center gap-2 rounded-full bg-green-100 text-green-800">
+                                  <Phone className="w-4 h-4" />{" "}
+                                  {channel.phone_numbers.phone_number.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '$1 ($2) $3-$4')}
+                             
+                                </div>
+                              </div>
+                            </div>
+                          ),
+                      )}
                     </div>
                   </div>
                 </CardContent>
