@@ -138,32 +138,32 @@ pub async fn run_workflow_as_tool_call_and_respond(
     };
 
     // Bundle the context for the trigger node
-    println!("[TOOL_CALL_API] Bundling context for trigger node");
-    let rendered_inputs = match bundle_context_from_parts(
-        state.clone(),
-        &state.anything_client,
-        &account_id.to_string(),
-        &flow_session_id.to_string(),
-        Some(&inputs),
-        Some(&trigger_node.inputs_schema.clone().unwrap()),
-        Some(&trigger_node.plugin_config.clone()),
-        Some(&trigger_node.plugin_config_schema.clone()),
-        false,
-    )
-    .await
-    {
-        Ok(context) => context,
-        Err(e) => {
-            println!("[TOOL_CALL_API] Failed to bundle context: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to bundle trigger context",
-            )
-                .into_response();
-        }
-    };
+    // println!("[TOOL_CALL_API] Bundling context for trigger node");
+    // let rendered_inputs = match bundle_context_from_parts(
+    //     state.clone(),
+    //     &state.anything_client,
+    //     &account_id.to_string(),
+    //     &flow_session_id.to_string(),
+    //     Some(&inputs),
+    //     Some(&trigger_node.inputs_schema.clone().unwrap()),
+    //     Some(&trigger_node.plugin_config.clone()),
+    //     Some(&trigger_node.plugin_config_schema.clone()),
+    //     false,
+    // )
+    // .await
+    // {
+    //     Ok(context) => context,
+    //     Err(e) => {
+    //         println!("[TOOL_CALL_API] Failed to bundle context: {}", e);
+    //         return (
+    //             StatusCode::INTERNAL_SERVER_ERROR,
+    //             "Failed to bundle trigger context",
+    //         )
+    //             .into_response();
+    //     }
+    // };
 
-    println!("[TOOL_CALL_API] Bundled context: {:?}", rendered_inputs);
+    // println!("[TOOL_CALL_API] Bundled context: {:?}", rendered_inputs);
 
     //TODO: take the input style from here https://docs.vapi.ai/server-url/events
     //And convert and simplify it to create the correct "result";
