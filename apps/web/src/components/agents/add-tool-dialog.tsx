@@ -9,8 +9,6 @@ import {
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
-import { Badge } from "@repo/ui/components/ui/badge";
-import { BaseNodeIcon } from "@/components/studio/nodes/node-icon";
 import { useAnything } from "@/context/AnythingContext";
 import { createClient } from "@/lib/supabase/client";
 import api from "@repo/anything-api";
@@ -55,8 +53,8 @@ export function AddToolDialog({
       return;
     }
 
-    if (!name || name.trim() === "") {
-      console.error("Workflow name cannot be empty");
+    if (!name || name.trim() === "" || !description || description.trim() === "") {
+      console.error("Name and description are required");
       return;
     }
 

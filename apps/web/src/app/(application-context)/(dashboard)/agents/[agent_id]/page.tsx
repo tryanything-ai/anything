@@ -459,10 +459,12 @@ export default function AgentPage() {
                     Manage the phone number your agent can communicate through
                   </CardDescription>
                 </div>
-                <Button onClick={() => setAddPhoneNumberOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Get New Phone Number
-                </Button>
+                {phoneNumbers.length === 0 && (
+                  <Button onClick={() => setAddPhoneNumberOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Get New Phone Number
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -518,46 +520,57 @@ export default function AgentPage() {
                             (number) =>
                               number.phone_number_id !== connectedPhoneNumber,
                           )
-                          .map((number: any) => (
-                            <div
-                              key={number.phone_number_id}
-                              className="p-4 border rounded-lg mb-2 flex items-center justify-between"
-                            >
-                              <div>
-                                <div className="font-medium">
-                                  {number.phone_number}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {number.locality}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  Created{" "}
-                                  {new Date(
-                                    number.created_at,
-                                  ).toLocaleDateString()}
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  handleConnectPhoneToAgent(
-                                    number.phone_number_id,
-                                  )
-                                }
-                                disabled={
-                                  connectingPhoneNumber ===
-                                  number.phone_number_id
-                                }
+                          .map((number: any) => {
+                            const connectedAgent = number.agent_communication_channels.find(
+                              (channel: any) => channel.agent_id !== params.agent_id
+                            );
+                            
+                            return (
+                              <div
+                                key={number.phone_number_id}
+                                className="p-4 border rounded-lg mb-2 flex items-center justify-between"
                               >
-                                {connectingPhoneNumber ===
-                                number.phone_number_id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  "Use this number"
-                                )}
-                              </Button>
-                            </div>
-                          ))}
+                                <div>
+                                  <div className="font-medium">
+                                    {number.phone_number}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {number.locality}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Created{" "}
+                                    {new Date(
+                                      number.created_at,
+                                    ).toLocaleDateString()}
+                                  </div>
+                                  {connectedAgent && (
+                                    <div className="text-sm text-yellow-600 mt-1">
+                                      Connected to another agent
+                                    </div>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    handleConnectPhoneToAgent(
+                                      number.phone_number_id,
+                                    )
+                                  }
+                                  disabled={
+                                    connectingPhoneNumber === number.phone_number_id || connectedAgent
+                                  }
+                                >
+                                  {connectingPhoneNumber === number.phone_number_id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : connectedAgent ? (
+                                    "In use"
+                                  ) : (
+                                    "Use this number"
+                                  )}
+                                </Button>
+                              </div>
+                            );
+                          })}
                       </div>
                     ) : (
                       <div className="text-sm text-muted-foreground mb-4">
