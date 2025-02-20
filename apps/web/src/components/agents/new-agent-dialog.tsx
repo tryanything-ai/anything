@@ -33,6 +33,7 @@ export default function NewAgentDialog({
   } = useAnything();
 
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateAgent = async () => {
     if (!selectedAccount) {
@@ -45,6 +46,7 @@ export default function NewAgentDialog({
       return;
     }
 
+    setIsLoading(true);
     try {
       const client = await createClient();
       const newAgent = await api.agents.createAgent(
@@ -58,6 +60,8 @@ export default function NewAgentDialog({
     } catch (error) {
       console.error("Error creating agent:", error);
       alert("Failed to create agent");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,6 +83,7 @@ export default function NewAgentDialog({
               placeholder="Enter agent name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={isLoading}
             />
           </div>
 
@@ -86,9 +91,16 @@ export default function NewAgentDialog({
             <Button
               size="lg"
               onClick={handleCreateAgent}
-              disabled={!name.trim()}
+              disabled={!name.trim() || isLoading}
             >
-              Create Agent
+              {isLoading ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Creating...
+                </>
+              ) : (
+                "Create Agent"
+              )}
             </Button>
           </div>
         </div>

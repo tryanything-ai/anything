@@ -27,6 +27,7 @@ pub async fn create_vapi_agent(
 
     let client = Client::new();
     println!("[VAPI] Sending request to create assistant");
+
     let response = client
         .post("https://api.vapi.ai/assistant")
         .header("Authorization", format!("Bearer {}", vapi_api_key))
@@ -57,6 +58,7 @@ pub async fn create_vapi_agent(
         .await
         .map_err(|e| anyhow::anyhow!("[VAPI] Failed to parse VAPI response: {}", e))?;
 
+    println!("[VAPI] Response JSON: {:?}", response_json);
     if let Some(error) = response_json.get("error") {
         println!("[VAPI] Error from VAPI: {}", error);
         return Err(anyhow::anyhow!("[VAPI] Error from VAPI: {}", error));
@@ -134,6 +136,7 @@ pub async fn update_vapi_agent(
 
 pub async fn create_vapi_phone_number_from_twilio_number(
     state: Arc<AppState>,
+    user: User,
     phone_number_id: &str,
     vapi_agent_id: &str,
 ) -> Result<Value> {
@@ -145,6 +148,7 @@ pub async fn create_vapi_phone_number_from_twilio_number(
 
     let response = client
         .from("phone_numbers")
+        .auth(&user.jwt)
         .eq("phone_number_id", phone_number_id)
         .select("*")
         .execute()
@@ -176,7 +180,7 @@ pub async fn create_vapi_phone_number_from_twilio_number(
         "number": phone_number["phone_number"],
         "twilioAccountSid": twilio_account_sid,
         "twilioAuthToken": twilio_auth_token,
-        "phoneNumberId": phone_number_id,
+        // "phoneNumberId": phone_number_id,
         "assistantId": vapi_agent_id,
     });
 
@@ -206,35 +210,26 @@ pub async fn create_vapi_phone_number_from_twilio_number(
 }
 
 pub async fn delete_vapi_phone_number(vapi_phone_number_id: &str) -> Result<()> {
+    // Remove any quotes from the ID if present
+    let cleaned_id = vapi_phone_number_id.trim_matches('"');
+
     let vapi_api_key = std::env::var("VAPI_API_KEY")?;
     let client = Client::new();
 
-    println!("[VAPI] Deleting phone number {}", vapi_phone_number_id);
+    println!("[VAPI] Deleting phone number {}", cleaned_id);
 
-    client
-        .delete(&format!(
-            "https://api.vapi.ai/phone-number/{}",
-            vapi_phone_number_id
-        ))
+    let response = client
+        .delete(&format!("https://api.vapi.ai/phone-number/{}", cleaned_id))
         .header("Authorization", format!("Bearer {}", vapi_api_key))
         .send()
         .await?;
 
-    Ok(())
-}
-
-pub async fn delete_vapi_agent(agent_id: &str) -> Result<()> {
-    let vapi_api_key = std::env::var("VAPI_API_KEY")?;
-    let client = Client::new();
-
-    client
-        .delete(&format!("https://api.vapi.ai/agents/{}", agent_id))
-        .header("Authorization", format!("Bearer {}", vapi_api_key))
-        .send()
-        .await?;
+    let response_text = response.text().await?;
+    println!("[VAPI] Delete Number Response: {:?}", response_text);
 
     Ok(())
 }
+
 pub async fn get_vapi_calls(
     Path(account_id): Path<String>,
     State(state): State<Arc<AppState>>,

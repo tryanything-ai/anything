@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AgentCreator from "@/components/agents/agent-creator";
 import WelcomeToAgents from "@/components/agents/welcome-to-agents";
 import api from "@repo/anything-api";
 import { createClient } from "@/lib/supabase/client";
@@ -57,7 +56,6 @@ export default function AgentsPage() {
 
     fetchAgents();
   }, [selectedAccount]);
-
 
   if (isLoading) {
     return (

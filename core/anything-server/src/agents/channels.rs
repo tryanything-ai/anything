@@ -1,4 +1,5 @@
 use crate::agents::vapi::create_vapi_phone_number_from_twilio_number;
+use crate::agents::vapi::delete_vapi_phone_number;
 use crate::supabase_jwt_middleware::User;
 use crate::AppState;
 use axum::{
@@ -8,9 +9,8 @@ use axum::{
     Extension, Json,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use serde_json::Value;
-use crate::agents::vapi::delete_vapi_phone_number;
+use std::sync::Arc;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConnectPhoneToAgent {
@@ -32,6 +32,7 @@ pub async fn connect_phone_number_to_agent(
 
     let vapi_result = match create_vapi_phone_number_from_twilio_number(
         state.clone(),
+        user.clone(),
         &payload.phone_number_id,
         &agent_id,
     )
@@ -151,11 +152,41 @@ pub async fn remove_phone_number_from_agent(
         }
     };
 
+    println!("[CHANNELS] Response body: {}", body);
+
     let vapi_phone_number_id = match serde_json::from_str::<Value>(&body) {
-        Ok(json) => json["vapi_phone_number_id"].to_string(),
+        Ok(json) => {
+            if let Some(array) = json.as_array() {
+                let matching_record = array.iter().find(|record| {
+                    record["phone_number_id"].as_str() == Some(&phone_number_id)
+                });
+
+                if let Some(record) = matching_record {
+                    record["vapi_phone_number_id"].to_string()
+                } else {
+                    eprintln!("[CHANNELS] Could not find record with matching phone_number_id");
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to find matching record",
+                    )
+                        .into_response();
+                }
+            } else {
+                eprintln!("[CHANNELS] Response body is not an array");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Invalid response format",
+                )
+                    .into_response();
+            }
+        }
         Err(e) => {
             eprintln!("[CHANNELS] Error parsing response body: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse response body").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse response body",
+            )
+                .into_response();
         }
     };
 
@@ -164,9 +195,15 @@ pub async fn remove_phone_number_from_agent(
         Ok(_) => true,
         Err(e) => {
             eprintln!("[CHANNELS] Error deleting VAPI phone number: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete VAPI phone number").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to delete VAPI phone number",
+            )
+                .into_response();
         }
     };
+
+    println!("[CHANNELS] VAPI Result: {:?}", vapi_result);
 
     println!("[CHANNELS] Successfully completed operation");
     Json(body).into_response()
