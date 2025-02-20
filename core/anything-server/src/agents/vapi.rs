@@ -35,6 +35,7 @@ pub async fn create_vapi_agent(
         .json(&json!({
             "name": name,
             "firstMessage": greeting,
+            "backgroundSound": "off",
             "metadata": {
                 "account_id": account_id,
             },
@@ -114,6 +115,7 @@ pub async fn update_vapi_agent(
         .header("Authorization", format!("Bearer {}", vapi_api_key))
         .json(&json!({
             "firstMessage": new_vapi_config["firstMessage"],
+            "backgroundSound": "off",
             "name": new_vapi_config["name"],
             "model": new_vapi_config["model"]
         }))
