@@ -59,6 +59,19 @@ pub async fn process_tool_call_result_task(
     // Build response object
     let mut response = serde_json::Map::new();
 
+    let mut result_object = serde_json::Map::new();
+    result_object.insert(
+        "result".to_string(),
+        Value::String(tool_call_result.to_string()),
+    );
+
+    response.insert(
+        "results".to_string(),
+        Value::Array(vec![Value::Object(result_object)]),
+    );
+
+    println!("[PROCESS RESPONSE] Generated response: {:?}", response);
+
     // Send the response through the flow_completions channel
     let mut completions = state.flow_completions.lock().await;
     if let Some(completion) = completions.remove(&flow_session_id) {
@@ -67,13 +80,6 @@ pub async fn process_tool_call_result_task(
             let _ = completion.sender.send(Value::Object(response.clone()));
         }
     }
-
-    let mut result_object = serde_json::Map::new();
-    result_object.insert("result".to_string(), Value::String(tool_call_result.to_string()));
-
-    response.insert("results".to_string(), Value::Array(vec![Value::Object(result_object)]));
-
-    println!("[PROCESS RESPONSE] Generated response: {:?}", response);
 
     Ok(Some(Value::Object(response)))
 }
