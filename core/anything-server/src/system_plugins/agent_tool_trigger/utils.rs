@@ -12,20 +12,29 @@ use crate::{
 use serde_json::{json, Value};
 
 pub fn parse_tool_call_request_to_result(body: Json<Value>) -> (Value, String) {
+    println!(
+        "[TOOL_CALLS] Parsing tool call request to result Body: {:?}",
+        body
+    );
+
     // Get the call data
     let call_data = body.get("message").and_then(|m| m.get("call")).cloned();
 
     // Navigate through the nested structure to get to tool_calls
-    let tool_calls = body
+    let tool_call = body
         .get("message")
         .and_then(|m| m.get("tool_calls"))
         .and_then(|tc| tc.get(0));
 
-    if let Some(tool_call) = tool_calls {
+    println!("[TOOL_CALLS] Tool calls: {:?}", tool_call);
+
+    if let Some(tool_call) = tool_call {
         let tool_call_id = tool_call
             .get("id")
             .and_then(Value::as_str)
             .unwrap_or_default();
+
+        println!("[TOOL_CALLS] Tool call ID: {}", tool_call_id);
 
         // Get the function arguments
         let arguments = tool_call
@@ -45,7 +54,11 @@ pub fn parse_tool_call_request_to_result(body: Json<Value>) -> (Value, String) {
 
         (result, tool_call_id.to_string())
     } else {
-        (json!({"arguments": {}, "call": call_data}), String::new())
+        println!("[TOOL_CALLS] No tool call found");
+        (
+            json!({"arguments": {}, "call": call_data}),
+            String::new(),
+        )
     }
 }
 
@@ -58,6 +71,8 @@ pub fn parse_tool_response_into_api_response(
     println!("[TOOL_CALLS] Parsing tool response into API response");
 
     println!("[TOOL_CALLS] Stored result: {:?}", stored_result.clone());
+
+    println!("[TOOL_CALLS] Tool call ID: {}", tool_call_id);
     // Check for error first
     if let Some(error) = stored_error {
         let error_message = error
