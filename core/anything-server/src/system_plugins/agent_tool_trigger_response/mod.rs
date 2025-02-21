@@ -18,21 +18,10 @@ pub async fn process_tool_call_result_task(
         bundled_context
     );
 
-    // Get the required fields from the bundled context
-    let status_code = bundled_context
-        .get("status_code")
-        .and_then(|v| v.as_str())
-        .unwrap_or("200");
-
     let content_type = bundled_context
         .get("content_type")
         .and_then(|v| v.as_str())
         .unwrap_or("application/json");
-
-    let headers = bundled_context
-        .get("headers")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
 
     // Get body based on content type
     let tool_call_result = match content_type {
@@ -62,62 +51,13 @@ pub async fn process_tool_call_result_task(
             .to_string(),
     };
 
-    println!("[PROCESS RESPONSE] Status code: {}", status_code);
-    println!("[PROCESS RESPONSE] Content type: {}", content_type);
-    println!("[PROCESS RESPONSE] Headers: {}", headers);
+    // println!("[PROCESS RESPONSE] Status code: {}", status_code);
+    // println!("[PROCESS RESPONSE] Content type: {}", content_type);
+    // println!("[PROCESS RESPONSE] Headers: {}", headers);
     println!("[PROCESS RESPONSE] Body: {}", tool_call_result);
 
     // Build response object
     let mut response = serde_json::Map::new();
-    response.insert(
-        "status_code".to_string(),
-        Value::String(status_code.to_string()),
-    );
-
-    // Build headers map
-    let mut headers_map = serde_json::Map::new();
-    headers_map.insert(
-        "content-type".to_string(), 
-        Value::String("application/json".to_string()),
-    );
-
-    response.insert("headers".to_string(), Value::Object(headers_map));
-
-    // Parse and add body if present
-    if !tool_call_result.is_empty() {
-        let mut body_map = serde_json::Map::new();
-        let mut results_array = Vec::new();
-        let mut result_object = serde_json::Map::new();
-
-        if content_type == "application/json" {
-            match deep_parse_json(&tool_call_result) {
-                Ok(parsed_tool_call_response) => {
-                    // result_object.insert("toolCallId".to_string(), Value::String("1".to_string())); // TODO: Get actual tool call ID
-                    result_object.insert("result".to_string(), parsed_tool_call_response);
-                }
-                Err(e) => {
-                    println!("[PROCESS RESPONSE] Failed to parse JSON body: {}", e);
-                    // result_object.insert("toolCallId".to_string(), Value::String("1".to_string())); // TODO: Get actual tool call ID
-                    result_object.insert(
-                        "result".to_string(),
-                        Value::String(tool_call_result.to_string()),
-                    );
-                }
-            }
-        } else {
-            // result_object.insert("toolCallId".to_string(), Value::String("1".to_string())); // TODO: Get actual tool call ID
-            result_object.insert(
-                "result".to_string(),
-                Value::String(tool_call_result.to_string()),
-            );
-        }
-
-        results_array.push(Value::Object(result_object));
-        body_map.insert("results".to_string(), Value::Array(results_array));
-        response.insert("body".to_string(), Value::Object(body_map));
-    }
-
-    println!("[PROCESS RESPONSE] Generated response: {:?}", response);
 
     // Send the response through the flow_completions channel
     let mut completions = state.flow_completions.lock().await;
@@ -127,6 +67,13 @@ pub async fn process_tool_call_result_task(
             let _ = completion.sender.send(Value::Object(response.clone()));
         }
     }
+
+    let mut result_object = serde_json::Map::new();
+    result_object.insert("result".to_string(), Value::String(tool_call_result.to_string()));
+
+    response.insert("results".to_string(), Value::Array(vec![Value::Object(result_object)]));
+
+    println!("[PROCESS RESPONSE] Generated response: {:?}", response);
 
     Ok(Some(Value::Object(response)))
 }

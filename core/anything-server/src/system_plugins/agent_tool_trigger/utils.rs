@@ -86,13 +86,14 @@ pub fn parse_tool_response_into_api_response(
     let mut response = stored_result.clone().unwrap_or(json!({}));
 
     // Get the results array from the response
-    if let Some(body) = response.get_mut("body") {
-        if let Some(results) = body.get_mut("results") {
-            if let Some(results_array) = results.as_array_mut() {
-                if let Some(first_result) = results_array.get_mut(0) {
-                    if let Some(result_obj) = first_result.as_object_mut() {
-                        result_obj.insert("toolCallId".to_string(), Value::String(tool_call_id));
-                    }
+    if let Some(results) = response.get_mut("results") {
+        println!("[TOOL_CALLS] Results: {:?}", results);
+        if let Some(results_array) = results.as_array_mut() {
+            if let Some(first_result) = results_array.get_mut(0) {
+                println!("[TOOL_CALLS] First result: {:?}", first_result);
+                if let Some(result_obj) = first_result.as_object_mut() {
+                    println!("[TOOL_CALLS] Result obj: {:?}", result_obj);
+                    result_obj.insert("toolCallId".to_string(), Value::String(tool_call_id));
                 }
             }
         }
