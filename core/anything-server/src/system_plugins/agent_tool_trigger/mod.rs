@@ -231,7 +231,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
     // Wait for the result with a timeout
     match timeout(Duration::from_secs(WEBHOOK_TIMEOUT), rx).await {
         Ok(Ok(result)) => {
-            println!("[TOOL_CALL_API] Received workflow result");
+            println!("[TOOL_CALL_API] Received workflow result: {:?}", result);
             //TODO: take this response and turn it into the correct tool_call_response needed for
             utils::parse_tool_response_into_api_response(tool_call_id, Some(result), None)
                 .into_response()
