@@ -22,6 +22,7 @@ interface CallCost {
 interface Message {
   role: "bot" | "user" | "system" | "tool_calls" | "tool_call_result";
   message: string;
+  result?: string;
   toolCalls?: {
     function: {
       name: string;
@@ -217,38 +218,50 @@ export default function InboxPage() {
                       <div key={index} className={`p-3`}>
                         <p
                           className={`text-sm font-bold mb-1 ${
-                            message.role === "bot" 
-                              ? "text-blue-600" 
+                            message.role === "bot"
+                              ? "text-blue-600"
                               : message.role === "user"
-                              ? "text-green-600"
-                              : message.role === "tool_calls"
-                              ? "text-purple-600" 
-                              : message.role === "tool_call_result"
-                              ? "text-orange-600"
-                              : "text-gray-600"
+                                ? "text-green-600"
+                                : message.role === "tool_calls"
+                                  ? "text-orange-600 ml-2"
+                                  : message.role === "tool_call_result"
+                                    ? "text-orange-600 ml-2"
+                                    : "text-gray-600"
                           }`}
                         >
-                          {message.role === "bot" 
+                          {message.role === "bot"
                             ? "Assistant"
-                            : message.role === "user" 
-                            ? "User"
-                            : message.role === "tool_calls"
-                            ? "Tool Call"
-                            : message.role === "tool_call_result" 
-                            ? "Tool Result"
-                            : message.role}
+                            : message.role === "user"
+                              ? "User"
+                              : message.role === "tool_calls"
+                                ? "Tool Call"
+                                : message.role === "tool_call_result"
+                                  ? "Tool Result"
+                                  : message.role}
                         </p>
                         {message.role === "tool_calls" ? (
                           <div className="text-sm">
                             {message.toolCalls?.map((call, i) => (
-                              <div key={i} className="mb-2">
-                                <p className="font-medium">Function: {call.function.name}</p>
-                                <p className="text-gray-600">Args: {call.function.arguments}</p>
+                              <div key={i} className="mb-2 ml-2">
+                                <p className="font-medium">
+                                  Function: {call.function.name}
+                                </p>
+                                <p className="text-gray-600">
+                                  Args: {call.function.arguments}
+                                </p>
                               </div>
                             ))}
                           </div>
+                        ) : message.role === "tool_call_result" ? (
+                          <div className="text-sm ml-2">
+                            <p className="text-gray-600">
+                              Result: {message.result}
+                            </p>
+                          </div>
                         ) : (
-                          <p className="whitespace-pre-wrap">{message.message}</p>
+                          <p className="whitespace-pre-wrap">
+                            {message.message}
+                          </p>
                         )}
                       </div>
                     ))}
