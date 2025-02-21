@@ -56,6 +56,8 @@ pub fn parse_tool_response_into_api_response(
     stored_error: Option<Value>,
 ) -> impl IntoResponse {
     println!("[TOOL_CALLS] Parsing tool response into API response");
+
+    println!("[TOOL_CALLS] Stored result: {:?}", stored_result.clone());
     // Check for error first
     if let Some(error) = stored_error {
         let error_message = error
@@ -66,53 +68,17 @@ pub fn parse_tool_response_into_api_response(
         return (StatusCode::INTERNAL_SERVER_ERROR, error_message.to_string()).into_response();
     }
 
-    // let mut headers = HeaderMap::new();
+    let mut response = stored_result.clone().unwrap_or(json!({}));
 
-    // Get content type from the stored result
-    // let body = stored_result
-    //     .as_ref()
-    //     .and_then(|r| r.get("body"))
-    //     .and_then(Value::as_str)
-    //     .unwrap_or("body");
-
-    // println!("[TOOL_CALLS] Response content type: {}", content_type);
-
-    static EMPTY: Vec<Value> = Vec::new();
-    let results = stored_result
-        .as_ref()
-        .and_then(|r| r.get("body"))
-        .and_then(|b| b.get("results"))
-        .and_then(|r| r.as_array())
-        .unwrap_or(&EMPTY);
-
-    println!("[TOOL_CALLS] Results: {:?}", results);
-
-    // Get first result and add tool call ID
-    let result = results.first().map(|r| r.clone()).unwrap_or(json!({}));
-
-    // Convert to object if not already
-    let result_obj = match result {
-        Value::Object(mut obj) => {
-            obj.insert("toolCallId".to_string(), Value::String(tool_call_id));
-            Value::Object(obj)
-        }
-        _ => {
-            // Wrap non-object value
-            json!({
-                "result": result,
-                "toolCallId": tool_call_id
-            })
-        }
-    };
-
-    // Return the original object with enriched results
-    let mut response = stored_result.unwrap_or(json!({}));
-
-    if let Some(obj) = response.as_object_mut() {
-        // Update the results array in the body with the enriched result
-        if let Some(body) = obj.get_mut("body") {
-            if let Some(body_obj) = body.as_object_mut() {
-                body_obj.insert("results".to_string(), json!([result_obj]));
+    // Get the results array from the response
+    if let Some(body) = response.get_mut("body") {
+        if let Some(results) = body.get_mut("results") {
+            if let Some(results_array) = results.as_array_mut() {
+                if let Some(first_result) = results_array.get_mut(0) {
+                    if let Some(result_obj) = first_result.as_object_mut() {
+                        result_obj.insert("toolCallId".to_string(), Value::String(tool_call_id));
+                    }
+                }
             }
         }
     }

@@ -77,27 +77,9 @@ pub async fn process_tool_call_result_task(
     // Build headers map
     let mut headers_map = serde_json::Map::new();
     headers_map.insert(
-        "content-type".to_string(),
-        Value::String(content_type.to_string()),
+        "content-type".to_string(), 
+        Value::String("application/json".to_string()),
     );
-
-    // Parse and add additional headers if present
-    if !headers.is_empty() {
-        match deep_parse_json(headers) {
-            Ok(Value::Object(parsed_headers)) => {
-                for (key, value) in parsed_headers {
-                    headers_map.insert(key, value);
-                }
-            }
-            Ok(Value::Null) | Ok(Value::Bool(_)) | Ok(Value::Number(_)) | Ok(Value::String(_))
-            | Ok(Value::Array(_)) => {
-                println!("[PROCESS RESPONSE] Headers must be a JSON object");
-            }
-            Err(e) => {
-                println!("[PROCESS RESPONSE] Failed to parse headers: {}", e);
-            }
-        }
-    }
 
     response.insert("headers".to_string(), Value::Object(headers_map));
 
