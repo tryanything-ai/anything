@@ -23,7 +23,7 @@ pub fn parse_tool_call_request_to_result(body: Json<Value>) -> (Value, String) {
     // Navigate through the nested structure to get to tool_calls
     let tool_call = body
         .get("message")
-        .and_then(|m| m.get("tool_calls"))
+        .and_then(|m| m.get("toolCalls"))
         .and_then(|tc| tc.get(0));
 
     println!("[TOOL_CALLS] Tool calls: {:?}", tool_call);
