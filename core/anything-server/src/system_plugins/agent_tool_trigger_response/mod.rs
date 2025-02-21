@@ -2,87 +2,12 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
+use crate::system_plugins::webhook_response::deep_parse_json;
 use crate::AppState;
-
-// Deep parse JSON to handle common escape issues helpful for all the dirty json we have
-pub fn deep_parse_json(input: &str) -> Result<Value, serde_json::Error> {
-    // Try multiple parsing strategies in order
-    let attempts = [
-        // 1. Try parsing directly first
-        input.to_string(),
-        // 2. If wrapped in quotes and contains escaped quotes, unescape everything
-        if input.contains("\\\"") {
-            input
-                .replace("\\\"", "\"")
-                .replace("\\n", "\n")
-                .replace("\\/", "/")
-                .replace("\\\\", "\\")
-        } else {
-            input.to_string()
-        },
-        // 3. If wrapped in quotes, remove them and unescape
-        if input.starts_with('"') && input.ends_with('"') {
-            let inner = &input[1..input.len() - 1];
-            inner
-                .replace("\\\"", "\"")
-                .replace("\\n", "\n")
-                .replace("\\/", "/")
-                .replace("\\\\", "\\")
-        } else {
-            input.to_string()
-        },
-    ];
-
-    // Try each cleaning strategy
-    for (i, attempt) in attempts.iter().enumerate() {
-        match serde_json::from_str(attempt) {
-            Ok(mut parsed) => {
-                println!(
-                    "[DEEP PARSE JSON IN RESPONSE] Successfully parsed JSON using strategy {}",
-                    i + 1
-                );
-
-                // Recursively clean any string values that might be JSON
-                fn clean_recursive(value: &mut Value) {
-                    match value {
-                        Value::Object(map) => {
-                            for (_, v) in map.iter_mut() {
-                                clean_recursive(v);
-                            }
-                        }
-                        Value::Array(arr) => {
-                            for v in arr.iter_mut() {
-                                clean_recursive(v);
-                            }
-                        }
-                        Value::String(s) => {
-                            // Only try to parse if it looks like JSON
-                            if (s.starts_with('{') && s.ends_with('}'))
-                                || (s.starts_with('[') && s.ends_with(']'))
-                            {
-                                if let Ok(parsed) = serde_json::from_str(s) {
-                                    *value = parsed;
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-
-                clean_recursive(&mut parsed);
-                return Ok(parsed);
-            }
-            Err(_) => continue,
-        }
-    }
-
-    // If all parsing attempts fail, return the original input as a string Value
-    Ok(Value::String(input.to_string()))
-}
 
 //TODO: Something in here I thik is what makes it so we can only support returning JSON from webhooks.
 //For now just going to make webhooks only return json
-pub async fn process_webhook_response_task(
+pub async fn process_tool_call_result_task(
     state: Arc<AppState>,
     flow_session_id: String,
     bundled_context: &Value,
@@ -110,7 +35,7 @@ pub async fn process_webhook_response_task(
         .unwrap_or("");
 
     // Get body based on content type
-    let body = match content_type {
+    let tool_call_result = match content_type {
         "application/json" => bundled_context
             .get("json_body")
             .map(|v| v.to_string())
@@ -140,7 +65,7 @@ pub async fn process_webhook_response_task(
     println!("[PROCESS RESPONSE] Status code: {}", status_code);
     println!("[PROCESS RESPONSE] Content type: {}", content_type);
     println!("[PROCESS RESPONSE] Headers: {}", headers);
-    println!("[PROCESS RESPONSE] Body: {}", body);
+    println!("[PROCESS RESPONSE] Body: {}", tool_call_result);
 
     // Build response object
     let mut response = serde_json::Map::new();
@@ -177,20 +102,37 @@ pub async fn process_webhook_response_task(
     response.insert("headers".to_string(), Value::Object(headers_map));
 
     // Parse and add body if present
-    if !body.is_empty() {
+    if !tool_call_result.is_empty() {
+        let mut body_map = serde_json::Map::new();
+        let mut results_array = Vec::new();
+        let mut result_object = serde_json::Map::new();
+
         if content_type == "application/json" {
-            match deep_parse_json(&body) {
-                Ok(parsed_body) => {
-                    response.insert("body".to_string(), parsed_body);
+            match deep_parse_json(&tool_call_result) {
+                Ok(parsed_tool_call_response) => {
+                    // result_object.insert("toolCallId".to_string(), Value::String("1".to_string())); // TODO: Get actual tool call ID
+                    result_object.insert("result".to_string(), parsed_tool_call_response);
                 }
                 Err(e) => {
                     println!("[PROCESS RESPONSE] Failed to parse JSON body: {}", e);
-                    response.insert("body".to_string(), Value::String(body.to_string()));
+                    // result_object.insert("toolCallId".to_string(), Value::String("1".to_string())); // TODO: Get actual tool call ID
+                    result_object.insert(
+                        "result".to_string(),
+                        Value::String(tool_call_result.to_string()),
+                    );
                 }
             }
         } else {
-            response.insert("body".to_string(), Value::String(body.to_string()));
+            // result_object.insert("toolCallId".to_string(), Value::String("1".to_string())); // TODO: Get actual tool call ID
+            result_object.insert(
+                "result".to_string(),
+                Value::String(tool_call_result.to_string()),
+            );
         }
+
+        results_array.push(Value::Object(result_object));
+        body_map.insert("results".to_string(), Value::Array(results_array));
+        response.insert("body".to_string(), Value::Object(body_map));
     }
 
     println!("[PROCESS RESPONSE] Generated response: {:?}", response);

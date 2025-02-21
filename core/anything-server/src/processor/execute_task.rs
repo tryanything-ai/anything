@@ -13,7 +13,7 @@ use crate::system_plugins::http::http_plugin::process_http_task;
 use crate::system_plugins::javascript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
-
+use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
 use serde_json::{json, Value};
 
 use crate::types::action_types::ActionType;
@@ -64,7 +64,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                             .await
                         }
                         "@anything/agent_tool_call_response" => {
-                            process_webhook_response_task(
+                            process_tool_call_result_task(
                                 state_clone,
                                 task.flow_session_id.clone(),
                                 &bundled_plugin_cofig,
