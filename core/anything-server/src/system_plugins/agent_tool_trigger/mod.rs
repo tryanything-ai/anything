@@ -224,7 +224,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
             format!("Failed to send message to processor: {}", e),
         )
             .into_response();
-    }
+    }   
 
     println!("[TOOL_CALL_API] Waiting for workflow completion");
 

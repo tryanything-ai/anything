@@ -4,11 +4,6 @@ use axum::{
     Json,
 };
 
-use crate::{
-    types::action_types::{Action, ActionType, PluginName},
-    types::workflow_types::WorkflowVersionDefinition,
-};
-
 use serde_json::{json, Value};
 
 pub fn parse_tool_call_request_to_result(body: Json<Value>) -> (Value, String) {
