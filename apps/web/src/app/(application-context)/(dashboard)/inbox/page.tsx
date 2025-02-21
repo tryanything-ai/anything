@@ -20,8 +20,14 @@ interface CallCost {
 }
 
 interface Message {
-  role: "bot" | "user" | "system";
+  role: "bot" | "user" | "system" | "tool_calls" | "tool_call_result";
   message: string;
+  toolCalls?: {
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }[];
 }
 
 interface Call {
@@ -210,11 +216,40 @@ export default function InboxPage() {
                     .map((message, index) => (
                       <div key={index} className={`p-3`}>
                         <p
-                          className={`text-sm font-bold mb-1 ${message.role === "bot" ? "text-blue-600" : "text-green-600"}`}
+                          className={`text-sm font-bold mb-1 ${
+                            message.role === "bot" 
+                              ? "text-blue-600" 
+                              : message.role === "user"
+                              ? "text-green-600"
+                              : message.role === "tool_calls"
+                              ? "text-purple-600" 
+                              : message.role === "tool_call_result"
+                              ? "text-orange-600"
+                              : "text-gray-600"
+                          }`}
                         >
-                          {message.role === "bot" ? "Assistant" : "User"}
+                          {message.role === "bot" 
+                            ? "Assistant"
+                            : message.role === "user" 
+                            ? "User"
+                            : message.role === "tool_calls"
+                            ? "Tool Call"
+                            : message.role === "tool_call_result" 
+                            ? "Tool Result"
+                            : message.role}
                         </p>
-                        <p className="whitespace-pre-wrap">{message.message}</p>
+                        {message.role === "tool_calls" ? (
+                          <div className="text-sm">
+                            {message.toolCalls?.map((call, i) => (
+                              <div key={i} className="mb-2">
+                                <p className="font-medium">Function: {call.function.name}</p>
+                                <p className="text-gray-600">Args: {call.function.arguments}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap">{message.message}</p>
+                        )}
                       </div>
                     ))}
                 </div>

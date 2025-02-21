@@ -11,35 +11,43 @@ use crate::{
 
 use serde_json::{json, Value};
 
-pub fn parse_tool_call_request_to_result(body: Option<Json<Value>>) -> (Value, String) {
-    match body {
-        Some(Json(body)) => {
-            let tool_call_id = body.get("id").and_then(Value::as_str).unwrap_or_default();
+pub fn parse_tool_call_request_to_result(
+    body: Json<Value>,
+) -> (Value, String) {
+            // Get the call data
+            let call_data = body.get("message").and_then(|m| m.get("call")).cloned();
 
-            // Get the function arguments as a string
-            let arguments = body
-                .get("function")
-                .and_then(|f| f.get("arguments"))
-                .and_then(Value::as_str)
-                .unwrap_or("{}");
+            // Navigate through the nested structure to get to tool_calls
+            let tool_calls = body
+                .get("message")
+                .and_then(|m| m.get("tool_calls"))
+                .and_then(|tc| tc.get(0));
 
-            // Parse the arguments string into a Value
-            let mut parsed_args = serde_json::from_str::<Value>(arguments).unwrap_or(json!({}));
+            if let Some(tool_call) = tool_calls {
+                let tool_call_id = tool_call
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
 
-            // Add the tool_call_id to the arguments if parsed_args is an object
-            let result = if let Value::Object(ref mut map) = parsed_args {
-                map.insert("tool_call_id".to_string(), json!(tool_call_id));
-                Value::Object(map.clone())
+                // Get the function arguments
+                let arguments = tool_call
+                    .get("function")
+                    .and_then(|f| f.get("arguments"))
+                    .and_then(Value::as_str)
+                    .unwrap_or("{}");
+
+                // Parse the arguments string into a Value
+                let parsed_args = serde_json::from_str::<Value>(arguments).unwrap_or(json!({}));
+
+                // Create the result object with both arguments and call data
+                let result = json!({
+                    "arguments": parsed_args,
+                    "call": call_data
+                });
+
+                (result, tool_call_id.to_string())
             } else {
-                // If arguments wasn't an object, create a new object with just tool_call_id
-                json!({
-                    "tool_call_id": tool_call_id
-                })
-            };
-
-            (result, tool_call_id.to_string())
-        }
-        None => (json!({}), String::new()),
+        (json!({"arguments": {}, "call": call_data}), String::new())
     }
 }
 

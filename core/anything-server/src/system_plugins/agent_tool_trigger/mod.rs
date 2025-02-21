@@ -44,9 +44,11 @@ pub async fn run_workflow_as_tool_call_and_respond(
     Path((agent_id, workflow_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-    body: Option<Json<Value>>,
+    body: Json<Value>,
 ) -> impl IntoResponse {
     println!("[TOOL_CALL_API] Handling run workflow and respond");
+
+    println!("[TOOL_CALL_API] Call Body: {:?}", body);
 
     println!("[TOOL_CALL_API] Workflow ID: {}: ", workflow_id);
 
@@ -110,6 +112,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
     // Get account_id from workflow_version
     let account_id = workflow_version.account_id.clone();
 
+    println!("[TOOL_CALL_API] Workflow version: {:?}", workflow_version);
     // Parse the flow definition into a Workflow
     println!("[TOOL_CALL_API] Parsing workflow definition");
     // Validate the tool is has correct input and oupt nodes. Does not gurantee correct inputs ie rigth arguments
@@ -123,47 +126,18 @@ pub async fn run_workflow_as_tool_call_and_respond(
         Err(response) => return response.into_response(),
     };
 
+    println!("[TOOL_CALL_API] Trigger node: {:?}", trigger_node);
+
     let flow_session_id = Uuid::new_v4();
     let trigger_session_id = Uuid::new_v4();
 
-    //TODO: add agent id to the trigger input
-    let mut inputs = trigger_node.inputs.clone().unwrap();
-    inputs["agent_id"] = json!(agent_id);
 
     let task_config: TaskConfig = TaskConfig {
-        inputs: Some(inputs.clone()),
+        inputs: Some(trigger_node.inputs.clone().unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
         plugin_config: Some(trigger_node.plugin_config.clone()),
         plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
     };
-
-    // Bundle the context for the trigger node
-    // println!("[TOOL_CALL_API] Bundling context for trigger node");
-    // let rendered_inputs = match bundle_context_from_parts(
-    //     state.clone(),
-    //     &state.anything_client,
-    //     &account_id.to_string(),
-    //     &flow_session_id.to_string(),
-    //     Some(&inputs),
-    //     Some(&trigger_node.inputs_schema.clone().unwrap()),
-    //     Some(&trigger_node.plugin_config.clone()),
-    //     Some(&trigger_node.plugin_config_schema.clone()),
-    //     false,
-    // )
-    // .await
-    // {
-    //     Ok(context) => context,
-    //     Err(e) => {
-    //         println!("[TOOL_CALL_API] Failed to bundle context: {}", e);
-    //         return (
-    //             StatusCode::INTERNAL_SERVER_ERROR,
-    //             "Failed to bundle trigger context",
-    //         )
-    //             .into_response();
-    //     }
-    // };
-
-    // println!("[TOOL_CALL_API] Bundled context: {:?}", rendered_inputs);
 
     //TODO: take the input style from here https://docs.vapi.ai/server-url/events
     //And convert and simplify it to create the correct "result";
