@@ -48,7 +48,7 @@ pub struct AccountAuthProviderAccount {
     pub failed: bool,
     pub failed_reason: Option<String>,
     pub failure_retries: i32,
-    pub last_failure_retry: Option<DateTime<Utc>>
+    pub last_failure_retry: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone)]
@@ -397,21 +397,7 @@ pub async fn exchange_code_for_token(
 ) -> Result<OAuthToken, (StatusCode, String)> {
     let client = Client::new();
 
-    let request = client
-        .post(provider.token_url.clone())
-        .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
-
-    // // Add Authorization header if client_secret is present
-    // if let Some(client_secret) = &provider.client_secret {
-    //     let credentials = format!("{}:{}", provider.client_id, client_secret);
-    //     let encoded_credentials = URL_SAFE_NO_PAD.encode(credentials);
-    //     request = request.header(
-    //         header::AUTHORIZATION,
-    //         format!("Basic {}", encoded_credentials),
-    //     );
-    // }
-
-    let form_params = [
+    let mut form_params = vec![
         ("code", code),
         ("client_id", &provider.client_id),
         ("redirect_uri", redirect_uri),
@@ -419,9 +405,16 @@ pub async fn exchange_code_for_token(
         ("code_verifier", code_verifier),
     ];
 
+    // Add client_secret if present
+    if let Some(client_secret) = &provider.client_secret {
+        form_params.push(("client_secret", client_secret));
+    }
+
     println!("[AUTH INIT] token exchange form_params: {:?}", form_params);
 
-    let response = request
+    let response = client
+        .post(provider.token_url.clone())
+        .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
         .form(&form_params)
         .send()
         .await
@@ -452,6 +445,7 @@ pub async fn exchange_code_for_token(
                 format!("Failed to parse error response: {}", e),
             )
         })?;
+
         // println!("Parsed error response: {:?}", error);
 
         let status_code = if error.error == "invalid_client" {
