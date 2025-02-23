@@ -33,7 +33,6 @@ use auth::init::AuthState;
 
 mod system_plugins; 
 mod system_workflows;
-mod upgrade;
 mod processor;
 mod system_variables;
 mod workflows; 
