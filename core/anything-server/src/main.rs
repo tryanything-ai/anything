@@ -224,7 +224,7 @@ pub async fn root() -> impl IntoResponse {
     post(auth::providers::update_auth_provider_client_id),
     )
         .route("/auth/providers/:provider_name/client_secret_id/set",
-        post(auth::providers::update_auth_provider_client_secret_id),
+        post(auth::providers::set_auth_provider_client_secret_id),
     )
     //marketplace
     .route("/marketplace/actions", get(marketplace::actions::get_actions_from_marketplace))

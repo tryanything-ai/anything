@@ -162,43 +162,6 @@ pub async fn generate_unique_account_slug(
     (slug, human_readable_slug)
 }
 
-// pub async fn insert_secret_to_vault(
-//     client: &Postgrest,
-//     secret_name: &str,
-//     secret_value: &str,
-//     description: &str,
-// ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-//     dotenv().ok();
-//     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-//         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-//     let secret_input = CreateSecretInput {
-//         name: secret_name.to_string(),
-//         secret: secret_value.to_string(),
-//         description: description.to_string(),
-//     };
-
-//     println!("insert_secret rpc Input: {:?}", secret_input);
-
-//     let response = client
-//         .rpc(
-//             "insert_secret",
-//             serde_json::to_string(&secret_input).unwrap(),
-//         )
-//         .auth(supabase_service_role_api_key)
-//         .execute()
-//         .await?;
-
-//     let body = response.text().await?;
-
-//     println!("Response from vault insert: {:?}", body);
-
-//     let secret_vault_id = body.trim_matches('"').to_string();
-
-//     Ok(secret_vault_id)
-// }
-
-// use serde_json::Value;
 
 pub async fn insert_secret_to_vault(
     client: &Postgrest,

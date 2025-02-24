@@ -1,4 +1,4 @@
-use crate::auth::utils::update_secret_in_vault;
+use crate::auth::utils::{insert_secret_to_vault, update_secret_in_vault};
 use crate::AppState;
 use axum::{
     extract::{Path, State},
@@ -142,8 +142,6 @@ pub async fn set_auth_provider_client_id(
 ) -> impl IntoResponse {
     dotenv().ok();
     let cli_secret = env::var("CLI_SECRET").expect("CLI_SECRET must be set");
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     let client = &state.anything_client;
 
@@ -159,23 +157,16 @@ pub async fn set_auth_provider_client_id(
         separator = "_"
     );
 
-    // Insert client_id secret
-    let client_id_input = json!({
-        "name": vault_client_id_name,
-        "secret": payload.client_id,
-        "description": "Client ID for Auth Provider",
-    });
-
-    let client_id_response = match client
-        .rpc(
-            "insert_secret",
-            serde_json::to_string(&client_id_input).unwrap(),
-        )
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await
+    // Insert client_id secret using the utility function
+    let client_id_secret_vault_id = match insert_secret_to_vault(
+        client,
+        &vault_client_id_name,
+        &payload.client_id,
+        "Client ID for Auth Provider",
+    )
+    .await
     {
-        Ok(response) => response,
+        Ok(id) => id,
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -184,26 +175,6 @@ pub async fn set_auth_provider_client_id(
                 .into_response()
         }
     };
-
-    let client_id_body = match client_id_response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read client_id response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!(
-        "[PROVIDER SECRETS] Response from vault insert (client_id): {:?}",
-        client_id_body
-    );
-
-    let client_id_secret_vault_id = client_id_body.trim_matches('"');
-
-    //TODO: set vault ids in table
 
     let client = &state.anything_client;
 
@@ -250,15 +221,13 @@ pub async fn set_auth_provider_client_id(
     }
 }
 
-pub async fn update_auth_provider_client_secret_id(
+pub async fn set_auth_provider_client_secret_id(
     State(state): State<Arc<AppState>>,
     Path(auth_provider_name): Path<String>,
     Json(payload): Json<UpdateAuthProviderClientSecretPayload>,
 ) -> impl IntoResponse {
     dotenv().ok();
     let cli_secret = env::var("CLI_SECRET").expect("CLI_SECRET must be set");
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
 
     let client = &state.anything_client;
 
@@ -278,49 +247,24 @@ pub async fn update_auth_provider_client_secret_id(
         separator = "_"
     );
 
-    // Insert client_id secret
-    let client_secret_id_input = json!({
-        "name": vault_client_secret_id_name,
-        "secret": payload.client_secret_id,
-        "description": "Client Secret ID for Auth Provider",
-    });
-
-    let client_id_response = match client
-        .rpc(
-            "insert_secret",
-            serde_json::to_string(&client_secret_id_input).unwrap(),
-        )
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await
+    // Insert client_secret_id using the utility function
+    let client_id_secret_vault_id = match insert_secret_to_vault(
+        client,
+        &vault_client_secret_id_name,
+        &payload.client_secret_id,
+        "Client Secret ID for Auth Provider",
+    )
+    .await
     {
-        Ok(response) => response,
+        Ok(id) => id,
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to insert client_id secret",
+                "Failed to insert client_secret_id",
             )
                 .into_response()
         }
     };
-
-    let client_secret_id_body = match client_id_response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read client_id response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!(
-        "[PROVIDER SECRETS] Response from vault insert (client_secret_id): {:?}",
-        client_secret_id_body
-    );
-
-    let client_id_secret_vault_id = client_secret_id_body.trim_matches('"');
 
     let client = &state.anything_client;
 
