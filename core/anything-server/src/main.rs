@@ -39,6 +39,7 @@ mod workflows;
 mod actions; 
 mod tasks; 
 mod auth;
+mod vault;
 mod billing;
 mod email;
 mod bundler;
@@ -293,7 +294,6 @@ pub async fn root() -> impl IntoResponse {
         // Secrets
         .route("/account/:account_id/secrets", get(secrets::get_decrypted_secrets))
         .route("/account/:account_id/secret", post(secrets::create_secret))
-        .route("/account/:account_id/secret", put(secrets::update_secret))
         .route("/account/:account_id/secret/:id", delete(secrets::delete_secret))
         
         // User Facing API

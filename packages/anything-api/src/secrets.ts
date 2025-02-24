@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { mainModule } from 'process';
 
 const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 
@@ -162,40 +163,6 @@ export async function deleteSecret(supabase: SupabaseClient, account_id: string,
 
     } catch (error) {
         console.error('Error deleting Secret:', error);
-    } finally {
-    }
-}
-
-export async function updateSecret(supabase: SupabaseClient, account_id: string, secret_id: string, secret_vault_id: string, secret_value: string, secret_description: string) {
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        console.log('Updating Secret');
-
-        console.log('Session:', session);
-
-        if (session) {
-            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/secret`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `${session.access_token}`,
-                },
-                body: JSON.stringify({
-                    secret_id,
-                    secret_vault_id,
-                    secret_value,
-                    secret_description,
-                }),
-            });
-
-            const data = await response.json();
-            console.log('Data from /api/secret PUT:', data);
-            return data;
-        }
-
-    } catch (error) {
-        console.error('Error updating Secret:', error);
     } finally {
     }
 }

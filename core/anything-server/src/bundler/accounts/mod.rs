@@ -70,6 +70,7 @@ async fn fetch_accounts_from_db(
     account_id: &str,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
+    
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
 
     println!(

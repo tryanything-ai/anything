@@ -69,31 +69,6 @@ export default function AccountsPage(): JSX.Element {
     }
   };
 
-  const updateSecret = async (
-    secret_id: string,
-    secret_name: string,
-    secret_value: string,
-    secret_description: string,
-  ) => {
-    try {
-      if (!selectedAccount) {
-        console.error("No account selected");
-        return;
-      }
-      await api.secrets.updateSecret(
-        await createClient(),
-        selectedAccount.account_id,
-        secret_id,
-        secret_name,
-        secret_value,
-        secret_description,
-      );
-      fetchSecrets();
-    } catch (error) {
-      console.error("Error updating secret:", error);
-    }
-  };
-
   const askToDelete = (secret_id: string) => {
     setSecretIdToDelete(secret_id);
     setShowDeleteDialog(true);

@@ -38,6 +38,7 @@ pub struct AnythingCreateSecretInput {
     secret_description: String,
     account_id: String,
 }
+
 pub async fn create_secret(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
@@ -62,49 +63,29 @@ pub async fn create_secret(
         description: payload.secret_description.clone(),
     };
 
-    println!("insert_secret rpc Input?: {:?}", input);
-
-    //Get Special Priveledges by passing service_role in auth()
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    // Create Secret in Vault
-    let response = match client
-        .rpc("insert_secret", serde_json::to_string(&input).unwrap())
-        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
-        .execute()
-        .await
+    // Create Secret in Vault using utility function
+    let secret_vault_id = match crate::vault::insert_secret_to_vault(
+        client,
+        &input.name,
+        &input.secret,
+        &input.description,
+    )
+    .await
     {
-        Ok(response) => response,
+        Ok(id) => id,
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
+                "Failed to create secret in vault",
             )
                 .into_response()
         }
     };
-
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!("Response from vault insert: {:?}", body);
-
-    let secret_vault_id = body.trim_matches('"');
 
     let anything_secret_input = AnythingCreateSecretInput {
-        secret_id: secret_vault_id.to_string(), //use the same id in vault and public secrets table for dx
+        secret_id: secret_vault_id.clone(),
         secret_name: payload.secret_name.clone(),
-        vault_secret_id: secret_vault_id.to_string(), //vault_secret_id.clone(),
+        vault_secret_id: secret_vault_id,
         secret_description: payload.secret_description.clone(),
         account_id: account_id.clone(),
     };
@@ -192,58 +173,32 @@ pub async fn create_anything_api_key(
     // Generate a unique API key with a prefix for easy identification
     let api_key = format!("any_{}", uuid::Uuid::new_v4());
 
-    let input = CreateSecretInput {
-        name: vault_secret_name,
-        secret: api_key,
-        description: payload.secret_description.clone(),
-    };
-
-    println!("insert_secret rpc Input?: {:?}", input);
-
-    //Get Special Priveledges by passing service_role in auth()
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    // Create Secret in Vault
-    let response = match client
-        .rpc("insert_secret", serde_json::to_string(&input).unwrap())
-        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
-        .execute()
-        .await
+    // Create Secret in Vault using utility function
+    let secret_vault_id = match crate::vault::insert_secret_to_vault(
+        client,
+        &vault_secret_name,
+        &api_key,
+        &payload.secret_description,
+    )
+    .await
     {
-        Ok(response) => response,
+        Ok(id) => id,
         Err(_) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
+                "Failed to create secret in vault",
             )
                 .into_response()
         }
     };
-
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!("Response from vault insert: {:?}", body);
-
-    let secret_vault_id = body.trim_matches('"');
 
     let anything_secret_input = CreateAnythingApiKeySecretInput {
-        secret_id: secret_vault_id.to_string(), //use the same id in vault and public secrets table for dx
+        secret_id: secret_vault_id.clone(),
         secret_name: payload.secret_name.clone(),
-        vault_secret_id: secret_vault_id.to_string(), //vault_secret_id.clone(),
+        vault_secret_id: secret_vault_id,
         secret_description: payload.secret_description.clone(),
         account_id: account_id.clone(),
-        anything_api_key: true, //Important not to leak keys into the public secrets table
+        anything_api_key: true,
     };
 
     //Create Flow Version
@@ -435,150 +390,6 @@ pub struct ReadVaultDecryptedSecretInput {
     secret_uuid: String,
 }
 
-pub async fn update_secret(
-    State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-    Path(account_id): Path<String>,
-    headers: HeaderMap,
-    Json(payload): Json<UpdateSecretPayload>,
-) -> impl IntoResponse {
-    let read_secret_input = ReadVaultSecretInput {
-        secret_id: payload.secret_id.clone(),
-    };
-
-    //Get Special Priveledges by passing service_role in auth()
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    let client = &state.anything_client;
-
-    // Read Secret in Vault
-    let response = match client
-        .rpc(
-            "read_secret",
-            serde_json::to_string(&read_secret_input).unwrap(),
-        )
-        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response()
-        }
-    };
-
-    let vault_secret_body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!("Vault Secret Body: {:?}", vault_secret_body);
-
-    let vault_secret_json: serde_json::Value = serde_json::from_str(&vault_secret_body).unwrap();
-    let secret_name = vault_secret_json[0]["name"].as_str().unwrap_or_default();
-
-    println!("Secret Name: {:?}", secret_name);
-
-    println!("update_secret Input?: {:?}", payload);
-
-    let input = UpdateVaultSecretInput {
-        id: payload.secret_id.clone(),
-        secret: payload.secret_value.clone(),
-        name: secret_name.to_string(),
-        description: payload.secret_description.clone(),
-    };
-
-    println!("update_secret rpc Input?: {:?}", input);
-
-    // Create Secret in Vault
-    let response = match client
-        .rpc("update_secret", serde_json::to_string(&input).unwrap())
-        .auth(supabase_service_role_api_key.clone()) //Need to put service role key here I guess for it to show up current_setting in sql function
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response()
-        }
-    };
-
-    let update_secret_body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!("update_secret_body: {:?}", update_secret_body);
-
-    let anything_secret_input = UpdateAnythingSecretInput {
-        secret_description: payload.secret_description.clone(),
-    };
-
-    //Update Secret
-    let db_secret_response = match client
-        .from("secrets")
-        .auth(user.jwt.clone())
-        .eq("secret_id", &payload.secret_id.clone())
-        .eq("account_id", &account_id)
-        .update(serde_json::to_string(&anything_secret_input).unwrap())
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response()
-        }
-    };
-
-    let db_secret_body = match db_secret_response.text().await {
-        Ok(body) => body,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response()
-        }
-    };
-
-    println!("Update DB Secret Body: {:?}", db_secret_body);
-
-    // Invalidate the bundler secrets cache for this account after creating a new secret
-    // Only lock for the minimum time needed
-    {
-        let mut cache = state.bundler_secrets_cache.write().await;
-        cache.invalidate(&account_id);
-    }
-
-    Json(db_secret_body).into_response()
-}
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DeleteVaultSecretInput {
     secret_id: String,
@@ -643,6 +454,7 @@ pub async fn delete_secret(
     //If the user is allowed to delete the secret from the anything.secrets table the RLS policy means they are allowed to delete from vault.
     // It should fail if the user is not allowed to delete from the anything.secrets table
     // So this should be safe ( but i wish it was safer )
+    //TODO: protect this more. right now its a little open.
     //TODO: protect this more. right now its a little open.
     let input = DeleteVaultSecretInput {
         secret_id: secret_id.clone(),
