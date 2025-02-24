@@ -1,4 +1,4 @@
-use crate::auth::utils::insert_secret_to_vault;
+use crate::vault::insert_secret_to_vault;
 use crate::AppState;
 use axum::{
     extract::{Path, Query, State},

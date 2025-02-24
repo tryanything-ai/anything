@@ -9,10 +9,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
 
-use crate::auth::{
-    init::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken},
-    utils::update_secret_in_vault,
-};
+use crate::auth::init::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken};
+
+use crate::vault::update_secret_in_vault;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateAccountAuthProviderAccount {
