@@ -1,11 +1,11 @@
 use crate::auth::init::AccountAuthProviderAccount;
 use crate::AppState;
 use chrono::Utc;
-use postgrest::Postgrest;
-use std::sync::Arc;
 use dotenv::dotenv;
-use std::env;
+use postgrest::Postgrest;
 use serde_json::json;
+use std::env;
+use std::sync::Arc;
 use tracing::debug;
 
 pub mod accounts_cache;
@@ -56,7 +56,7 @@ pub async fn fetch_cached_auth_accounts(
         }
     }
 
-    //Update the cache  
+    //Update the cache
     {
         let mut cache = state.bundler_accounts_cache.write().await;
         cache.set(account_id, accounts.clone());
@@ -64,7 +64,6 @@ pub async fn fetch_cached_auth_accounts(
 
     Ok(accounts)
 }
-
 
 async fn fetch_accounts_from_db(
     client: &Postgrest,
@@ -88,11 +87,21 @@ async fn fetch_accounts_from_db(
         .await?;
 
     let body = response.text().await?;
+
+    // First check if we got an error response from the database
+    if let Ok(error_response) = serde_json::from_str::<serde_json::Value>(&body) {
+        if let Some(error_message) = error_response.get("message") {
+            debug!("[BUNDLER] Database error: {}", error_message);
+            return Err(format!("Database error: {}", error_message).into());
+        }
+    }
+
+    // If no error, try to parse as accounts
     let accounts: Vec<AccountAuthProviderAccount> = match serde_json::from_str(&body) {
         Ok(parsed) => parsed,
         Err(e) => {
-            println!("[BUNDLER] Error parsing auth accounts: {}", e);
-            println!("[BUNDLER] Response body: {}", body);
+            debug!("[BUNDLER] Error parsing auth accounts: {}", e);
+            debug!("[BUNDLER] Response body: {}", body);
             return Err(Box::new(e));
         }
     };
@@ -104,4 +113,3 @@ async fn fetch_accounts_from_db(
 
     Ok(accounts)
 }
-
