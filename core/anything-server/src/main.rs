@@ -314,7 +314,7 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/auth/providers", get(auth::providers::get_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
         .route(
             "/account/:account_id/auth/:provider_name/initiate",
-            get(auth::init::initiate_auth),
+            get(auth::init::generate_oauth_init_url_for_client),
         )
         //Test Workflows
         .route(

@@ -129,10 +129,10 @@ pub async fn handle_provider_callback(
     Query(params): Query<OAuthCallbackParams>,
 ) -> impl IntoResponse {
     println!(
-        "[AUTH INIT] Handling auth callback for provider: {:?}",
+        "[OAUTH] Starting OAuth callback handler for provider: {}",
         provider_name
     );
-    println!("[AUTH INIT] Params: {:?}", params);
+    println!("[OAUTH] Received callback parameters: {:?}", params);
 
     let client = &state.anything_client;
     let auth_states = &state.auth_states;
@@ -140,8 +140,10 @@ pub async fn handle_provider_callback(
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    println!("[OAUTH] Successfully loaded environment variables");
 
     // Get Provider details
+    println!("[OAUTH] Fetching provider details for: {}", provider_name);
     let response = match client
         .rpc(
             "get_decrypted_auth_provider_by_name",
@@ -151,48 +153,61 @@ pub async fn handle_provider_callback(
         .execute()
         .await
     {
-        Ok(response) => response,
-        Err(_) => {
+        Ok(response) => {
+            println!("[OAUTH] Successfully retrieved provider details");
+            response
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to get provider details: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    println!(
-        "[AUTH INIT] get_decryped_auth_provider Response: {:?}",
-        response
-    );
+    println!("[OAUTH] Provider details response: {:?}", response);
 
     let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
+        Ok(body) => {
+            println!("[OAUTH] Successfully read response body");
+            body
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to read response body: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    let auth_providers: Vec<AuthProvider> = match serde_json::from_str(&body) {
-        Ok(providers) => providers,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+    let auth_providers: Vec<AuthProvider> = match serde_json::from_str::<Vec<AuthProvider>>(&body) {
+        Ok(providers) => {
+            println!("[OAUTH] Successfully parsed auth providers");
+            providers
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to parse auth providers JSON: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
         }
     };
 
     let auth_provider = match auth_providers.into_iter().next() {
-        Some(provider) => provider,
-        None => return (StatusCode::NOT_FOUND, "Auth provider not found").into_response(),
+        Some(provider) => {
+            println!("[OAUTH] Found auth provider: {}", provider.provider_name);
+            provider
+        }
+        None => {
+            println!("[OAUTH] No auth provider found");
+            return (StatusCode::NOT_FOUND, "Auth provider not found").into_response();
+        }
     };
 
-    println!("[AUTH INIT] AuthProvider: {:?}", auth_provider);
-
     // Verify state from the database
-    // Retrieve the stored AuthState using the received state
+    println!("[OAUTH] Verifying state token");
     let auth_state = auth_states
         .read()
         .await
@@ -200,45 +215,63 @@ pub async fn handle_provider_callback(
         .cloned();
 
     let auth_state = match auth_state {
-        Some(state) => state,
-        None => return (StatusCode::BAD_REQUEST, "Invalid state").into_response(),
+        Some(state) => {
+            println!("[OAUTH] State verification successful");
+            state
+        }
+        None => {
+            println!("[OAUTH] Invalid state token received");
+            return (StatusCode::BAD_REQUEST, "Invalid state").into_response();
+        }
     };
 
     // Exchange code for token
-    // Use the stored code_verifier in the token exchange
+    println!("[OAUTH] Exchanging authorization code for tokens");
     let token = match exchange_code_for_token(
         &auth_provider,
         &params.code.as_deref().unwrap_or(""),
         &auth_provider.redirect_url,
-        &auth_state.code_verifier, // Use the stored code_verifier here
+        &auth_state.code_verifier,
     )
     .await
     {
-        Ok(token) => token,
-        Err(_) => {
+        Ok(token) => {
+            println!("[OAUTH] Successfully exchanged code for tokens");
+            token
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to exchange code for tokens: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to exchange code for token",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    println!("[AUTH INIT] Token: {:?}", token);
-
+    println!("[OAUTH] Generating unique account slug");
     let (account_slug, account_label) = generate_unique_account_slug(
         client,
         auth_provider.provider_label.as_str(),
         auth_state.account_id.as_str(),
     )
     .await;
+    println!(
+        "[OAUTH] Generated slug: {} and label: {}",
+        account_slug, account_label
+    );
 
     let refresh_token_expires_at = if let Some(refresh_token_lifetime) =
         auth_provider.refresh_token_lifetime_seconds.as_deref()
     {
         let refresh_token_lifetime: i64 = refresh_token_lifetime.parse().unwrap_or(0);
+        println!(
+            "[OAUTH] Refresh token lifetime: {} seconds",
+            refresh_token_lifetime
+        );
         Some(Utc::now() + chrono::Duration::seconds(refresh_token_lifetime))
     } else {
+        println!("[OAUTH] No refresh token lifetime specified");
         None
     };
 
@@ -246,23 +279,32 @@ pub async fn handle_provider_callback(
         auth_provider.access_token_lifetime_seconds.as_deref()
     {
         let access_token_lifetime: i64 = access_token_lifetime.parse().unwrap_or(0);
+        println!(
+            "[OAUTH] Access token lifetime: {} seconds",
+            access_token_lifetime
+        );
         Some(Utc::now() + chrono::Duration::seconds(access_token_lifetime))
     } else {
+        println!("[OAUTH] No access token lifetime specified");
         None
     };
 
     //Add access-token to vault
+    println!("[OAUTH] Storing access token in vault");
     let vault_access_token_name = slugify!(
         format!(
             "access_token_for_{}_for_account_{}",
-            account_slug.clone(), //change so we can have multiple per account //its not used for fetching just unique id
+            account_slug.clone(),
             auth_state.account_id.clone()
         )
         .as_str(),
         separator = "_"
     );
 
-    println!("Access Token Vault Name: {}", vault_access_token_name);
+    println!(
+        "[OAUTH] Access Token Vault Name: {}",
+        vault_access_token_name
+    );
 
     let access_token_vault_id = insert_secret_to_vault(
         client,
@@ -275,21 +317,28 @@ pub async fn handle_provider_callback(
     )
     .await
     .unwrap();
+    println!(
+        "[OAUTH] Access token stored with vault ID: {}",
+        access_token_vault_id
+    );
 
     //Add refresh token secret in vault
+    println!("[OAUTH] Storing refresh token in vault");
     let vault_refresh_token_name = slugify!(
         format!(
             "refresh_token_for_{}_for_account_{}",
-            account_slug.clone(), //
+            account_slug.clone(),
             auth_state.account_id.clone()
         )
         .as_str(),
         separator = "_"
     );
 
-    println!("Refresh Token Vault Name: {}", vault_refresh_token_name);
+    println!(
+        "[OAUTH] Refresh Token Vault Name: {}",
+        vault_refresh_token_name
+    );
 
-    // let refresh_token_vault_id = body.trim_matches('"');
     let refresh_token_vault_id = insert_secret_to_vault(
         client,
         &vault_refresh_token_name,
@@ -301,6 +350,10 @@ pub async fn handle_provider_callback(
     )
     .await
     .unwrap();
+    println!(
+        "[OAUTH] Refresh token stored with vault ID: {}",
+        refresh_token_vault_id
+    );
 
     let input = CreateAccountAuthProviderAccount {
         account_id: auth_state.account_id.clone(),
@@ -313,7 +366,11 @@ pub async fn handle_provider_callback(
         refresh_token_expires_at: refresh_token_expires_at.unwrap_or_else(Utc::now),
     };
 
-    println!("[AUTH INIT] Create Account Input: {:?}", input);
+    println!(
+        "[OAUTH] Creating account auth provider account with input: {:?}",
+        input
+    );
+
     // Store token in the database
     let create_account_response = match client
         .from("account_auth_provider_accounts")
@@ -322,31 +379,42 @@ pub async fn handle_provider_callback(
         .execute()
         .await
     {
-        Ok(response) => response,
-        Err(_) => {
+        Ok(response) => {
+            println!("[OAUTH] Successfully created account auth provider account");
+            response
+        }
+        Err(e) => {
+            println!(
+                "[OAUTH] Failed to create account auth provider account: {:?}",
+                e
+            );
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
     println!(
-        "[AUTH INIT] Create Account Response: {:?}",
+        "[OAUTH] Create Account Response: {:?}",
         create_account_response
     );
 
     // Invalidate the bundler secrets cache for this account after creating a new secret
-    // Only lock for the minimum time needed
+    println!(
+        "[OAUTH] Invalidating bundler secrets cache for account: {}",
+        auth_state.account_id
+    );
     {
         let mut cache = state.bundler_accounts_cache.write().await;
         cache.invalidate(&auth_state.account_id);
     }
+    println!("[OAUTH] Cache invalidated successfully");
 
     // Return success response
     if create_account_response.status().is_success() {
-        // Successful response
+        println!("[OAUTH] Authentication process completed successfully");
         let html = r#"
         <html>
         <body>
@@ -364,7 +432,7 @@ pub async fn handle_provider_callback(
 
         Html(html).into_response()
     } else {
-        // Error response
+        println!("[OAUTH] Authentication process failed");
         let html = r#"
         <html>
         <body>
@@ -395,6 +463,7 @@ pub async fn exchange_code_for_token(
     redirect_uri: &str,
     code_verifier: &str,
 ) -> Result<OAuthToken, (StatusCode, String)> {
+    println!("[OAUTH] Starting code exchange for token");
     let client = Client::new();
 
     let mut form_params = vec![
@@ -407,10 +476,15 @@ pub async fn exchange_code_for_token(
 
     // Add client_secret if present
     if let Some(client_secret) = &provider.client_secret {
+        println!("[OAUTH] Adding client secret to token request");
         form_params.push(("client_secret", client_secret));
     }
 
-    println!("[AUTH INIT] token exchange form_params: {:?}", form_params);
+    println!("[OAUTH] Token exchange form parameters: {:?}", form_params);
+    println!(
+        "[OAUTH] Making POST request to token URL: {}",
+        provider.token_url
+    );
 
     let response = client
         .post(provider.token_url.clone())
@@ -418,35 +492,41 @@ pub async fn exchange_code_for_token(
         .form(&form_params)
         .send()
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| {
+            println!("[OAUTH] Token exchange request failed: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
 
     let status = response.status();
-    println!("[AUTH INIT] Response status: {:?}", status);
+    println!("[OAUTH] Token exchange response status: {:?}", status);
 
     let body = response.text().await.map_err(|e| {
-        println!("[AUTH INIT] Error reading response body: {:?}", e);
+        println!(
+            "[OAUTH] Error reading token exchange response body: {:?}",
+            e
+        );
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
-    println!("[AUTH INIT] Response body: {:?}", body);
+    println!("[OAUTH] Token exchange response body: {:?}", body);
 
     if status.is_success() {
+        println!("[OAUTH] Token exchange successful, parsing response");
         serde_json::from_str::<OAuthToken>(&body).map_err(|e| {
-            println!("[AUTH INIT] Failed to parse token response: {:?}", e);
+            println!("[OAUTH] Failed to parse successful token response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse token response: {}", e),
             )
         })
     } else {
+        println!("[OAUTH] Token exchange failed, parsing error response");
         let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
-            println!("[AUTH INIT] Failed to parse error response: {:?}", e);
+            println!("[OAUTH] Failed to parse error response: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to parse error response: {}", e),
             )
         })?;
-
-        // println!("Parsed error response: {:?}", error);
 
         let status_code = if error.error == "invalid_client" {
             StatusCode::UNAUTHORIZED
@@ -455,23 +535,30 @@ pub async fn exchange_code_for_token(
         };
 
         println!(
-            "[AUTH INIT] Returning error with status code: {:?}, description: {:?}",
+            "[OAUTH] Returning error response - Status: {:?}, Description: {:?}",
             status_code, error.error_description
         );
         Err((status_code, error.error_description))
     }
 }
 
-pub async fn initiate_auth(
+pub async fn generate_oauth_init_url_for_client(
     Path((account_id, provider_name)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
+    println!(
+        "[OAUTH] Generating OAuth URL for account: {} and provider: {}",
+        account_id, provider_name
+    );
+
     let auth_states = &state.auth_states;
     // Generate a unique state parameter
     let state_string = generate_random_string(32);
     let code_verifier = generate_code_verifier();
-    // Use the account_id from the path parameter
-    let account_id = account_id.clone();
+    println!(
+        "[OAUTH] Generated state: {} and code verifier",
+        state_string
+    );
 
     let auth_state = AuthState {
         state: state_string.clone(),
@@ -480,19 +567,22 @@ pub async fn initiate_auth(
         created_at: Utc::now(),
     };
 
-    println!("[AUTH INIT] Auth State: {:?}", auth_state);
+    println!("[OAUTH] Created auth state: {:?}", auth_state);
 
     // Store the state in memory
     let mut auth_states_lock = auth_states.write().await;
     auth_states_lock.insert(state_string.clone(), auth_state);
+    println!("[OAUTH] Stored auth state in memory");
 
     let client = &state.anything_client;
 
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    println!("[OAUTH] Loaded environment variables");
 
     // Get Provider details
+    println!("[OAUTH] Fetching provider details for: {}", provider_name);
     let response = match client
         .rpc(
             "get_decrypted_auth_provider_by_name",
@@ -502,42 +592,45 @@ pub async fn initiate_auth(
         .execute()
         .await
     {
-        Ok(response) => response,
-        Err(_) => {
+        Ok(response) => {
+            println!("[OAUTH] Successfully retrieved provider details");
+            response
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to find provider: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to find that provider",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    println!(
-        "[AUTH INIT] get_decrypted_auth_provider_by_name Response: {:?}",
-        response
-    );
-
     let body = match response.text().await {
-        Ok(body) => body,
-        Err(_) => {
+        Ok(body) => {
+            println!("[OAUTH] Successfully read provider response body");
+            body
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to read provider response body: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
-    println!("[AUTH INIT] Body: {:?}", body);
-
-    let auth_providers: Vec<AuthProvider> = match serde_json::from_str(&body) {
-        Ok(providers) => providers,
-        Err(e) => {
+    let auth_providers: Vec<AuthProvider> = match serde_json::from_str::<Vec<AuthProvider>>(&body) {
+        Ok(providers) => {
             println!(
-                "[AUTH INIT] Failed to parse JSON for auth_providers: {:?}",
-                e
+                "[OAUTH] Successfully parsed {} auth providers",
+                providers.len()
             );
-            println!("[AUTH INIT] Raw body: {}", body);
+            providers
+        }
+        Err(e) => {
+            println!("[OAUTH] Failed to parse auth providers JSON: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse JSON for auth_providers",
@@ -547,32 +640,33 @@ pub async fn initiate_auth(
     };
 
     if auth_providers.is_empty() {
-        println!("[AUTH INIT] No auth providers found in parsed JSON");
+        println!("[OAUTH] No auth providers found");
         return (StatusCode::NOT_FOUND, "No auth providers found").into_response();
     }
 
-    println!("[AUTH INIT] Parsed {} auth providers", auth_providers.len());
-
     let auth_provider = match auth_providers.into_iter().next() {
-        Some(provider) => provider,
+        Some(provider) => {
+            println!("[OAUTH] Selected auth provider: {}", provider.provider_name);
+            provider
+        }
         None => {
-            println!("[AUTH INIT] No auth provider found after parsing");
+            println!("[OAUTH] No auth provider found after parsing");
             return (StatusCode::NOT_FOUND, "Auth provider not found").into_response();
         }
     };
 
-    println!("[AUTH INIT] Selected auth provider: {:?}", auth_provider);
-
     // Build the OAuth URL
+    println!("[OAUTH] Building OAuth URL");
     let client_id = auth_provider.client_id.clone();
     let redirect_uri = auth_provider.redirect_url.clone();
     let auth_url = auth_provider.auth_url.clone();
-
     let scope = auth_provider.scopes.clone();
-    let code_challenge = generate_code_challenge(&code_verifier).await; // Assuming you have a function to generate code challenge
+
+    println!("[OAUTH] Generating code challenge from verifier");
+    let code_challenge = generate_code_challenge(&code_verifier).await;
 
     let auth_url = format!(
-        "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}&code_challenge={}&code_challenge_method=S256",
+        "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}&code_challenge={}&code_challenge_method=S256&access_type=offline",
         auth_url,
         client_id,
         urlencoding::encode(redirect_uri.as_str()),
@@ -581,7 +675,7 @@ pub async fn initiate_auth(
         urlencoding::encode(&code_challenge)
     );
 
-    println!("[AUTH INIT] Auth URL: {}", auth_url);
+    println!("[OAUTH] Generated OAuth URL: {}", auth_url);
 
     Json(OAuthResponse { url: auth_url }).into_response()
 }
