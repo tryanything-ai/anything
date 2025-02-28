@@ -116,6 +116,10 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 {
                     "value": "airtable",
                     "title": "Airtable"
+                },
+                {
+                    "value": "google",
+                    "title": "Google"
                 }
             ],
             "x-jsf-presentation": { 
