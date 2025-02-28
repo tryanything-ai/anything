@@ -665,8 +665,11 @@ pub async fn generate_oauth_init_url_for_client(
     println!("[OAUTH] Generating code challenge from verifier");
     let code_challenge = generate_code_challenge(&code_verifier).await;
 
+    //access_type=offline is for google to provide refresh_token
+    //https://developers.google.com/identity/protocols/oauth2/web-server#httprest
+    //prompt=consent is for google to show the consent screen
     let auth_url = format!(
-        "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}&code_challenge={}&code_challenge_method=S256&access_type=offline",
+        "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}&code_challenge={}&code_challenge_method=S256&access_type=offline&prompt=consent",
         auth_url,
         client_id,
         urlencoding::encode(redirect_uri.as_str()),
