@@ -11,7 +11,11 @@ import { Button } from "@repo/ui/components/ui/button";
 import { usePostHog } from "posthog-js/react";
 import { MARKETING_EVENTS } from "../../posthog/events";
 
-export function Header({ stargazers_count }: { stargazers_count: number }) {
+export function Header({
+  stargazers_count,
+}: {
+  stargazers_count: number | null;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const posthog = usePostHog();
 
@@ -71,7 +75,9 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             </div>
           </Link>
           <div className="hidden sm:block">
-            <Stargazer count={stargazers_count} />
+            {stargazers_count !== null && (
+              <Stargazer count={stargazers_count} />
+            )}
           </div>
 
           {/* <Link
