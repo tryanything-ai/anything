@@ -25,6 +25,8 @@ export default async function PersonalAccountDashboard({
       name: "Automations",
       href: "/workflows",
     },
+    { name: "Campaigns", href: "/campaigns" },
+
     // {
     //   name: "Templates",
     //   href: "/templates",
