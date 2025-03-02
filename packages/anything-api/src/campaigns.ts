@@ -287,7 +287,7 @@ export const updateCampaign = async (
 
     if (session) {
       const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/campaign/${campaign_id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `${session.access_token}`,
@@ -304,3 +304,4 @@ export const updateCampaign = async (
     throw error;
   }
 };
+

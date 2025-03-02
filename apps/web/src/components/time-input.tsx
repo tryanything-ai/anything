@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@repo/ui/components/ui/input";
+import { Clock } from "lucide-react";
 
 interface TimeInputProps {
   id?: string;
@@ -7,6 +8,7 @@ interface TimeInputProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  showIcon?: boolean;
 }
 
 export function TimeInput({
@@ -15,6 +17,7 @@ export function TimeInput({
   onChange,
   disabled = false,
   className = "",
+  showIcon = true,
 }: TimeInputProps) {
   const [hours, setHours] = useState("09");
   const [minutes, setMinutes] = useState("00");
@@ -68,30 +71,33 @@ export function TimeInput({
   };
 
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
-      <Input
-        id={id ? `${id}-hours` : undefined}
-        type="number"
-        min={0}
-        max={23}
-        value={hours}
-        onChange={handleHoursChange}
-        disabled={disabled}
-        className="w-20"
-        placeholder="HH"
-      />
-      <span className="text-lg">:</span>
-      <Input
-        id={id ? `${id}-minutes` : undefined}
-        type="number"
-        min={0}
-        max={59}
-        value={minutes}
-        onChange={handleMinutesChange}
-        disabled={disabled}
-        className="w-20"
-        placeholder="MM"
-      />
+    <div className={`flex items-center ${className}`}>
+      {showIcon && <Clock className="w-4 h-4 text-orange-500 mr-2" />}
+      <div className="flex items-center border rounded-md px-3 py-2 bg-background">
+        <Input
+          id={id ? `${id}-hours` : undefined}
+          type="number"
+          min={0}
+          max={23}
+          value={hours}
+          onChange={handleHoursChange}
+          disabled={disabled}
+          className="w-12 border-0 p-0 text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+          placeholder="HH"
+        />
+        <span className="text-lg mx-1">:</span>
+        <Input
+          id={id ? `${id}-minutes` : undefined}
+          type="number"
+          min={0}
+          max={59}
+          value={minutes}
+          onChange={handleMinutesChange}
+          disabled={disabled}
+          className="w-12 border-0 p-0 text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+          placeholder="MM"
+        />
+      </div>
     </div>
   );
 }

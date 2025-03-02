@@ -27,6 +27,7 @@ import {
   Plus,
   Users,
   Clock,
+  Calendar,
 } from "lucide-react";
 import {
   Tabs,
@@ -44,6 +45,16 @@ import DeleteCampaignDialog from "@/components/campaigns/delete-campaign-dialog"
 // import { Progress } from "@repo/ui/components/ui/progress";
 import { Label } from "@repo/ui/components/ui/label";
 import { UploadContactsListDialog } from "@/components/campaigns/upload-contacts-list-dialog";
+import { TimeInput } from "@/components/time-input";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { ScheduleEditor } from "@/components/schedule-editor";
 
 interface Campaign {
   campaign_id: string;
@@ -113,6 +124,12 @@ export default function CampaignPage() {
   const [contactsLoading, setContactsLoading] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+  const [scheduleDays, setScheduleDays] = useState<string[]>([]);
+  const [scheduleStartTime, setScheduleStartTime] = useState("09:00:00");
+  const [scheduleEndTime, setScheduleEndTime] = useState("17:00:00");
+  const [timezone, setTimezone] = useState("America/New_York");
+  const [isUpdatingSchedule, setIsUpdatingSchedule] = useState(false);
 
   const {
     accounts: { selectedAccount },
@@ -161,6 +178,15 @@ export default function CampaignPage() {
     fetchCampaign();
   }, [selectedAccount, params.campaign_id]);
 
+  useEffect(() => {
+    if (campaign) {
+      setScheduleDays(campaign.schedule_days_of_week || []);
+      setScheduleStartTime(campaign.schedule_start_time || "09:00:00");
+      setScheduleEndTime(campaign.schedule_end_time || "17:00:00");
+      setTimezone(campaign.timezone || "America/New_York");
+    }
+  }, [campaign]);
+
   const handleToggleCampaignStatus = async () => {
     if (!selectedAccount || !campaign) return;
 
@@ -181,6 +207,66 @@ export default function CampaignPage() {
       console.error("Error updating campaign status:", error);
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleUpdateSchedule = async () => {
+    if (!selectedAccount || !campaign) {
+      console.log("Missing selectedAccount or campaign:", {
+        selectedAccount,
+        campaign,
+      });
+      return;
+    }
+
+    try {
+      console.log("Updating schedule with values:", {
+        scheduleDays,
+        scheduleStartTime,
+        scheduleEndTime,
+        timezone,
+      });
+
+      setIsUpdatingSchedule(true);
+
+      const client = await createClient();
+      console.log("Created API client");
+
+      await api.campaigns.updateCampaign(
+        client,
+        selectedAccount.account_id,
+        campaign.campaign_id,
+        {
+          schedule_days_of_week: scheduleDays,
+          schedule_start_time: scheduleStartTime,
+          schedule_end_time: scheduleEndTime,
+          timezone: timezone,
+        },
+      );
+
+      console.log("Successfully updated campaign schedule");
+
+      // Refresh campaign data
+      await fetchCampaign();
+      console.log("Refreshed campaign data");
+
+      setIsEditingSchedule(false);
+    } catch (error) {
+      console.error("Error updating campaign schedule:", error);
+      console.log("Full error details:", {
+        error,
+        // selectedAccount,
+        // campaign,
+        // scheduleData: {
+        //   scheduleDays,
+        //   scheduleStartTime,
+        //   scheduleEndTime,
+        //   timezone
+        // }
+      });
+    } finally {
+      setIsUpdatingSchedule(false);
+      console.log("Finished update attempt");
     }
   };
 
@@ -369,7 +455,7 @@ export default function CampaignPage() {
                             <span>{agent.agent_name}</span>
                           </div>
                           <Link
-                            href={`/agents/${agent[0]?.agent_id}`}
+                            href={`/agents/${agent.agent_id}`}
                             className="ml-2"
                           >
                             <Button variant="outline" size="icon">
@@ -381,33 +467,75 @@ export default function CampaignPage() {
                     )}
 
                     <div>
-                      <Label className="text-muted-foreground mb-1 block">
-                        Call Schedule
-                      </Label>
-                      <div className="px-3 py-2 rounded-md border">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-orange-500" />
-                            <span>
-                              {campaign.schedule_start_time?.substring(0, 5)} -{" "}
-                              {campaign.schedule_end_time?.substring(0, 5)}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              ({campaign.timezone})
-                            </span>
+                      <div className="flex justify-between items-center mb-1">
+                        <Label className="text-muted-foreground block">
+                          Call Schedule
+                        </Label>
+                        {isEditingSchedule ? (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsEditingSchedule(false)}
+                              disabled={isUpdatingSchedule}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={handleUpdateSchedule}
+                              disabled={
+                                isUpdatingSchedule || scheduleDays.length === 0
+                              }
+                            >
+                              {isUpdatingSchedule ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                                  Saving
+                                </>
+                              ) : (
+                                "Save"
+                              )}
+                            </Button>
                           </div>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {campaign.schedule_days_of_week?.map((day) => (
-                              <span
-                                key={day}
-                                className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
-                              >
-                                {day.substring(0, 3)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setIsEditingSchedule(true)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
+
+                      <ScheduleEditor
+                        days={
+                          isEditingSchedule
+                            ? scheduleDays
+                            : campaign?.schedule_days_of_week || []
+                        }
+                        startTime={
+                          isEditingSchedule
+                            ? scheduleStartTime
+                            : campaign?.schedule_start_time || "09:00:00"
+                        }
+                        endTime={
+                          isEditingSchedule
+                            ? scheduleEndTime
+                            : campaign?.schedule_end_time || "17:00:00"
+                        }
+                        timezone={
+                          isEditingSchedule
+                            ? timezone
+                            : campaign?.timezone || "America/New_York"
+                        }
+                        onDaysChange={setScheduleDays}
+                        onStartTimeChange={setScheduleStartTime}
+                        onEndTimeChange={setScheduleEndTime}
+                        onTimezoneChange={setTimezone}
+                        isEditing={isEditingSchedule}
+                      />
                     </div>
 
                     {contactCount > 0 ? (
@@ -548,7 +676,7 @@ export default function CampaignPage() {
                 <CardDescription>Manage your campaign settings</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
                     <Label htmlFor="campaign-name">Campaign Name</Label>
                     <Input
