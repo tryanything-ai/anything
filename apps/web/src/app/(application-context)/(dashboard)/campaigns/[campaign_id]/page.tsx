@@ -26,6 +26,7 @@ import {
   Play,
   Plus,
   Users,
+  Clock,
 } from "lucide-react";
 import {
   Tabs,
@@ -42,7 +43,7 @@ import {
 import DeleteCampaignDialog from "@/components/campaigns/delete-campaign-dialog";
 // import { Progress } from "@repo/ui/components/ui/progress";
 import { Label } from "@repo/ui/components/ui/label";
-import { UploadCustomerListDialog } from "@/components/campaigns/upload-customer-list-dialog";
+import { UploadContactsListDialog } from "@/components/campaigns/upload-contacts-list-dialog";
 
 interface Campaign {
   campaign_id: string;
@@ -50,17 +51,17 @@ interface Campaign {
   description: string;
   status: string;
   agent_id: string;
-  customer_list_id: string;
   created_at: string;
   updated_at: string;
-  agent?: {
-    agent_name: string;
+  schedule_days_of_week: string[];
+  schedule_start_time: string;
+  schedule_end_time: string;
+  timezone: string;
+  agents: {
     agent_id: string;
+    agent_name: string;
   };
-  customer_list?: {
-    list_name: string;
-    contact_count: number;
-  };
+  campaign_contacts: CampaignContact[];
   campaign_stats?: {
     total_calls: number;
     completed_calls: number;
@@ -69,15 +70,38 @@ interface Campaign {
   };
 }
 
-interface CustomerContact {
+interface CampaignContact {
+  campaign_contact_id: string;
+  campaign_id: string;
   contact_id: string;
-  first_name: string;
-  last_name: string;
-  phone_number: string;
-  email: string;
+  account_id: string;
   status: string;
-  call_attempts: number;
-  last_call_at: string | null;
+  active: boolean;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+  contacts: {
+    contact_id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    company: string;
+    title: string;
+    address: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    status: string;
+    source: string;
+    notes: string;
+    tags: string[];
+    custom_fields: any;
+    archived: boolean;
+    created_at: string;
+    updated_at: string;
+  };
 }
 
 export default function CampaignPage() {
@@ -85,7 +109,7 @@ export default function CampaignPage() {
   const router = useRouter();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [contacts, setContacts] = useState<CustomerContact[]>([]);
+  const [contacts, setContacts] = useState<CampaignContact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -159,6 +183,10 @@ export default function CampaignPage() {
       setIsUpdatingStatus(false);
     }
   };
+
+  // Add computed properties for agent and contact count
+  const agent = campaign?.agents; // Get the first agent from the agents array
+  const contactCount = contacts.length;
 
   if (isLoading) {
     return (
@@ -255,7 +283,7 @@ export default function CampaignPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {campaign.customer_list ? (
+                  {contactCount > 0 ? (
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between mb-2">
@@ -276,7 +304,7 @@ export default function CampaignPage() {
                             Total Contacts
                           </div>
                           <div className="text-2xl font-bold">
-                            {campaign.campaign_stats?.total_calls || 0}
+                            {contactCount}
                           </div>
                         </div>
                         <div className="bg-muted rounded-lg p-3">
@@ -308,16 +336,13 @@ export default function CampaignPage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center py-6">
                       <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-                      <h3 className="text-lg font-medium mb-2">
-                        No Customer List
-                      </h3>
+                      <h3 className="text-lg font-medium mb-2">No Contacts</h3>
                       <p className="text-sm text-muted-foreground text-center mb-4">
-                        You need to upload a customer list to start this
-                        campaign.
+                        You need to upload contacts to start this campaign.
                       </p>
                       <Button onClick={() => setUploadDialogOpen(true)}>
                         <FileUp className="w-4 h-4 mr-2" />
-                        Upload Customer List
+                        Upload Contacts
                       </Button>
                     </div>
                   )}
@@ -333,7 +358,7 @@ export default function CampaignPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {campaign.agent && (
+                    {agent && (
                       <div>
                         <Label className="text-muted-foreground mb-1 block">
                           Agent
@@ -341,10 +366,10 @@ export default function CampaignPage() {
                         <div className="flex items-center">
                           <div className="px-3 py-2 rounded-md border flex items-center gap-2 w-full">
                             <Phone className="w-4 h-4 text-blue-500" />
-                            <span>{campaign.agent.agent_name}</span>
+                            <span>{agent.agent_name}</span>
                           </div>
                           <Link
-                            href={`/agents/${campaign.agent.agent_id}`}
+                            href={`/agents/${agent[0]?.agent_id}`}
                             className="ml-2"
                           >
                             <Button variant="outline" size="icon">
@@ -355,17 +380,47 @@ export default function CampaignPage() {
                       </div>
                     )}
 
-                    {campaign.customer_list ? (
+                    <div>
+                      <Label className="text-muted-foreground mb-1 block">
+                        Call Schedule
+                      </Label>
+                      <div className="px-3 py-2 rounded-md border">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-orange-500" />
+                            <span>
+                              {campaign.schedule_start_time?.substring(0, 5)} -{" "}
+                              {campaign.schedule_end_time?.substring(0, 5)}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              ({campaign.timezone})
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {campaign.schedule_days_of_week?.map((day) => (
+                              <span
+                                key={day}
+                                className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+                              >
+                                {day.substring(0, 3)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {contactCount > 0 ? (
                       <div>
                         <Label className="text-muted-foreground mb-1 block">
-                          Customer List
+                          Contacts
                         </Label>
                         <div className="flex items-center">
                           <div className="px-3 py-2 rounded-md border flex items-center gap-2 w-full">
                             <Users className="w-4 h-4 text-purple-500" />
-                            <span>{campaign.customer_list.list_name}</span>
+                            <span>Campaign Contacts</span>
                             <span className="text-sm text-muted-foreground ml-auto">
-                              {campaign.customer_list.contact_count} contacts
+                              {contactCount} contacts
                             </span>
                           </div>
                           <Button
@@ -381,9 +436,9 @@ export default function CampaignPage() {
                     ) : (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>No customer list</AlertTitle>
+                        <AlertTitle>No contacts</AlertTitle>
                         <AlertDescription>
-                          Upload a customer list to start making calls.
+                          Upload contacts to start making calls.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -399,7 +454,7 @@ export default function CampaignPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Customer Contacts</CardTitle>
+                  <CardTitle>Contacts</CardTitle>
                   <CardDescription>
                     Manage the contacts in your campaign
                   </CardDescription>
@@ -421,12 +476,11 @@ export default function CampaignPage() {
                       No Contacts Yet
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Upload a CSV file with your customer contacts to get
-                      started.
+                      Upload a CSV file with your contacts to get started.
                     </p>
                     <Button onClick={() => setUploadDialogOpen(true)}>
                       <FileUp className="w-4 h-4 mr-2" />
-                      Upload Customer List
+                      Upload Contacts List
                     </Button>
                   </div>
                 ) : (
@@ -438,38 +492,42 @@ export default function CampaignPage() {
                       <div>Attempts</div>
                       <div>Last Call</div>
                     </div>
-                    {contacts.map((contact) => (
+                    {contacts.map((campaignContact) => (
                       <div
-                        key={contact.contact_id}
+                        key={campaignContact.contact_id}
                         className="grid grid-cols-6 gap-4 p-4 border-b last:border-0"
                       >
                         <div className="col-span-2">
-                          {contact.first_name} {contact.last_name}
+                          {campaignContact.contacts.first_name}{" "}
+                          {campaignContact.contacts.last_name}
                           <div className="text-sm text-muted-foreground">
-                            {contact.email}
+                            {campaignContact.contacts.email}
                           </div>
                         </div>
-                        <div>{contact.phone_number}</div>
+                        <div>{campaignContact.contacts.phone}</div>
                         <div>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              contact.status === "completed"
+                              campaignContact.status === "completed"
                                 ? "bg-green-100 text-green-800"
-                                : contact.status === "in_progress"
+                                : campaignContact.status === "in_progress"
                                   ? "bg-blue-100 text-blue-800"
-                                  : contact.status === "failed"
+                                  : campaignContact.status === "failed"
                                     ? "bg-red-100 text-red-800"
                                     : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {contact.status}
+                            {campaignContact.status}
                           </span>
                         </div>
-                        <div>{contact.call_attempts}</div>
                         <div>
-                          {contact.last_call_at
+                          {campaignContact.contacts.custom_fields
+                            ?.call_attempts || 0}
+                        </div>
+                        <div>
+                          {campaignContact.contacts.custom_fields?.last_call_at
                             ? new Date(
-                                contact.last_call_at,
+                                campaignContact.contacts.custom_fields.last_call_at,
                               ).toLocaleDateString()
                             : "Never"}
                         </div>
@@ -525,7 +583,7 @@ export default function CampaignPage() {
         </TabsContent>
       </Tabs>
 
-      <UploadCustomerListDialog
+      <UploadContactsListDialog
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         accountId={selectedAccount?.account_id || ""}

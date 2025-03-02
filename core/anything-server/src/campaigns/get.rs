@@ -79,7 +79,7 @@ pub async fn get_campaign(
     let response = match client
         .from("campaigns")
         .auth(&user.jwt)
-        .select("*")
+        .select("*, campaign_contacts(*), agents(*)")
         .eq("campaign_id", &campaign_id)
         .eq("account_id", &account_id)
         .single()

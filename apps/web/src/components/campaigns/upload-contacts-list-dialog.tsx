@@ -14,19 +14,19 @@ import Papa from "papaparse";
 import { createClient } from "@/lib/supabase/client";
 import api from "@repo/anything-api";
 
-interface UploadCustomerListDialogProps {
+interface UploadContactListDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
   campaignId: string;
 }
 
-export function UploadCustomerListDialog({
+export function UploadContactsListDialog({
   open,
   onOpenChange,
   accountId,
   campaignId,
-}: UploadCustomerListDialogProps) {
+}: UploadContactListDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
