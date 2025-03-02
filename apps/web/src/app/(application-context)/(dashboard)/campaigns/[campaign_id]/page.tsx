@@ -40,7 +40,7 @@ import {
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
 import DeleteCampaignDialog from "@/components/campaigns/delete-campaign-dialog";
-import { Progress } from "@repo/ui/components/ui/progress";
+// import { Progress } from "@repo/ui/components/ui/progress";
 import { Label } from "@repo/ui/components/ui/label";
 import { UploadCustomerListDialog } from "@/components/campaigns/upload-customer-list-dialog";
 
@@ -136,24 +136,6 @@ export default function CampaignPage() {
   useEffect(() => {
     fetchCampaign();
   }, [selectedAccount, params.campaign_id]);
-
-  const handleUploadCustomerList = async (file: File) => {
-    if (!selectedAccount || !campaign) return;
-
-    try {
-      await api.campaigns.uploadCustomerList(
-        await createClient(),
-        selectedAccount.account_id,
-        campaign.campaign_id,
-        file,
-      );
-
-      // Refresh campaign data after upload
-      fetchCampaign();
-    } catch (error) {
-      console.error("Error uploading customer list:", error);
-    }
-  };
 
   const handleToggleCampaignStatus = async () => {
     if (!selectedAccount || !campaign) return;
@@ -282,10 +264,10 @@ export default function CampaignPage() {
                             {completionPercentage}%
                           </span>
                         </div>
-                        <Progress
+                        {/* <Progress
                           value={completionPercentage}
                           className="h-2"
-                        />
+                        /> */}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mt-4">
@@ -546,7 +528,8 @@ export default function CampaignPage() {
       <UploadCustomerListDialog
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
-        onUpload={handleUploadCustomerList}
+        accountId={selectedAccount?.account_id || ""}
+        campaignId={campaign?.campaign_id || ""}
       />
     </div>
   );

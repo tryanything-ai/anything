@@ -1,0 +1,16 @@
+first_name,last_name,phone_number,email,company,job_title,lead_source,last_contact_date,notes
+John,Doe,+15551234567,john.doe@example.com,Acme Inc,CEO,Website,2023-10-15,Interested in enterprise plan
+Jane,Smith,+15559876543,jane.smith@example.com,Tech Solutions,CTO,Conference,2023-11-20,Follow up about API integration
+Michael,Johnson,+14155550123,michael.j@example.com,Global Corp,Director,Referral,2023-09-05,Needs demo of new features
+Emily,Williams,+16505551234,emily.w@example.com,Startup XYZ,Founder,LinkedIn,2023-12-01,Looking for pricing options
+David,Brown,+17185552345,,DataSystems,Manager,Trade Show,2023-08-10,No email - prefers phone calls
+Sarah,Miller,+19255553456,sarah.m@example.com,Innovate Co,VP Sales,,2023-11-15,High priority lead
+Robert,Davis,+12125554567,robert.d@example.com,Finance Plus,CFO,Email Campaign,2023-10-25,Budget approved for Q1
+Jennifer,Garcia,+13105555678,,Creative Design,Art Director,Partner Referral,2023-09-18,Prefers text messages
+William,Martinez,+16175556789,will.m@example.com,Education Now,Principal,Webinar,2023-12-05,Interested in bulk discount
+Elizabeth,Rodriguez,+19495557890,liz.r@example.com,Health Services,Director,Google Ads,2023-11-10,Requested case studies
+James,Hernandez,+12065558901,james.h@example.com,Legal Firm,Partner,Facebook,2023-10-12,Needs legal compliance info
+Patricia,Lopez,+13035559012,patricia.l@example.com,Retail Chain,Procurement,Twitter,2023-09-22,Looking for quick onboarding
+Richard,Gonzalez,+17705550123,rich.g@example.com,Manufacturing Inc,Operations,YouTube,2023-11-28,International expansion
+Linda,Wilson,+18585551234,,Consulting Group,Consultant,Podcast,2023-10-30,No email - left voicemail
+Thomas,Anderson,+16465552345,thomas.a@example.com,Tech Startup,Developer,GitHub,2023-12-08,Technical questions about API 

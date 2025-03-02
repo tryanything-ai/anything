@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS anything.campaigns
 (
     campaign_id uuid unique NOT NULL DEFAULT uuid_generate_v4() primary key,
@@ -11,6 +10,13 @@ CREATE TABLE IF NOT EXISTS anything.campaigns
     campaign_name TEXT NOT NULL,
     campaign_description TEXT NOT NULL,
     campaign_status TEXT NOT NULL, -- e.g. 'active', 'inactive', 'completed', etc
+    
+    -- Campaign scheduling settings - include all days as options
+    schedule_days_of_week TEXT[] DEFAULT ARRAY['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']::TEXT[],
+    schedule_start_time TIME DEFAULT '09:00:00',
+    schedule_end_time TIME DEFAULT '17:00:00',
+    timezone TEXT DEFAULT 'America/New_York',
+    
     active boolean not null default true,
     archived boolean not null default false,
 
@@ -24,6 +30,11 @@ CREATE TABLE IF NOT EXISTS anything.campaigns
     created_by uuid references auth.users(id)
 );
 
+-- Add comments to explain the scheduling columns
+COMMENT ON COLUMN anything.campaigns.schedule_days_of_week IS 'Array of days when the campaign is allowed to run, including weekends';
+COMMENT ON COLUMN anything.campaigns.schedule_start_time IS 'Time of day when the campaign can start making calls (local time in specified timezone)';
+COMMENT ON COLUMN anything.campaigns.schedule_end_time IS 'Time of day when the campaign should stop making calls (local time in specified timezone)';
+COMMENT ON COLUMN anything.campaigns.timezone IS 'Timezone for interpreting the schedule times (e.g., "America/New_York")';
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_campaigns_timestamp

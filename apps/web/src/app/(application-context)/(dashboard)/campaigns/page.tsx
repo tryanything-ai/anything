@@ -23,17 +23,12 @@ interface Campaign {
   campaign_name: string;
   description: string;
   agent_id: string;
-  customer_list_id: string;
   status: string;
   created_at: string;
   updated_at: string;
   agent?: {
     agent_name: string;
     agent_communication_channels?: any[];
-  };
-  customer_list?: {
-    list_name: string;
-    contact_count: number;
   };
 }
 
@@ -128,15 +123,6 @@ export default function CampaignsPage() {
                           <div className="px-2 py-1 font-medium flex items-center gap-2 rounded-full bg-blue-100 text-blue-800">
                             <Phone className="w-4 h-4" />{" "}
                             {campaign.agent.agent_name}
-                          </div>
-                        </div>
-                      )}
-                      {campaign.customer_list && (
-                        <div className="flex items-center">
-                          <div className="px-2 py-1 font-medium flex items-center gap-2 rounded-full bg-purple-100 text-purple-800">
-                            <Users className="w-4 h-4" />{" "}
-                            {campaign.customer_list.list_name} (
-                            {campaign.customer_list.contact_count} contacts)
                           </div>
                         </div>
                       )}

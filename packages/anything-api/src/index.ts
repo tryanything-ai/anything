@@ -11,6 +11,7 @@ import * as profiles from './profiles';
 import * as variables from './variable-explorer'; 
 import * as agents from './agents';
 import * as campaigns from './campaigns'; 
+import * as contacts from './contacts';
 
 
 const api = {
@@ -26,7 +27,8 @@ const api = {
   profiles,
   variables,
   agents,
-  campaigns
+  campaigns,
+  contacts,
 };
 
 export default api;

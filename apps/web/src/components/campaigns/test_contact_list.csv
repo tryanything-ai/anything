@@ -1,0 +1,16 @@
+first_name,last_name,phone_number,email,company,job_title,lead_source,last_contact_date,notes
+John,Doe,+15551234567,john.doe@example.com,Acme Inc,CEO,Website,2023-05-15,Interested in premium plan
+Jane,Smith,+15559876543,jane.smith@example.com,XYZ Corp,CTO,Referral,2023-06-20,Follow up about technical questions
+Michael,Johnson,+15552223333,michael.j@example.com,ABC Ltd,Manager,LinkedIn,2023-04-10,Requested demo
+Emily,Williams,+15554445555,emily.w@example.com,Tech Solutions,Director,Conference,2023-07-01,Met at TechConf 2023
+David,Brown,+15556667777,david.b@example.com,Global Services,VP Sales,Cold Call,2023-03-25,Potential enterprise client
+Sarah,Miller,+15558889999,sarah.m@example.com,Innovate Inc,Founder,Twitter,2023-06-05,Mentioned our product in tweet
+Robert,Wilson,+15551112222,,Smart Systems,Engineer,Webinar,2023-05-30,Attended product webinar
+Jennifer,Taylor,+15553334444,jennifer.t@example.com,Future Tech,Consultant,Email Campaign,2023-07-10,Responded to newsletter
+William,Anderson,+15555556666,,Data Insights,Analyst,Google Search,2023-04-15,Interested in analytics features
+Lisa,Thomas,+15557778888,lisa.t@example.com,Cloud Solutions,CIO,Partner Referral,2023-06-15,Working with our partner
+James,Jackson,+15559990000,james.j@example.com,Secure Networks,CISO,Security Forum,2023-05-20,Concerned about compliance
+Patricia,White,+15552221111,,Marketing Pro,CMO,Facebook Ad,2023-07-05,Clicked on ad for marketing features
+Richard,Harris,+15554443333,richard.h@example.com,Growth Ventures,Investor,Angel List,2023-04-20,Interested in our growth metrics
+Linda,Martin,+15556665555,linda.m@example.com,Education Plus,Director,Education Expo,2023-06-25,Looking for educational solutions
+Thomas,Thompson,+15558887777,thomas.t@example.com,Health Systems,Administrator,Healthcare Conference,2023-05-10,Needs HIPAA compliant solution 

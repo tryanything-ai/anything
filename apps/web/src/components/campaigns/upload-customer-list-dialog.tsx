@@ -10,22 +10,28 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { FileUp, X } from "lucide-react";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import Papa from "papaparse";
+import { createClient } from "@/lib/supabase/client";
+import api from "@repo/anything-api";
 
 interface UploadCustomerListDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpload: (file: File) => Promise<void>;
+  accountId: string;
+  campaignId: string;
 }
 
 export function UploadCustomerListDialog({
   open,
   onOpenChange,
-  onUpload,
+  accountId,
+  campaignId,
 }: UploadCustomerListDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -75,14 +81,75 @@ export function UploadCustomerListDialog({
 
     try {
       setIsUploading(true);
-      await onUpload(file);
+      setParseError(null);
 
-      alert("Customer list uploaded successfully");
+      // Parse the CSV file
+      const parse_result = await new Promise<Papa.ParseResult<any>>(
+        (resolve, reject) => {
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: resolve,
+            error: reject,
+          });
+        },
+      );
+
+      // Transform the parsed data into the format expected by our API
+      const contacts = parse_result.data.map((row) => ({
+        name: `${row.first_name || ""} ${row.last_name || ""}`.trim(),
+        phone_number: row.phone_number,
+        email: row.email || undefined,
+        additional_data: Object.keys(row)
+          .filter(
+            (key) =>
+              !["first_name", "last_name", "phone_number", "email"].includes(
+                key,
+              ),
+          )
+          .reduce(
+            (obj, key) => {
+              obj[key] = row[key];
+              return obj;
+            },
+            {} as Record<string, any>,
+          ),
+      }));
+
+      // Filter out entries without phone numbers
+      const validContacts = contacts.filter((contact) => contact.phone_number);
+
+      if (validContacts.length === 0) {
+        setParseError(
+          "No valid contacts found. Ensure your CSV has a phone_number column.",
+        );
+        setIsUploading(false);
+        return;
+      }
+
+      // Use our new function to add contacts with deduplication
+      const result = await api.campaigns.addContactsToCampaignWithDeduplication(
+        await createClient(),
+        accountId,
+        campaignId,
+        validContacts,
+      );
+
+      console.log(
+        "[CAMPAIGN] Successfully added contacts to campaign:",
+        result,
+      );
+
+      // Show success message with counts from the response
+      alert(`Successfully processed ${validContacts.length} contacts:
+      - ${result.created_contacts} new contacts created
+      - ${result.existing_contacts} existing contacts found
+      - ${result.added_to_campaign} contacts added to campaign`);
 
       onOpenChange(false);
     } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("There was an error uploading your customer list");
+      console.error("Error processing file:", error);
+      setParseError("There was an error processing your customer list");
     } finally {
       setIsUploading(false);
     }
@@ -164,6 +231,12 @@ export function UploadCustomerListDialog({
               </>
             )}
           </div>
+
+          {parseError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{parseError}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <DialogFooter>

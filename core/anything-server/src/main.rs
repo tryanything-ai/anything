@@ -55,6 +55,8 @@ mod templater;
 mod testing; 
 mod trigger_engine;
 mod agents; 
+mod campaigns;
+mod contacts;
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
@@ -267,6 +269,21 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/triggers", get(actions::get_triggers))
         .route("/account/:account_id/other", get(actions::get_other_actions))
 
+        // Campaigns routes
+        .route("/account/:account_id/campaigns", get(campaigns::get_campaigns))
+        .route("/account/:account_id/campaign/:campaign_id", get(campaigns::get_campaign))
+        .route("/account/:account_id/campaign", post(campaigns::create_campaign))
+        .route("/account/:account_id/campaign/:campaign_id", put(campaigns::update_campaign))
+
+        .route("/account/:account_id/campaign/:campaign_id", delete(campaigns::delete_campaign))
+        .route("/account/:account_id/campaign/:campaign_id/status", put(campaigns::update_campaign_status))
+        
+        // Campaign contacts routes
+        .route("/account/:account_id/campaign/:campaign_id/contacts", get(campaigns::get_campaign_contacts))
+        .route("/account/:account_id/campaign/:campaign_id/contacts", post(campaigns::add_contacts_to_campaign))
+        .route("/account/:account_id/campaign/:campaign_id/contact/:contact_id", delete(campaigns::remove_contact_from_campaign))
+        .route("/account/:account_id/campaign/:campaign_id/contacts/create", post(campaigns::create_and_add_contacts_to_campaign))
+
         //Marketplace && Templates
         .route(
             "/account/:account_id/marketplace/workflow/:workflow_id/version/:workflow_version_id/publish",
@@ -369,6 +386,12 @@ pub async fn root() -> impl IntoResponse {
         //Calls
         .route("/account/:account_id/calls", get(agents::vapi::get_vapi_calls))
 
+        // Contacts routes
+        .route("/account/:account_id/contacts", get(contacts::get_contacts))
+        .route("/account/:account_id/contact/:contact_id", get(contacts::get_contact))
+        .route("/account/:account_id/contact", post(contacts::create_contact))
+        .route("/account/:account_id/contact/:contact_id", put(contacts::update_contact))
+        .route("/account/:account_id/contact/:contact_id", delete(contacts::delete_contact))
 
         .layer(middleware::from_fn_with_state(
             state.clone(),
