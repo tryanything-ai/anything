@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS anything.campaigns
     campaign_status TEXT NOT NULL, -- e.g. 'active', 'inactive', 'completed', etc
     
     -- Campaign scheduling settings - include all days as options
-    schedule_days_of_week TEXT[] DEFAULT ARRAY['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']::TEXT[],
+    schedule_days_of_week TEXT[] DEFAULT ARRAY['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']::TEXT[],
     schedule_start_time TIME DEFAULT '09:00:00',
     schedule_end_time TIME DEFAULT '17:00:00',
     timezone TEXT DEFAULT 'America/New_York',

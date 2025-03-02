@@ -304,4 +304,51 @@ export const updateCampaign = async (
     throw error;
   }
 };
+/**
+ * Removes a contact from a campaign
+ * 
+ * @param supabase - Supabase client
+ * @param account_id - Account ID 
+ * @param campaign_id - Campaign ID
+ * @param contact_id - Contact ID
+ */
+export const removeContactFromCampaign = async (
+  supabase: SupabaseClient,
+  account_id: string, 
+  campaign_id: string,
+  contact_id: string
+) => {
+  console.log('[CAMPAIGN] Removing contact from campaign', {
+    account_id,
+    campaign_id,
+    contact_id
+  });
 
+  if (!ANYTHING_API_URL) {
+    console.error('[CAMPAIGN] ANYTHING_API_URL is not defined');
+    throw new Error('ANYTHING_API_URL is not defined');
+  }
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/campaign/${campaign_id}/contact/${contact_id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to remove contact from campaign: ${errorText}`);
+      }
+
+      console.log('[CAMPAIGN] Successfully removed contact from campaign');
+    }
+  } catch (error) {
+    console.error('[CAMPAIGN] Error removing contact from campaign:', error);
+    throw error;
+  }
+};

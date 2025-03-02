@@ -28,6 +28,7 @@ import {
   Users,
   Clock,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import {
   Tabs,
@@ -55,6 +56,16 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { ScheduleEditor } from "@/components/schedule-editor";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 
 interface Campaign {
   campaign_id: string;
@@ -130,6 +141,9 @@ export default function CampaignPage() {
   const [scheduleEndTime, setScheduleEndTime] = useState("17:00:00");
   const [timezone, setTimezone] = useState("America/New_York");
   const [isUpdatingSchedule, setIsUpdatingSchedule] = useState(false);
+  const [contactToRemove, setContactToRemove] =
+    useState<CampaignContact | null>(null);
+  const [isRemovingContact, setIsRemovingContact] = useState(false);
 
   const {
     accounts: { selectedAccount },
@@ -246,23 +260,23 @@ export default function CampaignPage() {
 
       console.log("Successfully updated campaign schedule");
 
-      // Refresh campaign data
-      await fetchCampaign();
-      console.log("Refreshed campaign data");
+      // Update the campaign object locally instead of fetching again
+      if (campaign) {
+        setCampaign({
+          ...campaign,
+          schedule_days_of_week: scheduleDays,
+          schedule_start_time: scheduleStartTime,
+          schedule_end_time: scheduleEndTime,
+          timezone: timezone,
+        });
+      }
 
+      // Exit edit mode
       setIsEditingSchedule(false);
     } catch (error) {
       console.error("Error updating campaign schedule:", error);
       console.log("Full error details:", {
         error,
-        // selectedAccount,
-        // campaign,
-        // scheduleData: {
-        //   scheduleDays,
-        //   scheduleStartTime,
-        //   scheduleEndTime,
-        //   timezone
-        // }
       });
     } finally {
       setIsUpdatingSchedule(false);
@@ -273,6 +287,33 @@ export default function CampaignPage() {
   // Add computed properties for agent and contact count
   const agent = campaign?.agents; // Get the first agent from the agents array
   const contactCount = contacts.length;
+
+  const handleRemoveContact = async () => {
+    if (!selectedAccount || !campaign || !contactToRemove) return;
+
+    try {
+      setIsRemovingContact(true);
+
+      await api.campaigns.removeContactFromCampaign(
+        await createClient(),
+        selectedAccount.account_id,
+        campaign.campaign_id,
+        contactToRemove.contact_id,
+      );
+
+      // Update local state to remove the contact
+      setContacts(
+        contacts.filter((c) => c.contact_id !== contactToRemove.contact_id),
+      );
+
+      // Clear the contact to remove
+      setContactToRemove(null);
+    } catch (error) {
+      console.error("Error removing contact from campaign:", error);
+    } finally {
+      setIsRemovingContact(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -613,17 +654,18 @@ export default function CampaignPage() {
                   </div>
                 ) : (
                   <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 p-4 font-medium border-b">
+                    <div className="grid grid-cols-7 gap-4 p-4 font-medium border-b">
                       <div className="col-span-2">Name</div>
                       <div>Phone</div>
                       <div>Status</div>
                       <div>Attempts</div>
                       <div>Last Call</div>
+                      {/* <div className="text-right">Actions</div> */}
                     </div>
                     {contacts.map((campaignContact) => (
                       <div
                         key={campaignContact.contact_id}
-                        className="grid grid-cols-6 gap-4 p-4 border-b last:border-0"
+                        className="grid grid-cols-7 gap-4 p-4 border-b last:border-0"
                       >
                         <div className="col-span-2">
                           {campaignContact.contacts.first_name}{" "}
@@ -658,6 +700,17 @@ export default function CampaignPage() {
                                 campaignContact.contacts.custom_fields.last_call_at,
                               ).toLocaleDateString()
                             : "Never"}
+                        </div>
+                        <div className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setContactToRemove(campaignContact)}
+                            disabled={isRemovingContact}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -717,6 +770,47 @@ export default function CampaignPage() {
         accountId={selectedAccount?.account_id || ""}
         campaignId={campaign?.campaign_id || ""}
       />
+
+      <AlertDialog
+        open={!!contactToRemove}
+        onOpenChange={(open) => !open && setContactToRemove(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Contact</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove{" "}
+              <span className="font-medium">
+                {contactToRemove?.contacts.first_name}{" "}
+                {contactToRemove?.contacts.last_name}
+              </span>{" "}
+              from this campaign? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemovingContact}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveContact();
+              }}
+              disabled={isRemovingContact}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isRemovingContact ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                "Remove"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
