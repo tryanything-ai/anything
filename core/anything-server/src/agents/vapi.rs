@@ -426,3 +426,57 @@ pub async fn get_vapi_calls(
 
     Json(Value::Array(all_calls)).into_response()
 }
+
+pub async fn start_outbound_call(
+    state: Arc<AppState>,
+    agent_id: String,
+    account_phone_number_id: String,
+    destination_phone_number: String,
+   
+) -> Result<Value> {
+    let vapi_api_key = std::env::var("VAPI_API_KEY")
+        .map_err(|_| anyhow::anyhow!("VAPI_API_KEY environment variable not found"))?;
+
+    let client = Client::new();
+    println!("[OUTBOUND_CALL] Sending request to start outbound call");
+
+    let payload = json!({
+        "customer": {
+            "number": destination_phone_number
+        },
+        "phoneNumberId": account_phone_number_id,
+        "assistantId": agent_id
+    });
+
+    println!("[OUTBOUND_CALL] Payload: {:?}", payload);
+
+    let response = client
+        .post("https://api.vapi.ai/call")
+        .header("Authorization", format!("Bearer {}", vapi_api_key))
+        .header("Content-Type", "application/json")
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("[OUTBOUND_CALL] Failed to send request to VAPI: {}", e))?;
+
+    let response_json = response
+        .json::<Value>()
+        .await
+        .map_err(|e| anyhow::anyhow!("[OUTBOUND_CALL] Failed to parse VAPI response: {}", e))?;
+
+    println!("[OUTBOUND_CALL] Response JSON: {:?}", response_json);
+    if response_json.get("error").is_some() {
+        let error_message = response_json
+            .get("message")
+            .and_then(|m| match m {
+                Value::Array(arr) => arr.first().and_then(Value::as_str).map(String::from),
+                Value::String(s) => Some(s.clone()),
+                _ => None,
+            })
+            .unwrap_or_else(|| "Unknown error".to_string());
+        println!("[OUTBOUND_CALL] Error from VAPI: {}", error_message);
+        return Err(anyhow::anyhow!("{}", error_message));
+    }
+
+    Ok(response_json)
+}

@@ -42,6 +42,8 @@ export const fieldsMap: { [key: string]: any } = {
   //Simple inputs
   text: CodeMirrorFieldText,
   account: FieldAccount,
+  agent: FieldAgent,
+  account_phone_number: FieldAccountPhoneNumber,
   error: FieldUnknown,
 };
 
@@ -396,6 +398,235 @@ function FieldAccount({
         </>
       )}
       {/* <Label htmlFor={name}>{label}</Label> */}
+
+      {(touched || submited) && error && (
+        <div className="text-red-500" id={`${name}-error`}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldAgent({
+  type,
+  name,
+  label,
+  description,
+  value,
+  isVisible,
+  error,
+  submited,
+  onChange,
+  onValueChange,
+  required,
+  ...props
+}: any) {
+  const [touched, setTouched] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [agents, setAgents] = useState<any[]>([]);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
+
+  if (!isVisible) return null;
+
+  function handleValueChange(e: any) {
+    console.log("[AGENT FORM FIELD] Value changed:", e);
+    if (!touched) setTouched(true);
+    onValueChange(e);
+  }
+
+  const getAgents = async () => {
+    try {
+      if (!selectedAccount) return;
+      const fetchedAgents = await api.agents.getAgents(
+        await createClient(),
+        selectedAccount.account_id,
+      );
+      console.log("[AGENT FORM FIELD] Agents response:", fetchedAgents);
+      setAgents(fetchedAgents);
+      setHydrated(true);
+    } catch (e) {
+      console.log("[AGENT FORM FIELD] Error getting agents:", e);
+    }
+  };
+
+  useEffect(() => {
+    getAgents();
+  }, []);
+
+  return (
+    <div className="grid gap-3 my-4">
+      <Label htmlFor={name}>
+        {label}{" "}
+        <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+          agent
+        </span>
+      </Label>
+      {!hydrated ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          {agents.length === 0 ? (
+            <div className="flex flex-row items-center border rounded-md p-2">
+              <div className="text-xl ml-2">Create an Agent First</div>
+              <div className="ml-auto">
+                <Link href="/agents">
+                  <Button variant="outline">Create Agent</Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <Select value={value} onValueChange={handleValueChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={description} />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.map((agent) => (
+                  <SelectItem key={agent.agent_id} value={agent.agent_id}>
+                    <div className="flex flex-row items-center">
+                      <div className="text-lg">{agent.agent_name}</div>
+                    </div>
+                  </SelectItem>
+                ))}
+                <div className="border-t my-2 mb-2" />
+                <div className="">
+                  <div className="flex flex-row">
+                    <div className="text-lg flex items-center">
+                      Create New Agent
+                    </div>
+                    <div className="ml-auto">
+                      <Link href="/agents">
+                        <Button variant="outline">Create Agent</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </SelectContent>
+            </Select>
+          )}
+        </>
+      )}
+
+      {(touched || submited) && error && (
+        <div className="text-red-500" id={`${name}-error`}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldAccountPhoneNumber({
+  type,
+  name,
+  label,
+  description,
+  value,
+  isVisible,
+  error,
+  submited,
+  onChange,
+  onValueChange,
+  required,
+  ...props
+}: any) {
+  const [touched, setTouched] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [phoneNumbers, setPhoneNumbers] = useState<any[]>([]);
+  const {
+    accounts: { selectedAccount },
+  } = useAnything();
+
+  if (!isVisible) return null;
+
+  function handleValueChange(e: any) {
+    console.log("[PHONE NUMBER FORM FIELD] Value changed:", e);
+    if (!touched) setTouched(true);
+    onValueChange(e);
+  }
+
+  const getPhoneNumbers = async () => {
+    try {
+      if (!selectedAccount) return;
+      const fetchedPhoneNumbers = await api.agents.getAccountPhoneNumbers(
+        await createClient(),
+        selectedAccount.account_id,
+      );
+      console.log(
+        "[PHONE NUMBER FORM FIELD] Phone numbers response:",
+        fetchedPhoneNumbers,
+      );
+      setPhoneNumbers(fetchedPhoneNumbers);
+      setHydrated(true);
+    } catch (e) {
+      console.log("[PHONE NUMBER FORM FIELD] Error getting phone numbers:", e);
+    }
+  };
+
+  useEffect(() => {
+    getPhoneNumbers();
+  }, []);
+
+  return (
+    <div className="grid gap-3 my-4">
+      <Label htmlFor={name}>
+        {label}{" "}
+        <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
+          phone number
+        </span>
+      </Label>
+      {!hydrated ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          {phoneNumbers.length === 0 ? (
+            <div className="flex flex-row items-center border rounded-md p-2">
+              <div className="text-xl ml-2">Add a Phone Number First</div>
+              <div className="ml-auto">
+                <Link href="/phone-numbers">
+                  <Button variant="outline">Add Phone Number</Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <Select value={value} onValueChange={handleValueChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={description} />
+              </SelectTrigger>
+              <SelectContent>
+                {phoneNumbers.map((number) => (
+                  <SelectItem
+                    key={number.phone_number_id}
+                    value={number.phone_number_id}
+                  >
+                    <div className="flex flex-row items-center">
+                      <div className="text-lg">{number.phone_number}</div>
+                      <div className="text-sm text-muted-foreground ml-2">
+                        {number.locality}
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+                <div className="border-t my-2 mb-2" />
+                <div className="">
+                  <div className="flex flex-row">
+                    <div className="text-lg flex items-center">
+                      Add New Phone Number
+                    </div>
+                    <div className="ml-auto">
+                      <Link href="/phone-numbers">
+                        <Button variant="outline">Add Number</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </SelectContent>
+            </Select>
+          )}
+        </>
+      )}
 
       {(touched || submited) && error && (
         <div className="text-red-500" id={`${name}-error`}>

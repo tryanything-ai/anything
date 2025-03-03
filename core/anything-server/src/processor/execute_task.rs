@@ -9,11 +9,12 @@ use crate::system_plugins::formatter_actions::{
 };
 use crate::system_plugins::webhook_response::process_webhook_response_task;
 
+use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
+use crate::system_plugins::calls::outbound_call::process_outbound_call_task;
 use crate::system_plugins::http::http_plugin::process_http_task;
 use crate::system_plugins::javascript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
-use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
 use serde_json::{json, Value};
 
 use crate::types::action_types::ActionType;
@@ -71,6 +72,9 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                             )
                             .await
                         }
+                        "@anything/outbound_call" => {
+                            process_outbound_call_task(state_clone, &bundled_plugin_cofig).await
+                        }
                         "@anything/format_text" => process_text_task(&bundled_plugin_cofig),
                         "@anything/format_date" => process_date_task(&bundled_plugin_cofig),
                         _ => {
@@ -104,15 +108,15 @@ pub fn process_missing_plugin(
     plugin_id: &str,
     task_id: &str,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    Ok(Some(json!({
-        "message": format!("Processed task {} :: plugin_id {} does not exist.", task_id, plugin_id)
-    })))
+    Err(format!(
+        "Failed to process task {}: plugin_id {} does not exist",
+        task_id, plugin_id
+    )
+    .into())
 }
 
 pub fn process_no_plugin_name(
     task_id: &str,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    Ok(Some(json!({
-        "message": format!("Processed task {} :: no plugin_id found.", task_id)
-    })))
+    Err(format!("Failed to process task {}: no plugin_id specified", task_id).into())
 }

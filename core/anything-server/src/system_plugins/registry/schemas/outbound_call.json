@@ -1,0 +1,131 @@
+{
+    "type": "action", 
+    "featured": false, 
+    "action_template_definition": 
+    {
+      "anything_action_version": "0.1.0",
+      "type": "action",
+      "plugin_name": "@anything/outbound_call",
+      "plugin_version": "0.1.0",
+      "action_id": "outbound_call",
+      "label": "Outbound Call",
+      "description": "Make an outbound call",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-phone-outgoing\"><polyline points=\"22 8 22 2 16 2\"/><line x1=\"16\" x2=\"22\" y1=\"8\" y2=\"2\"/><path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"/></svg>",
+      "inputs": {
+        "account_phone_number_id": "",
+        "destination_phone_number": "",
+        "agent_id": ""
+      },
+      "inputs_locked": false,
+      "inputs_schema": {
+        "type": "object",
+        "properties": {
+          "destination_phone_number": {
+            "type": "string",
+            "title": "Phone Number",
+            "default": "",
+            "x-jsf-presentation": {
+                "inputType": "text"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
+          },
+          "account_phone_number_id": {
+            "type": "string",
+            "title": "Account Phone Number ID",
+            "default": "",  
+            "x-jsf-presentation": {
+                "inputType": "account_phone_number"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
+          },
+          "agent_id": {
+            "type": "string",
+            "title": "Agent ID",
+            "default": "",
+            "x-jsf-presentation": {
+                "inputType": "agent"
+              },
+              "x-any-validation": {
+                "type": "string"
+              }
+          }
+        },      
+        "required": ["destination_phone_number", "agent_id", "account_phone_number_id"],
+        "x-jsf-order": ["agent_id", "account_phone_number_id", "destination_phone_number"]
+      },
+      "inputs_schema_locked": true,
+      "plugin_config": {
+        "destination_phone_number": "{{inputs.destination_phone_number}}",
+        "agent_id": "{{inputs.agent_id}}",
+        "account_phone_number_id": "{{inputs.account_phone_number_id}}"
+      },
+      "plugin_config_locked": true,
+      "plugin_config_schema": {
+        "type": "object",
+        "properties": {
+          "destination_phone_number": {
+             "title": "Phone Number",
+              "description": "Phone number to call",
+              "type": "string",
+              "default": "{{inputs.destination_phone_number}}",
+              "x-jsf-presentation": {
+                "inputType": "text"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
+          },
+          "account_phone_number_id": {
+            "title": "Account Phone Number ID",
+            "description": "Account phone number ID to use for the call",
+            "type": "string",
+            "default": "{{inputs.account_phone_number_id}}",
+            "x-jsf-presentation": {
+                "inputType": "text"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
+          },
+          "agent_id": {
+            "title": "Agent ID",
+            "description": "Agent ID to use for the call",
+            "type": "string",
+            "default": "{{inputs.agent_id}}",
+            "x-jsf-presentation": {
+                "inputType": "text"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
+          }
+        },
+        "x-jsf-order": ["agent_id", "account_phone_number_id", "destination_phone_number"],
+        "required": ["destination_phone_number", "agent_id", "account_phone_number_id"],
+        "additionalProperties": false
+      },
+      "plugin_config_schema_locked": true,
+      "presentation": {
+        "position": {
+          "x": 300,
+          "y": 100
+        }
+      },
+      "handles": [
+        {
+          "id": "a", 
+          "type": "target",
+          "position": "top"
+        },
+        {
+          "id": "b",
+          "type": "source",
+          "position": "bottom"
+        }
+      ]
+    }
+}
