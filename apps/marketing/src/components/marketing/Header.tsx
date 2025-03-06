@@ -40,7 +40,7 @@ export function Header({
   };
 
   return (
-    <header className="text-slate-900 border-b border-slate-200 bg-white py-3 font-sans">
+    <header className="text-slate-900 border-b border-slate-200 bg-white py-4 font-sans sticky top-0 z-50 shadow-sm">
       <nav
         className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8"
         aria-label="Global"
@@ -69,9 +69,6 @@ export function Header({
               <span className="font-bold tracking-tight text-xl">
                 Anything AI
               </span>
-              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded-full hidden sm:inline-block">
-                beta
-              </span>
             </div>
           </Link>
           <div className="hidden sm:block">
@@ -80,31 +77,34 @@ export function Header({
             )}
           </div>
 
-          {/* <Link
-            href="/templates/workflows"
-            className="-m-1.5 p-1.5 lg:flex hidden"
-            onClick={() => handleLinkClick(MARKETING_EVENTS.TEMPLATE_VIEW)}
-          >
-            <span className="sr-only">Templates</span>
-            <div className="flex gap-2 ml-4">
-              <span className="text-base font-medium">Templates</span>
-            </div>
-          </Link>
-          <Link
-            href="/templates/actions"
-            className="-m-1.5 p-1.5 lg:flex hidden"
-            onClick={() => handleLinkClick(MARKETING_EVENTS.INTEGRATION_VIEW)}
-          >
-            <span className="sr-only">Integrations</span>
-            <div className="flex gap-2 ml-4">
-              <span className="text-base font-medium">Integrations</span>
-            </div>
-          </Link> */}
+          {/* <div className="hidden lg:flex space-x-6 ml-6">
+            <Link
+              href="/features"
+              className="text-base font-medium text-slate-700 hover:text-purple-600 transition-colors"
+              onClick={() => handleLinkClick(MARKETING_EVENTS.FEATURE_VIEW)}
+            >
+              Features
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-base font-medium text-slate-700 hover:text-purple-600 transition-colors"
+              onClick={() => handleLinkClick(MARKETING_EVENTS.PRICING_VIEW)}
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/about"
+              className="text-base font-medium text-slate-700 hover:text-purple-600 transition-colors"
+              onClick={() => handleLinkClick(MARKETING_EVENTS.ABOUT_VIEW)}
+            >
+              About
+            </Link>
+          </div> */}
         </div>
 
         <div className="flex items-center ml-auto">
           <Button
-            className="h-11 mr-2 rounded-full hidden sm:inline-flex"
+            className="h-11 mr-3 rounded-full hidden sm:inline-flex hover:bg-purple-50 hover:text-purple-600 transition-colors"
             variant="outline"
             onClick={handleLogin}
           >
@@ -135,10 +135,10 @@ export function Header({
               className="-m-1.5 p-1.5"
               onClick={() => handleLinkClick(MARKETING_EVENTS.HOME_VIEW)}
             >
-              <span className="sr-only">Anything</span>
+              <span className="sr-only">Anything AI</span>
               <div className="flex gap-2">
                 <span className="text-xl font-bold tracking-tight text-slate-900">
-                  Anything
+                  Anything AI
                 </span>
               </div>
             </Link>
@@ -156,65 +156,57 @@ export function Header({
               <VscClose className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          {/* <div className="flex items-center justify-between mt-10">
+
+          {/* <div className="mt-8 space-y-6">
             <Link
-              href="/templates/workflows"
-              className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
-              onClick={() => handleLinkClick(MARKETING_EVENTS.TEMPLATE_VIEW)}
+              href="/features"
+              className="block text-base font-medium text-slate-900 hover:text-purple-600 transition-colors"
+              onClick={() => handleLinkClick(MARKETING_EVENTS.FEATURE_VIEW)}
             >
-              <span className="sr-only">Templates</span>
-              <div className="flex gap-2">
-                <span className="text-base font-medium">Templates</span>
-              </div>
+              Features
             </Link>
-          </div>
-          <div className="flex items-center justify-between mt-10">
             <Link
-              href="/templates/actions"
-              className="-m-1.5 p-1.5 text-slate-900 hover:text-slate-600 transition-colors duration-200"
-              onClick={() => handleLinkClick(MARKETING_EVENTS.INTEGRATION_VIEW)}
+              href="/pricing"
+              className="block text-base font-medium text-slate-900 hover:text-purple-600 transition-colors"
+              onClick={() => handleLinkClick(MARKETING_EVENTS.PRICING_VIEW)}
             >
-              <span className="sr-only">Integrations</span>
-              <div className="flex gap-2">
-                <span className="text-base font-medium">Integrations</span>
-              </div>
+              Pricing
+            </Link>
+            <Link
+              href="/about"
+              className="block text-base font-medium text-slate-900 hover:text-purple-600 transition-colors"
+              onClick={() => handleLinkClick(MARKETING_EVENTS.ABOUT_VIEW)}
+            >
+              About
             </Link>
           </div> */}
 
-          <div className="flex items-center justify-between mt-10">
+          <div className="mt-8 flex flex-col space-y-4">
+            <Button
+              className="w-full rounded-full justify-center"
+              variant="outline"
+              onClick={handleLogin}
+            >
+              Login
+            </Button>
+            <Button
+              className="w-full rounded-full justify-center bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={handleSignup}
+            >
+              Get Started
+            </Button>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-200">
             <a
               href="https://github.com/tryanything-ai/anything"
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
-              role="button"
-              tabIndex={0}
+              className="flex items-center text-slate-700 hover:text-slate-900 transition-colors"
               onClick={handleGithub}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleGithub();
-                }
-              }}
             >
-              <span className="sr-only">GitHub</span>
-              <FaGithub className="h-6 w-6" aria-hidden="true" />
+              <FaGithub className="h-5 w-5 mr-2" />
+              <span>GitHub</span>
             </a>
           </div>
-          {/* <div className="flex items-center justify-between mt-10">
-            <a
-              href="https://discord.gg/VRBKaqjprE"
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-600 hover:text-slate-900 transition-colors duration-200"
-              role="button"
-              tabIndex={0}
-              onClick={handleDiscord}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleDiscord();
-                }
-              }}
-            >
-              <span className="sr-only">Discord</span>
-              <FaDiscord className="h-6 w-6" aria-hidden="true" />
-            </a>
-          </div> */}
         </Dialog.Panel>
       </Dialog>
     </header>
