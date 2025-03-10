@@ -1,24 +1,28 @@
 use crate::processor::execute_task::execute_task;
 use crate::processor::flow_session_cache::FlowSessionData;
-use crate::processor::parsing_utils::get_trigger_node;
+use crate::processor::utils::{
+    create_workflow_graph, get_trigger_node, get_workflow_and_tasks_from_cache,
+    is_already_processing,
+};
 use crate::AppState;
 use chrono::Utc;
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
 use uuid::Uuid;
 
 use crate::processor::db_calls::{
     create_task, get_workflow_definition, update_flow_session_status, update_task_status,
 };
+
 use crate::types::{
     action_types::ActionType,
     task_types::{
-        CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+        CreateTaskInput, FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus,
+        TriggerSessionStatus,
     },
-    workflow_types::WorkflowVersionDefinition,
+    workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
 };
 
 // Add this near your other type definitions
@@ -63,21 +67,8 @@ pub async fn processor(
         println!("[PROCESSOR] Received workflow_id: {}", flow_session_id);
 
         // Check if this flow session is already being processed
-        {
-            // Use a scope block to automatically drop the lock when done
-            let mut active_sessions = active_flow_sessions.lock().await;
-            if !active_sessions.insert(flow_session_id) {
-                println!(
-                    "[PROCESSOR] Flow session {} is already being processed, skipping",
-                    flow_session_id
-                );
-                continue;
-            }
-            println!(
-                "[PROCESSOR] Added flow session {} to active sessions",
-                flow_session_id
-            );
-            // Lock is automatically dropped here at end of scope
+        if is_already_processing(&active_flow_sessions, flow_session_id).await {
+            continue; //SKIP. We are already processing
         }
 
         // Clone what we need for the new task
@@ -98,80 +89,21 @@ pub async fn processor(
                 flow_session_id
             );
 
-            let mut workflow_definition = None;
-            let mut cached_tasks = None;
-
-            // Try to get from cache first using a read lock
+            // Get workflow definition and cached tasks
+            let (workflow, cached_tasks) = match get_workflow_and_tasks_from_cache(
+                &state,
+                flow_session_id,
+                &workflow_id,
+                &version_id,
+            )
+            .await
             {
-                let cache = state.flow_session_cache.read().await;
-                println!(
-                    "[PROCESSOR] Checking cache for flow_session_id: {}",
-                    flow_session_id
-                );
-                if let Some(session_data) = cache.get(&flow_session_id) {
-                    if let Some(workflow) = &session_data.workflow {
-                        println!(
-                            "[PROCESSOR] Found workflow in cache for flow_session_id: {}",
-                            flow_session_id
-                        );
-                        workflow_definition = Some(workflow.clone());
-                    }
-                    //When we hydrate old tasks this will have items init from hydrate_processor
-                    cached_tasks = Some(session_data.tasks);
-                }
-            }
-
-            // Only fetch flow definition from DB if we didn't find it in cache
-            if workflow_definition.is_none() {
-                println!(
-                "[PROCESSOR] No workflow found in cache, fetching from DB for flow_session_id: {}",
-                flow_session_id
-            );
-
-                let workflow =
-                    match get_workflow_definition(state.clone(), &workflow_id, version_id.as_ref())
-                        .await
-                    {
-                        Ok(w) => {
-                            println!("[PROCESSOR] Successfully fetched workflow from DB");
-                            w
-                        }
-                        Err(e) => {
-                            println!("[PROCESSOR] Error getting workflow definition: {}", e);
-                            return;
-                        }
-                    };
-
-                // Only update cache if there isn't already data there
-                //TODO: this feels like it could be wrong. In what situation is do we need to fetch worfklow but also no session in cache yet?
-                {
-                    let mut cache = state.flow_session_cache.write().await;
-                    if cache.get(&flow_session_id).is_none() {
-                        println!("[PROCESSOR] Creating new session data in cache");
-                        let session_data = FlowSessionData {
-                            workflow: Some(workflow.clone()),
-                            tasks: HashMap::new(),
-                            flow_session_id,
-                            workflow_id,
-                            workflow_version_id: version_id,
-                        };
-                        cache.set(&flow_session_id, session_data);
-                    }
-                }
-
-                workflow_definition = Some(workflow);
-            }
-
-            println!(
-                "[PROCESSOR] Workflow definition status: {:?}",
-                workflow_definition.is_some()
-            );
-
-            let workflow = match &workflow_definition {
-                Some(w) => w,
-                None => {
-                    println!("[PROCESSOR] No workflow definition found");
-                    //This should never happen
+                Ok((workflow, cached_tasks)) => (workflow, cached_tasks),
+                Err(e) => {
+                    println!("[PROCESSOR] Cannot process workflow: {}", e);
+                    // Clean up active sessions before returning
+                    active_flow_sessions.lock().await.remove(&flow_session_id);
+                    drop(permit);
                     return;
                 }
             };
@@ -272,6 +204,8 @@ pub async fn processor(
                             "[PROCESSOR] All existing tasks completed, finding next task after: {}",
                             task.task_id
                         );
+
+                        //TODO: manage conditional situations here
                         // Find the next action after this completed task using the graph
                         let graph = create_workflow_graph(&workflow.flow_definition);
                         if let Some(neighbors) = graph.get(&task.action_id) {
@@ -613,18 +547,4 @@ pub async fn processor(
     }
 
     Ok(())
-}
-
-/// Creates a graph representation of the workflow
-pub fn create_workflow_graph(
-    workflow_def: &WorkflowVersionDefinition,
-) -> HashMap<String, Vec<String>> {
-    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
-    for edge in &workflow_def.edges {
-        graph
-            .entry(edge.source.clone())
-            .or_insert_with(Vec::new)
-            .push(edge.target.clone());
-    }
-    graph
 }

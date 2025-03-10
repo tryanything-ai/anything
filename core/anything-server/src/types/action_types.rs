@@ -78,7 +78,7 @@ pub enum ActionType {
     Trigger,  // Trigger action
     Action,   // General action
     Loop,     // Loop action
-    Decision, // Decision action
+    // Decision, // Decision action
     Filter,   // Filter action
     Response, // Response action for making api endpoints
     Input,    // Input action for subflows
@@ -93,7 +93,7 @@ impl ActionType {
             ActionType::Response => "response",
             ActionType::Action => "action",
             ActionType::Loop => "loop",
-            ActionType::Decision => "decision",
+            // ActionType::Decision => "decision",
             ActionType::Filter => "filter",
             ActionType::Output => "output",
         }

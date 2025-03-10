@@ -63,3 +63,5 @@ dist-ssr
 .envrc
 
 **/tsconfig.tsbuildinfo
+
+.history

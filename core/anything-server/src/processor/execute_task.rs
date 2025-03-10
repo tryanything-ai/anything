@@ -15,6 +15,7 @@ use crate::types::task_types::Task;
 use crate::AppState;
 use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
 use serde_json::{json, Value};
+use crate::system_plugins::filter::process_filter_task;
 
 use crate::types::action_types::ActionType;
 
@@ -49,6 +50,9 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                     Some(plugin_name) => match plugin_name.as_str() {
                         "@anything/http" => {
                             process_http_task(&http_client, &bundled_plugin_cofig).await
+                        }
+                        "@anything/filter" => {
+                            process_filter_task(&bundled_plugin_cofig)
                         }
                         //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
                         //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.
