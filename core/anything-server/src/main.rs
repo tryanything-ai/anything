@@ -426,6 +426,9 @@ pub async fn root() -> impl IntoResponse {
     // Spawn the hydrate processor
     tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
 
+    // Spawn the campaign engine
+    // tokio::spawn(campaigns::campaign_engine_loop(state.clone()));
+
     let state_clone = state.clone();
     tokio::spawn(async move {
         let mut sigterm = signal(SignalKind::terminate()).unwrap();

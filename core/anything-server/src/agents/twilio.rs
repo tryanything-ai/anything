@@ -84,6 +84,8 @@ pub async fn purchase_phone_number(
 
     let client = Client::new();
 
+    //TODO: shut off machine detection?
+    
     // Purchase the phone number
     let response = match client
         .post(&format!(

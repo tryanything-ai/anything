@@ -599,7 +599,7 @@ function FieldAccountPhoneNumber({
                 {phoneNumbers.map((number) => (
                   <SelectItem
                     key={number.phone_number_id}
-                    value={number.phone_number_id}
+                    value={`${number.phone_number_id}`}
                   >
                     <div className="flex flex-row items-center">
                       <div className="text-lg">{number.phone_number}</div>
@@ -609,8 +609,8 @@ function FieldAccountPhoneNumber({
                     </div>
                   </SelectItem>
                 ))}
-                <div className="border-t my-2 mb-2" />
-                <div className="">
+                {/* <div className="border-t my-2 mb-2" /> */}
+                {/* <div className="">
                   <div className="flex flex-row">
                     <div className="text-lg flex items-center">
                       Add New Phone Number
@@ -621,7 +621,7 @@ function FieldAccountPhoneNumber({
                       </Link>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </SelectContent>
             </Select>
           )}

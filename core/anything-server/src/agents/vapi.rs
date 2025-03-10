@@ -9,6 +9,7 @@ use axum::{
 use futures::future::join_all;
 use reqwest::Client;
 use serde_json::{json, Value};
+use std::env;
 use std::sync::Arc;
 
 use crate::supabase_jwt_middleware::User;
@@ -432,23 +433,63 @@ pub async fn start_outbound_call(
     agent_id: String,
     account_phone_number_id: String,
     destination_phone_number: String,
-   
 ) -> Result<Value> {
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
+
     let vapi_api_key = std::env::var("VAPI_API_KEY")
         .map_err(|_| anyhow::anyhow!("VAPI_API_KEY environment variable not found"))?;
 
-    let client = Client::new();
+    let supabase_client = &state.anything_client;
     println!("[OUTBOUND_CALL] Sending request to start outbound call");
 
+    let twilio_account_sid = std::env::var("TWILIO_ACCOUNT_SID")
+        .map_err(|_| anyhow::anyhow!("TWILIO_ACCOUNT_SID environment variable not found"))?;
+    let twilio_auth_token = std::env::var("TWILIO_AUTH_TOKEN")
+        .map_err(|_| anyhow::anyhow!("TWILIO_AUTH_TOKEN environment variable not found"))?;
+
+    let response = supabase_client
+        .from("phone_numbers")
+        .auth(supabase_service_role_api_key.clone())
+        .eq("phone_number_id", account_phone_number_id)
+        .select("*")
+        .single()
+        .execute()
+        .await
+        .map_err(|e| anyhow::anyhow!("[VAPI] Failed to fetch phone number: {}", e))?;
+
+    let phone_number_body = response.text().await?;
+    println!("[OUTBOUND_CALL] Phone number body: {}", phone_number_body);
+    let phone_number: Value = serde_json::from_str(&phone_number_body)?;
+    println!("[OUTBOUND_CALL] Phone number: {:?}", phone_number);
+
+    let account_phone_number = phone_number
+        .get("phone_number")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
+    println!(
+        "[OUTBOUND_CALL] Account phone number: {}",
+        account_phone_number
+    );
+
+    //TODO: Use phone number as one off phone number vs "number connected to an agent"
     let payload = json!({
         "customer": {
             "number": destination_phone_number
         },
-        "phoneNumberId": account_phone_number_id,
+        "phoneNumberId": "c8dc563d-a21c-4018-b590-f1081c7cf94f",
+        // "phoneNumber": { //using a "transient" number vs stored
+        //     "twilioAccountSid": twilio_account_sid,
+        //     "twilioAuthToken": twilio_auth_token,
+        //     // "number": account_phone_number,
+        //     "twilioPhoneNumber": account_phone_number
+        // },
         "assistantId": agent_id
     });
 
     println!("[OUTBOUND_CALL] Payload: {:?}", payload);
+
+    let client = Client::new();
 
     let response = client
         .post("https://api.vapi.ai/call")
