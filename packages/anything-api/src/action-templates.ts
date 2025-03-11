@@ -103,3 +103,27 @@ export const getOtherActionTemplatesForAccount = async (supabase: SupabaseClient
         console.error('Error fetching other actions:', error);
     }
 }
+
+export const getResponseTemplatesForAccount = async (supabase: SupabaseClient, account_id: string) => {
+    try {
+        console.log('Finding other templates for account:', account_id);
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('Session:', session);
+
+        if (session) {
+            const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/responses`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${session.access_token}`,
+                },
+            });
+
+            const data = await response.json();
+            console.log('Data from /api/other:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('Error fetching other actions:', error);
+    }
+}

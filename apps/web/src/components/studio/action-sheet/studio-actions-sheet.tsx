@@ -44,6 +44,7 @@ export function StudioActionsSheet(): JSX.Element {
   const [actions, setActions] = useState<any>([]);
   const [triggers, setTriggers] = useState<any>([]);
   const [other, setOther] = useState<any>([]);
+  const [responses, setResponses] = useState<any>([]);
 
   const [addingJson, setAddingJson] = useState(false);
   const [json, setJson] = useState("");
@@ -99,6 +100,23 @@ export function StudioActionsSheet(): JSX.Element {
     }
   };
 
+  const fetchResponses = async () => {
+    try {
+      if (!selectedAccount) {
+        console.error("No account selected");
+        return;
+      }
+      const res = await api.action_templates.getResponseTemplatesForAccount(
+        await createClient(),
+        selectedAccount.account_id,
+      );
+      console.log("action sheet responses templates res:", res);
+      setResponses(res);
+    } catch (error) {
+      console.error("Error fetching responses:", error);
+    }
+  };
+
   const addNodeFromJson = (json: string) => {
     addNode(JSON.parse(json), { x: 100, y: 300 });
     setAddingJson(false);
@@ -113,6 +131,7 @@ export function StudioActionsSheet(): JSX.Element {
     fetchActions();
     fetchTriggers();
     fetchOther();
+    fetchResponses();
   }, [showingActionSheet]);
 
   return (
@@ -151,6 +170,7 @@ export function StudioActionsSheet(): JSX.Element {
             <TabsList>
               <TabsTrigger value="triggers">Triggers</TabsTrigger>
               <TabsTrigger value="actions">Actions</TabsTrigger>
+              <TabsTrigger value="other">Other</TabsTrigger>
               <TabsTrigger value="responses">Responses</TabsTrigger>
             </TabsList>
 
@@ -272,7 +292,7 @@ export function StudioActionsSheet(): JSX.Element {
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="responses" className="h-full">
+                <TabsContent value="other" className="h-full">
                   <ScrollArea className="h-full pr-4 pb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {other &&
@@ -292,6 +312,51 @@ export function StudioActionsSheet(): JSX.Element {
                               <div
                                 className="flex flex-row gap-4 items-center"
                                 key={`content-${db_other.action_template_id}`}
+                              >
+                                <BaseNodeIcon icon={action.icon} />
+                                <div className="min-w-0">
+                                  <div className="text-lg font-semibold truncate">
+                                    {action.label}
+                                    {!marketplace && (
+                                      <Badge className="ml-2" variant="outline">
+                                        Team
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-sm font-normal truncate">
+                                    {action.description}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                    <div className="h-12" />
+                  </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="responses" className="h-full">
+                  <ScrollArea className="h-full pr-4 pb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {responses &&
+                        responses.map((db_response: any) => {
+                          let action: Action =
+                            db_response.action_template_definition;
+                          let marketplace: boolean =
+                            "featured" in db_response;
+                          return (
+                            <div
+                              key={`${db_response.action_template_id}-${action.label}`}
+                              onClick={() => {
+                                addNode(action, { x: 100, y: 300 });
+                                setShowingActionSheet(false);
+                              }}
+                              className="flex flex-col justify-between p-4 border rounded-md border-black cursor-pointer hover:bg-gray-50"
+                            >
+                              <div
+                                className="flex flex-row gap-4 items-center"
+                                key={`content-${db_response.action_template_id}`}
                               >
                                 <BaseNodeIcon icon={action.icon} />
                                 <div className="min-w-0">

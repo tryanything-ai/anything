@@ -133,7 +133,6 @@ pub async fn get_actions(
         }
     };
 
-
     // Load schema templates from the registry
     let json_items = match registry::load_schema_templates() {
         Ok(templates) => {
@@ -189,8 +188,8 @@ pub async fn get_triggers(
 ) -> impl IntoResponse {
     println!("Handling a get_actions");
 
-      // Load schema templates from the registry
-      let json_items = match registry::load_schema_templates() {
+    // Load schema templates from the registry
+    let json_items = match registry::load_schema_templates() {
         Ok(templates) => {
             println!("Successfully loaded schema templates");
             Value::Array(templates)
@@ -231,8 +230,8 @@ pub async fn get_other_actions(
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!("Handling get_other_actions");
-      // Load schema templates from the registry
-      let json_items = match registry::load_schema_templates() {
+    // Load schema templates from the registry
+    let json_items = match registry::load_schema_templates() {
         Ok(templates) => {
             println!("Successfully loaded schema templates");
             Value::Array(templates)
@@ -255,8 +254,50 @@ pub async fn get_other_actions(
                 .filter(|item| {
                     item.get("type")
                         .and_then(|t| t.as_str())
-                        .map(|t| t != "action" && t != "trigger")
+                        .map(|t| t != "action" && t != "trigger" && t != "response")
                         .unwrap_or(true)
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        })
+        .map(|filtered| Value::Array(filtered))
+        .unwrap_or(Value::Array(vec![]));
+
+    Json(filtered_items).into_response()
+}
+
+pub async fn get_responses(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("Handling get_other_actions");
+    // Load schema templates from the registry
+    let json_items = match registry::load_schema_templates() {
+        Ok(templates) => {
+            println!("Successfully loaded schema templates");
+            Value::Array(templates)
+        }
+        Err(err) => {
+            eprintln!("Failed to load schema templates: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to load schema templates",
+            )
+                .into_response();
+        }
+    };
+
+    // Filter JSON items to exclude "action" and "trigger" types
+    let filtered_items = json_items
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter(|item| {
+                    item.get("type")
+                        .and_then(|t| t.as_str())
+                        .map(|t| t == "response")
+                        .unwrap_or(false)
                 })
                 .cloned()
                 .collect::<Vec<_>>()

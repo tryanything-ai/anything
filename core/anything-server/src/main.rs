@@ -266,6 +266,7 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/actions", get(actions::get_actions))
         .route("/account/:account_id/triggers", get(actions::get_triggers))
         .route("/account/:account_id/other", get(actions::get_other_actions))
+        .route("/account/:account_id/responses", get(actions::get_responses))
 
         //Marketplace && Templates
         .route(
