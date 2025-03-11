@@ -372,106 +372,60 @@ async fn start_parallel_workflow_processing(
         let existing_tasks = cached_tasks.as_ref().unwrap();
 
         // First try to find an incomplete task
-        let incomplete_task = existing_tasks.values().find(|task| {
-            task.task_status == TaskStatus::Running || task.task_status == TaskStatus::Pending
-        });
+        let incomplete_tasks = existing_tasks
+            .values()
+            .filter(|task| {
+                task.task_status == TaskStatus::Running
+                    || task.task_status == TaskStatus::Pending
+                    || task.task_status == TaskStatus::Failed
+            })
+            .collect::<Vec<_>>();
 
-        if let Some(task) = incomplete_task {
+        // If there are incomplete tasks, resume from them
+        if !incomplete_tasks.is_empty() {
             println!(
-                "[PROCESSOR] Resuming from incomplete task: {}",
-                task.task_id
+                "[PROCESSOR] Found {} incomplete tasks to resume",
+                incomplete_tasks.len()
             );
 
-            // We have an incomplete task - process it
-            Some(task.clone())
-        } else {
-            // If no incomplete task, get the task with highest processing order
-            let last_completed_task = existing_tasks
-                .values()
-                .max_by_key(|task| task.processing_order);
-
-            if let Some(task) = last_completed_task {
+            // For each incomplete task, spawn a processing path
+            for task in incomplete_tasks {
                 println!(
-                    "[PROCESSOR] All existing tasks completed, finding next task after: {}",
+                    "[PROCESSOR] Resuming from incomplete task: {}",
                     task.task_id
                 );
 
-                // Find the next action after this completed task using the graph
-                let graph = create_workflow_graph(&workflow.flow_definition);
-                if let Some(neighbors) = graph.get(&task.action_id) {
-                    for neighbor_id in neighbors {
-                        let next_action = workflow
-                            .flow_definition
-                            .actions
-                            .iter()
-                            .find(|action| &action.action_id == neighbor_id);
-
-                        // We found the next action to run in graph. lets make a task for it
-                        if let Some(action) = next_action {
-                            // Create the next task
-                            let next_task_input = CreateTaskInput {
-                                account_id: workflow.account_id.to_string(),
-                                processing_order: task.processing_order + 1,
-                                task_status: TaskStatus::Running.as_str().to_string(),
-                                flow_id: workflow_id.to_string(),
-                                flow_version_id: workflow.flow_version_id.to_string(),
-                                action_label: action.label.clone(),
-                                trigger_id: trigger_task_id.clone(),
-                                trigger_session_id: trigger_session_id.to_string(),
-                                trigger_session_status: TriggerSessionStatus::Running
-                                    .as_str()
-                                    .to_string(),
-                                flow_session_id: flow_session_id.to_string(),
-                                flow_session_status: FlowSessionStatus::Running
-                                    .as_str()
-                                    .to_string(),
-                                action_id: action.action_id.clone(),
-                                r#type: action.r#type.clone(),
-                                plugin_name: action.plugin_name.clone(),
-                                plugin_version: action.plugin_version.clone(),
-                                stage: if workflow.published {
-                                    Stage::Production.as_str().to_string()
-                                } else {
-                                    Stage::Testing.as_str().to_string()
-                                },
-                                config: TaskConfig {
-                                    inputs: Some(action.inputs.clone().unwrap()),
-                                    inputs_schema: Some(action.inputs_schema.clone().unwrap()),
-                                    plugin_config: Some(action.plugin_config.clone()),
-                                    plugin_config_schema: Some(action.plugin_config_schema.clone()),
-                                },
-                                result: None,
-                                error: None,
-                                started_at: Some(Utc::now()),
-                                test_config: None,
-                            };
-
-                            match create_task(state.clone(), &next_task_input).await {
-                                Ok(new_task) => {
-                                    let mut cache = state.flow_session_cache.write().await;
-                                    if cache.add_task(&flow_session_id, new_task.clone()) {
-                                        Some(new_task)
-                                    } else {
-                                        println!(
-                                                    "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-                                                    flow_session_id
-                                                );
-                                        Some(new_task)
-                                    }
-                                }
-                                Err(e) => {
-                                    println!("[PROCESSOR] Error creating next task: {}", e);
-                                    None
-                                }
-                            };
-                        }
-                    }
+                // Increment active paths counter
+                {
+                    let mut paths = active_paths.lock().await;
+                    *paths += 1;
+                    println!("[PROCESSOR] Incremented active paths to: {}", *paths);
                 }
-                None // No next task found
-            } else {
-                println!("[PROCESSOR] No existing tasks found in cache");
-                None
+
+                // Clone the context for this path
+                let path_ctx = PathProcessingContext {
+                    state: ctx.state.clone(),
+                    client: ctx.client.clone(),
+                    flow_session_id,
+                    workflow_id,
+                    trigger_task_id: ctx.trigger_task_id.clone(),
+                    trigger_session_id: ctx.trigger_session_id,
+                    workflow: ctx.workflow.clone(),
+                    workflow_def: ctx.workflow_def.clone(),
+                    active_paths: ctx.active_paths.clone(),
+                    path_semaphore: ctx.path_semaphore.clone(),
+                };
+
+                // Spawn a processing path for this task
+                spawn_process_path(path_ctx, task.clone());
             }
+
+            // Return None since we've already spawned paths for all incomplete tasks
+        None
+        } else {
+            // All tasks are either completed or there are no tasks
+            println!("[PROCESSOR] No incomplete tasks found to resume");
+            None
         }
     };
 
