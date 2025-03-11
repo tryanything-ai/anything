@@ -26,7 +26,7 @@ export function JsonSchemaForm({
   onFocus,
   // onBlur,
   disabled = false,
-  showVariablesExplorer = false,
+  showInputsExplorer = false,
   showResultsExplorer = false,
 }: any): JSX.Element {
   const {
@@ -259,7 +259,7 @@ export function JsonSchemaForm({
                 isVisible={field.isVisible}
                 required={field.required}
                 provider={field.provider}
-                showVariablesExplorer={showVariablesExplorer}
+                showInputsExplorer={showInputsExplorer}
                 showResultsExplorer={showResultsExplorer}
               />
             </div>

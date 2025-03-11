@@ -85,17 +85,17 @@ export default function InputVariablesForm(): JSX.Element {
           name="input-variables-form"
           onSubmit={handleOnSubmit}
           fields={fields}
-          onFocus={(fieldName: string) => {
-            if (explorerTab !== "results") {
-              setExplorerTab("results");
-            }
-            if (!showExplorer) {
-              setShowExplorer(true);
-            }
-          }}
+          // onFocus={(fieldName: string) => {
+          //   if (explorerTab !== "results") {
+          //     setExplorerTab("results");
+          //   }
+          //   if (!showExplorer) {
+          //     setShowExplorer(true);
+          //   }
+          // }}
           initialValues={selected_node_variables}
           handleValidation={handleValidation}
-          showVariablesExplorer={false}
+          showInputsExplorer={false}
           showResultsExplorer={true}
         />
       )}

@@ -89,16 +89,16 @@ export default function ConfigurationForm(): JSX.Element {
             onSubmit={handleOnSubmit}
             fields={fields}
             formContext="configuration"
-            showVariablesExplorer={true}
+            showInputsExplorer={true}
             showResultsExplorer={false}
-            onFocus={(fieldName: string) => {
-              if (explorerTab !== "variables") {
-                setExplorerTab("variables");
-              }
-              if (!showExplorer) {
-                setShowExplorer(true);
-              }
-            }}
+            // onFocus={(fieldName: string) => {
+              // if (explorerTab !== "variables") {
+              //   setExplorerTab("variables");
+              // }
+              // if (!showExplorer) {
+              //   setShowExplorer(true);
+              // }
+            // }}
             initialValues={selected_node_input}
             handleValidation={handleValidation}
           />

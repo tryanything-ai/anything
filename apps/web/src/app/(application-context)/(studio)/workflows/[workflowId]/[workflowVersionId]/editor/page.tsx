@@ -32,7 +32,7 @@ export default function StudioLayout(): JSX.Element {
           <ResizablePanel defaultSize={40} className="flex flex-col min-h-0">
             <div className="flex-1 overflow-hidden">
               {explorerTab === "results" && <VariableEditingExplorer />}
-              {explorerTab === "variables" && <VariablesExplorer />}
+              {explorerTab === "inputs" && <VariablesExplorer />}
             </div>
           </ResizablePanel>
         )}

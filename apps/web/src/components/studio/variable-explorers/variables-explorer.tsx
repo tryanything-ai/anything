@@ -16,8 +16,8 @@ export function BaseVariablesExplorer(): JSX.Element {
     explorer: { insertVariable },
   } = useAnything();
 
-  const [variables, setVariables] = useState<any>({});
-  const [renderedVariables, setRenderedVariables] = useState<any>({});
+  const [inputs, setInputs] = useState<any>({});
+  // const [renderedInputs, setRenderedInputs] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   const { selectedAccount } = useAccounts();
@@ -46,7 +46,7 @@ export function BaseVariablesExplorer(): JSX.Element {
         version_id: db_flow_version_id,
       });
 
-      const result = await api.variables.getWorkflowVersionVariables(
+      const result = await api.variables.getWorkflowVersionPluginInputs(
         await createClient(),
         selectedAccount.account_id,
         db_flow_id,
@@ -59,8 +59,12 @@ export function BaseVariablesExplorer(): JSX.Element {
           "[VARIABLES EXPLORER] Successfully fetched results:",
           result,
         );
-        setRenderedVariables(result.rendered_variables);
-        setVariables(result.variables);
+
+        if (result.rendered_inputs) {
+          setInputs(result.rendered_inputs);
+        } else {
+          setInputs(result.inputs);
+        }
       } else {
         console.error("[VARIABLES EXPLORER] No results found");
       }
@@ -81,19 +85,19 @@ export function BaseVariablesExplorer(): JSX.Element {
       {selected_node_data && selected_node_data.type !== ActionType.Trigger && (
         <div className="w-full">
           {loading && <div>Loading...</div>}
-          {!variables && !loading && (
+          {!inputs && !loading && (
             <div className="text-muted-foreground">
               Run Workflow Test Access Variables
             </div>
           )}
-          {renderedVariables && (
+          {inputs && (
             <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
               <div className="p-3">
-                <div className="flex-1 font-bold mb-2">Variables</div>
+                <div className="flex-1 font-bold mb-2">Inputs</div>
                 <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
                   <JsonExplorer
-                    parentPath={"variables."}
-                    data={renderedVariables}
+                    parentPath={"inputs."}
+                    data={inputs}
                     onSelect={(v) => {
                       console.log(v);
                       insertVariable(`{{${v}}}`);

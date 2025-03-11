@@ -31,7 +31,7 @@ export const getWorkflowVersionResults = async (
     }
 }
 
-export const getWorkflowVersionVariables = async (
+export const getWorkflowVersionPluginInputs = async (
     supabase: SupabaseClient,
     account_id: string,
     workflow_id: string,

@@ -336,7 +336,7 @@ pub async fn root() -> impl IntoResponse {
             get(variables::get_flow_version_results)
         )
         .route( "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
-        get(variables::get_flow_version_variables))
+        get(variables::get_flow_version_inputs))
         .route(
             "/account/:account_id/testing/system_variables",
             get(system_variables::get_system_variables_handler))

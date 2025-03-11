@@ -5,9 +5,22 @@ import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { linter, lintGutter } from "@codemirror/lint";
 import { propsPlugin } from "./codemirror-utils";
-import { Fullscreen } from "lucide-react";
+import { Fullscreen, Sparkles, Variable } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@repo/ui/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import { useAnything } from "@/context/AnythingContext";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -35,13 +48,19 @@ export default function FieldJson({
   onKeyUp,
   onFocus,
   className,
+  showInputsExplorer,
 }: any) {
+  const {
+    workflow: { setShowExplorer, setExplorerTab },
+  } = useAnything();
+
   const editorRef = React.useRef<any>(null);
   const [editorValue, setEditorValue] = React.useState(
     ensureStringValue(value),
   );
   const [isValidInput, setIsValidInput] = React.useState(true);
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [showAIHelper, setShowAIHelper] = React.useState(false);
 
   React.useEffect(() => {
     const newValue = ensureStringValue(value);
@@ -72,7 +91,7 @@ export default function FieldJson({
         // Check for complete or partial variable pattern
         const isCompleteVariable = /^{{.*}}$/.test(val.trim());
         const isPartialVariable = /{{.*/.test(val.trim());
-        
+
         if (isCompleteVariable || isPartialVariable) {
           console.log("[FIELD JSON] [HANDLE CHANGE] Valid variable pattern");
           setEditorValue(val);
@@ -112,7 +131,7 @@ export default function FieldJson({
 
   const jsonLinter = linter((view) => {
     const doc = view.state.doc.toString();
-    
+
     // Check for variable pattern first
     const isVariablePattern = /^{{.*}}$/.test(doc.trim());
     if (isVariablePattern) {
@@ -169,36 +188,87 @@ export default function FieldJson({
         </span>
       </Label>
 
-      {/* Regular inline editor */}
-      <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(true)}
-          className="absolute right-0 top-0 z-10"
-        >
-          <Fullscreen size={16} />
-        </Button>
-        <CodeMirror
-          {...codeEditorProps}
-          className={cn(
-            "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
-            className,
-          )}
-          style={{
-            minHeight: "2.25rem",
-            height: "auto",
-            width: "100%",
-            maxWidth: "100%",
-            overflow: "auto",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
-            whiteSpace: "pre-wrap",
-            boxSizing: "border-box",
-            fontFamily: "monospace",
-            outline: "none",
-          }}
-        />
+      {/* Container with relative positioning for controls overlay */}
+      <div className="relative">
+        {/* Controls positioned absolutely in top-right */}
+        <div className="absolute -top-7 right-0 z-10 flex gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    setExplorerTab(showInputsExplorer ? "inputs" : "results");
+                    setShowExplorer(true);
+                  }}
+                >
+                  <Variable size={14} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Explore Available Variables</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setShowAIHelper(true)}
+                >
+                  <Sparkles size={14} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>AI Assist</p>
+              </TooltipContent>
+            </Tooltip> */}
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setIsExpanded(true)}
+                >
+                  <Fullscreen size={14} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Expand Editor</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Editor */}
+        <div className="w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
+          <CodeMirror
+            {...codeEditorProps}
+            className={cn(
+              "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
+              className,
+            )}
+            style={{
+              minHeight: "2.25rem",
+              height: "auto",
+              width: "100%",
+              maxWidth: "100%",
+              overflow: "auto",
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+              whiteSpace: "pre-wrap",
+              boxSizing: "border-box",
+              fontFamily: "monospace",
+              outline: "none",
+            }}
+          />
+        </div>
       </div>
 
       {/* Expanded modal editor */}
@@ -228,6 +298,20 @@ export default function FieldJson({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* TODO: actually implement some day. very helpful  */}
+      {/* AI Helper Dialog */}
+      {/* <Dialog open={showAIHelper} onOpenChange={setShowAIHelper}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>AI Assistant</DialogTitle>
+            <DialogDescription>
+              Let AI help you edit this field
+            </DialogDescription>
+          </DialogHeader>
+       
+        </DialogContent>
+      </Dialog> */}
 
       {!isValidInput && <div className="text-red-500">Invalid Input</div>}
       {error && <div className="text-red-500">{error}</div>}

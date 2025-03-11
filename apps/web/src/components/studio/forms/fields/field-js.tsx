@@ -40,7 +40,7 @@ interface CodemirrorFieldJsProps {
   onFocus?: () => void;
   className?: string;
   actionId?: string;
-  showVariablesExplorer?: boolean;
+  showInputsExplorer?: boolean;
   showResultsExplorer?: boolean;
 }
 
@@ -57,7 +57,7 @@ export default function CodemirrorFieldJs({
   onKeyUp,
   onFocus,
   className,
-  showVariablesExplorer,
+  showInputsExplorer,
   showResultsExplorer,
 }: CodemirrorFieldJsProps) {
   const {
@@ -254,7 +254,7 @@ export default function CodemirrorFieldJs({
             {/* Add flex container for side-by-side layout in expanded mode */}
             <div className="flex gap-4 h-[95%]">
               {/* Variables Explorer Panel */}
-              {showVariablesExplorer && (
+              {showInputsExplorer && (
                 <div className="w-1/4 border px-2 rounded-md bg-background">
                   <BaseVariablesExplorer />
                 </div>
