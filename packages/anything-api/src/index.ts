@@ -10,7 +10,7 @@ import * as marketplace from './marketplace';
 import * as profiles from './profiles';
 import * as variables from './variable-explorer'; 
 import * as agents from './agents';
-
+import * as accounts from './accounts';
 
 const api = {
   flows,
@@ -24,7 +24,8 @@ const api = {
   marketplace, 
   profiles,
   variables,
-  agents
+  agents,
+  accounts,
 };
 
 export default api;

@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 export type Account = {
   account_id: string;
   name: string;
+  slug: string;
   personal_account: boolean;
 };
 

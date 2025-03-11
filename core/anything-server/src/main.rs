@@ -275,6 +275,9 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
         .route("/account/:account_id/marketplace/workflow/:template_id/clone", get(marketplace::workflows::clone_marketplace_workflow_template))
 
+        //Account Management
+        .route("/account/:account_id/slug/:slug", get(auth::accounts::get_account_by_slug))
+
         //Billing
         .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
         .route("/account/:account_id/billing/checkout", post(billing::create_links::get_checkout_link))
@@ -370,6 +373,11 @@ pub async fn root() -> impl IntoResponse {
         //Calls
         .route("/account/:account_id/calls", get(agents::vapi::get_vapi_calls))
 
+        // Invitations
+        .route("/account/:account_id/invitations", get(auth::accounts::get_account_invitations))
+
+        // Members
+        .route("/account/:account_id/members", get(auth::accounts::get_account_members))
 
         .layer(middleware::from_fn_with_state(
             state.clone(),
