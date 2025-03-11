@@ -326,6 +326,7 @@ pub async fn root() -> impl IntoResponse {
             get(testing::get_test_session_results),
         )
         //Variables Explorer for Testing
+        //TODO: we need to protect this for parallel running. You should not be able to select a result that isnt guranteed to be there
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/results",
             get(variables::get_flow_version_results)
