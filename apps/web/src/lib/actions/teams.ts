@@ -10,7 +10,7 @@ export async function createTeam(prevState: any, formData: FormData) {
     const slug = formData.get("slug") as string;
     const supabase = await createClient();
 
-    const { data, error }: any = await supabase.rpc('create_account',
+    const { data, error }: any = await supabase.rpc('create_team',
          // @ts-ignore
         {
         name,
