@@ -171,7 +171,7 @@ export function JsonSchemaForm({
     const activeField = fields.find((f: any) => f.name === GLOBAL_ACTIVE_FIELD);
     if (activeField?.inputType === "javascript_or_variable") {
       alert(
-        "Variable insertion not supported for JavaScript fields. Use variables.variable_name in the javascript editor instead.",
+        "Variable insertion not supported for JavaScript fields. Use inputs.input_name in the javascript editor instead.",
       );
       return;
     }

@@ -52,7 +52,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                             process_http_task(&http_client, &bundled_plugin_cofig).await
                         }
                         "@anything/filter" => {
-                            process_filter_task(&bundled_plugin_cofig)
+                            process_filter_task(&bundled_inputs, &bundled_plugin_cofig).await
                         }
                         //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
                         //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.

@@ -9,50 +9,29 @@
       "action_id": "filter",
       "label": "Filter",
       "description": "Conditionally Run Next Action",
-      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>",
-      "inputs": {
-        "condition": "return false;"
-      },
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-filter\"><polygon points=\"22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3\"/></svg>",
+      "inputs": {},
       "inputs_locked": false,
-      "inputs_schema": {
-        "type": "object",
-        "properties": {
-          "cron_expression": {
-            "title": "JS Condition",
-            "description": "Conditionally Run Next Action",
-            "type": "string",
-            "default": "return false;",
-            "x-jsf-presentation": {
-                "inputType": "javascript_or_variable"
-            }, 
-            "x-any-validation": {
-              "type": "string"
-            }
-          }
-        },
-        "x-jsf-order": ["condition"],
-        "required": ["condition"],
-        "additionalProperties": false
-      },
-      "inputs_schema_locked": true,
+      "inputs_schema": {},
+      "inputs_schema_locked": false,
       "plugin_config": {
-        "condition": "{{inputs.condition}}"
+        "condition": "false"
       },
-      "plugin_config_locked": true,
+      "plugin_config_locked": false,
       "plugin_config_schema": {
         "type": "object",
         "properties": {
-          "condition": {
-            "title": "Cron Expression",
-            "description": "When to run the trigger",
-            "type": "string",
-            "default": "{{variables.condition}}",
-            "x-jsf-presentation": {
-              "inputType": "text"
-            },
-            "x-any-validation": {
-              "type": "string"
-            }
+          "condition": { 
+             "title": "Condition",
+              "description": "Condition to check",
+              "type": "string",
+              "default": "false",
+              "x-jsf-presentation": {
+                "inputType": "javascript_or_variable"
+              }, 
+              "x-any-validation": {
+                "type": "string"
+              }
           }
         },
         "x-jsf-order": ["condition"],

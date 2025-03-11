@@ -382,11 +382,32 @@ pub async fn process_task(
     update_task_with_result(
         ctx,
         task,
-        task_result,
+        task_result.clone(),
         bundled_context,
         TaskStatus::Completed,
     )
     .await;
+
+    // Check if this is a filter task that returned false
+    if let Some(plugin_name) = &task.plugin_name {
+        if plugin_name.as_str() == "@anything/filter" {
+            if let Some(result_value) = &task_result {
+                // Check if the filter returned false
+                if let Some(should_continue) = result_value.get("should_continue") {
+                    if let Some(continue_value) = should_continue.as_bool() {
+                        if !continue_value {
+                            println!(
+                                "[PROCESSOR] Filter task {} returned false, stopping branch execution",
+                                task.task_id
+                            );
+                            // Return empty vector to indicate no next actions
+                            return Ok(Vec::new());
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Find next actions
     println!(
