@@ -20,6 +20,8 @@ use crate::types::{
     workflow_types::DatabaseFlowVersion,
 };
 
+
+
 pub fn get_trigger_node(workflow: &WorkflowVersionDefinition) -> Option<&Action> {
     workflow
         .actions

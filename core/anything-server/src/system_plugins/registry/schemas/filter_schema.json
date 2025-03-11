@@ -68,6 +68,11 @@
       },
       "handles": [
         {
+          "id": "a", 
+          "type": "target",
+          "position": "top"
+        },
+        {
           "id": "b",
           "type": "source",
           "position": "bottom"
