@@ -6,6 +6,39 @@ use reqwest::Client;
 
 use serde_json::Value;
 
+fn is_binary_content(content_type: &str) -> bool {
+    let content_type = content_type.split(';').next().unwrap_or("").trim();
+    content_type.starts_with("image/")
+        || content_type.starts_with("application/pdf")
+        || content_type.starts_with("application/msword")
+        || content_type.starts_with("application/vnd.openxmlformats-")
+        || content_type.starts_with("application/zip")
+        || content_type.starts_with("application/x-rar")
+        || content_type == "application/octet-stream"
+}
+
+fn format_binary_response(content_type: &str, bytes: &[u8]) -> Value {
+    let base64_data = base64::encode(bytes);
+    
+    // For images, return a complete data URL that can be used directly in <img> tags
+    if content_type.starts_with("image/") {
+        serde_json::json!({
+            "type": "image",
+            "content_type": content_type,
+            "size": bytes.len(),
+            "data": format!("data:{};base64,{}", content_type, base64_data),
+        })
+    } else {
+        // For other binary files, return just the base64 data
+        serde_json::json!({
+            "type": "binary",
+            "content_type": content_type,
+            "size": bytes.len(),
+            "data": base64_data,
+        })
+    }
+}
+
 pub async fn process_http_task(
     http_client: &Client,
     bundled_context: &Value,
@@ -69,37 +102,66 @@ pub async fn process_http_task(
         let request_start = Instant::now();
         let response = request_builder.send().await?;
         println!("[SPEED] HTTP request took {:?}", request_start.elapsed());
-        println!(
-            "[TASK_ENGINE] HTTP request response received: {:?}",
-            response
-        );
+
         let status = response.status();
         let headers = response.headers().clone();
 
-        // Try to parse the response as JSON, if it fails, return the raw text
-        let body = match response.text().await {
-            Ok(text) => {
-                println!("[TASK_ENGINE] Response text: {}", text);
-                match serde_json::from_str::<Value>(&text) {
-                    Ok(json_value) => {
-                        println!(
-                            "[TASK_ENGINE] HTTP request successful. JSON Response: {:?}",
-                            json_value
-                        );
-                        json_value
-                    }
-                    Err(_) => {
-                        println!(
-                            "[TASK_ENGINE] HTTP request successful. Text Response: {}",
-                            text
-                        );
-                        Value::String(text)
-                    }
-                }
+        let content_type = headers
+            .get("content-type")
+            .and_then(|h| h.to_str().ok())
+            .unwrap_or("");
+
+        // Check file size
+        const MAX_SIZE: u64 = 10 * 1024 * 1024; // 10MB
+        if let Some(length) = headers
+            .get("content-length")
+            .and_then(|h| h.to_str().ok())
+            .and_then(|s| s.parse::<u64>().ok())
+        {
+            if length > MAX_SIZE {
+                return Err(format!(
+                    "File size {} bytes exceeds maximum allowed size of {} bytes",
+                    length, MAX_SIZE
+                )
+                .into());
             }
-            Err(e) => {
-                println!("[TASK_ENGINE] Error reading response body: {:?}", e);
-                return Err(e.into());
+        }
+
+        let body = if is_binary_content(content_type) {
+            let bytes = response.bytes().await?;
+
+            let filename = headers
+                .get("content-disposition")
+                .and_then(|h| h.to_str().ok())
+                .and_then(|s| {
+                    s.split(';')
+                        .find(|part| part.trim().starts_with("filename="))
+                        .map(|part| part.trim()[9..].trim_matches('"').to_string())
+                });
+
+            let mut response = format_binary_response(content_type, &bytes);
+            
+            // Add filename if available
+            if let Some(name) = filename {
+                response.as_object_mut().unwrap().insert(
+                    "filename".to_string(),
+                    Value::String(name)
+                );
+            }
+            
+            response
+        } else {
+            // Handle text/JSON response
+            let text = response.text().await?;
+            match serde_json::from_str::<Value>(&text) {
+                Ok(json_value) => serde_json::json!({
+                    "type": "json",
+                    "data": json_value
+                }),
+                Err(_) => serde_json::json!({
+                    "type": "text",
+                    "data": text
+                }),
             }
         };
 

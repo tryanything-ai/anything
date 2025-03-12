@@ -15,7 +15,7 @@ use crate::{
     types::{
         action_types::ActionType,
         task_types::{
-            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TestConfig,
+            CreateTaskInput, FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TestConfig,
             TriggerSessionStatus,
         },
         workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
@@ -432,33 +432,24 @@ pub async fn get_test_session_results(
         }
     };
 
-    let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response()
+    let tasks: Vec<Task> = match serde_json::from_str(&body) {
+        Ok(tasks) => tasks,
+        Err(e) => {
+            println!("Failed to parse tasks: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse tasks").into_response();
         }
     };
 
-    let all_completed = items.as_array().map_or(false, |tasks| {
-        if tasks.is_empty() {
-            return false;
-        }
-        tasks.iter().all(|task| {
-            let flow_status = task.get("flow_session_status");
-            let trigger_status = task.get("trigger_session_status");
-            let task_status = task.get("task_status");
-            (flow_status == Some(&Value::String("completed".to_string()))
-                || flow_status == Some(&Value::String("failed".to_string())))
-                && (trigger_status == Some(&Value::String("completed".to_string()))
-                    || trigger_status == Some(&Value::String("failed".to_string())))
-                && (task_status == Some(&Value::String("completed".to_string()))
-                    || task_status == Some(&Value::String("canceled".to_string()))
-                    || task_status == Some(&Value::String("failed".to_string())))
-        })
-    });
+    let all_completed = !tasks.is_empty()
+        && tasks.iter().all(|task| {
+            matches!(
+                task.trigger_session_status,
+                TriggerSessionStatus::Completed | TriggerSessionStatus::Failed
+            )
+        });
 
     let result = serde_json::json!({
-        "tasks": items,
+        "tasks": tasks,
         "complete": all_completed
     });
 
