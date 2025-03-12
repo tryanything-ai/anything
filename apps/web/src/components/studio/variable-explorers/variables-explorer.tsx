@@ -87,7 +87,7 @@ export function BaseInputsExplorer(): JSX.Element {
           {loading && <div>Loading...</div>}
           {!inputs && !loading && (
             <div className="text-muted-foreground">
-              Run Workflow Test Access Variables
+              Run Workflow Test To Access Variables
             </div>
           )}
           {inputs && (

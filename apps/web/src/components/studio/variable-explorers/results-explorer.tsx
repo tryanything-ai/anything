@@ -99,7 +99,7 @@ export function ResultsExplorer(): JSX.Element {
           {loading && <div>Loading...</div>}
           {results && results.length === 0 && !loading && (
             <div className="text-muted-foreground">
-              Run Workflow Test Access Results
+              Run Workflow Test To Access Results
             </div>
           )}
           {results &&

@@ -15,17 +15,17 @@ export function ExplorersPanel({
   if (!showInputsExplorer && !showResultsExplorer) return null;
 
   return (
-    <div className="flex-shrink-0 flex flex-col gap-4 w-[400px]">
+    <div className="flex-shrink-0 flex flex-col gap-4 w-[360px]">
       {showInputsExplorer && (
         <div className="flex-1 min-h-0">
-          <div className="h-full overflow-auto border rounded-md bg-background">
+          <div className="h-full border rounded-md bg-background p-2">
             <BaseInputsExplorer />
           </div>
         </div>
       )}
       {showResultsExplorer && (
         <div className="flex-1 min-h-0">
-          <div className="h-full overflow-auto border rounded-md bg-background p-2">
+          <div className="h-full border rounded-md bg-background p-2">
             <BaseVariableEditingExplorer />
           </div>
         </div>

@@ -47,7 +47,7 @@ export default function FieldJson({
   showResultsExplorer,
 }: any) {
   const {
-    workflow: { setShowExplorer, setExplorerTab },
+    workflow: { setShowExplorer, showExplorer, setExplorerTab },
   } = useAnything();
 
   const editorRef = React.useRef<any>(null);
@@ -196,15 +196,17 @@ export default function FieldJson({
                   size="sm"
                   className="h-6 w-6 p-0"
                   onClick={() => {
-                    setExplorerTab(showInputsExplorer ? "inputs" : "results");
-                    setShowExplorer(true);
+                    if (setShowExplorer && setExplorerTab) {
+                      setExplorerTab(showInputsExplorer ? "inputs" : "results");
+                      setShowExplorer(!showExplorer);
+                    }
                   }}
                 >
                   <Variable size={14} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Explore Available Variables</p>
+                <p>Toggle Variables Explorer</p>
               </TooltipContent>
             </Tooltip>
 
@@ -214,13 +216,13 @@ export default function FieldJson({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => setIsExpanded(true)}
+                  onClick={() => setIsExpanded((prev) => !prev)}
                 >
                   <Fullscreen size={14} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Expand Editor</p>
+                <p>Toggle Expanded Editor</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

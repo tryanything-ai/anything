@@ -14,8 +14,7 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { useAnything } from "@/context/AnythingContext";
-import { BaseInputsExplorer } from "@/components/studio/variable-explorers/variables-explorer";
-import { BaseVariableEditingExplorer } from "@/components/studio/variable-explorers/variable-editing-explorer-layout";
+import { ExplorersPanel } from "@/components/studio/variable-explorers/explorer-panel";
 
 export default function CodeMirrorFieldHtml({
   name,
@@ -34,7 +33,7 @@ export default function CodeMirrorFieldHtml({
   showResultsExplorer,
 }: any) {
   const {
-    workflow: { setShowExplorer, setExplorerTab },
+    workflow: { setShowExplorer, showExplorer, setExplorerTab },
   } = useAnything();
 
   const [editorValue, setEditorValue] = React.useState(value || "");
@@ -110,15 +109,17 @@ export default function CodeMirrorFieldHtml({
                   size="sm"
                   className="h-6 w-6 p-0"
                   onClick={() => {
-                    setExplorerTab(showInputsExplorer ? "inputs" : "results");
-                    setShowExplorer(true);
+                    if (setShowExplorer && setExplorerTab) {
+                      setExplorerTab(showInputsExplorer ? "inputs" : "results");
+                      setShowExplorer(!showExplorer);
+                    }
                   }}
                 >
                   <Variable size={14} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Explore Available Variables</p>
+                <p>Toggle Variables Explorer</p>
               </TooltipContent>
             </Tooltip>
 
@@ -128,13 +129,13 @@ export default function CodeMirrorFieldHtml({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => setIsExpanded(true)}
+                  onClick={() => setIsExpanded((prev) => !prev)}
                 >
                   <Fullscreen size={14} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Expand Editor</p>
+                <p>Toggle Expanded Editor</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -167,9 +168,9 @@ export default function CodeMirrorFieldHtml({
 
       {/* Expanded modal editor */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="max-w-[90vw] h-[90vh]">
-          <div className="flex flex-col h-full w-full">
-            <div className="flex items-center justify-between mb-3">
+        <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col overflow-hidden">
+          <div className="flex flex-col h-full w-full overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between mb-3">
               <Label htmlFor={name}>
                 {label}{" "}
                 <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
@@ -177,30 +178,17 @@ export default function CodeMirrorFieldHtml({
                 </span>
               </Label>
             </div>
-            {/* Add flex container for side-by-side layout in expanded mode */}
-            <div className="flex gap-4 flex-1 min-h-0">
-              {/* Variables Explorer Panel */}
-              {showInputsExplorer && (
-                <div className="w-[400px] flex flex-col min-h-0">
-                  <div className="flex-1 overflow-hidden border rounded-md bg-background">
-                    <BaseInputsExplorer />
-                  </div>
-                </div>
-              )}
-              {showResultsExplorer && (
-                <div className="w-[400px] flex flex-col min-h-0">
-                  <div className="flex-1 overflow-hidden border rounded-md bg-background">
-                    <BaseVariableEditingExplorer />
-                  </div>
-                </div>
-              )}
-              {/* Editor Container */}
-              <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex gap-4 flex-1 min-h-0 overflow-hidden">
+              <ExplorersPanel
+                showInputsExplorer={showInputsExplorer}
+                showResultsExplorer={showResultsExplorer}
+              />
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <div className="flex-1 overflow-hidden border rounded-md">
                   <CodeMirror
                     {...codeEditorProps}
                     className={cn(
-                      "w-full h-full bg-background text-sm",
+                      "w-full h-full bg-background text-sm overflow-auto",
                       className,
                     )}
                     style={{

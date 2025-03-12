@@ -56,7 +56,7 @@ export function BaseVariableEditingExplorer(): JSX.Element {
       defaultValue="results"
       value={tab}
       onValueChange={setTab}
-      className="flex flex-col h-full mt-3"
+      className="flex flex-col h-full"
     >
       <VariableExplorerTabs className="w-[340px]" />
       <VariableExplorerContent />
