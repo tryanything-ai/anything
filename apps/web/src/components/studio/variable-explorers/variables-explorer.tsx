@@ -10,7 +10,7 @@ import { Send, XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 // Base component that just handles the variables display
-export function BaseVariablesExplorer(): JSX.Element {
+export function BaseInputsExplorer(): JSX.Element {
   const {
     workflow: { db_flow_id, db_flow_version_id, selected_node_data },
     explorer: { insertVariable },
@@ -133,7 +133,7 @@ export function VariablesExplorer(): JSX.Element {
       </div>
       <ScrollArea className="flex-1">
         <div className="px-2">
-          <BaseVariablesExplorer />
+          <BaseInputsExplorer />
         </div>
       </ScrollArea>
     </div>

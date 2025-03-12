@@ -14,7 +14,7 @@ import {
 import { useAnything } from "@/context/AnythingContext";
 import { Button } from "@repo/ui/components/ui/button";
 import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
-import { BaseVariablesExplorer } from "@/components/studio/variable-explorers/variables-explorer";
+import { BaseInputsExplorer } from "@/components/studio/variable-explorers/variables-explorer";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -256,7 +256,7 @@ export default function CodemirrorFieldJs({
               {/* Variables Explorer Panel */}
               {showInputsExplorer && (
                 <div className="w-1/4 border px-2 rounded-md bg-background">
-                  <BaseVariablesExplorer />
+                  <BaseInputsExplorer />
                 </div>
               )}
               {/* Editor Container */}

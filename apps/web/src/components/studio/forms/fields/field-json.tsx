@@ -7,13 +7,7 @@ import { linter, lintGutter } from "@codemirror/lint";
 import { propsPlugin } from "./codemirror-utils";
 import { Fullscreen, Sparkles, Variable } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@repo/ui/components/ui/dialog";
+import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -21,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { useAnything } from "@/context/AnythingContext";
+import { ExplorersPanel } from "@/components/studio/variable-explorers/explorer-panel";
 
 function ensureStringValue(value: any): string {
   if (value === null || value === undefined) {
@@ -49,6 +44,7 @@ export default function FieldJson({
   onFocus,
   className,
   showInputsExplorer,
+  showResultsExplorer,
 }: any) {
   const {
     workflow: { setShowExplorer, setExplorerTab },
@@ -212,22 +208,6 @@ export default function FieldJson({
               </TooltipContent>
             </Tooltip>
 
-            {/* <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => setShowAIHelper(true)}
-                >
-                  <Sparkles size={14} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>AI Assist</p>
-              </TooltipContent>
-            </Tooltip> */}
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -273,9 +253,9 @@ export default function FieldJson({
 
       {/* Expanded modal editor */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="max-w-[90vw] h-[90vh]">
-          <div className="h-full w-full">
-            <div className="flex items-center justify-between mb-3">
+        <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col overflow-hidden">
+          <div className="flex flex-col h-full w-full overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between mb-3">
               <Label htmlFor={name}>
                 {label}{" "}
                 <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
@@ -283,35 +263,31 @@ export default function FieldJson({
                 </span>
               </Label>
             </div>
-            <CodeMirror
-              {...codeEditorProps}
-              className={cn(
-                "w-full h-full overflow-hidden rounded-md border border-input bg-background text-sm",
-                className,
-              )}
-              style={{
-                height: "95%",
-                width: "100%",
-                fontFamily: "monospace",
-              }}
-            />
+            <div className="flex gap-4 flex-1 min-h-0 overflow-hidden">
+              <ExplorersPanel
+                showInputsExplorer={showInputsExplorer}
+                showResultsExplorer={showResultsExplorer}
+              />
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-hidden border rounded-md">
+                  <CodeMirror
+                    {...codeEditorProps}
+                    className={cn(
+                      "w-full h-full bg-background text-sm overflow-auto",
+                      className,
+                    )}
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      fontFamily: "monospace",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* TODO: actually implement some day. very helpful  */}
-      {/* AI Helper Dialog */}
-      {/* <Dialog open={showAIHelper} onOpenChange={setShowAIHelper}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>AI Assistant</DialogTitle>
-            <DialogDescription>
-              Let AI help you edit this field
-            </DialogDescription>
-          </DialogHeader>
-       
-        </DialogContent>
-      </Dialog> */}
 
       {!isValidInput && <div className="text-red-500">Invalid Input</div>}
       {error && <div className="text-red-500">{error}</div>}
