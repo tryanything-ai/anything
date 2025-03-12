@@ -158,6 +158,7 @@ pub async fn test_workflow(
         flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
         trigger_session_id: Uuid::parse_str(&trigger_session_id).unwrap(),
         trigger_task: Some(input),
+        subflow_depth: 0,
     };
 
     println!("[TEST WORKFLOW] Initializing flow session data");

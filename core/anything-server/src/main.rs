@@ -55,7 +55,7 @@ mod templater;
 mod testing; 
 mod trigger_engine;
 mod agents; 
-
+use uuid::Uuid;
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
 use std::sync::atomic::AtomicBool;
@@ -88,6 +88,7 @@ pub struct AppState {
     bundler_secrets_cache: RwLock<SecretsCache>,
     bundler_accounts_cache: RwLock<AccountsCache>,
     flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
+    subflow_result_channels: RwLock<HashMap<Uuid, oneshot::Sender<Value>>>,
     shutdown_signal: Arc<AtomicBool>,
 }
 
@@ -184,9 +185,7 @@ async fn main() {
         public_client: public_client.clone(),
         http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
-
-        workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
-
+        workflow_processor_semaphore: Arc::new(Semaphore::new(100)),
         trigger_engine_signal,
         processor_sender: processor_tx,
         processor_receiver: Mutex::new(processor_rx),
@@ -195,9 +194,10 @@ async fn main() {
         account_access_cache: Arc::new(RwLock::new(
             account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400))
         )),
-        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
-        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
+        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))),
+        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))),
         flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
+        subflow_result_channels: RwLock::new(HashMap::new()),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
     });
 

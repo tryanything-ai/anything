@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::react_flow_types::{HandleProps, NodePresentation};
-use node_semver::{Range, Version};
+use node_semver::Version; 
 use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

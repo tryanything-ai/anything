@@ -9,16 +9,17 @@ use crate::system_plugins::formatter_actions::{
 };
 use crate::system_plugins::webhook_response::process_webhook_response_task;
 
+use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
+use crate::system_plugins::filter::process_filter_task;
 use crate::system_plugins::http::http_plugin::process_http_task;
 use crate::system_plugins::javascript::process_js_task;
+use crate::system_plugins::subflow::process_subflow_task;
 use crate::types::task_types::Task;
 use crate::AppState;
-use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
 use serde_json::{json, Value};
-use crate::system_plugins::filter::process_filter_task;
 
+use crate::processor::PathProcessingContext;
 use crate::types::action_types::ActionType;
-
 #[derive(Debug, Clone)]
 pub struct TaskError {
     pub error: Value,
@@ -27,7 +28,12 @@ pub struct TaskError {
 
 pub type TaskResult = Result<(Option<Value>, Value), TaskError>;
 
-pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
+pub async fn execute_task(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    task: &Task,
+    ctx: &PathProcessingContext,
+) -> TaskResult {
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Clone state before using it in join
@@ -54,10 +60,18 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                         "@anything/filter" => {
                             process_filter_task(&bundled_inputs, &bundled_plugin_cofig).await
                         }
-                        //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
-                        //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.
                         "@anything/javascript" => {
                             process_js_task(&bundled_inputs, &bundled_plugin_cofig).await
+                        }
+                        "@anything/subflow" => {
+                            process_subflow_task(
+                                state_clone,
+                                &bundled_inputs,
+                                &bundled_plugin_cofig,
+                                task,
+                                &ctx,
+                            )
+                            .await
                         }
                         "@anything/webhook_response" => {
                             process_webhook_response_task(

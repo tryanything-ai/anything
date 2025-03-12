@@ -1,7 +1,9 @@
 use crate::processor::execute_task::execute_task;
 
 use chrono::Utc;
-use serde_json::Value;
+use serde_json::{json, Value};
+use tokio::sync::oneshot;
+use uuid::Uuid;
 
 use std::collections::HashMap;
 
@@ -355,7 +357,7 @@ pub async fn process_task(
 
     // Execute the task
     let (task_result, bundled_context) =
-        match execute_task(ctx.state.clone(), &ctx.client, task).await {
+        match execute_task(ctx.state.clone(), &ctx.client, task, ctx).await {
             Ok(success_value) => {
                 println!("[PROCESSOR] Task {} completed successfully", task.task_id);
                 success_value
@@ -388,16 +390,66 @@ pub async fn process_task(
     )
     .await;
 
+    // Check if this is a subflow task that needs to wait for completion
+    if let Some(plugin_name) = &task.plugin_name {
+        if plugin_name.as_str() == "@anything/subflow" {
+            const MAX_SUBFLOW_DEPTH: usize = 5;
+
+            if ctx.subflow_depth >= MAX_SUBFLOW_DEPTH {
+                println!(
+                    "[PROCESSOR] Maximum subflow depth ({}) reached, stopping subflow execution",
+                    MAX_SUBFLOW_DEPTH
+                );
+                return Err(TaskError {
+                    error: serde_json::json!({
+                        "error": "Maximum subflow depth reached",
+                        "max_depth": MAX_SUBFLOW_DEPTH,
+                        "current_depth": ctx.subflow_depth
+                    }),
+                    context: json!({}),
+                });
+            }
+
+            // Wait for subflow completion and get result
+            if let Some(flow_session_id) =
+                task_result.as_ref().and_then(|r| r.get("flow_session_id"))
+            {
+                println!(
+                    "[PROCESSOR] Waiting for subflow {} completion (depth: {})",
+                    flow_session_id, ctx.subflow_depth
+                );
+
+                // Get the result channel for this subflow
+                if let Some(flow_session_id_str) = flow_session_id.as_str() {
+                    if let Ok(session_uuid) = Uuid::parse_str(flow_session_id_str) {
+                        let mut channels = ctx.state.subflow_result_channels.write().await;
+                        if let Some(rx) = channels.remove(&session_uuid) {
+                            // Send the result through the channel
+                            if let Ok(result) = rx.send(task_result.clone().unwrap_or_default()) {
+                                println!("[PROCESSOR] Successfully sent subflow result");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Check if this is a filter task that returned false
     if let Some(plugin_name) = &task.plugin_name {
+        println!("[FILTER] Checking plugin name: {}", plugin_name);
         if plugin_name.as_str() == "@anything/filter" {
+            println!("[FILTER] Processing filter task {}", task.task_id);
             if let Some(result_value) = &task_result {
+                println!("[FILTER] Got result value: {:?}", result_value);
                 // Check if the filter returned false
                 if let Some(should_continue) = result_value.get("should_continue") {
+                    println!("[FILTER] Found should_continue value: {:?}", should_continue);
                     if let Some(continue_value) = should_continue.as_bool() {
+                        println!("[FILTER] Continue value is: {}", continue_value);
                         if !continue_value {
                             println!(
-                                "[PROCESSOR] Filter task {} returned false, stopping branch execution",
+                                "[FILTER] Filter task {} returned false, stopping branch execution",
                                 task.task_id
                             );
                             // Return empty vector to indicate no next actions

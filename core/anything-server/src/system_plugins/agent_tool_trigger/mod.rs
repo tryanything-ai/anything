@@ -215,6 +215,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
         flow_session_id: flow_session_id,
         trigger_session_id: trigger_session_id,
         trigger_task: Some(task),
+        subflow_depth: 0,
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

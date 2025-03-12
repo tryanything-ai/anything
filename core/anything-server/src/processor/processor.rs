@@ -35,6 +35,7 @@ pub struct ProcessorMessage {
     pub flow_session_id: Uuid,
     pub trigger_session_id: Uuid,
     pub trigger_task: Option<CreateTaskInput>,
+    pub subflow_depth: usize,
 }
 
 // Constants
@@ -53,6 +54,7 @@ pub struct PathProcessingContext {
     pub workflow_def: Arc<WorkflowVersionDefinition>,
     pub active_paths: Arc<Mutex<usize>>,
     pub path_semaphore: Arc<Semaphore>,
+    pub subflow_depth: usize,
 }
 
 /// Processes a single path in the workflow
@@ -96,12 +98,17 @@ async fn process_path(ctx: PathProcessingContext, initial_task: Task) {
         let next_actions = match process_task(&ctx, &current_task, &graph).await {
             Ok(actions) => {
                 println!(
-                    "[PROCESSOR] Successfully processed task: {}",
+                    "[PROCESSOR] Found {} next actions for task {}",
+                    actions.len(),
                     current_task.task_id
                 );
+                if actions.is_empty() {
+                    println!("[PROCESSOR] No next actions returned (filter stopped), ending path");
+                    break;
+                }
                 actions
             }
-            Err(_) => {
+            Err(e) => {
                 println!(
                     "[PROCESSOR] Task {} failed, marking path as failed",
                     current_task.task_id
@@ -153,6 +160,7 @@ async fn process_path(ctx: PathProcessingContext, initial_task: Task) {
                             workflow_def: ctx.workflow_def.clone(),
                             active_paths: ctx.active_paths.clone(),
                             path_semaphore: ctx.path_semaphore.clone(),
+                            subflow_depth: ctx.subflow_depth,
                         };
 
                         // Spawn a new task for this path
@@ -294,6 +302,7 @@ async fn start_parallel_workflow_processing(
         workflow_def,
         active_paths: active_paths.clone(),
         path_semaphore,
+        subflow_depth: processor_message.subflow_depth,
     };
     println!("[PROCESSOR] Created shared processing context");
 
@@ -414,6 +423,7 @@ async fn start_parallel_workflow_processing(
                     workflow_def: ctx.workflow_def.clone(),
                     active_paths: ctx.active_paths.clone(),
                     path_semaphore: ctx.path_semaphore.clone(),
+                    subflow_depth: ctx.subflow_depth,
                 };
 
                 // Spawn a processing path for this task
@@ -421,7 +431,7 @@ async fn start_parallel_workflow_processing(
             }
 
             // Return None since we've already spawned paths for all incomplete tasks
-        None
+            None
         } else {
             // All tasks are either completed or there are no tasks
             println!("[PROCESSOR] No incomplete tasks found to resume");
@@ -564,6 +574,12 @@ fn spawn_process_path(ctx: PathProcessingContext, task: Task) {
                         actions.len(),
                         current_task.task_id
                     );
+                    if actions.is_empty() {
+                        println!(
+                            "[PROCESSOR] No next actions returned (filter stopped), ending path"
+                        );
+                        break;
+                    }
                     actions
                 }
                 Err(e) => {
@@ -626,6 +642,7 @@ fn spawn_process_path(ctx: PathProcessingContext, task: Task) {
                                 workflow_def: ctx.workflow_def.clone(),
                                 active_paths: ctx.active_paths.clone(),
                                 path_semaphore: ctx.path_semaphore.clone(),
+                                subflow_depth: ctx.subflow_depth,
                             };
 
                             println!(

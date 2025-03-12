@@ -252,6 +252,7 @@ pub async fn run_workflow_and_respond(
         flow_session_id: flow_session_id,
         trigger_session_id: trigger_session_id,
         trigger_task: Some(task),
+        subflow_depth: 0,
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -375,12 +376,15 @@ pub async fn run_workflow_version_and_respond(
     let account_id = workflow_version.account_id.clone();
 
     // Validate the webhook trigger node and outputs
-    let (trigger_node, _output_node) =
-        match validate_required_input_and_response_plugins(&workflow_version.flow_definition, "@anything/webhook".to_string(), "@anything/webhook_response".to_string(), true)
-        {
-            Ok((trigger, output)) => (trigger, output),
-            Err(response) => return response.into_response(),
-        };
+    let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
+        &workflow_version.flow_definition,
+        "@anything/webhook".to_string(),
+        "@anything/webhook_response".to_string(),
+        true,
+    ) {
+        Ok((trigger, output)) => (trigger, output),
+        Err(response) => return response.into_response(),
+    };
 
     let flow_session_id = Uuid::new_v4().to_string();
     let trigger_session_id = Uuid::new_v4();
@@ -510,6 +514,7 @@ pub async fn run_workflow_version_and_respond(
         flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
         trigger_session_id: trigger_session_id,
         trigger_task: Some(task.clone()),
+        subflow_depth: 0,
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -755,6 +760,7 @@ pub async fn run_workflow(
         flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
         trigger_session_id: trigger_session_id,
         trigger_task: Some(task.clone()),
+        subflow_depth: 0,
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -969,6 +975,7 @@ pub async fn run_workflow_version(
         flow_session_id: flow_session_id,
         trigger_session_id: trigger_session_id,
         trigger_task: Some(task),
+        subflow_depth: 0,
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

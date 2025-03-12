@@ -372,6 +372,7 @@ async fn create_trigger_task(
         flow_session_id: Uuid::parse_str(&input.flow_session_id).unwrap(),
         trigger_session_id: Uuid::parse_str(&input.trigger_session_id).unwrap(),
         trigger_task: Some(input),
+        subflow_depth: 0,
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

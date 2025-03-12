@@ -171,9 +171,9 @@ pub async fn process_filter_task(
 
     // Return a result with should_continue flag
     Ok(Some(json!({
-        "result": {
+        // "result": {
             "should_continue": condition,
             "condition_result": condition
-        }
+        // }
     })))
 }

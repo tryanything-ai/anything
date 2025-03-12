@@ -178,6 +178,7 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
                         flow_session_id: Uuid::parse_str(&session_id).unwrap(),
                         trigger_session_id: Uuid::parse_str(&trigger_session_id).unwrap(),
                         trigger_task: None,
+                        subflow_depth: 0,
                     };
 
                     if let Err(e) = state.processor_sender.send(processor_message).await {
