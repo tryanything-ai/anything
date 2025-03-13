@@ -89,26 +89,29 @@ pub async fn test_workflow(
 
     println!("[TEST WORKFLOW] Successfully retrieved workflow version");
 
+    // Find the trigger action
+    let trigger_action = match workflow_version
+        .flow_definition
+        .actions
+        .iter()
+        .find(|action| action.r#type == ActionType::Trigger)
+    {
+        Some(action) => action,
+        None => {
+            println!("[TEST WORKFLOW] No trigger action found in workflow");
+            return (
+                StatusCode::BAD_REQUEST,
+                "No trigger action found in workflow",
+            )
+                .into_response();
+        }
+    };
+
     let task_config = TaskConfig {
-        inputs: Some(serde_json::json!(
-            workflow_version.flow_definition.actions[0].inputs
-        )),
-        inputs_schema: Some(
-            workflow_version.flow_definition.actions[0]
-                .inputs_schema
-                .clone()
-                .unwrap(),
-        ),
-        plugin_config: Some(
-            workflow_version.flow_definition.actions[0]
-                .plugin_config
-                .clone(),
-        ),
-        plugin_config_schema: Some(
-            workflow_version.flow_definition.actions[0]
-                .plugin_config_schema
-                .clone(),
-        ),
+        inputs: Some(serde_json::json!(trigger_action.inputs)),
+        inputs_schema: Some(trigger_action.inputs_schema.clone().unwrap()),
+        plugin_config: Some(trigger_action.plugin_config.clone()),
+        plugin_config_schema: Some(trigger_action.plugin_config_schema.clone()),
     };
 
     let trigger_session_id = Uuid::new_v4().to_string();
@@ -120,24 +123,16 @@ pub async fn test_workflow(
         task_status: TaskStatus::Running.as_str().to_string(),
         flow_id: workflow_id.clone(),
         flow_version_id: workflow_version_id.clone(),
-        action_label: workflow_version.flow_definition.actions[0].label.clone(),
-        trigger_id: workflow_version.flow_definition.actions[0]
-            .action_id
-            .clone(),
+        action_label: trigger_action.label.clone(),
+        trigger_id: trigger_action.action_id.clone(),
         trigger_session_id: trigger_session_id.clone(),
         trigger_session_status: FlowSessionStatus::Running.as_str().to_string(),
         flow_session_id: flow_session_id.clone(),
         flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: workflow_version.flow_definition.actions[0]
-            .action_id
-            .clone(),
+        action_id: trigger_action.action_id.clone(),
         r#type: ActionType::Trigger,
-        plugin_name: workflow_version.flow_definition.actions[0]
-            .plugin_name
-            .clone(),
-        plugin_version: workflow_version.flow_definition.actions[0]
-            .plugin_version
-            .clone(),
+        plugin_name: trigger_action.plugin_name.clone(),
+        plugin_version: trigger_action.plugin_version.clone(),
         stage: Stage::Testing.as_str().to_string(),
         config: task_config,
         result: Some(serde_json::json!({
