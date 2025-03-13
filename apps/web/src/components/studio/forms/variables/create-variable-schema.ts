@@ -38,6 +38,26 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             type: "boolean",
         }
     },
+    html: {
+        default: "",
+        type: "string",
+        "x-jsf-presentation": {
+            inputType: "html_or_variable",
+        },
+        "x-any-validation": {
+            type: "string",
+        }
+    },
+    xml: {
+        default: "",
+        type: "string",
+        "x-jsf-presentation": {
+            inputType: "xml_or_variable",
+        },
+        "x-any-validation": {
+            type: "string",
+        }
+    },
     object: {
         default: {},
         type: "object",
@@ -83,6 +103,14 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                     "value": "text",
                     "title": "Text",
                    
+                },
+                {
+                    "value": "html", 
+                    "title": "HTML"
+                },
+                {
+                    "value": "xml",
+                    "title": "XML"
                 },
                 { 
                     "value": "number",
