@@ -561,14 +561,14 @@ pub async fn processor(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[PROCESSOR] Starting processor");
 
-    // Create a shared set to track active flow sessions
     let active_flow_sessions = Arc::new(Mutex::new(HashSet::new()));
-    // Get the receiver from the state
     let mut rx = state.processor_receiver.lock().await;
-    // Guard against too many workflows running at once
+    println!("[PROCESSOR] Successfully acquired receiver lock");
+
     let number_of_processors_semaphore = state.workflow_processor_semaphore.clone();
 
     while let Some(message) = rx.recv().await {
+        println!("[PROCESSOR] Received message: {:?}", message);
         // Check if we received shutdown signal
         if state
             .shutdown_signal

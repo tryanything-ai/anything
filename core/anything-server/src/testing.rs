@@ -74,10 +74,7 @@ pub async fn test_workflow(
     let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&body) {
         Ok(dbflowversion) => dbflowversion,
         Err(e) => {
-            println!(
-                "[TESTING] Failed to parse workflow version JSON: {}",
-                e
-            );
+            println!("[TESTING] Failed to parse workflow version JSON: {}", e);
             println!("[TESTING] Raw JSON body: {}", body);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -391,7 +388,10 @@ pub async fn get_test_session_results(
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     println!("[TESTING] Handling get_test_session_results request");
-    println!("[TESTING] Getting results for session {} in workflow {} version {}", session_id, workflow_id, workflow_version_id);
+    println!(
+        "[TESTING] Getting results for session {} in workflow {} version {}",
+        session_id, workflow_id, workflow_version_id
+    );
 
     let client = &state.anything_client;
 
@@ -411,14 +411,14 @@ pub async fn get_test_session_results(
         Ok(response) => {
             println!("[TESTING] Successfully queried tasks table");
             response
-        },
+        }
         Err(e) => {
             println!("[TESTING] Failed to execute request to get tasks: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -426,14 +426,14 @@ pub async fn get_test_session_results(
         Ok(body) => {
             println!("[TESTING] Successfully read response body");
             body
-        },
+        }
         Err(e) => {
             println!("[TESTING] Failed to read response body: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -441,7 +441,7 @@ pub async fn get_test_session_results(
         Ok(tasks) => {
             println!("[TESTING] Successfully parsed {} tasks", tasks.len());
             tasks
-        },
+        }
         Err(e) => {
             println!("[TESTING] Failed to parse tasks JSON: {}", e);
             println!("[TESTING] Raw JSON body: {}", body);
