@@ -2,6 +2,7 @@ use crate::processor::utils::{
     create_workflow_graph, get_trigger_node, get_workflow_and_tasks_from_cache,
     is_already_processing,
 };
+
 use crate::AppState;
 use chrono::Utc;
 
@@ -286,7 +287,6 @@ async fn start_parallel_workflow_processing(
 
         // Wait for all paths to complete
         loop {
-            // Check if all paths have completed
             let paths_count = {
                 let paths = active_paths.lock().await;
                 *paths
@@ -300,13 +300,15 @@ async fn start_parallel_workflow_processing(
             // Sleep briefly to avoid busy waiting
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
-            // Check for shutdown signal
+            // If shutdown signal received, log but continue waiting
             if state
                 .shutdown_signal
                 .load(std::sync::atomic::Ordering::SeqCst)
             {
-                println!("[PROCESSOR] Received shutdown signal during path completion wait");
-                break;
+                println!(
+                    "[PROCESSOR] Shutdown signal received, waiting for {} active paths to complete",
+                    paths_count
+                );
             }
         }
     } else {
@@ -567,14 +569,18 @@ pub async fn processor(
 
     let number_of_processors_semaphore = state.workflow_processor_semaphore.clone();
 
+    // Keep track of spawned workflow tasks
+    let mut workflow_handles = Vec::new();
+
     while let Some(message) = rx.recv().await {
-        println!("[PROCESSOR] Received message: {:?}", message);
         // Check if we received shutdown signal
         if state
             .shutdown_signal
             .load(std::sync::atomic::Ordering::SeqCst)
         {
-            println!("[PROCESSOR] Received shutdown signal, stopping processor");
+            println!(
+                "[PROCESSOR] Received shutdown signal, waiting for active workflows to complete"
+            );
             break;
         }
 
@@ -603,7 +609,7 @@ pub async fn processor(
         let active_flow_sessions = Arc::clone(&active_flow_sessions);
 
         // Spawn a new task for this workflow
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             println!(
                 "[PROCESSOR] Starting workflow processing for {}",
                 flow_session_id
@@ -663,7 +669,20 @@ pub async fn processor(
             active_flow_sessions.lock().await.remove(&flow_session_id);
             drop(permit);
         });
+        workflow_handles.push(handle);
     }
+
+    // Wait for all active workflows to complete
+    println!(
+        "[PROCESSOR] Waiting for {} active workflows to complete",
+        workflow_handles.len()
+    );
+    for handle in workflow_handles {
+        if let Err(e) = handle.await {
+            println!("[PROCESSOR] Error waiting for workflow to complete: {}", e);
+        }
+    }
+    println!("[PROCESSOR] All workflows completed, shutting down");
 
     Ok(())
 }
