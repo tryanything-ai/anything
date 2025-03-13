@@ -109,10 +109,10 @@ export default function CodeMirrorFieldNumber({
         </span>
       </Label>
 
-      {/* Container with relative positioning for controls overlay */}
-      <div className="relative">
-        {/* Controls positioned absolutely in top-right */}
-        <div className="absolute -top-7 right-0 z-10 flex gap-1">
+      {/* Updated container with overflow handling */}
+      <div className="relative min-w-[200px]">
+        {/* Moved controls outside of scroll area and increased z-index */}
+        <div className="absolute -top-7 right-0 z-50 flex gap-1">
           <TooltipProvider>
             {(showInputsExplorer || showResultsExplorer) && (
               <Tooltip>
@@ -133,7 +133,7 @@ export default function CodeMirrorFieldNumber({
                     <Variable size={14} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="top" className="z-[60]">
                   <p>Toggle Variables Explorer</p>
                 </TooltipContent>
               </Tooltip>
@@ -150,26 +150,25 @@ export default function CodeMirrorFieldNumber({
                   <Fullscreen size={14} />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent side="top" className="z-[60]">
                 <p>Toggle Expanded Editor</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
 
-        {/* Editor */}
-        <div className="w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
+        {/* Updated editor container with proper overflow handling */}
+        <div className="w-full overflow-x-auto [&_.cm-editor.cm-focused]:outline-none">
           <CodeMirror
             {...codeEditorProps}
             className={cn(
-              "w-full overflow-hidden rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
+              "w-full rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
               className,
             )}
             style={{
               minHeight: "2.25rem",
               height: "auto",
-              width: "100%",
-              maxWidth: "100%",
+              minWidth: "100%", // Ensures content doesn't shrink below container width
               overflow: "auto",
               wordWrap: "break-word",
               overflowWrap: "break-word",
