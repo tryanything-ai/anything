@@ -3,7 +3,7 @@ FROM rust:1.83.0-bullseye as builder
 # Set environment variables for build
 ENV RUST_LOG=info
 ENV RUST_BACKTRACE=1
-ENV RUSTFLAGS="-C target-cpu=native -C opt-level=3"
+# ENV RUSTFLAGS="-C target-cpu=native -C opt-level=3"
 ENV CARGO_PROFILE_RELEASE_LTO=true
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1
 ENV RUST_MIN_STACK=8388608
