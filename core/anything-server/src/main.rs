@@ -411,7 +411,7 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
 
     // Spawn the hydrate processor
-    tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
+    // tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
 
     let state_clone = state.clone();
     tokio::spawn(async move {
