@@ -1,4 +1,4 @@
-FROM rust:1.83.0-bullseye as builder
+FROM rust:1.83.0-bookworm as builder
 
 # Set environment variables for build
 ENV RUST_LOG=info
@@ -25,19 +25,17 @@ COPY ./src ./src
 # Clean and rebuild with actual source
 RUN cargo clean && cargo build --release
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # Set runtime environment variables
 ENV RUST_LOG=info
 ENV RUST_BACKTRACE=1
 ENV RUST_MIN_STACK=8388608
-ENV ROCKET_ADDRESS=0.0.0.0
-ENV ROCKET_PORT=3001
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
     tini \
-    libssl1.1 \
+    libssl3 \
     ca-certificates \
     libpthread-stubs0-dev \
     curl \
