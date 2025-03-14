@@ -14,7 +14,7 @@ export default function NewTeamForm(): JSX.Element {
         <Label htmlFor="password">Identifier</Label>
         <div className="flex items-center gap-x-2">
           <span className="text-sm text-muted-foreground whitespace-nowrap grow">
-            https://your-app.com/
+            https://tryanything.xyz/
           </span>
           <Input name="slug" placeholder="my-team" required />
         </div>

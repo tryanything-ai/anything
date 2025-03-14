@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -5,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
 import {
   Table,
   TableRow,
@@ -13,26 +15,43 @@ import {
   TableCell,
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
-import CreateTeamInvitationButton from "./create-team-invitation-button";
 import { formatDistanceToNow } from "date-fns";
+import { createClient } from "@/lib/supabase/client";
+import api from "@repo/anything-api";
+import CreateTeamInvitationButton from "./create-team-invitation-button";
 import DeleteTeamInvitationButton from "./delete-team-invitation-button";
 
 type Props = {
   accountId: string;
 };
 
-export default async function ManageTeamInvitations({
-  accountId,
-}: Props): Promise<JSX.Element> {
-  const supabaseClient = await createClient();
+export default function ManageTeamInvitations({ accountId }: Props) {
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: invitations }: any = await supabaseClient.rpc(
-    "get_account_invitations",
-    // @ts-ignore
-    {
-      account_id: accountId,
-    } as any,
-  );
+  useEffect(() => {
+    async function fetchInvitations() {
+      try {
+        const supabaseClient = await createClient();
+        const result = await api.accounts.getAccountInvitations(
+          supabaseClient,
+          accountId,
+        );
+        setInvitations(result || []);
+      } catch (err) {
+        setError("Failed to load invitations");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchInvitations();
+  }, [accountId]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <Card>
@@ -79,9 +98,9 @@ export default async function ManageTeamInvitations({
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DeleteTeamInvitationButton
+                    {/* <DeleteTeamInvitationButton
                       invitationId={invitation.invitation_id}
-                    />
+                    /> */}
                   </TableCell>
                 </TableRow>
               ))}

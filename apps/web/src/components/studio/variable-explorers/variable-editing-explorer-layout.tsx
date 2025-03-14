@@ -4,21 +4,71 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-
 import { useAnything } from "@/context/AnythingContext";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { ResultsExplorer } from "./results-explorer";
 import { useState } from "react";
 import { Button } from "@repo/ui/components/ui/button";
-import { Send, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { SecretsExplorer } from "./secrets-explorer";
 import { SystemVariablesExplorer } from "./system-variables-explorer";
 
+// Reusable tabs component
+function VariableExplorerTabs({ className }: { className?: string }) {
+  return (
+    <TabsList className={className}>
+      <TabsTrigger value="results">Action Results</TabsTrigger>
+      <TabsTrigger value="secrets">Secrets</TabsTrigger>
+      <TabsTrigger value="system_variables">System Variables</TabsTrigger>
+    </TabsList>
+  );
+}
+
+// Reusable content component
+function VariableExplorerContent() {
+  return (
+    <>
+      <TabsContent value="results" className="h-full overflow-y-auto">
+        <ScrollArea className="h-full">
+          <ResultsExplorer />
+        </ScrollArea>
+      </TabsContent>
+      <TabsContent value="secrets" className="h-full overflow-y-auto">
+        <ScrollArea className="h-full">
+          <SecretsExplorer />
+        </ScrollArea>
+      </TabsContent>
+      <TabsContent value="system_variables" className="h-full overflow-y-auto">
+        <ScrollArea className="h-full">
+          <SystemVariablesExplorer />
+        </ScrollArea>
+      </TabsContent>
+    </>
+  );
+}
+
+// Base component with just tabs and content
+export function BaseVariableEditingExplorer(): JSX.Element {
+  const [tab, setTab] = useState("results");
+
+  return (
+    <Tabs
+      defaultValue="results"
+      value={tab}
+      onValueChange={setTab}
+      className="flex flex-col h-full"
+    >
+      <VariableExplorerTabs className="w-[340px]" />
+      <VariableExplorerContent />
+    </Tabs>
+  );
+}
+
+// Default export with close button and layout
 export default function VariableEditingExplorer(): JSX.Element {
   const {
     workflow: { setShowExplorer },
   } = useAnything();
-
   const [tab, setTab] = useState("results");
 
   return (
@@ -38,30 +88,9 @@ export default function VariableEditingExplorer(): JSX.Element {
           >
             <XIcon className="size-5 fill-foreground" />
           </Button>
-          <TabsList className="w-[340px]">
-            <TabsTrigger value="results">Action Results</TabsTrigger>
-            <TabsTrigger value="secrets">Secrets</TabsTrigger>
-            <TabsTrigger value="system_variables">System Variables</TabsTrigger>
-          </TabsList>
+          <VariableExplorerTabs className="w-[340px]" />
         </div>
-        <TabsContent value="results" className="h-full overflow-y-auto">
-          <ScrollArea className="h-full">
-            <ResultsExplorer />
-          </ScrollArea>
-        </TabsContent>
-        <TabsContent value="secrets" className="h-full overflow-y-auto">
-          <ScrollArea className="h-full">
-            <SecretsExplorer />
-          </ScrollArea>
-        </TabsContent>
-        <TabsContent
-          value="system_variables"
-          className="h-full overflow-y-auto"
-        >
-          <ScrollArea className="h-full">
-            <SystemVariablesExplorer />
-          </ScrollArea>
-        </TabsContent>
+        <VariableExplorerContent />
       </Tabs>
     </div>
   );

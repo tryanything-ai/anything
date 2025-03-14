@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -5,37 +8,58 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
 import {
   Table,
   TableRow,
   TableBody,
   TableCell,
 } from "@repo/ui/components/ui/table";
-
 import { Badge } from "@repo/ui/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 import TeamMemberOptions from "./team-member-options";
+import api from "@repo/anything-api";
 
 type Props = {
   accountId: string;
 };
 
-export default async function ManageTeamMembers({
-  accountId,
-}: Props): Promise<JSX.Element> {
-  const supabaseClient = await createClient();
+export default function ManageTeamMembers({ accountId }: Props) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: members }: any = await supabaseClient.rpc(
-    "get_account_members",
-    // @ts-ignore
-    {
-      account_id: accountId,
-    } as any,
-  );
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const supabaseClient = await createClient();
 
-  const { data } = await supabaseClient.auth.getUser();
+        // Get members
+        const membersData = await api.accounts.getAccountMembers(
+          supabaseClient,
+          accountId,
+        );
+        setMembers(membersData || []);
+
+        // Get current user
+        const { data } = await supabaseClient.auth.getUser();
+        setCurrentUser(data?.user);
+      } catch (err) {
+        setError("Failed to load team members");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [accountId]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
   const isPrimaryOwner = members?.find(
-    (member: any) => member.user_id === data?.user?.id,
+    (member) => member.user_id === currentUser?.id,
   )?.is_primary_owner;
 
   return (
@@ -47,7 +71,7 @@ export default async function ManageTeamMembers({
       <CardContent>
         <Table>
           <TableBody>
-            {members?.map((member: any) => (
+            {members?.map((member) => (
               <TableRow key={member.user_id}>
                 <TableCell>
                   <div className="flex gap-x-2">

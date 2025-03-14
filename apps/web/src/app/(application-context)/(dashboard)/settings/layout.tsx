@@ -8,11 +8,12 @@ export default function PersonalAccountSettingsPage({
   children: React.ReactNode;
 }): JSX.Element {
   const items = [
-    { name: "Accounts", href: "/settings" },
+    { name: "Linked Services", href: "/settings" },
     { name: "Secrets", href: "/settings/secrets" },
     { name: "API Keys", href: "/settings/keys" },
     { name: "Your Profile", href: "/settings/profile" },
     // { name: "Teams", href: "/settings/teams" },
+    { name: "Members", href: "/settings/members" },
     { name: "Billing", href: "/settings/billing" },
   ];
   return (

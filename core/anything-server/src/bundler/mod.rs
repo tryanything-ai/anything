@@ -2,9 +2,6 @@ pub mod accounts;
 pub mod bundler;
 pub mod secrets;
 
-#[cfg(test)]
-pub mod bundler_test;
-
 use std::{sync::Arc, time::Duration};
 
 pub use bundler::*;

@@ -1,6 +1,8 @@
-use crate::processor::execute_task::execute_task;
-use crate::processor::flow_session_cache::FlowSessionData;
-use crate::processor::parsing_utils::get_trigger_node;
+use crate::processor::utils::{
+    create_workflow_graph, get_trigger_node, get_workflow_and_tasks_from_cache,
+    is_already_processing,
+};
+
 use crate::AppState;
 use chrono::Utc;
 
@@ -8,17 +10,22 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use tokio::sync::Semaphore;
 use uuid::Uuid;
 
-use crate::processor::db_calls::{
-    create_task, get_workflow_definition, update_flow_session_status, update_task_status,
+use crate::processor::processor_utils::{
+    check_and_update_workflow_completion, create_task_for_action, process_task, update_flow_status,
 };
+
+use crate::processor::db_calls::{create_task, update_flow_session_status, update_task_status};
+
 use crate::types::{
     action_types::ActionType,
     task_types::{
-        CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+        CreateTaskInput, FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus,
+        TriggerSessionStatus,
     },
-    workflow_types::WorkflowVersionDefinition,
+    workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
 };
 
 // Add this near your other type definitions
@@ -31,17 +38,539 @@ pub struct ProcessorMessage {
     pub trigger_task: Option<CreateTaskInput>,
 }
 
+// Constants
+const MAX_CONCURRENT_PATHS: usize = 5;
+
+/// Represents the state needed for processing a workflow path
+#[derive(Clone)]
+pub struct PathProcessingContext {
+    pub state: Arc<AppState>,
+    pub client: postgrest::Postgrest,
+    pub flow_session_id: Uuid,
+    pub workflow_id: Uuid,
+    pub trigger_task_id: String,
+    pub trigger_session_id: Uuid,
+    pub workflow: Arc<DatabaseFlowVersion>,
+    pub workflow_def: Arc<WorkflowVersionDefinition>,
+    pub active_paths: Arc<Mutex<usize>>,
+    pub path_semaphore: Arc<Semaphore>,
+}
+
+/// Starts processing a workflow with parallel paths
+async fn start_parallel_workflow_processing(
+    state: Arc<AppState>,
+    client: postgrest::Postgrest,
+    flow_session_id: Uuid,
+    workflow_id: Uuid,
+    trigger_task_id: String,
+    trigger_session_id: Uuid,
+    workflow: DatabaseFlowVersion,
+    processor_message: ProcessorMessage,
+    cached_tasks: Option<HashMap<Uuid, Task>>,
+) {
+    println!(
+        "[PROCESSOR] Starting parallel workflow processing for flow session: {}",
+        flow_session_id
+    );
+
+    // Create a semaphore to limit concurrent paths
+    let path_semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_PATHS));
+    println!(
+        "[PROCESSOR] Created semaphore with {} max concurrent paths",
+        MAX_CONCURRENT_PATHS
+    );
+
+    // Create a counter to track active path processors
+    let active_paths = Arc::new(Mutex::new(0));
+    println!("[PROCESSOR] Initialized active paths counter");
+
+    // Create the workflow graph
+    let workflow_def = Arc::new(workflow.flow_definition.clone());
+    let graph = create_workflow_graph(&workflow_def);
+    println!("[PROCESSOR] Created workflow graph");
+
+    // Clone workflow before using it in the Arc
+    let workflow_clone = workflow.clone();
+
+    // Clone client before using it in the context
+    let client_clone = client.clone();
+
+    // Create the shared context
+    let ctx = PathProcessingContext {
+        state: state.clone(),
+        client: client_clone,
+        flow_session_id,
+        workflow_id,
+        trigger_task_id: trigger_task_id.clone(),
+        trigger_session_id: trigger_session_id.clone(),
+        workflow: Arc::new(workflow_clone),
+        workflow_def,
+        active_paths: active_paths.clone(),
+        path_semaphore,
+    };
+    println!("[PROCESSOR] Created shared processing context");
+
+    // let workflow_id = processor_message.workflow_id;
+    // let version_id = processor_message.version_id;
+    // let flow_session_id = processor_message.flow_session_id;
+    let trigger_task = processor_message.trigger_task.clone();
+    // let trigger_task_id = trigger_task.clone().unwrap().trigger_id;
+    // let trigger_session_id = processor_message.trigger_session_id;
+
+    // Create initial trigger task
+    let trigger_node = get_trigger_node(&workflow.flow_definition).unwrap();
+
+    // If we have a trigger task in the message, use that, otherwise check cache
+    let initial_task = if let Some(trigger_task) = trigger_task {
+        // Create task from the provided trigger task input
+        match create_task(state.clone(), &trigger_task).await {
+            Ok(task) => {
+                // Update cache with new task
+                let mut cache = state.flow_session_cache.write().await;
+                if cache.add_task(&flow_session_id, task.clone()) {
+                    Some(task)
+                } else {
+                    println!(
+                        "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+                        flow_session_id
+                    );
+                    Some(task)
+                }
+            }
+            Err(e) => {
+                println!("[PROCESSOR] Error creating initial task: {}", e);
+                None
+            }
+        }
+    } else if cached_tasks.is_none() || cached_tasks.as_ref().unwrap().is_empty() {
+        // Only create trigger task if there are no existing tasks in cache
+        let initial_task = CreateTaskInput {
+            account_id: workflow.account_id.to_string(),
+            processing_order: 0,
+            task_status: TaskStatus::Running.as_str().to_string(),
+            flow_id: workflow_id.to_string(),
+            flow_version_id: workflow.flow_version_id.to_string(),
+            action_label: trigger_node.label.clone(),
+            trigger_id: trigger_task_id.clone(),
+            trigger_session_id: trigger_session_id.to_string(),
+            trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+            flow_session_id: flow_session_id.to_string(),
+            flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+            action_id: trigger_node.action_id.clone(),
+            r#type: ActionType::Trigger,
+            plugin_name: trigger_node.plugin_name.clone(),
+            plugin_version: trigger_node.plugin_version.clone(),
+            stage: if workflow.published {
+                Stage::Production.as_str().to_string()
+            } else {
+                Stage::Testing.as_str().to_string()
+            },
+            config: TaskConfig {
+                inputs: Some(trigger_node.inputs.clone().unwrap()),
+                inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+                plugin_config: Some(trigger_node.plugin_config.clone()),
+                plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
+            },
+            result: None,
+            error: None,
+            started_at: Some(Utc::now()),
+            test_config: None,
+        };
+
+        // Start with trigger task
+        match create_task(state.clone(), &initial_task).await {
+            Ok(task) => {
+                // Update cache with new task
+                let mut cache = state.flow_session_cache.write().await;
+                if cache.add_task(&flow_session_id, task.clone()) {
+                    Some(task)
+                } else {
+                    println!(
+                        "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+                        flow_session_id
+                    );
+                    Some(task)
+                }
+            }
+            Err(e) => {
+                println!("[PROCESSOR] Error creating initial task: {}", e);
+                None
+            }
+        }
+    } else {
+        // We have existing tasks - find the last incomplete task or the highest processing order
+        let existing_tasks = cached_tasks.as_ref().unwrap();
+
+        // First try to find an incomplete task
+        let incomplete_tasks = existing_tasks
+            .values()
+            .filter(|task| {
+                task.task_status == TaskStatus::Running
+                    || task.task_status == TaskStatus::Pending
+                    || task.task_status == TaskStatus::Failed
+            })
+            .collect::<Vec<_>>();
+
+        // If there are incomplete tasks, resume from them
+        if !incomplete_tasks.is_empty() {
+            println!(
+                "[PROCESSOR] Found {} incomplete tasks to resume",
+                incomplete_tasks.len()
+            );
+
+            // For each incomplete task, spawn a processing path
+            for task in incomplete_tasks {
+                println!(
+                    "[PROCESSOR] Resuming from incomplete task: {}",
+                    task.task_id
+                );
+
+                // Increment active paths counter
+                {
+                    let mut paths = active_paths.lock().await;
+                    *paths += 1;
+                    println!("[PROCESSOR] Incremented active paths to: {}", *paths);
+                }
+
+                // Clone the context for this path
+                let path_ctx = PathProcessingContext {
+                    state: ctx.state.clone(),
+                    client: ctx.client.clone(),
+                    flow_session_id,
+                    workflow_id,
+                    trigger_task_id: ctx.trigger_task_id.clone(),
+                    trigger_session_id: ctx.trigger_session_id,
+                    workflow: ctx.workflow.clone(),
+                    workflow_def: ctx.workflow_def.clone(),
+                    active_paths: ctx.active_paths.clone(),
+                    path_semaphore: ctx.path_semaphore.clone(),
+                };
+
+                // Spawn a processing path for this task
+                spawn_process_path(path_ctx, task.clone());
+            }
+
+            // Return None since we've already spawned paths for all incomplete tasks
+            None
+        } else {
+            // All tasks are either completed or there are no tasks
+            println!("[PROCESSOR] No incomplete tasks found to resume");
+            None
+        }
+    };
+
+    // Check for shutdown signal
+    if state
+        .shutdown_signal
+        .load(std::sync::atomic::Ordering::SeqCst)
+    {
+        println!("[PROCESSOR] Received shutdown signal, stopping task processing");
+        return;
+    }
+
+    // If we have an initial task, start processing it in parallel
+    if let Some(task) = initial_task {
+        println!(
+            "[PROCESSOR] Starting initial task processing: {}",
+            task.task_id
+        );
+
+        // Increment active paths counter
+        {
+            let mut paths = active_paths.lock().await;
+            *paths += 1;
+            println!("[PROCESSOR] Incremented active paths to: {}", *paths);
+        }
+
+        // Spawn the initial task processing
+        spawn_process_path(ctx, task);
+
+        // Wait for all paths to complete
+        loop {
+            let paths_count = {
+                let paths = active_paths.lock().await;
+                *paths
+            };
+
+            if paths_count == 0 {
+                println!("[PROCESSOR] All paths have completed, workflow is done");
+                break;
+            }
+
+            // Sleep briefly to avoid busy waiting
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+            // If shutdown signal received, log but continue waiting
+            if state
+                .shutdown_signal
+                .load(std::sync::atomic::Ordering::SeqCst)
+            {
+                println!(
+                    "[PROCESSOR] Shutdown signal received, waiting for {} active paths to complete",
+                    paths_count
+                );
+            }
+        }
+    } else {
+        println!("[PROCESSOR] No initial task to process, workflow is complete");
+
+        // Update flow session status to completed
+        update_flow_status(
+            &ctx,
+            &FlowSessionStatus::Completed,
+            &TriggerSessionStatus::Completed,
+        )
+        .await;
+    }
+
+    println!(
+        "[PROCESSOR] Workflow processing complete: {}",
+        flow_session_id
+    );
+}
+
+fn spawn_process_path(ctx: PathProcessingContext, task: Task) {
+    println!(
+        "[PROCESSOR] Entering spawn_process_path for task: {}",
+        task.task_id
+    );
+    tokio::spawn(async move {
+        println!(
+            "[PROCESSOR] Starting parallel path for action: {} (task: {})",
+            task.action_label, task.task_id
+        );
+
+        // Acquire a permit from the semaphore
+        println!(
+            "[PROCESSOR] Attempting to acquire semaphore permit for task: {}",
+            task.task_id
+        );
+        let permit = match ctx.path_semaphore.acquire().await {
+            Ok(permit) => {
+                println!(
+                    "[PROCESSOR] Successfully acquired permit for task: {}",
+                    task.task_id
+                );
+                permit
+            }
+            Err(e) => {
+                println!(
+                    "[PROCESSOR] Failed to acquire path permit for task {}: {}",
+                    task.task_id, e
+                );
+
+                // Decrement active paths counter
+                {
+                    let mut paths = ctx.active_paths.lock().await;
+                    *paths -= 1;
+                    println!(
+                        "[PROCESSOR] Decremented active paths to {} after permit failure",
+                        *paths
+                    );
+                }
+                return;
+            }
+        };
+
+        // Process the path (inline the process_path logic)
+        println!(
+            "[PROCESSOR] Creating workflow graph for task: {}",
+            task.task_id
+        );
+        let graph = create_workflow_graph(&ctx.workflow_def);
+        let mut current_task = task;
+
+        // Process tasks in this path until completion
+        println!("[PROCESSOR] Starting task processing loop for path");
+        loop {
+            println!(
+                "[PROCESSOR] Processing task: {} in loop",
+                current_task.task_id
+            );
+            // Process the current task
+            let next_actions = match process_task(&ctx, &current_task, &graph).await {
+                Ok(actions) => {
+                    println!(
+                        "[PROCESSOR] Found {} next actions for task {}",
+                        actions.len(),
+                        current_task.task_id
+                    );
+                    actions
+                }
+                Err(e) => {
+                    println!(
+                        "[PROCESSOR] Task {} failed, marking path as failed",
+                        current_task.task_id
+                    );
+                    // Task failed, mark path as failed and exit
+                    check_and_update_workflow_completion(&ctx, false).await;
+                    drop(permit);
+                    return;
+                }
+            };
+
+            // If we have multiple next actions, spawn new paths for all but the first
+            if next_actions.len() > 1 {
+                println!(
+                    "[PROCESSOR] Multiple next actions found ({}), spawning new paths",
+                    next_actions.len()
+                );
+                // Increment active paths counter for the additional paths
+                {
+                    let mut paths = ctx.active_paths.lock().await;
+                    *paths += next_actions.len() - 1; // -1 because we'll process one in this path
+                    println!(
+                        "[PROCESSOR] Incremented active paths to {} for parallel processing",
+                        *paths
+                    );
+                }
+
+                // Process all but the first action in new paths
+                for (idx, next_action) in next_actions.iter().skip(1).enumerate() {
+                    println!(
+                        "[PROCESSOR] Creating task for parallel path {} of {}",
+                        idx + 1,
+                        next_actions.len() - 1
+                    );
+                    // Create a new task for this action
+                    match create_task_for_action(
+                        &ctx,
+                        next_action,
+                        current_task.processing_order + 1,
+                    )
+                    .await
+                    {
+                        Ok(new_task) => {
+                            println!(
+                                "[PROCESSOR] Successfully created task {} for parallel path",
+                                new_task.task_id
+                            );
+                            // Clone the context for the new path
+                            let new_ctx = PathProcessingContext {
+                                state: ctx.state.clone(),
+                                client: ctx.client.clone(),
+                                flow_session_id: ctx.flow_session_id,
+                                workflow_id: ctx.workflow_id,
+                                trigger_task_id: ctx.trigger_task_id.clone(),
+                                trigger_session_id: ctx.trigger_session_id,
+                                workflow: ctx.workflow.clone(),
+                                workflow_def: ctx.workflow_def.clone(),
+                                active_paths: ctx.active_paths.clone(),
+                                path_semaphore: ctx.path_semaphore.clone(),
+                            };
+
+                            println!(
+                                "[PROCESSOR] Spawning new process path for task: {}",
+                                new_task.task_id
+                            );
+                            spawn_process_path(new_ctx, new_task);
+                        }
+                        Err(e) => {
+                            println!("[PROCESSOR] Error creating task for parallel path: {}", e);
+
+                            // Decrement active paths counter for this failed path
+                            {
+                                let mut paths = ctx.active_paths.lock().await;
+                                *paths -= 1;
+                                println!("[PROCESSOR] Decremented active paths to {} after task creation failure", *paths);
+                            }
+                        }
+                    }
+                }
+
+                // Continue with the first next action in this path
+                println!("[PROCESSOR] Continuing with first action in current path");
+                if let Some(first_action) = next_actions.first() {
+                    match create_task_for_action(
+                        &ctx,
+                        first_action,
+                        current_task.processing_order + 1,
+                    )
+                    .await
+                    {
+                        Ok(new_task) => {
+                            println!(
+                                "[PROCESSOR] Created next task {} in current path",
+                                new_task.task_id
+                            );
+                            current_task = new_task;
+                        }
+                        Err(e) => {
+                            println!(
+                                "[PROCESSOR] Error creating next task in current path: {}",
+                                e
+                            );
+
+                            // Path is complete with error
+                            check_and_update_workflow_completion(&ctx, false).await;
+                            drop(permit);
+                            return;
+                        }
+                    }
+                } else {
+                    println!("[PROCESSOR] No first action found (unexpected), breaking loop");
+                    // No next action (shouldn't happen, but handle it)
+                    break;
+                }
+            } else if next_actions.len() == 1 {
+                println!("[PROCESSOR] Single next action found, continuing in current path");
+                // Just one next action, continue in this path
+                match create_task_for_action(
+                    &ctx,
+                    &next_actions[0],
+                    current_task.processing_order + 1,
+                )
+                .await
+                {
+                    Ok(new_task) => {
+                        println!(
+                            "[PROCESSOR] Created next task {} in current path",
+                            new_task.task_id
+                        );
+                        current_task = new_task;
+                    }
+                    Err(e) => {
+                        println!(
+                            "[PROCESSOR] Error creating next task in current path: {}",
+                            e
+                        );
+
+                        // Path is complete with error
+                        check_and_update_workflow_completion(&ctx, false).await;
+                        drop(permit);
+                        return;
+                    }
+                }
+            } else {
+                // No more actions in this path
+                println!("[PROCESSOR] No more actions in path, completing successfully");
+                break;
+            }
+        }
+
+        // Path completed successfully
+        println!("[PROCESSOR] Path completed successfully, updating workflow completion status");
+        check_and_update_workflow_completion(&ctx, true).await;
+
+        // Release the semaphore permit
+        println!("[PROCESSOR] Releasing semaphore permit");
+        drop(permit);
+    });
+}
+
 pub async fn processor(
     state: Arc<AppState>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[PROCESSOR] Starting processor");
 
-    // Create a shared set to track active flow sessions
     let active_flow_sessions = Arc::new(Mutex::new(HashSet::new()));
-    // Get the receiver from the state
     let mut rx = state.processor_receiver.lock().await;
-    // Guard againts too many workflows running at once
+    println!("[PROCESSOR] Successfully acquired receiver lock");
+
     let number_of_processors_semaphore = state.workflow_processor_semaphore.clone();
+
+    // Keep track of spawned workflow tasks
+    let mut workflow_handles = Vec::new();
 
     while let Some(message) = rx.recv().await {
         // Check if we received shutdown signal
@@ -49,35 +578,24 @@ pub async fn processor(
             .shutdown_signal
             .load(std::sync::atomic::Ordering::SeqCst)
         {
-            println!("[PROCESSOR] Received shutdown signal, stopping processor");
+            println!(
+                "[PROCESSOR] Received shutdown signal, waiting for active workflows to complete"
+            );
             break;
         }
 
         let workflow_id = message.workflow_id;
         let version_id = message.version_id;
         let flow_session_id = message.flow_session_id;
-        let trigger_task = message.trigger_task;
+        let trigger_task = message.trigger_task.clone();
         let trigger_task_id = trigger_task.clone().unwrap().trigger_id;
         let trigger_session_id = message.trigger_session_id;
 
-        println!("[PROCESSOR] Received workflow_id: {}", flow_session_id);
+        println!("[PROCESSOR] Received flow_session_id: {}", flow_session_id);
 
         // Check if this flow session is already being processed
-        {
-            // Use a scope block to automatically drop the lock when done
-            let mut active_sessions = active_flow_sessions.lock().await;
-            if !active_sessions.insert(flow_session_id) {
-                println!(
-                    "[PROCESSOR] Flow session {} is already being processed, skipping",
-                    flow_session_id
-                );
-                continue;
-            }
-            println!(
-                "[PROCESSOR] Added flow session {} to active sessions",
-                flow_session_id
-            );
-            // Lock is automatically dropped here at end of scope
+        if is_already_processing(&active_flow_sessions, flow_session_id).await {
+            continue; //SKIP. We are already processing
         }
 
         // Clone what we need for the new task
@@ -91,504 +609,46 @@ pub async fn processor(
         let active_flow_sessions = Arc::clone(&active_flow_sessions);
 
         // Spawn a new task for this workflow
-        //SPAWN NEW PROCESSOR FOR EACH WORKFLOW
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             println!(
                 "[PROCESSOR] Starting workflow processing for {}",
                 flow_session_id
             );
 
-            let mut workflow_definition = None;
-            let mut cached_tasks = None;
-
-            // Try to get from cache first using a read lock
+            // Get workflow definition and cached tasks
+            let (workflow, cached_tasks) = match get_workflow_and_tasks_from_cache(
+                &state,
+                flow_session_id,
+                &workflow_id,
+                &version_id,
+            )
+            .await
             {
-                let cache = state.flow_session_cache.read().await;
-                println!(
-                    "[PROCESSOR] Checking cache for flow_session_id: {}",
-                    flow_session_id
-                );
-                if let Some(session_data) = cache.get(&flow_session_id) {
-                    if let Some(workflow) = &session_data.workflow {
-                        println!(
-                            "[PROCESSOR] Found workflow in cache for flow_session_id: {}",
-                            flow_session_id
-                        );
-                        workflow_definition = Some(workflow.clone());
-                    }
-                    //When we hydrate old tasks this will have items init from hydrate_processor
-                    cached_tasks = Some(session_data.tasks);
-                }
-            }
-
-            // Only fetch flow definition from DB if we didn't find it in cache
-            if workflow_definition.is_none() {
-                println!(
-                "[PROCESSOR] No workflow found in cache, fetching from DB for flow_session_id: {}",
-                flow_session_id
-            );
-
-                let workflow =
-                    match get_workflow_definition(state.clone(), &workflow_id, version_id.as_ref())
-                        .await
-                    {
-                        Ok(w) => {
-                            println!("[PROCESSOR] Successfully fetched workflow from DB");
-                            w
-                        }
-                        Err(e) => {
-                            println!("[PROCESSOR] Error getting workflow definition: {}", e);
-                            return;
-                        }
-                    };
-
-                // Only update cache if there isn't already data there
-                //TODO: this feels like it could be wrong. In what situation is do we need to fetch worfklow but also no session in cache yet?
-                {
-                    let mut cache = state.flow_session_cache.write().await;
-                    if cache.get(&flow_session_id).is_none() {
-                        println!("[PROCESSOR] Creating new session data in cache");
-                        let session_data = FlowSessionData {
-                            workflow: Some(workflow.clone()),
-                            tasks: HashMap::new(),
-                            flow_session_id,
-                            workflow_id,
-                            workflow_version_id: version_id,
-                        };
-                        cache.set(&flow_session_id, session_data);
-                    }
-                }
-
-                workflow_definition = Some(workflow);
-            }
-
-            println!(
-                "[PROCESSOR] Workflow definition status: {:?}",
-                workflow_definition.is_some()
-            );
-
-            let workflow = match &workflow_definition {
-                Some(w) => w,
-                None => {
-                    println!("[PROCESSOR] No workflow definition found");
-                    //This should never happen
+                Ok((workflow, cached_tasks)) => (workflow, cached_tasks),
+                Err(e) => {
+                    println!("[PROCESSOR] Cannot process workflow: {}", e);
+                    // Clean up active sessions before returning
+                    active_flow_sessions.lock().await.remove(&flow_session_id);
+                    drop(permit);
                     return;
                 }
             };
 
             println!("[PROCESSOR] Starting workflow execution");
 
-            // Create initial trigger task
-            let trigger_node = get_trigger_node(&workflow.flow_definition).unwrap();
-
-            //If there are no tasks in cache, we need to create the trigger task
-            let mut current_task = if cached_tasks.is_none()
-                || cached_tasks.as_ref().unwrap().is_empty()
-            {
-                // Only create trigger task if there are no existing tasks in cache
-                let initial_task = if let Some(trigger_task) = trigger_task {
-                    trigger_task
-                } else {
-                    CreateTaskInput {
-                        account_id: workflow.account_id.to_string(),
-                        processing_order: 0,
-                        task_status: TaskStatus::Running.as_str().to_string(),
-                        flow_id: workflow_id.to_string(),
-                        flow_version_id: workflow.flow_version_id.to_string(),
-                        action_label: trigger_node.label.clone(),
-                        trigger_id: trigger_task_id.clone(),
-                        trigger_session_id: trigger_session_id.to_string(),
-                        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-                        flow_session_id: flow_session_id.to_string(),
-                        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-                        action_id: trigger_node.action_id.clone(),
-                        r#type: ActionType::Trigger,
-                        plugin_name: trigger_node.plugin_name.clone(),
-                        plugin_version: trigger_node.plugin_version.clone(),
-                        stage: if workflow.published {
-                            Stage::Production.as_str().to_string()
-                        } else {
-                            Stage::Testing.as_str().to_string()
-                        },
-                        config: TaskConfig {
-                            inputs: Some(trigger_node.inputs.clone().unwrap()),
-                            inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
-                            plugin_config: Some(trigger_node.plugin_config.clone()),
-                            plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
-                        },
-                        result: None,
-                        error: None,
-                        started_at: Some(Utc::now()),
-                        test_config: None,
-                    }
-                };
-
-                // Start with trigger task
-                match create_task(state.clone(), &initial_task).await {
-                    Ok(task) => {
-                        // Update cache with new task
-                        let mut cache = state.flow_session_cache.write().await;
-                        if cache.add_task(&flow_session_id, task.clone()) {
-                            Some(task)
-                        } else {
-                            println!(
-                                "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-                                flow_session_id
-                            );
-                            Some(task)
-                        }
-                    }
-                    Err(e) => {
-                        println!("[PROCESSOR] Error creating initial task: {}", e);
-                        None
-                    }
-                }
-            } else {
-                // We have existing tasks - find the last incomplete task or the highest processing order
-                let existing_tasks = cached_tasks.as_ref().unwrap();
-
-                // First try to find an incomplete task
-                let incomplete_task = existing_tasks.values().find(|task| {
-                    task.task_status == TaskStatus::Running
-                        || task.task_status == TaskStatus::Pending
-                });
-
-                if let Some(task) = incomplete_task {
-                    println!(
-                        "[PROCESSOR] Resuming from incomplete task: {}",
-                        task.task_id
-                    );
-
-                    //WE have an incomplete task - process it
-                    Some(task.clone())
-                } else {
-                    // If no incomplete task, get the task with highest processing order
-                    let last_completed_task = existing_tasks
-                        .values()
-                        .max_by_key(|task| task.processing_order);
-
-                    if let Some(task) = last_completed_task {
-                        println!(
-                            "[PROCESSOR] All existing tasks completed, finding next task after: {}",
-                            task.task_id
-                        );
-                        // Find the next action after this completed task using the graph
-                        let graph = create_workflow_graph(&workflow.flow_definition);
-                        if let Some(neighbors) = graph.get(&task.action_id) {
-                            for neighbor_id in neighbors {
-                                let next_action = workflow
-                                    .flow_definition
-                                    .actions
-                                    .iter()
-                                    .find(|action| &action.action_id == neighbor_id);
-
-                                //We found the next action to run in graph. lets make a task for it
-                                if let Some(action) = next_action {
-                                    // Create the next task
-                                    let next_task_input = CreateTaskInput {
-                                        account_id: workflow.account_id.to_string(),
-                                        processing_order: task.processing_order + 1,
-                                        task_status: TaskStatus::Running.as_str().to_string(),
-                                        flow_id: workflow_id.to_string(),
-                                        flow_version_id: workflow.flow_version_id.to_string(),
-                                        action_label: action.label.clone(),
-                                        trigger_id: trigger_task_id.clone(),
-                                        trigger_session_id: trigger_session_id.to_string(),
-                                        trigger_session_status: TriggerSessionStatus::Running
-                                            .as_str()
-                                            .to_string(),
-                                        flow_session_id: flow_session_id.to_string(),
-                                        flow_session_status: FlowSessionStatus::Running
-                                            .as_str()
-                                            .to_string(),
-                                        action_id: action.action_id.clone(),
-                                        r#type: action.r#type.clone(),
-                                        plugin_name: action.plugin_name.clone(),
-                                        plugin_version: action.plugin_version.clone(),
-                                        stage: if workflow.published {
-                                            Stage::Production.as_str().to_string()
-                                        } else {
-                                            Stage::Testing.as_str().to_string()
-                                        },
-                                        config: TaskConfig {
-                                            inputs: Some(action.inputs.clone().unwrap()),
-                                            inputs_schema: Some(
-                                                action.inputs_schema.clone().unwrap(),
-                                            ),
-                                            plugin_config: Some(action.plugin_config.clone()),
-                                            plugin_config_schema: Some(
-                                                action.plugin_config_schema.clone(),
-                                            ),
-                                        },
-                                        result: None,
-                                        error: None,
-                                        started_at: Some(Utc::now()),
-                                        test_config: None,
-                                    };
-
-                                    match create_task(state.clone(), &next_task_input).await {
-                                        Ok(new_task) => {
-                                            let mut cache = state.flow_session_cache.write().await;
-                                            if cache.add_task(&flow_session_id, new_task.clone()) {
-                                                Some(new_task)
-                                            } else {
-                                                println!(
-                                                    "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-                                                    flow_session_id
-                                                );
-                                                Some(new_task)
-                                            }
-                                        }
-                                        Err(e) => {
-                                            println!("[PROCESSOR] Error creating next task: {}", e);
-                                            None
-                                        }
-                                    };
-                                }
-                            }
-                        }
-                        None // No next task found
-                    } else {
-                        println!("[PROCESSOR] No existing tasks found in cache");
-                        None
-                    }
-                }
-            };
-
-            // Create graph for BFS traversal
-            let workflow_def: WorkflowVersionDefinition = workflow.flow_definition.clone();
-
-            let graph = create_workflow_graph(&workflow_def);
-
-            // Process tasks until workflow completion or shutdown
-            while let Some(task) = current_task {
-                // Check for shutdown signal after creating new task
-                if state
-                    .shutdown_signal
-                    .load(std::sync::atomic::Ordering::SeqCst)
-                {
-                    println!("[PROCESSOR] Received shutdown signal, stopping task processing");
-                    break;
-                }
-
-                // Execute the current task and handle its result
-                println!("[PROCESSOR] Executing task: {}", task.task_id);
-
-                let processing_order = task.processing_order;
-
-                let (task_result, bundled_context) =
-                    match execute_task(state.clone(), &client, &task).await {
-                        Ok(success_value) => {
-                            println!("[PROCESSOR] Task {} completed successfully", task.task_id);
-                            success_value
-                        }
-                        Err(error) => {
-                            println!("[PROCESSOR] Task {} failed: {:?}", task.task_id, error);
-
-                            // Update task status to failed
-                            let state_clone = state.clone();
-                            let task_id = task.task_id.clone();
-                            let error_clone = error.clone();
-                            tokio::spawn(async move {
-                                if let Err(e) = update_task_status(
-                                    state_clone,
-                                    &task_id,
-                                    &TaskStatus::Failed,
-                                    Some(error_clone.context),
-                                    None,
-                                    Some(error_clone.error),
-                                )
-                                .await
-                                {
-                                    println!("[PROCESSOR] Failed to update task status: {}", e);
-                                }
-                            });
-
-                            // Update flow session status to failed
-                            let state_clone = state.clone();
-                            let flow_session_id_clone = flow_session_id.clone();
-                            tokio::spawn(async move {
-                                if let Err(e) = update_flow_session_status(
-                                    &state_clone,
-                                    &flow_session_id_clone,
-                                    &FlowSessionStatus::Failed,
-                                    &TriggerSessionStatus::Failed,
-                                )
-                                .await
-                                {
-                                    println!(
-                                        "[PROCESSOR] Failed to update flow session status: {}",
-                                        e
-                                    );
-                                }
-                            });
-
-                            // Update cache
-                            {
-                                let mut cache = state.flow_session_cache.write().await;
-                                let mut task_copy = task.clone();
-                                task_copy.result = Some(error.error.clone());
-                                task_copy.context = Some(error.context.clone());
-                                task_copy.task_status = TaskStatus::Failed;
-                                task_copy.ended_at = Some(Utc::now());
-                                let _ = cache.update_task(&flow_session_id, task_copy);
-                            }
-
-                            println!("[PROCESSOR] Workflow failed: {}", flow_session_id);
-
-                            // Send error response to webhook if needed
-                            let mut completions = state.flow_completions.lock().await;
-                            if let Some(completion) =
-                                completions.remove(&flow_session_id.to_string())
-                            {
-                                if completion.needs_response {
-                                    println!(
-                                    "[PROCESSOR] Sending error response through completion channel"
-                                );
-                                    let _ = completion.sender.send(error.error.clone());
-                                }
-                            }
-                            break; // Exit the while loop
-                        }
-                    };
-
-                // Spawn task status update to DB asynchronously
-                let state_clone = state.clone();
-                let task_id = task.task_id.clone();
-                let task_result_clone = task_result.clone();
-                let bundled_context_clone = bundled_context.clone();
-                tokio::spawn(async move {
-                    if let Err(e) = update_task_status(
-                        state_clone,
-                        &task_id,
-                        &TaskStatus::Completed,
-                        Some(bundled_context_clone),
-                        task_result_clone.clone(),
-                        None,
-                    )
-                    .await
-                    {
-                        println!("[PROCESSOR] Failed to update task status: {}", e);
-                    }
-                });
-
-                //Update cache with result the same we do the db. these need to match!
-                {
-                    let mut cache = state.flow_session_cache.write().await;
-                    let mut task_copy = task.clone();
-                    task_copy.result = task_result;
-                    task_copy.context = Some(bundled_context);
-                    task_copy.task_status = TaskStatus::Completed;
-                    task_copy.ended_at = Some(Utc::now());
-                    let _ = cache.update_task(&flow_session_id, task_copy);
-                }
-
-                let next_action = if let Some(neighbors) = graph.get(&task.action_id) {
-                    let mut next_action = None;
-                    // Get the first unprocessed neighbor
-                    //TODO: this is where we would handle if we have multiple paths to take and can parallelize
-                    for neighbor_id in neighbors {
-                        let neighbor = workflow_def
-                            .actions
-                            .iter()
-                            .find(|action| &action.action_id == neighbor_id);
-
-                        if let Some(action) = neighbor {
-                            // Check if this task has already been processed
-                            let cache = state.flow_session_cache.read().await;
-                            if let Some(session_data) = cache.get(&flow_session_id) {
-                                if !session_data
-                                    .tasks
-                                    .iter()
-                                    .any(|(_, t)| t.action_id == action.action_id)
-                                {
-                                    next_action = Some(action.clone());
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    next_action
-                } else {
-                    None
-                };
-
-                // Create next task if available
-                current_task = if let Some(next_action) = next_action {
-                    let next_task_input = CreateTaskInput {
-                        account_id: workflow.account_id.to_string(),
-                        processing_order: processing_order + 1,
-                        task_status: TaskStatus::Running.as_str().to_string(), //we create tasks when we start them
-                        flow_id: workflow_id.to_string(),
-                        flow_version_id: workflow.flow_version_id.to_string(),
-                        action_label: next_action.label.clone(),
-                        trigger_id: trigger_task_id.clone(),
-                        trigger_session_id: trigger_session_id.to_string(),
-                        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
-                        flow_session_id: flow_session_id.to_string(),
-                        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
-                        action_id: next_action.action_id,
-                        r#type: next_action.r#type,
-                        plugin_name: next_action.plugin_name.clone(),
-                        plugin_version: next_action.plugin_version.clone(),
-                        stage: if workflow.published {
-                            Stage::Production.as_str().to_string()
-                        } else {
-                            Stage::Testing.as_str().to_string()
-                        },
-                        config: TaskConfig {
-                            inputs: Some(next_action.inputs.clone().unwrap()),
-                            inputs_schema: Some(next_action.inputs_schema.clone().unwrap()),
-                            plugin_config: Some(next_action.plugin_config.clone()),
-                            plugin_config_schema: Some(next_action.plugin_config_schema.clone()),
-                        },
-                        result: None,
-                        error: None,
-                        test_config: None,
-                        started_at: Some(Utc::now()),
-                    };
-
-                    match create_task(state.clone(), &next_task_input).await {
-                        Ok(new_task) => {
-                            // Update cache
-                            {
-                                let mut cache = state.flow_session_cache.write().await;
-                                if let Some(mut session_data) = cache.get(&flow_session_id) {
-                                    session_data
-                                        .tasks
-                                        .insert(new_task.task_id.clone(), new_task.clone());
-                                    cache.set(&flow_session_id, session_data);
-                                }
-                            } // Lock is dropped here
-                              // processing_order += 1;
-                            Some(new_task)
-                        }
-                        Err(e) => {
-                            println!("[PROCESSOR] Error creating next task: {}", e);
-                            None
-                        }
-                    }
-                } else {
-                    // No more tasks - workflow is complete
-                    let state_clone = state.clone();
-                    let flow_session_id_clone = flow_session_id.clone();
-                    tokio::spawn(async move {
-                        if let Err(e) = update_flow_session_status(
-                            &state_clone,
-                            &flow_session_id_clone,
-                            &FlowSessionStatus::Completed,
-                            &TriggerSessionStatus::Completed,
-                        )
-                        .await
-                        {
-                            println!("[PROCESSOR] Failed to update flow session status: {}", e);
-                        }
-                    });
-
-                    println!("[PROCESSOR] Workflow completed: {}", flow_session_id);
-                    None
-                };
-            }
+            // Start parallel workflow processing
+            start_parallel_workflow_processing(
+                state.clone(),
+                (*client).clone(),
+                flow_session_id,
+                workflow_id,
+                trigger_task_id,
+                trigger_session_id,
+                workflow,
+                message,
+                cached_tasks,
+            )
+            .await;
 
             println!(
                 "[PROCESSOR] Completed workflow processing for {}",
@@ -605,26 +665,24 @@ pub async fn processor(
                 );
             }
 
-            // // Remove the flow session from active sessions when done
+            // Remove the flow session from active sessions when done
             active_flow_sessions.lock().await.remove(&flow_session_id);
             drop(permit);
         });
-        //END SPAWNED PROCESSOR
+        workflow_handles.push(handle);
     }
+
+    // Wait for all active workflows to complete
+    println!(
+        "[PROCESSOR] Waiting for {} active workflows to complete",
+        workflow_handles.len()
+    );
+    for handle in workflow_handles {
+        if let Err(e) = handle.await {
+            println!("[PROCESSOR] Error waiting for workflow to complete: {}", e);
+        }
+    }
+    println!("[PROCESSOR] All workflows completed, shutting down");
 
     Ok(())
-}
-
-/// Creates a graph representation of the workflow
-pub fn create_workflow_graph(
-    workflow_def: &WorkflowVersionDefinition,
-) -> HashMap<String, Vec<String>> {
-    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
-    for edge in &workflow_def.edges {
-        graph
-            .entry(edge.source.clone())
-            .or_insert_with(Vec::new)
-            .push(edge.target.clone());
-    }
-    graph
 }

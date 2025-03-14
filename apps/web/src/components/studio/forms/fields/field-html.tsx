@@ -4,9 +4,17 @@ import { html } from "@codemirror/lang-html";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { propsPlugin } from "./codemirror-utils";
-import { Fullscreen } from "lucide-react";
+import { Fullscreen, Variable } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import { useAnything } from "@/context/AnythingContext";
+import { ExplorersPanel } from "@/components/studio/variable-explorers/explorer-panel";
 
 export default function CodeMirrorFieldHtml({
   name,
@@ -21,7 +29,13 @@ export default function CodeMirrorFieldHtml({
   onKeyUp,
   onFocus,
   className,
+  showInputsExplorer,
+  showResultsExplorer,
 }: any) {
+  const {
+    workflow: { setShowExplorer, showExplorer, setExplorerTab },
+  } = useAnything();
+
   const [editorValue, setEditorValue] = React.useState(value || "");
   const editorRef = React.useRef<any>(null);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -67,7 +81,7 @@ export default function CodeMirrorFieldHtml({
       lineNumbers: false,
       foldGutter: false,
       highlightActiveLine: false,
-    }
+    },
   };
 
   if (!isVisible) {
@@ -83,43 +97,79 @@ export default function CodeMirrorFieldHtml({
         </span>
       </Label>
 
-      {/* Regular inline editor */}
-      <div className="relative w-full overflow-hidden [&_.cm-editor.cm-focused]:outline-none">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(true)}
-          className="absolute right-0 top-0 z-10"
-        >
-          <Fullscreen size={16} />
-        </Button>
-        <CodeMirror
-          {...codeEditorProps}
-          style={{
-            minHeight: "2.5rem",
-            height: "auto",
-            width: "100%",
-            maxWidth: "100%",
-            overflow: "auto",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
-            whiteSpace: "pre-wrap",
-            boxSizing: "border-box",
-            fontFamily: "monospace",
-            outline: "none",
-          }}
-          className={cn(
-            "w-full overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-            className,
-          )}
-        />
+      {/* Updated container with overflow handling */}
+      <div className="relative min-w-[200px]">
+        {/* Moved controls outside of scroll area and increased z-index */}
+        <div className="absolute -top-7 right-0 z-50 flex gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    if (setShowExplorer && setExplorerTab) {
+                      setExplorerTab(showInputsExplorer ? "inputs" : "results");
+                      setShowExplorer(!showExplorer);
+                    }
+                  }}
+                >
+                  <Variable size={14} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="z-[60]">
+                <p>Toggle Variables Explorer</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                >
+                  <Fullscreen size={14} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="z-[60]">
+                <p>Toggle Expanded Editor</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Updated editor container with proper overflow handling */}
+        <div className="w-full overflow-x-auto [&_.cm-editor.cm-focused]:outline-none">
+          <CodeMirror
+            {...codeEditorProps}
+            className={cn(
+              "w-full rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_.cm-content]:px-1 [&_.cm-content]:py-2 [&_.cm-gutters]:h-[100%] [&_.cm-gutters]:bottom-0 [&_.cm-gutters]:absolute",
+              className,
+            )}
+            style={{
+              minHeight: "2.25rem",
+              height: "auto",
+              minWidth: "100%", // Ensures content doesn't shrink below container width
+              overflow: "auto",
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+              whiteSpace: "pre-wrap",
+              boxSizing: "border-box",
+              fontFamily: "monospace",
+              outline: "none",
+            }}
+          />
+        </div>
       </div>
 
       {/* Expanded modal editor */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="max-w-[90vw] h-[90vh]">
-          <div className="h-full w-full">
-            <div className="flex items-center justify-between mb-3">
+        <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col overflow-hidden">
+          <div className="flex flex-col h-full w-full overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between mb-3">
               <Label htmlFor={name}>
                 {label}{" "}
                 <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase text-muted-foreground">
@@ -127,18 +177,28 @@ export default function CodeMirrorFieldHtml({
                 </span>
               </Label>
             </div>
-            <CodeMirror
-              {...codeEditorProps}
-              className={cn(
-                "w-full h-full overflow-hidden rounded-md border border-input bg-background text-sm",
-                className,
-              )}
-              style={{
-                height: "95%",
-                width: "100%",
-                fontFamily: "monospace",
-              }}
-            />
+            <div className="flex gap-4 flex-1 min-h-0 overflow-hidden">
+              <ExplorersPanel
+                showInputsExplorer={showInputsExplorer}
+                showResultsExplorer={showResultsExplorer}
+              />
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-hidden border rounded-md">
+                  <CodeMirror
+                    {...codeEditorProps}
+                    className={cn(
+                      "w-full h-full bg-background text-sm overflow-auto",
+                      className,
+                    )}
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      fontFamily: "monospace",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

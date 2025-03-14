@@ -13,6 +13,7 @@ import * as agents from './agents';
 import * as campaigns from './campaigns'; 
 import * as contacts from './contacts';
 
+import * as accounts from './accounts';
 
 const api = {
   flows,
@@ -29,6 +30,7 @@ const api = {
   agents,
   campaigns,
   contacts,
+  accounts,
 };
 
 export default api;

@@ -144,6 +144,10 @@ impl Templater {
                 variable: template_name.to_string(),
             })?;
 
+        println!("[TEMPLATER] Template: {:?}", template);
+        println!("[TEMPLATER] Context: {:?}", context);
+        println!("[TEMPLATER] Validations: {:?}", validations);
+
         self.render_value(template, context, &validations, &[])
     }
 
@@ -161,13 +165,10 @@ impl Templater {
                     let mut current_path = path.to_vec();
                     current_path.push(k.clone());
                     if path.is_empty() {
-                        let validation_type = validations.get(k).ok_or_else(|| TemplateError {
-                            message: format!("Validation not found for key '{}'", k),
-                            variable: k.clone(),
-                        })?;
+                        let expected_validation_type = Self::get_validation_type(validations, &k)?;
                         let rendered = self.render_value(v, context, validations, &current_path)?;
                         let validated =
-                            self.validate_and_convert_value(rendered, validation_type, k)?;
+                            self.validate_and_convert_value(rendered, expected_validation_type, k)?;
                         result.insert(k.clone(), validated);
                     } else {
                         result.insert(
@@ -193,15 +194,7 @@ impl Templater {
                     if path.is_empty() {
                         let validation_key = variable.to_string();
                         let expected_type =
-                            validations
-                                .get(&validation_key)
-                                .ok_or_else(|| TemplateError {
-                                    message: format!(
-                                        "Validation not found for key '{}'",
-                                        validation_key
-                                    ),
-                                    variable: validation_key.clone(),
-                                })?;
+                            Self::get_validation_type(validations, &validation_key)?;
                         let value = Self::get_value_from_path(context, variable, expected_type)
                             .ok_or_else(|| TemplateError {
                                 message: format!("Variable not found in context: {}", variable),
@@ -242,15 +235,7 @@ impl Templater {
                     let value = if path.is_empty() {
                         let validation_key = variable.to_string();
                         let expected_type =
-                            validations
-                                .get(&validation_key)
-                                .ok_or_else(|| TemplateError {
-                                    message: format!(
-                                        "Validation not found for key '{}'",
-                                        validation_key
-                                    ),
-                                    variable: validation_key.clone(),
-                                })?;
+                            Self::get_validation_type(validations, &validation_key)?;
                         let value = Self::get_value_from_path(context, variable, expected_type)
                             .ok_or_else(|| TemplateError {
                                 message: "Variable not found in context".to_string(),
@@ -267,7 +252,16 @@ impl Templater {
                     };
 
                     let replacement = match value {
-                        Value::String(s) => s.clone(),
+                        Value::String(s) => {
+                            if s.contains('<') && s.contains('>') || s.contains('\n') {
+                                // Escape quotes and newlines manually, without adding extra quotes
+                                s.replace('\\', "\\\\")
+                                    .replace('"', "\\\"")
+                                    .replace('\n', "\\n")
+                            } else {
+                                s.clone()
+                            }
+                        }
                         _ => value.to_string(),
                     };
                     result.replace_range(open_idx..close_idx + 2, &replacement);
@@ -278,6 +272,16 @@ impl Templater {
             }
             _ => Ok(value.clone()),
         }
+    }
+
+    fn get_validation_type<'a>(
+        validations: &'a HashMap<String, ValidationFieldType>,
+        key: &str,
+    ) -> Result<&'a ValidationFieldType, TemplateError> {
+        validations.get(key).ok_or_else(|| TemplateError {
+            message: format!("Validation not found for key '{}'", key),
+            variable: key.to_string(),
+        })
     }
 
     fn validate_and_convert_value(
@@ -326,19 +330,30 @@ impl Templater {
             ValidationFieldType::Object => match value {
                 Value::Object(_) => Ok(value),
                 Value::String(s) => {
+                    println!("Attempting to parse as object. String length: {}", s.len());
+                    println!("First 100 chars: {}", &s[..s.len().min(100)]);
                     // Try to parse string as JSON object
                     match serde_json::from_str(&s) {
                         Ok(parsed) => match parsed {
-                            Value::Object(_) => Ok(parsed),
-                            _ => Err(TemplateError {
-                                message: format!("String parsed but not an object: {}", s),
-                                variable: variable.to_string(),
-                            }),
+                            Value::Object(_) => {
+                                println!("Successfully parsed as object");
+                                Ok(parsed)
+                            }
+                            _ => {
+                                println!("Parsed but not an object");
+                                Err(TemplateError {
+                                    message: format!("String parsed but not an object: {}", s),
+                                    variable: variable.to_string(),
+                                })
+                            }
                         },
-                        Err(_) => Err(TemplateError {
-                            message: format!("Cannot parse string as object: {}", s),
-                            variable: variable.to_string(),
-                        }),
+                        Err(e) => {
+                            println!("Parse error: {}", e);
+                            Err(TemplateError {
+                                message: format!("Cannot parse string as object: {}", s),
+                                variable: variable.to_string(),
+                            })
+                        }
                     }
                 }
                 _ => Err(TemplateError {
@@ -754,6 +769,377 @@ mod tests {
             json!({
                 "object_field": {},
                 "array_field": []
+            })
+        );
+    }
+
+    #[test]
+    fn test_email_with_html_body() {
+        let mut templater = Templater::new();
+
+        // This represents your template string with the email structure
+        let template = json!({
+            "body": {
+                "drafts": {
+                    "subject": "{{inputs.subject}}",
+                    "body": "{{inputs.body}}",
+                    "to_fields": [{
+                        "address": "{{inputs.to_address}}"
+                    }],
+                    "from_field": {
+                        "name": "{{inputs.from_name}}",
+                        "address": "{{inputs.from_address}}"
+                    },
+                    "attachments": [{
+                        "base64_data": "{{inputs.attachment_data}}",
+                        "filename": "{{inputs.attachment_name}}"
+                    }]
+
+                }
+            }
+        });
+
+        templater.add_template("email_template", template);
+
+        // This represents your input variables
+        let context = json!({
+            "inputs": {
+                "subject": "Test Email",
+                "body": "<!DOCTYPE html><html><body><p>Hello!</p><p>This is a <strong>test</strong> email with <em>HTML</em> content.</p><p>Best regards,<br/>Test Sender</p></body></html>",
+                "to_address": "recipient@example.com",
+                "from_name": "Test Sender",
+                "from_address": "sender@example.com",
+                "attachment_data": "base64_encoded_string",
+                "attachment_name": "test.pdf"
+            }
+        });
+
+        let mut validations = HashMap::new();
+        validations.insert("body".to_string(), ValidationFieldType::Object);
+
+        let result = templater
+            .render("email_template", &context, validations)
+            .unwrap();
+
+        // Verify the result matches what we expect
+        assert_eq!(
+            result,
+            json!({
+                    "body": {
+                        "drafts": {
+                            "subject": "Test Email",
+                            "body": "<!DOCTYPE html><html><body><p>Hello!</p><p>This is a <strong>test</strong> email with <em>HTML</em> content.</p><p>Best regards,<br/>Test Sender</p></body></html>",
+                            "to_fields": [{
+                            "address": "recipient@example.com"
+                        }],
+                        "from_field": {
+                            "name": "Test Sender",
+                            "address": "sender@example.com"
+                        },
+                        "attachments": [{
+                            "base64_data": "base64_encoded_string",
+                            "filename": "test.pdf"
+                        }]
+                    }
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_missive_draft_bundling() {
+        let mut templater = Templater::new();
+
+        // The plugin config that needs to be rendered
+        let template = json!({
+            "url": "https://public.missiveapp.com/v1/drafts",
+            "method": "POST",
+            "headers": "{\n  \"Authorization\": \"Bearer {{inputs.MISSIVE_API_KEY}}\",\n  \"Content-Type\": \"application/json\"\n}",
+            "body": "{\n  \"drafts\": {\n    \"subject\": \"{{inputs.subject}}\",\n    \"body\": \"{{inputs.body}}\",\n    \"to_fields\": [\n      {\n        \"address\": \"{{inputs.to_address}}\"\n      }\n    ],\n    \"from_field\": {\n      \"name\": \"{{inputs.from_name}}\",\n      \"address\": \"{{inputs.from_address}}\"\n    },\n    \"attachments\": [\n      {\n        \"base64_data\": \"{{inputs.attachement_as_base64}}\",\n        \"filename\": \"FAKE New Bars Retail Dsplay.png\"\n      }\n    ]\n  }\n}"
+        });
+
+        templater.add_template("missive_draft", template);
+
+        // The rendered inputs that would come from bundle_cached_inputs
+        let context = json!({
+            "inputs": {
+                "subject": "[DO NOT SEND!] Test Draft from Carl @ Anything AI",
+                "body": "<!DOCTYPE html>\\n<html>\\n<body>\\n    <p>Hi Test Person!,</p>\\n\\n    <p>I hope you're well!</p>\\n\\n    <p>\\n        I just wanted to confirm you received your Organic Protein Bars, and see if you have any initial feedback or questions.\\n    </p>\\n\\n    <p>\\n        <strong>To support sales & marketing, most of our clients like to use our retail displays (below)</strong>, \\n        as well as our collection of \\n        <a href=\\\"https://drive.google.com/drive/folders/13l0f67j1SsXaw59y3XHQkGm1-cx15IWb\\\" target=\\\"_blank\\\">shelf talkers</a> \\n        that fit well into \\n        <a href=\\\"https://www.amazon.com/dp/B0BWDJXY48?smid=A128CO7G80NO6D&ref_=chk_typ_imgToDp&th=1\\\" target=\\\"_blank\\\">these frames</a>.\\n    </p>\\n\\n    <p>\\n        Please let us know if you're interested, or we'd be happy to can design something custom for you.\\n    </p>\\n\\n    <p>Thanks for your support!</p>\\n\\n    <p>Warmly,<br>Person</p>\\n</body>\\n</html>\\n",
+                "to_address": "carl@gmail.com",
+                "from_address": "person@company.com",
+                "from_name": "Person",
+                "attachement_as_base64": "asfasdfasf",
+                "MISSIVE_API_KEY": "test_api_key"
+            }
+        });
+
+        // Set up validations for the template fields
+        let mut validations = HashMap::new();
+        validations.insert("url".to_string(), ValidationFieldType::String);
+        validations.insert("method".to_string(), ValidationFieldType::String);
+        validations.insert("headers".to_string(), ValidationFieldType::Object);
+        validations.insert("body".to_string(), ValidationFieldType::Object);
+
+        // Render the template
+        let result = templater
+            .render("missive_draft", &context, validations)
+            .unwrap();
+
+        // Expected results after rendering
+        let expected_body = json!({
+            "drafts": {
+                "subject": "[DO NOT SEND!] Test Draft from Carl @ Anything AI",
+                "body": "<!DOCTYPE html>\\n<html>\\n<body>\\n    <p>Hi Test Person!,</p>\\n\\n    <p>I hope you're well!</p>\\n\\n    <p>\\n        I just wanted to confirm you received your Organic Protein Bars, and see if you have any initial feedback or questions.\\n    </p>\\n\\n    <p>\\n        <strong>To support sales & marketing, most of our clients like to use our retail displays (below)</strong>, \\n        as well as our collection of \\n        <a href=\\\"https://drive.google.com/drive/folders/13l0f67j1SsXaw59y3XHQkGm1-cx15IWb\\\" target=\\\"_blank\\\">shelf talkers</a> \\n        that fit well into \\n        <a href=\\\"https://www.amazon.com/dp/B0BWDJXY48?smid=A128CO7G80NO6D&ref_=chk_typ_imgToDp&th=1\\\" target=\\\"_blank\\\">these frames</a>.\\n    </p>\\n\\n    <p>\\n        Please let us know if you're interested, or we'd be happy to can design something custom for you.\\n    </p>\\n\\n    <p>Thanks for your support!</p>\\n\\n    <p>Warmly,<br>Person</p>\\n</body>\\n</html>\\n",
+                "to_fields": [
+                    {
+                        "address": "carl@gmail.com"
+                    }
+                ],
+                "from_field": {
+                    "name": "Person",
+                    "address": "person@company.com"
+                },
+                "attachments": [
+                    {
+                        "base64_data": "asfasdfasf",
+                        "filename": "FAKE New Bars Retail Dsplay.png"
+                    }
+                ]
+            }
+        });
+
+        let expected_headers = json!({
+            "Authorization": "Bearer test_api_key",
+            "Content-Type": "application/json"
+        });
+
+        assert_eq!(result["body"], expected_body);
+        assert_eq!(result["headers"], expected_headers);
+
+        // Verify each part of the result
+        assert_eq!(result["url"], "https://public.missiveapp.com/v1/drafts");
+        assert_eq!(result["method"], "POST");
+    }
+
+    #[test]
+    fn test_automation_data_types() {
+        let mut templater = Templater::new();
+
+        // Template covering various automation system data types
+        let template = json!({
+            "xml_content": "{{inputs.xml_data}}",
+            "sql_query": "{{inputs.sql_query}}",
+            "csv_data": "{{inputs.csv_data}}",
+            "base64_file": "{{inputs.file_content}}",
+            "markdown": "{{inputs.markdown}}",
+            "yaml_config": "{{inputs.yaml_config}}",
+            "shell_script": "{{inputs.shell_script}}",
+            "api_response": "{{inputs.api_json}}"
+        });
+
+        templater.add_template("automation_test", template);
+
+        // Context with matching keys
+        let context = json!({
+            "inputs": {
+                "xml_data": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <customer id=\"123\">\n    <name>John Doe</name>\n    <email>john@example.com</email>\n    <orders>\n      <order id=\"A1\">\n        <item>Product 1</item>\n        <quantity>2</quantity>\n      </order>\n    </orders>\n  </customer>\n</root>",
+
+                "sql_query": "SELECT u.name, u.email, COUNT(o.id) as order_count\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE u.status = 'active'\nGROUP BY u.id\nHAVING COUNT(o.id) > 5;",
+
+                "csv_data": "id,name,email,status\n1,John Doe,john@example.com,active\n2,Jane Smith,jane@example.com,pending\n3,Bob Wilson,bob@example.com,inactive",
+
+                "file_content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+
+                "markdown": "# Title\n\n## Subtitle\n\nThis is a *markdown* document with:\n- Lists\n- **Bold** text\n- [Links](https://example.com)\n\n```code\nsome code block\n```",
+
+                "yaml_config": "version: '3'\nservices:\n  web:\n    image: nginx:latest\n    ports:\n      - \"80:80\"\n    volumes:\n      - ./html:/usr/share/nginx/html",
+
+                "shell_script": "#!/bin/bash\n\necho \"Starting backup process...\"\nBACKUP_DIR=\"/var/backups/$(date +%Y-%m-%d)\"\n\nif [ ! -d \"$BACKUP_DIR\" ]; then\n  mkdir -p \"$BACKUP_DIR\"\nfi\n\ntar -czf \"$BACKUP_DIR/backup.tar.gz\" /var/www/\necho \"Backup completed\"",
+
+                "api_json": "{\n  \"status\": \"success\",\n  \"data\": {\n    \"users\": [\n      {\n        \"id\": 1,\n        \"name\": \"John Doe\"\n      }\n    ]\n  }\n}"
+            }
+        });
+
+        // Set up validations - all strings since we want to preserve formatting
+        let mut validations = HashMap::new();
+        validations.insert("xml_content".to_string(), ValidationFieldType::String);
+        validations.insert("sql_query".to_string(), ValidationFieldType::String);
+        validations.insert("csv_data".to_string(), ValidationFieldType::String);
+        validations.insert("base64_file".to_string(), ValidationFieldType::String);
+        validations.insert("markdown".to_string(), ValidationFieldType::String);
+        validations.insert("yaml_config".to_string(), ValidationFieldType::String);
+        validations.insert("shell_script".to_string(), ValidationFieldType::String);
+        validations.insert("api_response".to_string(), ValidationFieldType::Object);
+
+        let result = templater
+            .render("automation_test", &context, validations)
+            .unwrap();
+
+        // Verify each type of content is handled correctly
+        assert!(result["xml_content"].as_str().unwrap().starts_with("<?xml"));
+        assert!(result["sql_query"].as_str().unwrap().contains("SELECT"));
+        assert!(result["csv_data"]
+            .as_str()
+            .unwrap()
+            .contains("id,name,email"));
+        assert!(result["base64_file"]
+            .as_str()
+            .unwrap()
+            .contains("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1"));
+        assert!(result["markdown"].as_str().unwrap().contains("# Title"));
+        assert!(result["yaml_config"].as_str().unwrap().contains("version:"));
+        assert!(result["shell_script"]
+            .as_str()
+            .unwrap()
+            .contains("#!/bin/bash"));
+
+        // API response should be parsed as an object
+        assert_eq!(
+            result["api_response"],
+            json!({
+                "status": "success",
+                "data": {
+                    "users": [
+                        {
+                            "id": 1,
+                            "name": "John Doe"
+                        }
+                    ]
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_nested_automation_data_types() {
+        let mut templater = Templater::new();
+
+        // Template with nested structure
+        let template = json!({
+            "request": {
+                "endpoint": "/api/v1/process",
+                "payload": {
+                    "document": {
+                        "xml_section": "{{inputs.document.xml_content}}",
+                        "metadata": {
+                            "query": "{{inputs.document.sql_query}}",
+                            "format": {
+                                "csv_part": "{{inputs.document.csv_data}}"
+                            }
+                        }
+                    },
+                    "attachments": [
+                        {
+                            "name": "config.yaml",
+                            "content": "{{inputs.configs.yaml_content}}",
+                            "metadata": {
+                                "script": "{{inputs.configs.deployment_script}}"
+                            }
+                        },
+                        {
+                            "name": "readme.md",
+                            "content": "{{inputs.docs.markdown_content}}"
+                        }
+                    ],
+                    "api_configs": {
+                        "endpoints": "{{inputs.configs.api_endpoints}}",
+                        "auth": {
+                            "token": "{{inputs.configs.auth_token}}",
+                            "signature": "{{inputs.configs.signature}}"
+                        }
+                    }
+                }
+            }
+        });
+
+        templater.add_template("nested_automation_test", template);
+
+        // Context with nested data
+        let context = json!({
+            "inputs": {
+                "document": {
+                    "xml_content": "<?xml version=\"1.0\"?>\n<data>\n  <record id=\"1\">\n    <field>Nested XML Value</field>\n  </record>\n</data>",
+                    "sql_query": "WITH recursive_data AS (\n  SELECT id, parent_id, name\n  FROM nested_table\n  WHERE parent_id IS NULL\n  UNION ALL\n  SELECT t.id, t.parent_id, t.name\n  FROM nested_table t\n  INNER JOIN recursive_data rd ON rd.id = t.parent_id\n)\nSELECT * FROM recursive_data;",
+                    "csv_data": "parent_id,child_id,relationship\n1,2,\"direct\"\n1,3,\"indirect\"\n2,4,\"direct\""
+                },
+                "configs": {
+                    "yaml_content": "global:\n  environment: production\nservices:\n  frontend:\n    replicas: 3\n    config:\n      api_version: v2\n      timeout: 30s",
+                    "deployment_script": "#!/bin/bash\nset -e\n\nDEPLOY_ENV=\"prod\"\nfor service in $(cat services.txt); do\n  kubectl apply -f \"${service}.yaml\"\ndone",
+                    "api_endpoints": {
+                        "prod": "https://api.prod.example.com",
+                        "staging": "https://api.staging.example.com",
+                        "dev": "https://api.dev.example.com"
+                    },
+                    "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "signature": "sha256:d8e8fca2dc0f896fd7cb4cb0031ba249"
+                },
+                "docs": {
+                    "markdown_content": "# Nested Documentation\n\n## System Architecture\n\n```mermaid\ngraph TD\n    A[Client] --> B[Load Balancer]\n    B --> C[Server 1]\n    B --> D[Server 2]\n```\n\n### Configuration\nRefer to `config.yaml` for detailed settings."
+                }
+            }
+        });
+
+        // Set up validations
+        let mut validations = HashMap::new();
+        validations.insert("request".to_string(), ValidationFieldType::Object);
+
+        let result = templater
+            .render("nested_automation_test", &context, validations)
+            .unwrap();
+
+        // Verify nested structure
+        let payload = &result["request"]["payload"];
+
+        // Check document section
+        assert!(payload["document"]["xml_section"]
+            .as_str()
+            .unwrap()
+            .contains("<?xml version=\"1.0\"?>"));
+
+        assert!(payload["document"]["metadata"]["query"]
+            .as_str()
+            .unwrap()
+            .contains("WITH recursive_data"));
+
+        assert!(payload["document"]["metadata"]["format"]["csv_part"]
+            .as_str()
+            .unwrap()
+            .contains("parent_id,child_id"));
+
+        // Check attachments
+        let attachments = payload["attachments"].as_array().unwrap();
+
+        // Verify YAML attachment
+        assert!(attachments[0]["content"]
+            .as_str()
+            .unwrap()
+            .contains("global:"));
+
+        assert!(attachments[0]["metadata"]["script"]
+            .as_str()
+            .unwrap()
+            .contains("#!/bin/bash"));
+
+        // Verify Markdown attachment
+        assert!(attachments[1]["content"]
+            .as_str()
+            .unwrap()
+            .contains("# Nested Documentation"));
+
+        // Verify API configs
+        let api_configs = &payload["api_configs"];
+        assert_eq!(
+            api_configs["auth"]["token"],
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        );
+
+        // Verify nested JSON object
+        assert_eq!(
+            api_configs["endpoints"],
+            json!({
+                "prod": "https://api.prod.example.com",
+                "staging": "https://api.staging.example.com",
+                "dev": "https://api.dev.example.com"
             })
         );
     }

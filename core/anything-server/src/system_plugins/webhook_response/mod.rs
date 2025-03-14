@@ -87,9 +87,9 @@ pub async fn process_webhook_response_task(
     flow_session_id: String,
     bundled_context: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    println!("[PROCESS RESPONSE] Starting process_response_task");
+    println!("[WEBHOOK RESPONSE] Starting process_response_task");
     println!(
-        "[PROCESS RESPONSE] Initial bundled context: {:?}",
+        "[WEBHOOK RESPONSE] Initial bundled context: {:?}",
         bundled_context
     );
 
@@ -137,10 +137,10 @@ pub async fn process_webhook_response_task(
             .to_string(),
     };
 
-    println!("[PROCESS RESPONSE] Status code: {}", status_code);
-    println!("[PROCESS RESPONSE] Content type: {}", content_type);
-    println!("[PROCESS RESPONSE] Headers: {}", headers);
-    println!("[PROCESS RESPONSE] Body: {}", body);
+    println!("[WEBHOOK RESPONSE] Status code: {}", status_code);
+    println!("[WEBHOOK RESPONSE] Content type: {}", content_type);
+    println!("[WEBHOOK RESPONSE] Headers: {}", headers);
+    println!("[WEBHOOK RESPONSE] Body: {}", body);
 
     // Build response object
     let mut response = serde_json::Map::new();
@@ -166,10 +166,10 @@ pub async fn process_webhook_response_task(
             }
             Ok(Value::Null) | Ok(Value::Bool(_)) | Ok(Value::Number(_)) | Ok(Value::String(_))
             | Ok(Value::Array(_)) => {
-                println!("[PROCESS RESPONSE] Headers must be a JSON object");
+                println!("[WEBHOOK RESPONSE] Headers must be a JSON object");
             }
             Err(e) => {
-                println!("[PROCESS RESPONSE] Failed to parse headers: {}", e);
+                println!("[WEBHOOK RESPONSE] Failed to parse headers: {}", e);
             }
         }
     }
@@ -184,7 +184,7 @@ pub async fn process_webhook_response_task(
                     response.insert("body".to_string(), parsed_body);
                 }
                 Err(e) => {
-                    println!("[PROCESS RESPONSE] Failed to parse JSON body: {}", e);
+                    println!("[WEBHOOK RESPONSE] Failed to parse JSON body: {}", e);
                     response.insert("body".to_string(), Value::String(body.to_string()));
                 }
             }
@@ -193,15 +193,35 @@ pub async fn process_webhook_response_task(
         }
     }
 
-    println!("[PROCESS RESPONSE] Generated response: {:?}", response);
+    println!("[WEBHOOK RESPONSE] Generated response: {:?}", response);
 
     // Send the response through the flow_completions channel
     let mut completions = state.flow_completions.lock().await;
+    println!(
+        "[WEBHOOK RESPONSE] Looking for completion channel for flow_session_id: {}",
+        flow_session_id
+    );
+    println!(
+        "[WEBHOOK RESPONSE] Available completion channels: {:?}",
+        completions.keys().collect::<Vec<_>>()
+    );
+
     if let Some(completion) = completions.remove(&flow_session_id) {
         if completion.needs_response {
-            println!("[PROCESS RESPONSE] Sending result through completion channel");
-            let _ = completion.sender.send(Value::Object(response.clone()));
+            println!("[WEBHOOK RESPONSE] Found completion channel and sending response");
+            let send_result = completion.sender.send(Value::Object(response.clone()));
+            match send_result {
+                Ok(_) => println!("[WEBHOOK RESPONSE] Successfully sent response through channel"),
+                Err(e) => println!("[WEBHOOK RESPONSE] Failed to send response: {:?}", e),
+            }
+        } else {
+            println!("[WEBHOOK RESPONSE] Found completion channel but response not needed");
         }
+    } else {
+        println!(
+            "[WEBHOOK RESPONSE] No completion channel found for flow_session_id: {}",
+            flow_session_id
+        );
     }
 
     Ok(Some(Value::Object(response)))

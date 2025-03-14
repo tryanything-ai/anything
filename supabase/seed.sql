@@ -20,11 +20,11 @@ INSERT INTO auth.users (
     email_change_token_new,
     recovery_token
 ) VALUES
-    ('00000000-0000-0000-0000-000000000000', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'authenticated', 'authenticated', 'user1@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
-    ('00000000-0000-0000-0000-000000000000', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'authenticated', 'authenticated', 'user2@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
-    ('00000000-0000-0000-0000-000000000000', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'authenticated', 'authenticated', 'user3@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
-    ('00000000-0000-0000-0000-000000000000', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', 'authenticated', 'authenticated', 'user4@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
-    ('00000000-0000-0000-0000-000000000000', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'authenticated', 'authenticated', 'user5@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', '');
+    ('00000000-0000-0000-0000-000000000000', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'authenticated', 'authenticated', 'user1@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''); 
+    -- ('00000000-0000-0000-0000-000000000000', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'authenticated', 'authenticated', 'user2@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    -- ('00000000-0000-0000-0000-000000000000', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'authenticated', 'authenticated', 'user3@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    -- ('00000000-0000-0000-0000-000000000000', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', 'authenticated', 'authenticated', 'user4@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', ''),
+    -- ('00000000-0000-0000-0000-000000000000', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'authenticated', 'authenticated', 'user5@example.com', crypt('password123', gen_salt('bf')), current_timestamp, current_timestamp, current_timestamp, '{"provider":"email","providers":["email"]}', '{}', current_timestamp, current_timestamp, '', '', '', '');
 
 -- inspired by https://gist.github.com/khattaksd/4e8f4c89f4e928a2ecaad56d4a17ecd1
 -- test user email identities
@@ -55,20 +55,20 @@ INSERT INTO
     );
 
 -- Inserting sample team accounts into basejump.accounts
-INSERT INTO basejump.accounts (
-    id, primary_owner_user_id, name, slug, personal_account, updated_at, created_at, created_by, updated_by
-) VALUES
-    ('c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'Account 1', 'account-1', false, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
-    ('7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'Account 2', 'account-2', false, now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f');
+-- INSERT INTO basejump.accounts (
+--     id, primary_owner_user_id, name, slug, personal_account, updated_at, created_at, created_by, updated_by
+-- ) VALUES
+--     ('c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'Account 1', 'account-1', false, now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
+--     ('7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', 'Account 2', 'account-2', false, now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f');
 
 -- Inserting sample users into basejump.account_user table  
-INSERT INTO basejump.account_user (user_id, account_id, account_role)
-VALUES
-    ('0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'owner'),
-    ('5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'owner'),
-    ('1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'member'),
-    ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'member'),
-    ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'member');
+-- INSERT INTO basejump.account_user (user_id, account_id, account_role)
+-- VALUES
+--     ('0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'owner'),
+--     ('5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'owner'),
+--     ('1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'member'),
+--     ('3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'member'),
+--     ('2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'member');
 
 -- Inserting sample profiles into marketplace.profiles
 -- INSERT INTO marketplace.profiles (
@@ -1988,51 +1988,51 @@ INSERT INTO anything.auth_providers (
     );
 
 -- Inserting sample OAuth providers for users into anything.account_auth_provider_accounts
-INSERT INTO anything.account_auth_provider_accounts (
-    account_auth_provider_account_id, 
-    account_id, 
-    auth_provider_id, 
-    account_auth_provider_account_label,
-    account_auth_provider_account_slug,  
-    access_token_vault_id, 
-    refresh_token_vault_id, 
-    access_token_expires_at,
-    refresh_token_expires_at,
-    updated_at, 
-    created_at, 
-    updated_by, 
-    created_by
-) VALUES
-    (
-        'f1a9d7e5-9c8d-4a7f-b6b4-1d5c4e7a8b9d', -- Example UUID, replace with real UUID
-        'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', -- Account 1
-        'airtable', -- Airtable Provider
-        'Airtable Account 1', 
-        'airtable',
-        '123e4567-e89b-12d3-a456-426614174009', 
-        '123e4567-e89b-12d3-a456-426614174011', 
-        '2024-08-08 12:00:00+00', -- Example expiration timestamp
-         '2024-08-08 12:00:00+00',
-        now(), 
-        now(), 
-        '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', -- user1
-        '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'  -- user1
-    ),
-    (
-        'b7c5f9e4-6a7b-4d8f-a1c9-2f6e3a4d7b8c', -- Example UUID, replace with real UUID
-        '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', -- Account 2
-        'gmail', -- Gmail Provider
-        'Gmail Account 2', 
-        'gmail', 
-        '123e4567-e89b-12d3-a456-426614174010', 
-        '123e4567-e89b-12d3-a456-426614174012', 
-        '2024-08-08 12:00:00+00', -- Example expiration timestamp
-         '2024-08-08 12:00:00+00',
-        now(), 
-        now(), 
-        '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', -- user2
-        '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'  -- user2
-    );
+-- INSERT INTO anything.account_auth_provider_accounts (
+--     account_auth_provider_account_id, 
+--     account_id, 
+--     auth_provider_id, 
+--     account_auth_provider_account_label,
+--     account_auth_provider_account_slug,  
+--     access_token_vault_id, 
+--     refresh_token_vault_id, 
+--     access_token_expires_at,
+--     refresh_token_expires_at,
+--     updated_at, 
+--     created_at, 
+--     updated_by, 
+--     created_by
+-- ) VALUES
+--     (
+--         'f1a9d7e5-9c8d-4a7f-b6b4-1d5c4e7a8b9d', -- Example UUID, replace with real UUID
+--         'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', -- Account 1
+--         'airtable', -- Airtable Provider
+--         'Airtable Account 1', 
+--         'airtable',
+--         '123e4567-e89b-12d3-a456-426614174009', 
+--         '123e4567-e89b-12d3-a456-426614174011', 
+--         '2024-08-08 12:00:00+00', -- Example expiration timestamp
+--          '2024-08-08 12:00:00+00',
+--         now(), 
+--         now(), 
+--         '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', -- user1
+--         '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'  -- user1
+--     ),
+--     (
+--         'b7c5f9e4-6a7b-4d8f-a1c9-2f6e3a4d7b8c', -- Example UUID, replace with real UUID
+--         '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', -- Account 2
+--         'gmail', -- Gmail Provider
+--         'Gmail Account 2', 
+--         'gmail', 
+--         '123e4567-e89b-12d3-a456-426614174010', 
+--         '123e4567-e89b-12d3-a456-426614174012', 
+--         '2024-08-08 12:00:00+00', -- Example expiration timestamp
+--          '2024-08-08 12:00:00+00',
+--         now(), 
+--         now(), 
+--         '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', -- user2
+--         '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'  -- user2
+--     );
 
 -- Inserting sample flows into anything.flows
 --  NOT USER FULL RIGHT NOW. Dropping so we can focus on refactor to plugin_name and plugin_version, feb 14, 2025
@@ -3360,34 +3360,34 @@ INSERT INTO anything.account_auth_provider_accounts (
    DELETE FROM vault.secrets;
 
    -- Inserting sample secrets into vault.secrets
-INSERT INTO vault.secrets (
-    id, name, description, secret
-) VALUES
-    ('123e4567-e89b-12d3-a456-426614174000', 'API_KEY_1', 'silly description', 'SUPER_SECRET_KEY_1'),
-    ('123e4567-e89b-12d3-a456-426614174001', 'API_KEY_2', 'silly description', 'SUPER_SECRET_KEY_2'),
-    ('123e4567-e89b-12d3-a456-426614174002', 'API_KEY_3', 'silly description', 'SUPER_SECRET_KEY_3'),
-    ('123e4567-e89b-12d3-a456-426614174003', 'API_KEY_4', 'silly description', 'SUPER_SECRET_KEY_4'),
-    ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5'),
-    ('123e4567-e89b-12d3-a456-426614174005', 'provider_client_id_for_airtable', 'silly description', 'provider_client_id_for_aritable_tst_key_123'),
-    ('123e4567-e89b-12d3-a456-426614174006', 'provider_client_secret_id_for_airtable', 'silly description', 'provider_client_secret_id_for_aritable_tst_key_123'),
-    ('123e4567-e89b-12d3-a456-426614174007', 'provider_client_id_for_google', 'silly description', 'provider_client_id_for_google_tst_key_123'),
-    ('123e4567-e89b-12d3-a456-426614174008', 'provider_client_secret_id_for_google', 'silly description', 'provider_client_secret_id_for_google_tst_key_123'),
-    ('123e4567-e89b-12d3-a456-426614174009', 'mock_access_token_1', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_1234567890'),
-    ('123e4567-e89b-12d3-a456-426614174010', 'mock_access_token_2', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_0987654321'),
-    ('123e4567-e89b-12d3-a456-426614174011', 'mock_refresh_token_1', 'Mock refresh token for testing', 'MOCK_REFRESH_TOKEN_ABCDEFGHIJ'),
-    ('123e4567-e89b-12d3-a456-426614174012', 'mock_refresh_token_2', 'Mock refresh token for testing', 'MOCK_REFRESH_TOKEN_JIHGFEDCBA')
-    ON CONFLICT (id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
+-- INSERT INTO vault.secrets (
+--     id, name, description, secret
+-- ) VALUES
+--     ('123e4567-e89b-12d3-a456-426614174000', 'API_KEY_1', 'silly description', 'SUPER_SECRET_KEY_1'),
+--     ('123e4567-e89b-12d3-a456-426614174001', 'API_KEY_2', 'silly description', 'SUPER_SECRET_KEY_2'),
+--     ('123e4567-e89b-12d3-a456-426614174002', 'API_KEY_3', 'silly description', 'SUPER_SECRET_KEY_3'),
+--     ('123e4567-e89b-12d3-a456-426614174003', 'API_KEY_4', 'silly description', 'SUPER_SECRET_KEY_4'),
+--     ('123e4567-e89b-12d3-a456-426614174004', 'API_KEY_5', 'silly description', 'SUPER_SECRET_KEY_5'),
+--     ('123e4567-e89b-12d3-a456-426614174005', 'provider_client_id_for_airtable', 'silly description', 'provider_client_id_for_aritable_tst_key_123'),
+--     ('123e4567-e89b-12d3-a456-426614174006', 'provider_client_secret_id_for_airtable', 'silly description', 'provider_client_secret_id_for_aritable_tst_key_123'),
+--     ('123e4567-e89b-12d3-a456-426614174007', 'provider_client_id_for_google', 'silly description', 'provider_client_id_for_google_tst_key_123'),
+--     ('123e4567-e89b-12d3-a456-426614174008', 'provider_client_secret_id_for_google', 'silly description', 'provider_client_secret_id_for_google_tst_key_123'),
+--     ('123e4567-e89b-12d3-a456-426614174009', 'mock_access_token_1', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_1234567890'),
+--     ('123e4567-e89b-12d3-a456-426614174010', 'mock_access_token_2', 'Mock access token for testing', 'MOCK_ACCESS_TOKEN_0987654321'),
+--     ('123e4567-e89b-12d3-a456-426614174011', 'mock_refresh_token_1', 'Mock refresh token for testing', 'MOCK_REFRESH_TOKEN_ABCDEFGHIJ'),
+--     ('123e4567-e89b-12d3-a456-426614174012', 'mock_refresh_token_2', 'Mock refresh token for testing', 'MOCK_REFRESH_TOKEN_JIHGFEDCBA')
+--     ON CONFLICT (id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
 
-   -- Inserting sample secrets into anything.secrets
-INSERT INTO anything.secrets (
-    secret_id, account_id, secret_name, vault_secret_id, created_at, updated_at, created_by, updated_by
-) VALUES
-    ('123e4567-e89b-12d3-a456-426614174000', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_1', '123e4567-e89b-12d3-a456-426614174000', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
-    ('123e4567-e89b-12d3-a456-426614174001', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_2', '123e4567-e89b-12d3-a456-426614174001', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
-    ('123e4567-e89b-12d3-a456-426614174002', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_3', '123e4567-e89b-12d3-a456-426614174002', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
-    ('123e4567-e89b-12d3-a456-426614174003', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_4', '123e4567-e89b-12d3-a456-426614174003', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
-    ('123e4567-e89b-12d3-a456-426614174004', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_5', '123e4567-e89b-12d3-a456-426614174004', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d')
-    ON CONFLICT (secret_id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
+--    -- Inserting sample secrets into anything.secrets
+-- INSERT INTO anything.secrets (
+--     secret_id, account_id, secret_name, vault_secret_id, created_at, updated_at, created_by, updated_by
+-- ) VALUES
+--     ('123e4567-e89b-12d3-a456-426614174000', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_1', '123e4567-e89b-12d3-a456-426614174000', now(), now(), '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8', '0c8d9e2f-3d4e-4a6d-9c5b-7d2e0402a7c8'),
+--     ('123e4567-e89b-12d3-a456-426614174001', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_2', '123e4567-e89b-12d3-a456-426614174001', now(), now(), '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f', '5e6f1234-b5d7-4e6b-9d3a-6a2e7c1b2a9f'),
+--     ('123e4567-e89b-12d3-a456-426614174002', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_3', '123e4567-e89b-12d3-a456-426614174002', now(), now(), '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6', '1e4f12a7-3c55-4e6d-9b4d-2a1f0403a2a6'),
+--     ('123e4567-e89b-12d3-a456-426614174003', '7df12345-a5d3-4b13-9e3a-2f5c3e6a7b91', 'API_KEY_4', '123e4567-e89b-12d3-a456-426614174003', now(), now(), '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f', '3d8b144c-1e9d-4a8c-8234-4e5c9b3d5c2f'),
+--     ('123e4567-e89b-12d3-a456-426614174004', 'c9b8d2d5-3b12-4a6d-9eb2-1f6c7409b332', 'API_KEY_5', '123e4567-e89b-12d3-a456-426614174004', now(), now(), '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d', '2a7b3d8e-2f3c-4b5d-8e3a-4a7c3e6a7c8d')
+--     ON CONFLICT (secret_id) DO NOTHING; -- when you run db reset --linked on staging it doesnt actually delete secrets in vault so we need to ignore conflicts
 
 
     -- Inserting sample action-templates into anyting.action_templates

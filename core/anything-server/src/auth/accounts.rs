@@ -125,3 +125,200 @@ pub async fn get_auth_accounts_for_provider_name(
 
     Json(item).into_response()
 }
+
+pub async fn get_account_by_slug(
+    Path((account_id, slug)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!("[ACCOUNT] Handling get_account_by_slug for slug: {}", slug);
+    println!("[ACCOUNT] User JWT: {}", user.jwt);
+
+    let client = &state.public_client;
+    println!("[ACCOUNT] Using public client to make request");
+
+    // Call the public.get_account_by_slug function
+    println!(
+        "[ACCOUNT] Calling RPC get_account_by_slug with slug: {}",
+        slug
+    );
+    let response = match client
+        .rpc(
+            "get_account_by_slug",
+            serde_json::json!({ "slug": slug }).to_string(),
+        )
+        .auth(user.jwt)
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[ACCOUNT] Successfully got response from RPC call");
+            response
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error executing RPC request: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => {
+            println!("[ACCOUNT] Successfully read response body: {}", body);
+            body
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error reading response body: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let account: Value = match serde_json::from_str(&body) {
+        Ok(account) => {
+            println!("[ACCOUNT] Successfully parsed JSON response: {:?}", account);
+            account
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error parsing JSON response: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    println!("[ACCOUNT] Returning account response");
+    Json(account).into_response()
+}
+
+pub async fn get_account_invitations(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!(
+        "[ACCOUNT] Handling get_account_invitations for account: {}",
+        account_id
+    );
+
+    let client = &state.public_client;
+
+    let response = match client
+        .rpc(
+            "get_account_invitations",
+            serde_json::json!({ "account_id": account_id }).to_string(),
+        )
+        .auth(user.jwt)
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[ACCOUNT] Successfully got response from RPC call");
+            response
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error executing RPC request: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => {
+            println!("[ACCOUNT] Successfully read response body: {}", body);
+            body
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error reading response body: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let invitations: Value = match serde_json::from_str(&body) {
+        Ok(invitations) => {
+            println!("[ACCOUNT] Successfully parsed JSON response");
+            invitations
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error parsing JSON response: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    Json(invitations).into_response()
+}
+
+pub async fn get_account_members(
+    Path(account_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<User>,
+) -> impl IntoResponse {
+    println!(
+        "[ACCOUNT] Handling get_account_members for account: {}",
+        account_id
+    );
+
+    let client = &state.public_client;
+
+    let response = match client
+        .rpc(
+            "get_account_members",
+            serde_json::json!({ "account_id": account_id }).to_string(),
+        )
+        .auth(user.jwt)
+        .execute()
+        .await
+    {
+        Ok(response) => {
+            println!("[ACCOUNT] Successfully got response from RPC call");
+            response
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error executing RPC request: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to execute request",
+            )
+                .into_response();
+        }
+    };
+
+    let body = match response.text().await {
+        Ok(body) => {
+            println!("[ACCOUNT] Successfully read response body: {}", body);
+            body
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error reading response body: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read response body",
+            )
+                .into_response();
+        }
+    };
+
+    let members: Value = match serde_json::from_str(&body) {
+        Ok(members) => {
+            println!("[ACCOUNT] Successfully parsed JSON response");
+            members
+        }
+        Err(e) => {
+            println!("[ACCOUNT] Error parsing JSON response: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
+        }
+    };
+
+    Json(members).into_response()
+}

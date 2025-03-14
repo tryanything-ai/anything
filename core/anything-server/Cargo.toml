@@ -35,8 +35,8 @@ async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
 env_logger = "0.11.5"
 log = "0.4.22"
 anyhow = "1.0.94"
-serde_v8 = "0.235.0"
-rustyscript = "0.11.0"
+serde_v8 = "=0.234.0"
+rustyscript = "=0.11.0"
 node-semver = "2.2.0"
 futures = "0.3.31"
 

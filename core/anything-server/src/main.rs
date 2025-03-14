@@ -268,6 +268,7 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/actions", get(actions::get_actions))
         .route("/account/:account_id/triggers", get(actions::get_triggers))
         .route("/account/:account_id/other", get(actions::get_other_actions))
+        .route("/account/:account_id/responses", get(actions::get_responses))
 
         // Campaigns routes
         .route("/account/:account_id/campaigns", get(campaigns::get_campaigns))
@@ -291,6 +292,9 @@ pub async fn root() -> impl IntoResponse {
         )
         .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
         .route("/account/:account_id/marketplace/workflow/:template_id/clone", get(marketplace::workflows::clone_marketplace_workflow_template))
+
+        //Account Management
+        .route("/account/:account_id/slug/:slug", get(auth::accounts::get_account_by_slug))
 
         //Billing
         .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
@@ -343,12 +347,13 @@ pub async fn root() -> impl IntoResponse {
             get(testing::get_test_session_results),
         )
         //Variables Explorer for Testing
+        //TODO: we need to protect this for parallel running. You should not be able to select a result that isnt guranteed to be there
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/results",
             get(variables::get_flow_version_results)
         )
         .route( "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
-        get(variables::get_flow_version_variables))
+        get(variables::get_flow_version_inputs))
         .route(
             "/account/:account_id/testing/system_variables",
             get(system_variables::get_system_variables_handler))
@@ -393,6 +398,11 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/contact/:contact_id", put(contacts::update_contact))
         .route("/account/:account_id/contact/:contact_id", delete(contacts::delete_contact))
 
+        // Invitations
+        .route("/account/:account_id/invitations", get(auth::accounts::get_account_invitations))
+
+        // Members
+        .route("/account/:account_id/members", get(auth::accounts::get_account_members))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,
@@ -424,7 +434,7 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
 
     // Spawn the hydrate processor
-    tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
+    // tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
 
     // Spawn the campaign engine
     // tokio::spawn(campaigns::campaign_engine_loop(state.clone()));
