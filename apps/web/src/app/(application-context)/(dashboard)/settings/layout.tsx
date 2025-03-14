@@ -10,11 +10,13 @@ export default function PersonalAccountSettingsPage({
   const items = [
     { name: "Linked Services", href: "/settings" },
     { name: "Secrets", href: "/settings/secrets" },
+    { name: "Files", href: "/settings/files" },
     { name: "API Keys", href: "/settings/keys" },
     { name: "Your Profile", href: "/settings/profile" },
     // { name: "Teams", href: "/settings/teams" },
     { name: "Members", href: "/settings/members" },
     { name: "Billing", href: "/settings/billing" },
+
   ];
   return (
     <div className="space-y-6 w-full">

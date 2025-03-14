@@ -11,6 +11,7 @@ import * as profiles from './profiles';
 import * as variables from './variable-explorer'; 
 import * as agents from './agents';
 import * as accounts from './accounts';
+import * as files from './files';
 
 const api = {
   flows,
@@ -26,6 +27,7 @@ const api = {
   variables,
   agents,
   accounts,
+  files,
 };
 
 export default api;
