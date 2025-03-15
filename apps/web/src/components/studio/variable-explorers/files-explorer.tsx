@@ -4,9 +4,6 @@ import api from "@repo/anything-api";
 import { useAccounts } from "@/context/AccountsContext";
 import { Button } from "@repo/ui/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { RadioGroup, RadioGroupItem } from "@repo/ui/components/ui/radio-group";
-import { Label } from "@repo/ui/components/ui/label";
-import Image from "next/image";
 import { FileIcon } from "lucide-react";
 import Link from "next/link";
 
