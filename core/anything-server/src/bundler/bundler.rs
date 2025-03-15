@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use crate::bundler::accounts::fetch_cached_auth_accounts;
 use crate::bundler::secrets::get_decrypted_secrets;
-use crate::templater::Templater;
+use crate::templater::{files::get_template_file_requirements, Templater};
 use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
@@ -155,6 +155,17 @@ pub async fn bundle_cached_inputs(
         serde_json::to_value(get_system_variables())?,
     );
 
+    //TODO: this is all about making sure we only query the files we need because the opposite would really be resource expensive.
+    //IF they want a url of a file without this it would pull the like the base64 string of eveyr file they have every time.
+    //That would not work good!
+    let required_files = get_template_file_requirements(inputs.unwrap())?;
+    println!("[BUNDLER] Required files: {:?}", required_files);
+    // Add files //TODO: this needs to be done carefully so we don't pull all files all the time.
+    // render_inputs_context.insert(
+    //     "files".to_string(),
+    //     serde_json::to_value(get_files(state.clone(), client, account_id))?,
+    // );
+
     // Extract and set validations from schemas
     let mut templater = Templater::new();
 
@@ -163,11 +174,8 @@ pub async fn bundle_cached_inputs(
 
         let input_validations = extract_template_key_validations_from_schema(inputs_schema);
         let context_value = serde_json::to_value(&render_inputs_context)?;
-        let rendered = templater.render(
-            "task_inputs_definition",
-            &context_value,
-            input_validations,
-        )?;
+        let rendered =
+            templater.render("task_inputs_definition", &context_value, input_validations)?;
 
         println!("[BUNDLER] Rendered inputs output: {}", rendered);
         Ok(rendered)
