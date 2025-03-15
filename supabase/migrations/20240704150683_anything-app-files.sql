@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS anything.files
     file_size BIGINT NOT NULL,  -- Changed to BIGINT to match i64 in Rust
     content_type TEXT NOT NULL,  -- Renamed from file_type to match our implementation
     path TEXT,                   -- Optional path for future folder support
+    public_url TEXT,             -- Optional public URL for public files
+    access_type TEXT NOT NULL,   -- Controls how the file can be accessed
 
     -- timestamps are useful for auditing
     -- Basejump has some convenience functions defined below for automatically handling these

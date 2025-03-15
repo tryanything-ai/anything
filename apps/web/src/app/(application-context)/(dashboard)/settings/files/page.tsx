@@ -60,6 +60,7 @@ export default function FilesPage(): JSX.Element {
         await createClient(),
         selectedAccount.account_id,
       );
+      console.log("Files response:", response);
       setFiles(response || []);
     } catch (error) {
       console.error("Error fetching files:", error);
@@ -80,7 +81,8 @@ export default function FilesPage(): JSX.Element {
         await createClient(),
         selectedAccount.account_id,
         file,
-        (progress) => setUploadProgress(progress),
+        "public",
+        (progress: number) => setUploadProgress(progress),
       );
       await fetchFiles();
     } catch (error) {

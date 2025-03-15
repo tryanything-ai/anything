@@ -383,7 +383,7 @@ pub async fn root() -> impl IntoResponse {
 
         // File Management
         .route("/account/:account_id/files", get(files::get_files))
-        .route("/account/:account_id/file/:access", post(files::upload_file))
+        .route("/account/:account_id/file/upload/:access", post(files::upload_file))
         .route("/account/:account_id/file/:file_id", delete(files::delete_file))
         .route("/account/:account_id/file/:file_id/download", get(files::get_file_download_url))
 
@@ -399,7 +399,7 @@ pub async fn root() -> impl IntoResponse {
         .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)
-        .with_state(state.clone());
+        .with_state(state.clone()); 
     
     // Spawn processor
     tokio::spawn(processor::processor(state.clone()));

@@ -21,10 +21,10 @@ function FilePreview({ file }: { file: File }) {
   if (file.content_type.startsWith("image/")) {
     return (
       <div className="relative w-20 h-20">
-        <Image
+        <img
           src={file.public_url}
           alt={file.file_name}
-          fill
+          // fill
           className="object-cover rounded-md"
         />
       </div>
@@ -45,43 +45,49 @@ function FileRow({
   file: File;
   onInsert: (value: string) => void;
 }) {
-  const [format, setFormat] = useState<"url" | "base64">("url");
-
-  const handleInsert = () => {
-    onInsert(`{{files.${file.file_name}.${format}}}`);
+  const handleInsert = (format: "url" | "base64") => {
+    onInsert(`{{files.${file.file_name}.file_${format}}}`);
   };
 
   return (
-    <div className="flex items-center gap-4 p-2 border-b last:border-b-0">
-      <FilePreview file={file} />
+    <div className="flex flex-col gap-2 py-4 px-3 border-b last:border-b-0">
+      <div className="flex items-center gap-4">
+        <FilePreview file={file} />
 
-      <div className="flex-1">
-        <div className="font-medium">{file.file_name}</div>
-        <div className="text-sm text-gray-500">{file.content_type}</div>
+        <div className="flex-1">
+          <div className="font-medium flex items-center gap-2">
+            {file.file_name}
+            <a
+              href={file.public_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 text-sm"
+            >
+              (View)
+            </a>
+          </div>
+          <div className="text-sm text-gray-500">{file.content_type}</div>
+        </div>
       </div>
 
-      <RadioGroup
-        defaultValue="url"
-        onValueChange={(value) => setFormat(value as "url" | "base64")}
-        className="flex gap-4"
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="url" id={`url-${file.file_id}`} />
-          <Label htmlFor={`url-${file.file_id}`}>URL</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="base64" id={`base64-${file.file_id}`} />
-          <Label htmlFor={`base64-${file.file_id}`}>Base64</Label>
-        </div>
-      </RadioGroup>
-
-      <Button
-        variant="ghost"
-        className="p-1 m-1 h-auto bg-blue-500 text-blue-100 hover:bg-blue-600 hover:text-blue-50 font-medium"
-        onClick={handleInsert}
-      >
-        Insert
-      </Button>
+      <div className="flex gap-2 ml-24">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-1 h-auto bg-blue-500 text-blue-100 hover:bg-blue-600 hover:text-blue-50 font-medium"
+          onClick={() => handleInsert("url")}
+        >
+          Insert URL
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-1 h-auto bg-blue-500 text-blue-100 hover:bg-blue-600 hover:text-blue-50 font-medium"
+          onClick={() => handleInsert("base64")}
+        >
+          Insert Base64
+        </Button>
+      </div>
     </div>
   );
 }
@@ -130,6 +136,7 @@ export function FilesExplorer(): JSX.Element {
         await createClient(),
         selectedAccount.account_id,
       );
+      console.log("Files response:", response);
       setFiles(response || []);
     } catch (error) {
       console.error("Error fetching files:", error);

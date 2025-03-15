@@ -6,30 +6,54 @@ export async function uploadFile(
   supabase: SupabaseClient, 
   account_id: string, 
   file: File,
+  access: string,
   onProgress?: (progress: number) => void
-) {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
+): Promise<any> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
 
-    if (session) {
+      if (!session) {
+        throw new Error('No session found');
+      }
+
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/file`, {
-        method: 'POST',
-        headers: {
-          Authorization: `${session.access_token}`,
-        },
-        body: formData,
+      const xhr = new XMLHttpRequest();
+
+      // Add progress event listener
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          onProgress(percentComplete);
+        }
       });
 
-      const data = await response.json();
-      return data;
+      // Add load event listener
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.response));
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      });
+
+      // Add error event listener
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload failed'));
+      });
+
+      // Open and send the request
+      xhr.open('POST', `${ANYTHING_API_URL}/account/${account_id}/file/upload/${access}`);
+      xhr.setRequestHeader('Authorization', session.access_token);
+      xhr.send(formData);
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      reject(error);
     }
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error;
-  }
+  });
 }
 
 export async function getFiles(supabase: SupabaseClient, account_id: string) {
