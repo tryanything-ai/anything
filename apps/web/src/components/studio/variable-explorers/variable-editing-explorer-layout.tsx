@@ -12,14 +12,16 @@ import { Button } from "@repo/ui/components/ui/button";
 import { XIcon } from "lucide-react";
 import { SecretsExplorer } from "./secrets-explorer";
 import { SystemVariablesExplorer } from "./system-variables-explorer";
-
+import { cn } from "@repo/ui/lib/utils";
+import { FilesExplorer } from "./files-explorer";
 // Reusable tabs component
 function VariableExplorerTabs({ className }: { className?: string }) {
   return (
-    <TabsList className={className}>
+    <TabsList className={cn("flex-1", className)}>
       <TabsTrigger value="results">Action Results</TabsTrigger>
       <TabsTrigger value="secrets">Secrets</TabsTrigger>
-      <TabsTrigger value="system_variables">System Variables</TabsTrigger>
+      <TabsTrigger value="files">Files</TabsTrigger>
+      <TabsTrigger value="system_variables">System</TabsTrigger>
     </TabsList>
   );
 }
@@ -36,6 +38,11 @@ function VariableExplorerContent() {
       <TabsContent value="secrets" className="h-full overflow-y-auto">
         <ScrollArea className="h-full">
           <SecretsExplorer />
+        </ScrollArea>
+      </TabsContent>
+      <TabsContent value="files" className="h-full overflow-y-auto">
+        <ScrollArea className="h-full">
+          <FilesExplorer />
         </ScrollArea>
       </TabsContent>
       <TabsContent value="system_variables" className="h-full overflow-y-auto">
@@ -58,7 +65,8 @@ export function BaseVariableEditingExplorer(): JSX.Element {
       onValueChange={setTab}
       className="flex flex-col h-full"
     >
-      <VariableExplorerTabs className="w-[340px]" />
+      <VariableExplorerTabs className="w-[330px]" />
+
       <VariableExplorerContent />
     </Tabs>
   );
@@ -88,7 +96,7 @@ export default function VariableEditingExplorer(): JSX.Element {
           >
             <XIcon className="size-5 fill-foreground" />
           </Button>
-          <VariableExplorerTabs className="w-[340px]" />
+          <VariableExplorerTabs className="w-[330px]" />
         </div>
         <VariableExplorerContent />
       </Tabs>

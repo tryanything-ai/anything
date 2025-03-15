@@ -43,6 +43,7 @@ mod vault;
 mod billing;
 mod email;
 mod bundler;
+mod files;
 mod variables; 
 mod charts;
 mod marketplace;
@@ -379,6 +380,12 @@ pub async fn root() -> impl IntoResponse {
 
         // Members
         .route("/account/:account_id/members", get(auth::accounts::get_account_members))
+
+        // File Management
+        .route("/account/:account_id/files", get(files::get_files))
+        .route("/account/:account_id/file/:access", post(files::upload_file))
+        .route("/account/:account_id/file/:file_id", delete(files::delete_file))
+        .route("/account/:account_id/file/:file_id/download", get(files::get_file_download_url))
 
         .layer(middleware::from_fn_with_state(
             state.clone(),
