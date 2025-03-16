@@ -39,9 +39,9 @@ pub async fn create_task_for_action(
         action_label: action.label.clone(),
         trigger_id: ctx.trigger_task_id.clone(),
         trigger_session_id: ctx.trigger_session_id.to_string(),
-        trigger_session_status: TriggerSessionStatus::Pending.as_str().to_string(),
+        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
         flow_session_id: ctx.flow_session_id.to_string(),
-        flow_session_status: FlowSessionStatus::Pending.as_str().to_string(),
+        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
         action_id: action.action_id.clone(),
         r#type: action.r#type.clone(),
         plugin_name: action.plugin_name.clone(),
@@ -168,47 +168,32 @@ pub async fn update_task_with_result(
     bundled_context: Value,
     status: TaskStatus,
 ) {
-    println!(
-        "[PROCESSOR] Updating task {} with status: {:?}",
-        task.task_id, status
-    );
-
-    // Update task in database
+    // Instead of fire-and-forget, wait for the update
     let state_clone = ctx.state.clone();
     let task_id = task.task_id.clone();
     let task_result_clone = task_result.clone();
     let bundled_context_clone = bundled_context.clone();
     let status_clone = status.clone();
 
-    tokio::spawn(async move {
+    // Wait for the status update to complete
+    if let Err(e) = update_task_status(
+        state_clone,
+        &task_id,
+        &status_clone,
+        Some(bundled_context_clone),
+        task_result_clone,
+        None,
+    )
+    .await
+    {
         println!(
-            "[PROCESSOR] Spawned task to update database status for task: {}",
-            task_id
+            "[PROCESSOR] Failed to update task status in database: {}",
+            e
         );
-        if let Err(e) = update_task_status(
-            state_clone,
-            &task_id,
-            &status_clone,
-            Some(bundled_context_clone),
-            task_result_clone,
-            None,
-        )
-        .await
-        {
-            println!(
-                "[PROCESSOR] Failed to update task status in database: {}",
-                e
-            );
-        } else {
-            println!(
-                "[PROCESSOR] Successfully updated task status in database: {}",
-                task_id
-            );
-        }
-    });
+        // Optionally retry or handle the error
+    }
 
-    // Now you can use the original status here
-    println!("[PROCESSOR] Updating task in cache: {}", task.task_id);
+    // Update cache after confirming DB update
     let mut cache = ctx.state.flow_session_cache.write().await;
     let mut task_copy = task.clone();
     task_copy.result = task_result;
@@ -216,7 +201,6 @@ pub async fn update_task_with_result(
     task_copy.task_status = status;
     task_copy.ended_at = Some(Utc::now());
     let _ = cache.update_task(&ctx.flow_session_id, task_copy);
-    println!("[PROCESSOR] Updated task in cache: {}", task.task_id);
 }
 
 /// Updates the task status on error

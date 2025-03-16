@@ -421,8 +421,59 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
 
-    // Spawn the hydrate processor
-    // tokio::spawn(processor::hydrate_processor::hydrate_processor(state.clone()));
+    // Spawn a channel monitoring task
+    tokio::spawn({
+        let state = state.clone();
+        async move {
+            loop {
+                // Check channels every 30 seconds
+                tokio::time::sleep(Duration::from_secs(30)).await;
+
+                // Get processor channel capacity
+                let processor_capacity = state.processor_sender.capacity();
+                let processor_max = 1000; // This matches your channel size
+                println!(
+                    "[CHANNEL MONITOR] Processor channel: {}/{} slots available ({:.1}% full)",
+                    processor_capacity,
+                    processor_max,
+                    ((processor_max - processor_capacity) as f64 / processor_max as f64) * 100.0
+                );
+
+                // Check workflow processor semaphore
+                let workflow_permits = state.workflow_processor_semaphore.available_permits();
+                let max_workflows = 100; // This matches your semaphore size
+                println!(
+                    "[CHANNEL MONITOR] Workflow processors: {}/{} available ({:.1}% in use)",
+                    workflow_permits,
+                    max_workflows,
+                    ((max_workflows - workflow_permits) as f64 / max_workflows as f64) * 100.0
+                );
+
+                // Check flow completions size
+                let completion_count = state.flow_completions.lock().await.len();
+                println!(
+                    "[CHANNEL MONITOR] Active flow completions: {}",
+                    completion_count
+                );
+
+                // Check cache sizes - Fixed to access inner data structures
+                let api_key_cache_size = state.api_key_cache.read().await.keys().len();
+                // let account_access_cache_size = state.account_access_cache.read().await.get_size();  // Assuming there's a get_size() method
+                // let flow_session_cache_size = state.flow_session_cache.read().await.get_size();  // Assuming there's a get_size() method
+                
+                println!("[CHANNEL MONITOR] Cache sizes:");
+                println!("  - API Key cache: {} entries", api_key_cache_size);
+                // println!("  - Account access cache: {} entries", account_access_cache_size);
+                // println!("  - Flow session cache: {} entries", flow_session_cache_size);
+
+                // Check if shutdown signal is active
+                if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
+                    println!("[CHANNEL MONITOR] Shutdown signal detected, stopping monitoring");
+                    break;
+                }
+            }
+        }
+    });
 
     let state_clone = state.clone();
     tokio::spawn(async move {

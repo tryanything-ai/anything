@@ -86,7 +86,7 @@ async fn start_parallel_workflow_processing(
 
     // Create the workflow graph
     let workflow_def = Arc::new(workflow.flow_definition.clone());
-    let graph = create_workflow_graph(&workflow_def);
+    // let graph = create_workflow_graph(&workflow_def);
     println!("[PROCESSOR] Created workflow graph");
 
     // Clone workflow before using it in the Arc
@@ -110,12 +110,7 @@ async fn start_parallel_workflow_processing(
     };
     println!("[PROCESSOR] Created shared processing context");
 
-    // let workflow_id = processor_message.workflow_id;
-    // let version_id = processor_message.version_id;
-    // let flow_session_id = processor_message.flow_session_id;
     let trigger_task = processor_message.trigger_task.clone();
-    // let trigger_task_id = trigger_task.clone().unwrap().trigger_id;
-    // let trigger_session_id = processor_message.trigger_session_id;
 
     // Create initial trigger task
     let trigger_node = get_trigger_node(&workflow.flow_definition).unwrap();

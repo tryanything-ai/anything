@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -17,6 +16,7 @@ import WorkflowStatusComponent from "./workflow-status";
 import api from "@repo/anything-api";
 import { useAnything } from "@/context/AnythingContext";
 import { createClient } from "@/lib/supabase/client";
+
 export default function ManageWorkflows(): JSX.Element {
   let {
     accounts: { selectedAccount },
