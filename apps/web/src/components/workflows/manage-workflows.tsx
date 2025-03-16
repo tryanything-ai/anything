@@ -77,9 +77,18 @@ export default function ManageWorkflows(): JSX.Element {
 
           //only do if we have actual data
           if (flow_version) {
-            icons = flow_version.flow_definition.actions.map((action: any) => {
-              return action.icon;
-            });
+            icons = Array.from(
+              flow_version.flow_definition.actions
+                .reduce((unique: Map<string, any>, action: any) => {
+                  if (!unique.has(action.plugin_name)) {
+                    unique.set(action.plugin_name, action);
+                  }
+                  return unique;
+                }, new Map())
+                .values(),
+            )
+              .slice(0, 5)
+              .map((action: any) => action.icon);
           }
 
           return (
