@@ -20,6 +20,8 @@ use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
+use aws_sdk_s3::Client as S3Client;
+use files::r2_client::get_r2_client;
 
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::sleep;
@@ -77,6 +79,7 @@ pub struct AppState {
     anything_client: Arc<Postgrest>,
     marketplace_client: Arc<Postgrest>,
     public_client: Arc<Postgrest>,
+    r2_client: Arc<S3Client>,
     http_client: Arc<Client>,
     workflow_processor_semaphore: Arc<Semaphore>,
     auth_states: RwLock<HashMap<String, AuthState>>,
@@ -106,6 +109,8 @@ async fn main() {
             .schema("anything")
             .insert_header("apikey", supabase_api_key.clone()),
     );
+
+    let r2_client = Arc::new(get_r2_client().await);    
 
     //Marketplace Schema for Managing Templates etc
     let marketplace_client = Arc::new(
@@ -183,11 +188,10 @@ async fn main() {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
         public_client: public_client.clone(),
+        r2_client: r2_client.clone(),
         http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
-
         workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
-
         trigger_engine_signal,
         processor_sender: processor_tx,
         processor_receiver: Mutex::new(processor_rx),
@@ -382,10 +386,10 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/members", get(auth::accounts::get_account_members))
 
         // File Management
-        .route("/account/:account_id/files", get(files::get_files))
-        .route("/account/:account_id/file/upload/:access", post(files::upload_file))
-        .route("/account/:account_id/file/:file_id", delete(files::delete_file))
-        .route("/account/:account_id/file/:file_id/download", get(files::get_file_download_url))
+        .route("/account/:account_id/files", get(files::routes::get_files))
+        .route("/account/:account_id/file/upload/:access", post(files::routes::upload_file))
+        .route("/account/:account_id/file/:file_id", delete(files::routes::delete_file))
+        .route("/account/:account_id/file/:file_id/download", get(files::routes::get_file_download_url))
 
         .layer(middleware::from_fn_with_state(
             state.clone(),

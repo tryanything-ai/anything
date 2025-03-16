@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::error::Error;
 
 use crate::types::json_schema::ValidationFieldType;
-pub mod files;
+pub mod utils;
 
 #[derive(Debug)]
 pub struct TemplateError {

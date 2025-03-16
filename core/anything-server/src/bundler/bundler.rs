@@ -11,7 +11,8 @@ use std::sync::Arc;
 
 use crate::bundler::accounts::fetch_cached_auth_accounts;
 use crate::bundler::secrets::get_decrypted_secrets;
-use crate::templater::{files::get_template_file_requirements, Templater};
+use crate::files::utils::get_files;
+use crate::templater::{utils::get_template_file_requirements, Templater};
 use crate::types::task_types::TaskStatus;
 
 use uuid::Uuid;
@@ -114,14 +115,39 @@ pub async fn bundle_cached_inputs(
     println!("[BUNDLER] Starting to bundle inputs");
 
     // Pre-allocate with known capacity
-    let mut render_inputs_context = HashMap::with_capacity(4);
+    let mut render_inputs_context = HashMap::with_capacity(5);
+
+    //TODO: this is all about making sure we only query the files we need because the opposite would really be resource expensive.
+    //IF they want a url of a file without this it would pull the like the base64 string of eveyr file they have every time.
+    //That would not work good!
+    let required_files = get_template_file_requirements(inputs.unwrap())?;
+    println!("[BUNDLER] Required files: {:?}", required_files);
+    // // Add files //TODO: this needs to be done carefully so we don't pull all files all the time.
+    // render_inputs_context.insert(
+    //     "files".to_string(),
+    //     serde_json::to_value(get_files(state.clone(), client, account_id))?,
+    // );
 
     // Parallel fetch of secrets, accounts, and cached task results
-    let (secrets_result, accounts_result, tasks_result) = tokio::join!(
+    let (secrets_result, accounts_result, tasks_result, files_result) = tokio::join!(
         get_decrypted_secrets(state.clone(), client, account_id), //cached secrets
         fetch_cached_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
-        fetch_completed_cached_tasks(state.clone(), flow_session_id) //cached task results
+        fetch_completed_cached_tasks(state.clone(), flow_session_id), //cached task results
+        get_files(state.clone(), client, account_id, required_files)  //cached files
     );
+
+    //Process Files
+    let mut files = HashMap::new();
+    for file in files_result? {
+        let file_name = file.file_name.clone();
+        //Make Sub hashmap because hashmap insert will make "filename.png" the key vs { filename: { "png": ... }} if you don't
+        let mut file_content = HashMap::new();
+        file_content.insert(file.file_extension, file.content);
+        files.insert(file_name, file_content);
+    }
+    render_inputs_context.insert("files".to_string(), serde_json::to_value(files)?);
+
+    println!("[BUNDLER] Context: {:?}", render_inputs_context);
 
     // Process accounts
     let mut accounts = HashMap::new();
@@ -154,17 +180,6 @@ pub async fn bundle_cached_inputs(
         "system".to_string(),
         serde_json::to_value(get_system_variables())?,
     );
-
-    //TODO: this is all about making sure we only query the files we need because the opposite would really be resource expensive.
-    //IF they want a url of a file without this it would pull the like the base64 string of eveyr file they have every time.
-    //That would not work good!
-    let required_files = get_template_file_requirements(inputs.unwrap())?;
-    println!("[BUNDLER] Required files: {:?}", required_files);
-    // Add files //TODO: this needs to be done carefully so we don't pull all files all the time.
-    // render_inputs_context.insert(
-    //     "files".to_string(),
-    //     serde_json::to_value(get_files(state.clone(), client, account_id))?,
-    // );
 
     // Extract and set validations from schemas
     let mut templater = Templater::new();

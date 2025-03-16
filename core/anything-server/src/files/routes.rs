@@ -1,9 +1,6 @@
-use aws_config::default_provider::credentials::DefaultCredentialsChain;
-use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::primitives::ByteStream;
-use aws_sdk_s3::Client as S3Client;
 use axum::{
-    extract::{Multipart, Path, Query, State},
+    extract::{Multipart, Path, State},
     http::StatusCode,
     response::IntoResponse,
     Extension, Json,
@@ -17,8 +14,6 @@ use uuid::Uuid;
 
 use crate::{supabase_jwt_middleware::User, AppState};
 
-use std::collections::HashMap;
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FileAccessType {
@@ -28,15 +23,15 @@ pub enum FileAccessType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileMetadata {
-    file_id: String,
-    file_name: String,
-    file_size: i64,
-    content_type: String,
+    pub file_id: String,
+    pub file_name: String,
+    pub file_size: i64,
+    pub content_type: String,
     // created_at: chrono::DateTime<chrono::Utc>,
-    account_id: String,
-    path: Option<String>,        // For future folder support
-    public_url: Option<String>,  // For public files
-    access_type: FileAccessType, // Controls how the file can be accessed
+    pub account_id: String,
+    pub path: Option<String>,        // For future folder support
+    pub public_url: Option<String>,  // For public files
+    pub access_type: FileAccessType, // Controls how the file can be accessed
 }
 
 #[derive(Debug, Serialize)]
@@ -49,34 +44,20 @@ pub struct FileResponse {
     base64: Option<String>,
 }
 
-// Initialize R2 client
-async fn get_r2_client() -> S3Client {
-    println!("[FILES] Initializing R2 client");
-    let r2_account_id = std::env::var("R2_ACCOUNT_ID").expect("R2_ACCOUNT_ID must be set");
-    let r2_access_key_id = std::env::var("R2_ACCESS_KEY_ID").expect("R2_ACCESS_KEY_ID must be set");
-    let r2_secret_access_key =
-        std::env::var("R2_SECRET_ACCESS_KEY").expect("R2_SECRET_ACCESS_KEY must be set");
-
-    let credentials = Credentials::new(
-        r2_access_key_id,
-        r2_secret_access_key,
-        None,
-        None,
-        "anything-r2",
-    );
-
-    let config = aws_sdk_s3::Config::builder()
-        .behavior_version_latest()
-        .region(Region::new("auto"))
-        .endpoint_url(format!(
-            "https://{}.r2.cloudflarestorage.com",
-            r2_account_id
-        ))
-        .credentials_provider(credentials)
-        .build();
-
-    println!("[FILES] R2 client initialized successfully");
-    S3Client::from_conf(config)
+// Add this helper function at the top with other imports
+fn make_filename_url_safe(filename: &str) -> String {
+    // Replace spaces and problematic characters with underscores or dashes
+    // Remove or encode special characters that could cause URL issues
+    filename
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect::<String>()
 }
 
 // Get files for an account
@@ -135,7 +116,7 @@ pub async fn upload_file(
     mut multipart: Multipart,
 ) -> impl IntoResponse {
     println!("[FILES] Starting file upload for account: {}", account_id);
-    let r2_client = get_r2_client().await;
+    let r2_client = &state.r2_client;
     let bucket = std::env::var("R2_BUCKET").expect("R2_BUCKET must be set");
     let cdn_domain = std::env::var("R2_PUBLIC_DOMAIN").expect("R2_PUBLIC_DOMAIN must be set");
 
@@ -147,7 +128,8 @@ pub async fn upload_file(
     );
 
     while let Some(field) = multipart.next_field().await.unwrap() {
-        let file_name = field.file_name().unwrap_or("unnamed").to_string();
+        let original_filename = field.file_name().unwrap_or("unnamed").to_string();
+        let safe_filename = make_filename_url_safe(&original_filename);
         let content_type = field
             .content_type()
             .unwrap_or("application/octet-stream")
@@ -155,14 +137,15 @@ pub async fn upload_file(
         let data = field.bytes().await.unwrap();
 
         println!(
-            "[FILES] Processing file: {} ({} bytes)",
-            file_name,
-            data.len()
+            "[FILES] Processing file: {} ({} bytes) - sanitized name: {}",
+            original_filename,
+            data.len(),
+            safe_filename
         );
 
         let file_id = Uuid::new_v4().to_string();
-        // Simplified key structure - no folders
-        let r2_key = format!("{}/{}", account_id, file_name);
+        // Use the safe filename for the storage key
+        let r2_key = format!("{}/{}", account_id, safe_filename);
 
         let mut put_object = r2_client
             .put_object()
@@ -181,12 +164,11 @@ pub async fn upload_file(
                 println!("[FILES] Successfully uploaded file to R2: {}", r2_key);
                 let file_metadata = FileMetadata {
                     file_id: file_id.clone(),
-                    file_name,
+                    file_name: safe_filename, // Use the safe filename here
                     file_size: data.len() as i64,
                     content_type,
-                    // created_at: chrono::Utc::now(),
                     account_id: account_id.clone(),
-                    path: None,
+                    path: Some(r2_key.clone()),
                     public_url: if !is_private {
                         Some(format!("{}/{}", cdn_domain, r2_key))
                     } else {
@@ -279,7 +261,7 @@ pub async fn delete_file(
         file_id, account_id
     );
     let client = &state.anything_client;
-    let r2_client = get_r2_client().await;
+    let r2_client = &state.r2_client;
     let bucket = std::env::var("R2_BUCKET").expect("R2_BUCKET must be set");
 
     // First, get the file metadata
@@ -367,7 +349,7 @@ pub async fn get_file_download_url(
         file_id, account_id
     );
     let client = &state.anything_client;
-    let r2_client = get_r2_client().await;
+    let r2_client = &state.r2_client;
     let bucket = std::env::var("R2_BUCKET").expect("R2_BUCKET must be set");
 
     // Get file metadata

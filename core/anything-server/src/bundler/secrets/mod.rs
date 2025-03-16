@@ -1,8 +1,7 @@
 use dotenv::dotenv;
 use postgrest::Postgrest;
-use secrets_cache::SecretsCache;
 use std::{env, sync::Arc};
-use tracing::debug;
+
 use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
