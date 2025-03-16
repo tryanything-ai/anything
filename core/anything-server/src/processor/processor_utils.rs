@@ -9,7 +9,7 @@ use crate::processor::execute_task::TaskError;
 
 use crate::processor::db_calls::{create_task, update_flow_session_status, update_task_status};
 
-use crate::processor::processor::PathProcessingContext;
+use crate::processor::parallelizer::PathProcessingContext;
 
 use crate::types::{
     action_types::Action,
