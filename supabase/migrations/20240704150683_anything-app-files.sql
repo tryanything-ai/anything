@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS anything.files
     -- referencing the account table. Make sure you also set permissions appropriately
     account_id uuid not null references basejump.accounts(id),
 
-    -- ADD YOUR COLUMNS HERE
     -- Updated columns to match FileMetadata struct
     file_name TEXT NOT NULL,
     file_size BIGINT NOT NULL,  -- Changed to BIGINT to match i64 in Rust
@@ -24,7 +23,6 @@ CREATE TABLE IF NOT EXISTS anything.files
     updated_by uuid references auth.users(id),
     created_by uuid references auth.users(id)
 );
-
 
 -- protect the timestamps by setting created_at and updated_at to be read-only and managed by a trigger
 CREATE TRIGGER set_files_timestamp
