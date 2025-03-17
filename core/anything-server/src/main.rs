@@ -187,7 +187,7 @@ async fn main() {
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
     // Create the task updater channel  
-   let (task_updater_tx, task_updater_rx) = mpsc::channel::<TaskMessage>(100); // Buffer size of 100
+   let (task_updater_tx, task_updater_rx) = mpsc::channel::<TaskMessage>(1000); // Buffer size of 100
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -446,6 +446,16 @@ pub async fn root() -> impl IntoResponse {
                     processor_capacity,
                     processor_max,
                     ((processor_max - processor_capacity) as f64 / processor_max as f64) * 100.0
+                );
+
+                // Get task updater channel capacity
+                let task_updater_capacity = state.task_updater_sender.capacity();
+                let task_updater_max = 1000; // Adjust this to match your channel size
+                println!(
+                    "[CHANNEL MONITOR] Task updater channel: {}/{} slots available ({:.1}% full)",
+                    task_updater_capacity,
+                    task_updater_max,
+                    ((task_updater_max - task_updater_capacity) as f64 / task_updater_max as f64) * 100.0
                 );
 
                 // Check workflow processor semaphore

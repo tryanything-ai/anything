@@ -1,6 +1,6 @@
-use std::sync::Arc;
-
 use serde_json::Value;
+use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::AppState;
 
@@ -84,7 +84,7 @@ pub fn deep_parse_json(input: &str) -> Result<Value, serde_json::Error> {
 //For now just going to make webhooks only return json
 pub async fn process_webhook_response_task(
     state: Arc<AppState>,
-    flow_session_id: String,
+    flow_session_id: Uuid,
     bundled_context: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[WEBHOOK RESPONSE] Starting process_response_task");
@@ -206,7 +206,7 @@ pub async fn process_webhook_response_task(
         completions.keys().collect::<Vec<_>>()
     );
 
-    if let Some(completion) = completions.remove(&flow_session_id) {
+    if let Some(completion) = completions.remove(&flow_session_id.to_string()) {
         if completion.needs_response {
             println!("[WEBHOOK RESPONSE] Found completion channel and sending response");
             let send_result = completion.sender.send(Value::Object(response.clone()));

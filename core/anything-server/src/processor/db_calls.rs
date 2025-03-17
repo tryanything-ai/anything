@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::system_plugins::http::http_plugin::parse_headers;
 use crate::types::{
-    task_types::{CreateTaskInput, FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
+    task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus},
     workflow_types::DatabaseFlowVersion,
 };
 use crate::AppState;
@@ -153,7 +153,7 @@ pub async fn get_session_tasks(
     Ok(tasks)
 }
 
-pub async fn create_task(state: Arc<AppState>, task: &CreateTaskInput) -> Result<(), String> {
+pub async fn create_task(state: Arc<AppState>, task: &Task) -> Result<(), String> {
     println!("[PROCESSOR DB CALLS] Creating new task");
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")

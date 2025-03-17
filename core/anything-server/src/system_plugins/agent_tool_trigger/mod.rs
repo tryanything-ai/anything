@@ -123,9 +123,6 @@ pub async fn run_workflow_as_tool_call_and_respond(
 
     println!("[TOOL_CALL_API] Trigger node: {:?}", trigger_node);
 
-    // let flow_session_id = Uuid::new_v4();
-    // let trigger_session_id = Uuid::new_v4();
-
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(trigger_node.inputs.clone().unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -146,8 +143,6 @@ pub async fn run_workflow_as_tool_call_and_respond(
         .flow_version_id(workflow_version.flow_version_id)
         .action_label(trigger_node.label.clone())
         .trigger_id(trigger_node.action_id.clone())
-        // .trigger_session_id(trigger_session_id.to_string())
-        // .flow_session_id(flow_session_id.to_string())
         .action_id(trigger_node.action_id.clone())
         .r#type(ActionType::Trigger)
         .plugin_name(trigger_node.plugin_name.clone())

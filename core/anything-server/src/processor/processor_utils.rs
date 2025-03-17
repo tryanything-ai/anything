@@ -1,22 +1,19 @@
 use crate::processor::execute_task::execute_task;
+use crate::status_updater::{TaskMessage, TaskOperation};
 
 use chrono::Utc;
 use serde_json::Value;
 
 use std::collections::HashMap;
 
+use crate::processor::db_calls::update_flow_session_status;
 use crate::processor::execute_task::TaskError;
-
-use crate::processor::db_calls::{create_task, update_flow_session_status, update_task_status};
 
 use crate::processor::parallelizer::PathProcessingContext;
 
 use crate::types::{
     action_types::Action,
-    task_types::{
-        CreateTaskInput, FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus,
-        TriggerSessionStatus,
-    },
+    task_types::{FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus},
 };
 
 /// Creates a task for the given action
@@ -30,31 +27,32 @@ pub async fn create_task_for_action(
         action.label, processing_order
     );
 
-    let next_task_input = match Task::builder()
-    .account_id(ctx.workflow.account_id.clone())
-    .flow_id(ctx.workflow_id.clone())
-    .flow_version_id(ctx.workflow.flow_version_id.clone())
-    .action_label(action.label.clone())
-    .trigger_id(ctx.trigger_task_id.clone())
-    .flow_session_id(ctx.flow_session_id.clone())
-    .trigger_session_id(ctx.trigger_session_id.clone())
-    .action_id(action.action_id.clone())
-    .r#type(action.r#type.clone())
-    .plugin_name(action.plugin_name.clone())
-    .plugin_version(action.plugin_version.clone())
-    .stage(if ctx.workflow.published {
-        Stage::Production
-    } else {
-        Stage::Testing
-    })
-    .processing_order(processing_order)
-    .config(TaskConfig {
-                inputs: Some(action.inputs.clone().unwrap()),
-                inputs_schema: Some(action.inputs_schema.clone().unwrap()),
-                plugin_config: Some(action.plugin_config.clone()),
-                plugin_config_schema: Some(action.plugin_config_schema.clone()),
-            })
-    .build() {
+    let task = match Task::builder()
+        .account_id(ctx.workflow.account_id.clone())
+        .flow_id(ctx.workflow_id.clone())
+        .flow_version_id(ctx.workflow.flow_version_id.clone())
+        .action_label(action.label.clone())
+        .trigger_id(ctx.trigger_task_id.clone())
+        .flow_session_id(ctx.flow_session_id.clone())
+        .trigger_session_id(ctx.trigger_session_id.clone())
+        .action_id(action.action_id.clone())
+        .r#type(action.r#type.clone())
+        .plugin_name(action.plugin_name.clone())
+        .plugin_version(action.plugin_version.clone())
+        .stage(if ctx.workflow.published {
+            Stage::Production
+        } else {
+            Stage::Testing
+        })
+        .processing_order(processing_order)
+        .config(TaskConfig {
+            inputs: Some(action.inputs.clone().unwrap()),
+            inputs_schema: Some(action.inputs_schema.clone().unwrap()),
+            plugin_config: Some(action.plugin_config.clone()),
+            plugin_config_schema: Some(action.plugin_config_schema.clone()),
+        })
+        .build()
+    {
         Ok(task) => task,
         Err(e) => panic!("Failed to build task: {}", e),
     };
@@ -96,7 +94,21 @@ pub async fn create_task_for_action(
         "[PROCESSOR] Calling create_task for action: {}",
         action.label
     );
-    let task = create_task(ctx.state.clone(), &next_task_input).await?;
+
+    // let task = create_task(ctx.state.clone(), &next_task_input).await?;
+    let create_task_message = TaskMessage {
+        task_id: task.task_id.clone(),
+        operation: TaskOperation::Create {
+            input: task.clone(),
+        },
+    };
+
+    ctx.state
+        .task_updater_sender
+        .send(create_task_message)
+        .await
+        .unwrap();
+
     // println!(
     //     "[PROCESSOR] Successfully created task {} for action: {}",
     //     task.task_id, action.label
@@ -190,43 +202,55 @@ pub async fn find_next_actions(
 }
 
 /// Updates the task status in the database and cache
-pub async fn update_task_with_result(
+pub async fn update_completed_task_with_result(
     ctx: &PathProcessingContext,
     task: &Task,
     task_result: Option<Value>,
     bundled_context: Value,
-    status: TaskStatus,
 ) {
     // Update cache immediately
     let mut cache = ctx.state.flow_session_cache.write().await;
     let mut task_copy = task.clone();
     task_copy.result = task_result.clone();
     task_copy.context = Some(bundled_context.clone());
-    task_copy.task_status = status.clone();
+    task_copy.task_status = TaskStatus::Completed;
     task_copy.ended_at = Some(Utc::now());
     let _ = cache.update_task(&ctx.flow_session_id, task_copy);
     drop(cache);
 
-    // Spawn database update as a background task
-    let state_clone = ctx.state.clone();
-    let task_id = task.task_id.clone();
-    tokio::spawn(async move {
-        if let Err(e) = update_task_status(
-            state_clone,
-            &task_id,
-            &status,
-            Some(bundled_context),
-            task_result,
-            None,
-        )
+    let task_message = TaskMessage {
+        task_id: task.task_id.clone(),
+        operation: TaskOperation::Update {
+            status: TaskStatus::Completed,
+            result: task_result.clone(),
+            error: None,
+            context: Some(bundled_context.clone()),
+        },
+    };
+
+    ctx.state
+        .task_updater_sender
+        .send(task_message)
         .await
-        {
-            println!(
-                "[PROCESSOR] Failed to update task status in database: {}",
-                e
-            );
-        }
-    });
+        .unwrap();
+
+    // tokio::spawn(async move {
+    //     if let Err(e) = update_task_status(
+    //         state_clone,
+    //         &task_id,
+    //         &status,
+    //         Some(bundled_context),
+    //         task_result,
+    //         None,
+    //     )
+    //     .await
+    //     {
+    //         println!(
+    //             "[PROCESSOR] Failed to update task status in database: {}",
+    //             e
+    //         );
+    //     }
+    // });
 }
 
 /// Updates the task status on error
@@ -241,28 +265,38 @@ pub async fn handle_task_error(ctx: &PathProcessingContext, task: &Task, error: 
     let _ = cache.update_task(&ctx.flow_session_id, task_copy);
     drop(cache);
 
-    // Spawn database update as a background task
-    let state_clone = ctx.state.clone();
-    let task_id = task.task_id.clone();
-    let error_clone = error.clone();
+    let error_message = TaskMessage {
+        task_id: task.task_id.clone(),
+        operation: TaskOperation::Update {
+            status: TaskStatus::Failed,
+            result: None,
+            error: Some(error.error.clone()),
+            context: Some(error.context.clone()),
+        },
+    };
 
-    tokio::spawn(async move {
-        if let Err(e) = update_task_status(
-            state_clone,
-            &task_id,
-            &TaskStatus::Failed,
-            Some(error_clone.context),
-            None,
-            Some(error_clone.error),
-        )
+    ctx.state
+        .task_updater_sender
+        .send(error_message)
         .await
-        {
-            println!(
-                "[PROCESSOR] Failed to update error status in database: {}",
-                e
-            );
-        }
-    });
+        .unwrap();
+    // tokio::spawn(async move {
+    //     if let Err(e) = update_task_status(
+    //         state_clone,
+    //         &task_id,
+    //         &TaskStatus::Failed,
+    //         Some(error_clone.context),
+    //         None,
+    //         Some(error_clone.error),
+    //     )
+    //     .await
+    //     {
+    //         println!(
+    //             "[PROCESSOR] Failed to update error status in database: {}",
+    //             e
+    //         );
+    //     }
+    // });
 }
 
 /// Updates the flow session status
@@ -353,8 +387,14 @@ pub async fn process_task(
                 );
 
                 handle_task_error(ctx, task, error.clone()).await;
+                println!(
+                    "[PROCESSOR] Task {} failed with error: {:?}",
+                    task.task_id,
+                    error.clone()
+                );
 
                 //no more work if we error.
+                //Discontinue working on this path.
                 return Ok(Vec::new());
             }
         };
@@ -366,14 +406,8 @@ pub async fn process_task(
         "[PROCESSOR] Updating task {} status to completed",
         task.task_id
     );
-    update_task_with_result(
-        ctx,
-        task,
-        task_result.clone(),
-        bundled_context,
-        TaskStatus::Completed,
-    )
-    .await;
+
+    update_completed_task_with_result(ctx, task, task_result.clone(), bundled_context).await;
 
     // Check if this is a filter task that returned false
     if let Some(plugin_name) = &task.plugin_name {

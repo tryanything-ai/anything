@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use uuid::Uuid;
 
 use serde_json::Value;
 
@@ -9,7 +10,7 @@ use crate::AppState;
 //For now just going to make webhooks only return json
 pub async fn process_tool_call_result_task(
     state: Arc<AppState>,
-    flow_session_id: String,
+    flow_session_id: Uuid,
     bundled_context: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     println!("[PROCESS RESPONSE] Starting process_response_task");
@@ -74,7 +75,7 @@ pub async fn process_tool_call_result_task(
 
     // Send the response through the flow_completions channel
     let mut completions = state.flow_completions.lock().await;
-    if let Some(completion) = completions.remove(&flow_session_id) {
+    if let Some(completion) = completions.remove(&flow_session_id.to_string()) {
         if completion.needs_response {
             println!("[PROCESS RESPONSE] Sending result through completion channel");
             let _ = completion.sender.send(Value::Object(response.clone()));

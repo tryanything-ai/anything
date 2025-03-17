@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     response::IntoResponse,
     Json,
 };
@@ -43,7 +43,6 @@ pub async fn create_secret(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     Path(account_id): Path<String>,
-    headers: HeaderMap,
     Json(payload): Json<CreateSecretPayload>,
 ) -> impl IntoResponse {
     let client = &state.anything_client;
@@ -151,7 +150,6 @@ pub async fn create_anything_api_key(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     Path(account_id): Path<String>,
-    headers: HeaderMap,
     Json(payload): Json<CreateAnythingApiKeyPayload>,
 ) -> impl IntoResponse {
     let client = &state.anything_client;
@@ -243,7 +241,6 @@ pub struct GetDecryptedSecretsInput {
 // Secrets
 pub async fn get_decrypted_secrets(
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
     Path(account_id): Path<String>,
 ) -> impl IntoResponse {
     println!("Handling a get_decrypted_secrets");
@@ -303,7 +300,6 @@ pub async fn get_decrypted_secrets(
 // Secrets
 pub async fn get_decrypted_anything_api_keys(
     State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
     Path(account_id): Path<String>,
 ) -> impl IntoResponse {
     println!("Handling a get_decrypted_secrets");
@@ -404,7 +400,6 @@ pub async fn delete_secret(
     Path((account_id, secret_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    headers: HeaderMap,
 ) -> impl IntoResponse {
     println!(
         "Delete Secret: {:?} for account: {:?}",
@@ -505,7 +500,6 @@ pub async fn delete_api_key(
     Path((account_id, secret_id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    headers: HeaderMap,
 ) -> impl IntoResponse {
     println!(
         "[DELETE API KEY] Deleting secret: {:?} for account: {:?}",

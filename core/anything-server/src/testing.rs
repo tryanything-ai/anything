@@ -6,7 +6,7 @@ use axum::{
 };
 
 use chrono::Utc;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
@@ -14,18 +14,12 @@ use crate::{
     supabase_jwt_middleware::User,
     types::{
         action_types::ActionType,
-        task_types::{
-            FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TestConfig,
-            TriggerSessionStatus,
-        },
-        workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
+        task_types::{Stage, Task, TaskConfig, TaskStatus},
+        workflow_types::DatabaseFlowVersion,
     },
     AppState,
 };
 use uuid::Uuid;
-
-use dotenv::dotenv;
-use std::env;
 
 // Testing a workflow
 pub async fn test_workflow(
@@ -476,13 +470,11 @@ pub async fn get_test_session_results(
     };
 
     println!("[TESTING] Checking completion status of tasks");
+    //TODO: maybe use trigger status in some future where we can have subflows.
     let all_completed = !tasks.is_empty()
-        && tasks.iter().all(|task| {
-            matches!(
-                task.trigger_session_status,
-                TriggerSessionStatus::Completed | TriggerSessionStatus::Failed
-            )
-        });
+        && tasks
+            .iter()
+            .all(|task| matches!(task.task_status, TaskStatus::Completed | TaskStatus::Failed));
 
     println!("[TESTING] Session completion status: {}", all_completed);
     let result = serde_json::json!({

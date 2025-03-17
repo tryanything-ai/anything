@@ -41,7 +41,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
 
     match bundled_context_result {
         Ok((bundled_inputs, bundled_plugin_cofig)) => {
-            let task_result = if task.r#type == ActionType::Trigger.as_str().to_string() {
+            let task_result = if task.r#type == ActionType::Trigger {
                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
                 process_trigger_task(task)
             } else {

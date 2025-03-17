@@ -1,7 +1,6 @@
 use crate::processor::utils::{create_workflow_graph, get_trigger_node};
 
 use crate::AppState;
-use chrono::Utc;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -14,16 +13,12 @@ use crate::processor::processor_utils::{
     check_and_update_workflow_completion, create_task_for_action, process_task, update_flow_status,
 };
 
-use crate::processor::db_calls::create_task;
 use crate::processor::processor::ProcessorMessage;
 use crate::status_updater::{TaskMessage, TaskOperation};
 
 use crate::types::{
     action_types::ActionType,
-    task_types::{
-        CreateTaskInput, FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus,
-        TriggerSessionStatus,
-    },
+    task_types::{FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus},
     workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
 };
 /// Represents the state needed for processing a workflow path
@@ -104,29 +99,10 @@ pub async fn start_parallel_workflow_processing(
     // If we have a trigger task in the message, use that, otherwise check cache
     let initial_task = if let Some(trigger_task) = trigger_task {
         // Create task from the provided trigger task input
-        // match create_task(state.clone(), &trigger_task).await {
-        //     Ok(task) => {
-        //         // Update cache with new task
-        //         let mut cache = state.flow_session_cache.write().await;
-        //         if cache.add_task(&flow_session_id, task.clone()) {
-        //             Some(task)
-        //         } else {
-        //             println!(
-        //                 "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-        //                 flow_session_id
-        //             );
-        //             Some(task)
-        //         }
-        //     }
-        //     Err(e) => {
-        //         println!("[PROCESSOR] Error creating initial task: {}", e);
-        //         None
-        //     }
-        // }
         let task_message = TaskMessage {
             task_id: trigger_task.task_id,
             operation: TaskOperation::Create {
-                input: trigger_task,
+                input: trigger_task.clone(),
             },
         };
 
@@ -145,59 +121,115 @@ pub async fn start_parallel_workflow_processing(
         }
     } else if cached_tasks.is_none() || cached_tasks.as_ref().unwrap().is_empty() {
         // Only create trigger task if there are no existing tasks in cache
-        let initial_task = CreateTaskInput {
-            task_id: Uuid::new_v4(),
-            account_id: workflow.account_id.to_string(),
-            processing_order: 0,
-            task_status: TaskStatus::Running.as_str().to_string(),
-            flow_id: workflow_id.to_string(),
-            flow_version_id: workflow.flow_version_id.to_string(),
-            action_label: trigger_node.label.clone(),
-            trigger_id: trigger_task_id.clone(),
-            trigger_session_id: trigger_session_id.to_string(),
-            trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-            flow_session_id: flow_session_id.to_string(),
-            flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-            action_id: trigger_node.action_id.clone(),
-            r#type: ActionType::Trigger,
-            plugin_name: trigger_node.plugin_name.clone(),
-            plugin_version: trigger_node.plugin_version.clone(),
-            stage: if workflow.published {
-                Stage::Production.as_str().to_string()
+        let new_task: Option<Task> = match Task::builder()
+            .account_id(workflow.account_id.clone())
+            .flow_id(workflow_id)
+            .flow_version_id(workflow.flow_version_id)
+            .action_label(trigger_node.label.clone())
+            .trigger_id(trigger_task_id.clone())
+            .trigger_session_id(trigger_session_id)
+            .flow_session_id(flow_session_id)
+            .action_id(trigger_node.action_id.clone())
+            .r#type(ActionType::Trigger)
+            .plugin_name(trigger_node.plugin_name.clone())
+            .plugin_version(trigger_node.plugin_version.clone())
+            .stage(if workflow.published {
+                Stage::Production
             } else {
-                Stage::Testing.as_str().to_string()
-            },
-            config: TaskConfig {
+                Stage::Testing
+            })
+            .config(TaskConfig {
                 inputs: Some(trigger_node.inputs.clone().unwrap()),
                 inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
                 plugin_config: Some(trigger_node.plugin_config.clone()),
                 plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
-            },
-            result: None,
-            error: None,
-            started_at: Some(Utc::now()),
-            test_config: None,
+            })
+            .build()
+        {
+            Ok(task) => Some(task),
+            Err(e) => None,
         };
 
+        // let initial_task = CreateTaskInput {
+        //     task_id: Uuid::new_v4(),
+        //     account_id: workflow.account_id.to_string(),
+        //     processing_order: 0,
+        //     task_status: TaskStatus::Running.as_str().to_string(),
+        //     flow_id: workflow_id.to_string(),
+        //     flow_version_id: workflow.flow_version_id.to_string(),
+        //     action_label: trigger_node.label.clone(),
+        //     trigger_id: trigger_task_id.clone(),
+        //     trigger_session_id: trigger_session_id.to_string(),
+        //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+        //     flow_session_id: flow_session_id.to_string(),
+        //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+        //     action_id: trigger_node.action_id.clone(),
+        //     r#type: ActionType::Trigger,
+        //     plugin_name: trigger_node.plugin_name.clone(),
+        //     plugin_version: trigger_node.plugin_version.clone(),
+        //     stage: if workflow.published {
+        //         Stage::Production.as_str().to_string()
+        //     } else {
+        //         Stage::Testing.as_str().to_string()
+        //     },
+        //     config: TaskConfig {
+        //         inputs: Some(trigger_node.inputs.clone().unwrap()),
+        //         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
+        //         plugin_config: Some(trigger_node.plugin_config.clone()),
+        //         plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
+        //     },
+        //     result: None,
+        //     error: None,
+        //     started_at: Some(Utc::now()),
+        //     test_config: None,
+        // };
+
         // Start with trigger task
-        match create_task(state.clone(), &initial_task).await {
-            Ok(task) => {
-                // Update cache with new task
-                let mut cache = state.flow_session_cache.write().await;
-                if cache.add_task(&flow_session_id, task.clone()) {
-                    Some(task)
-                } else {
-                    println!(
-                        "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-                        flow_session_id
-                    );
-                    Some(task)
-                }
+        // match create_task(state.clone(), &iniitial_task).await {
+        //     Ok(task) => {
+        //         // Update cache with new task
+        //         let mut cache = state.flow_session_cache.write().await;
+        //         if cache.add_task(&flow_session_id, task.clone()) {
+        //             Some(task)
+        //         } else {
+        //             println!(
+        //                 "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+        //                 flow_session_id
+        //             );
+        //             Some(task)
+        //         }
+        //     }
+        //     Err(e) => {
+        //         println!("[PROCESSOR] Error creating initial task: {}", e);
+        //         None
+        //     }
+        // }
+
+        if let Some(new_task) = new_task {
+            // Create task from the provided workflow
+            let task_message = TaskMessage {
+                task_id: new_task.task_id,
+                operation: TaskOperation::Create {
+                    input: new_task.clone(),
+                },
+            };
+
+            state.task_updater_sender.send(task_message).await.unwrap();
+
+            // Update cache with new task
+            let mut cache = state.flow_session_cache.write().await;
+            if cache.add_task(&flow_session_id, new_task.clone()) {
+                Some(new_task)
+            } else {
+                println!(
+                    "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+                    flow_session_id
+                );
+                Some(new_task)
             }
-            Err(e) => {
-                println!("[PROCESSOR] Error creating initial task: {}", e);
-                None
-            }
+        } else {
+            println!("[PROCESSOR] Failed to create new task");
+            None
         }
     } else {
         // We have existing tasks - find the last incomplete task or the highest processing order
