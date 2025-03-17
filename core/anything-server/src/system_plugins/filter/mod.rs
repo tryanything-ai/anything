@@ -2,6 +2,7 @@ use rustyscript::{json_args, Module, Runtime, RuntimeOptions};
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 use tokio::task;
+use uuid::Uuid;
 
 //This is meant to be used for function calls if we do agents and voice call type thing
 //And to be how we do reusable flows or sublfows
@@ -126,23 +127,41 @@ pub async fn process_filter_task(
 
         println!("[FILTER] Generated wrapped code: {:?}", wrapped_code);
 
-        // Create the module
-        let module = Module::new("user_condition.js", &wrapped_code);
-        println!("[FILTER] Created module");
+        // Create the module with unique name
+        let module_name = format!("user_condition_{}.js", Uuid::new_v4());
+        let module = Module::new(&module_name, &wrapped_code);
+        println!("[FILTER] Created module: {}", module_name);
 
         // Execute the module
         let script_start = Instant::now();
         println!("[FILTER] Starting script execution");
 
-        let result: Value = Runtime::execute_module(
+        let result: Value = match Runtime::execute_module(
             &module,
             vec![], // No additional modules needed
             RuntimeOptions {
-                timeout: Duration::from_secs(1), //TODO: this actually does not prevent script from long runs
+                timeout: Duration::from_secs(1),
                 ..Default::default()
             },
-            json_args!(), // No arguments needed since we inject via globalThis
-        )?;
+            json_args!(),
+        ) {
+            Ok(r) => {
+                println!("[FILTER] Script execution completed successfully");
+                // Clean up the module file
+                if let Err(e) = std::fs::remove_file(&module_name) {
+                    println!("[FILTER] Warning: Failed to clean up module file: {}", e);
+                }
+                r
+            },
+            Err(e) => {
+                // Clean up on error too
+                if let Err(e) = std::fs::remove_file(&module_name) {
+                    println!("[FILTER] Warning: Failed to clean up module file: {}", e);
+                }
+                println!("[FILTER] ERROR: Script execution failed: {:?}", e);
+                return Err(e.into());
+            }
+        };
 
         // Check if the result is our error object and convert it to a Rust error
         if let Some(error) = result.get("internal_error") {
