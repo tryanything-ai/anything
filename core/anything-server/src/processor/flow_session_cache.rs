@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
-use tracing::debug;
 use uuid::Uuid;
 
 use crate::types::task_types::Task;
@@ -84,16 +83,16 @@ impl FlowSessionCache {
         }
     }
 
-    pub fn remove_task(&mut self, flow_session_id: &Uuid, task_id: &Uuid) -> bool {
-        if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
-            if SystemTime::now() > cached_session.expires_at {
-                return false;
-            }
-            cached_session.data.tasks.remove(task_id).is_some()
-        } else {
-            false
-        }
-    }
+    // pub fn remove_task(&mut self, flow_session_id: &Uuid, task_id: &Uuid) -> bool {
+    //     if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
+    //         if SystemTime::now() > cached_session.expires_at {
+    //             return false;
+    //         }
+    //         cached_session.data.tasks.remove(task_id).is_some()
+    //     } else {
+    //         false
+    //     }
+    // }
 
     pub fn invalidate(&mut self, flow_session_id: &Uuid) {
         println!(
@@ -103,9 +102,9 @@ impl FlowSessionCache {
         self.cache.remove(flow_session_id);
     }
 
-    pub fn cleanup(&mut self) {
-        println!("[PROCESSOR] Starting flow session cache cleanup");
-        let now = SystemTime::now();
-        self.cache.retain(|_, session| session.expires_at > now);
-    }
+    // pub fn cleanup(&mut self) {
+    //     println!("[PROCESSOR] Starting flow session cache cleanup");
+    //     let now = SystemTime::now();
+    //     self.cache.retain(|_, session| session.expires_at > now);
+    // }
 }

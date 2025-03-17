@@ -4,7 +4,7 @@ use crate::{
 };
 use axum::{extract::State, http::StatusCode, Json};
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::Arc;
 
 #[derive(Debug, Serialize)]
@@ -23,7 +23,6 @@ struct LoopsUser {
 pub type NewUserWebhookPayload = WebhookPayload<User>;
 
 pub async fn handle_new_account_webhook(
-    State(state): State<Arc<AppState>>,
     Json(payload): Json<NewUserWebhookPayload>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     println!("[EXTERNAL EMAIL SYSTEM] Received new account webhook");

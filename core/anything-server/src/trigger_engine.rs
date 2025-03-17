@@ -13,9 +13,7 @@ use crate::{
     processor::processor::ProcessorMessage,
     types::{
         action_types::{ActionType, PluginName},
-        task_types::{
-            FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus,
-        },
+        task_types::{Stage, Task, TaskConfig},
         workflow_types::DatabaseFlowVersion,
     },
     AppState,
@@ -359,34 +357,6 @@ async fn create_trigger_task(
         Ok(task) => task,
         Err(e) => panic!("Failed to build task: {}", e),
     };
-
-    // let input = CreateTaskInput {
-    //     task_id: Uuid::new_v4(),
-    //     account_id: trigger.account_id.clone(),
-    //     task_status: TaskStatus::Running.as_str().to_string(),
-    //     flow_id: trigger.flow_id.clone(),
-    //     flow_version_id: trigger.flow_version_id.clone(),
-    //     action_label: trigger.action_label.clone(),
-    //     trigger_id: trigger.plugin_name.to_string(),
-    //     trigger_session_id: Uuid::new_v4().to_string(),
-    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-    //     flow_session_id: Uuid::new_v4().to_string(),
-    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-    //     action_id: trigger.action_id.clone(),
-    //     r#type: ActionType::Trigger,
-    //     plugin_name: trigger.plugin_name.clone(),
-    //     plugin_version: trigger.plugin_version.clone(),
-    //     stage: Stage::Production.as_str().to_string(),
-    //     config: trigger.config.clone(),
-    //     result: Some(serde_json::json!({
-    //         "message": format!("Successfully triggered task"),
-    //         "created_at": Utc::now()
-    //     })),
-    //     error: None,
-    //     test_config: None,
-    //     processing_order: 0,
-    //     started_at: Some(Utc::now()),
-    // };
 
     println!("[CRON TRIGGER] Creating processor message");
     // Send message to processor

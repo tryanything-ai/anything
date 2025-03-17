@@ -136,33 +136,7 @@ pub async fn test_workflow(
         Ok(task) => task,
         Err(e) => panic!("Failed to build task: {}", e),
     };
-    // let input = CreateTaskInput {
-    //     task_id: Uuid::new_v4(),
-    //     account_id: account_id.clone(),
-    //     task_status: TaskStatus::Running.as_str().to_string(),
-    //     flow_id: workflow_id.clone(),
-    //     flow_version_id: workflow_version_id.clone(),
-    //     action_label: trigger_action.label.clone(),
-    //     trigger_id: trigger_action.action_id.clone(),
-    //     trigger_session_id: trigger_session_id.clone(),
-    //     trigger_session_status: FlowSessionStatus::Running.as_str().to_string(),
-    //     flow_session_id: flow_session_id.clone(),
-    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-    //     action_id: trigger_action.action_id.clone(),
-    //     r#type: ActionType::Trigger,
-    //     plugin_name: trigger_action.plugin_name.clone(),
-    //     plugin_version: trigger_action.plugin_version.clone(),
-    //     stage: Stage::Testing.as_str().to_string(),
-    //     config: task_config,
-    //     result: Some(serde_json::json!({
-    //         "message": format!("Successfully triggered task"),
-    //         "created_at": Utc::now()
-    //     })),
-    //     error: None,
-    //     test_config: None,
-    //     processing_order: 0,
-    //     started_at: Some(Utc::now()),
-    // };
+
 
     println!("[TESTING] Creating processor message");
     // Send message to processor

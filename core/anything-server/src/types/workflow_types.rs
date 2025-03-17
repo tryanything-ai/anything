@@ -1,32 +1,16 @@
-use std::collections::HashMap;
-
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
-use crate::types::action_types::ActionType;
-use crate::types::react_flow_types::{Edge, HandleProps, NodePresentation, Position};
-use crate::types::action_types::Action;
-use node_semver::Version; 
-use serde_json::Value;
 
-use crate::types::json_schema::{InputFieldType, JsonSchema, JsonSchemaProperty, PresentationField, ValidationField, ValidationFieldType};
-use crate::types::action_types::PluginName;
+use crate::types::action_types::Action;
+use crate::types::react_flow_types::Edge;
+
+use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WorkflowVersionDefinition {
     pub actions: Vec<Action>,
     pub edges: Vec<Edge>,
 }
-
-impl WorkflowVersionDefinition {
-    pub fn from_json(json_str: &str) -> Result<Self, serde_json::Error> {
-        serde_json::from_str(json_str)
-    }
-
-    pub fn to_json(&self) -> Result<String, serde_json::Error> {
-        serde_json::to_string(self)
-    }
-}
-
 
 //DUPLICATING INTO NEW NAME FOR NEW PROCESSOR
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -148,7 +132,7 @@ pub struct DatabaseFlowVersion {
 //                 r#type: Some("object".to_string()),
 //                 required: Some(vec!["method".to_string(), "url".to_string()]),
 //                 x_jsf_order: Some(vec!["method".to_string(), "url".to_string(), "headers".to_string(), "body".to_string()]),
-//                 additional_properties: Some(false), 
+//                 additional_properties: Some(false),
 //                 all_of: None,
 //                 properties: {
 //                     let mut map = HashMap::new();
@@ -228,7 +212,7 @@ pub struct DatabaseFlowVersion {
 //                         x_jsf_presentation: Some(PresentationField {
 //                             input_type: InputFieldType::ObjectOrVariable,
 //                         }),
-//                     });                 
+//                     });
 //                     Some(map)
 //                 },
 //             },
@@ -265,5 +249,3 @@ pub struct DatabaseFlowVersion {
 //         }
 //     }
 // }
-
-

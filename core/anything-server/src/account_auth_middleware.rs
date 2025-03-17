@@ -83,17 +83,6 @@ impl AccountAccessCache {
         self.cache.insert(key, entry);
     }
 
-    pub fn remove(&mut self, user_id: &str, account_id: &str) {
-        println!(
-            "[ACCOUNT MIDDLEWARE] Removing cache entry for user_id: {}, account_id: {}",
-            user_id, account_id
-        );
-        let key = AccessCacheKey {
-            user_id: user_id.to_string(),
-            account_id: account_id.to_string(),
-        };
-        self.cache.remove(&key);
-    }
 
     // Cleanup expired entries
     pub fn cleanup(&mut self) {

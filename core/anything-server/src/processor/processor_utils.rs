@@ -55,39 +55,7 @@ pub async fn create_task_for_action(
         Ok(task) => task,
         Err(e) => panic!("Failed to build task: {}", e),
     };
-    // let next_task_input = CreateTaskInput {
-    //     task_id: Uuid::new_v4(),
-    //     account_id: ctx.workflow.account_id.to_string(),
-    //     processing_order,
-    //     task_status: TaskStatus::Running.as_str().to_string(),
-    //     flow_id: ctx.workflow_id.to_string(),
-    //     flow_version_id: ctx.workflow.flow_version_id.to_string(),
-    //     action_label: action.label.clone(),
-    //     trigger_id: ctx.trigger_task_id.clone(),
-    //     trigger_session_id: ctx.trigger_session_id.to_string(),
-    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-    //     flow_session_id: ctx.flow_session_id.to_string(),
-    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-    //     action_id: action.action_id.clone(),
-    //     r#type: action.r#type.clone(),
-    //     plugin_name: action.plugin_name.clone(),
-    //     plugin_version: action.plugin_version.clone(),
-    //     stage: if ctx.workflow.published {
-    //         Stage::Production.as_str().to_string()
-    //     } else {
-    //         Stage::Testing.as_str().to_string()
-    //     },
-    //     config: TaskConfig {
-    //         inputs: Some(action.inputs.clone().unwrap()),
-    //         inputs_schema: Some(action.inputs_schema.clone().unwrap()),
-    //         plugin_config: Some(action.plugin_config.clone()),
-    //         plugin_config_schema: Some(action.plugin_config_schema.clone()),
-    //     },
-    //     result: None,
-    //     error: None,
-    //     test_config: None,
-    //     started_at: Some(Utc::now()),
-    // };
+
 
     println!(
         "[PROCESSOR] Calling create_task for action: {}",

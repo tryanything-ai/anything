@@ -1,10 +1,7 @@
-use tokio::time::Instant;
-
-use std::collections::HashMap;
-
 use reqwest::Client;
-
 use serde_json::Value;
+use std::collections::HashMap;
+use tokio::time::Instant;
 
 fn is_binary_content(content_type: &str) -> bool {
     let content_type = content_type.split(';').next().unwrap_or("").trim();
@@ -19,7 +16,7 @@ fn is_binary_content(content_type: &str) -> bool {
 
 fn format_binary_response(content_type: &str, bytes: &[u8]) -> Value {
     let base64_data = base64::encode(bytes);
-    
+
     // For images, return a complete data URL that can be used directly in <img> tags
     if content_type.starts_with("image/") {
         serde_json::json!({
@@ -140,15 +137,15 @@ pub async fn process_http_task(
                 });
 
             let mut response = format_binary_response(content_type, &bytes);
-            
+
             // Add filename if available
             if let Some(name) = filename {
-                response.as_object_mut().unwrap().insert(
-                    "filename".to_string(),
-                    Value::String(name)
-                );
+                response
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("filename".to_string(), Value::String(name));
             }
-            
+
             response
         } else {
             // Handle text/JSON response

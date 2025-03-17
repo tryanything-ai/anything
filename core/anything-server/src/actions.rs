@@ -181,11 +181,7 @@ pub async fn get_actions(
 }
 
 // Actions
-pub async fn get_triggers(
-    Path(account_id): Path<String>,
-    State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-) -> impl IntoResponse {
+pub async fn get_triggers() -> impl IntoResponse {
     println!("Handling a get_actions");
 
     // Load schema templates from the registry
@@ -224,11 +220,7 @@ pub async fn get_triggers(
     Json(filtered_items).into_response()
 }
 
-pub async fn get_other_actions(
-    Path(account_id): Path<String>,
-    State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-) -> impl IntoResponse {
+pub async fn get_other_actions() -> impl IntoResponse {
     println!("Handling get_other_actions");
     // Load schema templates from the registry
     let json_items = match registry::load_schema_templates() {
@@ -266,11 +258,7 @@ pub async fn get_other_actions(
     Json(filtered_items).into_response()
 }
 
-pub async fn get_responses(
-    Path(account_id): Path<String>,
-    State(state): State<Arc<AppState>>,
-    Extension(user): Extension<User>,
-) -> impl IntoResponse {
+pub async fn get_responses() -> impl IntoResponse {
     println!("Handling get_other_actions");
     // Load schema templates from the registry
     let json_items = match registry::load_schema_templates() {

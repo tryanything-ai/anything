@@ -145,63 +145,9 @@ pub async fn start_parallel_workflow_processing(
             .build()
         {
             Ok(task) => Some(task),
-            Err(e) => None,
+            Err(_e) => None,
         };
 
-        // let initial_task = CreateTaskInput {
-        //     task_id: Uuid::new_v4(),
-        //     account_id: workflow.account_id.to_string(),
-        //     processing_order: 0,
-        //     task_status: TaskStatus::Running.as_str().to_string(),
-        //     flow_id: workflow_id.to_string(),
-        //     flow_version_id: workflow.flow_version_id.to_string(),
-        //     action_label: trigger_node.label.clone(),
-        //     trigger_id: trigger_task_id.clone(),
-        //     trigger_session_id: trigger_session_id.to_string(),
-        //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        //     flow_session_id: flow_session_id.to_string(),
-        //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        //     action_id: trigger_node.action_id.clone(),
-        //     r#type: ActionType::Trigger,
-        //     plugin_name: trigger_node.plugin_name.clone(),
-        //     plugin_version: trigger_node.plugin_version.clone(),
-        //     stage: if workflow.published {
-        //         Stage::Production.as_str().to_string()
-        //     } else {
-        //         Stage::Testing.as_str().to_string()
-        //     },
-        //     config: TaskConfig {
-        //         inputs: Some(trigger_node.inputs.clone().unwrap()),
-        //         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
-        //         plugin_config: Some(trigger_node.plugin_config.clone()),
-        //         plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
-        //     },
-        //     result: None,
-        //     error: None,
-        //     started_at: Some(Utc::now()),
-        //     test_config: None,
-        // };
-
-        // Start with trigger task
-        // match create_task(state.clone(), &iniitial_task).await {
-        //     Ok(task) => {
-        //         // Update cache with new task
-        //         let mut cache = state.flow_session_cache.write().await;
-        //         if cache.add_task(&flow_session_id, task.clone()) {
-        //             Some(task)
-        //         } else {
-        //             println!(
-        //                 "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-        //                 flow_session_id
-        //             );
-        //             Some(task)
-        //         }
-        //     }
-        //     Err(e) => {
-        //         println!("[PROCESSOR] Error creating initial task: {}", e);
-        //         None
-        //     }
-        // }
 
         if let Some(new_task) = new_task {
             // Create task from the provided workflow
@@ -324,6 +270,8 @@ pub async fn start_parallel_workflow_processing(
                 let paths = active_paths.lock().await;
                 *paths
             };
+
+            loop_count += 1;
 
             println!(
                 "[PROCESSOR] Waiting for {} active paths to complete... Loop count: {}",

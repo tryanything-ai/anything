@@ -23,15 +23,6 @@ impl ToString for Stage {
     }
 }
 
-impl Stage {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Stage::Production => "production",
-            Stage::Testing => "testing",
-        }
-    }
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TaskStatus {
@@ -253,12 +244,6 @@ impl TaskBuilder {
         }
     }
 
-    // Required fields
-    pub fn task_id(mut self, task_id: Uuid) -> Self {
-        self.task_id = Some(task_id);
-        self
-    }
-
     pub fn account_id(mut self, account_id: Uuid) -> Self {
         self.account_id = Some(account_id);
         self
@@ -266,12 +251,6 @@ impl TaskBuilder {
 
     pub fn flow_id(mut self, flow_id: Uuid) -> Self {
         self.flow_id = Some(flow_id);
-        self
-    }
-
-    // Optional fields with some examples (add more as needed)
-    pub fn task_status(mut self, status: TaskStatus) -> Self {
-        self.task_status = Some(status);
         self
     }
 
@@ -305,18 +284,8 @@ impl TaskBuilder {
         self
     }
 
-    pub fn trigger_session_status(mut self, trigger_session_status: TriggerSessionStatus) -> Self {
-        self.trigger_session_status = Some(trigger_session_status);
-        self
-    }
-
     pub fn flow_session_id(mut self, flow_session_id: Uuid) -> Self {
         self.flow_session_id = Some(flow_session_id);
-        self
-    }
-
-    pub fn flow_session_status(mut self, flow_session_status: FlowSessionStatus) -> Self {
-        self.flow_session_status = Some(flow_session_status);
         self
     }
 
@@ -347,11 +316,6 @@ impl TaskBuilder {
 
     pub fn result(mut self, result: Value) -> Self {
         self.result = Some(result);
-        self
-    }
-
-    pub fn error(mut self, error: Value) -> Self {
-        self.error = Some(error);
         self
     }
 

@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use super::react_flow_types::{HandleProps, NodePresentation};
-use node_semver::{Range, Version};
+use node_semver::Version;
 use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -75,27 +73,12 @@ pub struct Action {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ActionType {
-    Trigger,  // Trigger action
-    Action,   // General action
-    Loop,     // Loop action
+    Trigger, // Trigger action
+    Action,  // General action
+    Loop,    // Loop action
     // Decision, // Decision action
     Filter,   // Filter action
     Response, // Response action for making api endpoints
     Input,    // Input action for subflows
     Output,   // Output action for subflows
-}
-
-impl ActionType {
-    pub fn as_str(&self) -> &str {
-        match self {
-            ActionType::Input => "input",
-            ActionType::Trigger => "trigger",
-            ActionType::Response => "response",
-            ActionType::Action => "action",
-            ActionType::Loop => "loop",
-            // ActionType::Decision => "decision",
-            ActionType::Filter => "filter",
-            ActionType::Output => "output",
-        }
-    }
 }
