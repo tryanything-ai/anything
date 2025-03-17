@@ -1,19 +1,18 @@
 use crate::processor::execute_task::execute_task;
-use crate::status_updater::{TaskMessage, TaskOperation};
+use crate::status_updater::{Operation, StatusUpdateMessage};
 
 use chrono::Utc;
 use serde_json::Value;
 
 use std::collections::HashMap;
 
-use crate::processor::db_calls::update_flow_session_status;
 use crate::processor::execute_task::TaskError;
 
 use crate::processor::parallelizer::PathProcessingContext;
 
 use crate::types::{
     action_types::Action,
-    task_types::{FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus},
+    task_types::{Stage, Task, TaskConfig, TaskStatus},
 };
 
 /// Creates a task for the given action
@@ -96,9 +95,9 @@ pub async fn create_task_for_action(
     );
 
     // let task = create_task(ctx.state.clone(), &next_task_input).await?;
-    let create_task_message = TaskMessage {
+    let create_task_message = StatusUpdateMessage {
         task_id: task.task_id.clone(),
-        operation: TaskOperation::Create {
+        operation: Operation::CreateTask {
             input: task.clone(),
         },
     };
@@ -218,9 +217,9 @@ pub async fn update_completed_task_with_result(
     let _ = cache.update_task(&ctx.flow_session_id, task_copy);
     drop(cache);
 
-    let task_message = TaskMessage {
+    let task_message = StatusUpdateMessage {
         task_id: task.task_id.clone(),
-        operation: TaskOperation::Update {
+        operation: Operation::UpdateTask {
             status: TaskStatus::Completed,
             result: task_result.clone(),
             error: None,
@@ -265,9 +264,9 @@ pub async fn handle_task_error(ctx: &PathProcessingContext, task: &Task, error: 
     let _ = cache.update_task(&ctx.flow_session_id, task_copy);
     drop(cache);
 
-    let error_message = TaskMessage {
+    let error_message = StatusUpdateMessage {
         task_id: task.task_id.clone(),
-        operation: TaskOperation::Update {
+        operation: Operation::UpdateTask {
             status: TaskStatus::Failed,
             result: None,
             error: Some(error.error.clone()),
@@ -300,66 +299,75 @@ pub async fn handle_task_error(ctx: &PathProcessingContext, task: &Task, error: 
 }
 
 /// Updates the flow session status
-pub async fn update_flow_status(
-    ctx: &PathProcessingContext,
-    status: &FlowSessionStatus,
-    trigger_status: &TriggerSessionStatus,
-) {
-    let state = ctx.state.clone();
-    let flow_session_id = ctx.flow_session_id;
-    let status = status.clone();
-    let trigger_status = trigger_status.clone();
+// pub async fn update_flow_status(
+//     ctx: &PathProcessingContext,
+//     status: &FlowSessionStatus,
+//     trigger_status: &TriggerSessionStatus,
+// ) {
+//     let state = ctx.state.clone();
+//     let flow_session_id = ctx.flow_session_id;
+//     let status = status.clone();
+//     let trigger_status = trigger_status.clone();
 
-    tokio::spawn(async move {
-        if let Err(e) =
-            update_flow_session_status(&state, &flow_session_id, &status, &trigger_status).await
-        {
-            println!("[PROCESSOR] Failed to update flow session status: {}", e);
-        }
-    });
+//     tokio::spawn(async move {
+//         if let Err(e) =
+//             update_flow_session_status(&state, &flow_session_id, &status, &trigger_status).await
+//         {
+//             println!("[PROCESSOR] Failed to update flow session status: {}", e);
+//         }
+//     });
+// }
+
+pub async fn drop_path_counter(ctx: &PathProcessingContext) {
+    let mut paths = ctx.active_paths.lock().await;
+    *paths -= 1;
+    println!(
+        "[PROCESSOR] Decremented active paths to {} for parallel processing",
+        *paths
+    );
 }
 
 /// Checks if this is the last active path and updates workflow status accordingly
-pub async fn check_and_update_workflow_completion(ctx: &PathProcessingContext, is_success: bool) {
-    let mut paths = ctx.active_paths.lock().await;
-    *paths -= 1;
-    let remaining_paths = *paths;
-    println!(
-        "[PROCESSOR] Checking workflow completion. Remaining paths: {}",
-        remaining_paths
-    );
+// pub async fn check_and_update_workflow_completion(ctx: &PathProcessingContext, is_success: bool) {
+//     let mut paths = ctx.active_paths.lock().await;
+//     *paths -= 1;
+//     let remaining_paths = *paths;
+//     println!(
+//         "[PROCESSOR] Checking workflow completion. Remaining paths: {}",
+//         remaining_paths
+//     );
 
-    // If this was the last path, mark workflow as complete or failed
-    if remaining_paths == 0 {
-        println!(
-            "[PROCESSOR] All parallel paths completed for flow {}, workflow is {}",
-            ctx.flow_session_id,
-            if is_success { "successful" } else { "failed" }
-        );
+//     // If this was the last path, mark workflow as complete or failed
+//     if remaining_paths == 0 {
+//         println!(
+//             "[PROCESSOR] All parallel paths completed for flow {}, workflow is {}",
+//             ctx.flow_session_id,
+//             if is_success { "successful" } else { "failed" }
+//         );
 
-        // Update workflow status
-        let status = if is_success {
-            FlowSessionStatus::Completed
-        } else {
-            FlowSessionStatus::Failed
-        };
+//         // Update workflow status
+//         let status = if is_success {
+//             FlowSessionStatus::Completed
+//         } else {
+//             FlowSessionStatus::Failed
+//         };
 
-        let trigger_status = if is_success {
-            TriggerSessionStatus::Completed
-        } else {
-            TriggerSessionStatus::Failed
-        };
+//         let trigger_status = if is_success {
+//             TriggerSessionStatus::Completed
+//         } else {
+//             TriggerSessionStatus::Failed
+//         };
 
-        drop(paths); // Release the lock before the async call
+//         drop(paths); // Release the lock before the async call
 
-        update_flow_status(ctx, &status, &trigger_status).await;
-    } else {
-        println!(
-            "[PROCESSOR] Still waiting on {} paths to complete",
-            remaining_paths
-        );
-    }
-}
+//         update_flow_status(ctx, &status, &trigger_status).await;
+//     } else {
+//         println!(
+//             "[PROCESSOR] Still waiting on {} paths to complete",
+//             remaining_paths
+//         );
+//     }
+// }
 
 /// Processes a single task in a path
 pub async fn process_task(

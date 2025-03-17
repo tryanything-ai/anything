@@ -1,37 +1,44 @@
-// Define the type of task operation
-#[derive(Debug, Clone)]
-pub enum TaskOperation {
-    Update {
-        status: TaskStatus,
-        result: Option<Value>,
-        context: Option<Value>,
-        error: Option<Value>,
-    },
-    Create {
-        input: Task,
-    },
-}
-
-// Update the message struct to use the operation enum
-#[derive(Debug, Clone)]
-pub struct TaskMessage {
-    pub task_id: Uuid,
-    pub operation: TaskOperation,
-}
+use crate::processor::db_calls::update_flow_session_status;
+use crate::types::task_types::{FlowSessionStatus, TaskStatus, TriggerSessionStatus};
 
 use crate::processor::db_calls::create_task;
 use crate::processor::db_calls::update_task_status;
 use crate::types::task_types::Task;
-use crate::types::task_types::TaskStatus;
 use crate::AppState;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use uuid::Uuid;
 
+// Define the type of task operation
+#[derive(Debug, Clone)]
+pub enum Operation {
+    UpdateTask {
+        status: TaskStatus,
+        result: Option<Value>,
+        context: Option<Value>,
+        error: Option<Value>,
+    },
+    CreateTask {
+        input: Task,
+    },
+    CompleteWorkflow {
+        flow_session_id: Uuid,
+        status: FlowSessionStatus,
+        trigger_status: TriggerSessionStatus,
+    },
+}
+
+// Update the message struct to use the operation enum
+#[derive(Debug, Clone)]
+pub struct StatusUpdateMessage {
+    pub task_id: Uuid,
+    pub operation: Operation,
+}
+
 pub async fn task_database_status_processor(
     state: Arc<AppState>,
-    mut receiver: Receiver<TaskMessage>,
+    mut receiver: Receiver<StatusUpdateMessage>,
 ) {
     while let Some(message) = receiver.recv().await {
         println!(
@@ -40,7 +47,7 @@ pub async fn task_database_status_processor(
         );
 
         let result = match message.operation {
-            TaskOperation::Update {
+            Operation::UpdateTask {
                 status,
                 result,
                 context,
@@ -56,14 +63,27 @@ pub async fn task_database_status_processor(
                 )
                 .await
             }
-            TaskOperation::Create { input } => create_task(state.clone(), &input).await,
+            Operation::CreateTask { input } => create_task(state.clone(), &input).await,
+            Operation::CompleteWorkflow {
+                flow_session_id,
+                status,
+                trigger_status,
+            } => {
+                update_flow_session_status(
+                    &state,
+                    &flow_session_id,
+                    &status,
+                    &trigger_status,
+                )
+                .await
+            }
         };
 
         if let Err(e) = result {
-            println!("[TASK PROCESSOR] Failed to process task: {}", e);
+            println!("[TASK STATUS UPDATER] Failed to process update: {}", e);
         } else {
             println!(
-                "[TASK PROCESSOR] Successfully processed task: {}",
+                "[TASK STATUS UPDATER] Successfully processed update: {}",
                 message.task_id
             );
         }

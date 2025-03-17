@@ -9,12 +9,10 @@ use tokio::sync::Mutex;
 use tokio::sync::Semaphore;
 use uuid::Uuid;
 
-use crate::processor::processor_utils::{
-    check_and_update_workflow_completion, create_task_for_action, process_task, update_flow_status,
-};
+use crate::processor::processor_utils::{create_task_for_action, drop_path_counter, process_task};
 
 use crate::processor::processor::ProcessorMessage;
-use crate::status_updater::{TaskMessage, TaskOperation};
+use crate::status_updater::{Operation, StatusUpdateMessage};
 
 use crate::types::{
     action_types::ActionType,
@@ -99,9 +97,9 @@ pub async fn start_parallel_workflow_processing(
     // If we have a trigger task in the message, use that, otherwise check cache
     let initial_task = if let Some(trigger_task) = trigger_task {
         // Create task from the provided trigger task input
-        let task_message = TaskMessage {
+        let task_message = StatusUpdateMessage {
             task_id: trigger_task.task_id,
-            operation: TaskOperation::Create {
+            operation: Operation::CreateTask {
                 input: trigger_task.clone(),
             },
         };
@@ -207,9 +205,9 @@ pub async fn start_parallel_workflow_processing(
 
         if let Some(new_task) = new_task {
             // Create task from the provided workflow
-            let task_message = TaskMessage {
+            let task_message = StatusUpdateMessage {
                 task_id: new_task.task_id,
-                operation: TaskOperation::Create {
+                operation: Operation::CreateTask {
                     input: new_task.clone(),
                 },
             };
@@ -319,6 +317,7 @@ pub async fn start_parallel_workflow_processing(
         // Spawn the initial task processing
         spawn_path_processor(ctx, task);
 
+        let mut loop_count = 0;
         // Wait for all paths to complete
         loop {
             let paths_count = {
@@ -326,13 +325,17 @@ pub async fn start_parallel_workflow_processing(
                 *paths
             };
 
+            println!(
+                "[PROCESSOR] Waiting for {} active paths to complete... Loop count: {}",
+                paths_count, loop_count
+            );
+
             if paths_count == 0 {
                 println!("[PROCESSOR] All paths have completed, workflow is done");
                 break;
             }
 
             // Sleep briefly to avoid busy waiting
-            //Paus the loop a bit just to reduce resources in this loop
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
             // If shutdown signal received, log but continue waiting
@@ -348,20 +351,24 @@ pub async fn start_parallel_workflow_processing(
         }
     } else {
         println!("[PROCESSOR] No initial task to process, workflow is complete");
-
-        // Update flow session status to completed
-        update_flow_status(
-            &ctx,
-            &FlowSessionStatus::Completed,
-            &TriggerSessionStatus::Completed,
-        )
-        .await;
     }
 
+    // This code runs after the loop is broken
     println!(
         "[PROCESSOR] Workflow processing complete: {}",
         flow_session_id
     );
+
+    // Update flow session status to completed
+    let task_message = StatusUpdateMessage {
+        task_id: flow_session_id,
+        operation: Operation::CompleteWorkflow {
+            flow_session_id,
+            status: FlowSessionStatus::Completed,
+            trigger_status: TriggerSessionStatus::Completed,
+        },
+    };
+    state.task_updater_sender.send(task_message).await.unwrap();
 }
 
 fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
@@ -438,7 +445,8 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                         current_task.task_id
                     );
                     // Task failed, mark path as failed and exit
-                    check_and_update_workflow_completion(&ctx, false).await;
+                    // check_and_update_workflow_completion(&ctx, false).await;
+                    drop_path_counter(&ctx).await;
                     drop(permit);
                     return;
                 }
@@ -537,7 +545,9 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                             );
 
                             // Path is complete with error
-                            check_and_update_workflow_completion(&ctx, false).await;
+                            //TODO: figure how to handle this better.
+                            // check_and_update_workflow_completion(&ctx, false).await;
+                            drop_path_counter(&ctx).await;
                             drop(permit);
                             return;
                         }
@@ -571,7 +581,8 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                         );
 
                         // Path is complete with error
-                        check_and_update_workflow_completion(&ctx, false).await;
+                        // check_and_update_workflow_completion(&ctx, false).await;
+                        drop_path_counter(&ctx).await;
                         drop(permit);
                         return;
                     }
@@ -585,7 +596,8 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
 
         // Path completed successfully
         println!("[PROCESSOR] Path completed successfully, updating workflow completion status");
-        check_and_update_workflow_completion(&ctx, true).await;
+        // check_and_update_workflow_completion(&ctx, true).await;
+        drop_path_counter(&ctx).await;
 
         // Release the semaphore permit
         println!("[PROCESSOR] Releasing semaphore permit");

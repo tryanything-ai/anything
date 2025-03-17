@@ -11,7 +11,7 @@ use dotenv::dotenv;
 use processor::processor::ProcessorMessage;
 use postgrest::Postgrest;
 use reqwest::Client;
-use status_updater::TaskMessage;
+use status_updater::StatusUpdateMessage;
 use serde_json::Value;
 use std::{collections::HashMap, time::Duration};
 use std::env;
@@ -95,7 +95,7 @@ pub struct AppState {
     bundler_accounts_cache: RwLock<AccountsCache>,
     flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
     shutdown_signal: Arc<AtomicBool>,
-    task_updater_sender: mpsc::Sender<TaskMessage>,
+    task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
 }
 
 #[tokio::main]
@@ -187,7 +187,7 @@ async fn main() {
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
     // Create the task updater channel  
-   let (task_updater_tx, task_updater_rx) = mpsc::channel::<TaskMessage>(1000); // Buffer size of 100
+   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(1000); // Buffer size of 100
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
