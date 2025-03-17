@@ -100,7 +100,7 @@ pub async fn get_flow_version_results(
         .from("tasks")
         .auth(user.jwt)
         .eq("account_id", &account_id)
-        .eq("flow_session_id", &session_id)
+        .eq("flow_session_id", &session_id.to_string())
         .eq("flow_id", &workflow_id)
         .eq("flow_version_id", &workflow_version_id)
         .select("*")

@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 use uuid::Uuid;
 
-use crate::types::task_types::CreateTaskInput;
+use crate::types::task_types::Task;
 
 use crate::processor::parallelizer::start_parallel_workflow_processing;
 
@@ -21,7 +21,7 @@ pub struct ProcessorMessage {
     pub version_id: Option<Uuid>,
     pub flow_session_id: Uuid,
     pub trigger_session_id: Uuid,
-    pub trigger_task: Option<CreateTaskInput>,
+    pub trigger_task: Option<Task>,
 }
 
 pub async fn processor(

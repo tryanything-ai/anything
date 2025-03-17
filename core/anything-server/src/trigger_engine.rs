@@ -6,6 +6,7 @@ use dotenv::dotenv;
 use std::env;
 
 use node_semver::Version;
+use serde_json::json;
 
 use crate::{
     bundler::bundle_context_from_parts,
@@ -13,7 +14,7 @@ use crate::{
     types::{
         action_types::{ActionType, PluginName},
         task_types::{
-            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
+            FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus,
         },
         workflow_types::DatabaseFlowVersion,
     },
@@ -337,41 +338,64 @@ async fn create_trigger_task(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[CRON TRIGGER] Handling create task from cron trigger");
 
-    let input = CreateTaskInput {
-        account_id: trigger.account_id.clone(),
-        task_status: TaskStatus::Running.as_str().to_string(),
-        flow_id: trigger.flow_id.clone(),
-        flow_version_id: trigger.flow_version_id.clone(),
-        action_label: trigger.action_label.clone(),
-        trigger_id: trigger.plugin_name.to_string(),
-        trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        flow_session_id: Uuid::new_v4().to_string(),
-        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: trigger.action_id.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger.plugin_name.clone(),
-        plugin_version: trigger.plugin_version.clone(),
-        stage: Stage::Production.as_str().to_string(),
-        config: trigger.config.clone(),
-        result: Some(serde_json::json!({
+    let task = match Task::builder()
+        .account_id(Uuid::parse_str(&trigger.account_id).unwrap())
+        .flow_id(Uuid::parse_str(&trigger.flow_id).unwrap())
+        .flow_version_id(Uuid::parse_str(&trigger.flow_version_id).unwrap())
+        .action_label(trigger.action_label.clone())
+        .trigger_id(trigger.action_id.clone())
+        .action_id(trigger.action_id.clone())
+        .r#type(ActionType::Trigger)
+        .plugin_name(trigger.plugin_name.clone())
+        .plugin_version(trigger.plugin_version.clone())
+        .stage(Stage::Production)
+        .config(trigger.config.clone())
+        .result(json!({
             "message": format!("Successfully triggered task"),
-            "created_at": Utc::now()
-        })),
-        error: None,
-        test_config: None,
-        processing_order: 0,
-        started_at: Some(Utc::now()),
+                    "created_at": Utc::now()
+        }))
+        .build()
+    {
+        Ok(task) => task,
+        Err(e) => panic!("Failed to build task: {}", e),
     };
+
+    // let input = CreateTaskInput {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: trigger.account_id.clone(),
+    //     task_status: TaskStatus::Running.as_str().to_string(),
+    //     flow_id: trigger.flow_id.clone(),
+    //     flow_version_id: trigger.flow_version_id.clone(),
+    //     action_label: trigger.action_label.clone(),
+    //     trigger_id: trigger.plugin_name.to_string(),
+    //     trigger_session_id: Uuid::new_v4().to_string(),
+    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+    //     flow_session_id: Uuid::new_v4().to_string(),
+    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+    //     action_id: trigger.action_id.clone(),
+    //     r#type: ActionType::Trigger,
+    //     plugin_name: trigger.plugin_name.clone(),
+    //     plugin_version: trigger.plugin_version.clone(),
+    //     stage: Stage::Production.as_str().to_string(),
+    //     config: trigger.config.clone(),
+    //     result: Some(serde_json::json!({
+    //         "message": format!("Successfully triggered task"),
+    //         "created_at": Utc::now()
+    //     })),
+    //     error: None,
+    //     test_config: None,
+    //     processing_order: 0,
+    //     started_at: Some(Utc::now()),
+    // };
 
     println!("[CRON TRIGGER] Creating processor message");
     // Send message to processor
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
         version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
-        flow_session_id: Uuid::parse_str(&input.flow_session_id).unwrap(),
-        trigger_session_id: Uuid::parse_str(&input.trigger_session_id).unwrap(),
-        trigger_task: Some(input),
+        flow_session_id: task.flow_session_id.clone(),
+        trigger_session_id: task.trigger_session_id.clone(),
+        trigger_task: Some(task),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

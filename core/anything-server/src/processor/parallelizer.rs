@@ -1,12 +1,9 @@
-use crate::processor::utils::{
-    create_workflow_graph, get_trigger_node, get_workflow_and_tasks_from_cache,
-    is_already_processing,
-};
+use crate::processor::utils::{create_workflow_graph, get_trigger_node};
 
 use crate::AppState;
 use chrono::Utc;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -17,8 +14,9 @@ use crate::processor::processor_utils::{
     check_and_update_workflow_completion, create_task_for_action, process_task, update_flow_status,
 };
 
-use crate::processor::db_calls::{create_task, update_flow_session_status, update_task_status};
+use crate::processor::db_calls::create_task;
 use crate::processor::processor::ProcessorMessage;
+use crate::status_updater::{TaskMessage, TaskOperation};
 
 use crate::types::{
     action_types::ActionType,
@@ -106,28 +104,49 @@ pub async fn start_parallel_workflow_processing(
     // If we have a trigger task in the message, use that, otherwise check cache
     let initial_task = if let Some(trigger_task) = trigger_task {
         // Create task from the provided trigger task input
-        match create_task(state.clone(), &trigger_task).await {
-            Ok(task) => {
-                // Update cache with new task
-                let mut cache = state.flow_session_cache.write().await;
-                if cache.add_task(&flow_session_id, task.clone()) {
-                    Some(task)
-                } else {
-                    println!(
-                        "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
-                        flow_session_id
-                    );
-                    Some(task)
-                }
-            }
-            Err(e) => {
-                println!("[PROCESSOR] Error creating initial task: {}", e);
-                None
-            }
+        // match create_task(state.clone(), &trigger_task).await {
+        //     Ok(task) => {
+        //         // Update cache with new task
+        //         let mut cache = state.flow_session_cache.write().await;
+        //         if cache.add_task(&flow_session_id, task.clone()) {
+        //             Some(task)
+        //         } else {
+        //             println!(
+        //                 "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+        //                 flow_session_id
+        //             );
+        //             Some(task)
+        //         }
+        //     }
+        //     Err(e) => {
+        //         println!("[PROCESSOR] Error creating initial task: {}", e);
+        //         None
+        //     }
+        // }
+        let task_message = TaskMessage {
+            task_id: trigger_task.task_id,
+            operation: TaskOperation::Create {
+                input: trigger_task,
+            },
+        };
+
+        state.task_updater_sender.send(task_message).await.unwrap();
+
+        // Update cache with new task
+        let mut cache = state.flow_session_cache.write().await;
+        if cache.add_task(&flow_session_id, trigger_task.clone()) {
+            Some(trigger_task)
+        } else {
+            println!(
+                "[PROCESSOR] Failed to add task to cache for flow_session_id: {}",
+                flow_session_id
+            );
+            Some(trigger_task)
         }
     } else if cached_tasks.is_none() || cached_tasks.as_ref().unwrap().is_empty() {
         // Only create trigger task if there are no existing tasks in cache
         let initial_task = CreateTaskInput {
+            task_id: Uuid::new_v4(),
             account_id: workflow.account_id.to_string(),
             processing_order: 0,
             task_status: TaskStatus::Running.as_str().to_string(),
@@ -381,7 +400,7 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                     );
                     actions
                 }
-                Err(e) => {
+                Err(_e) => {
                     println!(
                         "[PROCESSOR] Task {} failed, marking path as failed",
                         current_task.task_id

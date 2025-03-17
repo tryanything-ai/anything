@@ -153,7 +153,7 @@ pub async fn get_session_tasks(
     Ok(tasks)
 }
 
-pub async fn create_task(state: Arc<AppState>, task: &CreateTaskInput) -> Result<Task, String> {
+pub async fn create_task(state: Arc<AppState>, task: &CreateTaskInput) -> Result<(), String> {
     println!("[PROCESSOR DB CALLS] Creating new task");
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
@@ -200,7 +200,7 @@ pub async fn create_task(state: Arc<AppState>, task: &CreateTaskInput) -> Result
     })?;
 
     println!("[PROCESSOR DB CALLS] Successfully created task");
-    Ok(task)
+    Ok(())
 }
 
 //Send just the data we need. Safer to not update every key.

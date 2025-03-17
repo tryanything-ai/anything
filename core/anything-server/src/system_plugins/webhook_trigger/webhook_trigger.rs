@@ -5,8 +5,6 @@ use axum::{
     Json,
 };
 
-use chrono::Utc;
-
 use std::time::Duration;
 
 use dotenv::dotenv;
@@ -18,9 +16,7 @@ use crate::{
     bundler::bundle_context_from_parts,
     types::{
         action_types::ActionType,
-        task_types::{
-            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
-        },
+        task_types::{Stage, Task, TaskConfig},
     },
     AppState, FlowCompletion,
 };
@@ -126,7 +122,6 @@ pub async fn run_workflow_and_respond(
     };
 
     let flow_session_id = Uuid::new_v4();
-    let trigger_session_id = Uuid::new_v4();
 
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(trigger_node.inputs.clone().unwrap()),
@@ -178,37 +173,66 @@ pub async fn run_workflow_and_respond(
 
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
-    let task = CreateTaskInput {
-        account_id: account_id.to_string(),
-        processing_order: 0,
-        task_status: TaskStatus::Running.as_str().to_string(),
-        flow_id: workflow_id.clone(),
-        flow_version_id: workflow_version.flow_version_id.to_string(),
-        action_label: trigger_node.label.clone(),
-        trigger_id: trigger_node.action_id.clone(),
-        trigger_session_id: trigger_session_id.to_string(),
-        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        flow_session_id: flow_session_id.to_string(),
-        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: trigger_node.action_id.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger_node.plugin_name.clone(),
-        plugin_version: trigger_node.plugin_version.clone(),
-        stage: if workflow_version.published {
-            Stage::Production.as_str().to_string()
+
+    let task = match Task::builder()
+        .account_id(account_id)
+        .flow_id(Uuid::parse_str(&workflow_id).unwrap())
+        .flow_version_id(workflow_version.flow_version_id)
+        .action_label(trigger_node.label.clone())
+        .trigger_id(trigger_node.action_id.clone())
+        .flow_session_id(flow_session_id)
+        .action_id(trigger_node.action_id.clone())
+        .r#type(ActionType::Trigger)
+        .plugin_name(trigger_node.plugin_name.clone())
+        .plugin_version(trigger_node.plugin_version.clone())
+        .stage(if workflow_version.published {
+            Stage::Production
         } else {
-            Stage::Testing.as_str().to_string()
-        },
-        config: task_config,
-        result: Some(json!({
-            "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": processed_payload.clone(),
-            "method": method.to_string(),
-        })),
-        error: None,
-        test_config: None,
-        started_at: Some(Utc::now()),
-    };
+            Stage::Testing
+        })
+        .config(task_config)
+        .result(json!({
+                    "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+                    "body": processed_payload.clone(),
+                    "method": method.to_string(),
+                }))
+        .build() {
+            Ok(task) => task,
+            Err(e) => panic!("Failed to build task: {}", e),
+        };
+
+    // let task = CreateTaskInput {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: account_id.to_string(),
+    //     processing_order: 0,
+    //     task_status: TaskStatus::Running.as_str().to_string(),
+    //     flow_id: workflow_id.clone(),
+    //     flow_version_id: workflow_version.flow_version_id.to_string(),
+    //     action_label: trigger_node.label.clone(),
+    //     trigger_id: trigger_node.action_id.clone(),
+    //     trigger_session_id: trigger_session_id.to_string(),
+    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+    //     flow_session_id: flow_session_id.to_string(),
+    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+    //     action_id: trigger_node.action_id.clone(),
+    //     r#type: ActionType::Trigger,
+    //     plugin_name: trigger_node.plugin_name.clone(),
+    //     plugin_version: trigger_node.plugin_version.clone(),
+    //     stage: if workflow_version.published {
+    //         Stage::Production.as_str().to_string()
+    //     } else {
+    //         Stage::Testing.as_str().to_string()
+    //     },
+    //     config: task_config,
+    //     result: Some(json!({
+    //         "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+    //         "body": processed_payload.clone(),
+    //         "method": method.to_string(),
+    //     })),
+    //     error: None,
+    //     test_config: None,
+    //     started_at: Some(Utc::now()),
+    // };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
@@ -250,7 +274,7 @@ pub async fn run_workflow_and_respond(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
         flow_session_id: flow_session_id,
-        trigger_session_id: trigger_session_id,
+        trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task),
     };
 
@@ -375,15 +399,18 @@ pub async fn run_workflow_version_and_respond(
     let account_id = workflow_version.account_id.clone();
 
     // Validate the webhook trigger node and outputs
-    let (trigger_node, _output_node) =
-        match validate_required_input_and_response_plugins(&workflow_version.flow_definition, "@anything/webhook".to_string(), "@anything/webhook_response".to_string(), true)
-        {
-            Ok((trigger, output)) => (trigger, output),
-            Err(response) => return response.into_response(),
-        };
+    let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
+        &workflow_version.flow_definition,
+        "@anything/webhook".to_string(),
+        "@anything/webhook_response".to_string(),
+        true,
+    ) {
+        Ok((trigger, output)) => (trigger, output),
+        Err(response) => return response.into_response(),
+    };
 
-    let flow_session_id = Uuid::new_v4().to_string();
-    let trigger_session_id = Uuid::new_v4();
+    let flow_session_id = Uuid::new_v4();
+
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -397,7 +424,7 @@ pub async fn run_workflow_version_and_respond(
         state.clone(),
         &state.anything_client,
         &account_id.to_string(),
-        &flow_session_id,
+        &flow_session_id.to_string(),
         Some(&trigger_node.inputs.clone().unwrap()),
         Some(&trigger_node.inputs_schema.clone().unwrap()),
         Some(&trigger_node.plugin_config.clone()),
@@ -434,38 +461,67 @@ pub async fn run_workflow_version_and_respond(
 
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
-    let task = CreateTaskInput {
-        account_id: account_id.to_string(),
-        processing_order: 0,
-        task_status: TaskStatus::Running.as_str().to_string(),
-        flow_id: workflow_id.clone(),
-        flow_version_id: workflow_version.flow_version_id.to_string(),
-        action_label: trigger_node.label.clone(),
-        trigger_id: trigger_node.action_id.clone(),
-        trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        flow_session_id: flow_session_id.clone(),
-        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: trigger_node.action_id.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger_node.plugin_name.clone(),
-        plugin_version: trigger_node.plugin_version.clone(),
-        stage: if workflow_version.published {
-            Stage::Production.as_str().to_string()
-        } else {
-            Stage::Testing.as_str().to_string()
-        },
-        config: task_config,
 
-        result: Some(json!({
-            "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": processed_payload.clone(),
-            "method": method.to_string(),
-        })),
-        error: None,
-        test_config: None,
-        started_at: Some(Utc::now()),
+    let task = match Task::builder()
+    .account_id(account_id)
+    .flow_id(Uuid::parse_str(&workflow_id).unwrap())
+    .flow_version_id(workflow_version.flow_version_id)
+    .action_label(trigger_node.label.clone())
+    .trigger_id(trigger_node.action_id.clone())
+    .flow_session_id(flow_session_id)
+    .action_id(trigger_node.action_id.clone())
+    .r#type(ActionType::Trigger)
+    .plugin_name(trigger_node.plugin_name.clone())
+    .plugin_version(trigger_node.plugin_version.clone())
+    .stage(if workflow_version.published {
+        Stage::Production
+    } else {
+        Stage::Testing
+    })
+    .config(task_config)
+    .result(json!({
+                "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+                "body": processed_payload.clone(),
+                "method": method.to_string(),
+            }))
+    .build() {
+        Ok(task) => task,
+        Err(e) => panic!("Failed to build task: {}", e),
     };
+
+    // let task = CreateTaskInput {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: account_id.to_string(),
+    //     processing_order: 0,
+    //     task_status: TaskStatus::Running.as_str().to_string(),
+    //     flow_id: workflow_id.clone(),
+    //     flow_version_id: workflow_version.flow_version_id.to_string(),
+    //     action_label: trigger_node.label.clone(),
+    //     trigger_id: trigger_node.action_id.clone(),
+    //     trigger_session_id: Uuid::new_v4().to_string(),
+    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+    //     flow_session_id: flow_session_id.clone(),
+    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+    //     action_id: trigger_node.action_id.clone(),
+    //     r#type: ActionType::Trigger,
+    //     plugin_name: trigger_node.plugin_name.clone(),
+    //     plugin_version: trigger_node.plugin_version.clone(),
+    //     stage: if workflow_version.published {
+    //         Stage::Production.as_str().to_string()
+    //     } else {
+    //         Stage::Testing.as_str().to_string()
+    //     },
+    //     config: task_config,
+
+    //     result: Some(json!({
+    //         "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+    //         "body": processed_payload.clone(),
+    //         "method": method.to_string(),
+    //     })),
+    //     error: None,
+    //     test_config: None,
+    //     started_at: Some(Utc::now()),
+    // };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
@@ -476,7 +532,7 @@ pub async fn run_workflow_version_and_respond(
     {
         let mut completions = state.flow_completions.lock().await;
         completions.insert(
-            flow_session_id.clone(),
+            flow_session_id.to_string(),
             FlowCompletion {
                 sender: tx,
                 needs_response: true,
@@ -488,7 +544,7 @@ pub async fn run_workflow_version_and_respond(
     let flow_session_data = FlowSessionData {
         workflow: Some(workflow_version.clone()),
         tasks: HashMap::new(),
-        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        flow_session_id: flow_session_id,
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         workflow_version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
     };
@@ -497,18 +553,15 @@ pub async fn run_workflow_version_and_respond(
     // Set the flow session data in cache
     {
         let mut cache = state.flow_session_cache.write().await;
-        cache.set(
-            &Uuid::parse_str(&flow_session_id).unwrap(),
-            flow_session_data,
-        );
+        cache.set(&flow_session_id, flow_session_data);
     }
 
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
-        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
-        trigger_session_id: trigger_session_id,
+        flow_session_id: flow_session_id,
+        trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
     };
 
@@ -547,7 +600,7 @@ pub async fn run_workflow_version_and_respond(
                 .flow_completions
                 .lock()
                 .await
-                .remove(&task.flow_session_id);
+                .remove(&task.flow_session_id.to_string());
             (
                 StatusCode::REQUEST_TIMEOUT,
                 Json(json!({
@@ -643,8 +696,8 @@ pub async fn run_workflow(
         Err(response) => return response.into_response(),
     };
 
-    let flow_session_id = Uuid::new_v4().to_string();
-    let trigger_session_id = Uuid::new_v4();
+    let flow_session_id = Uuid::new_v4();
+
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -658,7 +711,7 @@ pub async fn run_workflow(
         state.clone(),
         &state.anything_client,
         &account_id.to_string(),
-        &flow_session_id,
+        &flow_session_id.to_string(),
         Some(&trigger_node.inputs.clone().unwrap()),
         Some(&trigger_node.inputs_schema.clone().unwrap()),
         Some(&trigger_node.plugin_config.clone()),
@@ -695,37 +748,64 @@ pub async fn run_workflow(
 
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
-    let task = CreateTaskInput {
-        account_id: account_id.to_string(),
-        processing_order: 0,
-        task_status: TaskStatus::Running.as_str().to_string(),
-        flow_id: workflow_id.clone(),
-        flow_version_id: workflow_version.flow_version_id.to_string(),
-        action_label: trigger_node.label.clone(),
-        trigger_id: trigger_node.action_id.clone(),
-        trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        flow_session_id: flow_session_id.clone(),
-        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: trigger_node.action_id.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger_node.plugin_name.clone(),
-        plugin_version: trigger_node.plugin_version.clone(),
-        stage: if workflow_version.published {
-            Stage::Production.as_str().to_string()
-        } else {
-            Stage::Testing.as_str().to_string()
-        },
-        config: task_config,
-        result: Some(json!({
-            "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": processed_payload.clone(),
-            "method": method.to_string(),
-        })),
-        error: None,
-        test_config: None,
-        started_at: Some(Utc::now()),
+    let task = match Task::builder()
+    .account_id(account_id)
+    .flow_id(Uuid::parse_str(&workflow_id).unwrap())
+    .flow_version_id(workflow_version.flow_version_id)
+    .action_label(trigger_node.label.clone())
+    .trigger_id(trigger_node.action_id.clone())
+    .flow_session_id(flow_session_id)
+    .action_id(trigger_node.action_id.clone())
+    .r#type(ActionType::Trigger)
+    .plugin_name(trigger_node.plugin_name.clone())
+    .plugin_version(trigger_node.plugin_version.clone())
+    .stage(if workflow_version.published {
+        Stage::Production
+    } else {
+        Stage::Testing
+    })
+    .config(task_config)
+    .result(json!({
+                "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+                "body": processed_payload.clone(),
+                "method": method.to_string(),
+            }))
+    .build() {
+        Ok(task) => task,
+        Err(e) => panic!("Failed to build task: {}", e),
     };
+    // let task = CreateTaskInput {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: account_id.to_string(),
+    //     processing_order: 0,
+    //     task_status: TaskStatus::Running.as_str().to_string(),
+    //     flow_id: workflow_id.clone(),
+    //     flow_version_id: workflow_version.flow_version_id.to_string(),
+    //     action_label: trigger_node.label.clone(),
+    //     trigger_id: trigger_node.action_id.clone(),
+    //     trigger_session_id: Uuid::new_v4().to_string(),
+    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+    //     flow_session_id: flow_session_id.clone(),
+    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+    //     action_id: trigger_node.action_id.clone(),
+    //     r#type: ActionType::Trigger,
+    //     plugin_name: trigger_node.plugin_name.clone(),
+    //     plugin_version: trigger_node.plugin_version.clone(),
+    //     stage: if workflow_version.published {
+    //         Stage::Production.as_str().to_string()
+    //     } else {
+    //         Stage::Testing.as_str().to_string()
+    //     },
+    //     config: task_config,
+    //     result: Some(json!({
+    //         "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+    //         "body": processed_payload.clone(),
+    //         "method": method.to_string(),
+    //     })),
+    //     error: None,
+    //     test_config: None,
+    //     started_at: Some(Utc::now()),
+    // };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
@@ -733,7 +813,7 @@ pub async fn run_workflow(
     let flow_session_data = FlowSessionData {
         workflow: Some(workflow_version.clone()),
         tasks: HashMap::new(),
-        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
+        flow_session_id: flow_session_id,
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         workflow_version_id: Some(workflow_version.flow_version_id),
     };
@@ -742,18 +822,15 @@ pub async fn run_workflow(
     // Set the flow session data in cache
     {
         let mut cache = state.flow_session_cache.write().await;
-        cache.set(
-            &Uuid::parse_str(&flow_session_id).unwrap(),
-            flow_session_data,
-        );
+        cache.set(&flow_session_id, flow_session_data);
     }
 
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
-        flow_session_id: Uuid::parse_str(&flow_session_id).unwrap(),
-        trigger_session_id: trigger_session_id,
+        flow_session_id: flow_session_id,
+        trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
     };
 
@@ -861,7 +938,7 @@ pub async fn run_workflow_version(
     };
 
     let flow_session_id = Uuid::new_v4();
-    let trigger_session_id = Uuid::new_v4();
+
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(serde_json::to_value(&trigger_node.inputs).unwrap()),
         inputs_schema: Some(trigger_node.inputs_schema.clone().unwrap()),
@@ -912,37 +989,64 @@ pub async fn run_workflow_version(
 
     // Create a task to initiate the flow
     println!("[WEBHOOK API] Creating task for workflow execution");
-    let task = CreateTaskInput {
-        account_id: account_id.to_string(),
-        processing_order: 0,
-        task_status: TaskStatus::Running.as_str().to_string(),
-        flow_id: workflow_id.clone(),
-        flow_version_id: workflow_version.flow_version_id.to_string(),
-        action_label: trigger_node.label.clone(),
-        trigger_id: trigger_node.action_id.clone(),
-        trigger_session_id: Uuid::new_v4().to_string(),
-        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        flow_session_id: flow_session_id.to_string(),
-        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: trigger_node.action_id.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger_node.plugin_name.clone(),
-        plugin_version: trigger_node.plugin_version.clone(),
-        stage: if workflow_version.published {
-            Stage::Production.as_str().to_string()
-        } else {
-            Stage::Testing.as_str().to_string()
-        },
-        config: task_config,
-        result: Some(json!({
-            "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
-            "body": processed_payload.clone(),
-            "method": method.to_string(),
-        })),
-        error: None,
-        test_config: None,
-        started_at: Some(Utc::now()),
+    let task = match Task::builder()
+    .account_id(account_id)
+    .flow_id(Uuid::parse_str(&workflow_id).unwrap())
+    .flow_version_id(workflow_version.flow_version_id)
+    .action_label(trigger_node.label.clone())
+    .trigger_id(trigger_node.action_id.clone())
+    .flow_session_id(flow_session_id)
+    .action_id(trigger_node.action_id.clone())
+    .r#type(ActionType::Trigger)
+    .plugin_name(trigger_node.plugin_name.clone())
+    .plugin_version(trigger_node.plugin_version.clone())
+    .stage(if workflow_version.published {
+        Stage::Production
+    } else {
+        Stage::Testing
+    })
+    .config(task_config)
+    .result(json!({
+                "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+                "body": processed_payload.clone(),
+                "method": method.to_string(),
+            }))
+    .build() {
+        Ok(task) => task,
+        Err(e) => panic!("Failed to build task: {}", e),
     };
+    // let task = CreateTaskInput {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: account_id.to_string(),
+    //     processing_order: 0,
+    //     task_status: TaskStatus::Running.as_str().to_string(),
+    //     flow_id: workflow_id.clone(),
+    //     flow_version_id: workflow_version.flow_version_id.to_string(),
+    //     action_label: trigger_node.label.clone(),
+    //     trigger_id: trigger_node.action_id.clone(),
+    //     trigger_session_id: Uuid::new_v4().to_string(),
+    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+    //     flow_session_id: flow_session_id.to_string(),
+    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+    //     action_id: trigger_node.action_id.clone(),
+    //     r#type: ActionType::Trigger,
+    //     plugin_name: trigger_node.plugin_name.clone(),
+    //     plugin_version: trigger_node.plugin_version.clone(),
+    //     stage: if workflow_version.published {
+    //         Stage::Production.as_str().to_string()
+    //     } else {
+    //         Stage::Testing.as_str().to_string()
+    //     },
+    //     config: task_config,
+    //     result: Some(json!({
+    //         "headers": headers.iter().map(|(k,v)| (k.as_str(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect::<HashMap<_,_>>(),
+    //         "body": processed_payload.clone(),
+    //         "method": method.to_string(),
+    //     })),
+    //     error: None,
+    //     test_config: None,
+    //     started_at: Some(Utc::now()),
+    // };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
@@ -967,7 +1071,7 @@ pub async fn run_workflow_version(
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
         flow_session_id: flow_session_id,
-        trigger_session_id: trigger_session_id,
+        trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task),
     };
 

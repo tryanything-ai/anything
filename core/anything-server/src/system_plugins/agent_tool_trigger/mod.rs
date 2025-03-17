@@ -1,11 +1,9 @@
 use axum::{
     extract::{Path, State},
-    http::{HeaderMap, Method, StatusCode},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
 };
-
-use chrono::Utc;
 
 mod utils;
 
@@ -17,12 +15,9 @@ use std::{collections::HashMap, env, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
-    bundler::bundle_context_from_parts,
     types::{
         action_types::ActionType,
-        task_types::{
-            CreateTaskInput, FlowSessionStatus, Stage, TaskConfig, TaskStatus, TriggerSessionStatus,
-        },
+        task_types::{Stage, Task, TaskConfig},
     },
     AppState, FlowCompletion,
 };
@@ -128,9 +123,8 @@ pub async fn run_workflow_as_tool_call_and_respond(
 
     println!("[TOOL_CALL_API] Trigger node: {:?}", trigger_node);
 
-    let flow_session_id = Uuid::new_v4();
-    let trigger_session_id = Uuid::new_v4();
-
+    // let flow_session_id = Uuid::new_v4();
+    // let trigger_session_id = Uuid::new_v4();
 
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(trigger_node.inputs.clone().unwrap()),
@@ -145,33 +139,60 @@ pub async fn run_workflow_as_tool_call_and_respond(
 
     // Create a task to initiate the flow
     println!("[TOOL_CALL_API] Creating task for workflow execution");
-    let task = CreateTaskInput {
-        account_id: account_id.to_string(),
-        processing_order: 0,
-        task_status: TaskStatus::Running.as_str().to_string(),
-        flow_id: workflow_id.clone(),
-        flow_version_id: workflow_version.flow_version_id.to_string(),
-        action_label: trigger_node.label.clone(),
-        trigger_id: trigger_node.action_id.clone(),
-        trigger_session_id: trigger_session_id.to_string(),
-        trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
-        flow_session_id: flow_session_id.to_string(),
-        flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
-        action_id: trigger_node.action_id.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger_node.plugin_name.clone(),
-        plugin_version: trigger_node.plugin_version.clone(),
-        stage: if workflow_version.published {
-            Stage::Production.as_str().to_string()
+
+    let task = match Task::builder()
+        .account_id(account_id)
+        .flow_id(Uuid::parse_str(&workflow_id).unwrap())
+        .flow_version_id(workflow_version.flow_version_id)
+        .action_label(trigger_node.label.clone())
+        .trigger_id(trigger_node.action_id.clone())
+        // .trigger_session_id(trigger_session_id.to_string())
+        // .flow_session_id(flow_session_id.to_string())
+        .action_id(trigger_node.action_id.clone())
+        .r#type(ActionType::Trigger)
+        .plugin_name(trigger_node.plugin_name.clone())
+        .plugin_version(trigger_node.plugin_version.clone())
+        .stage(if workflow_version.published {
+            Stage::Production
         } else {
-            Stage::Testing.as_str().to_string()
-        },
-        config: task_config,
-        result: Some(parsed_and_formatted_body),
-        error: None,
-        test_config: None,
-        started_at: Some(Utc::now()),
+            Stage::Testing
+        })
+        .result(parsed_and_formatted_body)
+        .config(task_config)
+        .build()
+    {
+        Ok(task) => task,
+        Err(e) => panic!("Failed to build task: {}", e),
     };
+
+    // let task = Task {
+    //     task_id: Uuid::new_v4(),
+    //     account_id: account_id.to_string(),
+    //     processing_order: 0,
+    //     task_status: TaskStatus::Running.as_str().to_string(),
+    //     flow_id: workflow_id.clone(),
+    //     flow_version_id: workflow_version.flow_version_id.to_string(),
+    //     action_label: trigger_node.label.clone(),
+    //     trigger_id: trigger_node.action_id.clone(),
+    //     trigger_session_id: trigger_session_id.to_string(),
+    //     trigger_session_status: TriggerSessionStatus::Running.as_str().to_string(),
+    //     flow_session_id: flow_session_id.to_string(),
+    //     flow_session_status: FlowSessionStatus::Running.as_str().to_string(),
+    //     action_id: trigger_node.action_id.clone(),
+    //     r#type: ActionType::Trigger,
+    //     plugin_name: trigger_node.plugin_name.clone(),
+    //     plugin_version: trigger_node.plugin_version.clone(),
+    //     stage: if workflow_version.published {
+    //         Stage::Production.as_str().to_string()
+    //     } else {
+    //         Stage::Testing.as_str().to_string()
+    //     },
+    //     config: task_config,
+    //     result: Some(parsed_and_formatted_body),
+    //     error: None,
+    //     test_config: None,
+    //     started_at: Some(Utc::now()),
+    // };
 
     println!("[TOOL_CALL_API] Task to be created: {:?}", task);
 
@@ -184,7 +205,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
     {
         let mut completions = state.flow_completions.lock().await;
         completions.insert(
-            flow_session_id.to_string(),
+            task.flow_session_id.to_string(),
             FlowCompletion {
                 sender: tx,
                 needs_response: true,
@@ -196,7 +217,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
     let flow_session_data = FlowSessionData {
         workflow: Some(workflow_version.clone()),
         tasks: HashMap::new(),
-        flow_session_id: flow_session_id,
+        flow_session_id: task.flow_session_id.clone(),
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         workflow_version_id: Some(workflow_version.flow_version_id),
     };
@@ -205,16 +226,16 @@ pub async fn run_workflow_as_tool_call_and_respond(
     // Set the flow session data in cache
     {
         let mut cache = state.flow_session_cache.write().await;
-        cache.set(&flow_session_id, flow_session_data);
+        cache.set(&task.flow_session_id, flow_session_data);
     }
 
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
-        flow_session_id: flow_session_id,
-        trigger_session_id: trigger_session_id,
-        trigger_task: Some(task),
+        flow_session_id: task.flow_session_id.clone(),
+        trigger_session_id: task.trigger_session_id.clone(),
+        trigger_task: Some(task.clone()),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -224,14 +245,17 @@ pub async fn run_workflow_as_tool_call_and_respond(
             format!("Failed to send message to processor: {}", e),
         )
             .into_response();
-    }   
+    }
 
     println!("[TOOL_CALL_API] Waiting for workflow completion");
 
     // Wait for the result with a timeout
     match timeout(Duration::from_secs(WEBHOOK_TIMEOUT), rx).await {
         Ok(Ok(flow_result)) => {
-            println!("[TOOL_CALL_API] Received workflow result: {:?}", flow_result);
+            println!(
+                "[TOOL_CALL_API] Received workflow result: {:?}",
+                flow_result
+            );
             //TODO: take this response and turn it into the correct tool_call_response needed for
             utils::parse_tool_response_into_api_response(tool_call_id, Some(flow_result), None)
                 .into_response()
@@ -242,7 +266,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({
                     "error": "Workflow execution channel closed unexpectedly",
-                    "workflow_session_id": flow_session_id
+                    "workflow_session_id": task.flow_session_id
                 })),
             )
                 .into_response()
@@ -254,12 +278,12 @@ pub async fn run_workflow_as_tool_call_and_respond(
                 .flow_completions
                 .lock()
                 .await
-                .remove(&flow_session_id.to_string());
+                .remove(&task.flow_session_id.to_string());
             (
                 StatusCode::REQUEST_TIMEOUT,
                 Json(json!({
                     "error": "Workflow execution timed out",
-                    "workflow_session_id": flow_session_id
+                    "workflow_session_id": task.flow_session_id
                 })),
             )
                 .into_response()

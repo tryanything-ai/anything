@@ -11,6 +11,7 @@ use dotenv::dotenv;
 use processor::processor::ProcessorMessage;
 use postgrest::Postgrest;
 use reqwest::Client;
+use status_updater::TaskMessage;
 use serde_json::Value;
 use std::{collections::HashMap, time::Duration};
 use std::env;
@@ -22,7 +23,6 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
 use aws_sdk_s3::Client as S3Client;
 use files::r2_client::get_r2_client;
-
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::sleep;
 
@@ -32,6 +32,7 @@ use regex::Regex;
 extern crate slugify;
 
 use auth::init::AuthState;
+
 
 mod system_plugins; 
 mod system_workflows;
@@ -45,6 +46,7 @@ mod vault;
 mod billing;
 mod email;
 mod bundler;
+mod status_updater;
 mod files;
 mod variables; 
 mod charts;
@@ -93,6 +95,7 @@ pub struct AppState {
     bundler_accounts_cache: RwLock<AccountsCache>,
     flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
     shutdown_signal: Arc<AtomicBool>,
+    task_updater_sender: mpsc::Sender<TaskMessage>,
 }
 
 #[tokio::main]
@@ -183,6 +186,8 @@ async fn main() {
     let (trigger_engine_signal, _) = watch::channel("".to_string());
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
 
+    // Create the task updater channel  
+   let (task_updater_tx, task_updater_rx) = mpsc::channel::<TaskMessage>(100); // Buffer size of 100
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -204,6 +209,7 @@ async fn main() {
         bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
         flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
+        task_updater_sender: task_updater_tx.clone(), // Store the sender in AppState
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -347,10 +353,10 @@ pub async fn root() -> impl IntoResponse {
             get(system_variables::get_system_variables_handler))
         
         //Test Actions
-        .route(
-            "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
-            get(testing::test_action),
-        )
+        // .route(
+        //     "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id",
+        //     get(testing::test_action),
+        // )
 
         //Agents
         .route("/account/:account_id/agent", post(agents::create::create_agent))
@@ -407,6 +413,9 @@ pub async fn root() -> impl IntoResponse {
     
     // Spawn processor
     tokio::spawn(processor::processor(state.clone()));
+
+   // Spawn Update Processor
+   tokio::spawn(status_updater::task_database_status_processor(state.clone(), task_updater_rx));
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
