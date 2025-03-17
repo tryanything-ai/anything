@@ -13,6 +13,8 @@ use crate::types::task_types::CreateTaskInput;
 use crate::processor::parallelizer::start_parallel_workflow_processing;
 
 // Add this near your other type definitions
+//TODO: probably better just to send workflow in message vs having a cache for it.
+//Locks are slow? makes code more complicated
 #[derive(Debug, Clone)]
 pub struct ProcessorMessage {
     pub workflow_id: Uuid,
@@ -80,6 +82,7 @@ pub async fn processor(
             );
 
             // Get workflow definition and cached tasks
+            //TOOD: replace with just part of message from triggers?
             let (workflow, cached_tasks) = match get_workflow_and_tasks_from_cache(
                 &state,
                 flow_session_id,

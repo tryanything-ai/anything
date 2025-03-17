@@ -358,6 +358,8 @@ pub async fn process_task(
             }
         };
 
+    print!("[PROCESSOR] Task Result: {:?}", task_result);
+
     // Update task status to completed
     println!(
         "[PROCESSOR] Updating task {} status to completed",
@@ -374,21 +376,45 @@ pub async fn process_task(
 
     // Check if this is a filter task that returned false
     if let Some(plugin_name) = &task.plugin_name {
+        println!("[PROCESSOR - FILTER] Checking plugin name: {}", plugin_name);
         if plugin_name.as_str() == "@anything/filter" {
+            println!("[PROCESSOR - FILTER] Found filter task: {}", task.task_id);
             if let Some(result_value) = &task_result {
+                println!(
+                    "[PROCESSOR - FILTER] Filter result value: {:?}",
+                    result_value
+                );
                 // Check if the filter returned false
                 if let Some(should_continue) = result_value.get("should_continue") {
+                    println!(
+                        "[PROCESSOR - FILTER] Found should_continue value: {:?}",
+                        should_continue
+                    );
                     if let Some(continue_value) = should_continue.as_bool() {
+                        println!(
+                            "[PROCESSOR - FILTER] Parsed boolean value: {}",
+                            continue_value
+                        );
                         if !continue_value {
                             println!(
-                                "[PROCESSOR] Filter task {} returned false, stopping branch execution",
+                                "[PROCESSOR - FILTER] Task {} returned false, stopping branch execution",
                                 task.task_id
                             );
                             // Return empty vector to indicate no next actions
                             return Ok(Vec::new());
                         }
+                        println!(
+                            "[PROCESSOR - FILTER] Task {} returned true, continuing execution",
+                            task.task_id
+                        );
+                    } else {
+                        println!("[PROCESSOR - FILTER] should_continue is not a boolean value");
                     }
+                } else {
+                    println!("[PROCESSOR - FILTER] No should_continue field found in result");
                 }
+            } else {
+                println!("[PROCESSOR - FILTER] No result value found for filter task");
             }
         }
     }

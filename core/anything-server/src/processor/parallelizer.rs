@@ -76,8 +76,6 @@ pub async fn start_parallel_workflow_processing(
 
     // Create the workflow graph
     let workflow_def = Arc::new(workflow.flow_definition.clone());
-    // let graph = create_workflow_graph(&workflow_def);
-    println!("[PROCESSOR] Created workflow graph");
 
     // Clone workflow before using it in the Arc
     let workflow_clone = workflow.clone();
@@ -232,7 +230,7 @@ pub async fn start_parallel_workflow_processing(
                 };
 
                 // Spawn a processing path for this task
-                spawn_process_path(path_ctx, task.clone());
+                spawn_path_processor(path_ctx, task.clone());
             }
 
             // Return None since we've already spawned paths for all incomplete tasks
@@ -268,7 +266,7 @@ pub async fn start_parallel_workflow_processing(
         }
 
         // Spawn the initial task processing
-        spawn_process_path(ctx, task);
+        spawn_path_processor(ctx, task);
 
         // Wait for all paths to complete
         loop {
@@ -283,6 +281,7 @@ pub async fn start_parallel_workflow_processing(
             }
 
             // Sleep briefly to avoid busy waiting
+            //Paus the loop a bit just to reduce resources in this loop
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
             // If shutdown signal received, log but continue waiting
@@ -314,9 +313,9 @@ pub async fn start_parallel_workflow_processing(
     );
 }
 
-fn spawn_process_path(ctx: PathProcessingContext, task: Task) {
+fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
     println!(
-        "[PROCESSOR] Entering spawn_process_path for task: {}",
+        "[PROCESSOR] Entering spawn_path_processor for task: {}",
         task.task_id
     );
     tokio::spawn(async move {
@@ -448,7 +447,7 @@ fn spawn_process_path(ctx: PathProcessingContext, task: Task) {
                                 "[PROCESSOR] Spawning new process path for task: {}",
                                 new_task.task_id
                             );
-                            spawn_process_path(new_ctx, new_task);
+                            spawn_path_processor(new_ctx, new_task);
                         }
                         Err(e) => {
                             println!("[PROCESSOR] Error creating task for parallel path: {}", e);
