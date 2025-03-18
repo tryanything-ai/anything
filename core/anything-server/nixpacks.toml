@@ -2,7 +2,7 @@
 # https://nixpacks.com/docs/configuration/file#nixpkgs-archive
 # Replace the commit hash below with one that provides a newer glibc.
 # nixpkgsArchive = "a71e45961e88c8a6dde6287fa1e061f30f8c2fb7"
-providers = ["...", "rust"]
+providers = ["...", "rust", "python"]
 
 [phases.build]
 cmds = ["cargo build --release"]
