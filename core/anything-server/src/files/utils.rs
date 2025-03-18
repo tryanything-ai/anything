@@ -26,6 +26,7 @@ pub async fn get_files(
 ) -> Result<Vec<FileData>, Box<dyn Error + Send + Sync>> {
     // Early return if no file requirements
     if file_requirements.is_empty() {
+        println!("[FILES] No file requirements");
         return Ok(Vec::new());
     }
 
