@@ -334,7 +334,7 @@ pub async fn root() -> impl IntoResponse {
         //Test Workflows
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id",
-            get(testing::test_workflow),
+            post(testing::test_workflow),
         )
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",

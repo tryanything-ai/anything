@@ -72,7 +72,9 @@ export const testWorkflow = async (
     supabase: SupabaseClient,
     account_id: string,
     workflow_id: string,
-    workflow_version_id: string
+    workflow_version_id: string,
+    trigger_session_id: string,
+    flow_session_id: string
 ): Promise<StartWorkflowTestResult> => {
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -83,7 +85,13 @@ export const testWorkflow = async (
             const response = await fetch(`${ANYTHING_API_URL}/account/${account_id}/testing/workflow/${workflow_id}/version/${workflow_version_id}`, {
                 headers: {
                     Authorization: `${session.access_token}`,
+                    'Content-Type': 'application/json',
                 },
+                method: 'POST',
+                body: JSON.stringify({
+                    trigger_session_id,
+                    flow_session_id
+                })
             });
             const data = await response.json();
             console.log('Testing action via /api/account/id/workflow/id/version/id', data);

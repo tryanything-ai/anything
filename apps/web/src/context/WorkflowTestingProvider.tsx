@@ -10,6 +10,7 @@ import {
 } from "@repo/anything-api";
 import { useAccounts } from "./AccountsContext";
 import { createClient } from "@/lib/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 export enum TestingMode {
   ACTION = "action",
@@ -141,11 +142,16 @@ export const WorkflowTestingProvider = ({
         return;
       }
 
+      const trigger_session_id = uuidv4();
+      const flow_session_id = uuidv4();
+
       let results: StartWorkflowTestResult = await api.testing.testWorkflow(
         await createClient(),
         selectedAccount.account_id,
         db_flow_id,
         db_flow_version_id,
+        trigger_session_id,
+        flow_session_id,
       );
 
       if (!results) {

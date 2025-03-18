@@ -14,18 +14,26 @@ use crate::{
     supabase_jwt_middleware::User,
     types::{
         action_types::ActionType,
-        task_types::{Stage, Task, TaskConfig, TaskStatus},
+        task_types::{Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus},
         workflow_types::DatabaseFlowVersion,
     },
     AppState,
 };
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-// Testing a workflow
+#[derive(Debug, Deserialize, Serialize)]
+pub struct StartTestingWorkflowPayload {
+    trigger_session_id: Uuid,
+    flow_session_id: Uuid,
+}
+
+// #[axum::debug_handler]
 pub async fn test_workflow(
-    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
+    Path((account_id, workflow_id, workflow_version_id)): Path<(String, String, String)>,
+    Json(payload): Json<StartTestingWorkflowPayload>,
 ) -> impl IntoResponse {
     let client = &state.anything_client;
 
@@ -105,9 +113,6 @@ pub async fn test_workflow(
         plugin_config_schema: Some(trigger_action.plugin_config_schema.clone()),
     };
 
-    // let trigger_session_id = Uuid::new_v4().to_string();
-    // let flow_session_id = Uuid::new_v4().to_string();
-
     println!("[TESTING] Creating task input");
     let task = match Task::builder()
         .account_id(Uuid::parse_str(&account_id).unwrap())
@@ -115,8 +120,8 @@ pub async fn test_workflow(
         .flow_version_id(workflow_version.flow_version_id)
         .action_label(trigger_action.label.clone())
         .trigger_id(trigger_action.action_id.clone())
-        // .trigger_session_id(trigger_session_id.to_string())
-        // .flow_session_id(flow_session_id.to_string())
+        .trigger_session_id(payload.trigger_session_id.clone())
+        .flow_session_id(payload.flow_session_id.clone())
         .action_id(trigger_action.action_id.clone())
         .r#type(ActionType::Trigger)
         .plugin_name(trigger_action.plugin_name.clone())
@@ -136,7 +141,6 @@ pub async fn test_workflow(
         Ok(task) => task,
         Err(e) => panic!("Failed to build task: {}", e),
     };
-
 
     println!("[TESTING] Creating processor message");
     // Send message to processor
@@ -448,7 +452,7 @@ pub async fn get_test_session_results(
     let all_completed = !tasks.is_empty()
         && tasks
             .iter()
-            .all(|task| matches!(task.task_status, TaskStatus::Completed | TaskStatus::Failed));
+            .all(|task| matches!(task.trigger_session_status, TriggerSessionStatus::Completed | TriggerSessionStatus::Failed));
 
     println!("[TESTING] Session completion status: {}", all_completed);
     let result = serde_json::json!({
