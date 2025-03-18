@@ -7,19 +7,18 @@ use crate::processor::execute_task::TaskError;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
-use crate::processor::parallelizer::ProcessingContext;
+use crate::processor::parallelizer::PathProcessingContext;
 
 use crate::types::{
     action_types::Action,
     task_types::{Stage, Task, TaskConfig, TaskStatus},
 };
 
-
 use std::time::Instant;
 
 /// Creates a task for the given action
 pub async fn create_task(
-    ctx: &ProcessingContext,
+    ctx: &PathProcessingContext,
     task: &Task,
 ) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
     println!("[PROCESSOR] Creating new task: {}", task.task_id);
@@ -70,7 +69,7 @@ pub async fn create_task(
 
 /// Creates a task for the given action
 pub async fn create_task_for_action(
-    ctx: &ProcessingContext,
+    ctx: &PathProcessingContext,
     action: &Action,
     processing_order: i32,
 ) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
@@ -168,7 +167,7 @@ pub async fn create_task_for_action(
 
 /// Finds all unprocessed next actions for a task
 pub async fn find_next_actions(
-    ctx: &ProcessingContext,
+    ctx: &PathProcessingContext,
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Vec<Action> {
@@ -265,7 +264,7 @@ pub async fn find_next_actions(
 
 /// Updates the task status in the database and cache
 pub async fn update_completed_task_with_result(
-    ctx: &ProcessingContext,
+    ctx: &PathProcessingContext,
     task: &Task,
     task_result: Option<Value>,
     bundled_context: Value,
@@ -301,7 +300,7 @@ pub async fn update_completed_task_with_result(
 
 /// Updates the task status on error
 pub async fn handle_task_error(
-    ctx: &ProcessingContext,
+    ctx: &PathProcessingContext,
     task: &Task,
     error: TaskError,
     started_at: DateTime<Utc>,
@@ -334,26 +333,44 @@ pub async fn handle_task_error(
     }
 }
 
+pub async fn drop_path_counter(ctx: &PathProcessingContext) {
+    let mut paths = ctx.active_paths.lock().await;
+    *paths -= 1;
+    println!(
+        "[PROCESSOR] Decremented active paths to {} for parallel processing",
+        *paths
+    );
+}
+
 /// Processes a single task in a path
 pub async fn process_task(
-    ctx: &ProcessingContext,
+    ctx: &PathProcessingContext,
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Result<Vec<Action>, TaskError> {
     println!(
-        "[PROCESSOR] Processing task {} (action: {})",
+        "[PROCESSOR] Starting execution of task {} (action: {})",
         task.task_id, task.action_label
     );
 
-    let started_at = Utc::now();
-    let (task_result, bundled_context, _, ended_at) =
+    // Execute the task
+    let started_at_for_error = Utc::now();
+    let (task_result, bundled_context, started_at, ended_at) =
         match execute_task(ctx.state.clone(), &ctx.client, task).await {
             Ok(success_value) => success_value,
             Err(error) => {
-                handle_task_error(ctx, task, error.clone(), started_at, Utc::now()).await;
+                handle_task_error(ctx, task, error.clone(), started_at_for_error, Utc::now()).await;
                 return Ok(Vec::new());
             }
         };
+
+    print!("[PROCESSOR] Task Result: {:?}", task_result);
+
+    // Update task status to completed
+    println!(
+        "[PROCESSOR] Updating task {} status to completed",
+        task.task_id
+    );
 
     update_completed_task_with_result(
         ctx,
@@ -365,19 +382,61 @@ pub async fn process_task(
     )
     .await;
 
-    // Handle filter tasks
+    // Check if this is a filter task that returned false
     if let Some(plugin_name) = &task.plugin_name {
+        println!("[PROCESSOR - FILTER] Checking plugin name: {}", plugin_name);
         if plugin_name.as_str() == "@anything/filter" {
+            println!("[PROCESSOR - FILTER] Found filter task: {}", task.task_id);
             if let Some(result_value) = &task_result {
+                println!(
+                    "[PROCESSOR - FILTER] Filter result value: {:?}",
+                    result_value
+                );
+                // Check if the filter returned false
                 if let Some(should_continue) = result_value.get("should_continue") {
-                    if let Some(false) = should_continue.as_bool() {
-                        return Ok(Vec::new());
+                    println!(
+                        "[PROCESSOR - FILTER] Found should_continue value: {:?}",
+                        should_continue
+                    );
+                    if let Some(continue_value) = should_continue.as_bool() {
+                        println!(
+                            "[PROCESSOR - FILTER] Parsed boolean value: {}",
+                            continue_value
+                        );
+                        if !continue_value {
+                            println!(
+                                "[PROCESSOR - FILTER] Task {} returned false, stopping branch execution",
+                                task.task_id
+                            );
+                            // Return empty vector to indicate no next actions
+                            return Ok(Vec::new());
+                        }
+                        println!(
+                            "[PROCESSOR - FILTER] Task {} returned true, continuing execution",
+                            task.task_id
+                        );
+                    } else {
+                        println!("[PROCESSOR - FILTER] should_continue is not a boolean value");
                     }
+                } else {
+                    println!("[PROCESSOR - FILTER] No should_continue field found in result");
                 }
+            } else {
+                println!("[PROCESSOR - FILTER] No result value found for filter task");
             }
         }
     }
 
+    // Find next actions
+    println!(
+        "[PROCESSOR] Finding next actions for completed task: {}",
+        task.task_id
+    );
     let next_actions = find_next_actions(ctx, task, graph).await;
+    println!(
+        "[PROCESSOR] Found {} next actions for task {}",
+        next_actions.len(),
+        task.task_id
+    );
     Ok(next_actions)
 }
