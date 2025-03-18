@@ -9,11 +9,13 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use uuid::Uuid;
-
+use chrono::{DateTime, Utc};
 // Define the type of task operation
 #[derive(Debug, Clone)]
 pub enum Operation {
     UpdateTask {
+        started_at: Option<DateTime<Utc>>,
+        ended_at: Option<DateTime<Utc>>,
         status: TaskStatus,
         result: Option<Value>,
         context: Option<Value>,
@@ -48,6 +50,8 @@ pub async fn task_database_status_processor(
 
         let result = match message.operation {
             Operation::UpdateTask {
+                started_at,
+                ended_at,
                 status,
                 result,
                 context,
@@ -60,6 +64,8 @@ pub async fn task_database_status_processor(
                     context,
                     result,
                     error,
+                    started_at,
+                    ended_at,
                 )
                 .await
             }
@@ -69,13 +75,7 @@ pub async fn task_database_status_processor(
                 status,
                 trigger_status,
             } => {
-                update_flow_session_status(
-                    &state,
-                    &flow_session_id,
-                    &status,
-                    &trigger_status,
-                )
-                .await
+                update_flow_session_status(&state, &flow_session_id, &status, &trigger_status).await
             }
         };
 

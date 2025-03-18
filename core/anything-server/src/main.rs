@@ -98,7 +98,7 @@ pub struct AppState {
     task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
 }
 
-//
+// #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 #[tokio::main]
 async fn main() {
     dotenv().ok();

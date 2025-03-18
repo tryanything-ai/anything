@@ -17,7 +17,7 @@ use crate::system_plugins::javascript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
 use serde_json::{json, Value};
-
+use chrono::{DateTime, Utc};
 use crate::types::action_types::ActionType;
 
 #[derive(Debug, Clone)]
@@ -26,10 +26,11 @@ pub struct TaskError {
     pub context: Value,
 }
 
-pub type TaskResult = Result<(Option<Value>, Value), TaskError>;
+pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
 pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
     let start = Instant::now();
+    let started_at = Utc::now();
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Clone state before using it in join
@@ -110,7 +111,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                         "[SPEED] ExecuteTask::total_execution - {:?}",
                         start.elapsed()
                     );
-                    Ok((result, bundled_plugin_cofig))
+                    Ok((result, bundled_plugin_cofig, started_at, Utc::now()))
                 }
                 Err(e) => {
                     println!(

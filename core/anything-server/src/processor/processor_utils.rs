@@ -1,12 +1,11 @@
 use crate::processor::execute_task::execute_task;
 use crate::status_updater::{Operation, StatusUpdateMessage};
 
-use chrono::Utc;
 use serde_json::Value;
 
-use std::collections::HashMap;
-
 use crate::processor::execute_task::TaskError;
+use chrono::{DateTime, Utc};
+use std::collections::HashMap;
 
 use crate::processor::parallelizer::PathProcessingContext;
 
@@ -201,6 +200,8 @@ pub async fn update_completed_task_with_result(
     task: &Task,
     task_result: Option<Value>,
     bundled_context: Value,
+    started_at: DateTime<Utc>,
+    ended_at: DateTime<Utc>,
 ) {
     // Update cache immediately
     let mut cache = ctx.state.flow_session_cache.write().await;
@@ -219,6 +220,8 @@ pub async fn update_completed_task_with_result(
             result: task_result.clone(),
             error: None,
             context: Some(bundled_context.clone()),
+            started_at: Some(started_at),
+            ended_at: Some(ended_at),
         },
     };
 
@@ -248,7 +251,13 @@ pub async fn update_completed_task_with_result(
 }
 
 /// Updates the task status on error
-pub async fn handle_task_error(ctx: &PathProcessingContext, task: &Task, error: TaskError) {
+pub async fn handle_task_error(
+    ctx: &PathProcessingContext,
+    task: &Task,
+    error: TaskError,
+    started_at: DateTime<Utc>,
+    ended_at: DateTime<Utc>,
+) {
     // Update cache immediately
     let mut cache = ctx.state.flow_session_cache.write().await;
     let mut task_copy = task.clone();
@@ -266,6 +275,8 @@ pub async fn handle_task_error(ctx: &PathProcessingContext, task: &Task, error: 
             result: None,
             error: Some(error.error.clone()),
             context: Some(error.context.clone()),
+            started_at: Some(started_at),
+            ended_at: Some(ended_at),
         },
     };
 
@@ -292,26 +303,6 @@ pub async fn handle_task_error(ctx: &PathProcessingContext, task: &Task, error: 
     //     }
     // });
 }
-
-/// Updates the flow session status
-// pub async fn update_flow_status(
-//     ctx: &PathProcessingContext,
-//     status: &FlowSessionStatus,
-//     trigger_status: &TriggerSessionStatus,
-// ) {
-//     let state = ctx.state.clone();
-//     let flow_session_id = ctx.flow_session_id;
-//     let status = status.clone();
-//     let trigger_status = trigger_status.clone();
-
-//     tokio::spawn(async move {
-//         if let Err(e) =
-//             update_flow_session_status(&state, &flow_session_id, &status, &trigger_status).await
-//         {
-//             println!("[PROCESSOR] Failed to update flow session status: {}", e);
-//         }
-//     });
-// }
 
 pub async fn drop_path_counter(ctx: &PathProcessingContext) {
     let mut paths = ctx.active_paths.lock().await;
@@ -378,7 +369,8 @@ pub async fn process_task(
 
     // Execute the task
     let execute_start = Instant::now();
-    let (task_result, bundled_context) =
+    let started_at_for_error = Utc::now();
+    let (task_result, bundled_context, started_at, ended_at) =
         match execute_task(ctx.state.clone(), &ctx.client, task).await {
             Ok(success_value) => {
                 println!(
@@ -392,7 +384,7 @@ pub async fn process_task(
                     "[SPEED] ProcessorUtils::execute_task_error - {:?}",
                     execute_start.elapsed()
                 );
-                handle_task_error(ctx, task, error.clone()).await;
+                handle_task_error(ctx, task, error.clone(), started_at_for_error, Utc::now()).await;
                 return Ok(Vec::new());
             }
         };
@@ -406,7 +398,15 @@ pub async fn process_task(
         task.task_id
     );
 
-    update_completed_task_with_result(ctx, task, task_result.clone(), bundled_context).await;
+    update_completed_task_with_result(
+        ctx,
+        task,
+        task_result.clone(),
+        bundled_context,
+        started_at,
+        ended_at,
+    )
+    .await;
     println!(
         "[SPEED] ProcessorUtils::update_task_status - {:?}",
         update_start.elapsed()

@@ -1,9 +1,7 @@
 use chrono::Utc;
 use dotenv::dotenv;
 use serde_json::Value;
-use std::collections::HashSet;
 use std::{env, sync::Arc};
-use tracing::debug;
 use uuid::Uuid;
 
 use crate::system_plugins::http::http_plugin::parse_headers;
@@ -211,6 +209,8 @@ pub async fn update_task_status(
     context: Option<Value>,
     result: Option<Value>,
     error: Option<Value>,
+    started_at: Option<DateTime<Utc>>,
+    ended_at: Option<DateTime<Utc>>,
 ) -> Result<(), String> {
     println!(
         "[PROCESSOR DB CALLS] Updating task {} status to {}",
@@ -220,18 +220,6 @@ pub async fn update_task_status(
     dotenv().ok();
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
         .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    let started_at = if status.as_str() == TaskStatus::Running.as_str() {
-        Some(Utc::now())
-    } else {
-        None
-    };
-
-    let ended_at = if status.as_str() != TaskStatus::Running.as_str() {
-        Some(Utc::now())
-    } else {
-        None
-    };
 
     //Remove sensitive headers from context
     let cleaned_context = if let Some(context) = context {
