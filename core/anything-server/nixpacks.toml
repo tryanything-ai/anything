@@ -1,11 +1,11 @@
 [phases.setup]
 # https://nixpacks.com/docs/configuration/file#nixpkgs-archive
 # Replace the commit hash below with one that provides a newer glibc.
-nixpkgsArchive = "e08a8231e2c827f586e64727c1063c5e61dbc00d"
+nixpkgsArchive = "a71e45961e88c8a6dde6287fa1e061f30f8c2fb7"
 nixPkgs = ["...", "rust"]
 
 [phases.build]
 cmds = ["cargo build --release"]
 
 [start]
-cmd = "./target/release/your_app_executable"
+cmd = "./target/release/anything-server"
