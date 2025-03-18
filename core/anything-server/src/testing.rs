@@ -120,17 +120,12 @@ pub async fn test_workflow(
         .flow_version_id(workflow_version.flow_version_id)
         .action_label(trigger_action.label.clone())
         .trigger_id(trigger_action.action_id.clone())
-        .trigger_session_id(payload.trigger_session_id.clone())
         .flow_session_id(payload.flow_session_id.clone())
         .action_id(trigger_action.action_id.clone())
         .r#type(ActionType::Trigger)
         .plugin_name(trigger_action.plugin_name.clone())
         .plugin_version(trigger_action.plugin_version.clone())
-        .stage(if workflow_version.published {
-            Stage::Production
-        } else {
-            Stage::Testing
-        })
+        .stage(Stage::Testing)
         .config(task_config)
         .result(json!({
             "message": format!("Successfully triggered task"),

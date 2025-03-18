@@ -84,16 +84,27 @@ export const WorkflowTestingProvider = ({
     workflow_session_id: string,
   ) => {
     let isComplete = false;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 60; // Stop after 60 seconds
+    let finalTasksSet = false; // Add flag to track if we've set final tasks
 
-    while (!isComplete) {
-      // Mock API call to check workflow status
-      if (!flowId || !versionId || !workflow_session_id || !selectedAccount) {
-        console.log("No flow or version id to poll for results");
-        return;
-      }
+    // Add initial delay to allow backend to process
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const result: WorklfowTestSessionResult =
-        await api.testing.getTestingResults(
+    while (!isComplete && attempts < MAX_ATTEMPTS) {
+      try {
+        if (!flowId || !versionId || !workflow_session_id || !selectedAccount) {
+          console.error("Missing required polling parameters");
+          return;
+        }
+
+        // Don't make additional requests if we've already marked as complete
+        if (finalTasksSet) {
+          console.log("Polling stopped - final tasks already set");
+          return;
+        }
+
+        const result = await api.testing.getTestingResults(
           await createClient(),
           selectedAccount.account_id,
           flowId,
@@ -101,33 +112,44 @@ export const WorkflowTestingProvider = ({
           workflow_session_id,
         );
 
-      if (!result) {
-        continue;
-      }
+        if (!result) {
+          console.error("No result returned from polling");
+          attempts++;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
 
-      console.log("Polling results:", result);
+        if (result.complete) {
+          isComplete = true;
+          // Set final tasks state only once
+          if (!finalTasksSet && result.tasks) {
+            console.log("Setting final tasks state");
+            setWorkflowTestingSessionTasks(result.tasks);
+            finalTasksSet = true;
+          }
+          setTestingWorkflow(false);
+          setTestFinishedTime(new Date().toISOString());
+          return;
+        }
 
-      // Check completion status first
-      if (result?.complete) {
-        isComplete = true;
-        setTestingWorkflow(false);
-        setTestFinishedTime(new Date().toISOString());
-        // Set the final tasks state
-        if (result.tasks) {
+        // Only update tasks if we haven't reached completion
+        if (!finalTasksSet && result.tasks) {
+          console.log("Updating in-progress tasks");
           setWorkflowTestingSessionTasks(result.tasks);
         }
-        console.log("Workflow completed:", result.tasks);
-        return; // Exit immediately when complete
-      }
 
-      // Update tasks if we're not complete
-      if (result.tasks) {
-        console.log("Setting tasks:", result.tasks);
-        setWorkflowTestingSessionTasks(result.tasks);
+        attempts++;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error("Error polling for results:", error);
+        attempts++;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
+    }
 
-      // Wait before polling again
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!isComplete) {
+      console.error("Polling timed out after 60 seconds");
+      setTestingWorkflow(false);
     }
   };
 

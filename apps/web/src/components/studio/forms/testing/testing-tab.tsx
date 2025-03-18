@@ -85,6 +85,19 @@ export default function TestingTab(): JSX.Element {
                 `}
               >
                 {testFinishedTime && !isTransitioning
+                  ? "Complete"
+                  : "Running..."}
+              </div>
+            )}
+            {/* {testStartedTime && (
+              <div
+                className={`
+                  p-2 rounded-lg bg-gray-200 
+                  transition-all duration-300 
+                  ${testStartedTime ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}
+                `}
+              >
+                {testFinishedTime && !isTransitioning
                   ? formatDuration(
                       intervalToDuration({
                         start: new Date(testStartedTime),
@@ -93,7 +106,7 @@ export default function TestingTab(): JSX.Element {
                     )
                   : "Running..."}
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
