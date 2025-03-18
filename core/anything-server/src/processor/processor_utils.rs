@@ -17,6 +17,57 @@ use crate::types::{
 use std::time::Instant;
 
 /// Creates a task for the given action
+pub async fn create_task(
+    ctx: &PathProcessingContext,
+    task: &Task,
+) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
+    println!("[PROCESSOR] Creating new task: {}", task.task_id);
+
+    let create_task_message = StatusUpdateMessage {
+        operation: Operation::CreateTask {
+            task_id: task.task_id.clone(),
+            input: task.clone(),
+        },
+    };
+
+    if let Err(e) = ctx
+        .state
+        .task_updater_sender
+        .send(create_task_message)
+        .await
+    {
+        println!("[PROCESSOR] Failed to send create task message: {}", e);
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to send task creation message: {}", e),
+        )));
+    }
+
+    // Update cache with new task
+    {
+        println!("[PROCESSOR] Updating cache with new task: {}", task.task_id);
+        let mut cache = ctx.state.flow_session_cache.write().await;
+        if let Some(mut session_data) = cache.get(&ctx.flow_session_id) {
+            session_data
+                .tasks
+                .insert(task.task_id.clone(), task.clone());
+            cache.set(&ctx.flow_session_id, session_data);
+            println!(
+                "[PROCESSOR] Successfully updated cache with task: {}",
+                task.task_id
+            );
+        } else {
+            println!(
+                "[PROCESSOR] Warning: Could not find session data in cache for flow: {}",
+                ctx.flow_session_id
+            );
+        }
+    }
+
+    Ok(task.clone())
+}
+
+/// Creates a task for the given action
 pub async fn create_task_for_action(
     ctx: &PathProcessingContext,
     action: &Action,

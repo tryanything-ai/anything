@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::processor::flow_session_cache::FlowSessionData;
 use crate::processor::processor::ProcessorMessage;
+use crate::processor::processor_utils::create_task;
 use crate::status_updater::{Operation, StatusUpdateMessage};
 
 use crate::types::{
@@ -112,6 +113,12 @@ pub async fn start_parallel_workflow_processing(
             let mut paths = active_paths.lock().await;
             *paths += 1;
             println!("[PROCESSOR] Incremented active paths to: {}", *paths);
+        }
+
+        //Create First Action In Db
+        if let Err(e) = create_task(&ctx, &task).await {
+            println!("[PROCESSOR] Failed to create first action in db: {}", e);
+            return;
         }
 
         // Spawn the initial task processing
