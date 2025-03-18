@@ -32,7 +32,7 @@ pub async fn processor(
 
     while let Some(message) = rx.recv().await {
         // Check if we received shutdown signal
-        if state``
+        if state
             .shutdown_signal
             .load(std::sync::atomic::Ordering::SeqCst)
         {
