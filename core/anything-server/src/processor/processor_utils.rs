@@ -15,12 +15,15 @@ use crate::types::{
     task_types::{Stage, Task, TaskConfig, TaskStatus},
 };
 
+use std::time::Instant;
+
 /// Creates a task for the given action
 pub async fn create_task_for_action(
     ctx: &PathProcessingContext,
     action: &Action,
     processing_order: i32,
 ) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
+    let start = Instant::now();
     println!(
         "[PROCESSOR] Creating new task for action: {} (order: {})",
         action.label, processing_order
@@ -56,7 +59,7 @@ pub async fn create_task_for_action(
         Err(e) => panic!("Failed to build task: {}", e),
     };
 
-
+    let create_task_start = Instant::now();
     println!(
         "[PROCESSOR] Calling create_task for action: {}",
         action.label
@@ -75,6 +78,10 @@ pub async fn create_task_for_action(
         .send(create_task_message)
         .await
         .unwrap();
+    println!(
+        "[SPEED] ProcessorUtils::create_task_message - {:?}",
+        create_task_start.elapsed()
+    );
 
     // println!(
     //     "[PROCESSOR] Successfully created task {} for action: {}",
@@ -82,6 +89,7 @@ pub async fn create_task_for_action(
     // );
 
     // Update cache with new task
+    let cache_start = Instant::now();
     {
         println!("[PROCESSOR] Updating cache with new task: {}", task.task_id);
         let mut cache = ctx.state.flow_session_cache.write().await;
@@ -101,6 +109,14 @@ pub async fn create_task_for_action(
             );
         }
     }
+    println!(
+        "[SPEED] ProcessorUtils::update_cache - {:?}",
+        cache_start.elapsed()
+    );
+    println!(
+        "[SPEED] ProcessorUtils::create_task_total - {:?}",
+        start.elapsed()
+    );
 
     Ok(task)
 }
@@ -111,6 +127,7 @@ pub async fn find_next_actions(
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Vec<Action> {
+    let start = Instant::now();
     println!(
         "[PROCESSOR] Finding next actions for task: {} (action: {})",
         task.task_id, task.action_label
@@ -119,6 +136,13 @@ pub async fn find_next_actions(
     let mut next_actions = Vec::new();
 
     if let Some(neighbors) = graph.get(&task.action_id) {
+        let cache_start = Instant::now();
+        let cache = ctx.state.flow_session_cache.read().await;
+        println!(
+            "[SPEED] ProcessorUtils::get_cache_read - {:?}",
+            cache_start.elapsed()
+        );
+
         println!(
             "[PROCESSOR] Found {} potential next actions in graph",
             neighbors.len()
@@ -133,7 +157,6 @@ pub async fn find_next_actions(
 
             if let Some(action) = neighbor {
                 // Check if this task has already been processed
-                let cache = ctx.state.flow_session_cache.read().await;
                 if let Some(session_data) = cache.get(&ctx.flow_session_id) {
                     if !session_data
                         .tasks
@@ -164,6 +187,10 @@ pub async fn find_next_actions(
     println!(
         "[PROCESSOR] Found {} unprocessed next actions",
         next_actions.len()
+    );
+    println!(
+        "[SPEED] ProcessorUtils::find_next_actions - {:?}",
+        start.elapsed()
     );
     next_actions
 }
@@ -343,34 +370,29 @@ pub async fn process_task(
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Result<Vec<Action>, TaskError> {
+    let start = Instant::now();
     println!(
         "[PROCESSOR] Starting execution of task {} (action: {})",
         task.task_id, task.action_label
     );
 
     // Execute the task
+    let execute_start = Instant::now();
     let (task_result, bundled_context) =
         match execute_task(ctx.state.clone(), &ctx.client, task).await {
             Ok(success_value) => {
-                println!("[PROCESSOR] Task {} completed successfully", task.task_id);
+                println!(
+                    "[SPEED] ProcessorUtils::execute_task - {:?}",
+                    execute_start.elapsed()
+                );
                 success_value
             }
             Err(error) => {
                 println!(
-                    "[PROCESSOR] Task {} failed with error: {:?}",
-                    task.task_id,
-                    error.clone()
+                    "[SPEED] ProcessorUtils::execute_task_error - {:?}",
+                    execute_start.elapsed()
                 );
-
                 handle_task_error(ctx, task, error.clone()).await;
-                println!(
-                    "[PROCESSOR] Task {} failed with error: {:?}",
-                    task.task_id,
-                    error.clone()
-                );
-
-                //no more work if we error.
-                //Discontinue working on this path.
                 return Ok(Vec::new());
             }
         };
@@ -378,12 +400,17 @@ pub async fn process_task(
     print!("[PROCESSOR] Task Result: {:?}", task_result);
 
     // Update task status to completed
+    let update_start = Instant::now();
     println!(
         "[PROCESSOR] Updating task {} status to completed",
         task.task_id
     );
 
     update_completed_task_with_result(ctx, task, task_result.clone(), bundled_context).await;
+    println!(
+        "[SPEED] ProcessorUtils::update_task_status - {:?}",
+        update_start.elapsed()
+    );
 
     // Check if this is a filter task that returned false
     if let Some(plugin_name) = &task.plugin_name {
@@ -431,6 +458,7 @@ pub async fn process_task(
     }
 
     // Find next actions
+    let next_actions_start = Instant::now();
     println!(
         "[PROCESSOR] Finding next actions for completed task: {}",
         task.task_id
@@ -440,6 +468,14 @@ pub async fn process_task(
         "[PROCESSOR] Found {} next actions for task {}",
         next_actions.len(),
         task.task_id
+    );
+    println!(
+        "[SPEED] ProcessorUtils::find_next_actions - {:?}",
+        next_actions_start.elapsed()
+    );
+    println!(
+        "[SPEED] ProcessorUtils::process_task_total - {:?}",
+        start.elapsed()
     );
 
     Ok(next_actions)

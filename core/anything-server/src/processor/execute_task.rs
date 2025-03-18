@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Instant;
 
 use postgrest::Postgrest;
 
@@ -9,13 +10,13 @@ use crate::system_plugins::formatter_actions::{
 };
 use crate::system_plugins::webhook_response::process_webhook_response_task;
 
+use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
+use crate::system_plugins::filter::process_filter_task;
 use crate::system_plugins::http::http_plugin::process_http_task;
 use crate::system_plugins::javascript::process_js_task;
 use crate::types::task_types::Task;
 use crate::AppState;
-use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
 use serde_json::{json, Value};
-use crate::system_plugins::filter::process_filter_task;
 
 use crate::types::action_types::ActionType;
 
@@ -28,72 +29,106 @@ pub struct TaskError {
 pub type TaskResult = Result<(Option<Value>, Value), TaskError>;
 
 pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
+    let start = Instant::now();
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Clone state before using it in join
     let state_clone = Arc::clone(&state);
 
     // Bundle context with results from cache
+    let bundle_start = Instant::now();
     let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
         bundle_tasks_cached_context(state, client, task, true).await;
+    println!(
+        "[SPEED] ExecuteTask::bundle_context - {:?}",
+        bundle_start.elapsed()
+    );
 
     let http_client = state_clone.http_client.clone();
 
     match bundled_context_result {
         Ok((bundled_inputs, bundled_plugin_cofig)) => {
+            let task_execution_start = Instant::now();
             let task_result = if task.r#type == ActionType::Trigger {
                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
                 process_trigger_task(task)
             } else {
                 println!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_name {
-                    Some(plugin_name) => match plugin_name.as_str() {
-                        "@anything/http" => {
-                            process_http_task(&http_client, &bundled_plugin_cofig).await
-                        }
-                        "@anything/filter" => {
-                            process_filter_task(&bundled_inputs, &bundled_plugin_cofig).await
-                        }
-                        //JS need bundled variables because variables are injected into the JS runtime vs tempalted into the string like we do other places.
-                        //Honestly not sure this is required vs templating the text but it feels safer even if this adds a anit pattern to task processing for JS.
-                        "@anything/javascript" => {
-                            process_js_task(&bundled_inputs, &bundled_plugin_cofig).await
-                        }
-                        "@anything/webhook_response" => {
-                            process_webhook_response_task(
-                                state_clone,
-                                task.flow_session_id.clone(),
-                                &bundled_plugin_cofig,
-                            )
-                            .await
-                        }
-                        "@anything/agent_tool_call_response" => {
-                            process_tool_call_result_task(
-                                state_clone,
-                                task.flow_session_id.clone(),
-                                &bundled_plugin_cofig,
-                            )
-                            .await
-                        }
-                        "@anything/format_text" => process_text_task(&bundled_plugin_cofig),
-                        "@anything/format_date" => process_date_task(&bundled_plugin_cofig),
-                        _ => {
-                            process_missing_plugin(plugin_name.as_str(), &task.task_id.to_string())
-                        }
-                    },
+                    Some(plugin_name) => {
+                        let plugin_start = Instant::now();
+                        let result = match plugin_name.as_str() {
+                            "@anything/http" => {
+                                process_http_task(&http_client, &bundled_plugin_cofig).await
+                            }
+                            "@anything/filter" => {
+                                process_filter_task(&bundled_inputs, &bundled_plugin_cofig).await
+                            }
+                            "@anything/javascript" => {
+                                process_js_task(&bundled_inputs, &bundled_plugin_cofig).await
+                            }
+                            "@anything/webhook_response" => {
+                                process_webhook_response_task(
+                                    state_clone,
+                                    task.flow_session_id.clone(),
+                                    &bundled_plugin_cofig,
+                                )
+                                .await
+                            }
+                            "@anything/agent_tool_call_response" => {
+                                process_tool_call_result_task(
+                                    state_clone,
+                                    task.flow_session_id.clone(),
+                                    &bundled_plugin_cofig,
+                                )
+                                .await
+                            }
+                            "@anything/format_text" => process_text_task(&bundled_plugin_cofig),
+                            "@anything/format_date" => process_date_task(&bundled_plugin_cofig),
+                            _ => process_missing_plugin(
+                                plugin_name.as_str(),
+                                &task.task_id.to_string(),
+                            ),
+                        };
+                        println!(
+                            "[SPEED] ExecuteTask::plugin_execution - {:?}",
+                            plugin_start.elapsed()
+                        );
+                        result
+                    }
                     None => process_no_plugin_name(&task.task_id.to_string()),
                 }
             };
+            println!(
+                "[SPEED] ExecuteTask::task_execution - {:?}",
+                task_execution_start.elapsed()
+            );
 
             match task_result {
-                Ok(result) => Ok((result, bundled_plugin_cofig)),
-                Err(e) => Err(TaskError {
-                    error: json!({ "message": e.to_string() }),
-                    context: bundled_plugin_cofig,
-                }),
+                Ok(result) => {
+                    println!(
+                        "[SPEED] ExecuteTask::total_execution - {:?}",
+                        start.elapsed()
+                    );
+                    Ok((result, bundled_plugin_cofig))
+                }
+                Err(e) => {
+                    println!(
+                        "[SPEED] ExecuteTask::total_execution_error - {:?}",
+                        start.elapsed()
+                    );
+                    Err(TaskError {
+                        error: json!({ "message": e.to_string() }),
+                        context: bundled_plugin_cofig,
+                    })
+                }
             }
         }
         Err(e) => {
+            println!(
+                "[SPEED] ExecuteTask::total_execution_bundle_error - {:?}",
+                start.elapsed()
+            );
             // Create empty context since bundling failed
             let empty_context = json!({});
             Err(TaskError {

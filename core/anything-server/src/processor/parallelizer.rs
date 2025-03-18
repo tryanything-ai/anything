@@ -19,6 +19,9 @@ use crate::types::{
     task_types::{FlowSessionStatus, Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus},
     workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
 };
+
+use std::time::Instant;
+
 /// Represents the state needed for processing a workflow path
 #[derive(Clone)]
 pub struct PathProcessingContext {
@@ -49,6 +52,7 @@ pub async fn start_parallel_workflow_processing(
     processor_message: ProcessorMessage,
     cached_tasks: Option<HashMap<Uuid, Task>>,
 ) {
+    let start = Instant::now();
     println!(
         "[PROCESSOR] Starting parallel workflow processing for flow session: {}",
         flow_session_id
@@ -87,11 +91,15 @@ pub async fn start_parallel_workflow_processing(
         active_paths: active_paths.clone(),
         path_semaphore,
     };
-    println!("[PROCESSOR] Created shared processing context");
+    println!(
+        "[SPEED] Parallelizer::context_setup - {:?}",
+        start.elapsed()
+    );
 
     let trigger_task = processor_message.trigger_task.clone();
 
     // Create initial trigger task
+    let trigger_setup_start = Instant::now();
     let trigger_node = get_trigger_node(&workflow.flow_definition).unwrap();
 
     // If we have a trigger task in the message, use that, otherwise check cache
@@ -147,7 +155,6 @@ pub async fn start_parallel_workflow_processing(
             Ok(task) => Some(task),
             Err(_e) => None,
         };
-
 
         if let Some(new_task) = new_task {
             // Create task from the provided workflow
@@ -236,6 +243,10 @@ pub async fn start_parallel_workflow_processing(
             None
         }
     };
+    println!(
+        "[SPEED] Parallelizer::trigger_setup - {:?}",
+        trigger_setup_start.elapsed()
+    );
 
     // Check for shutdown signal
     if state
@@ -248,6 +259,7 @@ pub async fn start_parallel_workflow_processing(
 
     // If we have an initial task, start processing it in parallel
     if let Some(task) = initial_task {
+        let process_start = Instant::now();
         println!(
             "[PROCESSOR] Starting initial task processing: {}",
             task.task_id
@@ -297,6 +309,10 @@ pub async fn start_parallel_workflow_processing(
                 );
             }
         }
+        println!(
+            "[SPEED] Parallelizer::task_processing - {:?}",
+            process_start.elapsed()
+        );
     } else {
         println!("[PROCESSOR] No initial task to process, workflow is complete");
     }
@@ -317,9 +333,15 @@ pub async fn start_parallel_workflow_processing(
         },
     };
     state.task_updater_sender.send(task_message).await.unwrap();
+
+    println!(
+        "[SPEED] Parallelizer::total_workflow_processing - {:?}",
+        start.elapsed()
+    );
 }
 
 fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
+    let start = Instant::now();
     println!(
         "[PROCESSOR] Entering spawn_path_processor for task: {}",
         task.task_id
@@ -331,6 +353,7 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
         );
 
         // Acquire a permit from the semaphore
+        let permit_start = Instant::now();
         println!(
             "[PROCESSOR] Attempting to acquire semaphore permit for task: {}",
             task.task_id
@@ -338,8 +361,8 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
         let permit = match ctx.path_semaphore.acquire().await {
             Ok(permit) => {
                 println!(
-                    "[PROCESSOR] Successfully acquired permit for task: {}",
-                    task.task_id
+                    "[SPEED] Parallelizer::acquire_permit - {:?}",
+                    permit_start.elapsed()
                 );
                 permit
             }
@@ -348,7 +371,10 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                     "[PROCESSOR] Failed to acquire path permit for task {}: {}",
                     task.task_id, e
                 );
-
+                println!(
+                    "[SPEED] Parallelizer::acquire_permit_failed - {:?}",
+                    permit_start.elapsed()
+                );
                 // Decrement active paths counter
                 {
                     let mut paths = ctx.active_paths.lock().await;
@@ -363,16 +389,23 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
         };
 
         // Process the path (inline the process_path logic)
+        let graph_start = Instant::now();
         println!(
             "[PROCESSOR] Creating workflow graph for task: {}",
             task.task_id
         );
         let graph = create_workflow_graph(&ctx.workflow_def);
+        println!(
+            "[SPEED] Parallelizer::create_workflow_graph - {:?}",
+            graph_start.elapsed()
+        );
         let mut current_task = task;
 
         // Process tasks in this path until completion
+        let process_start = Instant::now();
         println!("[PROCESSOR] Starting task processing loop for path");
         loop {
+            let task_start = Instant::now();
             println!(
                 "[PROCESSOR] Processing task: {} in loop",
                 current_task.task_id
@@ -381,6 +414,10 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
             let next_actions = match process_task(&ctx, &current_task, &graph).await {
                 Ok(actions) => {
                     println!(
+                        "[SPEED] Parallelizer::process_task - {:?}",
+                        task_start.elapsed()
+                    );
+                    println!(
                         "[PROCESSOR] Found {} next actions for task {}",
                         actions.len(),
                         current_task.task_id
@@ -388,6 +425,10 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                     actions
                 }
                 Err(_e) => {
+                    println!(
+                        "[SPEED] Parallelizer::process_task_error - {:?}",
+                        task_start.elapsed()
+                    );
                     println!(
                         "[PROCESSOR] Task {} failed, marking path as failed",
                         current_task.task_id
@@ -399,6 +440,10 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
                     return;
                 }
             };
+            println!(
+                "[SPEED] Parallelizer::process_task - {:?}",
+                process_start.elapsed()
+            );
 
             // If we have multiple next actions, spawn new paths for all but the first
             if next_actions.len() > 1 {
@@ -550,5 +595,13 @@ fn spawn_path_processor(ctx: PathProcessingContext, task: Task) {
         // Release the semaphore permit
         println!("[PROCESSOR] Releasing semaphore permit");
         drop(permit);
+        println!(
+            "[SPEED] Parallelizer::release_permit - {:?}",
+            start.elapsed()
+        );
     });
+    println!(
+        "[SPEED] Parallelizer::path_processing - {:?}",
+        start.elapsed()
+    );
 }

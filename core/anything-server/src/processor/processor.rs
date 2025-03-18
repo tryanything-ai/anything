@@ -12,6 +12,8 @@ use crate::types::task_types::Task;
 
 use crate::processor::parallelizer::start_parallel_workflow_processing;
 
+use std::time::Instant;
+
 // Add this near your other type definitions
 //TODO: probably better just to send workflow in message vs having a cache for it.
 //Locks are slow? makes code more complicated
@@ -39,6 +41,7 @@ pub async fn processor(
     let mut workflow_handles = Vec::new();
 
     while let Some(message) = rx.recv().await {
+        let start = Instant::now();
         // Check if we received shutdown signal
         if state
             .shutdown_signal
@@ -61,6 +64,10 @@ pub async fn processor(
 
         // Check if this flow session is already being processed
         if is_already_processing(&active_flow_sessions, flow_session_id).await {
+            println!(
+                "[SPEED] Processor::check_already_processing - {:?}",
+                start.elapsed()
+            );
             continue; //SKIP. We are already processing
         }
 
@@ -76,13 +83,14 @@ pub async fn processor(
 
         // Spawn a new task for this workflow
         let handle = tokio::spawn(async move {
+            let workflow_start = Instant::now();
             println!(
                 "[PROCESSOR] Starting workflow processing for {}",
                 flow_session_id
             );
 
             // Get workflow definition and cached tasks
-            //TOOD: replace with just part of message from triggers?
+            let cache_start = Instant::now();
             let (workflow, cached_tasks) = match get_workflow_and_tasks_from_cache(
                 &state,
                 flow_session_id,
@@ -91,9 +99,19 @@ pub async fn processor(
             )
             .await
             {
-                Ok((workflow, cached_tasks)) => (workflow, cached_tasks),
+                Ok((workflow, cached_tasks)) => {
+                    println!(
+                        "[SPEED] Processor::get_workflow_and_tasks_from_cache - {:?}",
+                        cache_start.elapsed()
+                    );
+                    (workflow, cached_tasks)
+                }
                 Err(e) => {
                     println!("[PROCESSOR] Cannot process workflow: {}", e);
+                    println!(
+                        "[SPEED] Processor::get_workflow_and_tasks_from_cache_error - {:?}",
+                        cache_start.elapsed()
+                    );
                     // Clean up active sessions before returning
                     active_flow_sessions.lock().await.remove(&flow_session_id);
                     drop(permit);
@@ -104,6 +122,7 @@ pub async fn processor(
             println!("[PROCESSOR] Starting workflow execution");
 
             // Start parallel workflow processing
+            let parallel_start = Instant::now();
             start_parallel_workflow_processing(
                 state.clone(),
                 (*client).clone(),
@@ -116,6 +135,10 @@ pub async fn processor(
                 cached_tasks,
             )
             .await;
+            println!(
+                "[SPEED] Processor::parallel_workflow_processing - {:?}",
+                parallel_start.elapsed()
+            );
 
             println!(
                 "[PROCESSOR] Completed workflow processing for {}",
@@ -123,6 +146,7 @@ pub async fn processor(
             );
 
             // Invalidate cache for completed flow session
+            let cache_invalidate_start = Instant::now();
             {
                 let mut cache = state.flow_session_cache.write().await;
                 cache.invalidate(&flow_session_id);
@@ -131,12 +155,24 @@ pub async fn processor(
                     flow_session_id
                 );
             }
+            println!(
+                "[SPEED] Processor::cache_invalidation - {:?}",
+                cache_invalidate_start.elapsed()
+            );
 
             // Remove the flow session from active sessions when done
             active_flow_sessions.lock().await.remove(&flow_session_id);
             drop(permit);
+            println!(
+                "[SPEED] Processor::total_workflow_processing - {:?}",
+                workflow_start.elapsed()
+            );
         });
         workflow_handles.push(handle);
+        println!(
+            "[SPEED] Processor::message_handling - {:?}",
+            start.elapsed()
+        );
     }
 
     // Wait for all active workflows to complete
