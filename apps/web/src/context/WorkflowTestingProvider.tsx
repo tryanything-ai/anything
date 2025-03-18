@@ -101,25 +101,33 @@ export const WorkflowTestingProvider = ({
           workflow_session_id,
         );
 
-      if (result) {
-        console.log("Polling results:", result);
-        //Make tasks available
+      if (!result) {
+        continue;
+      }
+
+      console.log("Polling results:", result);
+
+      // Check completion status first
+      if (result?.complete) {
+        isComplete = true;
+        setTestingWorkflow(false);
+        setTestFinishedTime(new Date().toISOString());
+        // Set the final tasks state
         if (result.tasks) {
-          console.log("Setting completed tasks:", result.tasks);
           setWorkflowTestingSessionTasks(result.tasks);
         }
-
-        if (result?.complete) {
-          isComplete = true;
-          setTestingWorkflow(false);
-          setTestFinishedTime(new Date().toISOString());
-          // Handle completion (e.g., update state with results)
-          console.log("Workflow completed:", result.tasks);
-        } else {
-          // Wait before polling again
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
+        console.log("Workflow completed:", result.tasks);
+        return; // Exit immediately when complete
       }
+
+      // Update tasks if we're not complete
+      if (result.tasks) {
+        console.log("Setting tasks:", result.tasks);
+        setWorkflowTestingSessionTasks(result.tasks);
+      }
+
+      // Wait before polling again
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   };
 
