@@ -172,17 +172,17 @@ pub async fn run_workflow_and_respond(
     println!("[WEBHOOK API] Creating task for workflow execution");
 
     let task = match Task::builder()
-        .account_id(account_id)
+    .account_id(account_id)
         .flow_id(Uuid::parse_str(&workflow_id).unwrap())
-        .flow_version_id(workflow_version.flow_version_id)
-        .action_label(trigger_node.label.clone())
-        .trigger_id(trigger_node.action_id.clone())
-        .flow_session_id(flow_session_id)
-        .action_id(trigger_node.action_id.clone())
-        .r#type(ActionType::Trigger)
-        .plugin_name(trigger_node.plugin_name.clone())
-        .plugin_version(trigger_node.plugin_version.clone())
-        .stage(if workflow_version.published {
+    .flow_version_id(workflow_version.flow_version_id)
+    .action_label(trigger_node.label.clone())
+    .trigger_id(trigger_node.action_id.clone())
+    .flow_session_id(flow_session_id)
+    .action_id(trigger_node.action_id.clone())
+    .r#type(ActionType::Trigger)
+    .plugin_name(trigger_node.plugin_name.clone())
+    .plugin_version(trigger_node.plugin_version.clone())
+    .stage(if workflow_version.published {
             Stage::Production
         } else {
             Stage::Testing

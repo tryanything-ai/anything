@@ -100,7 +100,7 @@ pub struct AppState {
 
 #[tokio::main(
     flavor = "multi_thread",
-    worker_threads = 24
+    worker_threads = 48
 )]
 // #[tokio::main]
 async fn main() {
