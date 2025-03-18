@@ -98,8 +98,8 @@ pub struct AppState {
     task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
 }
 
-// #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
+// #[tokio::main]
 async fn main() {
     dotenv().ok();
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
