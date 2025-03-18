@@ -4,15 +4,10 @@ use std::time::{Duration, SystemTime};
 use uuid::Uuid;
 
 use crate::types::task_types::Task;
-use crate::types::workflow_types::DatabaseFlowVersion;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FlowSessionData {
-    pub workflow: Option<DatabaseFlowVersion>,
     pub tasks: HashMap<Uuid, Task>, // task_id -> task
-    pub flow_session_id: Uuid,
-    pub workflow_id: Uuid,
-    pub workflow_version_id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -83,17 +78,6 @@ impl FlowSessionCache {
         }
     }
 
-    // pub fn remove_task(&mut self, flow_session_id: &Uuid, task_id: &Uuid) -> bool {
-    //     if let Some(cached_session) = self.cache.get_mut(flow_session_id) {
-    //         if SystemTime::now() > cached_session.expires_at {
-    //             return false;
-    //         }
-    //         cached_session.data.tasks.remove(task_id).is_some()
-    //     } else {
-    //         false
-    //     }
-    // }
-
     pub fn invalidate(&mut self, flow_session_id: &Uuid) {
         println!(
             "[PROCESSOR] Invalidating flow session cache for session_id: {}",
@@ -102,9 +86,4 @@ impl FlowSessionCache {
         self.cache.remove(flow_session_id);
     }
 
-    // pub fn cleanup(&mut self) {
-    //     println!("[PROCESSOR] Starting flow session cache cleanup");
-    //     let now = SystemTime::now();
-    //     self.cache.retain(|_, session| session.expires_at > now);
-    // }
 }

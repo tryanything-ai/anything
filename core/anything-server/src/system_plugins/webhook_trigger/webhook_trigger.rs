@@ -21,10 +21,7 @@ use crate::{
     AppState, FlowCompletion,
 };
 
-use crate::{
-    processor::{flow_session_cache::FlowSessionData, processor::ProcessorMessage},
-    types::workflow_types::DatabaseFlowVersion,
-};
+use crate::{processor::processor::ProcessorMessage, types::workflow_types::DatabaseFlowVersion};
 
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -220,26 +217,11 @@ pub async fn run_workflow_and_respond(
         );
     }
 
-    //Set the flow data in the cache of the processor so we don't do it again
-    let flow_session_data = FlowSessionData {
-        workflow: Some(workflow_version.clone()),
-        tasks: HashMap::new(),
-        flow_session_id: flow_session_id,
-        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        workflow_version_id: Some(workflow_version.flow_version_id),
-    };
-
-    println!("[TEST WORKFLOW] Setting flow session data in cache");
-    // Set the flow session data in cache
-    {
-        let mut cache = state.flow_session_cache.write().await;
-        cache.set(&flow_session_id, flow_session_data);
-    }
-
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
+        workflow_version: workflow_version,
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task),
@@ -473,26 +455,11 @@ pub async fn run_workflow_version_and_respond(
         );
     }
 
-    //Set the flow data in the cache of the processor so we don't do it again
-    let flow_session_data = FlowSessionData {
-        workflow: Some(workflow_version.clone()),
-        tasks: HashMap::new(),
-        flow_session_id: flow_session_id,
-        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        workflow_version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
-    };
-
-    println!("[TEST WORKFLOW] Setting flow session data in cache");
-    // Set the flow session data in cache
-    {
-        let mut cache = state.flow_session_cache.write().await;
-        cache.set(&flow_session_id, flow_session_data);
-    }
-
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
+        workflow_version: workflow_version,
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
@@ -710,26 +677,11 @@ pub async fn run_workflow(
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
 
-    //Set the flow data in the cache of the processor so we don't do it again
-    let flow_session_data = FlowSessionData {
-        workflow: Some(workflow_version.clone()),
-        tasks: HashMap::new(),
-        flow_session_id: flow_session_id,
-        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        workflow_version_id: Some(workflow_version.flow_version_id),
-    };
-
-    println!("[TEST WORKFLOW] Setting flow session data in cache");
-    // Set the flow session data in cache
-    {
-        let mut cache = state.flow_session_cache.write().await;
-        cache.set(&flow_session_id, flow_session_data);
-    }
-
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
+        workflow_version: workflow_version.clone(),
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
@@ -916,30 +868,14 @@ pub async fn run_workflow_version(
         Ok(task) => task,
         Err(e) => panic!("Failed to build task: {}", e),
     };
-  
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
-
-    //Set the flow data in the cache of the processor so we don't do it again
-    let flow_session_data = FlowSessionData {
-        workflow: Some(workflow_version.clone()),
-        tasks: HashMap::new(),
-        flow_session_id: flow_session_id,
-        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        workflow_version_id: Some(workflow_version.flow_version_id),
-    };
-
-    println!("[TEST WORKFLOW] Setting flow session data in cache");
-    // Set the flow session data in cache
-    {
-        let mut cache = state.flow_session_cache.write().await;
-        cache.set(&flow_session_id, flow_session_data);
-    }
 
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
         version_id: Some(workflow_version.flow_version_id),
+        workflow_version: workflow_version.clone(),
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task),

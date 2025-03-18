@@ -358,26 +358,28 @@ async fn create_trigger_task(
         Err(e) => panic!("Failed to build task: {}", e),
     };
 
-    println!("[CRON TRIGGER] Creating processor message");
+    println!("[CRON TRIGGER] Creating processor message -> TODO: Fix ! Not implemented");
     // Send message to processor
-    let processor_message = ProcessorMessage {
-        workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
-        version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
-        flow_session_id: task.flow_session_id.clone(),
-        trigger_session_id: task.trigger_session_id.clone(),
-        trigger_task: Some(task),
-    };
+    //TODO: add back once we determine this pattern works.
+    // let processor_message = ProcessorMessage {
+    //     workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
+    //     version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
+    //     workflow_version: None,
+    //     flow_session_id: task.flow_session_id.clone(),
+    //     trigger_session_id: task.trigger_session_id.clone(),
+    //     trigger_task: Some(task),
+    // };
 
-    if let Err(e) = state.processor_sender.send(processor_message).await {
-        println!(
-            "[TRIGGER_ENGINE] Failed to send message to processor: {}",
-            e
-        );
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Failed to send message to processor: {}", e),
-        )));
-    }
+    // if let Err(e) = state.processor_sender.send(processor_message).await {
+    //     println!(
+    //         "[TRIGGER_ENGINE] Failed to send message to processor: {}",
+    //         e
+    //     );
+    //     return Err(Box::new(std::io::Error::new(
+    //         std::io::ErrorKind::Other,
+    //         format!("Failed to send message to processor: {}", e),
+    //     )));
+    // }
 
     println!("Successfully created trigger task");
 

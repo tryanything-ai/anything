@@ -75,87 +75,87 @@ pub async fn is_already_processing(
 ////////////// CACHING /////////////////
 //////////////////////////////////////
 
-/// Fetches a workflow definition from cache or database and ensures it's cached.
-/// Returns the workflow definition and cached tasks if found, or an error if the workflow couldn't be retrieved.
-pub async fn get_workflow_and_tasks_from_cache(
-    state: &Arc<AppState>,
-    flow_session_id: Uuid,
-    workflow_id: &Uuid,
-    version_id: &Option<Uuid>,
-) -> Result<(DatabaseFlowVersion, Option<HashMap<Uuid, Task>>), String> {
-    let mut workflow_definition = None;
-    let mut cached_tasks = None;
+// Fetches a workflow definition from cache or database and ensures it's cached.
+// Returns the workflow definition and cached tasks if found, or an error if the workflow couldn't be retrieved.
+// pub async fn get_workflow_and_tasks_from_cache(
+//     state: &Arc<AppState>,
+//     flow_session_id: Uuid,
+//     workflow_id: &Uuid,
+//     version_id: &Option<Uuid>,
+// ) -> Result<(DatabaseFlowVersion, Option<HashMap<Uuid, Task>>), String> {
+//     let mut workflow_definition = None;
+//     let mut cached_tasks = None;
 
-    // Try to get from cache first using a read lock
-    {
-        let cache = state.flow_session_cache.read().await;
-        println!(
-            "[PROCESSOR] Checking cache for flow_session_id: {}",
-            flow_session_id
-        );
-        if let Some(session_data) = cache.get(&flow_session_id) {
-            if let Some(workflow) = &session_data.workflow {
-                println!(
-                    "[PROCESSOR] Found workflow in cache for flow_session_id: {}",
-                    flow_session_id
-                );
-                workflow_definition = Some(workflow.clone());
-            }
-            //When we hydrate old tasks this will have items init from hydrate_processor
-            cached_tasks = Some(session_data.tasks);
-        }
-    }
+//     // Try to get from cache first using a read lock
+//     {
+//         let cache = state.flow_session_cache.read().await;
+//         println!(
+//             "[PROCESSOR] Checking cache for flow_session_id: {}",
+//             flow_session_id
+//         );
+//         if let Some(session_data) = cache.get(&flow_session_id) {
+//             if let Some(workflow) = &session_data.workflow {
+//                 println!(
+//                     "[PROCESSOR] Found workflow in cache for flow_session_id: {}",
+//                     flow_session_id
+//                 );
+//                 workflow_definition = Some(workflow.clone());
+//             }
+//             //When we hydrate old tasks this will have items init from hydrate_processor
+//             cached_tasks = Some(session_data.tasks);
+//         }
+//     }
 
-    // Only fetch flow definition from DB if we didn't find it in cache
-    if workflow_definition.is_none() {
-        println!(
-            "[PROCESSOR] No workflow found in cache, fetching from DB for flow_session_id: {}",
-            flow_session_id
-        );
+//     // Only fetch flow definition from DB if we didn't find it in cache
+//     if workflow_definition.is_none() {
+//         println!(
+//             "[PROCESSOR] No workflow found in cache, fetching from DB for flow_session_id: {}",
+//             flow_session_id
+//         );
 
-        let workflow =
-            match get_workflow_definition(state.clone(), workflow_id, version_id.as_ref()).await {
-                Ok(w) => {
-                    println!("[PROCESSOR] Successfully fetched workflow from DB");
-                    w
-                }
-                Err(e) => {
-                    let error_msg = format!("[PROCESSOR] Error getting workflow definition: {}", e);
-                    println!("{}", error_msg);
-                    return Err(error_msg);
-                }
-            };
+//         let workflow =
+//             match get_workflow_definition(state.clone(), workflow_id, version_id.as_ref()).await {
+//                 Ok(w) => {
+//                     println!("[PROCESSOR] Successfully fetched workflow from DB");
+//                     w
+//                 }
+//                 Err(e) => {
+//                     let error_msg = format!("[PROCESSOR] Error getting workflow definition: {}", e);
+//                     println!("{}", error_msg);
+//                     return Err(error_msg);
+//                 }
+//             };
 
-        // Only update cache if there isn't already data there
-        {
-            let mut cache = state.flow_session_cache.write().await;
-            if cache.get(&flow_session_id).is_none() {
-                println!("[PROCESSOR] Creating new session data in cache");
-                let session_data = FlowSessionData {
-                    workflow: Some(workflow.clone()),
-                    tasks: HashMap::new(),
-                    flow_session_id,
-                    workflow_id: *workflow_id,
-                    workflow_version_id: version_id.clone(),
-                };
-                cache.set(&flow_session_id, session_data);
-            }
-        }
+//         // Only update cache if there isn't already data there
+//         {
+//             let mut cache = state.flow_session_cache.write().await;
+//             if cache.get(&flow_session_id).is_none() {
+//                 println!("[PROCESSOR] Creating new session data in cache");
+//                 let session_data = FlowSessionData {
+//                     workflow: Some(workflow.clone()),
+//                     tasks: HashMap::new(),
+//                     flow_session_id,
+//                     workflow_id: *workflow_id,
+//                     workflow_version_id: version_id.clone(),
+//                 };
+//                 cache.set(&flow_session_id, session_data);
+//             }
+//         }
 
-        workflow_definition = Some(workflow);
-    }
+//         workflow_definition = Some(workflow);
+//     }
 
-    // Unwrap the workflow definition - we know it's Some at this point
-    match workflow_definition {
-        Some(workflow) => {
-            println!("[PROCESSOR] Workflow definition retrieved successfully");
-            Ok((workflow, cached_tasks))
-        }
-        None => {
-            // This should never happen based on the logic above, but we handle it just in case
-            let error_msg = "[PROCESSOR] No workflow definition found after fetching".to_string();
-            println!("{}", error_msg);
-            Err(error_msg)
-        }
-    }
-}
+//     // Unwrap the workflow definition - we know it's Some at this point
+//     match workflow_definition {
+//         Some(workflow) => {
+//             println!("[PROCESSOR] Workflow definition retrieved successfully");
+//             Ok((workflow, cached_tasks))
+//         }
+//         None => {
+//             // This should never happen based on the logic above, but we handle it just in case
+//             let error_msg = "[PROCESSOR] No workflow definition found after fetching".to_string();
+//             println!("{}", error_msg);
+//             Err(error_msg)
+//         }
+//     }
+// }

@@ -8,14 +8,13 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::bundler::accounts::fetch_cached_auth_accounts;
 use crate::bundler::secrets::get_decrypted_secrets;
 use crate::files::utils::get_files;
 use crate::templater::{utils::get_template_file_requirements, Templater};
 use crate::types::task_types::TaskStatus;
-
-use uuid::Uuid;
 
 use crate::types::json_schema::ValidationFieldType;
 
@@ -117,16 +116,8 @@ pub async fn bundle_cached_inputs(
     // Pre-allocate with known capacity
     let mut render_inputs_context = HashMap::with_capacity(5);
 
-    //TODO: this is all about making sure we only query the files we need because the opposite would really be resource expensive.
-    //IF they want a url of a file without this it would pull the like the base64 string of eveyr file they have every time.
-    //That would not work good!
     let required_files = get_template_file_requirements(inputs.unwrap())?;
     println!("[BUNDLER] Required files: {:?}", required_files);
-    // // Add files //TODO: this needs to be done carefully so we don't pull all files all the time.
-    // render_inputs_context.insert(
-    //     "files".to_string(),
-    //     serde_json::to_value(get_files(state.clone(), client, account_id))?,
-    // );
 
     // Parallel fetch of secrets, accounts, and cached task results
     let (secrets_result, accounts_result, tasks_result, files_result) = tokio::join!(

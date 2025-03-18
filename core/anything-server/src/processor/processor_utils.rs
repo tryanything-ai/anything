@@ -22,7 +22,6 @@ pub async fn create_task_for_action(
     action: &Action,
     processing_order: i32,
 ) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
-    let start = Instant::now();
     println!(
         "[PROCESSOR] Creating new task for action: {} (order: {})",
         action.label, processing_order
@@ -66,8 +65,8 @@ pub async fn create_task_for_action(
 
     // let task = create_task(ctx.state.clone(), &next_task_input).await?;
     let create_task_message = StatusUpdateMessage {
-        task_id: task.task_id.clone(),
         operation: Operation::CreateTask {
+            task_id: task.task_id.clone(),
             input: task.clone(),
         },
     };
@@ -82,13 +81,7 @@ pub async fn create_task_for_action(
         create_task_start.elapsed()
     );
 
-    // println!(
-    //     "[PROCESSOR] Successfully created task {} for action: {}",
-    //     task.task_id, action.label
-    // );
-
     // Update cache with new task
-    let cache_start = Instant::now();
     {
         println!("[PROCESSOR] Updating cache with new task: {}", task.task_id);
         let mut cache = ctx.state.flow_session_cache.write().await;
@@ -108,14 +101,6 @@ pub async fn create_task_for_action(
             );
         }
     }
-    println!(
-        "[SPEED] ProcessorUtils::update_cache - {:?}",
-        cache_start.elapsed()
-    );
-    println!(
-        "[SPEED] ProcessorUtils::create_task_total - {:?}",
-        start.elapsed()
-    );
 
     Ok(task)
 }
@@ -126,7 +111,6 @@ pub async fn find_next_actions(
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Vec<Action> {
-    let start = Instant::now();
     println!(
         "[PROCESSOR] Finding next actions for task: {} (action: {})",
         task.task_id, task.action_label
@@ -135,28 +119,46 @@ pub async fn find_next_actions(
     let mut next_actions = Vec::new();
 
     if let Some(neighbors) = graph.get(&task.action_id) {
-        let cache_start = Instant::now();
-        let cache = ctx.state.flow_session_cache.read().await;
         println!(
-            "[SPEED] ProcessorUtils::get_cache_read - {:?}",
-            cache_start.elapsed()
-        );
-
-        println!(
-            "[PROCESSOR] Found {} potential next actions in graph",
-            neighbors.len()
+            "[PROCESSOR] Found {} potential next actions in graph: {:?}",
+            neighbors.len(),
+            neighbors
         );
 
         for neighbor_id in neighbors {
+            println!(
+                "[PROCESSOR] Evaluating neighbor with ID: {} for task: {}",
+                neighbor_id, task.task_id
+            );
+
+            println!("[PROCESSOR] Workflow definition: {:?}", ctx.workflow_def);
+
             let neighbor = ctx
                 .workflow_def
                 .actions
                 .iter()
                 .find(|action| &action.action_id == neighbor_id);
 
+            println!(
+                "[PROCESSOR] Found neighbor in workflow definition: {} (ID: {})",
+                neighbor.unwrap().label,
+                neighbor_id
+            );
+
             if let Some(action) = neighbor {
+                println!(
+                    "[PROCESSOR] Found action in workflow definition: {} (ID: {})",
+                    action.label, action.action_id
+                );
+
+                let cache = ctx.state.flow_session_cache.read().await;
                 // Check if this task has already been processed
                 if let Some(session_data) = cache.get(&ctx.flow_session_id) {
+                    println!(
+                        "[PROCESSOR] Retrieved session data for flow session ID: {}",
+                        ctx.flow_session_id
+                    );
+
                     if !session_data
                         .tasks
                         .iter()
@@ -173,7 +175,17 @@ pub async fn find_next_actions(
                             action.label
                         );
                     }
+                } else {
+                    println!(
+                        "[PROCESSOR] Warning: No session data found for flow session ID: {}",
+                        ctx.flow_session_id
+                    );
                 }
+            } else {
+                println!(
+                    "[PROCESSOR] No action found in workflow definition for neighbor ID: {}",
+                    neighbor_id
+                );
             }
         }
     } else {
@@ -186,10 +198,6 @@ pub async fn find_next_actions(
     println!(
         "[PROCESSOR] Found {} unprocessed next actions",
         next_actions.len()
-    );
-    println!(
-        "[SPEED] ProcessorUtils::find_next_actions - {:?}",
-        start.elapsed()
     );
     next_actions
 }
@@ -214,8 +222,8 @@ pub async fn update_completed_task_with_result(
     drop(cache);
 
     let task_message = StatusUpdateMessage {
-        task_id: task.task_id.clone(),
         operation: Operation::UpdateTask {
+            task_id: task.task_id.clone(),
             status: TaskStatus::Completed,
             result: task_result.clone(),
             error: None,
@@ -230,24 +238,6 @@ pub async fn update_completed_task_with_result(
         .send(task_message)
         .await
         .unwrap();
-
-    // tokio::spawn(async move {
-    //     if let Err(e) = update_task_status(
-    //         state_clone,
-    //         &task_id,
-    //         &status,
-    //         Some(bundled_context),
-    //         task_result,
-    //         None,
-    //     )
-    //     .await
-    //     {
-    //         println!(
-    //             "[PROCESSOR] Failed to update task status in database: {}",
-    //             e
-    //         );
-    //     }
-    // });
 }
 
 /// Updates the task status on error
@@ -269,8 +259,8 @@ pub async fn handle_task_error(
     drop(cache);
 
     let error_message = StatusUpdateMessage {
-        task_id: task.task_id.clone(),
         operation: Operation::UpdateTask {
+            task_id: task.task_id.clone(),
             status: TaskStatus::Failed,
             result: None,
             error: Some(error.error.clone()),
@@ -285,23 +275,6 @@ pub async fn handle_task_error(
         .send(error_message)
         .await
         .unwrap();
-    // tokio::spawn(async move {
-    //     if let Err(e) = update_task_status(
-    //         state_clone,
-    //         &task_id,
-    //         &TaskStatus::Failed,
-    //         Some(error_clone.context),
-    //         None,
-    //         Some(error_clone.error),
-    //     )
-    //     .await
-    //     {
-    //         println!(
-    //             "[PROCESSOR] Failed to update error status in database: {}",
-    //             e
-    //         );
-    //     }
-    // });
 }
 
 pub async fn drop_path_counter(ctx: &PathProcessingContext) {
@@ -313,77 +286,23 @@ pub async fn drop_path_counter(ctx: &PathProcessingContext) {
     );
 }
 
-/// Checks if this is the last active path and updates workflow status accordingly
-// pub async fn check_and_update_workflow_completion(ctx: &PathProcessingContext, is_success: bool) {
-//     let mut paths = ctx.active_paths.lock().await;
-//     *paths -= 1;
-//     let remaining_paths = *paths;
-//     println!(
-//         "[PROCESSOR] Checking workflow completion. Remaining paths: {}",
-//         remaining_paths
-//     );
-
-//     // If this was the last path, mark workflow as complete or failed
-//     if remaining_paths == 0 {
-//         println!(
-//             "[PROCESSOR] All parallel paths completed for flow {}, workflow is {}",
-//             ctx.flow_session_id,
-//             if is_success { "successful" } else { "failed" }
-//         );
-
-//         // Update workflow status
-//         let status = if is_success {
-//             FlowSessionStatus::Completed
-//         } else {
-//             FlowSessionStatus::Failed
-//         };
-
-//         let trigger_status = if is_success {
-//             TriggerSessionStatus::Completed
-//         } else {
-//             TriggerSessionStatus::Failed
-//         };
-
-//         drop(paths); // Release the lock before the async call
-
-//         update_flow_status(ctx, &status, &trigger_status).await;
-//     } else {
-//         println!(
-//             "[PROCESSOR] Still waiting on {} paths to complete",
-//             remaining_paths
-//         );
-//     }
-// }
-
 /// Processes a single task in a path
 pub async fn process_task(
     ctx: &PathProcessingContext,
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Result<Vec<Action>, TaskError> {
-    let start = Instant::now();
     println!(
         "[PROCESSOR] Starting execution of task {} (action: {})",
         task.task_id, task.action_label
     );
 
     // Execute the task
-    let execute_start = Instant::now();
     let started_at_for_error = Utc::now();
     let (task_result, bundled_context, started_at, ended_at) =
         match execute_task(ctx.state.clone(), &ctx.client, task).await {
-            Ok(success_value) => {
-                println!(
-                    "[SPEED] ProcessorUtils::execute_task - {:?}",
-                    execute_start.elapsed()
-                );
-                success_value
-            }
+            Ok(success_value) => success_value,
             Err(error) => {
-                println!(
-                    "[SPEED] ProcessorUtils::execute_task_error - {:?}",
-                    execute_start.elapsed()
-                );
                 handle_task_error(ctx, task, error.clone(), started_at_for_error, Utc::now()).await;
                 return Ok(Vec::new());
             }
@@ -392,7 +311,6 @@ pub async fn process_task(
     print!("[PROCESSOR] Task Result: {:?}", task_result);
 
     // Update task status to completed
-    let update_start = Instant::now();
     println!(
         "[PROCESSOR] Updating task {} status to completed",
         task.task_id
@@ -407,10 +325,6 @@ pub async fn process_task(
         ended_at,
     )
     .await;
-    println!(
-        "[SPEED] ProcessorUtils::update_task_status - {:?}",
-        update_start.elapsed()
-    );
 
     // Check if this is a filter task that returned false
     if let Some(plugin_name) = &task.plugin_name {
@@ -458,7 +372,6 @@ pub async fn process_task(
     }
 
     // Find next actions
-    let next_actions_start = Instant::now();
     println!(
         "[PROCESSOR] Finding next actions for completed task: {}",
         task.task_id
@@ -469,14 +382,5 @@ pub async fn process_task(
         next_actions.len(),
         task.task_id
     );
-    println!(
-        "[SPEED] ProcessorUtils::find_next_actions - {:?}",
-        next_actions_start.elapsed()
-    );
-    println!(
-        "[SPEED] ProcessorUtils::process_task_total - {:?}",
-        start.elapsed()
-    );
-
     Ok(next_actions)
 }
