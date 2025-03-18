@@ -31,6 +31,7 @@ pub async fn processor(
     let mut workflow_handles = Vec::new();
 
     while let Some(message) = rx.recv().await {
+
         // Check if we received shutdown signal
         if state
             .shutdown_signal
@@ -62,10 +63,10 @@ pub async fn processor(
         // Spawn a new task for this workflow
         let handle = tokio::spawn(async move {
             println!("[PROCESSOR] Starting workflow execution");
-            
 
             // Start parallel workflow processing
             start_parallel_workflow_processing(state.clone(), (*client).clone(), message).await;
+
             drop(number_of_workflow_processors_permit);
         });
 

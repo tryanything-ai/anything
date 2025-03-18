@@ -27,7 +27,7 @@ pub async fn create_task_for_action(
         action.label, processing_order
     );
 
-    let task = match Task::builder()
+    let task = Task::builder()
         .account_id(ctx.workflow.account_id.clone())
         .flow_id(ctx.workflow_id.clone())
         .flow_version_id(ctx.workflow.flow_version_id.clone())
@@ -46,16 +46,18 @@ pub async fn create_task_for_action(
         })
         .processing_order(processing_order)
         .config(TaskConfig {
-            inputs: Some(action.inputs.clone().unwrap()),
+            inputs: Some(action.inputs.clone().unwrap_or_default()),
             inputs_schema: Some(action.inputs_schema.clone().unwrap()),
             plugin_config: Some(action.plugin_config.clone()),
             plugin_config_schema: Some(action.plugin_config_schema.clone()),
         })
         .build()
-    {
-        Ok(task) => task,
-        Err(e) => panic!("Failed to build task: {}", e),
-    };
+        .map_err(|e| {
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                e.to_string(),
+            )) as Box<dyn std::error::Error + Send + Sync>
+        })?;
 
     let create_task_start = Instant::now();
     println!(
@@ -63,7 +65,6 @@ pub async fn create_task_for_action(
         action.label
     );
 
-    // let task = create_task(ctx.state.clone(), &next_task_input).await?;
     let create_task_message = StatusUpdateMessage {
         operation: Operation::CreateTask {
             task_id: task.task_id.clone(),
@@ -71,11 +72,19 @@ pub async fn create_task_for_action(
         },
     };
 
-    ctx.state
+    if let Err(e) = ctx
+        .state
         .task_updater_sender
         .send(create_task_message)
         .await
-        .unwrap();
+    {
+        println!("[PROCESSOR] Failed to send create task message: {}", e);
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to send task creation message: {}", e),
+        )));
+    }
+
     println!(
         "[SPEED] ProcessorUtils::create_task_message - {:?}",
         create_task_start.elapsed()
@@ -233,11 +242,9 @@ pub async fn update_completed_task_with_result(
         },
     };
 
-    ctx.state
-        .task_updater_sender
-        .send(task_message)
-        .await
-        .unwrap();
+    if let Err(e) = ctx.state.task_updater_sender.send(task_message).await {
+        println!("[PROCESSOR] Failed to send completed task update: {}", e);
+    }
 }
 
 /// Updates the task status on error
@@ -270,11 +277,9 @@ pub async fn handle_task_error(
         },
     };
 
-    ctx.state
-        .task_updater_sender
-        .send(error_message)
-        .await
-        .unwrap();
+    if let Err(e) = ctx.state.task_updater_sender.send(error_message).await {
+        println!("[PROCESSOR] Failed to send task error update: {}", e);
+    }
 }
 
 pub async fn drop_path_counter(ctx: &PathProcessingContext) {
