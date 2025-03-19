@@ -220,7 +220,6 @@ pub async fn run_workflow_and_respond(
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        version_id: Some(workflow_version.flow_version_id),
         workflow_version: workflow_version,
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
@@ -458,7 +457,6 @@ pub async fn run_workflow_version_and_respond(
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        version_id: Some(Uuid::parse_str(&workflow_version_id).unwrap()),
         workflow_version: workflow_version,
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
@@ -680,7 +678,6 @@ pub async fn run_workflow(
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        version_id: Some(workflow_version.flow_version_id),
         workflow_version: workflow_version.clone(),
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
@@ -874,7 +871,6 @@ pub async fn run_workflow_version(
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        version_id: Some(workflow_version.flow_version_id),
         workflow_version: workflow_version.clone(),
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
