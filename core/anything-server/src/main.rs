@@ -189,10 +189,10 @@ async fn main() {
     );
 
     let (trigger_engine_signal, _) = watch::channel("".to_string());
-    let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(100); // Create both sender and receiver
+    let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(100000); 
 
     // Create the task updater channel  
-   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100); // Buffer size of 100
+   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000); 
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -445,7 +445,7 @@ pub async fn root() -> impl IntoResponse {
 
                 // Get processor channel capacity
                 let processor_capacity = state.processor_sender.capacity();
-                let processor_max = 100; // This matches your channel size
+                let processor_max = 100000; // This matches your channel size
                 println!(
                     "[CHANNEL MONITOR] Processor channel: {}/{} slots available ({:.1}% full)",
                     processor_capacity,
@@ -455,7 +455,7 @@ pub async fn root() -> impl IntoResponse {
 
                 // Get task updater channel capacity
                 let task_updater_capacity = state.task_updater_sender.capacity();
-                let task_updater_max = 100; // Adjust this to match your channel size
+                let task_updater_max = 100000; // Adjust this to match your channel size
                 println!(
                     "[CHANNEL MONITOR] Task updater channel: {}/{} slots available ({:.1}% full)",
                     task_updater_capacity,
