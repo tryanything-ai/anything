@@ -189,10 +189,10 @@ export const WorkflowTestingProvider = ({
         return;
       } else {
         console.log("Testing workflow results:", results);
-        setWorkflowTestingSessionId(results.flow_session_id);
+        setWorkflowTestingSessionId(flow_session_id);
       }
       // Start polling for results
-      pollForResults(db_flow_id, db_flow_version_id, results.flow_session_id);
+      pollForResults(db_flow_id, db_flow_version_id,  flow_session_id);
     } catch (error) {
       console.error(error);
     } finally {
