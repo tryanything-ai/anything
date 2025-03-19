@@ -336,6 +336,59 @@ async fn create_trigger_task(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("[CRON TRIGGER] Handling create task from cron trigger");
 
+      //Super User Access
+      dotenv().ok();
+      let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+          .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+  
+      // Get flow version from database
+      println!("[WEBHOOK API] Fetching flow version from database");
+      let response = match state
+          .anything_client
+          .from("flow_versions")
+          .eq("flow_id", trigger.flow_id.clone())
+          .eq("flow_version_id", trigger.flow_version_id.clone())
+          .auth(supabase_service_role_api_key.clone())
+          .select("*")
+          .single()
+          .execute()
+          .await
+      {
+          Ok(response) => response,
+          Err(err) => {
+              println!("[CRON TRIGGER] Failed to fetch flow version: {:?}", err);
+              return Err(Box::new(std::io::Error::new(
+                  std::io::ErrorKind::Other,
+                  format!("Failed to fetch flow version: {}", err),
+              )));
+          }
+      };
+  
+      let response_body = match response.text().await {
+          Ok(body) => {
+              println!("[CRON TRIGGER] Response body: {}", body);
+              body
+          }
+          Err(err) => {
+              println!("[CRON TRIGGER] Failed to read response body: {:?}", err);
+              return Err(Box::new(std::io::Error::new(
+                  std::io::ErrorKind::Other,
+                  format!("Failed to read response body: {}", err),
+              )));
+          }
+      };
+  
+      let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
+          Ok(version) => version,
+          Err(_) => {
+              println!("[CRON TRIGGER] No published workflow found");
+              return Err(Box::new(std::io::Error::new(
+                  std::io::ErrorKind::Other,
+                  format!("Unpublished Workflow. To use this endpoint you must publish your workflow."),
+              )));
+          }
+      };
+
     let task = match Task::builder()
         .account_id(Uuid::parse_str(&trigger.account_id).unwrap())
         .flow_id(Uuid::parse_str(&trigger.flow_id).unwrap())
@@ -361,25 +414,24 @@ async fn create_trigger_task(
     println!("[CRON TRIGGER] Creating processor message -> TODO: Fix ! Not implemented");
     // Send message to processor
     //TODO: add back once we determine this pattern works.
-    // let processor_message = ProcessorMessage {
-    //     workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
-    //     version_id: Some(Uuid::parse_str(&trigger.flow_version_id).unwrap()),
-    //     workflow_version: None,
-    //     flow_session_id: task.flow_session_id.clone(),
-    //     trigger_session_id: task.trigger_session_id.clone(),
-    //     trigger_task: Some(task),
-    // };
+    let processor_message = ProcessorMessage {
+        workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
+        workflow_version: workflow_version,
+        flow_session_id: task.flow_session_id.clone(),
+        trigger_session_id: task.trigger_session_id.clone(),
+        trigger_task: Some(task),
+    };
 
-    // if let Err(e) = state.processor_sender.send(processor_message).await {
-    //     println!(
-    //         "[TRIGGER_ENGINE] Failed to send message to processor: {}",
-    //         e
-    //     );
-    //     return Err(Box::new(std::io::Error::new(
-    //         std::io::ErrorKind::Other,
-    //         format!("Failed to send message to processor: {}", e),
-    //     )));
-    // }
+    if let Err(e) = state.processor_sender.send(processor_message).await {
+        println!(
+            "[TRIGGER_ENGINE] Failed to send message to processor: {}",
+            e
+        );
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to send message to processor: {}", e),
+        )));
+    }
 
     println!("Successfully created trigger task");
 

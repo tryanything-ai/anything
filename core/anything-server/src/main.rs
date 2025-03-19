@@ -423,12 +423,12 @@ pub async fn root() -> impl IntoResponse {
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
-    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
-    // tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
-    //     state.clone(),
-    // ));
+    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+        state.clone(),
+    ));
 
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
