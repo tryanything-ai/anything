@@ -29,7 +29,7 @@ pub struct TaskError {
 pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
 pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
-    let start = Instant::now();
+
     let started_at = Utc::now();
     println!("[PROCESS TASK] Processing task {}", task.task_id);
 
@@ -37,19 +37,14 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
     let state_clone = Arc::clone(&state);
 
     // Bundle context with results from cache
-    let bundle_start = Instant::now();
     let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
         bundle_tasks_cached_context(state, client, task, true).await;
-    println!(
-        "[SPEED] ExecuteTask::bundle_context - {:?}",
-        bundle_start.elapsed()
-    );
 
     let http_client = state_clone.http_client.clone();
 
     match bundled_context_result {
         Ok((bundled_inputs, bundled_plugin_cofig)) => {
-            let task_execution_start = Instant::now();
+
             let task_result = if task.r#type == ActionType::Trigger {
                 println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
                 process_trigger_task(task)
@@ -100,24 +95,12 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                     None => process_no_plugin_name(&task.task_id.to_string()),
                 }
             };
-            println!(
-                "[SPEED] ExecuteTask::task_execution - {:?}",
-                task_execution_start.elapsed()
-            );
 
             match task_result {
                 Ok(result) => {
-                    println!(
-                        "[SPEED] ExecuteTask::total_execution - {:?}",
-                        start.elapsed()
-                    );
                     Ok((result, bundled_plugin_cofig, started_at, Utc::now()))
                 }
                 Err(e) => {
-                    println!(
-                        "[SPEED] ExecuteTask::total_execution_error - {:?}",
-                        start.elapsed()
-                    );
                     Err(TaskError {
                         error: json!({ "message": e.to_string() }),
                         context: bundled_plugin_cofig,
@@ -126,10 +109,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
             }
         }
         Err(e) => {
-            println!(
-                "[SPEED] ExecuteTask::total_execution_bundle_error - {:?}",
-                start.elapsed()
-            );
+            println!("[ERROR] Failed to bundle task context: {}", e);
             // Create empty context since bundling failed
             let empty_context = json!({});
             Err(TaskError {

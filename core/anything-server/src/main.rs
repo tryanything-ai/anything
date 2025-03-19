@@ -110,6 +110,7 @@ async fn main() {
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
     let bind_address = "0.0.0.0:3001".to_string();
 
+    println!("[HELLO CARL] Starting Anything Server");
     //Anything Schema for Application
     let anything_client = Arc::new(
         Postgrest::new(supabase_url.clone())
@@ -188,10 +189,10 @@ async fn main() {
     );
 
     let (trigger_engine_signal, _) = watch::channel("".to_string());
-    let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(1000); // Create both sender and receiver
+    let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(100); // Create both sender and receiver
 
     // Create the task updater channel  
-   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(1000); // Buffer size of 100
+   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100); // Buffer size of 100
 
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
@@ -200,7 +201,7 @@ async fn main() {
         r2_client: r2_client.clone(),
         http_client: Arc::new(Client::new()),
         auth_states: RwLock::new(HashMap::new()),
-        workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
+        workflow_processor_semaphore: Arc::new(Semaphore::new(10)), //How many workflows we can run at once
         trigger_engine_signal,
         processor_sender: processor_tx,
         processor_receiver: Mutex::new(processor_rx),
@@ -444,7 +445,7 @@ pub async fn root() -> impl IntoResponse {
 
                 // Get processor channel capacity
                 let processor_capacity = state.processor_sender.capacity();
-                let processor_max = 1000; // This matches your channel size
+                let processor_max = 100; // This matches your channel size
                 println!(
                     "[CHANNEL MONITOR] Processor channel: {}/{} slots available ({:.1}% full)",
                     processor_capacity,
@@ -454,7 +455,7 @@ pub async fn root() -> impl IntoResponse {
 
                 // Get task updater channel capacity
                 let task_updater_capacity = state.task_updater_sender.capacity();
-                let task_updater_max = 1000; // Adjust this to match your channel size
+                let task_updater_max = 100; // Adjust this to match your channel size
                 println!(
                     "[CHANNEL MONITOR] Task updater channel: {}/{} slots available ({:.1}% full)",
                     task_updater_capacity,
