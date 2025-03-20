@@ -111,8 +111,8 @@ pub async fn update_secret_in_vault(
 
     // Validate new secret value is not empty or whitespace-only
     if new_secret_value.trim().is_empty() {
-        println!("[VAULT] Error: Secret value cannot be empty or whitespace-only");
-        return Err("Secret value cannot be empty or whitespace-only".into());
+        println!("[VAULT] Update Error: Secret value cannot be empty or whitespace-only");
+        return Err("Update Error: Secret value cannot be empty or whitespace-only".into());
     }
 
     // Validate secret ID is not empty

@@ -112,7 +112,7 @@ pub struct CreateAccountAuthProviderAccount {
     pub access_token_vault_id: String,
     pub refresh_token_vault_id: String,
     pub access_token_expires_at: DateTime<Utc>,
-    pub refresh_token_expires_at: DateTime<Utc>,
+    pub refresh_token_expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -363,7 +363,7 @@ pub async fn handle_provider_callback(
         access_token_vault_id: access_token_vault_id.to_string(),
         access_token_expires_at: access_token_expires_at.unwrap_or_else(Utc::now),
         refresh_token_vault_id: refresh_token_vault_id.to_string(),
-        refresh_token_expires_at: refresh_token_expires_at.unwrap_or_else(Utc::now),
+        refresh_token_expires_at: refresh_token_expires_at,
     };
 
     println!(

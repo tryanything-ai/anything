@@ -120,6 +120,7 @@ pub async fn refresh_accounts(
                             new_token
                         );
 
+                        // Calculate new expiry times if provided in auth provider config
                         let mut access_token_expires_at = None;
                         if let Some(access_token_lifespan) =
                             auth_provider.access_token_lifetime_seconds
@@ -149,28 +150,38 @@ pub async fn refresh_accounts(
                             );
                         }
 
-                        let refresh_token_value = new_token
-                            .refresh_token
-                            .as_deref()
-                            .unwrap_or_default()
-                            .to_string();
+                        // Only update tokens that have changed
+                        let mut update_tasks = Vec::new();
 
-                        //parallel update of both tokens in the vault
-                        let (access_result, refresh_result) = tokio::join!(
-                            update_secret_in_vault(
-                                client,
-                                &account.access_token_vault_id,
-                                &new_token.access_token,
-                            ),
-                            update_secret_in_vault(
+                        // Always update access token as it's guaranteed to be new
+                        update_tasks.push(update_secret_in_vault(
+                            client,
+                            &account.access_token_vault_id,
+                            &new_token.access_token,
+                        ));
+
+                        // Only update refresh token if we got a new one
+                        if let Some(new_refresh_token) = &new_token.refresh_token {
+                            update_tasks.push(update_secret_in_vault(
                                 client,
                                 &account.refresh_token_vault_id,
-                                &refresh_token_value,
-                            )
-                        );
+                                new_refresh_token,
+                            ));
+                            // Update refresh token expiry only if we got a new refresh token
+                            refresh_token_expires_at = refresh_token_expires_at;
+                        } else {
+                            // Keep existing refresh token expiry if no new refresh token
+                            refresh_token_expires_at = account.refresh_token_expires_at;
+                        }
 
-                        access_result?;
-                        refresh_result?;
+                        // Execute all updates in parallel
+                        let results = futures::future::join_all(update_tasks).await;
+                        for result in results {
+                            if let Err(e) = result {
+                                println!("[AUTH REFRESH] Failed to update token in vault: {:?}", e);
+                                return Err(e);
+                            }
+                        }
 
                         let account_updates = UpdateAccountAuthProviderAccount {
                             access_token_expires_at,
@@ -203,7 +214,9 @@ pub async fn refresh_accounts(
                             println!("[AUTH REFRESH] Successfully updated account with new token");
                             // Update the in-memory account with new values
                             account.access_token = new_token.access_token;
-                            account.refresh_token = new_token.refresh_token;
+                            if let Some(new_refresh_token) = new_token.refresh_token {
+                                account.refresh_token = Some(new_refresh_token);
+                            }
                             account.access_token_expires_at = access_token_expires_at;
                             account.refresh_token_expires_at = refresh_token_expires_at;
                         }
