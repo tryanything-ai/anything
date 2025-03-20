@@ -66,7 +66,7 @@ pub async fn process_http_task(
             }
         };
 
-        let mut request_builder = http_client.request(method, url);
+        let mut request_builder = http_client.request(method.clone(), url);
 
         println!("[TASK_ENGINE] Processing headers");
         let headers = parse_headers(bundled_context);
@@ -75,21 +75,35 @@ pub async fn process_http_task(
             request_builder = request_builder.header(key, value);
         }
 
+        let should_skip_empty = matches!(
+            method,
+            reqwest::Method::GET | reqwest::Method::HEAD | reqwest::Method::OPTIONS
+        );
+
         if let Some(body) = bundled_context.get("body") {
-            if let Some(body_str) = body.as_str() {
-                if !body_str.is_empty() {
-                    println!("[TASK_ENGINE] Adding body: {}", body_str);
-                    request_builder = request_builder.body(body_str.to_string());
-                } else {
-                    println!("[TASK_ENGINE] Body is an empty string, sending request without body");
+            let is_empty = match body {
+                Value::String(s) => {
+                    // Check if string is empty, "{}", or just whitespace
+                    let trimmed = s.trim();
+                    trimmed.is_empty() || trimmed == "{}"
                 }
-            } else if let Some(body_object) = body.as_object() {
-                let body_json = serde_json::to_string(body_object)?;
-                println!("[TASK_ENGINE] Adding body: {}", body_json);
-                request_builder = request_builder.body(body_json);
+                Value::Object(obj) => obj.is_empty(),
+                _ => {
+                    println!("[TASK_ENGINE] Body is not a string or an object");
+                    return Err("HTTP task body must be a string or an object".into());
+                }
+            };
+
+            if !is_empty || !should_skip_empty {
+                let body_str = match body {
+                    Value::String(s) => s.to_string(),
+                    Value::Object(obj) => serde_json::to_string(obj)?,
+                    _ => unreachable!(), // We already checked above
+                };
+                println!("[TASK_ENGINE] Adding body: {}", body_str);
+                request_builder = request_builder.body(body_str);
             } else {
-                println!("[TASK_ENGINE] Body is not a string or an object");
-                return Err("HTTP task body must be a string or an object".into());
+                println!("[TASK_ENGINE] Skipping empty body for {} request", method);
             }
         } else {
             println!("[TASK_ENGINE] No body found in task context");
@@ -97,6 +111,7 @@ pub async fn process_http_task(
 
         println!("[TASK_ENGINE] Sending HTTP request");
         let request_start = Instant::now();
+
         let response = request_builder.send().await?;
         println!("[SPEED] HTTP request took {:?}", request_start.elapsed());
 
