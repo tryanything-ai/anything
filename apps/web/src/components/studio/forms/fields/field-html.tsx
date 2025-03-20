@@ -111,7 +111,7 @@ export default function CodeMirrorFieldHtml({
                   onClick={() => {
                     if (setShowExplorer && setExplorerTab) {
                       setExplorerTab(showInputsExplorer ? "inputs" : "results");
-                      setShowExplorer(!showExplorer);
+                      setShowExplorer(true);
                     }
                   }}
                 >

@@ -233,7 +233,7 @@ export default function CodemirrorFieldJs({
                         setExplorerTab(
                           showInputsExplorer ? "inputs" : "results",
                         );
-                        setShowExplorer(!showExplorer);
+                        setShowExplorer(true);
                       }
                     }}
                   >

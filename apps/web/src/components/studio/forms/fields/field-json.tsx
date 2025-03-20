@@ -201,7 +201,7 @@ export default function FieldJson({
                         setExplorerTab(
                           showInputsExplorer ? "inputs" : "results",
                         );
-                        setShowExplorer(!showExplorer);
+                        setShowExplorer(true);
                       }
                     }}
                   >

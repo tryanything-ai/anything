@@ -121,7 +121,7 @@ export default function CodeMirrorFieldText({
                         setExplorerTab(
                           showInputsExplorer ? "inputs" : "results",
                         );
-                        setShowExplorer(!showExplorer);
+                        setShowExplorer(true);
                       }
                     }}
                   >

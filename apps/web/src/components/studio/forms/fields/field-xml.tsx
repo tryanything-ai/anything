@@ -200,7 +200,7 @@ export default function CodemirrorFieldXml({
                         setExplorerTab(
                           showInputsExplorer ? "inputs" : "results",
                         );
-                        setShowExplorer(!showExplorer);
+                        setShowExplorer(true);
                       }
                     }}
                   >

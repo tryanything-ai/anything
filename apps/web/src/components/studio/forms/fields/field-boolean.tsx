@@ -153,7 +153,7 @@ export default function CodeMirrorFieldBoolean({
                               setExplorerTab(
                                 showInputsExplorer ? "inputs" : "results",
                               );
-                              setShowExplorer(!showExplorer);
+                              setShowExplorer(true);
                             }
                           }}
                         >

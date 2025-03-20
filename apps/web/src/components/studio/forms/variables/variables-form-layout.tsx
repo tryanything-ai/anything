@@ -22,7 +22,7 @@ export function InputsFormLayout(): JSX.Element {
         break;
       case EditVariableFormMode.DELETE:
         header_title = "Edit Inputs";
-        link_button_text = "Cancel";
+        link_button_text = "Done";
         action = () => variables.setEditingMode(EditVariableFormMode.INPUT);
         break;
       case EditVariableFormMode.INPUT:
@@ -31,7 +31,7 @@ export function InputsFormLayout(): JSX.Element {
           Object.keys(workflow?.selected_node_inputs_schema?.properties || {})
             .length > 0
             ? "Edit"
-            : "Add New Input";
+            : "Add First Input";
         action = () => variables.setEditingMode(EditVariableFormMode.DELETE);
         break;
       default:
@@ -61,6 +61,7 @@ export function InputsFormLayout(): JSX.Element {
             onClick={(e) => {
               e.stopPropagation(); // Prevent collapse/expand when clicking link
               action();
+              variables.setIsFormVisible(true)
             }}
           >
             {link_button_text}
