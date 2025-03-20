@@ -279,22 +279,15 @@ pub async fn refresh_access_token(
         .post(&auth_provider.token_url)
         .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
 
-    // Add Authorization header if client_secret is present
-    // if let Some(client_secret) = &auth_provider.client_secret {
-    //     let credentials = format!("{}:{}", auth_provider.client_id, client_secret);
-    //     let encoded_credentials =
-    //         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(credentials);
-    //     request = request.header(
-    //         header::AUTHORIZATION,
-    //         format!("Basic {}", encoded_credentials),
-    //     );
-    // }
-
-    let form_params = [
+    let mut form_params = vec![
         ("grant_type", "refresh_token"),
         ("refresh_token", refresh_token),
         ("client_id", &auth_provider.client_id),
     ];
+
+    if let Some(client_secret) = &auth_provider.client_secret {
+        form_params.push(("client_secret", client_secret));
+    }
 
     println!(
         "[AUTH REFRESH] Refresh token exchange form_params: {:?}",
