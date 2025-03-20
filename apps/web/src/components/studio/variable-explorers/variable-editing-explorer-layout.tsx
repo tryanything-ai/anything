@@ -66,7 +66,6 @@ export function BaseVariableEditingExplorer(): JSX.Element {
       className="flex flex-col h-full"
     >
       <VariableExplorerTabs className="w-[330px]" />
-
       <VariableExplorerContent />
     </Tabs>
   );

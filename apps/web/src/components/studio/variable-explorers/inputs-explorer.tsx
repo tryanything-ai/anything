@@ -81,40 +81,43 @@ export function BaseInputsExplorer(): JSX.Element {
   }, [selected_node_data?.action_id]);
 
   return (
-    <div className="w-full">
-      {selected_node_data && selected_node_data.type !== ActionType.Trigger && (
-        <div className="w-full">
-          {loading && <div>Loading...</div>}
-          {!inputs && !loading && (
-            <div className="text-muted-foreground">
-              Run Workflow Test To Access Variables
-            </div>
-          )}
-          {inputs && (
-            <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
-              <div className="p-3">
-                <div className="flex-1 font-bold mb-2">Inputs</div>
-                <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
-                  <JsonExplorer
-                    parentPath={"inputs."}
-                    data={inputs}
-                    onSelect={(v) => {
-                      console.log(v);
-                      insertVariable(`{{${v}}}`);
-                    }}
-                  />
+    <div className="flex flex-col h-full w-full overflow-y-auto">
+      <ScrollArea className="h-full">
+        {selected_node_data &&
+          selected_node_data.type !== ActionType.Trigger && (
+            <div className="w-full">
+              {loading && <div>Loading...</div>}
+              {!inputs && !loading && (
+                <div className="text-muted-foreground">
+                  Run Workflow Test To Access Variables
                 </div>
-              </div>
+              )}
+              {inputs && (
+                <div className="h-auto w-full my-2 flex flex-col bg-white bg-opacity-5 overflow-hidden border rounded-md">
+                  <div className="p-3">
+                    <div className="flex-1 font-bold mb-2">Inputs</div>
+                    <div className="w-full rounded-lg p-2.5 bg-[whitesmoke]">
+                      <JsonExplorer
+                        parentPath={"inputs."}
+                        data={inputs}
+                        onSelect={(v) => {
+                          console.log(v);
+                          insertVariable(`{{${v}}}`);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
+      </ScrollArea>
     </div>
   );
 }
 
 // Wrapper component with layout controls
-export function VariablesExplorer(): JSX.Element {
+export function InputsExplorer(): JSX.Element {
   const {
     workflow: { setShowExplorer },
   } = useAnything();
@@ -131,11 +134,11 @@ export function VariablesExplorer(): JSX.Element {
           <XIcon className="size-5 fill-foreground" />
         </Button>
       </div>
-      <ScrollArea className="flex-1">
-        <div className="px-2">
-          <BaseInputsExplorer />
-        </div>
-      </ScrollArea>
+      {/* <ScrollArea className="flex-1"> */}
+      <div className="flex-1 min-h-0 h-full px-2">
+        <BaseInputsExplorer />
+      </div>
+      {/* </ScrollArea> */}
     </div>
   );
 }

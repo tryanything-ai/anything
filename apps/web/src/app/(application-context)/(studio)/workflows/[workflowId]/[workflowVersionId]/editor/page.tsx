@@ -10,7 +10,7 @@ import {
   ResizablePanelGroup,
 } from "@repo/ui/components/ui/resizable";
 import { ResultsExplorer } from "@/components/studio/variable-explorers/results-explorer";
-import { VariablesExplorer } from "@/components/studio/variable-explorers/variables-explorer";
+import { InputsExplorer } from "@/components/studio/variable-explorers/inputs-explorer";
 import { useAnything } from "@/context/AnythingContext";
 import VariableEditingExplorer from "@/components/studio/variable-explorers/variable-editing-explorer-layout";
 
@@ -32,7 +32,7 @@ export default function StudioLayout(): JSX.Element {
           <ResizablePanel defaultSize={40} className="flex flex-col min-h-0">
             <div className="flex-1 overflow-hidden">
               {explorerTab === "results" && <VariableEditingExplorer />}
-              {explorerTab === "inputs" && <VariablesExplorer />}
+              {explorerTab === "inputs" && <InputsExplorer />}
             </div>
           </ResizablePanel>
         )}

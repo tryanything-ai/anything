@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BaseInputsExplorer } from "@/components/studio/variable-explorers/variables-explorer";
+import { BaseInputsExplorer } from "@/components/studio/variable-explorers/inputs-explorer";
 import { BaseVariableEditingExplorer } from "../variable-explorers/variable-editing-explorer-layout";
 
 interface ExplorersPanelProps {
