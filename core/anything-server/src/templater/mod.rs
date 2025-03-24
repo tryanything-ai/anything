@@ -329,21 +329,24 @@ impl Templater {
                 }),
             },
             ValidationFieldType::Object => match value {
-                Value::Object(_) => Ok(value),
+                Value::Object(_) | Value::Array(_) => Ok(value),
                 Value::String(s) => {
-                    println!("Attempting to parse as object. String length: {}", s.len());
+                    println!("Attempting to parse as JSON. String length: {}", s.len());
                     println!("First 100 chars: {}", &s[..s.len().min(100)]);
-                    // Try to parse string as JSON object
+                    // Try to parse string as JSON (object or array)
                     match serde_json::from_str(&s) {
                         Ok(parsed) => match parsed {
-                            Value::Object(_) => {
-                                println!("Successfully parsed as object");
+                            Value::Object(_) | Value::Array(_) => {
+                                println!("Successfully parsed as JSON");
                                 Ok(parsed)
                             }
                             _ => {
-                                println!("Parsed but not an object");
+                                println!("Parsed but not an object or array");
                                 Err(TemplateError {
-                                    message: format!("String parsed but not an object: {}", s),
+                                    message: format!(
+                                        "String parsed but not a JSON object or array: {}",
+                                        s
+                                    ),
                                     variable: variable.to_string(),
                                 })
                             }
@@ -351,14 +354,14 @@ impl Templater {
                         Err(e) => {
                             println!("Parse error: {}", e);
                             Err(TemplateError {
-                                message: format!("Cannot parse string as object: {}", s),
+                                message: format!("Cannot parse string as JSON: {}", s),
                                 variable: variable.to_string(),
                             })
                         }
                     }
                 }
                 _ => Err(TemplateError {
-                    message: format!("Expected object, got: {:?}", value),
+                    message: format!("Expected JSON object or array, got: {:?}", value),
                     variable: variable.to_string(),
                 }),
             },
@@ -1142,6 +1145,110 @@ mod tests {
                 "staging": "https://api.staging.example.com",
                 "dev": "https://api.dev.example.com"
             })
+        );
+    }
+
+    #[test]
+    fn test_object_validation_accepts_json() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "object_data": "{{variables.object}}",
+                "array_numbers": "{{variables.array_numbers}}",
+                "array_strings": "{{variables.array_strings}}",
+                "array_objects": "{{variables.array_objects}}",
+                "string_object": "{{variables.string_object}}",
+                "string_array_numbers": "{{variables.string_array_numbers}}",
+                "string_array_strings": "{{variables.string_array_strings}}",
+                "string_array_objects": "{{variables.string_array_objects}}"
+            }),
+        );
+
+        let context = json!({
+            "variables": {
+                "object": {
+                    "key": "value",
+                    "number": 42
+                },
+                "array_numbers": [1, 2, 3],
+                "array_strings": ["one", "two", "three"],
+                "array_objects": [
+                    {"id": 1, "name": "first"},
+                    {"id": 2, "name": "second"}
+                ],
+                "string_object": "{\"key\": \"value\", \"number\": 42}",
+                "string_array_numbers": "[1, 2, 3]",
+                "string_array_strings": "[\"one\", \"two\", \"three\"]",
+                "string_array_objects": "[{\"id\": 1, \"name\": \"first\"}, {\"id\": 2, \"name\": \"second\"}]"
+            }
+        });
+
+        let mut validations = HashMap::new();
+        // All fields use Object validation type
+        validations.insert("object_data".to_string(), ValidationFieldType::Object);
+        validations.insert("array_numbers".to_string(), ValidationFieldType::Object);
+        validations.insert("array_strings".to_string(), ValidationFieldType::Object);
+        validations.insert("array_objects".to_string(), ValidationFieldType::Object);
+        validations.insert("string_object".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "string_array_numbers".to_string(),
+            ValidationFieldType::Object,
+        );
+        validations.insert(
+            "string_array_strings".to_string(),
+            ValidationFieldType::Object,
+        );
+        validations.insert(
+            "string_array_objects".to_string(),
+            ValidationFieldType::Object,
+        );
+
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
+        // Verify regular object
+        assert_eq!(
+            result["object_data"],
+            json!({
+                "key": "value",
+                "number": 42
+            })
+        );
+
+        // Verify direct arrays of different types
+        assert_eq!(result["array_numbers"], json!([1, 2, 3]));
+        assert_eq!(result["array_strings"], json!(["one", "two", "three"]));
+        assert_eq!(
+            result["array_objects"],
+            json!([
+                {"id": 1, "name": "first"},
+                {"id": 2, "name": "second"}
+            ])
+        );
+
+        // Verify string-encoded JSON
+        assert_eq!(
+            result["string_object"],
+            json!({
+                "key": "value",
+                "number": 42
+            })
+        );
+
+        // Verify string-encoded arrays of different types
+        assert_eq!(result["string_array_numbers"], json!([1, 2, 3]));
+        assert_eq!(
+            result["string_array_strings"],
+            json!(["one", "two", "three"])
+        );
+        assert_eq!(
+            result["string_array_objects"],
+            json!([
+                {"id": 1, "name": "first"},
+                {"id": 2, "name": "second"}
+            ])
         );
     }
 }
