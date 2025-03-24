@@ -171,7 +171,7 @@ async fn periodic_thread_warmup(state: Arc<AppState>) {
 
 #[tokio::main(
     flavor = "multi_thread",
-    worker_threads = 2
+    worker_threads = 8
 )]
 async fn main() {
     // Both warmups are now async
@@ -186,7 +186,6 @@ async fn main() {
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
     let bind_address = "0.0.0.0:3001".to_string();
 
-    println!("[HELLO CARL NEW] Starting Anything Server");
     //Anything Schema for Application
     let anything_client = Arc::new(
         Postgrest::new(supabase_url.clone())
