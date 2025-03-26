@@ -171,7 +171,7 @@ async fn periodic_thread_warmup(state: Arc<AppState>) {
 
 #[tokio::main(
     flavor = "multi_thread",
-    worker_threads = 8
+    worker_threads = 2
 )]
 async fn main() {
     // Both warmups are now async
