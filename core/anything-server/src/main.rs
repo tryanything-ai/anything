@@ -3,7 +3,8 @@ use axum::{
         header::ACCESS_CONTROL_ALLOW_ORIGIN, request::Parts as RequestParts, HeaderValue, Method,
     }, middleware::{self},
     response::{Html, IntoResponse},
-      routing::{any, delete, get, post, put}, Router
+    routing::{any, delete, get, post, put}, Router,
+    extract::DefaultBodyLimit,
 };
  
 use bundler::{accounts::accounts_cache::AccountsCache, secrets::secrets_cache::SecretsCache};
@@ -489,6 +490,7 @@ pub async fn root() -> impl IntoResponse {
         .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)
+        .layer(DefaultBodyLimit::max(52_428_800)) // 50MB limit in bytes
         .with_state(state.clone()); 
     
     // Spawn processor
