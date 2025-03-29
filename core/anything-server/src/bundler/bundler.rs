@@ -16,7 +16,7 @@ use crate::files::utils::get_files;
 use crate::templater::{utils::get_template_file_requirements, Templater};
 use crate::types::task_types::TaskStatus;
 
-use crate::types::json_schema::ValidationFieldType;
+use crate::types::json_schema::ValidationField;
 
 pub async fn bundle_tasks_cached_context(
     state: Arc<AppState>,
@@ -253,15 +253,14 @@ pub fn bundle_plugin_config(
 
 fn extract_template_key_validations_from_schema(
     schema: Option<&JsonSchema>,
-) -> HashMap<String, ValidationFieldType> {
+) -> HashMap<String, ValidationField> {
     let mut template_key_validations = HashMap::new();
 
     if let Some(schema) = schema {
         if let Some(properties) = &schema.properties {
             for (property_name, property_schema) in properties {
                 if let Some(validation) = &property_schema.x_any_validation {
-                    template_key_validations
-                        .insert(property_name.clone(), validation.r#type.clone());
+                    template_key_validations.insert(property_name.clone(), validation.clone());
                 }
             }
         }

@@ -2,7 +2,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
 
-use crate::types::json_schema::ValidationFieldType;
+use crate::types::json_schema::{ValidationField, ValidationFieldType};
 pub mod utils;
 
 #[derive(Debug)]
@@ -135,7 +135,7 @@ impl Templater {
         &self,
         template_name: &str,
         context: &Value,
-        validations: HashMap<String, ValidationFieldType>,
+        validations: HashMap<String, ValidationField>,
     ) -> Result<Value, TemplateError> {
         let template = self
             .templates
@@ -156,7 +156,7 @@ impl Templater {
         &self,
         value: &Value,
         context: &Value,
-        validations: &HashMap<String, ValidationFieldType>,
+        validations: &HashMap<String, ValidationField>,
         path: &[String],
     ) -> Result<Value, TemplateError> {
         match value {
@@ -166,10 +166,14 @@ impl Templater {
                     let mut current_path = path.to_vec();
                     current_path.push(k.clone());
                     if path.is_empty() {
-                        let expected_validation_type = Self::get_validation_type(validations, &k)?;
+                        let expected_validation_field =
+                            Self::get_validation_field(validations, &k)?;
                         let rendered = self.render_value(v, context, validations, &current_path)?;
-                        let validated =
-                            self.validate_and_convert_value(rendered, expected_validation_type, k)?;
+                        let validated = self.validate_and_convert_value(
+                            rendered,
+                            &expected_validation_field.r#type,
+                            k,
+                        )?;
                         result.insert(k.clone(), validated);
                     } else {
                         result.insert(
@@ -194,15 +198,22 @@ impl Templater {
                     // Only validate if this is a top-level path
                     if path.is_empty() {
                         let validation_key = variable.to_string();
-                        let expected_type =
-                            Self::get_validation_type(validations, &validation_key)?;
-                        let value = Self::get_value_from_path(context, variable, expected_type)
-                            .ok_or_else(|| TemplateError {
-                                message: format!("Variable not found in context: {}", variable),
-                                variable: variable.to_string(),
-                            })?;
-                        let value =
-                            self.validate_and_convert_value(value, expected_type, &validation_key)?;
+                        let expected_validation_field =
+                            Self::get_validation_field(validations, &validation_key)?;
+                        let value = Self::get_value_from_path(
+                            context,
+                            variable,
+                            &expected_validation_field.r#type,
+                        )
+                        .ok_or_else(|| TemplateError {
+                            message: format!("Variable not found in context: {}", variable),
+                            variable: variable.to_string(),
+                        })?;
+                        let value = self.validate_and_convert_value(
+                            value,
+                            &expected_validation_field.r#type,
+                            &validation_key,
+                        )?;
                         return Ok(value);
                     } else {
                         // For nested variables, just get the value without validation
@@ -235,14 +246,22 @@ impl Templater {
                     // Only validate if this is a top-level path
                     let value = if path.is_empty() {
                         let validation_key = variable.to_string();
-                        let expected_type =
-                            Self::get_validation_type(validations, &validation_key)?;
-                        let value = Self::get_value_from_path(context, variable, expected_type)
-                            .ok_or_else(|| TemplateError {
-                                message: "Variable not found in context".to_string(),
-                                variable: variable.to_string(),
-                            })?;
-                        self.validate_and_convert_value(value, expected_type, &validation_key)?
+                        let expected_validation_field =
+                            Self::get_validation_field(validations, &validation_key)?;
+                        let value = Self::get_value_from_path(
+                            context,
+                            variable,
+                            &expected_validation_field.r#type,
+                        )
+                        .ok_or_else(|| TemplateError {
+                            message: "Variable not found in context".to_string(),
+                            variable: variable.to_string(),
+                        })?;
+                        self.validate_and_convert_value(
+                            value,
+                            &expected_validation_field.r#type,
+                            &validation_key,
+                        )?
                     } else {
                         // For nested variables, just get the value without validation
                         Self::get_value_from_path(context, variable, &ValidationFieldType::Unknown)
@@ -275,10 +294,10 @@ impl Templater {
         }
     }
 
-    fn get_validation_type<'a>(
-        validations: &'a HashMap<String, ValidationFieldType>,
+    fn get_validation_field<'a>(
+        validations: &'a HashMap<String, ValidationField>,
         key: &str,
-    ) -> Result<&'a ValidationFieldType, TemplateError> {
+    ) -> Result<&'a ValidationField, TemplateError> {
         validations.get(key).ok_or_else(|| TemplateError {
             message: format!("Validation not found for key '{}'", key),
             variable: key.to_string(),
@@ -416,7 +435,13 @@ mod tests {
         });
 
         let mut validations = HashMap::new();
-        validations.insert("greeting".to_string(), ValidationFieldType::String);
+        validations.insert(
+            "greeting".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, validations)
@@ -447,7 +472,13 @@ mod tests {
         });
 
         let mut validations = HashMap::new();
-        validations.insert("greeting".to_string(), ValidationFieldType::String);
+        validations.insert(
+            "greeting".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, validations)
@@ -477,7 +508,13 @@ mod tests {
         });
 
         let mut validations = HashMap::new();
-        validations.insert("greeting".to_string(), ValidationFieldType::Number);
+        validations.insert(
+            "greeting".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Number,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, validations)
@@ -510,7 +547,13 @@ mod tests {
         });
 
         let mut validations = HashMap::new();
-        validations.insert("an_object".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "an_object".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, validations)
@@ -563,17 +606,76 @@ mod tests {
         });
 
         let mut template_key_validations = HashMap::new();
-        template_key_validations.insert("an_object".to_string(), ValidationFieldType::Object);
-        template_key_validations.insert("a_number".to_string(), ValidationFieldType::Number);
-        template_key_validations.insert("a_string".to_string(), ValidationFieldType::String);
-        template_key_validations.insert("a_boolean".to_string(), ValidationFieldType::Boolean);
-        template_key_validations.insert("an_array".to_string(), ValidationFieldType::Array);
-        template_key_validations.insert("a_null".to_string(), ValidationFieldType::Null);
-        template_key_validations.insert("a_float".to_string(), ValidationFieldType::Number);
-        template_key_validations.insert("a_number_string".to_string(), ValidationFieldType::String);
-        template_key_validations
-            .insert("a_boolean_string".to_string(), ValidationFieldType::String);
-        template_key_validations.insert("a_array_string".to_string(), ValidationFieldType::String);
+        template_key_validations.insert(
+            "an_object".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_number".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Number,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_string".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_boolean".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Boolean,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "an_array".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Array,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_null".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Null,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_float".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Number,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_number_string".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_boolean_string".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "a_array_string".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, template_key_validations)
@@ -631,9 +733,27 @@ mod tests {
         }});
 
         let mut template_key_validations = HashMap::new();
-        template_key_validations.insert("result".to_string(), ValidationFieldType::String);
-        template_key_validations.insert("obj_results".to_string(), ValidationFieldType::Object);
-        template_key_validations.insert("obj_as_string".to_string(), ValidationFieldType::String);
+        template_key_validations.insert(
+            "result".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "obj_results".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "obj_as_string".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
         let result = templater
             .render("test_template", &context, template_key_validations)
             .unwrap();
@@ -677,8 +797,20 @@ mod tests {
         });
 
         let mut template_key_validations = HashMap::new();
-        template_key_validations.insert("message".to_string(), ValidationFieldType::String);
-        template_key_validations.insert("description".to_string(), ValidationFieldType::String);
+        template_key_validations.insert(
+            "message".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "description".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, template_key_validations)
@@ -719,7 +851,13 @@ mod tests {
         });
 
         let mut template_key_validations = HashMap::new();
-        template_key_validations.insert("user".to_string(), ValidationFieldType::Object);
+        template_key_validations.insert(
+            "user".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, template_key_validations)
@@ -761,8 +899,20 @@ mod tests {
         });
 
         let mut validations = HashMap::new();
-        validations.insert("object_field".to_string(), ValidationFieldType::Object);
-        validations.insert("array_field".to_string(), ValidationFieldType::Array);
+        validations.insert(
+            "object_field".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "array_field".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Array,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("test_template", &context, validations)
@@ -819,7 +969,13 @@ mod tests {
         });
 
         let mut validations = HashMap::new();
-        validations.insert("body".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "body".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("email_template", &context, validations)
@@ -879,10 +1035,34 @@ mod tests {
 
         // Set up validations for the template fields
         let mut validations = HashMap::new();
-        validations.insert("url".to_string(), ValidationFieldType::String);
-        validations.insert("method".to_string(), ValidationFieldType::String);
-        validations.insert("headers".to_string(), ValidationFieldType::Object);
-        validations.insert("body".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "url".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "method".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "headers".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "body".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
 
         // Render the template
         let result = templater
@@ -966,14 +1146,62 @@ mod tests {
 
         // Set up validations - all strings since we want to preserve formatting
         let mut validations = HashMap::new();
-        validations.insert("xml_content".to_string(), ValidationFieldType::String);
-        validations.insert("sql_query".to_string(), ValidationFieldType::String);
-        validations.insert("csv_data".to_string(), ValidationFieldType::String);
-        validations.insert("base64_file".to_string(), ValidationFieldType::String);
-        validations.insert("markdown".to_string(), ValidationFieldType::String);
-        validations.insert("yaml_config".to_string(), ValidationFieldType::String);
-        validations.insert("shell_script".to_string(), ValidationFieldType::String);
-        validations.insert("api_response".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "xml_content".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "sql_query".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "csv_data".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "base64_file".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "markdown".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "yaml_config".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "shell_script".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "api_response".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("automation_test", &context, validations)
@@ -1085,7 +1313,13 @@ mod tests {
 
         // Set up validations
         let mut validations = HashMap::new();
-        validations.insert("request".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "request".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
 
         let result = templater
             .render("nested_automation_test", &context, validations)
@@ -1186,22 +1420,61 @@ mod tests {
 
         let mut validations = HashMap::new();
         // All fields use Object validation type
-        validations.insert("object_data".to_string(), ValidationFieldType::Object);
-        validations.insert("array_numbers".to_string(), ValidationFieldType::Object);
-        validations.insert("array_strings".to_string(), ValidationFieldType::Object);
-        validations.insert("array_objects".to_string(), ValidationFieldType::Object);
-        validations.insert("string_object".to_string(), ValidationFieldType::Object);
+        validations.insert(
+            "object_data".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "array_numbers".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "array_strings".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "array_objects".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "string_object".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
         validations.insert(
             "string_array_numbers".to_string(),
-            ValidationFieldType::Object,
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
         );
         validations.insert(
             "string_array_strings".to_string(),
-            ValidationFieldType::Object,
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
         );
         validations.insert(
             "string_array_objects".to_string(),
-            ValidationFieldType::Object,
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
         );
 
         let result = templater

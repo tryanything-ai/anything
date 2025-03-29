@@ -50,12 +50,20 @@ pub enum InputFieldType {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ValidationField {
     pub r#type: ValidationFieldType,
+    #[serde(default = "default_strict")]
+    pub strict: bool,
+}
+
+// Add this function to provide the default value for strict
+fn default_strict() -> bool {
+    true
 }
 
 impl Default for ValidationField {
     fn default() -> Self {
         ValidationField {
             r#type: ValidationFieldType::Unknown,
+            strict: true,
         }
     }
 }
@@ -101,4 +109,3 @@ pub struct JsonSchema {
     #[serde(rename = "additionalProperties")]
     pub additional_properties: Option<bool>,
 }
-
