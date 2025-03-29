@@ -28,6 +28,7 @@ export function JsonSchemaForm({
   disabled = false,
   showInputsExplorer = false,
   showResultsExplorer = false,
+  onToggleStrictMode,
 }: any): JSX.Element {
   const {
     explorer: { registerCallback, unRegisterCallback },
@@ -251,6 +252,9 @@ export function JsonSchemaForm({
                 onValueChange={(value: any) =>
                   handleFieldChange(fieldName, value)
                 }
+                toggleStrictMode={(fieldName: string, strict: boolean) =>
+                  onToggleStrictMode(fieldName, strict)
+                }
                 disabled={disabled}
                 name={field.name}
                 label={field.label}
@@ -258,6 +262,7 @@ export function JsonSchemaForm({
                 description={field.description}
                 isVisible={field.isVisible}
                 required={field.required}
+                strict={field.strict}
                 provider={field.provider}
                 showInputsExplorer={showInputsExplorer}
                 showResultsExplorer={showResultsExplorer}

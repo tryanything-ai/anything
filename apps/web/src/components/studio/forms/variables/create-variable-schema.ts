@@ -15,6 +15,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             inputType: "text", //Used to pick UI element on client
         },
         "x-any-validation": {
+            "strict": true, 
             type: "string", //Used to assist template renderer on server give correct types from variables
         }
     },
@@ -25,6 +26,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             inputType: "number_or_variable",
         },
         "x-any-validation": {
+            "strict": true, 
             type: "number",
         }
     },
@@ -35,6 +37,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             inputType: "boolean_or_variable",
         },
         "x-any-validation": {
+            "strict": true, 
             type: "boolean",
         }
     },
@@ -45,6 +48,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             inputType: "html_or_variable",
         },
         "x-any-validation": {
+            "strict": true, 
             type: "string",
         }
     },
@@ -55,6 +59,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             inputType: "xml_or_variable",
         },
         "x-any-validation": {
+            "strict": true, 
             type: "string",
         }
     },
@@ -65,6 +70,7 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
             inputType: "object_or_variable",
         },
         "x-any-validation": {
+            "strict": true, 
             type: "object",
         }
     },
@@ -73,7 +79,8 @@ export const VARIABLE_TYPES_JSF_PRESENTATION_AND_ANY_VALIDATION: any = {
         "x-jsf-presentation": {
             inputType: "account",
         },
-        "x-any-validation": {   
+        "x-any-validation": {
+            "strict": true,    
             type: "object",
         }
     }
@@ -91,7 +98,8 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 "inputType": "simple_text"
             },
             "x-any-validation": {
-                "type": "string"
+                "strict": true, 
+                "type": "string",
             }
         },
         "type": {
@@ -133,6 +141,7 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 "inputType": "select_or_variable"
             },
             "x-any-validation": {
+                "strict": true, 
                 "type": "string"
             }
         }, 
@@ -154,6 +163,7 @@ export let CREATE_VARIABLE_SCHEMA: any = {
                 "inputType": "select_or_variable"
             },
             "x-any-validation": {
+                "strict": true, 
                 "type": "string"
             }
         }

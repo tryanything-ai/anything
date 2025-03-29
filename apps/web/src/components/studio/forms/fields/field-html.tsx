@@ -31,10 +31,24 @@ export default function CodeMirrorFieldHtml({
   className,
   showInputsExplorer,
   showResultsExplorer,
+  toggleStrictMode,
 }: any) {
   const {
-    workflow: { setShowExplorer, showExplorer, setExplorerTab },
+    workflow: {
+      setShowExplorer,
+      showExplorer,
+      setExplorerTab,
+      selected_node_data,
+    },
   } = useAnything();
+
+  // Directly access the strict value
+  const schemaName = showResultsExplorer
+    ? "inputs_schema"
+    : "plugin_config_schema";
+  const strict =
+    selected_node_data?.[schemaName]?.properties?.[name]?.["x-any-validation"]
+      ?.strict ?? true;
 
   const [editorValue, setEditorValue] = React.useState(value || "");
   const editorRef = React.useRef<any>(null);
@@ -102,6 +116,37 @@ export default function CodeMirrorFieldHtml({
         {/* Moved controls outside of scroll area and increased z-index */}
         <div className="absolute -top-7 right-0 z-50 flex gap-1">
           <TooltipProvider>
+            {showResultsExplorer && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-6 px-2 font-medium",
+                      strict
+                        ? "text-[8px] tracking-wider"
+                        : "text-[8px] tracking-wider",
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleStrictMode(name, !strict);
+                    }}
+                  >
+                    {strict ? "STRICT" : "forgiving"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="z-[60]">
+                  <p>
+                    {strict
+                      ? "Switch to forgiving mode. Missing variables will return defaults."
+                      : "Switch to strict mode. Missing variables will make action fail."}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

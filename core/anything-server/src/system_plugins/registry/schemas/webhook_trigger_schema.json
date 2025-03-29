@@ -65,6 +65,7 @@
               "inputType": "select_or_variable"
             }, 
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
         }, 
@@ -95,6 +96,7 @@
               "inputType": "select_or_variable"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -107,6 +109,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -119,6 +122,7 @@
               "inputType": "text"
               },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -131,6 +135,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -143,6 +148,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           }
@@ -219,6 +225,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -230,6 +237,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -241,6 +249,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -252,6 +261,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -263,6 +273,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           },
@@ -274,6 +285,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true, 
               "type": "string"
             }
           }

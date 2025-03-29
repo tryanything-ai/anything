@@ -19,11 +19,17 @@ export default function WorkflowSettingsForm(): JSX.Element {
   console.log("input in worfklow-settings-form", input);
 
   const { fields, handleValidation } = useMemo(() => {
-    return createHeadlessForm(EDIT_FLOW_SCHEMA, {
+    let results = createHeadlessForm(EDIT_FLOW_SCHEMA, {
       initialValues: input,
     });
-  }, [input]);
+  // //Used to add "strict" feature kinda sideloading jsonschema form or our validation needs
+  //   results.fields = results.fields.map((field: any) => ({
+  //     ...field,
+  //     strict: EDIT_FLOW_SCHEMA.properties[field.name]?.["x-any-validation"]?.strict || true,
+  //   }));
 
+    return results;
+  }, [input]);
   async function handleOnSubmit(formValues: any) {
     await updateWorkflow(formValues);
     console.log("Submitted!", formValues);
@@ -37,6 +43,7 @@ export default function WorkflowSettingsForm(): JSX.Element {
         fields={fields}
         initialValues={input}
         handleValidation={handleValidation}
+        // onToggleStrictMode={(fieldName: string, strict: boolean) => toggleStrictMode(fieldName, strict)}
       />
     </div>
   );

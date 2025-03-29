@@ -17,9 +17,18 @@ export default function ActionDisplayForm(): JSX.Element {
   };
 
   const { fields, handleValidation } = useMemo(() => {
-    return createHeadlessForm(EDIT_ACTION_DISPLAY_SCHEMA, {
+    let results = createHeadlessForm(EDIT_ACTION_DISPLAY_SCHEMA, {
       initialValues: input,
     });
+    //Used to add "strict" feature kinda sideloading jsonschema form or our validation needs
+    results.fields = results.fields.map((field: any) => ({
+      ...field,
+      strict:
+        EDIT_ACTION_DISPLAY_SCHEMA.properties[field.name]?.["x-any-validation"]
+          ?.strict || true,
+    }));
+
+    return results;
   }, [input]);
 
   async function handleOnSubmit(formValues: any) {
@@ -30,6 +39,24 @@ export default function ActionDisplayForm(): JSX.Element {
     console.log("Submitted!", formValues);
   }
 
+  // async function toggleStrictMode(field_name: string, strict: boolean) {
+  //   await updateNodeData(
+  //     [
+  //       "plugin_config_schema",
+  //       "properties",
+  //       field_name,
+  //       "x-any-validation",
+  //       "strict",
+  //     ],
+  //     [strict],
+  //   );
+  //   console.log(
+  //     "[ACTION DISPLAY FORM] Toggled Strict Mode!",
+  //     field_name,
+  //     strict,
+  //   );
+  // }
+
   return (
     <div className="rounded-lg border p-4">
       <JsonSchemaForm
@@ -38,6 +65,9 @@ export default function ActionDisplayForm(): JSX.Element {
         fields={fields}
         initialValues={input}
         handleValidation={handleValidation}
+        // onToggleStrictMode={(fieldName: string, strict: boolean) =>
+        //   toggleStrictMode(fieldName, strict)
+        // }
       />
     </div>
   );

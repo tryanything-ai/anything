@@ -36,6 +36,7 @@
             "inputType": "select_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         },
@@ -48,6 +49,7 @@
             "inputType": "object_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "object"
           }
         },
@@ -60,6 +62,7 @@
             "inputType": "text"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         }, 
@@ -72,6 +75,7 @@
             "inputType": "html_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         },
@@ -84,6 +88,7 @@
             "inputType": "xml_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         }
@@ -174,6 +179,7 @@
             "inputType": "text"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         },
@@ -186,6 +192,7 @@
             "inputType": "text"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         },
@@ -198,6 +205,7 @@
             "inputType": "object_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "object"
           }
         },
@@ -210,6 +218,7 @@
             "inputType": "html_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         },
@@ -222,6 +231,7 @@
             "inputType": "xml_or_variable"
           },
           "x-any-validation": {
+            "strict": true,
             "type": "string"
           }
         }

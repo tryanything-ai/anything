@@ -26,6 +26,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true,
               "type": "string"
             }
           }
@@ -51,6 +52,7 @@
               "inputType": "text"
             },
             "x-any-validation": {
+              "strict": true,
               "type": "string"
             }
           }

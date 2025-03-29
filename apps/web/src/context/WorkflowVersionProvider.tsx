@@ -38,6 +38,8 @@ import { findConflictFreeId } from "@/lib/studio/helpers";
 import { useAccounts } from "./AccountsContext";
 import { useWorkflowVersionControl } from "./WorkflowVersionControlContext";
 import { createClient } from "@/lib/supabase/client";
+import { useAnything } from "@/context/AnythingContext";
+
 export enum PanelTab {
   SETTINGS = "settings",
   CONFIG = "config",
@@ -93,6 +95,11 @@ export interface WorkflowVersionContextInterface {
   addNode: (node_data: any, position: { x: number; y: number }) => void;
   deleteNode: (id: string) => void;
   updateNodeData: (update_key: string[], data: any[]) => Promise<boolean>;
+  updateInputStrictMode: (
+    schema_name: string,
+    fieldName: string,
+    strict: boolean,
+  ) => Promise<boolean>;
   updateWorkflow: (args: UpdateWorklowArgs) => Promise<void>;
   publishWorkflowVersion: () => Promise<void>;
   getActionIcon: (action_id: string) => string;
@@ -136,6 +143,7 @@ export const WorkflowVersionContext =
     addNode: () => {},
     deleteNode: () => {},
     updateNodeData: async () => false,
+    updateInputStrictMode: async () => false,
     updateWorkflow: async () => {},
     publishWorkflowVersion: async () => {},
     getActionIcon: () => "",
@@ -652,8 +660,6 @@ export const WorkflowVersionProvider = ({
             // const parsedValue = parseJsonRecursively(data[index]);
             // const parsedValue = newData[index];
 
-            // console.log(parsedValue);
-
             //TODO: This is kinda a hot fix for webhook reponse not allowing the use of other styles of responses
             // if (
             //   parsedValue &&
@@ -886,6 +892,53 @@ export const WorkflowVersionProvider = ({
     };
   }, [workflowId, workflowVersionId]);
 
+  const updateInputStrictMode = async (
+    schema_name: string,
+    fieldName: string,
+    strict: boolean,
+  ): Promise<boolean> => {
+    try {
+      const newNodes = cloneDeep(nodes);
+
+      let updatedNodes = newNodes.map((newNode) => {
+        if (newNode.id === selectedNodeId) {
+          // Ensure the path exists
+          if (!newNode.data[schema_name]) {
+            newNode.data[schema_name] = { properties: {} };
+          }
+          if (!newNode.data[schema_name].properties) {
+            newNode.data[schema_name].properties = {};
+          }
+          if (!newNode.data[schema_name].properties[fieldName]) {
+            newNode.data[schema_name].properties[fieldName] = {};
+          }
+
+          // Update the strict value
+          newNode.data[schema_name].properties[fieldName]["x-any-validation"] =
+            {
+              ...(newNode.data[schema_name].properties[fieldName][
+                "x-any-validation"
+              ] || {}),
+              strict: strict,
+            };
+        }
+        console.log("[UPDATE STRICT MODE] Updated Node", newNode);
+        return newNode;
+      });
+
+      // Call saveFlowVersion with the latest state
+      saveFlowVersionImmediate(updatedNodes, edges);
+
+      // Update the state with the latest state
+      setNodes(updatedNodes);
+
+      return true;
+    } catch (error) {
+      console.log("[UPDATE STRICT MODE] Error updating strict mode", error);
+      return false;
+    }
+  };
+
   return (
     <WorkflowVersionContext.Provider
       value={{
@@ -928,9 +981,43 @@ export const WorkflowVersionProvider = ({
         updateNodeData,
         updateWorkflow,
         publishWorkflowVersion,
+        updateInputStrictMode,
       }}
     >
       {children}
     </WorkflowVersionContext.Provider>
   );
 };
+
+// export const useFieldValidation = (schemaName: string, fieldName: string) => {
+//   const {
+//     workflow: { selected_node_data, nodes, selected_action_id },
+//   } = useAnything();
+
+//   return useMemo(() => {
+//     // Find the current node directly from nodes array to get latest state
+//     const currentNode = nodes.find((node) => node.id === selected_action_id);
+//     const nodeData = currentNode?.data;
+
+//     if (!nodeData || !schemaName || !fieldName) {
+//       return {
+//         strict: true, // default to strict
+//         validationType: "unknown",
+//       };
+//     }
+
+//     const schema = nodeData[schemaName as keyof Action];
+//     if (!schema?.properties?.[fieldName]?.["x-any-validation"]) {
+//       return {
+//         strict: true, // default to strict
+//         validationType: "unknown",
+//       };
+//     }
+
+//     const validation = schema.properties[fieldName]["x-any-validation"];
+//     return {
+//       strict: validation.strict ?? true, // default to strict if not specified
+//       validationType: validation.type || "unknown",
+//     };
+//   }, [nodes, selected_action_id, schemaName, fieldName]); // Update dependencies to include nodes and selected_action_id
+// };

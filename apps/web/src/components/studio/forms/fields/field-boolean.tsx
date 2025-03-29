@@ -32,10 +32,24 @@ export default function CodeMirrorFieldBoolean({
   onKeyUp,
   showInputsExplorer,
   showResultsExplorer,
+  toggleStrictMode,
 }: any) {
   const {
-    workflow: { setShowExplorer, showExplorer, setExplorerTab },
+    workflow: {
+      setShowExplorer,
+      showExplorer,
+      setExplorerTab,
+      selected_node_data,
+    },
   } = useAnything();
+
+  // Directly access the strict value
+  const schemaName = showResultsExplorer
+    ? "inputs_schema"
+    : "plugin_config_schema";
+  const strict =
+    selected_node_data?.[schemaName]?.properties?.[name]?.["x-any-validation"]
+      ?.strict ?? true;
 
   // Check if value is a valid boolean string
   const isValidBoolean = (val: any) => {
@@ -141,6 +155,37 @@ export default function CodeMirrorFieldBoolean({
             {isVariable && (
               <div className="flex gap-1">
                 <TooltipProvider>
+                  {showResultsExplorer && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-6 px-2 font-medium",
+                            strict
+                              ? "text-[8px] tracking-wider"
+                              : "text-[8px] tracking-wider",
+                          )}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleStrictMode(name, !strict);
+                          }}
+                        >
+                          {strict ? "STRICT" : "forgiving"}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="z-[60]">
+                        <p>
+                          {strict
+                            ? "Switch to forgiving mode. Missing variables will return defaults."
+                            : "Switch to strict mode. Missing variables will make action fail."}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+
                   {(showInputsExplorer || showResultsExplorer) && (
                     <Tooltip>
                       <TooltipTrigger asChild>

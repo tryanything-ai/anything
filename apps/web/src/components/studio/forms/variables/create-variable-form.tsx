@@ -56,9 +56,18 @@ export default function CreateVariableForm(): JSX.Element {
   }
 
   const { fields, handleValidation } = useMemo(() => {
-    return createHeadlessForm(CREATE_VARIABLE_SCHEMA, {
+    let results = createHeadlessForm(CREATE_VARIABLE_SCHEMA, {
       initialValues: the_variable,
     });
+    //Used to add "strict" feature kinda sideloading jsonschema form or our validation needs
+    results.fields = results.fields.map((field: any) => ({
+      ...field,
+      strict:
+        CREATE_VARIABLE_SCHEMA.properties[field.name]?.["x-any-validation"]
+          ?.strict || true,
+    }));
+
+    return results;
   }, [the_variable]);
 
   async function handleOnSubmit(formValues: any) {

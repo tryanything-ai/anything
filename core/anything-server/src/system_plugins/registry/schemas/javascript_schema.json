@@ -31,6 +31,7 @@
                 "inputType": "javascript_or_variable"
               }, 
               "x-any-validation": {
+                "strict": true,
                 "type": "string"
               }
           }

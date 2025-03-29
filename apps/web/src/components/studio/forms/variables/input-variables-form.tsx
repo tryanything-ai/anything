@@ -9,6 +9,7 @@ export default function InputVariablesForm(): JSX.Element {
       selected_node_inputs: selected_node_variables,
       selected_node_inputs_schema: selected_node_variables_schema,
       updateNodeData,
+      updateInputStrictMode,
       setShowExplorer,
       explorerTab,
       showExplorer,
@@ -44,23 +45,15 @@ export default function InputVariablesForm(): JSX.Element {
         initialValues: selected_node_variables,
       });
 
-      // Add detailed field logging
-      console.log(
-        "[INPUT VARIABLES FORM DEBUG] Created fields details:",
-        result.fields.map((field: any) => ({
-          name: field.name,
-          type: field.type,
-          inputType: field.inputType,
-          isVisible: field.isVisible,
-          default: field.default,
-          value: field.value,
-        })),
-      );
+      //Used to add "strict" feature kinda sideloading jsonschema form or our validation needs
+      result.fields = result.fields.map((field: any) => ({
+        ...field,
+        strict:
+          selected_node_variables_schema.properties[field.name]?.[
+            "x-any-validation"
+          ]?.strict || true,
+      }));
 
-      console.log(
-        "[INPUT VARIABLES FORM DEBUG] Created fields:",
-        result.fields,
-      );
       return result;
     } else {
       console.log("[INPUT VARIABLES FORM DEBUG] Skipping field Creation");
@@ -75,6 +68,15 @@ export default function InputVariablesForm(): JSX.Element {
     await updateNodeData(["inputs"], [formValues]);
   }
 
+  async function toggleStrictMode(field_name: string, strict: boolean) {
+    await updateInputStrictMode("inputs_schema", field_name, strict);
+    console.log(
+      "[INPUT VARIABLES FORM] Toggled Strict Mode!",
+      field_name,
+      strict,
+    );
+  }
+
   return (
     <>
       {Object.keys(selected_node_variables_schema?.properties || {}).length ===
@@ -83,7 +85,7 @@ export default function InputVariablesForm(): JSX.Element {
       ) : (
         <JsonSchemaForm
           name="input-variables-form"
-          onSubmit={handleOnSubmit}
+          onSubmit={handleOnSubmit} 
           fields={fields}
           // onFocus={(fieldName: string) => {
           //   if (explorerTab !== "results") {
@@ -93,6 +95,9 @@ export default function InputVariablesForm(): JSX.Element {
           //     setShowExplorer(true);
           //   }
           // }}
+          onToggleStrictMode={(fieldName: string, strict: boolean) =>
+            toggleStrictMode(fieldName, strict)
+          }
           initialValues={selected_node_variables}
           handleValidation={handleValidation}
           showInputsExplorer={false}

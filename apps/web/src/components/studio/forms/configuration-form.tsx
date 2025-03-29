@@ -14,6 +14,7 @@ export default function ConfigurationForm(): JSX.Element {
       selected_node_data,
       selected_node_plugin_config_schema: selected_node_input_schema,
       updateNodeData,
+      updateInputStrictMode,
       explorerTab,
       setExplorerTab,
       showExplorer,
@@ -38,18 +39,8 @@ export default function ConfigurationForm(): JSX.Element {
         initialValues: selected_node_input,
       });
 
-      // Add detailed field logging
-      console.log(
-        "[CONFIGURATION FORM DEBUG] Created fields details:",
-        result.fields.map((field: any) => ({
-          name: field.name,
-          type: field.type,
-          inputType: field.inputType,
-          isVisible: field.isVisible,
-          default: field.default,
-          value: field.value,
-        })),
-      );
+      console.log("[CONFIGURATION FORM DEBUG] Result:", result);
+
 
       return result;
     } else {
@@ -61,6 +52,19 @@ export default function ConfigurationForm(): JSX.Element {
   async function handleOnSubmit(formValues: any) {
     await updateNodeData(["plugin_config"], [formValues]);
     console.log("[CONFIGURATION FORM] Submitted!", formValues);
+  }
+
+  async function toggleStrictMode(field_name: string, strict: boolean) {
+    await updateInputStrictMode(
+      "plugin_config_schema",
+      field_name,
+      strict,
+    );
+    console.log(
+      "[CONFIGURATION FORM] Toggled Strict Mode!",
+      field_name,
+      strict,
+    );
   }
 
   console.log("[RENDERING INPUTS FORM]");
@@ -91,13 +95,16 @@ export default function ConfigurationForm(): JSX.Element {
             formContext="configuration"
             showInputsExplorer={true}
             showResultsExplorer={false}
+            onToggleStrictMode={(fieldName: string, strict: boolean) =>
+              toggleStrictMode(fieldName, strict)
+            }
             // onFocus={(fieldName: string) => {
-              // if (explorerTab !== "variables") {
-              //   setExplorerTab("variables");
-              // }
-              // if (!showExplorer) {
-              //   setShowExplorer(true);
-              // }
+            // if (explorerTab !== "variables") {
+            //   setExplorerTab("variables");
+            // }
+            // if (!showExplorer) {
+            //   setShowExplorer(true);
+            // }
             // }}
             initialValues={selected_node_input}
             handleValidation={handleValidation}

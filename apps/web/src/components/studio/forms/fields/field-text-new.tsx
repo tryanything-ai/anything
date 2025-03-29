@@ -3,7 +3,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { Label } from "@repo/ui/components/ui/label";
 import { cn } from "@repo/ui/lib/utils";
 import { propsPlugin } from "./codemirror-utils";
-import { Fullscreen, Variable } from "lucide-react";
+import { Fullscreen, Variable, AlertCircle } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { useAnything } from "@/context/AnythingContext";
 import { ExplorersPanel } from "@/components/studio/variable-explorers/explorer-panel";
-
+// import { useFieldValidation } from "@/context/WorkflowVersionProvider";
 export default function CodeMirrorFieldText({
   type,
   name,
@@ -34,16 +34,31 @@ export default function CodeMirrorFieldText({
   required,
   showInputsExplorer,
   showResultsExplorer,
+  toggleStrictMode,
 }: any) {
   const {
-    workflow: { setShowExplorer, showExplorer, setExplorerTab },
+    workflow: {
+      setShowExplorer,
+      showExplorer,
+      setExplorerTab,
+      selected_node_data,
+    },
   } = useAnything();
+
+  // Directly access the strict value
+  const schemaName = showResultsExplorer
+    ? "inputs_schema"
+    : "plugin_config_schema";
+  const strict =
+    selected_node_data?.[schemaName]?.properties?.[name]?.["x-any-validation"]
+      ?.strict ?? true;
 
   // Convert value to string if it isn't already
   const initialValue = typeof value === "string" ? value : String(value || "");
   const [editorValue, setEditorValue] = React.useState(initialValue);
   const editorRef = React.useRef<any>(null);
   const [isExpanded, setIsExpanded] = React.useState(false);
+  // const [isStrict, setIsStrict] = React.useState(true);
 
   const handleChange = React.useCallback(
     (val: string) => {
@@ -109,6 +124,37 @@ export default function CodeMirrorFieldText({
         {/* Moved controls outside of scroll area and ensured they stay on top */}
         <div className="absolute -top-7 right-0 z-50 flex gap-1">
           <TooltipProvider>
+            {showResultsExplorer && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-6 px-2 font-medium",
+                      strict
+                        ? "text-[8px] tracking-wider"
+                        : "text-[8px] tracking-wider",
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleStrictMode(name, !strict);
+                    }}
+                  >
+                    {strict ? "STRICT" : "forgiving"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="z-[60]">
+                  <p>
+                    {strict
+                      ? "Switch to forgiving mode. Missing variables will return defaults."
+                      : "Switch to strict mode. Missing variables will make action fail."}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {(showInputsExplorer || showResultsExplorer) && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -116,7 +162,9 @@ export default function CodeMirrorFieldText({
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       if (setShowExplorer && setExplorerTab) {
                         setExplorerTab(
                           showInputsExplorer ? "inputs" : "results",
@@ -140,7 +188,11 @@ export default function CodeMirrorFieldText({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => setIsExpanded((prev) => !prev)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsExpanded((prev) => !prev);
+                  }}
                 >
                   <Fullscreen size={14} />
                 </Button>
