@@ -204,11 +204,49 @@ impl Templater {
                             context,
                             variable,
                             &expected_validation_field.r#type,
-                        )
-                        .ok_or_else(|| TemplateError {
-                            message: format!("Variable not found in context: {}", variable),
-                            variable: variable.to_string(),
-                        })?;
+                        );
+                        let value = match value {
+                            Some(value) => value,
+                            None => {
+                                if !expected_validation_field.strict {
+                                    match expected_validation_field.r#type {
+                                        ValidationFieldType::String => {
+                                            Value::String("".to_string())
+                                        }
+                                        ValidationFieldType::Number => {
+                                            Value::Number(serde_json::Number::from(0))
+                                        }
+                                        ValidationFieldType::Boolean => Value::Bool(false),
+                                        ValidationFieldType::Array => Value::Array(vec![]),
+                                        ValidationFieldType::Object => {
+                                            Value::Object(serde_json::Map::new())
+                                        }
+                                        ValidationFieldType::Null => Value::Null,
+                                        _ => {
+                                            return Err(TemplateError {
+                                                message: format!(
+                                                    "Unsupported validation type for variable: {}",
+                                                    variable
+                                                ),
+                                                variable: variable.to_string(),
+                                            });
+                                        }
+                                    }
+                                } else {
+                                    return Err(TemplateError {
+                                        message: format!(
+                                            "Variable not found in context: {}",
+                                            variable
+                                        ),
+                                        variable: variable.to_string(),
+                                    });
+                                }
+                            }
+                        };
+                        // .ok_or_else(|| TemplateError {
+                        //     message: "Variable not found in context".to_string(),
+                        //     variable: variable.to_string(),
+                        // })?;
                         let value = self.validate_and_convert_value(
                             value,
                             &expected_validation_field.r#type,
@@ -221,11 +259,60 @@ impl Templater {
                             context,
                             variable,
                             &ValidationFieldType::Unknown,
-                        )
-                        .ok_or_else(|| TemplateError {
-                            message: format!("Variable not found in context: {}", variable),
-                            variable: variable.to_string(),
-                        })?;
+                        );
+                        let value = match value {
+                            Some(value) => value,
+                            None => {
+                                // Check if the parent field has non-strict validation
+                                if !path.is_empty() {
+                                    // Get the first element of path (top-level field name)
+                                    let top_field = &path[0];
+                                    // Look up validation for this field
+                                    if let Ok(field_validation) =
+                                        Self::get_validation_field(validations, top_field)
+                                    {
+                                        // If parent field is non-strict, return appropriate default value
+                                        if !field_validation.strict {
+                                            match field_validation.r#type {
+                                                ValidationFieldType::String => {
+                                                    return Ok(Value::String("".to_string()))
+                                                }
+                                                ValidationFieldType::Number => {
+                                                    return Ok(Value::Number(
+                                                        serde_json::Number::from(0),
+                                                    ))
+                                                }
+                                                ValidationFieldType::Boolean => {
+                                                    return Ok(Value::Bool(false))
+                                                }
+                                                ValidationFieldType::Array => {
+                                                    return Ok(Value::Array(vec![]))
+                                                }
+                                                ValidationFieldType::Object => {
+                                                    return Ok(
+                                                        Value::Object(serde_json::Map::new()),
+                                                    )
+                                                }
+                                                ValidationFieldType::Null => {
+                                                    return Ok(Value::Null)
+                                                }
+                                                _ => return Ok(Value::Null),
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Otherwise error as before
+                                return Err(TemplateError {
+                                    message: format!("Variable not found in context: {}", variable),
+                                    variable: variable.to_string(),
+                                });
+                            }
+                        };
+                        // .ok_or_else(|| TemplateError {
+                        //     message: format!("Variable not found in context: {}", variable),
+                        //     variable: variable.to_string(),
+                        // })?;
                         return Ok(value);
                     }
                 }
@@ -252,11 +339,49 @@ impl Templater {
                             context,
                             variable,
                             &expected_validation_field.r#type,
-                        )
-                        .ok_or_else(|| TemplateError {
-                            message: "Variable not found in context".to_string(),
-                            variable: variable.to_string(),
-                        })?;
+                        );
+                        let value = match value {
+                            Some(value) => value,
+                            None => {
+                                if !expected_validation_field.strict {
+                                    match expected_validation_field.r#type {
+                                        ValidationFieldType::String => {
+                                            Value::String("".to_string())
+                                        }
+                                        ValidationFieldType::Number => {
+                                            Value::Number(serde_json::Number::from(0))
+                                        }
+                                        ValidationFieldType::Boolean => Value::Bool(false),
+                                        ValidationFieldType::Array => Value::Array(vec![]),
+                                        ValidationFieldType::Object => {
+                                            Value::Object(serde_json::Map::new())
+                                        }
+                                        ValidationFieldType::Null => Value::Null,
+                                        _ => {
+                                            return Err(TemplateError {
+                                                message: format!(
+                                                    "Unsupported validation type for variable: {}",
+                                                    variable
+                                                ),
+                                                variable: variable.to_string(),
+                                            });
+                                        }
+                                    }
+                                } else {
+                                    return Err(TemplateError {
+                                        message: format!(
+                                            "Variable not found in context: {}",
+                                            variable
+                                        ),
+                                        variable: variable.to_string(),
+                                    });
+                                }
+                            }
+                        };
+                        // .ok_or_else(|| TemplateError {
+                        //     message: "Variable not found in context".to_string(),
+                        //     variable: variable.to_string(),
+                        // })?;
                         self.validate_and_convert_value(
                             value,
                             &expected_validation_field.r#type,
@@ -264,11 +389,61 @@ impl Templater {
                         )?
                     } else {
                         // For nested variables, just get the value without validation
-                        Self::get_value_from_path(context, variable, &ValidationFieldType::Unknown)
-                            .ok_or_else(|| TemplateError {
-                                message: "Variable not found in context".to_string(),
-                                variable: variable.to_string(),
-                            })?
+                        let value = Self::get_value_from_path(
+                            context,
+                            variable,
+                            &ValidationFieldType::Unknown,
+                        );
+                        let value = match value {
+                            Some(value) => value,
+                            None => {
+                                // Check if the parent field has non-strict validation
+                                if !path.is_empty() {
+                                    // Get the first element of path (top-level field name)
+                                    let top_field = &path[0];
+                                    // Look up validation for this field
+                                    if let Ok(field_validation) =
+                                        Self::get_validation_field(validations, top_field)
+                                    {
+                                        // If parent field is non-strict, return appropriate default value
+                                        if !field_validation.strict {
+                                            match field_validation.r#type {
+                                                ValidationFieldType::String => {
+                                                    return Ok(Value::String("".to_string()))
+                                                }
+                                                ValidationFieldType::Number => {
+                                                    return Ok(Value::Number(
+                                                        serde_json::Number::from(0),
+                                                    ))
+                                                }
+                                                ValidationFieldType::Boolean => {
+                                                    return Ok(Value::Bool(false))
+                                                }
+                                                ValidationFieldType::Array => {
+                                                    return Ok(Value::Array(vec![]))
+                                                }
+                                                ValidationFieldType::Object => {
+                                                    return Ok(
+                                                        Value::Object(serde_json::Map::new()),
+                                                    )
+                                                }
+                                                ValidationFieldType::Null => {
+                                                    return Ok(Value::Null)
+                                                }
+                                                _ => return Ok(Value::Null),
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Otherwise error as before
+                                return Err(TemplateError {
+                                    message: format!("Variable not found in context: {}", variable),
+                                    variable: variable.to_string(),
+                                });
+                            }
+                        };
+                        value
                     };
 
                     let replacement = match value {
@@ -294,14 +469,17 @@ impl Templater {
         }
     }
 
-    fn get_validation_field<'a>(
-        validations: &'a HashMap<String, ValidationField>,
+    fn get_validation_field(
+        validations: &HashMap<String, ValidationField>,
         key: &str,
-    ) -> Result<&'a ValidationField, TemplateError> {
-        validations.get(key).ok_or_else(|| TemplateError {
-            message: format!("Validation not found for key '{}'", key),
-            variable: key.to_string(),
-        })
+    ) -> Result<ValidationField, TemplateError> {
+        validations
+            .get(key)
+            .cloned() // Clone the ValidationField instead of returning a reference
+            .ok_or_else(|| TemplateError {
+                message: format!("Validation not found for key '{}'", key),
+                variable: key.to_string(),
+            })
     }
 
     fn validate_and_convert_value(
@@ -1522,6 +1700,79 @@ mod tests {
                 {"id": 1, "name": "first"},
                 {"id": 2, "name": "second"}
             ])
+        );
+    }
+    #[test]
+    fn test_deep_non_strict_validation() {
+        let mut templater = Templater::new();
+        templater.add_template(
+            "test_template",
+            json!({
+                "result": "{{variables.data.items[0].subitems[4].value}}",
+                "obj_results": "{{variables.data.items[0]}}",
+                "obj_as_string": "{{variables.data.items[0]}}"
+            }),
+        );
+
+        let context = json!({
+            "variables": {
+                "data": {
+                    "items": [
+                    {
+                        "subitems": [
+                            {"value": "first"},
+                            {"value": "second"},
+                            {"value": 42}
+                        ]
+                    },
+                    {
+                        "subitems": [
+                            {"value": "other"}
+                        ]
+                    }
+                ]
+            }
+        }});
+
+        let mut template_key_validations = HashMap::new();
+        template_key_validations.insert(
+            "result".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+        template_key_validations.insert(
+            "obj_results".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "obj_as_string".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        let result = templater
+            .render("test_template", &context, template_key_validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "result": "",
+                "obj_results": {
+                    "subitems": [
+                        {"value": "first"},
+                        {"value": "second"},
+                        {"value": 42}
+                    ]
+                },
+                "obj_as_string": "{\"subitems\":[{\"value\":\"first\"},{\"value\":\"second\"},{\"value\":42}]}"
+            })
         );
     }
 }
