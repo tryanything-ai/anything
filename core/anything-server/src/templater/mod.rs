@@ -1775,4 +1775,248 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn test_strict_vs_non_strict_validation() {
+        let mut templater = Templater::new();
+
+        // Create a template that includes all the fields we want to test
+        let template = json!({
+            "name": "{{name}}",
+            "age": "{{age}}",
+            "address": "{{address}}",
+            "non_existent_field": "{{non_existent_field}}"
+        });
+
+        templater.add_template("test_template", template);
+
+        let context = json!({
+            "name": "John Doe",
+            "age": 30,
+            "address": {
+                "city": "New York",
+                "zip": "10001"
+            }
+            // non_existent_field is intentionally missing
+        });
+
+        let mut template_key_validations = HashMap::new();
+        template_key_validations.insert(
+            "name".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "age".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Number,
+                strict: true,
+            },
+        );
+        template_key_validations.insert(
+            "address".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: false,
+            },
+        );
+        template_key_validations.insert(
+            "non_existent_field".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+
+        let result = templater
+            .render("test_template", &context, template_key_validations)
+            .unwrap();
+
+        assert_eq!(
+            result,
+            json!({
+                "name": "John Doe",
+                "age": 30,
+                "address": {
+                    "city": "New York",
+                    "zip": "10001"
+                },
+                "non_existent_field": ""
+            })
+        );
+    }
+
+    #[test]
+    fn test_strict_variable_fails_even_with_non_strict_success() {
+        let mut templater = Templater::new();
+
+        // Template with both strict and non-strict variables
+        let template = json!({
+            "optional_field": "{{variables.optional}}",
+            "required_field": "{{variables.required}}"
+        });
+
+        templater.add_template("test_template", template);
+
+        // Context with variables under the "variables" key
+        let context = json!({
+            "variables": {
+                "optional": "this value exists"
+                // required is intentionally missing
+            }
+        });
+
+        let mut template_key_validations = HashMap::new();
+        template_key_validations.insert(
+            "optional_field".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+        template_key_validations.insert(
+            "required_field".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+
+        // The render should fail because of the missing strict variable
+        let result = templater.render("test_template", &context, template_key_validations);
+
+        assert!(result.is_err());
+        match result {
+            Err(e) => {
+                assert!(e.message.contains("Variable not found in context"));
+                assert_eq!(e.variable, "variables.required");
+            }
+            _ => panic!("Expected an error for missing strict variable"),
+        }
+    }
+
+    #[test]
+    fn test_nested_strict_validation_in_object() {
+        let mut templater = Templater::new();
+
+        // Template with nested variables in an object
+        let template = json!({
+            "name": "{{variables.user.name}}",
+            "email": "{{variables.user.email}}",
+            "preferences": "{{variables.user.preferences}}"
+        });
+
+        templater.add_template("test_template", template);
+
+        // Context with missing nested field
+        let context = json!({
+            "variables": {
+                "user": {
+                    "name": "John Doe",
+                    // email intentionally missing
+                    "preferences": {
+                        "theme": "dark"
+                    }
+                }
+            }
+        });
+
+        let mut template_key_validations = HashMap::new();
+
+        template_key_validations.insert(
+            "name".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+
+        template_key_validations.insert(
+            "preferences".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+
+        template_key_validations.insert(
+            "email".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+
+        // Even though the parent object exists, the missing email should cause a failure
+        let result = templater.render("test_template", &context, template_key_validations);
+
+        println!("result: {:?}", result);
+
+        assert!(result.is_err());
+        match result {
+            Err(e) => {
+                assert!(e.message.contains("Variable not found in context"));
+                assert_eq!(e.variable, "variables.user.email");
+            }
+            _ => panic!("Expected an error for missing nested strict variable"),
+        }
+    }
+
+    #[test]
+    fn test_array_element_strict_validation() {
+        let mut templater = Templater::new();
+
+        // Template with array access
+        let template = json!({
+            "first_item": "{{variables.items[0]}}",
+            "second_item": "{{variables.items[1]}}",
+            "missing_item": "{{variables.items[5]}}"  // Intentionally accessing non-existent index
+        });
+
+        templater.add_template("test_template", template);
+
+        let context = json!({
+            "variables": {
+                "items": ["first", "second", "third"]
+            }
+        });
+
+        let mut template_key_validations = HashMap::new();
+        // First two fields are non-strict
+        template_key_validations.insert(
+            "first_item".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+        template_key_validations.insert(
+            "second_item".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+        // Last field is strict
+        template_key_validations.insert(
+            "missing_item".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+
+        let result = templater.render("test_template", &context, template_key_validations);
+
+        assert!(result.is_err());
+        match result {
+            Err(e) => {
+                assert!(e.message.contains("Variable not found in context"));
+                assert_eq!(e.variable, "variables.items[5]");
+            }
+            _ => panic!("Expected an error for missing array index with strict validation"),
+        }
+    }
 }
