@@ -128,6 +128,7 @@ impl Templater {
                 }
             }
         }
+        println!("[GET VALUE FROM PATH] {}", current.clone());
         Some(current.clone())
     }
 
@@ -151,20 +152,20 @@ impl Templater {
 
         self.render_value(template, context, &validations, &[])
     }
-
     fn render_value(
         &self,
-        value: &Value,
+        template: &Value,
         context: &Value,
         validations: &HashMap<String, ValidationField>,
         path: &[String],
     ) -> Result<Value, TemplateError> {
-        match value {
+        match template {
             Value::Object(map) => {
                 let mut result = serde_json::Map::new();
                 for (k, v) in map {
                     let mut current_path = path.to_vec();
                     current_path.push(k.clone());
+                    println!("[RENDER VALUE] Current path: {:?} - 1", current_path);
                     if path.is_empty() {
                         let expected_validation_field =
                             Self::get_validation_field(validations, &k)?;
@@ -187,14 +188,17 @@ impl Templater {
             Value::Array(arr) => {
                 let mut result = Vec::new();
                 for v in arr.iter() {
+                    println!("[RENDER VALUE] Current path: {:?} - 2", path);
                     result.push(self.render_value(v, context, validations, path)?);
                 }
                 Ok(Value::Array(result))
             }
             Value::String(s) => {
                 let trimmed = s.trim();
+                //Item is "ALL" variable
                 if trimmed.starts_with("{{") && trimmed.ends_with("}}") {
                     let variable = trimmed[2..trimmed.len() - 2].trim();
+                    println!("[RENDER VALUE] Current path: {:?} - 3", path);
                     // Only validate if this is a top-level path
                     if path.is_empty() {
                         let validation_key = variable.to_string();
@@ -243,10 +247,6 @@ impl Templater {
                                 }
                             }
                         };
-                        // .ok_or_else(|| TemplateError {
-                        //     message: "Variable not found in context".to_string(),
-                        //     variable: variable.to_string(),
-                        // })?;
                         let value = self.validate_and_convert_value(
                             value,
                             &expected_validation_field.r#type,
@@ -265,6 +265,7 @@ impl Templater {
                             None => {
                                 // Check if the parent field has non-strict validation
                                 if !path.is_empty() {
+                                    println!("[RENDER VALUE] Current path: {:?} - 4", path);
                                     // Get the first element of path (top-level field name)
                                     let top_field = &path[0];
                                     // Look up validation for this field
@@ -309,10 +310,6 @@ impl Templater {
                                 });
                             }
                         };
-                        // .ok_or_else(|| TemplateError {
-                        //     message: format!("Variable not found in context: {}", variable),
-                        //     variable: variable.to_string(),
-                        // })?;
                         return Ok(value);
                     }
                 }
@@ -329,9 +326,11 @@ impl Templater {
                     })?;
                     let close_idx = open_idx + close_idx;
                     let variable = result[open_idx + 2..close_idx].trim();
+                    println!("[RENDER VALUE] Current path: {:?} - 5", path);
 
                     // Only validate if this is a top-level path
                     let value = if path.is_empty() {
+                        println!("[RENDER VALUE] Current path: {:?} - 6", path);
                         let validation_key = variable.to_string();
                         let expected_validation_field =
                             Self::get_validation_field(validations, &validation_key)?;
@@ -378,73 +377,73 @@ impl Templater {
                                 }
                             }
                         };
-                        // .ok_or_else(|| TemplateError {
-                        //     message: "Variable not found in context".to_string(),
-                        //     variable: variable.to_string(),
-                        // })?;
                         self.validate_and_convert_value(
                             value,
                             &expected_validation_field.r#type,
                             &validation_key,
                         )?
                     } else {
-                        // For nested variables, just get the value without validation
+                        println!("[RENDER VALUE] Current path: {:?} - 7", path);
+                        // Get the first element of path (top-level field name)
+                        let top_field = &path[0];
+                        let expected_validation_field =
+                            Self::get_validation_field(validations, &top_field)?;
                         let value = Self::get_value_from_path(
                             context,
                             variable,
-                            &ValidationFieldType::Unknown,
+                            &expected_validation_field.r#type,
                         );
+
+                        println!("Validation Field: {:?}", expected_validation_field);
+
                         let value = match value {
                             Some(value) => value,
                             None => {
-                                // Check if the parent field has non-strict validation
-                                if !path.is_empty() {
-                                    // Get the first element of path (top-level field name)
-                                    let top_field = &path[0];
-                                    // Look up validation for this field
-                                    if let Ok(field_validation) =
-                                        Self::get_validation_field(validations, top_field)
-                                    {
-                                        // If parent field is non-strict, return appropriate default value
-                                        if !field_validation.strict {
-                                            match field_validation.r#type {
-                                                ValidationFieldType::String => {
-                                                    return Ok(Value::String("".to_string()))
-                                                }
-                                                ValidationFieldType::Number => {
-                                                    return Ok(Value::Number(
-                                                        serde_json::Number::from(0),
-                                                    ))
-                                                }
-                                                ValidationFieldType::Boolean => {
-                                                    return Ok(Value::Bool(false))
-                                                }
-                                                ValidationFieldType::Array => {
-                                                    return Ok(Value::Array(vec![]))
-                                                }
-                                                ValidationFieldType::Object => {
-                                                    return Ok(
-                                                        Value::Object(serde_json::Map::new()),
-                                                    )
-                                                }
-                                                ValidationFieldType::Null => {
-                                                    return Ok(Value::Null)
-                                                }
-                                                _ => return Ok(Value::Null),
-                                            }
+                                if !expected_validation_field.strict {
+                                    match expected_validation_field.r#type {
+                                        ValidationFieldType::String => {
+                                            Value::String("".to_string())
+                                        }
+                                        ValidationFieldType::Number => {
+                                            Value::Number(serde_json::Number::from(0))
+                                        }
+                                        ValidationFieldType::Boolean => Value::Bool(false),
+                                        ValidationFieldType::Array => Value::Array(vec![]),
+                                        ValidationFieldType::Object => {
+                                            Value::Object(serde_json::Map::new())
+                                        }
+                                        ValidationFieldType::Null => Value::Null,
+                                        _ => {
+                                            return Err(TemplateError {
+                                                message: format!(
+                                                    "Unsupported validation type for variable: {}",
+                                                    variable
+                                                ),
+                                                variable: variable.to_string(),
+                                            });
                                         }
                                     }
+                                } else {
+                                    return Err(TemplateError {
+                                        message: format!(
+                                            "Variable not found in context: {}",
+                                            variable
+                                        ),
+                                        variable: variable.to_string(),
+                                    });
                                 }
-
-                                // Otherwise error as before
-                                return Err(TemplateError {
-                                    message: format!("Variable not found in context: {}", variable),
-                                    variable: variable.to_string(),
-                                });
                             }
                         };
                         value
+
+                        // self.validate_and_convert_value(
+                        //     value,
+                        //     &expected_validation_field.r#type,
+                        //     &top_field,
+                        // )?
                     };
+
+                    println!("Value: {}", value.clone());
 
                     let replacement = match value {
                         Value::String(s) => {
@@ -459,13 +458,14 @@ impl Templater {
                         }
                         _ => value.to_string(),
                     };
+                    println!("Replacement: {}", replacement.clone());
                     result.replace_range(open_idx..close_idx + 2, &replacement);
                     start = open_idx + replacement.len();
                 }
 
                 Ok(Value::String(result))
             }
-            _ => Ok(value.clone()),
+            _ => Ok(template.clone()),
         }
     }
 
@@ -2018,5 +2018,126 @@ mod tests {
             }
             _ => panic!("Expected an error for missing array index with strict validation"),
         }
+    }
+
+    #[test]
+    fn test_email_template_with_mixed_strict_variables() {
+        let mut templater = Templater::new();
+
+        // Email template with various variables
+        let template = json!({
+            "subject": "Welcome {{variables.user.first_name}}!",
+            "to": "{{variables.user.email}}",
+            "from": "{{variables.system.sender_email}}",
+            "template_id": "{{variables.system.template_id}}",
+            "header": "Dear {{variables.user.title}} {{variables.user.last_name}},",
+            "content": "Welcome to {{variables.company.name}}!\n\nYour account has been created with the following details:\n\nDepartment: {{variables.user.department}}\nRole: {{variables.user.role}}\nManager: {{variables.user.manager_name}}\nStart Date: {{variables.user.start_date}}\n\nYour office is located at:\n{{variables.company.address}}\n{{variables.company.city}}, {{variables.company.state}} {{variables.company.zip}}\n\nBest regards,\n{{variables.system.signature}}",
+            "footer": "Contact {{variables.support.email}} for assistance"
+        });
+
+        templater.add_template("welcome_email", template);
+
+        // Context with some missing non-strict variables
+        let context = json!({
+            "variables": {
+                "user": {
+                    "first_name": "John",        // strict
+                    "last_name": "Doe",          // strict
+                    "email": "john@example.com", // strict
+                    "title": "Mr",               // non-strict
+                    "role": "Developer",         // strict
+                    // "department": missing     // non-strict
+                    // "manager_name": missing   // non-strict
+                    "start_date": "2024-03-15"   // strict
+                },
+                "company": {
+                    "name": "TechCorp",          // strict
+                    "address": "123 Tech St",     // non-strict
+                    // "city": missing           // non-strict
+                    "state": "CA",               // non-strict
+                    // "zip": missing            // non-strict
+                },
+                "system": {
+                    "sender_email": "no-reply@techcorp.com",  // strict
+                    "template_id": "welcome-001",             // strict
+                    "signature": "The TechCorp Team"          // strict
+                },
+                // "support": missing entirely   // non-strict
+            }
+        });
+
+        let mut validations = HashMap::new();
+
+        // Add validations for each top-level key
+        validations.insert(
+            "subject".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "to".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "from".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "template_id".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: true,
+            },
+        );
+        validations.insert(
+            "header".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+        validations.insert(
+            "content".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+        validations.insert(
+            "footer".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::String,
+                strict: false,
+            },
+        );
+
+        // The result should contain empty strings for missing non-strict variables
+        // but include all the strict variables that were provided
+        let result = templater
+            .render("welcome_email", &context, validations.clone())
+            .unwrap();
+
+        println!("Result: {}", result);
+
+        // Expected email with empty strings for missing non-strict variables
+        let expected = json!({
+            "subject": "Welcome John!",
+            "to": "john@example.com",
+            "from": "no-reply@techcorp.com",
+            "template_id": "welcome-001",
+            "header": "Dear Mr Doe,",
+            "content": "Welcome to TechCorp!\n\nYour account has been created with the following details:\n\nDepartment: \nRole: Developer\nManager: \nStart Date: 2024-03-15\n\nYour office is located at:\n123 Tech St\n, CA \n\nBest regards,\nThe TechCorp Team",
+            "footer": "Contact  for assistance"
+        });
+
+        assert_eq!(result, expected);
     }
 }

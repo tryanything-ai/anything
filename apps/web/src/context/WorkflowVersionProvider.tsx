@@ -801,6 +801,7 @@ export const WorkflowVersionProvider = ({
 
   const hydrateFlow = async () => {
     try {
+      console.log("[HYDRATE FLOW]")
       console.log("Fetch Flow By Id in new hydrate flow: ", workflowId);
       if (!workflowId || !selectedAccount || !workflowVersionId) return;
 
@@ -988,36 +989,3 @@ export const WorkflowVersionProvider = ({
     </WorkflowVersionContext.Provider>
   );
 };
-
-// export const useFieldValidation = (schemaName: string, fieldName: string) => {
-//   const {
-//     workflow: { selected_node_data, nodes, selected_action_id },
-//   } = useAnything();
-
-//   return useMemo(() => {
-//     // Find the current node directly from nodes array to get latest state
-//     const currentNode = nodes.find((node) => node.id === selected_action_id);
-//     const nodeData = currentNode?.data;
-
-//     if (!nodeData || !schemaName || !fieldName) {
-//       return {
-//         strict: true, // default to strict
-//         validationType: "unknown",
-//       };
-//     }
-
-//     const schema = nodeData[schemaName as keyof Action];
-//     if (!schema?.properties?.[fieldName]?.["x-any-validation"]) {
-//       return {
-//         strict: true, // default to strict
-//         validationType: "unknown",
-//       };
-//     }
-
-//     const validation = schema.properties[fieldName]["x-any-validation"];
-//     return {
-//       strict: validation.strict ?? true, // default to strict if not specified
-//       validationType: validation.type || "unknown",
-//     };
-//   }, [nodes, selected_action_id, schemaName, fieldName]); // Update dependencies to include nodes and selected_action_id
-// };
