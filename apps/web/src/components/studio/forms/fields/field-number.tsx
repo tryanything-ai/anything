@@ -146,13 +146,13 @@ export default function CodeMirrorFieldNumber({
                       toggleStrictMode(name, !strict);
                     }}
                   >
-                    {strict ? "STRICT" : "forgiving"}
+                    {strict ? "STRICT" : "relaxed"}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="z-[60]">
                   <p>
                     {strict
-                      ? "Switch to forgiving mode. Missing variables will return defaults."
+                      ? "Switch to relaxed mode. Missing variables will return defaults."
                       : "Switch to strict mode. Missing variables will make action fail."}
                   </p>
                 </TooltipContent>
