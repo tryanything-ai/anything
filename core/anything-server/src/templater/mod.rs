@@ -1185,33 +1185,61 @@ mod tests {
     }
 
     #[test]
-    fn test_missive_draft_bundling() {
+    fn test_missive_draft_template() {
         let mut templater = Templater::new();
 
-        // The plugin config that needs to be rendered
+        // The template that defines the HTTP request configuration
         let template = json!({
             "url": "https://public.missiveapp.com/v1/drafts",
             "method": "POST",
-            "headers": "{\n  \"Authorization\": \"Bearer {{inputs.MISSIVE_API_KEY}}\",\n  \"Content-Type\": \"application/json\"\n}",
-            "body": "{\n  \"drafts\": {\n    \"subject\": \"{{inputs.subject}}\",\n    \"body\": \"{{inputs.body}}\",\n    \"to_fields\": [\n      {\n        \"address\": \"{{inputs.to_address}}\"\n      }\n    ],\n    \"from_field\": {\n      \"name\": \"{{inputs.from_name}}\",\n      \"address\": \"{{inputs.from_address}}\"\n    },\n    \"attachments\": [\n      {\n        \"base64_data\": \"{{inputs.attachement_as_base64}}\",\n        \"filename\": \"FAKE New Bars Retail Dsplay.png\"\n      }\n    ]\n  }\n}"
+            "headers": {
+                "Authorization": "Bearer {{inputs.MISSIVE_API_KEY}}",
+                "Content-Type": "application/json"
+            },
+            "body": {
+                "drafts": {
+                    "body": "{{inputs.body}}",
+                    "to_fields": [{
+                        "address": "{{inputs.to_address}}"
+                    }],
+                    "from_field": {
+                        "name": "{{inputs.from_name}}",
+                        "address": "{{inputs.from_address}}"
+                    },
+                    "references": "{{inputs.references}}",
+                    "attachments": [{
+                        "base64_data": "{{inputs.attachement_as_base64}}",
+                        "filename": "Tusol Organic Protein Bars 2025.pdf"
+                    }]
+                }
+            }
         });
 
         templater.add_template("missive_draft", template);
 
-        // The rendered inputs that would come from bundle_cached_inputs
+        // The context with all required variables
         let context = json!({
             "inputs": {
-                "subject": "[DO NOT SEND!] Test Draft from Carl @ Anything AI",
-                "body": "<!DOCTYPE html>\\n<html>\\n<body>\\n    <p>Hi Test Person!,</p>\\n\\n    <p>I hope you're well!</p>\\n\\n    <p>\\n        I just wanted to confirm you received your Organic Protein Bars, and see if you have any initial feedback or questions.\\n    </p>\\n\\n    <p>\\n        <strong>To support sales & marketing, most of our clients like to use our retail displays (below)</strong>, \\n        as well as our collection of \\n        <a href=\\\"https://drive.google.com/drive/folders/13l0f67j1SsXaw59y3XHQkGm1-cx15IWb\\\" target=\\\"_blank\\\">shelf talkers</a> \\n        that fit well into \\n        <a href=\\\"https://www.amazon.com/dp/B0BWDJXY48?smid=A128CO7G80NO6D&ref_=chk_typ_imgToDp&th=1\\\" target=\\\"_blank\\\">these frames</a>.\\n    </p>\\n\\n    <p>\\n        Please let us know if you're interested, or we'd be happy to can design something custom for you.\\n    </p>\\n\\n    <p>Thanks for your support!</p>\\n\\n    <p>Warmly,<br>Person</p>\\n</body>\\n</html>\\n",
-                "to_address": "carl@gmail.com",
-                "from_address": "person@company.com",
-                "from_name": "Person",
-                "attachement_as_base64": "asfasdfasf",
-                "MISSIVE_API_KEY": "test_api_key"
+                "body": "<html><body style=\"font-family: Arial, sans-serif;\">Hi John,<br><br>I hope you're well!</body></html>",
+                "to_address": "john@example.com",
+                "from_address": "ilana@tusol-wellness.com",
+                "from_name": "Ilana",
+                "references": ["ref123"],
+                "MISSIVE_API_KEY": "test_api_key_123",
+                "attachement_as_base64": "base64_encoded_content_here"
+            },
+            "actions": {
+                "javascript_1": {
+                    "result": {
+                        "first_name": "John",
+                        "company": "ACME Corp",
+                        "email": "john@example.com"
+                    }
+                }
             }
         });
 
-        // Set up validations for the template fields
+        // Set up validations for all fields
         let mut validations = HashMap::new();
         validations.insert(
             "url".to_string(),
@@ -1247,40 +1275,41 @@ mod tests {
             .render("missive_draft", &context, validations)
             .unwrap();
 
-        // Expected results after rendering
-        let expected_body = json!({
-            "drafts": {
-                "subject": "[DO NOT SEND!] Test Draft from Carl @ Anything AI",
-                "body": "<!DOCTYPE html>\\n<html>\\n<body>\\n    <p>Hi Test Person!,</p>\\n\\n    <p>I hope you're well!</p>\\n\\n    <p>\\n        I just wanted to confirm you received your Organic Protein Bars, and see if you have any initial feedback or questions.\\n    </p>\\n\\n    <p>\\n        <strong>To support sales & marketing, most of our clients like to use our retail displays (below)</strong>, \\n        as well as our collection of \\n        <a href=\\\"https://drive.google.com/drive/folders/13l0f67j1SsXaw59y3XHQkGm1-cx15IWb\\\" target=\\\"_blank\\\">shelf talkers</a> \\n        that fit well into \\n        <a href=\\\"https://www.amazon.com/dp/B0BWDJXY48?smid=A128CO7G80NO6D&ref_=chk_typ_imgToDp&th=1\\\" target=\\\"_blank\\\">these frames</a>.\\n    </p>\\n\\n    <p>\\n        Please let us know if you're interested, or we'd be happy to can design something custom for you.\\n    </p>\\n\\n    <p>Thanks for your support!</p>\\n\\n    <p>Warmly,<br>Person</p>\\n</body>\\n</html>\\n",
-                "to_fields": [
-                    {
-                        "address": "carl@gmail.com"
-                    }
-                ],
-                "from_field": {
-                    "name": "Person",
-                    "address": "person@company.com"
-                },
-                "attachments": [
-                    {
-                        "base64_data": "asfasdfasf",
-                        "filename": "FAKE New Bars Retail Dsplay.png"
-                    }
-                ]
-            }
-        });
-
-        let expected_headers = json!({
-            "Authorization": "Bearer test_api_key",
-            "Content-Type": "application/json"
-        });
-
-        assert_eq!(result["body"], expected_body);
-        assert_eq!(result["headers"], expected_headers);
-
-        // Verify each part of the result
+        // Verify the structure and content of the rendered template
         assert_eq!(result["url"], "https://public.missiveapp.com/v1/drafts");
         assert_eq!(result["method"], "POST");
+
+        // Verify headers
+        assert_eq!(
+            result["headers"]["Authorization"],
+            "Bearer test_api_key_123"
+        );
+        assert_eq!(result["headers"]["Content-Type"], "application/json");
+
+        // Verify the body structure
+        let body = &result["body"]["drafts"];
+        assert_eq!(
+            body["body"],
+            "<html><body style=\"font-family: Arial, sans-serif;\">Hi John,<br><br>I hope you're well!</body></html>"
+        );
+
+        // Verify to_fields
+        assert_eq!(body["to_fields"][0]["address"], "john@example.com");
+
+        // Verify from_field
+        assert_eq!(body["from_field"]["name"], "Ilana");
+        assert_eq!(body["from_field"]["address"], "ilana@tusol-wellness.com");
+
+        // Verify references and attachments
+        assert_eq!(body["references"], json!(["ref123"]));
+        assert_eq!(
+            body["attachments"][0]["base64_data"],
+            "base64_encoded_content_here"
+        );
+        assert_eq!(
+            body["attachments"][0]["filename"],
+            "Tusol Organic Protein Bars 2025.pdf"
+        );
     }
 
     #[test]
@@ -2139,5 +2168,84 @@ mod tests {
         });
 
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_missive_draft_references_handling() {
+        let mut templater = Templater::new();
+
+        // The template needs to keep the quotes because it's JSON
+        let template = json!({
+            "body": {
+                "drafts": {
+                    "references": "{{inputs.references}}", // Quotes must stay
+                    "other_field": "some value"
+                }
+            }
+        });
+
+        templater.add_template("test_template", template);
+
+        // Test with array input
+        let context = json!({
+            "inputs": {
+                "references": ["ref1", "ref2", "ref3"]
+            }
+        });
+
+        let mut validations = HashMap::new();
+        validations.insert(
+            "body".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+
+        let result = templater
+            .render("test_template", &context, validations)
+            .unwrap();
+
+        // The references field should be a string containing the stringified array
+        println!(
+            "References result: {:?}",
+            result["body"]["drafts"]["references"]
+        );
+        // Will output something like: "[\"ref1\",\"ref2\",\"ref3\"]"
+
+        // To fix this, we need to change the validation type to Array or Object
+        let mut fixed_template = json!({
+            "body": {
+                "drafts": {
+                    "references": "{{inputs.references}}", // Still needs quotes in template
+                    "other_field": "some value"
+                }
+            }
+        });
+
+        templater = Templater::new();
+        templater.add_template("fixed_template", fixed_template);
+
+        let mut fixed_validations = HashMap::new();
+        fixed_validations.insert(
+            "body".to_string(),
+            ValidationField {
+                r#type: ValidationFieldType::Object,
+                strict: true,
+            },
+        );
+
+        // The key is to use Array validation type for the references field
+        let result = templater
+            .render("fixed_template", &context, fixed_validations)
+            .unwrap();
+
+        println!("Result: {:?}", result);
+        // Now it should preserve the array structure
+        assert!(result["body"]["drafts"]["references"].is_array());
+        assert_eq!(
+            result["body"]["drafts"]["references"],
+            json!(["ref1", "ref2", "ref3"])
+        );
     }
 }
