@@ -10,12 +10,20 @@ import { TaskChart } from "@/components/tasks/task-chart";
 import { useAnything } from "@/context/AnythingContext";
 import { createClient } from "@/lib/supabase/client";
 import useSWR from "swr";
+import { useState, useCallback, useEffect } from "react";
+
+const DEFAULT_PAGINATION = {
+  page: 1,
+  page_size: 20,
+  total: 0,
+};
 
 export default function WorkflowManager(): JSX.Element {
   const params = useParams<{ workflowId: string }>();
   const {
     accounts: { selectedAccount },
   } = useAnything();
+
 
   const endDate = new Date().toISOString();
   const startDate = new Date(
@@ -34,15 +42,6 @@ export default function WorkflowManager(): JSX.Element {
     return flow?.[0];
   };
 
-  const tasksFetcher = async () => {
-    if (!selectedAccount || !params.workflowId) return [];
-    const supabase = await createClient();
-    return api.tasks.getTasksForWorkflow(
-      supabase,
-      selectedAccount.account_id,
-      params.workflowId,
-    );
-  };
 
   const chartDataFetcher = async () => {
     if (!selectedAccount || !params.workflowId) return null;
@@ -60,27 +59,23 @@ export default function WorkflowManager(): JSX.Element {
   };
 
   const { data: workflow } = useSWR(
-    selectedAccount ? [`workflow`, selectedAccount.account_id, params.workflowId] : null,
+    selectedAccount
+      ? [`workflow`, selectedAccount.account_id, params.workflowId]
+      : null,
     workflowFetcher,
     {
       revalidateOnFocus: true,
-    }
-  );
-
-  const { data: tasks = [] } = useSWR(
-    selectedAccount ? [`tasks`, selectedAccount.account_id, params.workflowId] : null,
-    tasksFetcher,
-    {
-      revalidateOnFocus: true,
-    }
+    },
   );
 
   const { data: chartData } = useSWR(
-    selectedAccount ? [`chartData`, selectedAccount.account_id, params.workflowId] : null,
+    selectedAccount
+      ? [`chartData`, selectedAccount.account_id, params.workflowId]
+      : null,
     chartDataFetcher,
     {
       revalidateOnFocus: true,
-    }
+    },
   );
 
   return (
@@ -94,12 +89,15 @@ export default function WorkflowManager(): JSX.Element {
           />
 
           <Separator />
-          <div className=" flex flex-col gap-y-4 w-full  mx-auto text-center">
+          <div className="flex flex-col gap-y-4 w-full mx-auto text-center">
             <TaskChart chartData={chartData} />
           </div>
 
-          <div className="border rounded-md flex flex-col gap-y-4  h-full w-full items-center justify-center content-center mx-auto text-center">
-            <TaskTable tasks={tasks} />
+          <div className="border rounded-md w-full">
+            <TaskTable
+              workflowId={params.workflowId}
+              accountId={selectedAccount?.account_id ?? ""}
+            />
           </div>
         </div>
       ) : null}

@@ -60,6 +60,7 @@ mod templater;
 mod testing; 
 mod trigger_engine;
 mod agents; 
+mod flow_sessions;
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
@@ -179,7 +180,7 @@ async fn main() {
     // warm_up_blocking_threads(16).await;
     // warm_up_async_threads(48).await;
 
-    console_subscriber::init();
+    // console_subscriber::init();
 
     dotenv().ok();
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
