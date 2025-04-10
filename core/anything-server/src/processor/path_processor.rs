@@ -14,7 +14,7 @@ pub fn process_task_and_branches(
 ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
     Box::pin(async move {
         let graph = create_workflow_graph(&ctx.workflow_def);
-        let mut current_task = initial_task;
+        let current_task = initial_task;
 
         loop {
             let next_actions = match process_task(&ctx, &current_task, &graph).await {
