@@ -18,6 +18,7 @@ use serde_json::json;
 pub struct PaginationParams {
     page: Option<i64>,
     page_size: Option<i64>,
+    search: Option<String>,
 }
 
 //Task
@@ -38,22 +39,27 @@ pub async fn get_tasks(
 
     let client = &state.anything_client;
 
-    let get_count = async {
-        client
-            .from("tasks")
-            .auth(&user.jwt)
-            .eq("account_id", &account_id)
-            .select("*")
-            .exact_count()
-            .execute()
-            .await
-    };
+    let mut count_query = client
+        .from("tasks")
+        .auth(&user.jwt)
+        .eq("account_id", &account_id);
+
+    let mut data_query = client
+        .from("tasks")
+        .auth(&user.jwt)
+        .eq("account_id", &account_id);
+
+    // Add search filter if providedß
+    if let Some(search) = pagination.search {
+        let search_pattern = format!("%{}%", search);
+        count_query = count_query.ilike("action_label", &search_pattern);
+        data_query = data_query.ilike("action_label", &search_pattern);
+    }
+
+    let get_count = async { count_query.select("*").exact_count().execute().await };
 
     let get_data = async {
-        client
-            .from("tasks")
-            .auth(&user.jwt)
-            .eq("account_id", &account_id)
+        data_query
             .select("*")
             .range(offset as usize, (offset + page_size) as usize)
             .order("created_at.desc,processing_order.desc")
@@ -147,24 +153,29 @@ pub async fn get_task_by_workflow_id(
 
     let client = &state.anything_client;
 
-    let get_count = async {
-        client
-            .from("tasks")
-            .auth(&user.jwt)
-            .eq("account_id", &account_id)
-            .eq("flow_id", &workflow_id)    
-            .select("*")
-            .planned_count()
-            .execute()
-            .await
-    };
+    let mut count_query = client
+        .from("tasks")
+        .auth(&user.jwt)
+        .eq("account_id", &account_id)
+        .eq("flow_id", &workflow_id);
+
+    let mut data_query = client
+        .from("tasks")
+        .auth(&user.jwt)
+        .eq("account_id", &account_id)
+        .eq("flow_id", &workflow_id);
+
+    // Add search filter if provided
+    if let Some(search) = pagination.search {
+        let search_pattern = format!("%{}%", search);
+        count_query = count_query.ilike("action_label", &search_pattern);
+        data_query = data_query.ilike("action_label", &search_pattern);
+    }
+
+    let get_count = async { count_query.select("*").exact_count().execute().await };
 
     let get_data = async {
-        client
-            .from("tasks")
-            .auth(&user.jwt)
-            .eq("account_id", &account_id)
-            .eq("flow_id", &workflow_id)
+        data_query
             .select("*")
             .range(offset as usize, (offset + page_size) as usize)
             .order("created_at.desc,processing_order.desc")

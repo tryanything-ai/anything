@@ -5,6 +5,7 @@ const ANYTHING_API_URL = process.env.NEXT_PUBLIC_ANYTHING_API_URL
 export interface PaginationParams {
     page?: number;
     page_size?: number;
+    search?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -34,6 +35,9 @@ export const getTasks = async (
         }
         if (pagination?.page_size) {
             queryParams.append('page_size', pagination.page_size.toString());
+        }
+        if (pagination?.search) {
+            queryParams.append('search', pagination.search);
         }
 
         const queryString = queryParams.toString();
@@ -76,6 +80,9 @@ export const getTasksForWorkflow = async (
         }
         if (pagination?.page_size) {
             queryParams.append('page_size', pagination.page_size.toString());
+        }
+        if (pagination?.search) {
+            queryParams.append('search', pagination.search);
         }
 
         const queryString = queryParams.toString();
