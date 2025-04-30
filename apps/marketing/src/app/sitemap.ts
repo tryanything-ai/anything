@@ -4,8 +4,8 @@ import { MetadataRoute } from "next";
 const base_url = process.env.NEXT_PUBLIC_HOSTED_URL;
 
 async function getBlogSitemap() {
-  const key = process.env.SEOBOT_API_KEY;
-  if (!key) throw Error('SEOBOT_API_KEY enviroment variable must be set. You can use the DEMO key a8c58738-7b98-4597-b20a-0bb1c2fe5772 for testing - please set it in the root .env.local file.');
+  const key = process.env.NEXT_PUBLIC_SEOBOT_API_KEY;
+  if (!key) throw Error('NEXT_PUBLIC_SEOBOT_API_KEY enviroment variable must be set. You can use the DEMO key a8c58738-7b98-4597-b20a-0bb1c2fe5772 for testing - please set it in the root .env.local file.');
 
   try {
     const res = await fetch(`https://app.seobotai.com/api/sitemap?key=${key}`, { cache: 'no-store' });

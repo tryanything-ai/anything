@@ -8,10 +8,10 @@ import HighlightCode from "@/components/blog/HighlightCode";
 import "../blog.css";
 
 async function getPost(slug: string) {
-  const key = process.env.SEOBOT_API_KEY;
+  const key = process.env.NEXT_PUBLIC_SEOBOT_API_KEY;
   if (!key)
     throw Error(
-      "SEOBOT_API_KEY enviroment variable must be set. You can use the DEMO key a8c58738-7b98-4597-b20a-0bb1c2fe5772 for testing - please set it in the root .env.local file",
+      "NEXT_PUBLIC_SEOBOT_API_KEY enviroment variable must be set. You can use the DEMO key a8c58738-7b98-4597-b20a-0bb1c2fe5772 for testing - please set it in the root .env.local file",
     );
 
   const client = new BlogClient(key);
