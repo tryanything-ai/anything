@@ -2,6 +2,8 @@
 
 # This section defines system packages to be installed using Nix.
 [phases.setup]
+# Pinning the nixpkgs archive to ensure consistency across all Nix operations.
+nixpkgsArchive = "ef56e777fedaa4da8c66a150081523c5de1e0171"
 # By providing an explicit list of Nix packages, we guide Nixpacks.
 # The hope is that it will source these from a single, consistent nixpkgs revision,
 # thus avoiding conflicts with core utilities like binutils (which provides addr2line).
