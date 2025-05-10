@@ -270,12 +270,18 @@ async fn main() {
     // Create the task updater channel  
    let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000); 
 
+   let default_http_timeout = Duration::from_secs(30); // Default 30-second timeout
+   let http_client = Client::builder()
+       .timeout(default_http_timeout)
+       .build()
+       .expect("Failed to build HTTP client");
+
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
         public_client: public_client.clone(),
         r2_client: r2_client.clone(),
-        http_client: Arc::new(Client::new()),
+        http_client: Arc::new(http_client),
         auth_states: RwLock::new(HashMap::new()),
         workflow_processor_semaphore: Arc::new(Semaphore::new(10)), //How many workflows we can run at once
         trigger_engine_signal,
