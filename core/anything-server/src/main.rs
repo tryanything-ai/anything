@@ -178,6 +178,17 @@ async fn periodic_thread_warmup(state: Arc<AppState>) {
 // )]
 #[tokio::main]
 async fn main() {
+    // Set a global panic hook to log panic info
+    std::panic::set_hook(Box::new(|panic_info| {
+        eprintln!("[PANIC] Application panicked: {}", panic_info);
+        if let Some(location) = panic_info.location() {
+            eprintln!("[PANIC] At: {}:{}", location.file(), location.line());
+        }
+        if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            eprintln!("[PANIC] Payload: {}", s);
+        }
+    }));
+
     // Both warmups are now async
     // warm_up_blocking_threads(16).await;
     // warm_up_async_threads(48).await;
