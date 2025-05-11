@@ -387,7 +387,7 @@ pub async fn publish_workflow_to_marketplace(
     let combined_response = json!({
         "flow_template": marketplace_item[0],
         "flow_template_version": flow_version_item[0],
-        "marketplace_url": format!("https://www.tryanything.xyz/templates/{}", template_slug.clone())
+        "marketplace_url": format!("https://tryanything.xyz/templates/{}", template_slug.clone())
     });
 
     println!("[PUBLISH FLOW AS TEMPLATE] Publishing complete, returning response");

@@ -43,7 +43,7 @@ export default function Workflows(): JSX.Element {
   };
 
   const exploreTemplates = () => {
-    window.open("https://www.tryanything.xyz/templates/workflows", "_blank");
+    window.open("https://tryanything.xyz/templates/workflows", "_blank");
   };
 
   return (

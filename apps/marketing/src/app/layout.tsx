@@ -22,13 +22,13 @@ export const metadata: Metadata = {
   authors: [
     {
       name: "anything",
-      url: "https://www.tryanything.xyz",
+      url: siteConfig.url,
     },
   ],
   creator: "anything",
   metadataBase: new URL(siteConfig.url),
   alternates: {
-    canonical: "https://www.tryanything.xyz",
+    canonical: siteConfig.url,
   },
   openGraph: {
     type: "website",

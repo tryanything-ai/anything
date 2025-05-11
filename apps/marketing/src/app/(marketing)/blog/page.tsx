@@ -2,7 +2,7 @@ import ArticleCard from "@/components/blog/ArticleCard";
 import Pagination from "@/components/blog/Pagination";
 import { type Metadata } from "next";
 import { BlogClient } from "seobot";
-
+import { siteConfig } from "@/config/site";
 export async function generateMetadata(): Promise<Metadata> {
   const title = "Anything AI Blog";
   const description =
@@ -10,16 +10,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    metadataBase: new URL("https://tryanything.xyz"),
+    metadataBase: new URL(siteConfig.url),
     alternates: {
-      canonical: "/blog",
+      canonical: `${siteConfig.url}/blog`,
     },
     openGraph: {
       type: "website",
       title,
       description,
       // images: [],
-      url: "https://tryanything.xyz/blog",
+      url: `${siteConfig.url}/blog`,
     },
     twitter: {
       title,

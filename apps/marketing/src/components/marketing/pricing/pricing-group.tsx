@@ -12,7 +12,7 @@ const frequencies = [
 const tiers = [
   {
     name: "Pay As You Go",
-    id: "payg",
+    id: "payg", //TODO: This url is fucked
     href: `https://app.${process.env.NEXT_PUBLIC_HOSTED_URL?.replace(/^https?:\/\//, "").replace("www.", "")}/signup`,
     price: { monthly: "$0", annually: "$50" },
     description: "A plan that scales to Anything.",

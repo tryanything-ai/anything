@@ -3,35 +3,42 @@ import Pagination from "@/components/blog/Pagination";
 import { type Metadata } from "next";
 import Link from "next/link";
 import { BlogClient } from "seobot";
-
+import { siteConfig } from "@/config/site";
 async function getPosts(slug: string, page: number) {
   const key = process.env.NEXT_PUBLIC_SEOBOT_API_KEY;
-  if (!key) throw Error('NEXT_PUBLIC_SEOBOT_API_KEY enviroment variable must be set. You can use the DEMO key a8c58738-7b98-4597-b20a-0bb1c2fe5772 for testing - please set it in the root .env.local file');
+  if (!key)
+    throw Error(
+      "NEXT_PUBLIC_SEOBOT_API_KEY enviroment variable must be set. You can use the DEMO key a8c58738-7b98-4597-b20a-0bb1c2fe5772 for testing - please set it in the root .env.local file",
+    );
 
   const client = new BlogClient(key);
   return client.getCategoryArticles(slug, page, 10);
 }
 
 function deslugify(str: string) {
-  return str.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+  return str.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export const fetchCache = 'force-no-store';
+export const fetchCache = "force-no-store";
 
-export async function generateMetadata({ params: { slug } }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({
+  params: { slug },
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const title = `${deslugify(slug)} - Anything Blog`;
   return {
     title,
-    metadataBase: new URL('https:///tryanything.xyz'),
+    metadataBase: new URL(siteConfig.url),
     alternates: {
-      canonical: `/blog/category/${slug}`,
+      canonical: `${siteConfig.url}/blog/category/${slug}`,
     },
     openGraph: {
-      type: 'article',
+      type: "article",
       title,
       // description: '',
       // images: [],
-      url: `https:///tryanything.xyz/blog/category/${slug}`,
+      url: `${siteConfig.url}/blog/category/${slug}`,
     },
     twitter: {
       title,
@@ -57,22 +64,37 @@ export default async function Category({
   return (
     <section className="max-w-3xl my-8 lg:mt-10 mx-auto px-4 md:px-8 dark:text-white">
       <div className="flex flex-wrap items-center gap-2 mb-1 w-full dark:text-slate-400 text-sm mb-4">
-        <a href="/" className='text-orange-500'>Home</a>
-        <svg width="12" height="12" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+        <a href="/" className="text-orange-500">
+          Home
+        </a>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 1024 1024"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path
             fill="currentColor"
             d="M338.752 104.704a64 64 0 0 0 0 90.496l316.8 316.8l-316.8 316.8a64 64 0 0 0 90.496 90.496l362.048-362.048a64 64 0 0 0 0-90.496L429.248 104.704a64 64 0 0 0-90.496 0z"
           />
         </svg>
-        <Link href="/blog/" className='text-orange-500'>Blog</Link>
+        <Link href="/blog/" className="text-orange-500">
+          Blog
+        </Link>
       </div>
-      <h1 className='text-4xl my-4 font-black'>Category: {slug}</h1>
+      <h1 className="text-4xl my-4 font-black">Category: {slug}</h1>
       <ul>
         {posts.map((article: any) => (
           <ArticleCard key={article.id} article={article} />
         ))}
       </ul>
-      {lastPage > 1 && <Pagination slug={`/blog/category/${slug}`} pageNumber={pageNumber} lastPage={lastPage} />}
+      {lastPage > 1 && (
+        <Pagination
+          slug={`/blog/category/${slug}`}
+          pageNumber={pageNumber}
+          lastPage={lastPage}
+        />
+      )}
     </section>
   );
 }

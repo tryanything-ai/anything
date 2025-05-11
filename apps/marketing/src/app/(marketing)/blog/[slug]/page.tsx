@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { BlogClient } from "seobot";
-
+import { siteConfig } from "@/config/site";
 import NotFound from "@/components/blog/NotFound";
 import HighlightCode from "@/components/blog/HighlightCode";
 import "../blog.css";
@@ -33,16 +33,16 @@ export async function generateMetadata({
   return {
     title,
     description,
-    metadataBase: new URL("https://tryanything.xyz"),
+    metadataBase: new URL(siteConfig.url),
     alternates: {
-      canonical: `/blog/${slug}`,
+      canonical: `${siteConfig.url}/blog/${slug}`,
     },
     openGraph: {
       type: "article",
       title,
       description,
       images: [post.image],
-      url: `https:///tryanything.xyz/blog/${slug}`,
+      url: `${siteConfig.url}/blog/${slug}`,
     },
     twitter: {
       title,

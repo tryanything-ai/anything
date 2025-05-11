@@ -3,7 +3,7 @@ import Pagination from "@/components/blog/Pagination";
 import { type Metadata } from "next";
 import Link from "next/link";
 import { BlogClient } from "seobot";
-
+import { siteConfig } from "@/config/site";
 async function getPosts(slug: string, page: number) {
   const key = process.env.NEXT_PUBLIC_SEOBOT_API_KEY;
   if (!key)
@@ -29,18 +29,18 @@ export async function generateMetadata({
   const title = `${deslugify(slug)} - Anything AI Blog`;
   return {
     title,
-    metadataBase: new URL("https://tryanything.xyz"),
+    metadataBase: new URL(siteConfig.url),
     alternates: {
-      canonical: `/blog/tag/${slug}`,
+      canonical: `${siteConfig.url}/blog/tag/${slug}`,
     },
     openGraph: {
       type: "article",
       title,
       // description: '',
-      // images: [],
-      url: `https://tryanything.xyz/blog/tag/${slug}`,
+      // images: [],  
+      url: `${siteConfig.url}/blog/tag/${slug}`,
     },
-    twitter: {
+    twitter: {  
       title,
       // description: '',
       // card: 'summary_large_image',
