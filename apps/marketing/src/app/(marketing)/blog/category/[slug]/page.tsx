@@ -19,10 +19,10 @@ function deslugify(str: string) {
 export const fetchCache = 'force-no-store';
 
 export async function generateMetadata({ params: { slug } }: { params: { slug: string } }): Promise<Metadata> {
-  const title = `${deslugify(slug)} - DevHunt Blog`;
+  const title = `${deslugify(slug)} - Anything Blog`;
   return {
     title,
-    metadataBase: new URL('https://devhunt.org'),
+    metadataBase: new URL('https:///tryanything.xyz'),
     alternates: {
       canonical: `/blog/category/${slug}`,
     },
@@ -31,7 +31,7 @@ export async function generateMetadata({ params: { slug } }: { params: { slug: s
       title,
       // description: '',
       // images: [],
-      url: `https://devhunt.org/blog/category/${slug}`,
+      url: `https:///tryanything.xyz/blog/category/${slug}`,
     },
     twitter: {
       title,

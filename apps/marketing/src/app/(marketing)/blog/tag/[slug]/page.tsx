@@ -26,10 +26,10 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const title = `${deslugify(slug)} - DevHunt Blog`;
+  const title = `${deslugify(slug)} - Anything AI Blog`;
   return {
     title,
-    metadataBase: new URL("https://devhunt.org"),
+    metadataBase: new URL("https://tryanything.xyz"),
     alternates: {
       canonical: `/blog/tag/${slug}`,
     },
@@ -38,7 +38,7 @@ export async function generateMetadata({
       title,
       // description: '',
       // images: [],
-      url: `https://devhunt.org/blog/tag/${slug}`,
+      url: `https://tryanything.xyz/blog/tag/${slug}`,
     },
     twitter: {
       title,

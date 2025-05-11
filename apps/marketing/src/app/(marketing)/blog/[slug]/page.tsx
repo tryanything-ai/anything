@@ -33,7 +33,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    metadataBase: new URL("https://devhunt.org"),
+    metadataBase: new URL("https://tryanything.xyz"),
     alternates: {
       canonical: `/blog/${slug}`,
     },
@@ -42,7 +42,7 @@ export async function generateMetadata({
       title,
       description,
       images: [post.image],
-      url: `https://devhunt.org/blog/${slug}`,
+      url: `https:///tryanything.xyz/blog/${slug}`,
     },
     twitter: {
       title,
