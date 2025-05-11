@@ -29,8 +29,8 @@ use tokio::time::sleep;
 
 use regex::Regex;
 
-#[macro_use]
-extern crate slugify;
+// #[macro_use]
+// extern crate slugify;
 
 use auth::init::AuthState;
 
@@ -65,6 +65,8 @@ use tokio::sync::oneshot;
 use tokio::sync::Mutex;
 use std::sync::atomic::AtomicBool;
 use sys_info;
+
+use tower_http::compression::CompressionLayer;
 
 // Add this struct to store completion channels
 pub struct FlowCompletion {
@@ -497,6 +499,7 @@ pub async fn root() -> impl IntoResponse {
         .merge(protected_routes) // Protected routes
         .layer(cors)
         .layer(preflightlayer)
+        .layer(CompressionLayer::new())
         .layer(DefaultBodyLimit::max(52_428_800)) // 50MB limit in bytes
         .with_state(state.clone()); 
     
