@@ -14,11 +14,12 @@ use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result
 use crate::system_plugins::filter::process_filter_task;
 use crate::system_plugins::http::http_plugin::process_http_task;
 use crate::system_plugins::javascript::process_js_task;
+use crate::types::action_types::ActionType;
 use crate::types::task_types::Task;
 use crate::AppState;
-use serde_json::{json, Value};
 use chrono::{DateTime, Utc};
-use crate::types::action_types::ActionType;
+use serde_json::{json, Value};
+use tracing::{error, info, instrument, Span};
 
 #[derive(Debug, Clone)]
 pub struct TaskError {
@@ -28,31 +29,45 @@ pub struct TaskError {
 
 pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
+#[instrument(skip(state, client, task))]
 pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
-
+    let task_id = task.task_id;
+    let flow_session_id = task.flow_session_id;
+    let plugin_name = task.plugin_name.clone();
+    let root_span = tracing::info_span!(
+        "execute_task",
+        task_id = %task_id,
+        flow_session_id = %flow_session_id,
+        plugin_name = ?plugin_name
+    );
+    let _root_entered = root_span.enter();
     let started_at = Utc::now();
-    println!("[PROCESS TASK] Processing task {}", task.task_id);
+    info!("[PROCESS TASK] Processing task {}", task.task_id);
 
     // Clone state before using it in join
     let state_clone = Arc::clone(&state);
 
     // Bundle context with results from cache
+    let bundle_span = tracing::info_span!("bundle_tasks_cached_context");
+    let bundle_start = Instant::now();
     let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
         bundle_tasks_cached_context(state, client, task, true).await;
+    let bundle_duration = bundle_start.elapsed();
+    info!("[PROCESS TASK] Context bundling took {:?}", bundle_duration);
 
     let http_client = state_clone.http_client.clone();
 
     match bundled_context_result {
         Ok((bundled_inputs, bundled_plugin_cofig)) => {
-
+            let plugin_span = tracing::info_span!("plugin_execution", plugin_name = ?plugin_name);
+            let plugin_start = Instant::now();
             let task_result = if task.r#type == ActionType::Trigger {
-                println!("[PROCESS TASK] Processing trigger task {}", task.task_id);
+                info!("[PROCESS TASK] Processing trigger task {}", task.task_id);
                 process_trigger_task(task)
             } else {
-                println!("[PROCESS TASK] Processing regular task {}", task.task_id);
+                info!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_name {
                     Some(plugin_name) => {
-                        let plugin_start = Instant::now();
                         let result = match plugin_name.as_str() {
                             "@anything/http" => {
                                 process_http_task(&http_client, &bundled_plugin_cofig).await
@@ -86,9 +101,10 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                                 &task.task_id.to_string(),
                             ),
                         };
-                        println!(
+                        let plugin_duration = plugin_start.elapsed();
+                        info!(
                             "[SPEED] ExecuteTask::plugin_execution - {:?}",
-                            plugin_start.elapsed()
+                            plugin_duration
                         );
                         result
                     }
@@ -97,10 +113,9 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
             };
 
             match task_result {
-                Ok(result) => {
-                    Ok((result, bundled_plugin_cofig, started_at, Utc::now()))
-                }
+                Ok(result) => Ok((result, bundled_plugin_cofig, started_at, Utc::now())),
                 Err(e) => {
+                    error!("[PROCESS TASK] Plugin execution error: {}", e.to_string());
                     Err(TaskError {
                         error: json!({ "message": e.to_string() }),
                         context: bundled_plugin_cofig,
@@ -109,7 +124,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
             }
         }
         Err(e) => {
-            println!("[ERROR] Failed to bundle task context: {}", e);
+            error!("[ERROR] Failed to bundle task context: {}", e);
             // Create empty context since bundling failed
             let empty_context = json!({});
             Err(TaskError {

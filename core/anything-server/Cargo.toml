@@ -28,7 +28,6 @@ rand = "0.8.5"
 urlencoding = "2.1.3"
 sha2 = "0.10.8"
 chrono-tz = "0.10.0"
-tracing = "0.1.40"
 pulldown-cmark = "0.12.2"
 html2md = "0.2.14"
 async-stripe = { version = "0.31", features = ["runtime-tokio-hyper"] }
@@ -43,5 +42,7 @@ aws-sdk-s3 = "1.3.0"
 aws-config = "1.3.0"
 aws-types = "1.3.0"
 sys-info = "0.9"
-console-subscriber = "0.4.1"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+
 
