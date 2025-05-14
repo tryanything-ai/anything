@@ -2,6 +2,8 @@ use crate::AppState;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
+use tracing::{info, error, instrument, Span};
+use std::time::Instant;
 
 use crate::processor::flow_session_cache::FlowSessionData;
 use crate::processor::processor::ProcessorMessage;
@@ -24,26 +26,35 @@ pub struct ProcessingContext {
     pub workflow_def: Arc<WorkflowVersionDefinition>,
 }
 
+#[instrument(skip(state, client, processor_message))]
 pub async fn process_workflow(
     state: Arc<AppState>,
     client: postgrest::Postgrest,
     processor_message: ProcessorMessage,
 ) {
-    println!(
-        "[PROCESSOR] Processing workflow for flow session: {}",
-        processor_message.flow_session_id
-    );
+    let flow_session_id = processor_message.flow_session_id;
+    let workflow_id = processor_message.workflow_id;
+    let workflow_version_id = processor_message.workflow_version.flow_version_id;
+    let root_span = tracing::info_span!("process_workflow", flow_session_id = %flow_session_id, workflow_id = %workflow_id, workflow_version_id = %workflow_version_id);
+    let _root_entered = root_span.enter();
+    let workflow_start = Instant::now();
+    info!("[PROCESSOR] Processing workflow for flow session: {}", processor_message.flow_session_id);
 
     // Initialize flow session cache
+    let cache_span = tracing::info_span!("init_flow_session_cache");
+    let cache_start = Instant::now();
     let flow_session_data = FlowSessionData {
         tasks: HashMap::new(),
     };
-
     {
         let mut cache = state.flow_session_cache.write().await;
         cache.set(&processor_message.flow_session_id, flow_session_data);
     }
+    let cache_duration = cache_start.elapsed();
+    info!("[PROCESSOR] Flow session cache initialized in {:?}", cache_duration);
 
+    let ctx_span = tracing::info_span!("create_processing_context");
+    let ctx_start = Instant::now();
     let ctx = ProcessingContext {
         state: state.clone(),
         client,
@@ -54,17 +65,29 @@ pub async fn process_workflow(
         workflow: Arc::new(processor_message.workflow_version.clone()),
         workflow_def: Arc::new(processor_message.workflow_version.flow_definition.clone()),
     };
+    let ctx_duration = ctx_start.elapsed();
+    info!("[PROCESSOR] ProcessingContext created in {:?}", ctx_duration);
 
     if let Some(task) = processor_message.trigger_task {
+        let create_task_span = tracing::info_span!("create_first_task");
+        let create_task_start = Instant::now();
         if let Err(e) = create_task(&ctx, &task).await {
-            println!("[PROCESSOR] Failed to create first task: {}", e);
+            error!("[PROCESSOR] Failed to create first task: {}", e);
             return;
         }
+        let create_task_duration = create_task_start.elapsed();
+        info!("[PROCESSOR] First task created in {:?}", create_task_duration);
 
+        let process_span = tracing::info_span!("process_task_and_branches");
+        let process_start = Instant::now();
         process_task_and_branches(Arc::new(ctx), task).await;
+        let process_duration = process_start.elapsed();
+        info!("[PROCESSOR] process_task_and_branches completed in {:?}", process_duration);
     }
 
     // Update flow session status to completed
+    let update_span = tracing::info_span!("update_flow_session_status");
+    let update_start = Instant::now();
     let task_message = StatusUpdateMessage {
         operation: Operation::CompleteWorkflow {
             flow_session_id: processor_message.flow_session_id,
@@ -73,4 +96,9 @@ pub async fn process_workflow(
         },
     };
     let _ = state.task_updater_sender.send(task_message).await;
+    let update_duration = update_start.elapsed();
+    info!("[PROCESSOR] Flow session status update sent in {:?}", update_duration);
+
+    let workflow_duration = workflow_start.elapsed();
+    info!("[PROCESSOR] process_workflow total duration: {:?}", workflow_duration);
 }

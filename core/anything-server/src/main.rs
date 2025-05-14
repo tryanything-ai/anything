@@ -29,9 +29,6 @@ use tokio::time::sleep;
 
 use regex::Regex;
 
-// #[macro_use]
-// extern crate slugify;
-
 use auth::init::AuthState;
 
 mod system_plugins; 
@@ -67,6 +64,9 @@ use std::sync::atomic::AtomicBool;
 use sys_info;
 
 use tower_http::compression::CompressionLayer;
+
+use tracing::{info, warn, error};
+use tracing_subscriber;
 
 // Add this struct to store completion channels
 pub struct FlowCompletion {
@@ -178,14 +178,17 @@ async fn periodic_thread_warmup(state: Arc<AppState>) {
 // )]
 #[tokio::main]
 async fn main() {
+    // Initialize tracing subscriber
+    tracing_subscriber::fmt::init();
+
     // Set a global panic hook to log panic info
     std::panic::set_hook(Box::new(|panic_info| {
-        eprintln!("[PANIC] Application panicked: {}", panic_info);
+        error!("[PANIC] Application panicked: {}", panic_info);
         if let Some(location) = panic_info.location() {
-            eprintln!("[PANIC] At: {}:{}", location.file(), location.line());
+            error!("[PANIC] At: {}:{}", location.file(), location.line());
         }
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-            eprintln!("[PANIC] Payload: {}", s);
+            error!("[PANIC] Payload: {}", s);
         }
     }));
 
@@ -225,7 +228,7 @@ async fn main() {
     );
 
     let cors_origin = Arc::new(cors_origin);
-    println!("[CORS] CORS origin: {:?}", cors_origin);
+    info!("[CORS] CORS origin: {:?}", cors_origin);
 
     // Create a regex to match subdomains and localhost
     let protocol = if cors_origin.starts_with("https") {
@@ -233,11 +236,11 @@ async fn main() {
     } else {
         "http"
     };
-    println!("[CORS] Protocol: {}", protocol);
+    info!("[CORS] Protocol: {}", protocol);
 
     let cors_origin_regex = if cors_origin.contains("localhost") {
         let regex = Regex::new(&format!(r"^{}://localhost(:\d+)?$", protocol)).unwrap();
-        println!("[CORS] Localhost regex: {:?}", regex);
+        info!("[CORS] Localhost regex: {:?}", regex);
         regex
     } else {
         let regex = Regex::new(&format!(
@@ -246,7 +249,7 @@ async fn main() {
             regex::escape(&cors_origin) //TODO: maybe this is breaking? app acts normal but the logs say is not woring
         ))
         .unwrap();
-        println!("[CORS] Domain regex: {:?}", regex);
+        info!("[CORS] Domain regex: {:?}", regex);
         regex
     };
 
@@ -514,197 +517,199 @@ pub async fn root() -> impl IntoResponse {
         .layer(DefaultBodyLimit::max(52_428_800)) // 50MB limit in bytes
         .with_state(state.clone()); 
     
+    // Spawn Update Processor
+   tokio::spawn(status_updater::task_database_status_processor(state.clone(), task_updater_rx));
+
+
     // Spawn processor
     tokio::spawn(processor::processor(state.clone(), processor_rx));
 
-   // Spawn Update Processor
-   tokio::spawn(status_updater::task_database_status_processor(state.clone(), task_updater_rx));
 
     // // Spawn cron job loop
     // // Initiates work to be done on schedule tasks
     tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
 
     //Spawn task billing processing loop
-    tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
-        state.clone(),
-    ));
+    // tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
+    //     state.clone(),
+    // ));
 
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
 
     // Spawn a channel monitoring task
-    tokio::spawn({
-        let state = state.clone();
-        async move {
-            loop {
-                // Check channels every 30 seconds
-                tokio::time::sleep(Duration::from_secs(30)).await;
+    // tokio::spawn({
+    //     let state = state.clone();
+    //     async move {
+    //         loop {
+    //             // Check channels every 30 seconds
+    //             tokio::time::sleep(Duration::from_secs(30)).await;
 
-                // Get processor channel capacity
-                let processor_capacity = state.processor_sender.capacity();
-                let processor_max = 100000; // This matches your channel size
-                println!(
-                    "[CHANNEL MONITOR] Processor channel: {}/{} slots available ({:.1}% full)",
-                    processor_capacity,
-                    processor_max,
-                    ((processor_max - processor_capacity) as f64 / processor_max as f64) * 100.0
-                );
+    //             // Get processor channel capacity
+    //             let processor_capacity = state.processor_sender.capacity();
+    //             let processor_max = 100000; // This matches your channel size
+    //             info!(
+    //                 "[CHANNEL MONITOR] Processor channel: {}/{} slots available ({:.1}% full)",
+    //                 processor_capacity,
+    //                 processor_max,
+    //                 ((processor_max - processor_capacity) as f64 / processor_max as f64) * 100.0
+    //             );
 
-                // Get task updater channel capacity
-                let task_updater_capacity = state.task_updater_sender.capacity();
-                let task_updater_max = 100000; // Adjust this to match your channel size
-                println!(
-                    "[CHANNEL MONITOR] Task updater channel: {}/{} slots available ({:.1}% full)",
-                    task_updater_capacity,
-                    task_updater_max,
-                    ((task_updater_max - task_updater_capacity) as f64 / task_updater_max as f64) * 100.0
-                );
+    //             // Get task updater channel capacity
+    //             let task_updater_capacity = state.task_updater_sender.capacity();
+    //             let task_updater_max = 100000; // Adjust this to match your channel size
+    //             info!(
+    //                 "[CHANNEL MONITOR] Task updater channel: {}/{} slots available ({:.1}% full)",
+    //                 task_updater_capacity,
+    //                 task_updater_max,
+    //                 ((task_updater_max - task_updater_capacity) as f64 / task_updater_max as f64) * 100.0
+    //             );
 
-                // Check workflow processor semaphore
-                let workflow_permits = state.workflow_processor_semaphore.available_permits();
-                let max_workflows = 10; // This matches your semaphore size
-                println!(
-                    "[CHANNEL MONITOR] Workflow processors: {}/{} available ({:.1}% in use)",
-                    workflow_permits,
-                    max_workflows,
-                    ((max_workflows - workflow_permits) as f64 / max_workflows as f64) * 100.0
-                );
+    //             // Check workflow processor semaphore
+    //             let workflow_permits = state.workflow_processor_semaphore.available_permits();
+    //             let max_workflows = 10; // This matches your semaphore size
+    //             info!(
+    //                 "[CHANNEL MONITOR] Workflow processors: {}/{} available ({:.1}% in use)",
+    //                 workflow_permits,
+    //                 max_workflows,
+    //                 ((max_workflows - workflow_permits) as f64 / max_workflows as f64) * 100.0
+    //             );
 
-                // Check flow completions size
-                let completion_count = state.flow_completions.lock().await.len();
-                println!(
-                    "[CHANNEL MONITOR] Active flow completions: {}",
-                    completion_count
-                );
+    //             // Check flow completions size
+    //             let completion_count = state.flow_completions.lock().await.len();
+    //             info!(
+    //                 "[CHANNEL MONITOR] Active flow completions: {}",
+    //                 completion_count
+    //             );
 
-                // Check cache sizes - Fixed to access inner data structures
-                let api_key_cache_size = state.api_key_cache.read().await.keys().len();
-                // let account_access_cache_size = state.account_access_cache.read().await.get_size();  // Assuming there's a get_size() method
-                // let flow_session_cache_size = state.flow_session_cache.read().await.get_size();  // Assuming there's a get_size() method
+    //             // Check cache sizes - Fixed to access inner data structures
+    //             let api_key_cache_size = state.api_key_cache.read().await.keys().len();
+    //             // let account_access_cache_size = state.account_access_cache.read().await.get_size();  // Assuming there's a get_size() method
+    //             // let flow_session_cache_size = state.flow_session_cache.read().await.get_size();  // Assuming there's a get_size() method
                 
-                println!("[CHANNEL MONITOR] Cache sizes:");
-                println!("  - API Key cache: {} entries", api_key_cache_size);
-                // println!("  - Account access cache: {} entries", account_access_cache_size);
-                // println!("  - Flow session cache: {} entries", flow_session_cache_size);
+    //             info!("[CHANNEL MONITOR] Cache sizes:");
+    //             info!("  - API Key cache: {} entries", api_key_cache_size);
+    //             // println!("  - Account access cache: {} entries", account_access_cache_size);
+    //             // println!("  - Flow session cache: {} entries", flow_session_cache_size);
 
-                // Check if shutdown signal is active
-                if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
-                    println!("[CHANNEL MONITOR] Shutdown signal detected, stopping monitoring");
-                    break;
-                }
-            }
-        }
-    });
+    //             // Check if shutdown signal is active
+    //             if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
+    //                 info!("[CHANNEL MONITOR] Shutdown signal detected, stopping monitoring");
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // });
 
     // // Add monitoring task with both memory, CPU and runtime stats
-    tokio::spawn({
-        let state = state.clone();
-        async move {
-            let mut last_cpu_measure = Instant::now();
-            let mut last_cpu_usage = 0_f64;
-            let runtime = tokio::runtime::Handle::current();
+    // tokio::spawn({
+    //     let state = state.clone();
+    //     async move {
+    //         let mut last_cpu_measure = Instant::now();
+    //         let mut last_cpu_usage = 0_f64;
+    //         let runtime = tokio::runtime::Handle::current();
 
-            loop {
-                // Memory monitoring
-                if let Ok(mem_info) = sys_info::mem_info() {
-                    let used_mem_gb = (mem_info.total - mem_info.free) as f64 / 1024.0 / 1024.0;
-                    let total_mem_gb = mem_info.total as f64 / 1024.0 / 1024.0;
-                    let mem_usage_pct = (used_mem_gb / total_mem_gb) * 100.0;
+    //         loop {
+    //             // Memory monitoring
+    //             if let Ok(mem_info) = sys_info::mem_info() {
+    //                 let used_mem_gb = (mem_info.total - mem_info.free) as f64 / 1024.0 / 1024.0;
+    //                 let total_mem_gb = mem_info.total as f64 / 1024.0 / 1024.0;
+    //                 let mem_usage_pct = (used_mem_gb / total_mem_gb) * 100.0;
                     
-                    println!(
-                        "[SYSTEM MONITOR] Memory: {:.2}GB/{:.2}GB ({:.1}%)",
-                        used_mem_gb,
-                        total_mem_gb,
-                        mem_usage_pct
-                    );
+    //                 info!(
+    //                     "[SYSTEM MONITOR] Memory: {:.2}GB/{:.2}GB ({:.1}%)",
+    //                     used_mem_gb,
+    //                     total_mem_gb,
+    //                     mem_usage_pct
+    //                 );
 
-                    // Memory threshold check
-                    if mem_usage_pct > 85.0 {
-                        println!("[SYSTEM MONITOR] ⚠️ High memory usage detected");
-                        // Clear caches
-                        // let flow_cache = state.flow_session_cache.write().await;
-                        // let mut api_cache = state.api_key_cache.write().await;
-                        // api_cache.clear();
-                        // drop(flow_cache);
-                        // drop(api_cache);
-                    }
-                }
+    //                 // Memory threshold check
+    //                 if mem_usage_pct > 85.0 {
+    //                     warn!("[SYSTEM MONITOR] ⚠️ High memory usage detected");
+    //                     // Clear caches
+    //                     // let flow_cache = state.flow_session_cache.write().await;
+    //                     // let mut api_cache = state.api_key_cache.write().await;
+    //                     // api_cache.clear();
+    //                     // drop(flow_cache);
+    //                     // drop(api_cache);
+    //                 }
+    //             }
 
-                // CPU monitoring
-                if let Ok(cpu_load) = sys_info::loadavg() {
-                    let elapsed = last_cpu_measure.elapsed().as_secs_f64();
-                    let cpu_usage = cpu_load.one; // 1 minute load average
-                    let cpu_change = (cpu_usage - last_cpu_usage).abs();
+    //             // CPU monitoring
+    //             if let Ok(cpu_load) = sys_info::loadavg() {
+    //                 let elapsed = last_cpu_measure.elapsed().as_secs_f64();
+    //                 let cpu_usage = cpu_load.one; // 1 minute load average
+    //                 let cpu_change = (cpu_usage - last_cpu_usage).abs();
 
-                    println!(
-                        "[SYSTEM MONITOR] CPU Load: 1min: {:.1}, 5min: {:.1}, 15min: {:.1}",
-                        cpu_load.one,
-                        cpu_load.five,
-                        cpu_load.fifteen,
-                    );
+    //                 info!(
+    //                     "[SYSTEM MONITOR] CPU Load: 1min: {:.1}, 5min: {:.1}, 15min: {:.1}",
+    //                     cpu_load.one,
+    //                     cpu_load.five,
+    //                     cpu_load.fifteen,
+    //                 );
 
-                    // Get per-core CPU info if available
-                    if let Ok(cpu_num) = sys_info::cpu_num() {
-                        println!("[SYSTEM MONITOR] Number of CPUs: {}", cpu_num);
+    //                 // Get per-core CPU info if available
+    //                 if let Ok(cpu_num) = sys_info::cpu_num() {
+    //                     info!("[SYSTEM MONITOR] Number of CPUs: {}", cpu_num);
                         
-                        // Calculate per-core load
-                        let per_core_load = cpu_load.one / cpu_num as f64;
-                        println!("[SYSTEM MONITOR] Average load per core: {:.1}%", per_core_load * 100.0);
+    //                     // Calculate per-core load
+    //                     let per_core_load = cpu_load.one / cpu_num as f64;
+    //                     info!("[SYSTEM MONITOR] Average load per core: {:.1}%", per_core_load * 100.0);
 
-                        // Alert on high CPU usage
-                        if per_core_load > 0.8 { // 80% per core
-                            println!("[SYSTEM MONITOR] ⚠️ High CPU usage detected!");
-                        }
-                    }
+    //                     // Alert on high CPU usage
+    //                     if per_core_load > 0.8 { // 80% per core
+    //                         warn!("[SYSTEM MONITOR] ⚠️ High CPU usage detected!");
+    //                     }
+    //                 }
 
-                    // Log significant CPU changes
-                    if cpu_change > 0.5 && elapsed > 5.0 {
-                        println!(
-                            "[SYSTEM MONITOR] Significant CPU change detected: {:.1}% -> {:.1}%",
-                            last_cpu_usage * 100.0,
-                            cpu_usage * 100.0
-                        );
-                        last_cpu_measure = Instant::now();
-                        last_cpu_usage = cpu_usage;
-                    }
-                }
+    //                 // Log significant CPU changes
+    //                 if cpu_change > 0.5 && elapsed > 5.0 {
+    //                     info!(
+    //                         "[SYSTEM MONITOR] Significant CPU change detected: {:.1}% -> {:.1}%",
+    //                         last_cpu_usage * 100.0,
+    //                         cpu_usage * 100.0
+    //                     );
+    //                     last_cpu_measure = Instant::now();
+    //                     last_cpu_usage = cpu_usage;
+    //                 }
+    //             }
 
-                // Tokio runtime stats
-                let stats = runtime.metrics();
-                println!(
-                    "[SYSTEM MONITOR] Tokio Runtime Stats:\n  \
-                     - Active Tasks: {}\n  \
-                     - Workers: {}\n  \
-                     - Global Queue Depth: {}\n  \
-                    ",
-                    stats.num_alive_tasks(),
-                    stats.num_workers(),
-                    stats.global_queue_depth(),
-                );
+    //             // Tokio runtime stats
+    //             let stats = runtime.metrics();
+    //             info!(
+    //                 "[SYSTEM MONITOR] Tokio Runtime Stats:\n  \
+    //                  - Active Tasks: {}\n  \
+    //                  - Workers: {}\n  \
+    //                  - Global Queue Depth: {}\n  \
+    //                 ",
+    //                 stats.num_alive_tasks(),
+    //                 stats.num_workers(),
+    //                 stats.global_queue_depth(),
+    //             );
 
-                // Check if we're in shutdown
-                if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
-                    println!("[SYSTEM MONITOR] Shutdown signal detected, stopping monitoring");
-                    break;
-                }
+    //             // Check if we're in shutdown
+    //             if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
+    //                 info!("[SYSTEM MONITOR] Shutdown signal detected, stopping monitoring");
+    //                 break;
+    //             }
 
-                // Sleep between checks
-                tokio::time::sleep(Duration::from_secs(30)).await;
-            }
-        }
-    });
+    //             // Sleep between checks
+    //             tokio::time::sleep(Duration::from_secs(30)).await;
+    //         }
+    //     }
+    // });
 
     let state_clone = state.clone();
     tokio::spawn(async move {
         let mut sigterm = signal(SignalKind::terminate()).unwrap();
         sigterm.recv().await;
-        println!("Received SIGTERM signal");
+        info!("Received SIGTERM signal");
         // Set the shutdown signal
         state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
         
         // Give time for in-flight operations to complete
-        sleep(Duration::from_secs(2)).await;
+        sleep(Duration::from_secs(20)).await;
     });
 
     // Run the API server
