@@ -3,8 +3,7 @@ use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{runtime, trace as sdktrace, Resource};
 use opentelemetry_semantic_conventions::resource;
 use std::env;
-use tracing_subscriber::prelude::*;
-use tracing_subscriber::Registry;
+use tracing_subscriber::{prelude::*, EnvFilter, Registry};
 
 /// Initializes OpenTelemetry tracing and exports data to a gRPC OTLP endpoint.
 ///
@@ -41,7 +40,10 @@ pub fn init_otel_grpc() -> Result<(), Box<dyn std::error::Error + Send + Sync + 
 
     let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
 
-    let subscriber = Registry::default().with(telemetry_layer);
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("off,anything_server=trace"));
+
+    let subscriber = Registry::default().with(env_filter).with(telemetry_layer);
 
     tracing::subscriber::set_global_default(subscriber)?;
 
