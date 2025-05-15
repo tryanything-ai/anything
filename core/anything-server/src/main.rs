@@ -67,7 +67,7 @@ use tower_http::compression::CompressionLayer;
 use tracing::{info, warn, error, debug, trace};
 
 mod otel_setup;
-use otel_setup::init_tracing;
+use otel_setup::init_otel_grpc;
 
 // Add this struct to store completion channels
 pub struct FlowCompletion {
@@ -104,7 +104,7 @@ pub struct AppState {
 #[tokio::main]
 async fn main() {
     // Initialize tracing with OpenTelemetry
-    init_tracing();
+    init_otel_grpc();
 
     // Restore the panic hook if you want panics to be logged via tracing
     // std::panic::set_hook(Box::new(|panic_info| {
