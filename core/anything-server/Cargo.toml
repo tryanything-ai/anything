@@ -50,5 +50,5 @@ futures-util = { version = "0.3.17", default-features = false }
 tokio-stream = "0.1"
 tracing = { version = "0.1.35", default-features = false, features = ["std", "attributes"] }
 tracing-error = "0.2.0"
-tracing-subscriber = { version = "0.3.0", default-features = false, features = ["registry", "std", "fmt"] }
+tracing-subscriber = { version = "0.3.0", default-features = false, features = ["registry", "std", "fmt", "env-filter"] }
 tracing-opentelemetry   = "0.22"
