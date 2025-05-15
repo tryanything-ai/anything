@@ -5,6 +5,7 @@ use opentelemetry::{global, KeyValue};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
     runtime,
+    runtime::Tokio,
     trace::{
         self as sdktrace, Config as TraceConfig, RandomIdGenerator, Sampler, SdkTracerProvider,
     },
@@ -40,7 +41,7 @@ fn otel_resource() -> Resource {
 }
 
 // Set up the OpenTelemetry tracer provider, adapted from the example
-fn init_tracer_provider() -> SdkTracerProvider {
+fn init_tracer_provider() -> Result<SdkTracerProvider, opentelemetry::trace::TraceError> {
     println!("[OTEL_SETUP DEBUG] Initializing Tracer Provider...");
     let otel_endpoint = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
         .unwrap_or_else(|_| "http://otel-collector.railway.internal:4317".to_string());
@@ -49,31 +50,26 @@ fn init_tracer_provider() -> SdkTracerProvider {
         otel_endpoint
     );
 
-    // Create an OTLP exporter
-    let exporter = opentelemetry_otlp::SpanExporter::builder()
-        .with_tonic()
-        .with_endpoint(otel_endpoint) // SpanExporter builder takes endpoint directly
-        .build()
-        .expect("Failed to create OTLP span exporter");
-    println!("[OTEL_SETUP DEBUG]   OTLP Span Exporter created.");
+    let otlp_exporter = opentelemetry_otlp::new_exporter()
+        .tonic()
+        .with_endpoint(otel_endpoint)
+        .with_timeout(std::time::Duration::from_secs(3));
 
-    // Create a SdkTracerProvider
-    let provider = SdkTracerProvider::builder()
-        .with_sampler(Sampler::ParentBased(Box::new(Sampler::TraceIdRatioBased(
-            1.0,
-        ))))
-        .with_id_generator(RandomIdGenerator::default())
-        .with_resource(otel_resource()) // Add the resource to the provider
-        .with_batch_exporter(exporter) // Use batch exporter with Tokio runtime
-        .build();
+    let tracer = opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(otlp_exporter)
+        .with_trace_config(TraceConfig::default().with_resource(otel_resource()))
+        .install_batch(Tokio)?;
+
     println!("[OTEL_SETUP DEBUG]   SdkTracerProvider created.");
-    provider
+    Ok(tracer)
 }
 
 // Initialize tracing-subscriber with OpenTelemetry
 pub fn init_tracing() {
     println!("[OTEL_SETUP DEBUG] Initializing Tracing...");
-    let tracer_provider = init_tracer_provider();
+    let tracer_provider =
+        init_tracer_provider().expect("Failed to initialize OpenTelemetry tracer provider");
     let tracer = opentelemetry::trace::TracerProvider::tracer(&tracer_provider, "anything-server");
 
     // Set the SdkTracerProvider as the global tracer provider
