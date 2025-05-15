@@ -65,8 +65,20 @@ use sys_info;
 
 use tower_http::compression::CompressionLayer;
 
-use tracing::{info, warn, error};
-use tracing_subscriber;
+use tracing::{info, span, warn, error, Level};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry};
+
+use opentelemetry::{global, KeyValue};
+use opentelemetry_sdk::{
+    trace::{self as sdktrace, SdkTracerProvider, Sampler, RandomIdGenerator, Config as TraceConfig},
+    runtime,
+    Resource,
+};
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_semantic_conventions::{
+    resource::{SERVICE_NAME, SERVICE_VERSION, DEPLOYMENT_ENVIRONMENT_NAME},
+    SCHEMA_URL,
+};
 
 // Add this struct to store completion channels
 pub struct FlowCompletion {
@@ -102,75 +114,75 @@ pub struct AppState {
 
 //Javascript execution on Metal in Railway got too lazy and made it hard to get things running
 // Add this function before main
-async fn warm_up_blocking_threads(min_threads: usize) {
-    println!("[THREAD POOL] Warming up {} blocking threads...", min_threads);
-    let start = std::time::Instant::now();
+// async fn warm_up_blocking_threads(min_threads: usize) {
+//     println!("[THREAD POOL] Warming up {} blocking threads...", min_threads);
+//     let start = std::time::Instant::now();
     
-    let handles: Vec<_> = (0..min_threads)
-        .map(|i| {
-            tokio::task::spawn_blocking(move || {
-                println!("[THREAD POOL] Warming thread {}", i);
-                std::thread::sleep(std::time::Duration::from_millis(10));
-            })
-        })
-        .collect();
+//     let handles: Vec<_> = (0..min_threads)
+//         .map(|i| {
+//             tokio::task::spawn_blocking(move || {
+//                 println!("[THREAD POOL] Warming thread {}", i);
+//                 std::thread::sleep(std::time::Duration::from_millis(10));
+//             })
+//         })
+//         .collect();
 
-    // Wait for all threads to complete warmup using futures
-    futures::future::join_all(handles).await;
+//     // Wait for all threads to complete warmup using futures
+//     futures::future::join_all(handles).await;
 
-    println!("[THREAD POOL] Warmup completed in {:?}", start.elapsed());
-}
+//     println!("[THREAD POOL] Warmup completed in {:?}", start.elapsed());
+// }
 
-async fn warm_up_async_threads(num_threads: usize) {
-    println!("[ASYNC POOL] Warming up {} async threads...", num_threads);
-    let start = std::time::Instant::now();
+// async fn warm_up_async_threads(num_threads: usize) {
+//     println!("[ASYNC POOL] Warming up {} async threads...", num_threads);
+//     let start = std::time::Instant::now();
 
-    let handles: Vec<_> = (0..num_threads)
-        .map(|i| {
-            tokio::spawn(async move {
-                println!("[ASYNC POOL] Warming thread {}", i);
-                // Small async work to ensure thread activation
-                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-            })
-        })
-        .collect();
+//     let handles: Vec<_> = (0..num_threads)
+//         .map(|i| {
+//             tokio::spawn(async move {
+//                 println!("[ASYNC POOL] Warming thread {}", i);
+//                 // Small async work to ensure thread activation
+//                 tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+//             })
+//         })
+//         .collect();
 
-    // Wait for all warm-up tasks to complete
-    for handle in handles {
-        let _ = handle.await;
-    }
+//     // Wait for all warm-up tasks to complete
+//     for handle in handles {
+//         let _ = handle.await;
+//     }
 
-    println!("[ASYNC POOL] Warmup completed in {:?}", start.elapsed());
-}
+//     println!("[ASYNC POOL] Warmup completed in {:?}", start.elapsed());
+// }
 
 // Add this function after the existing warm-up functions
-async fn periodic_thread_warmup(state: Arc<AppState>) {
-    println!("[THREAD POOL] Starting periodic warmup task");
-    loop {
-        // Warm up every 5 minutes
-        tokio::time::sleep(Duration::from_secs(300)).await;
+// async fn periodic_thread_warmup(state: Arc<AppState>) {
+//     println!("[THREAD POOL] Starting periodic warmup task");
+//     loop {
+//         // Warm up every 5 minutes
+//         tokio::time::sleep(Duration::from_secs(300)).await;
         
-        // Skip if shutdown is signaled
-        if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
-            break;
-        }
+//         // Skip if shutdown is signaled
+//         if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
+//             break;
+//         }
 
-        println!("[THREAD POOL] Performing periodic warmup");
-        // Do some actual blocking work to keep threads warm
-        let handles: Vec<_> = (0..16)
-            .map(|i| {
-                tokio::task::spawn_blocking(move || {
-                    // Do some CPU work to keep thread warm
-                    let mut x = 0;
-                    for _ in 0..1000 { x += 1; }
-                    println!("[THREAD POOL] Keeping thread {} warm", i);
-                })
-            })
-            .collect();
+//         println!("[THREAD POOL] Performing periodic warmup");
+//         // Do some actual blocking work to keep threads warm
+//         let handles: Vec<_> = (0..16)
+//             .map(|i| {
+//                 tokio::task::spawn_blocking(move || {
+//                     // Do some CPU work to keep thread warm
+//                     let mut x = 0;
+//                     for _ in 0..1000 { x += 1; }
+//                     println!("[THREAD POOL] Keeping thread {} warm", i);
+//                 })
+//             })
+//             .collect();
 
-        futures::future::join_all(handles).await;
-    }
-}
+//         futures::future::join_all(handles).await;
+//     }
+// }
 
 // #[tokio::main(
 //     flavor = "multi_thread",
@@ -178,10 +190,10 @@ async fn periodic_thread_warmup(state: Arc<AppState>) {
 // )]
 #[tokio::main]
 async fn main() {
-    // Initialize tracing subscriber
-    tracing_subscriber::fmt::init();
+    // Initialize tracing with OpenTelemetry
+    init_tracing();
 
-    // Set a global panic hook to log panic info
+    // Restore the panic hook if you want panics to be logged via tracing
     std::panic::set_hook(Box::new(|panic_info| {
         error!("[PANIC] Application panicked: {}", panic_info);
         if let Some(location) = panic_info.location() {
@@ -191,12 +203,6 @@ async fn main() {
             error!("[PANIC] Payload: {}", s);
         }
     }));
-
-    // Both warmups are now async
-    // warm_up_blocking_threads(16).await;
-    // warm_up_async_threads(48).await;
-
-    // console_subscriber::init();
 
     dotenv().ok();
     let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
@@ -718,4 +724,54 @@ pub async fn root() -> impl IntoResponse {
 
     // Add this with your other spawned tasks:
     // tokio::spawn(periodic_thread_warmup(state.clone()));
+}
+
+// Helper to build a Resource for the service, adapted from the example
+fn otel_resource() -> Resource {
+    Resource::builder()
+        .with_attributes([
+            KeyValue::new(SERVICE_NAME, env!("CARGO_PKG_NAME").to_string()),
+            KeyValue::new(SERVICE_VERSION, env!("CARGO_PKG_VERSION").to_string()),
+            KeyValue::new(DEPLOYMENT_ENVIRONMENT_NAME, std::env::var("DEPLOYMENT_ENVIRONMENT").unwrap_or_else(|_| "development".to_string())),
+            // The example implies SCHEMA_URL is also part of the resource.
+            // It can be added as a KeyValue if not set by a specific builder method.
+            // KeyValue::new(opentelemetry_semantic_conventions::resource::SCHEMA_URL, SCHEMA_URL.to_string()),
+        ])
+        .build()
+}
+
+// Set up the OpenTelemetry tracer provider, adapted from the example
+fn init_tracer_provider() -> SdkTracerProvider {
+    let otel_endpoint = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
+        .unwrap_or_else(|_| "http://otel-collector:4317".to_string());
+
+    // Create an OTLP exporter
+    let exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .with_endpoint(otel_endpoint) // SpanExporter builder takes endpoint directly
+        .build()
+        .expect("Failed to create OTLP span exporter");
+
+    // Create a SdkTracerProvider
+    SdkTracerProvider::builder()
+        .with_sampler(Sampler::ParentBased(Box::new(Sampler::TraceIdRatioBased(1.0))))
+        .with_id_generator(RandomIdGenerator::default())
+        .with_resource(otel_resource()) // Add the resource to the provider
+        .with_batch_exporter(exporter) // Use batch exporter with Tokio runtime
+        .build()
+}
+
+// Initialize tracing-subscriber with OpenTelemetry
+fn init_tracing() {
+    let tracer_provider = init_tracer_provider();
+    let tracer = opentelemetry::trace::TracerProvider::tracer(&tracer_provider, "anything-server"); // Corrected path
+
+    // Set the SdkTracerProvider as the global tracer provider
+    global::set_tracer_provider(tracer_provider);
+
+    Registry::default()
+        .with(tracing_subscriber::filter::LevelFilter::from_level(Level::INFO))
+        .with(fmt::layer())
+        .with(tracing_opentelemetry::layer().with_tracer(tracer))
+        .init();
 }
