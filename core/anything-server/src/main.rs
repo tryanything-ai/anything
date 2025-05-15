@@ -104,7 +104,12 @@ pub struct AppState {
 #[tokio::main]
 async fn main() {
     // Initialize tracing with OpenTelemetry
-    init_otel_grpc();
+    if let Err(e) = init_otel_grpc() {
+        eprintln!("Failed to initialize OpenTelemetry: {}", e);
+        // Depending on your application's requirements, you might want to panic or exit.
+        // For critical observability, panicking might be appropriate.
+        panic!("Failed to initialize OpenTelemetry: {}", e);
+    }
 
     // Restore the panic hook if you want panics to be logged via tracing
     // std::panic::set_hook(Box::new(|panic_info| {
