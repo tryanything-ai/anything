@@ -20,8 +20,8 @@ use crate::{
     AppState,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use tracing::error;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StartTestingWorkflowPayload {
@@ -135,7 +135,7 @@ pub async fn test_workflow(
         .build()
     {
         Ok(task) => task,
-        Err(e) => error!("Failed to build task: {}", e),
+        Err(e) => panic!("Failed to build task: {}", e),
     };
 
     println!("[TESTING] Creating processor message");

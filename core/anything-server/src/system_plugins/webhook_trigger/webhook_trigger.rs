@@ -197,7 +197,7 @@ pub async fn run_workflow_and_respond(
                 }))
         .build() {
             Ok(task) => task,
-            Err(e) => error!("Failed to build task: {}", e),
+            Err(e) => panic!("Failed to build task: {}", e),
         };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -436,7 +436,7 @@ pub async fn run_workflow_version_and_respond(
             }))
     .build() {
         Ok(task) => task,
-        Err(e) => error!("Failed to build task: {}", e),
+        Err(e) => panic!("Failed to build task: {}", e),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -672,7 +672,7 @@ pub async fn run_workflow(
             }))
     .build() {
         Ok(task) => task,
-        Err(e) => error!("Failed to build task: {}", e),
+        Err(e) => panic!("Failed to build task: {}", e),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -865,7 +865,7 @@ pub async fn run_workflow_version(
             }))
     .build() {
         Ok(task) => task,
-        Err(e) => error!("Failed to build task: {}", e),
+        Err(e) => panic!("Failed to build task: {}", e),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);

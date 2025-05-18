@@ -155,7 +155,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
         .build()
     {
         Ok(task) => task,
-        Err(e) => error!("Failed to build task: {}", e),
+        Err(e) => panic!("Failed to build task: {}", e),
     };
 
     println!("[TOOL_CALL_API] Task to be created: {:?}", task);
