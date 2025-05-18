@@ -50,8 +50,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   routes.push({
     url: `${base_url}`,
     lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 1,
+    // changeFrequency: "weekly",
+    // priority: 1,
   });
 
   //templates
@@ -77,8 +77,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   routes.push({
     url: `${base_url}/blog`,
     lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.9,
+    // changeFrequency: "daily",
+    // priority: 0.9,
   });
 
   // Add blog articles
@@ -86,8 +86,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     routes.push({
       url: `${base_url}/blog/${article.slug}`,
       lastModified: new Date(article.lastmod),
-      changeFrequency: "weekly",
-      priority: 0.7,
+      // changeFrequency: "weekly",
+      // priority: 0.7,
     });
   });
 
@@ -96,8 +96,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     routes.push({
       url: `${base_url}/blog/category/${category.slug}`,
       lastModified: new Date(category.lastmod),
-      changeFrequency: "weekly",
-      priority: 0.6,
+      // changeFrequency: "weekly",
+      // priority: 0.6,
     });
   });
 
@@ -106,8 +106,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     routes.push({
       url: `${base_url}/blog/tag/${tag.slug}`,
       lastModified: new Date(tag.lastmod),
-      changeFrequency: "weekly",
-      priority: 0.5,
+      // changeFrequency: "weekly",
+      // priority: 0.5,
     });
   });
 
