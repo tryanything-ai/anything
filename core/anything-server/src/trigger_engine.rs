@@ -410,7 +410,7 @@ async fn create_trigger_task(
         .build()
     {
         Ok(task) => task,
-        Err(e) => error!("Failed to build task: {}", e),
+        Err(e) => panic!("Failed to build task: {}", e),
     };
 
     info!("[CRON TRIGGER] Creating processor message -> TODO: Fix ! Not implemented");
