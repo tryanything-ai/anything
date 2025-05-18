@@ -26,6 +26,8 @@ use crate::{processor::processor::ProcessorMessage, types::workflow_types::Datab
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 
+use tracing::error;
+
 use super::webhook_trigger_utils::{
     convert_request_to_payload, parse_response_action_response_into_api_response,
     validate_request_method, validate_required_input_and_response_plugins, validate_security_model,
@@ -195,7 +197,7 @@ pub async fn run_workflow_and_respond(
                 }))
         .build() {
             Ok(task) => task,
-            Err(e) => panic!("Failed to build task: {}", e),
+            Err(e) => error!("Failed to build task: {}", e),
         };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -434,7 +436,7 @@ pub async fn run_workflow_version_and_respond(
             }))
     .build() {
         Ok(task) => task,
-        Err(e) => panic!("Failed to build task: {}", e),
+        Err(e) => error!("Failed to build task: {}", e),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -670,7 +672,7 @@ pub async fn run_workflow(
             }))
     .build() {
         Ok(task) => task,
-        Err(e) => panic!("Failed to build task: {}", e),
+        Err(e) => error!("Failed to build task: {}", e),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);
@@ -863,7 +865,7 @@ pub async fn run_workflow_version(
             }))
     .build() {
         Ok(task) => task,
-        Err(e) => panic!("Failed to build task: {}", e),
+        Err(e) => error!("Failed to build task: {}", e),
     };
 
     println!("[WEBHOOK API] Task to be created: {:?}", task);

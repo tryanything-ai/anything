@@ -15,6 +15,7 @@ use std::env;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::{processor::processor::ProcessorMessage, types::workflow_types::DatabaseFlowVersion};
 use crate::{
     types::{
         action_types::ActionType,
@@ -22,8 +23,7 @@ use crate::{
     },
     AppState, FlowCompletion,
 };
-
-use crate::{processor::processor::ProcessorMessage, types::workflow_types::DatabaseFlowVersion};
+use tracing::error;
 
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -155,7 +155,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
         .build()
     {
         Ok(task) => task,
-        Err(e) => panic!("Failed to build task: {}", e),
+        Err(e) => error!("Failed to build task: {}", e),
     };
 
     println!("[TOOL_CALL_API] Task to be created: {:?}", task);

@@ -16,15 +16,18 @@ pub fn init_otel_grpc() -> Result<(), Box<dyn std::error::Error + Send + Sync + 
         .tonic()
         .with_endpoint(otlp_endpoint);
 
-    // Determine the deployment environment. Default to "development" if not set.
-    let deployment_environment =
-        env::var("DEPLOYMENT_ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
+    // Determine the deployment environment based on build profile.
+    let deployment_environment = if cfg!(debug_assertions) {
+        "development"
+    } else {
+        "production"
+    };
 
     let resource = Resource::new(vec![
         opentelemetry::KeyValue::new(resource::SERVICE_NAME, "anything-server"),
         opentelemetry::KeyValue::new(resource::DEPLOYMENT_ENVIRONMENT, deployment_environment),
         // You can add more common attributes here, for example:
-        // opentelemetry::KeyValue::new(resource::SERVICE_VERSION, env!("CARGO_PKG_VERSION")),
+        opentelemetry::KeyValue::new(resource::SERVICE_VERSION, env!("CARGO_PKG_VERSION")),
         // opentelemetry::KeyValue::new(resource::HOST_NAME, hostname::get().unwrap_or_default().to_string_lossy().into_owned()),
     ]);
 

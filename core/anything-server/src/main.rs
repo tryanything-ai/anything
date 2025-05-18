@@ -108,7 +108,7 @@ async fn main() {
         eprintln!("Failed to initialize OpenTelemetry: {}", e);
         // Depending on your application's requirements, you might want to panic or exit.
         // For critical observability, panicking might be appropriate.
-        panic!("Failed to initialize OpenTelemetry: {}", e);
+        error!("Failed to initialize OpenTelemetry: {}", e);
     }
 
     // Restore the panic hook if you want panics to be logged via tracing
