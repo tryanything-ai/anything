@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use tokio::time::{timeout, Duration};
+use tracing::{info, span, Instrument, Level};
 use uuid::Uuid;
 
 // Define the type of task operation
@@ -44,7 +45,7 @@ pub async fn task_database_status_processor(
     const TIMEOUT_DURATION: Duration = Duration::from_secs(30);
     const MAX_RETRIES: u32 = 3;
 
-    println!("[TASK PROCESSOR] Starting status updater processor");
+    info!("[TASK PROCESSOR] Starting status updater processor");
 
     loop {
         // Check shutdown signal first
@@ -52,97 +53,135 @@ pub async fn task_database_status_processor(
             .shutdown_signal
             .load(std::sync::atomic::Ordering::SeqCst)
         {
-            println!("[TASK PROCESSOR] Shutdown signal received, stopping status updater");
+            info!("[TASK PROCESSOR] Shutdown signal received, stopping status updater");
             break;
         }
 
         // Try to receive a message with timeout
         match timeout(TIMEOUT_DURATION, receiver.recv()).await {
             Ok(Some(message)) => {
-                println!(
-                    "[TASK PROCESSOR] Processing status update: {:?}",
-                    message.operation
+                let operation_kind = match &message.operation {
+                    Operation::UpdateTask { .. } => "UpdateTask",
+                    Operation::CreateTask { .. } => "CreateTask",
+                    Operation::CompleteWorkflow { .. } => "CompleteWorkflow",
+                };
+
+                let message_span = span!(
+                    Level::INFO,
+                    "process_status_update_message",
+                    operation_type = %operation_kind,
+                    otel.kind = "CONSUMER"
                 );
 
-                let mut retries = 0;
-                let mut last_error = None;
+                async {
+                    info!(
+                        "[TASK PROCESSOR] Processing status update: {:?}",
+                        message.operation
+                    );
 
-                // Retry loop for database operations
-                while retries < MAX_RETRIES {
-                    let result = match &message.operation {
-                        Operation::UpdateTask {
-                            task_id,
-                            started_at,
-                            ended_at,
-                            status,
-                            result,
-                            context,
-                            error,
-                        } => {
-                            update_task_status(
-                                state.clone(),
-                                task_id,
-                                status,
-                                context.clone(),
-                                result.clone(),
-                                error.clone(),
-                                *started_at,
-                                *ended_at,
-                            )
-                            .await
-                        }
-                        Operation::CreateTask { task_id: _, input } => {
-                            create_task(state.clone(), input).await
-                        }
-                        Operation::CompleteWorkflow {
-                            flow_session_id,
-                            status,
-                            trigger_status,
-                        } => {
-                            update_flow_session_status(
-                                &state,
-                                flow_session_id,
-                                status,
-                                trigger_status,
-                            )
-                            .await
-                        }
-                    };
+                    let mut retries = 0;
+                    let mut last_error = None;
 
-                    match result {
-                        Ok(_) => {
-                            println!("[TASK PROCESSOR] Successfully processed update");
-                            break;
+                    // Retry loop for database operations
+                    while retries < MAX_RETRIES {
+                        let db_op_span = span!(
+                            Level::INFO,
+                            "database_operation_attempt",
+                            retry_count = retries
+                        );
+
+                        let result = async {
+                            match &message.operation {
+                                Operation::UpdateTask {
+                                    task_id,
+                                    started_at,
+                                    ended_at,
+                                    status,
+                                    result,
+                                    context,
+                                    error,
+                                } => {
+                                    span!(Level::DEBUG, "update_task_status_db_call", task_id = %task_id, task_status = ?status).in_scope(|| {
+                                        update_task_status(
+                                            state.clone(),
+                                            task_id,
+                                            status,
+                                            context.clone(),
+                                            result.clone(),
+                                            error.clone(),
+                                            *started_at,
+                                            *ended_at,
+                                        )
+                                    })
+                                    .await
+                                }
+                                Operation::CreateTask { task_id, input } => {
+                                    span!(Level::DEBUG, "create_task_db_call", task_id = %task_id).in_scope(|| {
+                                        create_task(state.clone(), input)
+                                    }).await
+                                }
+                                Operation::CompleteWorkflow {
+                                    flow_session_id,
+                                    status,
+                                    trigger_status,
+                                } => {
+                                    span!(Level::DEBUG, "complete_workflow_db_call", flow_session_id = %flow_session_id, flow_status = ?status).in_scope(|| {
+                                        update_flow_session_status(
+                                            &state,
+                                            flow_session_id,
+                                            status,
+                                            trigger_status,
+                                        )
+                                    })
+                                    .await
+                                }
+                            }
                         }
-                        Err(e) => {
-                            last_error = Some(e);
-                            retries += 1;
-                            if retries < MAX_RETRIES {
-                                println!("[TASK PROCESSOR] Retry {} of {}", retries, MAX_RETRIES);
-                                tokio::time::sleep(Duration::from_millis(500 * retries as u64))
-                                    .await;
+                        .instrument(db_op_span)
+                        .await;
+
+                        match result {
+                            Ok(_) => {
+                                info!("[TASK PROCESSOR] Successfully processed update");
+                                break;
+                            }
+                            Err(e) => {
+                                last_error = Some(e);
+                                retries += 1;
+                                if retries < MAX_RETRIES {
+                                    info!("[TASK PROCESSOR] Retry {} of {}", retries, MAX_RETRIES);
+                                    tokio::time::sleep(Duration::from_millis(500 * retries as u64))
+                                        .await;
+                                }
                             }
                         }
                     }
-                }
 
-                if let Some(e) = last_error {
-                    if retries >= MAX_RETRIES {
-                        println!(
-                            "[TASK PROCESSOR] Failed to process update after {} retries: {}",
-                            MAX_RETRIES, e
-                        );
+                    if let Some(e) = last_error {
+                        if retries >= MAX_RETRIES {
+                            tracing::error!(
+                                error = %e,
+                                retries = MAX_RETRIES,
+                                "[TASK PROCESSOR] Failed to process update after max retries"
+                            );
+                            info!(
+                                "[TASK PROCESSOR] Failed to process update after {} retries: {}",
+                                MAX_RETRIES, e
+                            );
+                        }
                     }
                 }
+                .instrument(message_span)
+                .await;
             }
             Ok(None) => {
                 // Channel was closed
-                println!("[TASK PROCESSOR] Channel was closed unexpectedly");
+                info!("[TASK PROCESSOR] Channel was closed unexpectedly");
                 if !state
                     .shutdown_signal
                     .load(std::sync::atomic::Ordering::SeqCst)
                 {
-                    println!(
+                    info!(
                         "[TASK PROCESSOR] ERROR: Channel closed while processor was still running!"
                     );
                 }
@@ -150,7 +189,7 @@ pub async fn task_database_status_processor(
             }
             Err(_timeout) => {
                 // Timeout occurred - this is normal, just continue
-                println!(
+                info!(
                     "[TASK PROCESSOR] No messages received in {:?}",
                     TIMEOUT_DURATION
                 );
@@ -159,5 +198,5 @@ pub async fn task_database_status_processor(
         }
     }
 
-    println!("[TASK PROCESSOR] Status updater processor shutdown complete");
+    info!("[TASK PROCESSOR] Status updater processor shutdown complete");
 }
