@@ -216,7 +216,6 @@ pub async fn process_http_task(
     }
 }
 
-#[instrument(skip(bundled_context))]
 pub fn parse_headers(bundled_context: &Value) -> Vec<(String, String)> {
     info!("[TASK_ENGINE] Processing headers");
     let mut headers = Vec::new();

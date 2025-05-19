@@ -67,12 +67,6 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
                 info!("[PROCESS TASK] Processing regular task {}", task.task_id);
                 match &task.plugin_name {
                     Some(plugin_name) => {
-                        // Create a span for the plugin execution for debugging
-                        let plugin_span = tracing::info_span!(
-                            "plugin_execution",
-                            plugin_name = %plugin_name
-                        );
-                        let _plugin_entered = plugin_span.enter();
                         let result = match plugin_name.as_str() {
                             "@anything/http" => {
                                 process_http_task(&http_client, &bundled_plugin_cofig).await
