@@ -13,19 +13,19 @@ pub async fn process_js_task(
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
     info!("[RUSTYSCRIPT] Starting process_js_task");
-    info!("[RUSTYSCRIPT] Bundled variables: {:?}", bundled_inputs);
-    info!("[RUSTYSCRIPT] Plugin config: {:?}", bundled_plugin_config);
+    // info!("[RUSTYSCRIPT] Bundled variables: {:?}", bundled_inputs);
+    // info!("[RUSTYSCRIPT] Plugin config: {:?}", bundled_plugin_config);
 
     // Clone the context since we need to move it to the new thread
-    let clone_span = tracing::info_span!("clone_inputs");
-    let clone_start = Instant::now();
+    // let clone_span = tracing::info_span!("clone_inputs");
+    // let clone_start = Instant::now();
     let bundled_plugin_config_clone = bundled_plugin_config.clone();
     let bundled_inputs_clone = bundled_inputs.clone();
-    let clone_duration = clone_start.elapsed();
-    info!(
-        "[RUSTYSCRIPT] Created clones of input data for thread in {:?}",
-        clone_duration
-    );
+    // let clone_duration = clone_start.elapsed();
+    // info!(
+    //     "[RUSTYSCRIPT] Created clones of input data for thread in {:?}",
+    //     clone_duration
+    // );
 
     // Spawn blocking task in a separate thread
     info!("[RUSTYSCRIPT] Spawning blocking task in separate thread");
@@ -52,8 +52,8 @@ pub async fn process_js_task(
             );
 
             // Create a module that wraps the user's code with context and exports
-            let wrap_span = tracing::info_span!("wrap_code");
-            let wrap_start = Instant::now();
+            // let wrap_span = tracing::info_span!("wrap_code");
+            // let wrap_start = Instant::now();
             let wrapped_code = format!(
                 r#"
                 // Inject variables into globalThis.inputs to match autocomplete
@@ -88,21 +88,21 @@ pub async fn process_js_task(
                 "#,
                 serde_json::to_string(&bundled_inputs_clone)?
             );
-            let wrap_duration = wrap_start.elapsed();
-            info!("[RUSTYSCRIPT] Generated wrapped code, length: {} chars, in {:?}", wrapped_code.len(), wrap_duration);
+            // let wrap_duration = wrap_start.elapsed();
+            // info!("[RUSTYSCRIPT] Generated wrapped code, length: {} chars, in {:?}", wrapped_code.len(), wrap_duration);
 
             // Create the module with unique name
-            let module_span = tracing::info_span!("create_module");
-            let module_start = Instant::now();
+            // let module_span = tracing::info_span!("create_module");
+            // let module_start = Instant::now();
             info!("[RUSTYSCRIPT] Creating module from wrapped code");
             let module_name = format!("user_code_{}.js", Uuid::new_v4());
             let module = Module::new(&module_name, &wrapped_code);
             info!("[RUSTYSCRIPT] Successfully created module: {}", module_name);
-            let module_duration = module_start.elapsed();
-            info!("[RUSTYSCRIPT] Module creation took {:?}", module_duration);
+            // let module_duration = module_start.elapsed();
+            // info!("[RUSTYSCRIPT] Module creation took {:?}", module_duration);
 
             // Execute the module
-            let script_span = tracing::info_span!("script_execution");
+            let script_span = tracing::info_span!("javascript_execution");
             let script_start = Instant::now();
             info!("[RUSTYSCRIPT] Starting script execution with 1 second timeout");
 

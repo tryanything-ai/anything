@@ -19,7 +19,7 @@ pub struct ProcessorMessage {
     pub trigger_task: Option<Task>,
 }
 
-#[instrument(skip(state, processor_receiver))]
+// #[instrument(skip(state, processor_receiver))]
 pub async fn processor(
     state: Arc<AppState>,
     mut processor_receiver: mpsc::Receiver<ProcessorMessage>,

@@ -26,7 +26,7 @@ pub struct ProcessingContext {
     pub workflow_def: Arc<WorkflowVersionDefinition>,
 }
 
-#[instrument(skip(state, client, processor_message))]
+// #[instrument(skip(state, client, processor_message))]
 pub async fn process_workflow(
     state: Arc<AppState>,
     client: postgrest::Postgrest,

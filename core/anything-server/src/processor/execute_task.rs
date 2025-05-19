@@ -29,7 +29,7 @@ pub struct TaskError {
 
 pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
-#[instrument(skip(state, client, task))]
+// #[instrument(skip(state, client, task))]
 pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
     let task_id = task.task_id;
     let flow_session_id = task.flow_session_id;
