@@ -59,6 +59,9 @@ pub fn init_otel_grpc() -> Result<(), Box<dyn std::error::Error + Send + Sync + 
 
     otel_global::set_meter_provider(meter_provider);
 
+    // Initialize the metrics registry
+    let _ = &crate::metrics::METRICS;
+
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("off,anything_server=trace"));
 

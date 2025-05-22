@@ -10,20 +10,6 @@ use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
-// Placeholder function - replace with actual logic to get total permits from AppState
-// fn get_total_permits_from_state(state: &Arc<impl HasSemaphore>) -> u64 {
-//     // You MUST replace this with the correct way to get your configured max_concurrent_workflows
-//     // e.g., state.config.max_concurrent_workflows as u64 or similar.
-//     10 // Defaulting to 10 as a placeholder - PLEASE UPDATE
-// }
-
-// Implement the HasSemaphore trait for AppState
-// impl HasSemaphore for AppState {
-//     fn get_semaphore(&self) -> &tokio::sync::Semaphore {
-//         &self.workflow_processor_semaphore
-//     }
-// }
-
 #[derive(Debug, Clone)]
 pub struct ProcessorMessage {
     pub workflow_id: Uuid,
@@ -39,9 +25,6 @@ pub async fn processor(
     mut processor_receiver: mpsc::Receiver<ProcessorMessage>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("[PROCESSOR] Starting processor");
-
-    // Register semaphore metrics callback using the metrics registry
-    // METRICS.register_semaphore_metrics(get_total_permits_from_state, state.clone());
 
     // Keep running until shutdown signal
     loop {
@@ -69,8 +52,7 @@ pub async fn processor(
                 info!("[PROCESSOR] Received flow_session_id: {}", flow_session_id);
 
                 // Get permit before spawning task
-                // let semaphore_span = tracing::info_span!("acquire_semaphore");
-                // let semaphore_start = Instant::now();
+        
                 match state
                     .workflow_processor_semaphore
                     .clone()
@@ -81,16 +63,11 @@ pub async fn processor(
                     Ok(permit) => {
                         METRICS.processor_active_workflows.add(1, &[]); // Increment active workflows
 
-                        // let semaphore_duration = semaphore_start.elapsed();
-                        // info!(
-                        //     "[PROCESSOR] Successfully acquired semaphore permit in {:?}",
-                        //     semaphore_duration
-                        // );
+               
                         let state = Arc::clone(&state);
                         let client = state.anything_client.clone();
 
-                        // let spawn_span = tracing::info_span!("spawn_workflow", flow_session_id = %flow_session_id);
-                        // let spawn_start = Instant::now();
+           
                         let _ = tokio::spawn(async move {
                             let _permit_guard = permit;
                             let workflow_span = tracing::info_span!("workflow_execution", flow_session_id = %flow_session_id);
@@ -112,12 +89,6 @@ pub async fn processor(
                             METRICS.processor_active_workflows.add(-1, &[]); // Decrement active workflows
                         }).await;
 
-                        // .instrument(spawn_span)).await;
-                        // let spawn_duration = spawn_start.elapsed();
-                        // info!(
-                        //     "[PROCESSOR] Workflow spawn+execution took {:?}",
-                        //     spawn_duration
-                        // );
                     }
                     Err(e) => {
                         error!("[PROCESSOR] Failed to acquire semaphore: {}", e);
