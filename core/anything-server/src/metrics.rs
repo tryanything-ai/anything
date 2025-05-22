@@ -58,7 +58,7 @@ impl MetricsRegistry {
         }
     }
 
-    /// Registers a callback function to update semaphore metrics based on the provided app state
+    // Registers a callback function to update semaphore metrics based on the provided app state
     // pub fn register_semaphore_metrics<F>(
     //     &self,
     //     get_total_permits: F,
@@ -95,7 +95,7 @@ impl MetricsRegistry {
     // }
 }
 
-/// Trait to abstract access to a semaphore
-pub trait HasSemaphore {
-    fn get_semaphore(&self) -> &tokio::sync::Semaphore;
-}
+// Trait to abstract access to a semaphore
+// pub trait HasSemaphore {
+//     fn get_semaphore(&self) -> &tokio::sync::Semaphore;
+// }
