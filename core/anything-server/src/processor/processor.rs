@@ -50,26 +50,26 @@ pub async fn processor(
                 info!("[PROCESSOR] Received flow_session_id: {}", flow_session_id);
 
                 // Get permit before spawning task
-                let semaphore_span = tracing::info_span!("acquire_semaphore");
-                let semaphore_start = Instant::now();
+                // let semaphore_span = tracing::info_span!("acquire_semaphore");
+                // let semaphore_start = Instant::now();
                 match state
                     .workflow_processor_semaphore
                     .clone()
                     .acquire_owned()
-                    .instrument(semaphore_span.clone())
+                    // .instrument(semaphore_span.clone())
                     .await
                 {
                     Ok(permit) => {
-                        let semaphore_duration = semaphore_start.elapsed();
-                        info!(
-                            "[PROCESSOR] Successfully acquired semaphore permit in {:?}",
-                            semaphore_duration
-                        );
+                        // let semaphore_duration = semaphore_start.elapsed();
+                        // info!(
+                        //     "[PROCESSOR] Successfully acquired semaphore permit in {:?}",
+                        //     semaphore_duration
+                        // );
                         let state = Arc::clone(&state);
                         let client = state.anything_client.clone();
 
-                        let spawn_span = tracing::info_span!("spawn_workflow", flow_session_id = %flow_session_id);
-                        let spawn_start = Instant::now();
+                        // let spawn_span = tracing::info_span!("spawn_workflow", flow_session_id = %flow_session_id);
+                        // let spawn_start = Instant::now();
                         let _ = tokio::spawn(async move {
                             let _permit_guard = permit;
                             let workflow_span = tracing::info_span!("workflow_execution", flow_session_id = %flow_session_id);
@@ -87,12 +87,14 @@ pub async fn processor(
 
                             let exec_duration = exec_start.elapsed();
                             info!("[PROCESSOR] Completed workflow {} and releasing permit (duration: {:?})", flow_session_id, exec_duration);
-                        }.instrument(spawn_span)).await;
-                        let spawn_duration = spawn_start.elapsed();
-                        info!(
-                            "[PROCESSOR] Workflow spawn+execution took {:?}",
-                            spawn_duration
-                        );
+                        }).await;
+                        
+                        // .instrument(spawn_span)).await;
+                        // let spawn_duration = spawn_start.elapsed();
+                        // info!(
+                        //     "[PROCESSOR] Workflow spawn+execution took {:?}",
+                        //     spawn_duration
+                        // );
                     }
                     Err(e) => {
                         error!("[PROCESSOR] Failed to acquire semaphore: {}", e);
