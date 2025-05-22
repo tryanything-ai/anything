@@ -57,6 +57,7 @@ mod templater;
 mod testing; 
 mod trigger_engine;
 mod agents; 
+mod metrics;
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
