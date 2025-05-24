@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::mpsc;
 
-use tracing::{error, info, warn};
+use tracing::{error, info, warn, Span};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -17,6 +17,7 @@ pub struct ProcessorMessage {
     pub flow_session_id: Uuid,
     pub trigger_session_id: Uuid,
     pub trigger_task: Option<Task>,
+    pub task_id: Option<Uuid>, // Add task_id for tracing
 }
 
 // #[instrument(skip(state, processor_receiver))]
@@ -45,11 +46,30 @@ pub async fn processor(
                 let flow_session_id = message.flow_session_id;
                 let workflow_id = message.workflow_id;
                 let workflow_version_id = message.workflow_version.flow_version_id;
-                let root_span = tracing::info_span!("workflow_lifecycle", flow_session_id = %flow_session_id, workflow_id = %workflow_id, workflow_version_id = %workflow_version_id);
+                let task_id = message.task_id;
+
+                // Create root span with task_id for tracing
+                let root_span = if let Some(task_id) = task_id {
+                    tracing::info_span!("workflow_lifecycle",
+                        flow_session_id = %flow_session_id,
+                        workflow_id = %workflow_id,
+                        workflow_version_id = %workflow_version_id,
+                        task_id = %task_id
+                    )
+                } else {
+                    tracing::info_span!("workflow_lifecycle",
+                        flow_session_id = %flow_session_id,
+                        workflow_id = %workflow_id,
+                        workflow_version_id = %workflow_version_id
+                    )
+                };
                 let _root_entered = root_span.enter();
                 let workflow_start = Instant::now();
                 info!("[PROCESSOR] Received a new message for processing");
                 info!("[PROCESSOR] Received flow_session_id: {}", flow_session_id);
+                if let Some(task_id) = task_id {
+                    info!("[PROCESSOR] Processing task_id: {}", task_id);
+                }
 
                 // Get permit before spawning task
 
@@ -69,10 +89,20 @@ pub async fn processor(
                         // Simplified spawn pattern to prevent permit leakage
                         let workflow_handle = tokio::spawn(async move {
                             let _permit_guard = permit; // Ensure permit is released when this task completes
-                            let workflow_span = tracing::info_span!("workflow_execution", flow_session_id = %flow_session_id);
+                            let workflow_span = if let Some(task_id) = task_id {
+                                tracing::info_span!("workflow_execution",
+                                    flow_session_id = %flow_session_id,
+                                    task_id = %task_id
+                                )
+                            } else {
+                                tracing::info_span!("workflow_execution", flow_session_id = %flow_session_id)
+                            };
                             let _entered = workflow_span.enter();
                             let exec_start = Instant::now();
                             info!("[PROCESSOR] Starting workflow {}", flow_session_id);
+                            if let Some(task_id) = task_id {
+                                info!("[PROCESSOR] Executing task_id: {}", task_id);
+                            }
 
                             // Process workflow directly without nested spawn
                             process_workflow(state, (*client).clone(), message).await;

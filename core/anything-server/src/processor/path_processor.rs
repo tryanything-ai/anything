@@ -7,13 +7,20 @@ use crate::types::task_types::TaskStatus;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use tracing::error;
+use tracing::{error, info, Span};
 
 pub fn process_task_and_branches(
     ctx: Arc<ProcessingContext>,
     initial_task: Task,
 ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
     Box::pin(async move {
+        // Add task_id to current span for tracing
+        Span::current().record("task_id", &tracing::field::display(&initial_task.task_id));
+        info!(
+            "[PROCESSOR] Processing task and branches for task_id: {}",
+            initial_task.task_id
+        );
+
         let graph = create_workflow_graph(&ctx.workflow_def);
         let current_task = initial_task;
 

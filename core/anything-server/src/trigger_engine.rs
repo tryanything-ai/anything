@@ -27,7 +27,7 @@ use tokio::sync::RwLock;
 
 use cron::Schedule;
 use std::str::FromStr;
-use tracing::{error, info};
+use tracing::{error, info, Span};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -464,15 +464,20 @@ async fn create_trigger_task(
         }
     };
 
-    info!("[CRON TRIGGER] Creating processor message -> TODO: Fix ! Not implemented");
+    // Add task_id to the current span for tracing
+    Span::current().record("task_id", &tracing::field::display(&task.task_id));
+    info!(
+        "[CRON TRIGGER] Creating processor message for task: {}",
+        task.task_id
+    );
     // Send message to processor
-    //TODO: add back once we determine this pattern works.
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
         workflow_version: workflow_version,
         flow_session_id: task.flow_session_id.clone(),
         trigger_session_id: task.trigger_session_id.clone(),
-        trigger_task: Some(task),
+        trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

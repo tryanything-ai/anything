@@ -184,6 +184,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
         flow_session_id: task.flow_session_id.clone(),
         trigger_session_id: task.trigger_session_id.clone(),
         trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

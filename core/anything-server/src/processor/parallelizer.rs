@@ -35,13 +35,32 @@ pub async fn process_workflow(
     let flow_session_id = processor_message.flow_session_id;
     let workflow_id = processor_message.workflow_id;
     let workflow_version_id = processor_message.workflow_version.flow_version_id;
-    let root_span = tracing::info_span!("process_workflow", flow_session_id = %flow_session_id, workflow_id = %workflow_id, workflow_version_id = %workflow_version_id);
+    let task_id = processor_message.task_id;
+
+    // Create root span with task_id for tracing
+    let root_span = if let Some(task_id) = task_id {
+        tracing::info_span!("process_workflow",
+            flow_session_id = %flow_session_id,
+            workflow_id = %workflow_id,
+            workflow_version_id = %workflow_version_id,
+            task_id = %task_id
+        )
+    } else {
+        tracing::info_span!("process_workflow",
+            flow_session_id = %flow_session_id,
+            workflow_id = %workflow_id,
+            workflow_version_id = %workflow_version_id
+        )
+    };
     let _root_entered = root_span.enter();
     let workflow_start = Instant::now();
     info!(
         "[PROCESSOR] Processing workflow for flow session: {}",
         processor_message.flow_session_id
     );
+    if let Some(task_id) = task_id {
+        info!("[PROCESSOR] Processing task_id: {}", task_id);
+    }
 
     // Initialize flow session cache
     let cache_span = tracing::info_span!("init_flow_session_cache");

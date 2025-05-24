@@ -225,7 +225,8 @@ pub async fn run_workflow_and_respond(
         workflow_version: workflow_version,
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
-        trigger_task: Some(task),
+        trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -463,6 +464,7 @@ pub async fn run_workflow_version_and_respond(
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -684,6 +686,7 @@ pub async fn run_workflow(
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -876,7 +879,8 @@ pub async fn run_workflow_version(
         workflow_version: workflow_version.clone(),
         flow_session_id: flow_session_id,
         trigger_session_id: task.trigger_session_id,
-        trigger_task: Some(task),
+        trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

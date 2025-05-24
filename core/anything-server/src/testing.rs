@@ -20,7 +20,7 @@ use crate::{
     AppState,
 };
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{error, info, instrument, Span};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -30,6 +30,13 @@ pub struct StartTestingWorkflowPayload {
 }
 
 // #[axum::debug_handler]
+#[instrument(skip(state, user), fields(
+    account_id = %account_id,
+    workflow_id = %workflow_id, 
+    workflow_version_id = %workflow_version_id,
+    flow_session_id = %payload.flow_session_id,
+    trigger_session_id = %payload.trigger_session_id
+))]
 pub async fn test_workflow(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
@@ -38,7 +45,7 @@ pub async fn test_workflow(
 ) -> impl IntoResponse {
     let client = &state.anything_client;
 
-    println!("[TESTING] Handling test workflow request");
+    info!("[TESTING] Handling test workflow request");
 
     // GET the workflow_version
     let response = match client
@@ -114,7 +121,7 @@ pub async fn test_workflow(
         plugin_config_schema: Some(trigger_action.plugin_config_schema.clone()),
     };
 
-    println!("[TESTING] Creating task input");
+    info!("[TESTING] Creating task input");
     let task = match Task::builder()
         .account_id(Uuid::parse_str(&account_id).unwrap())
         .flow_id(Uuid::parse_str(&workflow_id).unwrap())
@@ -138,7 +145,11 @@ pub async fn test_workflow(
         Err(e) => panic!("Failed to build task: {}", e),
     };
 
-    println!("[TESTING] Creating processor message");
+    // Add task_id to the current span for tracing
+    Span::current().record("task_id", &tracing::field::display(&task.task_id));
+    info!("[TESTING] Created task with ID: {}", task.task_id);
+
+    info!("[TESTING] Creating processor message");
     // Send message to processor
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
@@ -146,12 +157,13 @@ pub async fn test_workflow(
         flow_session_id: task.flow_session_id.clone(),
         trigger_session_id: task.trigger_session_id.clone(),
         trigger_task: Some(task.clone()),
+        task_id: Some(task.task_id), // Include task_id for tracing
     };
 
-    println!("[TESTING] Initializing flow session data");
+    info!("[TESTING] Sending processor message for task: {}", task.task_id);
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
-        println!("[TESTING] Failed to send message to processor: {}", e);
+        error!("[TESTING] Failed to send message to processor: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to send message to processor: {}", e),
@@ -159,7 +171,7 @@ pub async fn test_workflow(
             .into_response();
     }
 
-    println!("[TESTING] Successfully initiated test workflow");
+    info!("[TESTING] Successfully initiated test workflow for task: {}", task.task_id);
     Json(serde_json::json!({
         "flow_session_id": task.flow_session_id,
         "trigger_session_id": task.trigger_session_id
