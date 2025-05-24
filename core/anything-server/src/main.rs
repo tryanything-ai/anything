@@ -448,8 +448,13 @@ pub async fn root() -> impl IntoResponse {
    tokio::spawn(status_updater::task_database_status_processor(state.clone(), task_updater_rx));
 
 
-    // Spawn processor
-    tokio::spawn(processor::processor(state.clone(), processor_rx));
+    // Spawn enhanced processor with better observability
+    let processor_state = state.clone();
+    tokio::spawn(async move {
+        if let Err(e) = processor::enhanced_processor::enhanced_processor(processor_state, processor_rx).await {
+            error!("[MAIN] Enhanced processor failed: {}", e);
+        }
+    });
 
 
     // // Spawn cron job loop

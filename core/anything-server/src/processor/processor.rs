@@ -6,8 +6,9 @@ use crate::AppState;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::mpsc;
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
-use tracing::{error, info, warn, Span};
+use tracing::{error, info, instrument, warn, Span};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -20,125 +21,185 @@ pub struct ProcessorMessage {
     pub task_id: Option<Uuid>, // Add task_id for tracing
 }
 
-// #[instrument(skip(state, processor_receiver))]
-pub async fn processor(
+/// Main processor struct that encapsulates the processing logic
+pub struct WorkflowProcessor {
     state: Arc<AppState>,
-    mut processor_receiver: mpsc::Receiver<ProcessorMessage>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    info!("[PROCESSOR] Starting processor");
+    metrics_recorder: MetricsRecorder,
+    span_factory: SpanFactory,
+}
 
-    // Keep running until shutdown signal
-    loop {
-        // Check shutdown signal first
-        if state
-            .shutdown_signal
-            .load(std::sync::atomic::Ordering::SeqCst)
-        {
-            info!("[PROCESSOR] Received shutdown signal, stopping processor");
-            break;
-        }
-
-        // Try to receive a message
-        match processor_receiver.recv().await {
-            Some(message) => {
-                METRICS.processor_messages_received.add(1, &[]); // Increment messages received
-
-                let flow_session_id = message.flow_session_id;
-                let workflow_id = message.workflow_id;
-                let workflow_version_id = message.workflow_version.flow_version_id;
-                let task_id = message.task_id;
-
-                // Create root span with task_id for tracing
-                let root_span = tracing::info_span!("workflow_lifecycle",
-                    flow_session_id = %flow_session_id,
-                    workflow_id = %workflow_id,
-                    workflow_version_id = %workflow_version_id,
-                    task_id = task_id.map(|id| id.to_string()).as_deref().unwrap_or("unknown")
-                );
-                let _root_entered = root_span.enter();
-                let workflow_start = Instant::now();
-                info!("[PROCESSOR] Received a new message for processing");
-                info!("[PROCESSOR] Received flow_session_id: {}", flow_session_id);
-                if let Some(task_id) = task_id {
-                    info!("[PROCESSOR] Processing task_id: {}", task_id);
-                }
-
-                // Get permit before spawning task
-
-                match state
-                    .workflow_processor_semaphore
-                    .clone()
-                    .acquire_owned()
-                    // .instrument(semaphore_span.clone())
-                    .await
-                {
-                    Ok(permit) => {
-                        METRICS.processor_active_workflows.add(1, &[]); // Increment active workflows
-
-                        let state = Arc::clone(&state);
-                        let client = state.anything_client.clone();
-
-                        // Simplified spawn pattern to prevent permit leakage
-                        let workflow_handle = tokio::spawn(async move {
-                            let _permit_guard = permit; // Ensure permit is released when this task completes
-                            let workflow_span = tracing::info_span!("workflow_execution",
-                                flow_session_id = %flow_session_id,
-                                task_id = task_id.map(|id| id.to_string()).as_deref().unwrap_or("unknown")
-                            );
-                            let _entered = workflow_span.enter();
-                            let exec_start = Instant::now();
-                            info!("[PROCESSOR] Starting workflow {}", flow_session_id);
-                            if let Some(task_id) = task_id {
-                                info!("[PROCESSOR] Executing task_id: {}", task_id);
-                            }
-
-                            // Process workflow directly without nested spawn
-                            process_workflow(state, (*client).clone(), message).await;
-
-                            let exec_duration = exec_start.elapsed();
-                            METRICS
-                                .processor_workflow_duration
-                                .record(exec_duration.as_secs_f64(), &[]); // Record duration
-                            info!("[PROCESSOR] Completed workflow {} and releasing permit (duration: {:?})", flow_session_id, exec_duration);
-                            METRICS.processor_active_workflows.add(-1, &[]); // Decrement active workflows
-                        });
-
-                        // Await the workflow task to ensure proper error handling
-                        if let Err(e) = workflow_handle.await {
-                            error!(
-                                "[PROCESSOR] Workflow {} failed with panic or cancellation: {}",
-                                flow_session_id, e
-                            );
-                            // The permit guard and metrics will still be properly handled due to the Drop trait
-                        }
-                    }
-                    Err(e) => {
-                        error!("[PROCESSOR] Failed to acquire semaphore: {}", e);
-                        // Note: METRICS.processor_active_workflows is not incremented here as the workflow didn't start
-                        warn!("[PROCESSOR] Continuing to process other messages");
-                        continue;
-                    }
-                }
-                let workflow_duration = workflow_start.elapsed();
-                info!(
-                    "[PROCESSOR] Total workflow lifecycle duration: {:?}",
-                    workflow_duration
-                );
-            }
-            None => {
-                // Channel was closed - this shouldn't happen unless we're shutting down
-                warn!("[PROCESSOR] Channel was closed unexpectedly");
-                if !state
-                    .shutdown_signal
-                    .load(std::sync::atomic::Ordering::SeqCst)
-                {
-                    error!("[PROCESSOR] ERROR: Channel closed while processor was still running!");
-                }
-                break;
-            }
+impl WorkflowProcessor {
+    pub fn new(state: Arc<AppState>) -> Self {
+        Self {
+            state,
+            metrics_recorder: MetricsRecorder::new(),
+            span_factory: SpanFactory::new(),
         }
     }
 
-    info!("[PROCESSOR] Processor shutdown complete");
-    Ok(())
+    /// Main processing loop
+    pub async fn run(
+        &self,
+        mut receiver: mpsc::Receiver<ProcessorMessage>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        info!("[PROCESSOR] Starting processor");
+
+        while let Some(message) = receiver.recv().await {
+            if let Err(e) = self.process_message(message).await {
+                error!("[PROCESSOR] Error processing message: {}", e);
+                // Continue processing other messages
+            }
+        }
+
+        info!("[PROCESSOR] Processor shutdown complete");
+        Ok(())
+    }
+
+    /// Process a single message
+    #[instrument(skip(self), fields(
+        flow_session_id = %message.flow_session_id,
+        workflow_id = %message.workflow_id,
+        task_id = ?message.task_id
+    ))]
+    async fn process_message(
+        &self,
+        message: ProcessorMessage,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.metrics_recorder.record_message_received();
+
+        let workflow_start = Instant::now();
+        let _root_span = self.span_factory.create_workflow_lifecycle_span(&message);
+
+        info!("[PROCESSOR] Received a new message for processing");
+
+        // Acquire permit for rate limiting
+        let permit = self.acquire_workflow_permit().await?;
+
+        // Execute the workflow
+        self.execute_workflow(message, permit).await?;
+
+        let workflow_duration = workflow_start.elapsed();
+        info!(
+            "[PROCESSOR] Total workflow lifecycle duration: {:?}",
+            workflow_duration
+        );
+
+        Ok(())
+    }
+
+    /// Acquire a permit from the semaphore for rate limiting
+    async fn acquire_workflow_permit(
+        &self,
+    ) -> Result<OwnedSemaphorePermit, Box<dyn std::error::Error + Send + Sync>> {
+        self.state
+            .workflow_processor_semaphore
+            .clone()
+            .acquire_owned()
+            .await
+            .map_err(|e| format!("Failed to acquire semaphore: {}", e).into())
+    }
+
+    /// Execute the workflow in a separate task
+    async fn execute_workflow(
+        &self,
+        message: ProcessorMessage,
+        permit: OwnedSemaphorePermit,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.metrics_recorder.record_workflow_started();
+
+        let state = Arc::clone(&self.state);
+        let client = state.anything_client.clone();
+        let flow_session_id = message.flow_session_id;
+        let task_id = message.task_id;
+        let metrics_recorder = self.metrics_recorder.clone();
+        let span_factory = self.span_factory.clone();
+
+        let workflow_handle = tokio::spawn(async move {
+            let _permit_guard = permit; // Ensure permit is released when this task completes
+            let _workflow_span =
+                span_factory.create_workflow_execution_span(flow_session_id, task_id);
+
+            let exec_start = Instant::now();
+            info!("[PROCESSOR] Starting workflow {}", flow_session_id);
+
+            // Process workflow
+            process_workflow(state, (*client).clone(), message).await;
+
+            let exec_duration = exec_start.elapsed();
+            metrics_recorder.record_workflow_completed(exec_duration);
+            info!(
+                "[PROCESSOR] Completed workflow {} (duration: {:?})",
+                flow_session_id, exec_duration
+            );
+        });
+
+        // Await the workflow task to ensure proper error handling
+        workflow_handle
+            .await
+            .map_err(|e| format!("Workflow failed: {}", e))?;
+
+        Ok(())
+    }
+}
+
+/// Handles span creation for better tracing
+#[derive(Clone)]
+struct SpanFactory;
+
+impl SpanFactory {
+    fn new() -> Self {
+        Self
+    }
+
+    fn create_workflow_lifecycle_span(&self, message: &ProcessorMessage) -> Span {
+        tracing::info_span!(
+            "workflow_lifecycle",
+            flow_session_id = %message.flow_session_id,
+            workflow_id = %message.workflow_id,
+            workflow_version_id = %message.workflow_version.flow_version_id,
+            task_id = message.task_id.map(|id| id.to_string()).as_deref().unwrap_or("unknown")
+        )
+    }
+
+    fn create_workflow_execution_span(&self, flow_session_id: Uuid, task_id: Option<Uuid>) -> Span {
+        tracing::info_span!(
+            "workflow_execution",
+            flow_session_id = %flow_session_id,
+            task_id = task_id.map(|id| id.to_string()).as_deref().unwrap_or("unknown")
+        )
+    }
+}
+
+/// Handles metrics recording
+#[derive(Clone)]
+struct MetricsRecorder;
+
+impl MetricsRecorder {
+    fn new() -> Self {
+        Self
+    }
+
+    fn record_message_received(&self) {
+        METRICS.processor_messages_received.add(1, &[]);
+    }
+
+    fn record_workflow_started(&self) {
+        METRICS.processor_active_workflows.add(1, &[]);
+    }
+
+    fn record_workflow_completed(&self, duration: std::time::Duration) {
+        METRICS
+            .processor_workflow_duration
+            .record(duration.as_secs_f64(), &[]);
+        METRICS.processor_active_workflows.add(-1, &[]);
+    }
+}
+
+/// Entry point for the processor
+pub async fn processor(
+    state: Arc<AppState>,
+    processor_receiver: mpsc::Receiver<ProcessorMessage>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let processor = WorkflowProcessor::new(state);
+    processor.run(processor_receiver).await
 }
