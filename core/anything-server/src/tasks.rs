@@ -222,7 +222,7 @@ pub async fn get_task_by_workflow_id(
         }
     };
 
-    println!("[TASKS] Data response body: {}", data_body);
+    // println!("[TASKS] Data response body: {}", data_body);
 
     let items: Value = match serde_json::from_str(&data_body) {
         Ok(items) => items,

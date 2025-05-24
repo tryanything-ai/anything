@@ -82,7 +82,7 @@ pub async fn process_workflow(
         workflow: Arc::new(processor_message.workflow_version.clone()),
         workflow_def: Arc::new(processor_message.workflow_version.flow_definition.clone()),
     };
-    let ctx_duration = ctx_start.elapsed();
+    let ctx_duration = ctx_start.elapsed(); 
     info!(
         "[PROCESSOR] ProcessingContext created in {:?}",
         ctx_duration

@@ -147,7 +147,7 @@ impl Templater {
             })?;
 
         println!("[TEMPLATER] Template: {:?}", template);
-        println!("[TEMPLATER] Context: {:?}", context);
+        // println!("[TEMPLATER] Context: {:?}", context);
         println!("[TEMPLATER] Validations: {:?}", validations);
 
         self.render_value(template, context, &validations, &[])

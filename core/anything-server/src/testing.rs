@@ -146,9 +146,12 @@ pub async fn test_workflow(
         Err(e) => panic!("Failed to build task: {}", e),
     };
 
-    // Add task_id to the current span for tracing
-    Span::current().record("task_id", &tracing::field::display(&task.task_id));
-    info!("[TESTING] Created task with ID: {}", task.task_id);
+    // Add task_id to the current span for tracing and log it explicitly
+    let task_id_str = task.task_id.to_string();
+    Span::current().record("task_id", task_id_str.as_str());
+    info!("[TESTING] Created task with ID: {} (flow_session_id: {}, trigger_session_id: {})", 
+          task.task_id, task.flow_session_id, task.trigger_session_id);
+    println!("[TESTING] Task ID: {}", task.task_id);
 
     info!("[TESTING] Creating processor message");
     // Send message to processor
@@ -162,9 +165,11 @@ pub async fn test_workflow(
     };
 
     info!("[TESTING] Sending processor message for task: {}", task.task_id);
+    println!("[TESTING] About to send processor message for task: {}", task.task_id);
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
-        error!("[TESTING] Failed to send message to processor: {}", e);
+        error!("[TESTING] Failed to send message to processor for task {}: {}", task.task_id, e);
+        println!("[TESTING] Failed to send processor message for task {}: {}", task.task_id, e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to send message to processor: {}", e),
@@ -173,9 +178,11 @@ pub async fn test_workflow(
     }
 
     info!("[TESTING] Successfully initiated test workflow for task: {}", task.task_id);
+    println!("[TESTING] Successfully sent processor message for task: {}", task.task_id);
     Json(serde_json::json!({
         "flow_session_id": task.flow_session_id,
-        "trigger_session_id": task.trigger_session_id
+        "trigger_session_id": task.trigger_session_id,
+        "task_id": task.task_id
     }))
     .into_response()
 }
@@ -196,6 +203,8 @@ pub async fn get_test_session_results(
         "[TESTING] Getting results for session {} in workflow {} version {}",
         session_id, workflow_id, workflow_version_id
     );
+    info!("[TESTING] get_test_session_results - session_id: {}, workflow_id: {}, workflow_version_id: {}", 
+          session_id, workflow_id, workflow_version_id);
 
     let client = &state.anything_client;
 
@@ -218,6 +227,7 @@ pub async fn get_test_session_results(
         }
         Err(e) => {
             println!("[TESTING] Failed to execute request to get tasks: {}", e);
+            error!("[TESTING] Failed to execute request to get tasks for session {}: {}", session_id, e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
@@ -233,6 +243,7 @@ pub async fn get_test_session_results(
         }
         Err(e) => {
             println!("[TESTING] Failed to read response body: {}", e);
+            error!("[TESTING] Failed to read response body for session {}: {}", session_id, e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to read response body",
@@ -244,11 +255,22 @@ pub async fn get_test_session_results(
     let tasks: Vec<Task> = match serde_json::from_str::<Vec<Task>>(&body) {
         Ok(tasks) => {
             println!("[TESTING] Successfully parsed {} tasks", tasks.len());
+            info!("[TESTING] Found {} tasks for session {}", tasks.len(), session_id);
+            
+            // Log each task ID for debugging
+            for task in &tasks {
+                println!("[TESTING] Task ID: {}, Status: {:?}, Action: {}", 
+                        task.task_id, task.trigger_session_status, task.action_label);
+                info!("[TESTING] Task details - ID: {}, Status: {:?}, Action: {}, Plugin: {}", 
+                      task.task_id, task.trigger_session_status, task.action_label, task.plugin_name);
+            }
+            
             tasks
         }
         Err(e) => {
             println!("[TESTING] Failed to parse tasks JSON: {}", e);
             println!("[TESTING] Raw JSON body: {}", body);
+            error!("[TESTING] Failed to parse tasks JSON for session {}: {}", session_id, e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse tasks").into_response();
         }
     };
@@ -264,6 +286,8 @@ pub async fn get_test_session_results(
         });
 
     println!("[TESTING] Session completion status: {}", all_completed);
+    info!("[TESTING] Session {} completion status: {} ({} tasks)", session_id, all_completed, tasks.len());
+    
     let result = serde_json::json!({
         "tasks": tasks,
         "complete": all_completed
