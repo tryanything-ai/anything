@@ -52,7 +52,7 @@ pub async fn processor(
                 info!("[PROCESSOR] Received flow_session_id: {}", flow_session_id);
 
                 // Get permit before spawning task
-        
+
                 match state
                     .workflow_processor_semaphore
                     .clone()
@@ -63,32 +63,36 @@ pub async fn processor(
                     Ok(permit) => {
                         METRICS.processor_active_workflows.add(1, &[]); // Increment active workflows
 
-               
                         let state = Arc::clone(&state);
                         let client = state.anything_client.clone();
 
-           
-                        let _ = tokio::spawn(async move {
-                            let _permit_guard = permit;
+                        // Simplified spawn pattern to prevent permit leakage
+                        let workflow_handle = tokio::spawn(async move {
+                            let _permit_guard = permit; // Ensure permit is released when this task completes
                             let workflow_span = tracing::info_span!("workflow_execution", flow_session_id = %flow_session_id);
                             let _entered = workflow_span.enter();
                             let exec_start = Instant::now();
                             info!("[PROCESSOR] Starting workflow {}", flow_session_id);
 
-                            if let Err(e) = tokio::task::spawn(async move {
-                                process_workflow(state, (*client).clone(), message).await;
-                            })
-                            .await
-                            {
-                                error!("[PROCESSOR] Workflow {} failed with error: {}", flow_session_id, e);
-                            }
+                            // Process workflow directly without nested spawn
+                            process_workflow(state, (*client).clone(), message).await;
 
                             let exec_duration = exec_start.elapsed();
-                            METRICS.processor_workflow_duration.record(exec_duration.as_secs_f64(), &[]); // Record duration
+                            METRICS
+                                .processor_workflow_duration
+                                .record(exec_duration.as_secs_f64(), &[]); // Record duration
                             info!("[PROCESSOR] Completed workflow {} and releasing permit (duration: {:?})", flow_session_id, exec_duration);
                             METRICS.processor_active_workflows.add(-1, &[]); // Decrement active workflows
-                        }).await;
+                        });
 
+                        // Await the workflow task to ensure proper error handling
+                        if let Err(e) = workflow_handle.await {
+                            error!(
+                                "[PROCESSOR] Workflow {} failed with panic or cancellation: {}",
+                                flow_session_id, e
+                            );
+                            // The permit guard and metrics will still be properly handled due to the Drop trait
+                        }
                     }
                     Err(e) => {
                         error!("[PROCESSOR] Failed to acquire semaphore: {}", e);

@@ -7,6 +7,7 @@ use crate::types::task_types::TaskStatus;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use tracing::error;
 
 pub fn process_task_and_branches(
     ctx: Arc<ProcessingContext>,
@@ -55,7 +56,46 @@ pub fn process_task_and_branches(
                         process_task_and_branches(ctx.clone(), new_task).await;
                     }
                     Err(e) => {
-                        println!("[PROCESSOR] Error creating task: {}", e);
+                        error!(
+                            "[PROCESSOR] Error creating task for action {}: {}",
+                            action.action_id, e
+                        );
+
+                        // Critical: Update flow session status to failed when branch creation fails
+                        if let Err(send_err) = ctx
+                            .state
+                            .task_updater_sender
+                            .send(StatusUpdateMessage {
+                                operation: Operation::CompleteWorkflow {
+                                    flow_session_id: ctx.flow_session_id,
+                                    status: crate::types::task_types::FlowSessionStatus::Failed,
+                                    trigger_status:
+                                        crate::types::task_types::TriggerSessionStatus::Failed,
+                                },
+                            })
+                            .await
+                        {
+                            error!(
+                                "[PROCESSOR] Failed to send workflow failure status update: {}",
+                                send_err
+                            );
+
+                            // As fallback, try direct database update
+                            if let Err(db_err) =
+                                crate::processor::db_calls::update_flow_session_status(
+                                    &ctx.state,
+                                    &ctx.flow_session_id,
+                                    &crate::types::task_types::FlowSessionStatus::Failed,
+                                    &crate::types::task_types::TriggerSessionStatus::Failed,
+                                )
+                                .await
+                            {
+                                error!("[PROCESSOR] Direct database update for workflow failure also failed: {}", db_err);
+                            }
+                        }
+
+                        // Break out of the loop since workflow failed
+                        return;
                     }
                 }
             }

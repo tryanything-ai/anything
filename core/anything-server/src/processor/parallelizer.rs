@@ -1,9 +1,9 @@
 use crate::AppState;
 use std::collections::HashMap;
 use std::sync::Arc;
-use uuid::Uuid;
-use tracing::{info, error, instrument, Span};
 use std::time::Instant;
+use tracing::{error, info, instrument, Span};
+use uuid::Uuid;
 
 use crate::processor::flow_session_cache::FlowSessionData;
 use crate::processor::processor::ProcessorMessage;
@@ -38,7 +38,10 @@ pub async fn process_workflow(
     let root_span = tracing::info_span!("process_workflow", flow_session_id = %flow_session_id, workflow_id = %workflow_id, workflow_version_id = %workflow_version_id);
     let _root_entered = root_span.enter();
     let workflow_start = Instant::now();
-    info!("[PROCESSOR] Processing workflow for flow session: {}", processor_message.flow_session_id);
+    info!(
+        "[PROCESSOR] Processing workflow for flow session: {}",
+        processor_message.flow_session_id
+    );
 
     // Initialize flow session cache
     let cache_span = tracing::info_span!("init_flow_session_cache");
@@ -51,7 +54,10 @@ pub async fn process_workflow(
         cache.set(&processor_message.flow_session_id, flow_session_data);
     }
     let cache_duration = cache_start.elapsed();
-    info!("[PROCESSOR] Flow session cache initialized in {:?}", cache_duration);
+    info!(
+        "[PROCESSOR] Flow session cache initialized in {:?}",
+        cache_duration
+    );
 
     let ctx_span = tracing::info_span!("create_processing_context");
     let ctx_start = Instant::now();
@@ -66,7 +72,10 @@ pub async fn process_workflow(
         workflow_def: Arc::new(processor_message.workflow_version.flow_definition.clone()),
     };
     let ctx_duration = ctx_start.elapsed();
-    info!("[PROCESSOR] ProcessingContext created in {:?}", ctx_duration);
+    info!(
+        "[PROCESSOR] ProcessingContext created in {:?}",
+        ctx_duration
+    );
 
     if let Some(task) = processor_message.trigger_task {
         let create_task_span = tracing::info_span!("create_first_task");
@@ -76,13 +85,19 @@ pub async fn process_workflow(
             return;
         }
         let create_task_duration = create_task_start.elapsed();
-        info!("[PROCESSOR] First task created in {:?}", create_task_duration);
+        info!(
+            "[PROCESSOR] First task created in {:?}",
+            create_task_duration
+        );
 
         let process_span = tracing::info_span!("process_task_and_branches");
         let process_start = Instant::now();
         process_task_and_branches(Arc::new(ctx), task).await;
         let process_duration = process_start.elapsed();
-        info!("[PROCESSOR] process_task_and_branches completed in {:?}", process_duration);
+        info!(
+            "[PROCESSOR] process_task_and_branches completed in {:?}",
+            process_duration
+        );
     }
 
     // Update flow session status to completed
@@ -95,10 +110,62 @@ pub async fn process_workflow(
             trigger_status: TriggerSessionStatus::Completed,
         },
     };
-    let _ = state.task_updater_sender.send(task_message).await;
+
+    // Critical: Properly handle send failure with retries
+    let mut retry_count = 0;
+    const MAX_SEND_RETRIES: usize = 3;
+    const RETRY_DELAY_MS: u64 = 100;
+
+    while retry_count < MAX_SEND_RETRIES {
+        match state.task_updater_sender.send(task_message.clone()).await {
+            Ok(_) => {
+                info!("[PROCESSOR] Successfully sent flow session completion status");
+                break;
+            }
+            Err(e) => {
+                retry_count += 1;
+                error!(
+                    "[PROCESSOR] Failed to send flow session completion status (attempt {}/{}): {}",
+                    retry_count, MAX_SEND_RETRIES, e
+                );
+
+                if retry_count >= MAX_SEND_RETRIES {
+                    // Critical: As a last resort, try direct database update
+                    error!("[PROCESSOR] All status update attempts failed, attempting direct database update");
+                    match crate::processor::db_calls::update_flow_session_status(
+                        &state,
+                        &processor_message.flow_session_id,
+                        &FlowSessionStatus::Completed,
+                        &TriggerSessionStatus::Completed,
+                    )
+                    .await
+                    {
+                        Ok(_) => info!("[PROCESSOR] Direct database update succeeded"),
+                        Err(db_err) => {
+                            error!("[PROCESSOR] Direct database update also failed: {}", db_err)
+                        }
+                    }
+                    break;
+                } else {
+                    // Wait before retry
+                    tokio::time::sleep(tokio::time::Duration::from_millis(
+                        RETRY_DELAY_MS * retry_count as u64,
+                    ))
+                    .await;
+                }
+            }
+        }
+    }
+
     let update_duration = update_start.elapsed();
-    info!("[PROCESSOR] Flow session status update sent in {:?}", update_duration);
+    info!(
+        "[PROCESSOR] Flow session status update completed in {:?}",
+        update_duration
+    );
 
     let workflow_duration = workflow_start.elapsed();
-    info!("[PROCESSOR] process_workflow total duration: {:?}", workflow_duration);
+    info!(
+        "[PROCESSOR] process_workflow total duration: {:?}",
+        workflow_duration
+    );
 }
