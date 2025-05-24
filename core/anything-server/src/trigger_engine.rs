@@ -375,6 +375,12 @@ async fn create_trigger_task(
     trigger: &InMemoryTrigger,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let execution_start = Instant::now();
+    let trigger_span = tracing::info_span!("create_trigger_task",
+        flow_id = %trigger.flow_id,
+        action_id = %trigger.action_id,
+        task_id = tracing::field::Empty  // Declare but leave empty initially
+    );
+    let _entered = trigger_span.enter();
     info!("[CRON TRIGGER] Handling create task from cron trigger");
 
     //Super User Access
@@ -464,7 +470,7 @@ async fn create_trigger_task(
         }
     };
 
-    // Add task_id to the current span for tracing
+    // Add task_id to the span by recording it
     Span::current().record("task_id", &tracing::field::display(&task.task_id));
     info!(
         "[CRON TRIGGER] Creating processor message for task: {}",

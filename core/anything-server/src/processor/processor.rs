@@ -49,20 +49,12 @@ pub async fn processor(
                 let task_id = message.task_id;
 
                 // Create root span with task_id for tracing
-                let root_span = if let Some(task_id) = task_id {
-                    tracing::info_span!("workflow_lifecycle",
-                        flow_session_id = %flow_session_id,
-                        workflow_id = %workflow_id,
-                        workflow_version_id = %workflow_version_id,
-                        task_id = %task_id
-                    )
-                } else {
-                    tracing::info_span!("workflow_lifecycle",
-                        flow_session_id = %flow_session_id,
-                        workflow_id = %workflow_id,
-                        workflow_version_id = %workflow_version_id
-                    )
-                };
+                let root_span = tracing::info_span!("workflow_lifecycle",
+                    flow_session_id = %flow_session_id,
+                    workflow_id = %workflow_id,
+                    workflow_version_id = %workflow_version_id,
+                    task_id = task_id.map(|id| id.to_string()).as_deref().unwrap_or("unknown")
+                );
                 let _root_entered = root_span.enter();
                 let workflow_start = Instant::now();
                 info!("[PROCESSOR] Received a new message for processing");
@@ -89,14 +81,10 @@ pub async fn processor(
                         // Simplified spawn pattern to prevent permit leakage
                         let workflow_handle = tokio::spawn(async move {
                             let _permit_guard = permit; // Ensure permit is released when this task completes
-                            let workflow_span = if let Some(task_id) = task_id {
-                                tracing::info_span!("workflow_execution",
-                                    flow_session_id = %flow_session_id,
-                                    task_id = %task_id
-                                )
-                            } else {
-                                tracing::info_span!("workflow_execution", flow_session_id = %flow_session_id)
-                            };
+                            let workflow_span = tracing::info_span!("workflow_execution",
+                                flow_session_id = %flow_session_id,
+                                task_id = task_id.map(|id| id.to_string()).as_deref().unwrap_or("unknown")
+                            );
                             let _entered = workflow_span.enter();
                             let exec_start = Instant::now();
                             info!("[PROCESSOR] Starting workflow {}", flow_session_id);

@@ -35,7 +35,8 @@ pub struct StartTestingWorkflowPayload {
     workflow_id = %workflow_id, 
     workflow_version_id = %workflow_version_id,
     flow_session_id = %payload.flow_session_id,
-    trigger_session_id = %payload.trigger_session_id
+    trigger_session_id = %payload.trigger_session_id,
+    task_id = tracing::field::Empty  // Declare but leave empty initially
 ))]
 pub async fn test_workflow(
     State(state): State<Arc<AppState>>,

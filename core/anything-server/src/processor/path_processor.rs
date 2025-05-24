@@ -14,8 +14,13 @@ pub fn process_task_and_branches(
     initial_task: Task,
 ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
     Box::pin(async move {
-        // Add task_id to current span for tracing
-        Span::current().record("task_id", &tracing::field::display(&initial_task.task_id));
+        // Create a new span with task_id properly declared as a field
+        let task_span = tracing::info_span!("process_task_and_branches",
+            task_id = %initial_task.task_id,
+            flow_session_id = %ctx.flow_session_id
+        );
+        let _entered = task_span.enter();
+
         info!(
             "[PROCESSOR] Processing task and branches for task_id: {}",
             initial_task.task_id
