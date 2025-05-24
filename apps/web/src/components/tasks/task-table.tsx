@@ -151,6 +151,7 @@ export function TaskTable({
             <TableHead></TableHead> {/* Badges */}
             <TableHead>Task</TableHead>
             <TableHead className="">Task ID</TableHead>
+            <TableHead className="">Flow Session ID</TableHead>
             <TableHead>Start Time</TableHead>
             <TableHead>Duration</TableHead>
             <TableHead className="text-right">Status</TableHead>
@@ -159,13 +160,13 @@ export function TaskTable({
         <TableBody>
           {allTasks.length === 0 && isLoading ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center" height={100}>
+              <TableCell colSpan={8} className="text-center" height={100}>
                 <div className="animate-pulse">Loading tasks...</div>
               </TableCell>
             </TableRow>
           ) : allTasks.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center" height={100}>
+              <TableCell colSpan={8} className="text-center" height={100}>
                 {searchTerm ? "No matching tasks found" : "No completed tasks"}
               </TableCell>
             </TableRow>
@@ -199,6 +200,9 @@ export function TaskTable({
                       {task.task_id}
                     </TableCell>
                     <TableCell className="text-left font-medium">
+                      {task.flow_session_id}
+                    </TableCell>
+                    <TableCell className="text-left font-medium">
                       {task.started_at
                         ? format(new Date(task.started_at), "Pp")
                         : "N/A"}
@@ -215,7 +219,7 @@ export function TaskTable({
                   </TableRow>
                   {expandedTaskIds.has(task.task_id) && task.result && (
                     <TableRow>
-                      <TableCell colSpan={7} className="bg-gray-50">
+                      <TableCell colSpan={8} className="bg-gray-50">
                         <div className="p-4 text-left h-full">
                           <div className="text-md font-semibold mb-2">
                             Configuration:
@@ -245,7 +249,7 @@ export function TaskTable({
                 </>
               ))}
               <tr ref={loadMoreRef} className="h-20">
-                <td colSpan={7} className="p-4 text-center">
+                <td colSpan={8} className="p-4 text-center">
                   {isValidating ? (
                     <div className="animate-pulse">Loading more tasks...</div>
                   ) : allTasks.length < tasksData.pagination.total ? (
