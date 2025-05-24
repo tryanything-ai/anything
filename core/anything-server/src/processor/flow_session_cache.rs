@@ -86,4 +86,33 @@ impl FlowSessionCache {
         self.cache.remove(flow_session_id);
     }
 
+    pub fn cleanup_expired(&mut self) -> usize {
+        let now = SystemTime::now();
+        let before_size = self.cache.len();
+
+        self.cache.retain(|flow_session_id, cached_session| {
+            let should_keep = cached_session.expires_at > now;
+            if !should_keep {
+                println!(
+                    "[PROCESSOR] Removing expired flow session from cache: {}",
+                    flow_session_id
+                );
+            }
+            should_keep
+        });
+
+        let removed = before_size - self.cache.len();
+        if removed > 0 {
+            println!(
+                "[PROCESSOR] Cleaned up {} expired flow sessions, {} remaining",
+                removed,
+                self.cache.len()
+            );
+        }
+        removed
+    }
+
+    pub fn size(&self) -> usize {
+        self.cache.len()
+    }
 }

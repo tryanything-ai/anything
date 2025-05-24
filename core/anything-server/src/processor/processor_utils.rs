@@ -14,7 +14,6 @@ use crate::types::{
     task_types::{Stage, Task, TaskConfig, TaskStatus},
 };
 
-
 use std::time::Instant;
 
 /// Creates a task for the given action
