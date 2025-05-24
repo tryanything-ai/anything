@@ -10,6 +10,7 @@ use serde_json::json;
 
 use crate::{
     bundler::bundle_context_from_parts,
+    metrics::METRICS,
     processor::processor::ProcessorMessage,
     types::{
         action_types::{ActionType, PluginName},
@@ -21,6 +22,7 @@ use crate::{
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::sync::RwLock;
 
 use cron::Schedule;
@@ -76,6 +78,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
 
                 //Create tasks for triggers that should run
                 //Then update trigger to get next time to run in memory
+                let triggers_count = triggers_to_run.len();
                 for (id, trigger) in triggers_to_run {
                     info!("[TRIGGER_ENGINE] Trigger should run for trigger_id ie workflow_id: {}",
                         trigger.plugin_name
@@ -90,7 +93,11 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
                     info!("[TRIGGER_ENGINE] Trigger Loop Successfully LOOPED");
                 }
 
-                info!("[TRIGGER_ENGINE] Finished trigger check loop");
+                if triggers_count > 0 {
+                    info!("[TRIGGER_ENGINE] Finished trigger check loop - executed {} triggers", triggers_count);
+                } else {
+                    info!("[TRIGGER_ENGINE] Finished trigger check loop - no triggers to execute");
+                }
             }
             _ = trigger_engine_signal_rx.changed() => {
                 let workflow_id = trigger_engine_signal_rx.borrow().clone();
@@ -111,6 +118,7 @@ async fn update_triggers_for_workflow(
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
     workflow_id: &String,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let update_start = Instant::now();
     info!(
         "[TRIGGER_ENGINE] Updating triggers for workflow: {}",
         workflow_id
@@ -149,6 +157,7 @@ async fn update_triggers_for_workflow(
     let old_value = triggers.remove(workflow_id);
     if let Some(old_trigger) = old_value {
         info!("[TRIGGER_ENGINE] Removing old trigger: {:?}", old_trigger);
+        METRICS.triggers_active.add(-1, &[]);
     }
     //Write new riggers in memory for workflow_id
     // let mut triggers = triggers.write().await;
@@ -159,12 +168,20 @@ async fn update_triggers_for_workflow(
             info!("[TRIGGER_ENGINE] Replaced old trigger: {:?}", old_trigger);
         } else {
             info!("[TRIGGER_ENGINE] Added new trigger");
+            METRICS.triggers_active.add(1, &[]);
         }
     }
 
+    // Record metrics
+    let update_duration = update_start.elapsed();
+    METRICS.trigger_updates_total.add(1, &[]);
+    METRICS
+        .trigger_update_duration
+        .record(update_duration.as_secs_f64(), &[]);
+
     info!(
-        "[TRIGGER_ENGINE] Successfully updated triggers for workflow: {}",
-        workflow_id
+        "[TRIGGER_ENGINE] Successfully updated triggers for workflow: {} in {:?}",
+        workflow_id, update_duration
     );
     Ok(())
 }
@@ -174,6 +191,7 @@ pub async fn hydrate_triggers(
     client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
 ) {
+    let hydration_start = Instant::now();
     info!("[TRIGGER_ENGINE] Hydrating triggers from the database");
 
     dotenv().ok();
@@ -192,6 +210,7 @@ pub async fn hydrate_triggers(
         Ok(response) => response,
         Err(e) => {
             error!("[TRIGGER_ENGINE] Error fetching flow versions: {:?}", e);
+            METRICS.trigger_failures_total.add(1, &[]);
             return;
         }
     };
@@ -206,6 +225,7 @@ pub async fn hydrate_triggers(
         }
         Err(e) => {
             error!("[TRIGGER_ENGINE] Error reading response body: {:?}", e);
+            METRICS.trigger_failures_total.add(1, &[]);
             return;
         }
     };
@@ -214,6 +234,7 @@ pub async fn hydrate_triggers(
         Ok(flow_versions) => flow_versions,
         Err(e) => {
             error!("[TRIGGER_ENGINE] Error parsing JSON: {:?}", e);
+            METRICS.trigger_failures_total.add(1, &[]);
             return;
         }
     };
@@ -261,7 +282,14 @@ pub async fn hydrate_triggers(
         );
     }
 
+    let triggers_count = new_triggers.len();
     let mut triggers = triggers.write().await;
+
+    // Update the active triggers counter
+    let old_count = triggers.len() as i64;
+    let new_count = triggers_count as i64;
+    METRICS.triggers_active.add(new_count - old_count, &[]);
+
     for (id, trigger) in new_triggers.into_iter() {
         triggers.insert(id, trigger);
     }
@@ -274,7 +302,19 @@ pub async fn hydrate_triggers(
         );
     }
 
-    info!("[TRIGGER_ENGINE] Successfully hydrated triggers from the database");
+    // Record metrics
+    let hydration_duration = hydration_start.elapsed();
+    METRICS
+        .trigger_hydration_duration
+        .record(hydration_duration.as_secs_f64(), &[]);
+    METRICS
+        .triggers_loaded_total
+        .add(triggers_count as u64, &[]);
+
+    info!(
+        "[TRIGGER_ENGINE] Successfully hydrated {} triggers from the database in {:?}",
+        triggers_count, hydration_duration
+    );
 }
 
 pub fn should_trigger_run(trigger: &InMemoryTrigger) -> bool {
@@ -334,6 +374,7 @@ async fn create_trigger_task(
     state: &Arc<AppState>,
     trigger: &InMemoryTrigger,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let execution_start = Instant::now();
     info!("[CRON TRIGGER] Handling create task from cron trigger");
 
     //Super User Access
@@ -357,6 +398,7 @@ async fn create_trigger_task(
         Ok(response) => response,
         Err(err) => {
             error!("[CRON TRIGGER] Failed to fetch flow version: {:?}", err);
+            METRICS.trigger_failures_total.add(1, &[]);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!("Failed to fetch flow version: {}", err),
@@ -371,6 +413,7 @@ async fn create_trigger_task(
         }
         Err(err) => {
             error!("[CRON TRIGGER] Failed to read response body: {:?}", err);
+            METRICS.trigger_failures_total.add(1, &[]);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!("Failed to read response body: {}", err),
@@ -382,6 +425,7 @@ async fn create_trigger_task(
         Ok(version) => version,
         Err(_) => {
             error!("[CRON TRIGGER] No published workflow found");
+            METRICS.trigger_failures_total.add(1, &[]);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!(
@@ -410,7 +454,14 @@ async fn create_trigger_task(
         .build()
     {
         Ok(task) => task,
-        Err(e) => panic!("Failed to build task: {}", e),
+        Err(e) => {
+            error!("[CRON TRIGGER] Failed to build task: {}", e);
+            METRICS.trigger_failures_total.add(1, &[]);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to build task: {}", e),
+            )));
+        }
     };
 
     info!("[CRON TRIGGER] Creating processor message -> TODO: Fix ! Not implemented");
@@ -429,13 +480,24 @@ async fn create_trigger_task(
             "[TRIGGER_ENGINE] Failed to send message to processor: {}",
             e
         );
+        METRICS.trigger_failures_total.add(1, &[]);
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Failed to send message to processor: {}", e),
         )));
     }
 
-    info!("Successfully created trigger task");
+    // Record successful execution
+    let execution_duration = execution_start.elapsed();
+    METRICS.trigger_executions_total.add(1, &[]);
+    METRICS
+        .trigger_execution_duration
+        .record(execution_duration.as_secs_f64(), &[]);
+
+    info!(
+        "Successfully created trigger task in {:?}",
+        execution_duration
+    );
 
     Ok(())
 }
