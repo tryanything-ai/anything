@@ -1,4 +1,5 @@
 use crate::AppState;
+use opentelemetry::KeyValue;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -7,9 +8,8 @@ use tokio::task::JoinSet;
 use tracing::{error, info, instrument, warn, Span};
 use uuid::Uuid;
 
-use crate::processor::components::{
-    EnhancedMetricsRecorder, EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext,
-};
+use crate::metrics::METRICS;
+use crate::processor::components::{EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext};
 use crate::processor::flow_session_cache::FlowSessionData;
 use crate::processor::processor::ProcessorMessage;
 use crate::processor::processor_utils::create_task;
@@ -39,7 +39,7 @@ pub struct ProcessingContext {
     // Enhanced parallel processing fields
     pub branch_semaphore: Arc<Semaphore>,
     pub active_branches: Arc<Mutex<usize>>,
-    pub metrics_recorder: EnhancedMetricsRecorder,
+    pub metrics_labels: Vec<KeyValue>,
     pub span_factory: EnhancedSpanFactory,
 }
 
@@ -56,6 +56,16 @@ impl ProcessingContext {
         };
 
         let service_name = "anything-server".to_string();
+
+        let metrics_labels = vec![
+            KeyValue::new("service", service_name.clone()),
+            KeyValue::new("environment", environment.to_string()),
+            KeyValue::new("workflow_id", processor_message.workflow_id.to_string()),
+            KeyValue::new(
+                "flow_session_id",
+                processor_message.flow_session_id.to_string(),
+            ),
+        ];
 
         Self {
             state,
@@ -74,15 +84,7 @@ impl ProcessingContext {
             processed_tasks: Arc::new(Mutex::new(processor_message.existing_tasks.clone())),
             branch_semaphore: Arc::new(Semaphore::new(MAX_CONCURRENT_BRANCHES)),
             active_branches: Arc::new(Mutex::new(0)),
-            metrics_recorder: EnhancedMetricsRecorder::with_labels(vec![
-                ("service", service_name.clone()),
-                ("environment", environment.to_string()),
-                ("workflow_id", processor_message.workflow_id.to_string()),
-                (
-                    "flow_session_id",
-                    processor_message.flow_session_id.to_string(),
-                ),
-            ]),
+            metrics_labels,
             span_factory: EnhancedSpanFactory::new(service_name, environment.to_string()),
         }
     }
@@ -135,7 +137,7 @@ impl EnhancedParallelProcessor {
             self.context.flow_session_id
         );
 
-        self.context.metrics_recorder.record_workflow_started();
+        METRICS.record_workflow_started(&self.context.metrics_labels);
         let workflow_start = Instant::now();
 
         // Create the initial task in the database
@@ -152,9 +154,7 @@ impl EnhancedParallelProcessor {
 
         // Record metrics
         let workflow_duration = workflow_start.elapsed();
-        self.context
-            .metrics_recorder
-            .record_workflow_completed(workflow_duration);
+        METRICS.record_workflow_completed(workflow_duration, &self.context.metrics_labels);
 
         info!(
             "[PARALLELIZER] Workflow processing completed in {:?}",
@@ -253,9 +253,7 @@ impl EnhancedParallelProcessor {
             .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
 
         let permit_duration = permit_start.elapsed();
-        self.context
-            .metrics_recorder
-            .record_semaphore_wait_time(permit_duration);
+        METRICS.record_semaphore_wait_time(permit_duration, &self.context.metrics_labels);
 
         self.context.increment_active_branches().await;
 
@@ -418,6 +416,9 @@ pub async fn process_workflow(
         ctx_duration
     );
 
+    // Record message received
+    METRICS.record_message_received(&context.metrics_labels);
+
     // Create enhanced processor
     let processor = EnhancedParallelProcessor::new(context);
 
@@ -428,6 +429,7 @@ pub async fn process_workflow(
             }
             Err(e) => {
                 error!("[PARALLELIZER] Workflow processing failed: {}", e);
+                METRICS.record_workflow_error(&e.to_string());
                 // The error handling is already done in the processor methods
             }
         }

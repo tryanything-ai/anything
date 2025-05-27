@@ -1,3 +1,4 @@
+use crate::metrics::METRICS;
 use crate::processor::components::ProcessorError;
 use crate::processor::parallelizer::ProcessingContext;
 use crate::processor::processor_utils::{create_task_for_action, process_task};
@@ -238,9 +239,7 @@ impl EnhancedBranchProcessor {
                 .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
 
             let permit_duration = permit_start.elapsed();
-            context
-                .metrics_recorder
-                .record_semaphore_wait_time(permit_duration);
+            METRICS.record_semaphore_wait_time(permit_duration, &context.metrics_labels);
 
             context.increment_active_branches().await;
 
@@ -303,9 +302,7 @@ impl EnhancedBranchProcessor {
             .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
 
         let permit_duration = permit_start.elapsed();
-        self.context
-            .metrics_recorder
-            .record_semaphore_wait_time(permit_duration);
+        METRICS.record_semaphore_wait_time(permit_duration, &self.context.metrics_labels);
 
         self.context.increment_active_branches().await;
 

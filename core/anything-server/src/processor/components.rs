@@ -1,55 +1,6 @@
-use crate::metrics::METRICS;
-use opentelemetry::KeyValue;
-use std::sync::Arc;
 use std::time::Instant;
 use tracing::{error, info, Span};
 use uuid::Uuid;
-
-/// Extended metrics recorder with more detailed tracking
-#[derive(Clone)]
-pub struct EnhancedMetricsRecorder {
-    labels: Vec<KeyValue>,
-}
-
-impl EnhancedMetricsRecorder {
-    pub fn new() -> Self {
-        Self { labels: vec![] }
-    }
-
-    pub fn with_labels(labels: Vec<(&'static str, String)>) -> Self {
-        Self {
-            labels: labels
-                .into_iter()
-                .map(|(k, v)| KeyValue::new(k, v))
-                .collect(),
-        }
-    }
-
-    pub fn record_message_received(&self) {
-        METRICS.processor_messages_received.add(1, &self.labels);
-    }
-
-    pub fn record_workflow_started(&self) {
-        METRICS.processor_active_workflows.add(1, &self.labels);
-    }
-
-    pub fn record_workflow_completed(&self, duration: std::time::Duration) {
-        METRICS
-            .processor_workflow_duration
-            .record(duration.as_secs_f64(), &self.labels);
-        METRICS.processor_active_workflows.add(-1, &self.labels);
-    }
-
-    pub fn record_workflow_error(&self, error_type: &str) {
-        // This would record to a counter metric for errors
-        // METRICS.processor_workflow_errors.add(1, &[KeyValue::new("error_type", error_type.to_string())]);
-    }
-
-    pub fn record_semaphore_wait_time(&self, wait_duration: std::time::Duration) {
-        // This would record how long we waited for a semaphore permit
-        // METRICS.processor_semaphore_wait_time.record(wait_duration.as_secs_f64(), &self.labels);
-    }
-}
 
 /// Enhanced span factory with additional context
 #[derive(Clone)]
@@ -196,20 +147,6 @@ impl std::error::Error for ProcessorError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_enhanced_metrics_recorder_with_labels() {
-        let recorder = EnhancedMetricsRecorder::with_labels(vec![
-            ("workflow_type", "data_processing".to_string()),
-            ("priority", "high".to_string()),
-        ]);
-
-        // Test that methods don't panic
-        recorder.record_message_received();
-        recorder.record_workflow_started();
-        recorder.record_workflow_completed(std::time::Duration::from_secs(1));
-        recorder.record_workflow_error("timeout");
-    }
 
     #[test]
     fn test_workflow_execution_context() {

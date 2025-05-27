@@ -1,23 +1,20 @@
 use crate::metrics::METRICS;
-use crate::processor::components::{
-    EnhancedMetricsRecorder, EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext,
-};
+use crate::processor::components::{EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext};
 use crate::processor::parallelizer::process_workflow;
 use crate::processor::processor::ProcessorMessage;
-use crate::types::task_types::Task;
-use crate::types::workflow_types::DatabaseFlowVersion;
+
 use crate::AppState;
+use opentelemetry::KeyValue;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::mpsc;
-use tokio::sync::{OwnedSemaphorePermit, Semaphore};
-use tracing::{error, info, instrument, warn, Span};
-use uuid::Uuid;
+use tokio::sync::OwnedSemaphorePermit;
+use tracing::{error, info, instrument};
 
 /// Enhanced workflow processor with better observability
 pub struct EnhancedWorkflowProcessor {
     state: Arc<AppState>,
-    metrics_recorder: EnhancedMetricsRecorder,
+    metrics_labels: Vec<KeyValue>,
     span_factory: EnhancedSpanFactory,
     service_name: String,
     environment: String,
@@ -48,12 +45,14 @@ impl EnhancedWorkflowProcessor {
             );
         }
 
+        let metrics_labels = vec![
+            KeyValue::new("service", service_name.clone()),
+            KeyValue::new("environment", environment.to_string()),
+        ];
+
         Self {
             state,
-            metrics_recorder: EnhancedMetricsRecorder::with_labels(vec![
-                ("service", service_name.clone()),
-                ("environment", environment.to_string()),
-            ]),
+            metrics_labels,
             span_factory: EnhancedSpanFactory::new(service_name.clone(), environment.to_string()),
             service_name,
             environment: environment.to_string(),
@@ -72,7 +71,7 @@ impl EnhancedWorkflowProcessor {
         while let Some(message) = receiver.recv().await {
             if let Err(e) = self.process_message(message).await {
                 error!("[ENHANCED_PROCESSOR] Error processing message: {}", e);
-                self.metrics_recorder.record_workflow_error(&e.to_string());
+                METRICS.record_workflow_error(&e.to_string());
             }
         }
 
@@ -88,15 +87,15 @@ impl EnhancedWorkflowProcessor {
         environment = %self.environment
     ))]
     async fn process_message(&self, message: ProcessorMessage) -> Result<(), ProcessorError> {
-        self.metrics_recorder.record_message_received();
+        METRICS.record_message_received(&self.metrics_labels);
 
-        let workflow_start = Instant::now();
         let lifecycle_span = self.span_factory.create_workflow_lifecycle_span(
             message.flow_session_id,
             message.workflow_id,
             message.workflow_version.flow_version_id,
             message.task_id,
         );
+
         let _lifecycle_guard = lifecycle_span.enter();
 
         info!(
@@ -122,13 +121,12 @@ impl EnhancedWorkflowProcessor {
             .await
             .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
         let permit_duration = permit_start.elapsed();
-        self.metrics_recorder
-            .record_semaphore_wait_time(permit_duration);
+        METRICS.record_semaphore_wait_time(permit_duration, &self.metrics_labels);
 
         context.record_stage("executing_workflow");
 
         // Execute the workflow
-        match self.execute_workflow(message, permit, &context).await {
+        match self.execute_workflow(message, permit).await {
             Ok(_) => {
                 context.record_success();
                 Ok(())
@@ -170,15 +168,15 @@ impl EnhancedWorkflowProcessor {
         &self,
         message: ProcessorMessage,
         permit: OwnedSemaphorePermit,
-        context: &WorkflowExecutionContext,
+        // context: &WorkflowExecutionContext,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.metrics_recorder.record_workflow_started();
+        METRICS.record_workflow_started(&self.metrics_labels);
 
         let state = Arc::clone(&self.state);
         let client = state.anything_client.clone();
         let flow_session_id = message.flow_session_id;
         let task_id = message.task_id;
-        let metrics_recorder = self.metrics_recorder.clone();
+        let metrics_labels = self.metrics_labels.clone();
         let span_factory = self.span_factory.clone();
 
         // Get action type from trigger task if available
@@ -207,7 +205,7 @@ impl EnhancedWorkflowProcessor {
 
             let exec_duration = exec_start.elapsed();
             execution_span.record("execution_duration_ms", exec_duration.as_millis() as i64);
-            metrics_recorder.record_workflow_completed(exec_duration);
+            METRICS.record_workflow_completed(exec_duration, &metrics_labels);
 
             info!(
                 "[ENHANCED_PROCESSOR] Completed workflow {} (duration: {:?})",
@@ -230,21 +228,4 @@ pub async fn enhanced_processor(
 ) -> Result<(), ProcessorError> {
     let processor = EnhancedWorkflowProcessor::new(state);
     processor.run(processor_receiver).await
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_enhanced_processor_creation() {
-        // Test that the enhanced processor initializes with correct environment
-        let environment = if cfg!(debug_assertions) {
-            "development"
-        } else {
-            "production"
-        };
-
-        assert_eq!(environment, "development"); // This test runs in debug mode
-    }
 }

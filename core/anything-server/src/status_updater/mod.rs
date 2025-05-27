@@ -2,9 +2,11 @@ use crate::processor::db_calls::{create_task, update_flow_session_status, update
 use crate::types::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
 use crate::websocket::{broadcast_task_update_simple, broadcast_task_update_with_session, broadcast_workflow_completion_simple, UpdateType};
 use crate::AppState;
+use crate::metrics::METRICS;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::sync::mpsc::Receiver;
 use tokio::time::{timeout, Duration};
 use tracing::{info, span, Instrument, Level};
@@ -39,6 +41,14 @@ pub struct StatusUpdateMessage {
     pub operation: Operation,
 }
 
+fn get_operation_type(operation: &Operation) -> &'static str {
+    match operation {
+        Operation::UpdateTask { .. } => "update_task",
+        Operation::CreateTask { .. } => "create_task", 
+        Operation::CompleteWorkflow { .. } => "complete_workflow",
+    }
+}
+
 pub async fn task_database_status_processor(
     state: Arc<AppState>,
     mut receiver: Receiver<StatusUpdateMessage>,
@@ -58,9 +68,20 @@ pub async fn task_database_status_processor(
             break;
         }
 
+        // Track queue wait time
+        let queue_wait_start = Instant::now();
+
         // Try to receive a message with timeout
         match timeout(TIMEOUT_DURATION, receiver.recv()).await {
             Ok(Some(message)) => {
+                // Record queue wait time
+                let queue_wait_ms = queue_wait_start.elapsed().as_millis() as u64;
+                METRICS.record_status_queue_wait_time(queue_wait_ms);
+
+                // Record operation start and type
+                let operation_type = get_operation_type(&message.operation);
+                METRICS.record_status_operation_start(operation_type);
+
                 let operation_kind = match &message.operation {
                     Operation::UpdateTask { .. } => "UpdateTask",
                     Operation::CreateTask { .. } => "CreateTask",
@@ -80,6 +101,7 @@ pub async fn task_database_status_processor(
                         message.operation
                     );
 
+                    let operation_start = Instant::now();
                     let mut retries = 0;
                     let mut last_error = None;
 
@@ -143,7 +165,10 @@ pub async fn task_database_status_processor(
 
                         match result {
                             Ok(_) => {
-                                info!("[TASK PROCESSOR] Successfully processed update");
+                                let operation_duration_ms = operation_start.elapsed().as_millis() as u64;
+                                METRICS.record_status_operation_success(operation_duration_ms, operation_type);
+                                
+                                info!("[TASK PROCESSOR] Successfully processed update in {}ms", operation_duration_ms);
                                 
                                 // Broadcast WebSocket updates after successful database operations
                                 match &message.operation {
@@ -168,8 +193,25 @@ pub async fn task_database_status_processor(
                                 break;
                             }
                             Err(e) => {
+                                let error_str = e.to_string();
+                                
+                                // Record retry and categorize error
+                                METRICS.record_status_retry(operation_type);
+                                METRICS.record_status_database_error();
+                                METRICS.record_status_operation_failure(&error_str, operation_type);
+                                
                                 last_error = Some(e);
                                 retries += 1;
+                                
+                                tracing::warn!(
+                                    error = %error_str,
+                                    retry_count = retries,
+                                    max_retries = MAX_RETRIES,
+                                    operation_type = %operation_kind,
+                                    "[TASK PROCESSOR] Database operation failed, retry {} of {}",
+                                    retries, MAX_RETRIES
+                                );
+                                
                                 if retries < MAX_RETRIES {
                                     info!("[TASK PROCESSOR] Retry {} of {}", retries, MAX_RETRIES);
                                     tokio::time::sleep(Duration::from_millis(500 * retries as u64))
@@ -181,9 +223,12 @@ pub async fn task_database_status_processor(
 
                     if let Some(e) = last_error {
                         if retries >= MAX_RETRIES {
+                            METRICS.record_status_max_retries_exceeded(operation_type);
+                            
                             tracing::error!(
                                 error = %e,
                                 retries = MAX_RETRIES,
+                                operation_type = %operation_kind,
                                 "[TASK PROCESSOR] Failed to process update after max retries"
                             );
                             info!(
@@ -198,12 +243,14 @@ pub async fn task_database_status_processor(
             }
             Ok(None) => {
                 // Channel was closed
+                METRICS.record_status_channel_closed();
+                
                 info!("[TASK PROCESSOR] Channel was closed unexpectedly");
                 if !state
                     .shutdown_signal
                     .load(std::sync::atomic::Ordering::SeqCst)
                 {
-                    info!(
+                    tracing::error!(
                         "[TASK PROCESSOR] ERROR: Channel closed while processor was still running!"
                     );
                 }
@@ -211,8 +258,10 @@ pub async fn task_database_status_processor(
             }
             Err(_timeout) => {
                 // Timeout occurred - this is normal, just continue
+                METRICS.record_status_timeout_error();
+                
                 info!(
-                    "[TASK PROCESSOR] No messages received in {:?}",
+                    "[TASK PROCESSOR] No messages received in {:?}, continuing...",
                     TIMEOUT_DURATION
                 );
                 continue;
