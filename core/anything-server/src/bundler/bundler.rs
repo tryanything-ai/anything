@@ -211,7 +211,8 @@ pub async fn bundle_cached_inputs_with_tasks(
     }
     render_inputs_context.insert("files".to_string(), serde_json::to_value(files)?);
 
-    println!("[BUNDLER] Context: {:?}", render_inputs_context);
+    // Removed verbose logging of context to reduce log spam
+    // println!("[BUNDLER] Context: {:?}", render_inputs_context);
 
     // Process accounts
     let mut accounts = HashMap::new();
@@ -256,7 +257,8 @@ pub async fn bundle_cached_inputs_with_tasks(
         let rendered =
             templater.render("task_inputs_definition", &context_value, input_validations)?;
 
-        println!("[BUNDLER] Rendered inputs output: {}", rendered);
+        // Removed verbose logging of rendered output to reduce log spam
+        // println!("[BUNDLER] Rendered inputs output: {}", rendered);
         Ok(rendered)
     } else {
         println!("[BUNDLER] No inputs found in task config");
@@ -341,10 +343,7 @@ pub fn bundle_plugin_config(
             &inputs_context_value,
             plugin_config_validations,
         )?;
-        println!(
-            "[BUNDLER] Rendered plugin config output: {}",
-            rendered_plugin_config_definition
-        );
+        // Removed verbose logging of rendered plugin config to reduce log spam
         Ok(rendered_plugin_config_definition)
     } else {
         println!("[BUNDLER] No plugin config found in task config, returning empty object");

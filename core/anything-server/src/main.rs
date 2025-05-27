@@ -14,7 +14,7 @@ use postgrest::Postgrest;
 use reqwest::Client;
 use status_updater::StatusUpdateMessage;
 use serde_json::Value;
-use std::{collections::HashMap, time::Duration, time::Instant};
+use std::time::Duration;
 use std::env;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -62,14 +62,13 @@ mod metrics;
 mod websocket;
 
 use tokio::sync::oneshot;
-use tokio::sync::Mutex;
 use std::sync::atomic::AtomicBool;
 
 use tower_http::compression::CompressionLayer;
 
-use tracing::{info, warn, error, debug, trace};
+use tracing::{info, error};
 
-mod otel_setup;
+mod otel_setup; 
 use otel_setup::init_otel_grpc;
 
 // Add this struct to store completion channels
@@ -97,7 +96,7 @@ pub struct AppState {
     task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
     flow_completions: DashMap<String, FlowCompletion>,
     api_key_cache: DashMap<String, CachedApiKey>,
-    account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
+    account_access_cache: account_auth_middleware::AccountAccessCache,
     bundler_secrets_cache: DashMap<String, SecretsCache>,
     bundler_accounts_cache: DashMap<String, AccountsCache>,
     shutdown_signal: Arc<AtomicBool>,
@@ -241,9 +240,7 @@ async fn main() {
         processor_sender: processor_tx,
         flow_completions: DashMap::new(),
         api_key_cache: DashMap::new(),
-        account_access_cache: Arc::new(RwLock::new(
-            account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400))
-        )),
+        account_access_cache: account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400)),
         bundler_secrets_cache: DashMap::new(),
         bundler_accounts_cache: DashMap::new(),
         shutdown_signal: Arc::new(AtomicBool::new(false)),

@@ -4,9 +4,9 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
@@ -28,7 +28,7 @@ struct AccessCacheKey {
 
 // Add this to your AppState struct in main.rs
 pub struct AccountAccessCache {
-    cache: HashMap<AccessCacheKey, CachedAccess>,
+    cache: DashMap<AccessCacheKey, CachedAccess>,
     ttl: Duration,
 }
 
@@ -39,7 +39,7 @@ impl AccountAccessCache {
             ttl
         );
         Self {
-            cache: HashMap::new(),
+            cache: DashMap::new(),
             ttl,
         }
     }
@@ -49,7 +49,6 @@ impl AccountAccessCache {
             user_id: user_id.to_string(),
             account_id: account_id.to_string(),
         };
-
         let result = self.cache.get(&key).and_then(|entry| {
             if entry.expires_at > SystemTime::now() {
                 Some(entry.has_access)
@@ -64,7 +63,7 @@ impl AccountAccessCache {
         result
     }
 
-    pub fn set(&mut self, user_id: &str, account_id: &str, has_access: bool) {
+    pub fn set(&self, user_id: &str, account_id: &str, has_access: bool) {
         println!(
             "[ACCOUNT MIDDLEWARE] Setting cache for user_id: {}, account_id: {} -> has_access: {}",
             user_id, account_id, has_access
@@ -73,19 +72,16 @@ impl AccountAccessCache {
             user_id: user_id.to_string(),
             account_id: account_id.to_string(),
         };
-
         let expires_at = SystemTime::now() + self.ttl;
         let entry = CachedAccess {
             has_access,
             expires_at,
         };
-
         self.cache.insert(key, entry);
     }
 
-
     // Cleanup expired entries
-    pub fn cleanup(&mut self) {
+    pub fn cleanup(&self) {
         println!("[ACCOUNT MIDDLEWARE] Starting cache cleanup");
         let before_count = self.cache.len();
         self.cache
@@ -97,7 +93,6 @@ impl AccountAccessCache {
         );
     }
 }
-
 
 async fn verify_account_access(
     client: &postgrest::Postgrest,
@@ -176,8 +171,7 @@ pub async fn account_access_middleware(
     // Check cache first
     let mut needs_db_check = true;
     let has_access = {
-        let cache = state.account_access_cache.read().await;
-        if let Some(cached_access) = cache.get(user_id, account_id) {
+        if let Some(cached_access) = state.account_access_cache.get(user_id, account_id) {
             needs_db_check = false;
             cached_access
         } else {
@@ -202,10 +196,9 @@ pub async fn account_access_middleware(
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
         // Update cache
-        {
-            let mut cache = state.account_access_cache.write().await;
-            cache.set(user_id, account_id, db_has_access);
-        }
+        state
+            .account_access_cache
+            .set(user_id, account_id, db_has_access);
 
         if !db_has_access {
             println!("[ACCOUNT MIDDLEWARE] Access denied from database check");
@@ -227,7 +220,6 @@ pub async fn cleanup_account_access_cache(state: Arc<AppState>) {
     loop {
         tokio::time::sleep(cleanup_interval).await;
         println!("[ACCOUNT MIDDLEWARE] Running scheduled cache cleanup");
-        let mut cache = state.account_access_cache.write().await;
-        cache.cleanup();
+        state.account_access_cache.cleanup();
     }
 }
