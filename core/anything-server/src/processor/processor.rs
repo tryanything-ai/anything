@@ -60,7 +60,7 @@ impl WorkflowProcessor {
     }
 
     /// Process a single message
-    #[instrument(skip(self), fields(
+    #[instrument(skip(self, message), fields(
         flow_session_id = %message.flow_session_id,
         workflow_id = %message.workflow_id,
         task_id = ?message.task_id

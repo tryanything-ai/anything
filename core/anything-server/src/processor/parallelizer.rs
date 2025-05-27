@@ -114,7 +114,7 @@ impl EnhancedParallelProcessor {
         Self { context }
     }
 
-    #[instrument(skip(self), fields(
+    #[instrument(skip(self, initial_task), fields(
         flow_session_id = %self.context.flow_session_id,
         workflow_id = %self.context.workflow_id,
     ))]
