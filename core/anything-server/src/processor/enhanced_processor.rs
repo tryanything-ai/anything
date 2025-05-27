@@ -6,18 +6,23 @@ use crate::processor::processor::ProcessorMessage;
 use crate::AppState;
 use opentelemetry::KeyValue;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 use tokio::sync::OwnedSemaphorePermit;
-use tracing::{error, info, instrument};
+use tokio::time::timeout;
+use tracing::{error, info, instrument, warn};
 
-/// Enhanced workflow processor with better observability
+/// Enhanced workflow processor with better observability and keepalive
 pub struct EnhancedWorkflowProcessor {
     state: Arc<AppState>,
     metrics_labels: Vec<KeyValue>,
     span_factory: EnhancedSpanFactory,
     service_name: String,
     environment: String,
+    // Keepalive configuration
+    keepalive_interval: Duration,
+    message_timeout: Duration,
+    semaphore_timeout: Duration,
 }
 
 impl EnhancedWorkflowProcessor {
@@ -56,6 +61,14 @@ impl EnhancedWorkflowProcessor {
             span_factory: EnhancedSpanFactory::new(service_name.clone(), environment.to_string()),
             service_name,
             environment: environment.to_string(),
+            // Configure timeouts - more aggressive in production
+            keepalive_interval: if cfg!(debug_assertions) {
+                Duration::from_secs(30) // 30s in dev
+            } else {
+                Duration::from_secs(10) // 10s in prod
+            },
+            message_timeout: Duration::from_secs(300), // 5 minutes max per message
+            semaphore_timeout: Duration::from_secs(30), // 30s max to acquire permit
         }
     }
 
@@ -64,19 +77,100 @@ impl EnhancedWorkflowProcessor {
         mut receiver: mpsc::Receiver<ProcessorMessage>,
     ) -> Result<(), ProcessorError> {
         info!(
-            "[ENHANCED_PROCESSOR] Starting processor in {} environment",
-            self.environment
+            "[ENHANCED_PROCESSOR] Starting processor in {} environment with keepalive every {:?}",
+            self.environment, self.keepalive_interval
         );
 
-        while let Some(message) = receiver.recv().await {
-            if let Err(e) = self.process_message(message).await {
-                error!("[ENHANCED_PROCESSOR] Error processing message: {}", e);
-                METRICS.record_workflow_error(&e.to_string());
+        let mut last_activity = Instant::now();
+        let mut keepalive_counter = 0u64;
+
+        loop {
+            // Use select! to handle both messages and keepalive
+            tokio::select! {
+                // Handle incoming messages with timeout
+                message_result = timeout(self.keepalive_interval, receiver.recv()) => {
+                    match message_result {
+                        Ok(Some(message)) => {
+                            last_activity = Instant::now();
+
+                            // Process message with overall timeout
+                            match timeout(self.message_timeout, self.process_message(message)).await {
+                                Ok(Ok(())) => {
+                                    // Success - continue
+                                }
+                                Ok(Err(e)) => {
+                                    error!("[ENHANCED_PROCESSOR] Error processing message: {}", e);
+                                    METRICS.record_workflow_error(&e.to_string());
+                                }
+                                Err(_) => {
+                                    error!("[ENHANCED_PROCESSOR] Message processing timed out after {:?}", self.message_timeout);
+                                    METRICS.record_workflow_error("message_timeout");
+                                }
+                            }
+                        }
+                        Ok(None) => {
+                            // Channel closed - but don't exit immediately, keep trying to reconnect
+                            warn!("[ENHANCED_PROCESSOR] Message channel closed, but keeping processor alive");
+                            tokio::time::sleep(Duration::from_secs(1)).await;
+                        }
+                        Err(_) => {
+                            // Timeout occurred - this is normal, continue to keepalive
+                        }
+                    }
+                }
+
+                // Keepalive heartbeat
+                _ = tokio::time::sleep(self.keepalive_interval) => {
+                    keepalive_counter += 1;
+                    let idle_duration = last_activity.elapsed();
+
+                    info!(
+                        "[ENHANCED_PROCESSOR] 💓 Keepalive #{} - Idle for {:?}, {} permits available",
+                        keepalive_counter,
+                        idle_duration,
+                        self.state.workflow_processor_semaphore.available_permits()
+                    );
+
+                    // Record keepalive metrics
+                    METRICS.record_processor_keepalive(idle_duration, &self.metrics_labels);
+
+                    // Perform health checks during idle time
+                    self.perform_health_checks().await;
+                }
             }
         }
+    }
 
-        info!("[ENHANCED_PROCESSOR] Processor shutdown complete");
-        Ok(())
+    async fn perform_health_checks(&self) {
+        // Check semaphore health
+        let available_permits = self.state.workflow_processor_semaphore.available_permits();
+        if available_permits == 0 {
+            warn!(
+                "[ENHANCED_PROCESSOR] ⚠️  All semaphore permits are in use - potential bottleneck"
+            );
+        }
+
+        // Check if we can acquire a permit quickly (health check)
+        match timeout(
+            Duration::from_millis(100),
+            self.state
+                .workflow_processor_semaphore
+                .clone()
+                .acquire_owned(),
+        )
+        .await
+        {
+            Ok(Ok(permit)) => {
+                // Release immediately - this was just a health check
+                drop(permit);
+            }
+            Ok(Err(e)) => {
+                warn!("[ENHANCED_PROCESSOR] Semaphore health check failed: {}", e);
+            }
+            Err(_) => {
+                warn!("[ENHANCED_PROCESSOR] Semaphore health check timed out - potential deadlock");
+            }
+        }
     }
 
     #[instrument(skip(self, message), fields(
@@ -114,12 +208,18 @@ impl EnhancedWorkflowProcessor {
         // Record initial stage
         context.record_stage("acquiring_permit");
 
-        // Measure semaphore wait time
+        // Measure semaphore wait time with timeout
         let permit_start = Instant::now();
-        let permit = self
-            .acquire_workflow_permit()
+        let permit = timeout(self.semaphore_timeout, self.acquire_workflow_permit())
             .await
+            .map_err(|_| {
+                ProcessorError::SemaphoreError(format!(
+                    "Semaphore acquisition timed out after {:?}",
+                    self.semaphore_timeout
+                ))
+            })?
             .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
+
         let permit_duration = permit_start.elapsed();
         METRICS.record_semaphore_wait_time(permit_duration, &self.metrics_labels);
 

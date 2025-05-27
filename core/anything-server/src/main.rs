@@ -463,10 +463,14 @@ pub async fn root() -> impl IntoResponse {
 
 
     // Spawn enhanced processor with better observability
+    // The keepalive system should prevent it from ever exiting, but if it does, log it
     let processor_state = state.clone();
     tokio::spawn(async move {
         if let Err(e) = processor::enhanced_processor::enhanced_processor(processor_state, processor_rx).await {
             error!("[MAIN] Enhanced processor failed: {}", e);
+            error!("[MAIN] This should not happen with the keepalive system - investigate!");
+        } else {
+            error!("[MAIN] Enhanced processor exited normally - this should not happen with keepalive!");
         }
     });
 

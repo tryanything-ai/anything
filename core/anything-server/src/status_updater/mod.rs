@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::mpsc::Receiver;
 use tokio::time::{timeout, Duration};
-use tracing::{info, span, Instrument, Level};
+use tracing::{info, span, warn, Instrument, Level};
 use uuid::Uuid;
 
 // Define the type of task operation
@@ -242,19 +242,21 @@ pub async fn task_database_status_processor(
                 .await;
             }
             Ok(None) => {
-                // Channel was closed
+                // Channel was closed - but don't exit immediately, keep trying
                 METRICS.record_status_channel_closed();
                 
-                info!("[TASK PROCESSOR] Channel was closed unexpectedly");
+                warn!("[TASK PROCESSOR] Channel was closed, but keeping processor alive");
                 if !state
                     .shutdown_signal
                     .load(std::sync::atomic::Ordering::SeqCst)
                 {
-                    tracing::error!(
-                        "[TASK PROCESSOR] ERROR: Channel closed while processor was still running!"
+                    warn!(
+                        "[TASK PROCESSOR] Channel closed while processor was still running - will keep retrying"
                     );
                 }
-                break;
+                // Sleep briefly and continue instead of breaking
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                continue;
             }
             Err(_timeout) => {
                 // Timeout occurred - this is normal, just continue

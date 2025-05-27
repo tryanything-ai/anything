@@ -17,6 +17,8 @@ pub struct MetricsRegistry {
     pub processor_workflow_duration: Histogram<f64>,
     pub processor_semaphore_wait_time: Histogram<f64>,
     pub processor_workflow_errors: Counter<u64>,
+    pub processor_keepalive_heartbeats: Counter<u64>,
+    pub processor_idle_duration: Histogram<f64>,
 
     // Status updater metrics (adding the ones referenced in enhanced_processor.rs)
     pub status_updater_operations_total: Counter<u64>,
@@ -78,6 +80,16 @@ impl MetricsRegistry {
             processor_workflow_errors: meter
                 .u64_counter("anything_processor_workflow_errors_total")
                 .with_description("Total number of workflow processing errors.")
+                .init(),
+
+            processor_keepalive_heartbeats: meter
+                .u64_counter("anything_processor_keepalive_heartbeats_total")
+                .with_description("Total number of processor keepalive heartbeats.")
+                .init(),
+
+            processor_idle_duration: meter
+                .f64_histogram("anything_processor_idle_duration_seconds")
+                .with_description("Duration of processor idle time between messages in seconds.")
                 .init(),
 
             // Status updater metrics
@@ -225,6 +237,12 @@ impl MetricsRegistry {
     pub fn record_semaphore_wait_time(&self, wait_duration: Duration, labels: &[KeyValue]) {
         self.processor_semaphore_wait_time
             .record(wait_duration.as_secs_f64(), labels);
+    }
+
+    pub fn record_processor_keepalive(&self, idle_duration: Duration, labels: &[KeyValue]) {
+        self.processor_keepalive_heartbeats.add(1, labels);
+        self.processor_idle_duration
+            .record(idle_duration.as_secs_f64(), labels);
     }
 
     // ===== STATUS UPDATER METRICS METHODS =====
