@@ -33,6 +33,21 @@ impl EnhancedWorkflowProcessor {
 
         let service_name = "anything-server".to_string();
 
+        // Add runtime verification
+        info!(
+            "[ENHANCED_PROCESSOR] Runtime info - Current thread: {:?}, Available parallelism: {:?}",
+            std::thread::current().name(),
+            std::thread::available_parallelism()
+        );
+
+        // Check if we're in a Tokio runtime context
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            info!(
+                "[ENHANCED_PROCESSOR] Tokio runtime detected - Metrics: {:?}",
+                handle.metrics()
+            );
+        }
+
         Self {
             state,
             metrics_recorder: EnhancedMetricsRecorder::with_labels(vec![
