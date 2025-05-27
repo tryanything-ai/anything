@@ -15,13 +15,19 @@ use crate::types::{
 };
 
 use std::time::Instant;
+use tracing::{error, info, instrument, warn};
 
 /// Creates a task for the given action
+#[instrument(skip(ctx, task), fields(
+    task_id = %task.task_id,
+    flow_session_id = %ctx.flow_session_id,
+))]
 pub async fn create_task(
     ctx: &ProcessingContext,
     task: &Task,
 ) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
-    println!("[PROCESSOR] Creating new task: {}", task.task_id);
+    let create_start = Instant::now();
+    info!("[PROCESSOR_UTILS] Creating new task: {}", task.task_id);
 
     let create_task_message = StatusUpdateMessage {
         operation: Operation::CreateTask {
@@ -36,7 +42,10 @@ pub async fn create_task(
         .send(create_task_message)
         .await
     {
-        println!("[PROCESSOR] Failed to send create task message: {}", e);
+        error!(
+            "[PROCESSOR_UTILS] Failed to send create task message: {}",
+            e
+        );
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Failed to send task creation message: {}", e),
@@ -44,37 +53,51 @@ pub async fn create_task(
     }
 
     // Update cache with new task
+    let cache_start = Instant::now();
     {
-        println!("[PROCESSOR] Updating cache with new task: {}", task.task_id);
         let mut cache = ctx.state.flow_session_cache.write().await;
         if let Some(mut session_data) = cache.get(&ctx.flow_session_id) {
             session_data
                 .tasks
                 .insert(task.task_id.clone(), task.clone());
             cache.set(&ctx.flow_session_id, session_data);
-            println!(
-                "[PROCESSOR] Successfully updated cache with task: {}",
-                task.task_id
+            info!(
+                "[PROCESSOR_UTILS] Successfully updated cache with task: {} in {:?}",
+                task.task_id,
+                cache_start.elapsed()
             );
         } else {
-            println!(
-                "[PROCESSOR] Warning: Could not find session data in cache for flow: {}",
+            warn!(
+                "[PROCESSOR_UTILS] Could not find session data in cache for flow: {}",
                 ctx.flow_session_id
             );
         }
     }
 
+    let total_duration = create_start.elapsed();
+    info!(
+        "[PROCESSOR_UTILS] Task creation completed in {:?}",
+        total_duration
+    );
+
     Ok(task.clone())
 }
 
 /// Creates a task for the given action
+#[instrument(skip(ctx, action), fields(
+    action_id = %action.action_id,
+    action_label = %action.label,
+    processing_order = %processing_order,
+    flow_session_id = %ctx.flow_session_id,
+))]
 pub async fn create_task_for_action(
     ctx: &ProcessingContext,
     action: &Action,
     processing_order: i32,
 ) -> Result<Task, Box<dyn std::error::Error + Send + Sync>> {
-    println!(
-        "[PROCESSOR] Creating new task for action: {} (order: {})",
+    let create_start = Instant::now();
+    info!(
+        "[PROCESSOR_UTILS] Creating new task for action: {} (order: {})",
         action.label, processing_order
     );
 
@@ -110,9 +133,9 @@ pub async fn create_task_for_action(
             )) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
-    let create_task_start = Instant::now();
-    println!(
-        "[PROCESSOR] Calling create_task for action: {}",
+    let message_start = Instant::now();
+    info!(
+        "[PROCESSOR_UTILS] Sending create task message for action: {}",
         action.label
     );
 
@@ -129,38 +152,48 @@ pub async fn create_task_for_action(
         .send(create_task_message)
         .await
     {
-        println!("[PROCESSOR] Failed to send create task message: {}", e);
+        error!(
+            "[PROCESSOR_UTILS] Failed to send create task message: {}",
+            e
+        );
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Failed to send task creation message: {}", e),
         )));
     }
 
-    println!(
-        "[SPEED] ProcessorUtils::create_task_message - {:?}",
-        create_task_start.elapsed()
+    info!(
+        "[PROCESSOR_UTILS] Task message sent in {:?}",
+        message_start.elapsed()
     );
 
     // Update cache with new task
+    let cache_start = Instant::now();
     {
-        println!("[PROCESSOR] Updating cache with new task: {}", task.task_id);
         let mut cache = ctx.state.flow_session_cache.write().await;
         if let Some(mut session_data) = cache.get(&ctx.flow_session_id) {
             session_data
                 .tasks
                 .insert(task.task_id.clone(), task.clone());
             cache.set(&ctx.flow_session_id, session_data);
-            println!(
-                "[PROCESSOR] Successfully updated cache with task: {}",
-                task.task_id
+            info!(
+                "[PROCESSOR_UTILS] Successfully updated cache with task: {} in {:?}",
+                task.task_id,
+                cache_start.elapsed()
             );
         } else {
-            println!(
-                "[PROCESSOR] Warning: Could not find session data in cache for flow: {}",
+            warn!(
+                "[PROCESSOR_UTILS] Could not find session data in cache for flow: {}",
                 ctx.flow_session_id
             );
         }
     }
+
+    let total_duration = create_start.elapsed();
+    info!(
+        "[PROCESSOR_UTILS] Task for action creation completed in {:?}",
+        total_duration
+    );
 
     Ok(task)
 }
@@ -334,26 +367,46 @@ pub async fn handle_task_error(
 }
 
 /// Processes a single task in a path
+#[instrument(skip(ctx, task, graph), fields(
+    task_id = %task.task_id,
+    action_label = %task.action_label,
+    flow_session_id = %ctx.flow_session_id,
+))]
 pub async fn process_task(
     ctx: &ProcessingContext,
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Result<Vec<Action>, TaskError> {
-    println!(
-        "[PROCESSOR] Processing task {} (action: {})",
+    let process_start = Instant::now();
+    info!(
+        "[PROCESSOR_UTILS] Processing task {} (action: {})",
         task.task_id, task.action_label
     );
 
     let started_at = Utc::now();
+    let execution_start = Instant::now();
     let (task_result, bundled_context, _, ended_at) =
         match execute_task(ctx.state.clone(), &ctx.client, task).await {
-            Ok(success_value) => success_value,
+            Ok(success_value) => {
+                let execution_duration = execution_start.elapsed();
+                info!(
+                    "[PROCESSOR_UTILS] Task {} executed successfully in {:?}",
+                    task.task_id, execution_duration
+                );
+                success_value
+            }
             Err(error) => {
+                let execution_duration = execution_start.elapsed();
+                error!(
+                    "[PROCESSOR_UTILS] Task {} execution failed after {:?}: {}",
+                    task.task_id, execution_duration, error.error
+                );
                 handle_task_error(ctx, task, error.clone(), started_at, Utc::now()).await;
                 return Ok(Vec::new());
             }
         };
 
+    let update_start = Instant::now();
     update_completed_task_with_result(
         ctx,
         task,
@@ -363,13 +416,23 @@ pub async fn process_task(
         ended_at,
     )
     .await;
+    info!(
+        "[PROCESSOR_UTILS] Task {} status updated in {:?}",
+        task.task_id,
+        update_start.elapsed()
+    );
 
     // Handle filter tasks
     if let Some(plugin_name) = &task.plugin_name {
         if plugin_name.as_str() == "@anything/filter" {
+            info!("[PROCESSOR_UTILS] Processing filter task: {}", task.task_id);
             if let Some(result_value) = &task_result {
                 if let Some(should_continue) = result_value.get("should_continue") {
                     if let Some(false) = should_continue.as_bool() {
+                        info!(
+                            "[PROCESSOR_UTILS] Filter task {} returned false, stopping branch",
+                            task.task_id
+                        );
                         return Ok(Vec::new());
                     }
                 }
@@ -377,6 +440,20 @@ pub async fn process_task(
         }
     }
 
+    let next_actions_start = Instant::now();
     let next_actions = find_next_actions(ctx, task, graph).await;
+    info!(
+        "[PROCESSOR_UTILS] Found {} next actions for task {} in {:?}",
+        next_actions.len(),
+        task.task_id,
+        next_actions_start.elapsed()
+    );
+
+    let total_duration = process_start.elapsed();
+    info!(
+        "[PROCESSOR_UTILS] Task {} processing completed in {:?}",
+        task.task_id, total_duration
+    );
+
     Ok(next_actions)
 }
