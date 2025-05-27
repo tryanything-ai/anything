@@ -209,10 +209,8 @@ pub async fn handle_provider_callback(
     // Verify state from the database
     println!("[OAUTH] Verifying state token");
     let auth_state = auth_states
-        .read()
-        .await
         .get(&params.state.unwrap())
-        .cloned();
+        .map(|entry| entry.value().clone());
 
     let auth_state = match auth_state {
         Some(state) => {
@@ -401,14 +399,13 @@ pub async fn handle_provider_callback(
         create_account_response
     );
 
-    // Invalidate the bundler secrets cache for this account after creating a new secret
+    // Invalidate the bundler accounts cache for this account after OAuth
     println!(
-        "[OAUTH] Invalidating bundler secrets cache for account: {}",
+        "[OAUTH] Invalidating bundler accounts cache for account: {}",
         auth_state.account_id
     );
-    {
-        let mut cache = state.bundler_accounts_cache.write().await;
-        cache.invalidate(&auth_state.account_id);
+    if let Some(cache_entry) = state.bundler_accounts_cache.get(&auth_state.account_id) {
+        cache_entry.invalidate(&auth_state.account_id);
     }
     println!("[OAUTH] Cache invalidated successfully");
 
@@ -570,8 +567,7 @@ pub async fn generate_oauth_init_url_for_client(
     println!("[OAUTH] Created auth state: {:?}", auth_state);
 
     // Store the state in memory
-    let mut auth_states_lock = auth_states.write().await;
-    auth_states_lock.insert(state_string.clone(), auth_state);
+    auth_states.insert(state_string.clone(), auth_state);
     println!("[OAUTH] Stored auth state in memory");
 
     let client = &state.anything_client;

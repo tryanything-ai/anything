@@ -1,4 +1,5 @@
 use crate::auth::init::AccountAuthProviderAccount;
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
@@ -13,15 +14,15 @@ struct CachedAccount {
 //IMPROVEMENTS:
 // Way to let the system be aware if a user has no accounts we don't need to keep trying to hydrate the cache for them
 pub struct AccountsCache {
-    cache: HashMap<String, Vec<CachedAccount>>, // account_id -> accounts
+    cache: DashMap<String, Vec<CachedAccount>>, // account_id -> accounts
     ttl: Duration,
 }
 
 impl AccountsCache {
     pub fn new(ttl: Duration) -> Self {
-       println!("[BUNDLER] Creating new AccountsCache with TTL: {:?}", ttl);
+        println!("[BUNDLER] Creating new AccountsCache with TTL: {:?}", ttl);
         Self {
-            cache: HashMap::new(),
+            cache: DashMap::new(),
             ttl,
         }
     }
@@ -37,8 +38,8 @@ impl AccountsCache {
         })
     }
 
-    pub fn set(&mut self, account_id: &str, accounts: Vec<AccountAuthProviderAccount>) {
-       println!(
+    pub fn set(&self, account_id: &str, accounts: Vec<AccountAuthProviderAccount>) {
+        println!(
             "[BUNDLER] Setting accounts cache for account_id: {}",
             account_id
         );
@@ -53,16 +54,16 @@ impl AccountsCache {
         self.cache.insert(account_id.to_string(), cached_accounts);
     }
 
-    pub fn invalidate(&mut self, account_id: &str) {
-       println!(
+    pub fn invalidate(&self, account_id: &str) {
+        println!(
             "[BUNDLER] Invalidating accounts cache for account_id: {}",
             account_id
         );
         self.cache.remove(account_id);
     }
 
-    pub fn cleanup(&mut self) {
-       println!("[BUNDLER] Starting accounts cache cleanup");
+    pub fn cleanup(&self) {
+        println!("[BUNDLER] Starting accounts cache cleanup");
         let now = SystemTime::now();
         self.cache
             .retain(|_, entries| entries.iter().any(|entry| entry.expires_at > now));

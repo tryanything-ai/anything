@@ -6,6 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
     Extension,
 };
+use dashmap::DashMap;
 use futures_util::{sink::SinkExt, stream::StreamExt};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
@@ -43,7 +44,7 @@ pub struct WebSocketConnection {
     pub user_id: String,
 }
 
-pub type WebSocketConnections = Arc<RwLock<HashMap<String, WebSocketConnection>>>;
+pub type WebSocketConnections = DashMap<String, WebSocketConnection>;
 pub type WorkflowBroadcaster = broadcast::Sender<WorkflowTestingUpdate>;
 
 #[derive(Debug, Deserialize)]
@@ -142,10 +143,9 @@ async fn handle_websocket_connection(
         user_id: user.account_id.clone(),
     };
 
-    {
-        let mut connections = state.websocket_connections.write().await;
-        connections.insert(connection_id.clone(), connection);
-    }
+    state
+        .websocket_connections
+        .insert(connection_id.clone(), connection);
 
     // Subscribe to workflow updates
     let mut receiver = state.workflow_broadcaster.subscribe();
@@ -227,10 +227,7 @@ async fn handle_websocket_connection(
     }
 
     // Clean up connection
-    {
-        let mut connections = state.websocket_connections.write().await;
-        connections.remove(&connection_id);
-    }
+    state.websocket_connections.remove(&connection_id);
 
     info!("[WEBSOCKET] Connection {} closed", connection_id);
 }

@@ -167,16 +167,13 @@ pub async fn run_workflow_as_tool_call_and_respond(
     let (tx, rx) = oneshot::channel();
 
     // Store the sender in the state
-    {
-        let mut completions = state.flow_completions.lock().await;
-        completions.insert(
-            task.flow_session_id.to_string(),
-            FlowCompletion {
-                sender: tx,
-                needs_response: true,
-            },
-        );
-    }
+    state.flow_completions.insert(
+        task.flow_session_id.to_string(),
+        FlowCompletion {
+            sender: tx,
+            needs_response: true,
+        },
+    );
 
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
@@ -231,8 +228,6 @@ pub async fn run_workflow_as_tool_call_and_respond(
             // Remove the completion channel on timeout
             state
                 .flow_completions
-                .lock()
-                .await
                 .remove(&task.flow_session_id.to_string());
             (
                 StatusCode::REQUEST_TIMEOUT,

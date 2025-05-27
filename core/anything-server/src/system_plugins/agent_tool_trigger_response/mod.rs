@@ -74,8 +74,7 @@ pub async fn process_tool_call_result_task(
     println!("[PROCESS RESPONSE] Generated response: {:?}", response);
 
     // Send the response through the flow_completions channel
-    let mut completions = state.flow_completions.lock().await;
-    if let Some(completion) = completions.remove(&flow_session_id.to_string()) {
+    if let Some((_, completion)) = state.flow_completions.remove(&flow_session_id.to_string()) {
         if completion.needs_response {
             println!("[PROCESS RESPONSE] Sending result through completion channel");
             let _ = completion.sender.send(Value::Object(response.clone()));

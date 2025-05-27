@@ -77,8 +77,7 @@ pub async fn validate_api_key(state: Arc<AppState>, api_key: String) -> Result<S
     // Check cache first
     let cached_account = {
         println!("[VALIDATE API KEY] Checking cache for API key");
-        let cache = state.api_key_cache.read().await;
-        if let Some(cached) = cache.get(&api_key) {
+        if let Some(cached) = state.api_key_cache.get(&api_key) {
             println!("[VALIDATE API KEY] Found cached API key");
             Some(cached.account_id.clone())
         } else {
@@ -113,18 +112,15 @@ pub async fn validate_api_key(state: Arc<AppState>, api_key: String) -> Result<S
     }
 
     // Update cache with new value
-    {
-        println!("[VALIDATE API KEY] Updating cache with new API key");
-        let mut cache = state.api_key_cache.write().await;
-        cache.insert(
-            api_key,
-            CachedApiKey {
-                account_id: secret.account_id.clone(),
-                secret_id: uuid::Uuid::parse_str(&secret.secret_id).unwrap(),
-                secret_name: secret.secret_name.clone(),
-            },
-        );
-    }
+    println!("[VALIDATE API KEY] Updating cache with new API key");
+    state.api_key_cache.insert(
+        api_key,
+        CachedApiKey {
+            account_id: secret.account_id.clone(),
+            secret_id: uuid::Uuid::parse_str(&secret.secret_id).unwrap(),
+            secret_name: secret.secret_name.clone(),
+        },
+    );
 
     println!("[VALIDATE API KEY] API key validation successful");
     Ok(secret.account_id)

@@ -196,17 +196,20 @@ pub async fn process_webhook_response_task(
     println!("[WEBHOOK RESPONSE] Generated response: {:?}", response);
 
     // Send the response through the flow_completions channel
-    let mut completions = state.flow_completions.lock().await;
     println!(
         "[WEBHOOK RESPONSE] Looking for completion channel for flow_session_id: {}",
         flow_session_id
     );
     println!(
         "[WEBHOOK RESPONSE] Available completion channels: {:?}",
-        completions.keys().collect::<Vec<_>>()
+        state
+            .flow_completions
+            .iter()
+            .map(|entry| entry.key().clone())
+            .collect::<Vec<_>>()
     );
 
-    if let Some(completion) = completions.remove(&flow_session_id.to_string()) {
+    if let Some((_, completion)) = state.flow_completions.remove(&flow_session_id.to_string()) {
         if completion.needs_response {
             println!("[WEBHOOK RESPONSE] Found completion channel and sending response");
             let send_result = completion.sender.send(Value::Object(response.clone()));

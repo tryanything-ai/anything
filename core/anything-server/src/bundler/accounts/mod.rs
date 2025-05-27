@@ -1,4 +1,5 @@
 use crate::auth::init::AccountAuthProviderAccount;
+use crate::bundler::accounts::accounts_cache::AccountsCache;
 use crate::AppState;
 use chrono::Utc;
 use dotenv::dotenv;
@@ -6,6 +7,7 @@ use postgrest::Postgrest;
 use serde_json::json;
 use std::env;
 use std::sync::Arc;
+use std::time::Duration;
 use tracing::debug;
 
 pub mod accounts_cache;
@@ -24,9 +26,11 @@ pub async fn fetch_cached_auth_accounts(
 
     //Check if accounts are in the the cache
     let mut accounts: Vec<AccountAuthProviderAccount> = {
-        let cache = state.bundler_accounts_cache.read().await;
-        let accounts = cache.get(account_id).unwrap_or_default();
-        accounts
+        if let Some(cache_entry) = state.bundler_accounts_cache.get(account_id) {
+            cache_entry.get(account_id).unwrap_or_default()
+        } else {
+            Vec::new()
+        }
     };
 
     //If not, fetch them from the DB
@@ -57,10 +61,12 @@ pub async fn fetch_cached_auth_accounts(
     }
 
     //Update the cache
-    {
-        let mut cache = state.bundler_accounts_cache.write().await;
-        cache.set(account_id, accounts.clone());
-    }
+    let cache = state
+        .bundler_accounts_cache
+        .entry(account_id.to_string())
+        .or_insert_with(|| AccountsCache::new(Duration::from_secs(86400)));
+
+    cache.set(account_id, accounts.clone());
 
     Ok(accounts)
 }
@@ -70,7 +76,7 @@ async fn fetch_accounts_from_db(
     account_id: &str,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
-    
+
     let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
 
     println!(

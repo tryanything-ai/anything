@@ -4,7 +4,9 @@ mod enhanced_processor_tests {
     use crate::processor::processor::ProcessorMessage;
     use crate::types::action_types::ActionType;
     use crate::types::workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition};
+    use dashmap::DashMap;
     use serde_json::Value;
+    use std::collections::HashMap;
     use tokio::sync::mpsc;
     use uuid::Uuid;
 
@@ -57,6 +59,12 @@ mod enhanced_processor_tests {
                     edges: vec![],
                 },
             },
+            workflow_definition: WorkflowVersionDefinition {
+                actions: vec![],
+                edges: vec![],
+            },
+            existing_tasks: HashMap::new(),
+            workflow_graph: None,
             flow_session_id: Uuid::new_v4(),
             trigger_session_id: Uuid::new_v4(),
             trigger_task: None,
@@ -98,32 +106,21 @@ mod enhanced_processor_tests {
             public_client: Arc::new(postgrest::Postgrest::new("http://test")),
             r2_client: Arc::new(s3_client),
             http_client: Arc::new(reqwest::Client::new()),
-            auth_states: RwLock::new(HashMap::new()),
+            auth_states: DashMap::new(),
+            flow_completions: DashMap::new(),
+            api_key_cache: DashMap::new(),
+            websocket_connections: DashMap::new(),
+            workflow_broadcaster: crate::websocket::WorkflowBroadcaster::new(1000),
             trigger_engine_signal: watch::channel("".to_string()).0,
             processor_sender: mpsc::channel::<ProcessorMessage>(100).0,
             task_updater_sender: mpsc::channel::<crate::status_updater::StatusUpdateMessage>(100).0,
-            flow_completions: Arc::new(Mutex::new(HashMap::new())),
-            api_key_cache: Arc::new(RwLock::new(HashMap::new())),
             account_access_cache: Arc::new(RwLock::new(
                 crate::account_auth_middleware::AccountAccessCache::new(
                     std::time::Duration::from_secs(60),
                 ),
             )),
-            bundler_secrets_cache: RwLock::new(
-                crate::bundler::secrets::secrets_cache::SecretsCache::new(
-                    std::time::Duration::from_secs(60),
-                ),
-            ),
-            bundler_accounts_cache: RwLock::new(
-                crate::bundler::accounts::accounts_cache::AccountsCache::new(
-                    std::time::Duration::from_secs(60),
-                ),
-            ),
-            flow_session_cache: Arc::new(RwLock::new(
-                crate::processor::flow_session_cache::FlowSessionCache::new(
-                    std::time::Duration::from_secs(60),
-                ),
-            )),
+            bundler_secrets_cache: DashMap::new(),
+            bundler_accounts_cache: DashMap::new(),
             shutdown_signal: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         })
     }

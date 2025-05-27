@@ -14,13 +14,15 @@ pub async fn cleanup_bundler_caches(state: Arc<AppState>) {
     loop {
         tokio::time::sleep(cleanup_interval).await;
         println!("[BUNDLER] Running scheduled cache cleanup");
-        {
-            let mut secrets_cache = state.bundler_secrets_cache.write().await;
-            secrets_cache.cleanup();
+
+        // Cleanup secrets caches for all accounts
+        for cache_entry in state.bundler_secrets_cache.iter_mut() {
+            cache_entry.cleanup();
         }
-        {
-            let mut accounts_cache = state.bundler_accounts_cache.write().await;
-            accounts_cache.cleanup();
+
+        // Cleanup accounts caches for all accounts
+        for cache_entry in state.bundler_accounts_cache.iter_mut() {
+            cache_entry.cleanup();
         }
     }
 }

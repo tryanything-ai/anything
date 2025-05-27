@@ -26,6 +26,7 @@ use aws_sdk_s3::Client as S3Client;
 use files::r2_client::get_r2_client;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::sleep;
+use dashmap::DashMap;
 
 use regex::Regex;
 
@@ -51,7 +52,7 @@ mod marketplace;
 mod secrets;
 mod supabase_jwt_middleware;
 mod api_key_middleware;
-mod account_auth_middleware;
+mod account_auth_middleware;    
 mod types;
 mod templater;
 mod testing; 
@@ -90,18 +91,18 @@ pub struct AppState {
     r2_client: Arc<S3Client>,
     http_client: Arc<Client>,
     workflow_processor_semaphore: Arc<Semaphore>,
-    auth_states: RwLock<HashMap<String, AuthState>>,
+    auth_states: DashMap<String, AuthState>,
     trigger_engine_signal: watch::Sender<String>,
     processor_sender: mpsc::Sender<ProcessorMessage>,
     task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
-    flow_completions: Arc<Mutex<HashMap<String, FlowCompletion>>>,
-    api_key_cache: Arc<RwLock<HashMap<String, CachedApiKey>>>,
+    flow_completions: DashMap<String, FlowCompletion>,
+    api_key_cache: DashMap<String, CachedApiKey>,
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
-    bundler_secrets_cache: RwLock<SecretsCache>,
-    bundler_accounts_cache: RwLock<AccountsCache>,
+    bundler_secrets_cache: DashMap<String, SecretsCache>,
+    bundler_accounts_cache: DashMap<String, AccountsCache>,
     shutdown_signal: Arc<AtomicBool>,
     // WebSocket infrastructure
-    websocket_connections: websocket::WebSocketConnections,
+    websocket_connections: DashMap<String, websocket::WebSocketConnection>,
     workflow_broadcaster: websocket::WorkflowBroadcaster,
 }
 
@@ -218,7 +219,6 @@ async fn main() {
    let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000);
 
    // Create WebSocket infrastructure
-   let websocket_connections = Arc::new(RwLock::new(HashMap::new()));
    let (workflow_broadcaster, _) = broadcast::channel(1000); 
 
    let default_http_timeout = Duration::from_secs(30); // Default 30-second timeout
@@ -235,22 +235,21 @@ async fn main() {
         public_client: public_client.clone(),
         r2_client: r2_client.clone(),
         http_client: Arc::new(http_client),
-        auth_states: RwLock::new(HashMap::new()),
+        auth_states: DashMap::new(),
         workflow_processor_semaphore: Arc::new(Semaphore::new(10)), //How many workflows we can run at once
         trigger_engine_signal,
         processor_sender: processor_tx,
-        // processor_receiver: Mutex::new(processor_rx),
-        flow_completions: Arc::new(Mutex::new(HashMap::new())),
-        api_key_cache: Arc::new(RwLock::new(HashMap::new())),
+        flow_completions: DashMap::new(),
+        api_key_cache: DashMap::new(),
         account_access_cache: Arc::new(RwLock::new(
             account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400))
         )),
-        bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
-        bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
+        bundler_secrets_cache: DashMap::new(),
+        bundler_accounts_cache: DashMap::new(),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
         task_updater_sender: task_updater_tx.clone(), // Store the sender in AppState
         // WebSocket infrastructure
-        websocket_connections,
+        websocket_connections: DashMap::new(),
         workflow_broadcaster,
     });
 

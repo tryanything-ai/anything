@@ -1,3 +1,4 @@
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
@@ -12,7 +13,7 @@ struct CachedSecret {
 }
 
 pub struct SecretsCache {
-    cache: HashMap<String, Vec<CachedSecret>>, // account_id -> secrets
+    cache: DashMap<String, Vec<CachedSecret>>, // account_id -> secrets
     ttl: Duration,
 }
 
@@ -20,7 +21,7 @@ impl SecretsCache {
     pub fn new(ttl: Duration) -> Self {
         println!("[BUNDLER] Creating new SecretsCache with TTL: {:?}", ttl);
         Self {
-            cache: HashMap::new(),
+            cache: DashMap::new(),
             ttl,
         }
     }
@@ -36,7 +37,7 @@ impl SecretsCache {
         })
     }
 
-    pub fn set(&mut self, account_id: &str, secrets: Vec<DecryptedSecret>) {
+    pub fn set(&self, account_id: &str, secrets: Vec<DecryptedSecret>) {
         println!(
             "[BUNDLER] Setting secrets cache for account_id: {}",
             account_id
@@ -49,7 +50,7 @@ impl SecretsCache {
         self.cache.insert(account_id.to_string(), cached_secrets);
     }
 
-    pub fn invalidate(&mut self, account_id: &str) {
+    pub fn invalidate(&self, account_id: &str) {
         println!(
             "[BUNDLER] Invalidating secrets cache for account_id: {}",
             account_id
@@ -57,7 +58,7 @@ impl SecretsCache {
         self.cache.remove(account_id);
     }
 
-    pub fn cleanup(&mut self) {
+    pub fn cleanup(&self) {
         println!("[BUNDLER] Starting secrets cache cleanup");
         let now = SystemTime::now();
         self.cache

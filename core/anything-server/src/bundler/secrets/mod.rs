@@ -1,11 +1,12 @@
 use dotenv::dotenv;
 use postgrest::Postgrest;
-use std::{env, sync::Arc};
+use std::{env, sync::Arc, time::Duration};
 
 use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
 
+use crate::bundler::secrets::secrets_cache::SecretsCache;
 use crate::AppState;
 
 pub mod secrets_cache;
@@ -23,10 +24,9 @@ pub async fn get_decrypted_secrets(
     client: &Postgrest,
     account_id: &str,
 ) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {
-    // Try to get from cache first using a read lock
-    {
-        let cache = state.bundler_secrets_cache.read().await;
-        if let Some(cached_secrets) = cache.get(account_id) {
+    // Try to get from cache first
+    if let Some(cache_entry) = state.bundler_secrets_cache.get(account_id) {
+        if let Some(cached_secrets) = cache_entry.get(account_id) {
             println!(
                 "[BUNDLER] Using cached secrets for account_id: {}",
                 account_id
@@ -43,15 +43,17 @@ pub async fn get_decrypted_secrets(
     // If not in cache, fetch from DB
     let secrets = fetch_secrets_from_vault(client, account_id).await?;
 
-    // Update cache with a write lock
-    {
-        let mut cache = state.bundler_secrets_cache.write().await;
-        cache.set(account_id, secrets.clone());
-        println!(
-            "[BUNDLER] Updated secrets cache for account_id: {}",
-            account_id
-        );
-    }
+    // Update cache - get or create cache for this account
+    let cache = state
+        .bundler_secrets_cache
+        .entry(account_id.to_string())
+        .or_insert_with(|| SecretsCache::new(Duration::from_secs(86400)));
+
+    cache.set(account_id, secrets.clone());
+    println!(
+        "[BUNDLER] Updated secrets cache for account_id: {}",
+        account_id
+    );
 
     Ok(secrets)
 }

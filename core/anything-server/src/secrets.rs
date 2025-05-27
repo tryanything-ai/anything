@@ -121,10 +121,8 @@ pub async fn create_secret(
     println!("DB Secret Body: {:?}", db_secret_body);
 
     // Invalidate the bundler secrets cache for this account after creating a new secret
-    // Only lock for the minimum time needed
-    {
-        let mut cache = state.bundler_secrets_cache.write().await;
-        cache.invalidate(&account_id);
+    if let Some(cache_entry) = state.bundler_secrets_cache.get(&account_id) {
+        cache_entry.invalidate(&account_id);
     }
 
     Json(db_secret_body).into_response()
@@ -486,11 +484,9 @@ pub async fn delete_secret(
 
     println!("Delete Vault Secret Body: {:?}", rpc_body);
 
-    // Invalidate the bundler secrets cache for this account after creating a new secret
-    // Only lock for the minimum time needed
-    {
-        let mut cache = state.bundler_secrets_cache.write().await;
-        cache.invalidate(&account_id);
+    // Invalidate the bundler secrets cache for this account after deleting a secret
+    if let Some(cache_entry) = state.bundler_secrets_cache.get(&account_id) {
+        cache_entry.invalidate(&account_id);
     }
 
     Json(body).into_response()
@@ -584,14 +580,11 @@ pub async fn delete_api_key(
 
     println!("[DELETE API KEY] Removing API key from cache");
     // Delete from API key cache
-    {
-        let mut cache = state.api_key_cache.write().await;
-        let removed = cache.remove(&secret_value);
-        println!(
-            "[DELETE API KEY] Successfully removed from cache: {}",
-            removed.is_some()
-        );
-    }
+    let removed = state.api_key_cache.remove(&secret_value);
+    println!(
+        "[DELETE API KEY] Successfully removed from cache: {}",
+        removed.is_some()
+    );
 
     println!("[DELETE API KEY] Deleting secret from database");
     // Delete in DB
