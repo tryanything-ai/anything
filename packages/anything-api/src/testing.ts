@@ -107,6 +107,78 @@ export type WorklfowTestSessionResult = {
     complete: boolean;
 } | undefined;
 
+// WebSocket message types
+export interface WorkflowTestingUpdate {
+    type: 'workflow_update' | 'connection_established' | 'session_state';
+    update_type?: 'task_created' | 'task_updated' | 'task_completed' | 'task_failed' | 'workflow_completed' | 'workflow_failed';
+    flow_session_id: string;
+    data?: any;
+    tasks?: TaskRow[];
+    complete?: boolean;
+}
+
+// WebSocket connection for workflow testing
+export const createWorkflowTestingWebSocket = (
+    supabase: SupabaseClient,
+    account_id: string,
+    flow_session_id: string,
+    onMessage: (update: WorkflowTestingUpdate) => void,
+    onError?: (error: Event) => void,
+    onClose?: (event: CloseEvent) => void
+): Promise<WebSocket | null> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                reject(new Error('No session available'));
+                return;
+            }
+
+            // Convert HTTP URL to WebSocket URL
+            const wsUrl = ANYTHING_API_URL?.replace('http://', 'ws://').replace('https://', 'wss://');
+            const url = `${wsUrl}/account/${account_id}/testing/workflow/session/${flow_session_id}/ws?token=${encodeURIComponent(session.access_token)}`;
+            
+            console.log('[WEBSOCKET] Connecting to workflow testing WebSocket');
+            console.log('[WEBSOCKET] Token length:', session.access_token.length);
+            
+            const ws = new WebSocket(url);
+            
+            ws.onopen = (event) => {
+                console.log('[WEBSOCKET] Connected to workflow testing WebSocket');
+                resolve(ws);
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const update: WorkflowTestingUpdate = JSON.parse(event.data);
+                    console.log('[WEBSOCKET] Received update:', update);
+                    onMessage(update);
+                } catch (error) {
+                    console.error('[WEBSOCKET] Error parsing message:', error);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('[WEBSOCKET] WebSocket error:', error);
+                if (onError) onError(error);
+                reject(error);
+            };
+            
+            ws.onclose = (event) => {
+                console.log('[WEBSOCKET] WebSocket closed:', event.code, event.reason);
+                if (onClose) onClose(event);
+            };
+            
+        } catch (error) {
+            console.error('[WEBSOCKET] Error creating WebSocket:', error);
+            reject(error);
+        }
+    });
+};
+
+
+
 
 export const getTestingResults = async (
     supabase: SupabaseClient,

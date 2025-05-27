@@ -1,12 +1,21 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+} from "react";
 import { useWorkflowVersion } from "./WorkflowVersionProvider";
 import api from "@repo/anything-api";
 import {
   StartWorkflowTestResult,
   TaskRow,
   WorklfowTestSessionResult,
+  createWorkflowTestingWebSocket,
+  WorkflowTestingUpdate,
 } from "@repo/anything-api";
 import { useAccounts } from "./AccountsContext";
 import { createClient } from "@/lib/supabase/client";
@@ -68,6 +77,19 @@ export const WorkflowTestingProvider = ({
   const [testStartedTime, setTestStartedTime] = useState<string>("");
   const [testFinishedTime, setTestFinishedTime] = useState<string>("");
 
+  // WebSocket connection ref
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, []);
+
   const resetState = () => {
     setTestingMode(TestingMode.ACTION);
     setWorkflowTestingSessionId("");
@@ -76,79 +98,146 @@ export const WorkflowTestingProvider = ({
     setTestingWorkflow(false);
     setTestStartedTime("");
     setTestFinishedTime("");
+
+    // Close WebSocket connection if it exists
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
   };
 
-  const pollForResults = async (
-    flowId: string,
-    versionId: string,
-    workflow_session_id: string,
-  ) => {
-    let isComplete = false;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 60; // Stop after 60 seconds
-    let finalTasksSet = false; // Add flag to track if we've set final tasks
-
-    // Add initial delay to allow backend to process
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    while (!isComplete && attempts < MAX_ATTEMPTS) {
-      try {
-        if (!flowId || !versionId || !workflow_session_id || !selectedAccount) {
-          console.error("Missing required polling parameters");
-          return;
-        }
-
-        // Don't make additional requests if we've already marked as complete
-        if (finalTasksSet) {
-          console.log("Polling stopped - final tasks already set");
-          return;
-        }
-
-        const result = await api.testing.getTestingResults(
-          await createClient(),
-          selectedAccount.account_id,
-          flowId,
-          versionId,
-          workflow_session_id,
-        );
-
-        if (!result) {
-          console.error("No result returned from polling");
-          attempts++;
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          continue;
-        }
-
-        if (result.complete) {
-          isComplete = true;
-          // Set final tasks state only once
-          if (!finalTasksSet && result.tasks) {
-            console.log("Setting final tasks state");
-            setWorkflowTestingSessionTasks(result.tasks);
-            finalTasksSet = true;
-          }
-          setTestingWorkflow(false);
-          setTestFinishedTime(new Date().toISOString());
-          return;
-        }
-
-        // Only update tasks if we haven't reached completion
-        if (!finalTasksSet && result.tasks) {
-          console.log("Updating in-progress tasks");
-          setWorkflowTestingSessionTasks(result.tasks);
-        }
-
-        attempts++;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        console.error("Error polling for results:", error);
-        attempts++;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+  const refreshTaskData = async () => {
+    if (
+      !selectedAccount ||
+      !db_flow_id ||
+      !db_flow_version_id ||
+      !workflowTestingSessionId
+    ) {
+      return;
     }
 
-    if (!isComplete) {
-      console.error("Polling timed out after 60 seconds");
+    try {
+      const result = await api.testing.getTestingResults(
+        await createClient(),
+        selectedAccount.account_id,
+        db_flow_id,
+        db_flow_version_id,
+        workflowTestingSessionId,
+      );
+
+      if (result?.tasks) {
+        console.log(
+          "[WEBSOCKET] Refreshed task data from API:",
+          result.tasks.length,
+          "tasks",
+        );
+        setWorkflowTestingSessionTasks(result.tasks);
+      }
+    } catch (error) {
+      console.error("[WEBSOCKET] Error refreshing task data:", error);
+    }
+  };
+
+  const subscribeToWorkflowUpdates = async (flow_session_id: string) => {
+    if (!selectedAccount) {
+      console.error("No account selected for WebSocket subscription");
+      return;
+    }
+
+    try {
+      console.log(
+        "[WEBSOCKET] Subscribing to workflow updates for session:",
+        flow_session_id,
+      );
+
+      const ws = await createWorkflowTestingWebSocket(
+        await createClient(),
+        selectedAccount.account_id,
+        flow_session_id,
+        (update: WorkflowTestingUpdate) => {
+          console.log("[WEBSOCKET] Received workflow update:", update);
+
+          switch (update.type) {
+            case "connection_established":
+              console.log("[WEBSOCKET] Connection established");
+              break;
+
+            case "session_state":
+              // Initial session state with current tasks
+              if (update.tasks) {
+                console.log(
+                  "[WEBSOCKET] Setting initial session state with tasks:",
+                  update.tasks.length,
+                );
+                setWorkflowTestingSessionTasks(update.tasks);
+              }
+              break;
+
+            case "workflow_update":
+              switch (update.update_type) {
+                case "task_created":
+                case "task_updated":
+                case "task_completed":
+                case "task_failed":
+                  // Simple update - refresh task data from API
+                  if (
+                    update.data?.needs_refresh &&
+                    db_flow_id &&
+                    db_flow_version_id &&
+                    workflowTestingSessionId
+                  ) {
+                    console.log(
+                      "[WEBSOCKET] Task update received, refreshing data from API",
+                    );
+                    refreshTaskData();
+                  }
+                  break;
+
+                case "workflow_completed":
+                case "workflow_failed":
+                  // Workflow finished - do final refresh
+                  console.log("[WEBSOCKET] Workflow completed");
+                  if (
+                    update.data?.needs_refresh &&
+                    db_flow_id &&
+                    db_flow_version_id &&
+                    workflowTestingSessionId
+                  ) {
+                    refreshTaskData();
+                  }
+                  setTestingWorkflow(false);
+                  setTestFinishedTime(new Date().toISOString());
+
+                  // Close WebSocket connection
+                  if (wsRef.current) {
+                    wsRef.current.close();
+                    wsRef.current = null;
+                  }
+                  break;
+              }
+              break;
+          }
+        },
+        (error) => {
+          console.error("[WEBSOCKET] WebSocket error:", error);
+          setTestingWorkflow(false);
+        },
+        (event) => {
+          console.log(
+            "[WEBSOCKET] WebSocket closed:",
+            event.code,
+            event.reason,
+          );
+          wsRef.current = null;
+        },
+      );
+
+      wsRef.current = ws;
+    } catch (error) {
+      console.error(
+        "[WEBSOCKET] Failed to create WebSocket connection:",
+        error,
+      );
       setTestingWorkflow(false);
     }
   };
@@ -191,8 +280,8 @@ export const WorkflowTestingProvider = ({
         console.log("Testing workflow results:", results);
         setWorkflowTestingSessionId(flow_session_id);
       }
-      // Start polling for results
-      pollForResults(db_flow_id, db_flow_version_id,  flow_session_id);
+      // Start WebSocket subscription for real-time updates
+      subscribeToWorkflowUpdates(flow_session_id);
     } catch (error) {
       console.error(error);
     } finally {

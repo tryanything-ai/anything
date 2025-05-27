@@ -115,4 +115,21 @@ impl FlowSessionCache {
     pub fn size(&self) -> usize {
         self.cache.len()
     }
+
+    // Find a task by task_id across all sessions and return (flow_session_id, task)
+    pub fn find_task_by_id(&self, task_id: &Uuid) -> Option<(Uuid, Task)> {
+        let now = SystemTime::now();
+
+        for (flow_session_id, cached_session) in &self.cache {
+            // Skip expired sessions
+            if cached_session.expires_at <= now {
+                continue;
+            }
+
+            if let Some(task) = cached_session.data.tasks.get(task_id) {
+                return Some((*flow_session_id, task.clone()));
+            }
+        }
+        None
+    }
 }

@@ -115,7 +115,7 @@ export default function TestingTab(): JSX.Element {
             worklowTestingSessionTasks.length === 0 && (
               <div className="flex items-center gap-2 text-muted-foreground transition-opacity duration-300">
                 <Loader2 size={14} className="animate-spin" />
-                <span>Initializing workflow test...</span>
+                <span>Connecting to workflow session...</span>
               </div>
             )}
           <div className="space-y-2 transition-all duration-300">

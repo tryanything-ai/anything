@@ -18,7 +18,7 @@ use std::{collections::HashMap, time::Duration, time::Instant};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tokio::sync::{watch, Semaphore};
+use tokio::sync::{watch, Semaphore, broadcast};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
@@ -58,6 +58,7 @@ mod testing;
 mod trigger_engine;
 mod agents; 
 mod metrics;
+mod websocket;
 
 use tokio::sync::oneshot;
 use tokio::sync::Mutex;
@@ -100,6 +101,9 @@ pub struct AppState {
     bundler_accounts_cache: RwLock<AccountsCache>,
     flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
     shutdown_signal: Arc<AtomicBool>,
+    // WebSocket infrastructure
+    websocket_connections: websocket::WebSocketConnections,
+    workflow_broadcaster: websocket::WorkflowBroadcaster,
 }
 
 #[tokio::main]
@@ -212,7 +216,11 @@ async fn main() {
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(100000); 
 
     // Create the task updater channel  
-   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000); 
+   let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000);
+
+   // Create WebSocket infrastructure
+   let websocket_connections = Arc::new(RwLock::new(HashMap::new()));
+   let (workflow_broadcaster, _) = broadcast::channel(1000); 
 
    let default_http_timeout = Duration::from_secs(30); // Default 30-second timeout
    let http_client = Client::builder()
@@ -243,6 +251,9 @@ async fn main() {
         flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
         task_updater_sender: task_updater_tx.clone(), // Store the sender in AppState
+        // WebSocket infrastructure
+        websocket_connections,
+        workflow_broadcaster,
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -285,7 +296,13 @@ pub async fn root() -> impl IntoResponse {
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_plugins::webhook_trigger::run_workflow_version_and_respond))
 
     // API routes for running agent tools - very simliar to webhooks just shapped differnt to capture relationshipe between agent and workflow
-    .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond));
+    .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond))
+    
+    // WebSocket for real-time workflow testing updates (public route with token-based auth)
+    .route(
+        "/account/:account_id/testing/workflow/session/:flow_session_id/ws",
+        get(websocket::websocket_handler),
+    );
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
@@ -373,6 +390,7 @@ pub async fn root() -> impl IntoResponse {
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
             get(testing::get_test_session_results),
         )
+
         //Variables Explorer for Testing
         //TODO: we need to protect this for parallel running. You should not be able to select a result that isnt guranteed to be there
         .route(

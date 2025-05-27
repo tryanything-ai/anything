@@ -1,5 +1,6 @@
 use crate::processor::db_calls::{create_task, update_flow_session_status, update_task_status};
 use crate::types::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
+use crate::websocket::{broadcast_task_update_simple, broadcast_task_update_with_session, broadcast_workflow_completion_simple, UpdateType};
 use crate::AppState;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
@@ -143,6 +144,27 @@ pub async fn task_database_status_processor(
                         match result {
                             Ok(_) => {
                                 info!("[TASK PROCESSOR] Successfully processed update");
+                                
+                                // Broadcast WebSocket updates after successful database operations
+                                match &message.operation {
+                                    Operation::UpdateTask { task_id, status, .. } => {
+                                        // We'll broadcast a simple update and let the frontend fetch the task data
+                                        let update_type = match status {
+                                            TaskStatus::Completed => UpdateType::TaskCompleted,
+                                            TaskStatus::Failed => UpdateType::TaskFailed,
+                                            _ => UpdateType::TaskUpdated,
+                                        };
+                                        broadcast_task_update_simple(&state.workflow_broadcaster, task_id, update_type).await;
+                                    }
+                                    Operation::CreateTask { input, .. } => {
+                                        broadcast_task_update_with_session(&state.workflow_broadcaster, &input.account_id.to_string(), &input.flow_session_id.to_string(), &input.task_id, UpdateType::TaskCreated).await;
+                                    }
+                                    Operation::CompleteWorkflow { flow_session_id, status, .. } => {
+                                        let success = matches!(status, FlowSessionStatus::Completed);
+                                        broadcast_workflow_completion_simple(&state.workflow_broadcaster, flow_session_id, success).await;
+                                    }
+                                }
+                                
                                 break;
                             }
                             Err(e) => {
@@ -200,3 +222,7 @@ pub async fn task_database_status_processor(
 
     info!("[TASK PROCESSOR] Status updater processor shutdown complete");
 }
+
+
+
+
