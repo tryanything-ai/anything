@@ -24,10 +24,21 @@ pub async fn bundle_tasks_cached_context(
     task: &Task,
     refresh_auth: bool,
 ) -> Result<(Value, Value), Box<dyn Error + Send + Sync>> {
+    bundle_tasks_cached_context_with_tasks(state, client, task, refresh_auth, None).await
+}
+
+pub async fn bundle_tasks_cached_context_with_tasks(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    task: &Task,
+    refresh_auth: bool,
+    in_memory_tasks: Option<&HashMap<Uuid, Task>>,
+) -> Result<(Value, Value), Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
     let rendered_inputs_definition =
-        bundle_tasks_cached_inputs(state, client, task, refresh_auth).await?;
+        bundle_tasks_cached_inputs_with_tasks(state, client, task, refresh_auth, in_memory_tasks)
+            .await?;
 
     let plugin_config = task.config.plugin_config.as_ref();
     let plugin_config_schema = task.config.plugin_config_schema.as_ref();
@@ -50,6 +61,16 @@ pub async fn bundle_tasks_cached_inputs(
     task: &Task,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    bundle_tasks_cached_inputs_with_tasks(state, client, task, refresh_auth, None).await
+}
+
+pub async fn bundle_tasks_cached_inputs_with_tasks(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    task: &Task,
+    refresh_auth: bool,
+    in_memory_tasks: Option<&HashMap<Uuid, Task>>,
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
     let account_id = task.account_id.to_string();
@@ -57,7 +78,7 @@ pub async fn bundle_tasks_cached_inputs(
     let inputs = task.config.inputs.as_ref();
     let inputs_schema = task.config.inputs_schema.as_ref();
 
-    let rendered_inputs_definition = bundle_cached_inputs(
+    let rendered_inputs_definition = bundle_cached_inputs_with_tasks(
         state,
         client,
         &account_id,
@@ -65,6 +86,7 @@ pub async fn bundle_tasks_cached_inputs(
         inputs,
         inputs_schema,
         refresh_auth,
+        in_memory_tasks,
     )
     .await?;
 
@@ -82,9 +104,36 @@ pub async fn bundle_context_from_parts(
     plugin_config_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    bundle_context_from_parts_with_tasks(
+        state,
+        client,
+        account_id,
+        flow_session_id,
+        inputs,
+        inputs_schema,
+        plugin_config,
+        plugin_config_schema,
+        refresh_auth,
+        None, // No in-memory tasks provided, will fetch from database
+    )
+    .await
+}
+
+pub async fn bundle_context_from_parts_with_tasks(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    account_id: &str,
+    flow_session_id: &str,
+    inputs: Option<&Value>,
+    inputs_schema: Option<&JsonSchema>,
+    plugin_config: Option<&Value>,
+    plugin_config_schema: Option<&JsonSchema>,
+    refresh_auth: bool,
+    in_memory_tasks: Option<&HashMap<Uuid, Task>>, // Pass in-memory tasks from processor
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle context from parts");
 
-    let rendered_inputs_definition = bundle_cached_inputs(
+    let rendered_inputs_definition = bundle_cached_inputs_with_tasks(
         state,
         client,
         account_id,
@@ -92,6 +141,7 @@ pub async fn bundle_context_from_parts(
         inputs,
         inputs_schema,
         refresh_auth,
+        in_memory_tasks,
     )
     .await?;
 
@@ -111,6 +161,29 @@ pub async fn bundle_cached_inputs(
     inputs_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+    bundle_cached_inputs_with_tasks(
+        state,
+        client,
+        account_id,
+        flow_session_id,
+        inputs,
+        inputs_schema,
+        refresh_auth,
+        None, // No in-memory tasks provided, will fetch from database
+    )
+    .await
+}
+
+pub async fn bundle_cached_inputs_with_tasks(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    account_id: &str,
+    flow_session_id: &str,
+    inputs: Option<&Value>,
+    inputs_schema: Option<&JsonSchema>,
+    refresh_auth: bool,
+    in_memory_tasks: Option<&HashMap<Uuid, Task>>, // Pass in-memory tasks from processor
+) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER] Starting to bundle inputs");
 
     // Pre-allocate with known capacity
@@ -123,8 +196,8 @@ pub async fn bundle_cached_inputs(
     let (secrets_result, accounts_result, tasks_result, files_result) = tokio::join!(
         get_decrypted_secrets(state.clone(), client, account_id), //cached secrets
         fetch_cached_auth_accounts(state.clone(), client, account_id, refresh_auth), //cached accounts
-        fetch_completed_cached_tasks(state.clone(), flow_session_id), //cached task results
-        get_files(state.clone(), client, account_id, required_files)  //cached files
+        fetch_completed_tasks(state.clone(), flow_session_id, in_memory_tasks), //task results from memory or database
+        get_files(state.clone(), client, account_id, required_files)            //cached files
     );
 
     //Process Files
@@ -191,22 +264,50 @@ pub async fn bundle_cached_inputs(
     }
 }
 
-async fn fetch_completed_cached_tasks(
+async fn fetch_completed_tasks(
     state: Arc<AppState>,
     flow_session_id: &str,
+    in_memory_tasks: Option<&HashMap<Uuid, Task>>,
 ) -> Result<Vec<Task>, Box<dyn Error + Send + Sync>> {
-    let cache = state.flow_session_cache.read().await;
-    let session_id = Uuid::parse_str(flow_session_id).unwrap();
-    let tasks = if let Some(session_data) = cache.get(&session_id) {
-        session_data
-            .tasks
+    // If we have in-memory tasks (from processor), use those for better performance
+    if let Some(tasks_map) = in_memory_tasks {
+        println!("[BUNDLER] Using in-memory tasks for bundling context");
+        let completed_tasks: Vec<Task> = tasks_map
             .values()
             .filter(|task| task.task_status == TaskStatus::Completed)
             .cloned()
-            .collect()
-    } else {
-        Vec::new()
-    };
+            .collect();
+        return Ok(completed_tasks);
+    }
+
+    // Fallback to database fetch when no in-memory tasks are available
+    println!("[BUNDLER] Fetching completed tasks from database (fallback)");
+    use dotenv::dotenv;
+    use std::env;
+
+    dotenv().ok();
+    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
+        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+
+    let response = state
+        .anything_client
+        .from("tasks")
+        .auth(supabase_service_role_api_key)
+        .eq("flow_session_id", flow_session_id)
+        .eq("task_status", "Completed")
+        .select("*")
+        .execute()
+        .await
+        .map_err(|e| format!("Failed to fetch completed tasks: {}", e))?;
+
+    let body = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read response body: {}", e))?;
+
+    let tasks: Vec<Task> =
+        serde_json::from_str(&body).map_err(|e| format!("Failed to parse tasks JSON: {}", e))?;
+
     Ok(tasks)
 }
 

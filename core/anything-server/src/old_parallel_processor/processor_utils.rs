@@ -356,7 +356,7 @@ pub async fn process_task(
     // Execute the task
     let started_at_for_error = Utc::now();
     let (task_result, bundled_context, started_at, ended_at) =
-        match execute_task(ctx.state.clone(), &ctx.client, task).await {
+        match execute_task(ctx.state.clone(), &ctx.client, task, None).await {
             Ok(success_value) => success_value,
             Err(error) => {
                 handle_task_error(ctx, task, error.clone(), started_at_for_error, Utc::now()).await;

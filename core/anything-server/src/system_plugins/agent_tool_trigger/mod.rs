@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use dotenv::dotenv;
 use serde_json::{json, Value};
+use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -180,11 +181,16 @@ pub async fn run_workflow_as_tool_call_and_respond(
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
-        workflow_version: workflow_version,
+        workflow_version: workflow_version.clone(),
+        workflow_definition: workflow_version.flow_definition.clone(),
         flow_session_id: task.flow_session_id.clone(),
         trigger_session_id: task.trigger_session_id.clone(),
         trigger_task: Some(task.clone()),
-        task_id: Some(task.task_id), // Include task_id for tracing
+        task_id: Some(task.task_id),    // Include task_id for tracing
+        existing_tasks: HashMap::new(), // No existing tasks for new workflows
+        workflow_graph: crate::processor::utils::create_workflow_graph(
+            &workflow_version.flow_definition,
+        ),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

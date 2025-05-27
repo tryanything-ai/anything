@@ -52,26 +52,16 @@ pub async fn create_task(
         )));
     }
 
-    // Update cache with new task
+    // Update in-memory task tracking
     let cache_start = Instant::now();
     {
-        let mut cache = ctx.state.flow_session_cache.write().await;
-        if let Some(mut session_data) = cache.get(&ctx.flow_session_id) {
-            session_data
-                .tasks
-                .insert(task.task_id.clone(), task.clone());
-            cache.set(&ctx.flow_session_id, session_data);
-            info!(
-                "[PROCESSOR_UTILS] Successfully updated cache with task: {} in {:?}",
-                task.task_id,
-                cache_start.elapsed()
-            );
-        } else {
-            warn!(
-                "[PROCESSOR_UTILS] Could not find session data in cache for flow: {}",
-                ctx.flow_session_id
-            );
-        }
+        let mut processed_tasks = ctx.processed_tasks.lock().await;
+        processed_tasks.insert(task.task_id, task.clone());
+        info!(
+            "[PROCESSOR_UTILS] Successfully updated in-memory task tracking: {} in {:?}",
+            task.task_id,
+            cache_start.elapsed()
+        );
     }
 
     let total_duration = create_start.elapsed();
@@ -167,26 +157,16 @@ pub async fn create_task_for_action(
         message_start.elapsed()
     );
 
-    // Update cache with new task
+    // Update in-memory task tracking
     let cache_start = Instant::now();
     {
-        let mut cache = ctx.state.flow_session_cache.write().await;
-        if let Some(mut session_data) = cache.get(&ctx.flow_session_id) {
-            session_data
-                .tasks
-                .insert(task.task_id.clone(), task.clone());
-            cache.set(&ctx.flow_session_id, session_data);
-            info!(
-                "[PROCESSOR_UTILS] Successfully updated cache with task: {} in {:?}",
-                task.task_id,
-                cache_start.elapsed()
-            );
-        } else {
-            warn!(
-                "[PROCESSOR_UTILS] Could not find session data in cache for flow: {}",
-                ctx.flow_session_id
-            );
-        }
+        let mut processed_tasks = ctx.processed_tasks.lock().await;
+        processed_tasks.insert(task.task_id, task.clone());
+        info!(
+            "[PROCESSOR_UTILS] Successfully updated in-memory task tracking: {} in {:?}",
+            task.task_id,
+            cache_start.elapsed()
+        );
     }
 
     let total_duration = create_start.elapsed();
@@ -199,32 +179,35 @@ pub async fn create_task_for_action(
 }
 
 /// Finds all unprocessed next actions for a task
+#[instrument(skip(ctx, task, graph), fields(
+    task_id = %task.task_id,
+    action_label = %task.action_label,
+    flow_session_id = %ctx.flow_session_id,
+))]
 pub async fn find_next_actions(
     ctx: &ProcessingContext,
     task: &Task,
     graph: &HashMap<String, Vec<String>>,
 ) -> Vec<Action> {
-    println!(
-        "[PROCESSOR] Finding next actions for task: {} (action: {})",
+    info!(
+        "[PROCESSOR_UTILS] Finding next actions for task: {} (action: {})",
         task.task_id, task.action_label
     );
 
     let mut next_actions = Vec::new();
 
     if let Some(neighbors) = graph.get(&task.action_id) {
-        println!(
-            "[PROCESSOR] Found {} potential next actions in graph: {:?}",
+        info!(
+            "[PROCESSOR_UTILS] Found {} potential next actions in graph: {:?}",
             neighbors.len(),
             neighbors
         );
 
         for neighbor_id in neighbors {
-            println!(
-                "[PROCESSOR] Evaluating neighbor with ID: {} for task: {}",
+            info!(
+                "[PROCESSOR_UTILS] Evaluating neighbor with ID: {} for task: {}",
                 neighbor_id, task.task_id
             );
-
-            // println!("[PROCESSOR] Workflow definition: {:?}", ctx.workflow_def);
 
             let neighbor = ctx
                 .workflow_def
@@ -232,70 +215,52 @@ pub async fn find_next_actions(
                 .iter()
                 .find(|action| &action.action_id == neighbor_id);
 
-            println!(
-                "[PROCESSOR] Found neighbor in workflow definition: {} (ID: {})",
-                neighbor.unwrap().label,
-                neighbor_id
-            );
-
             if let Some(action) = neighbor {
-                println!(
-                    "[PROCESSOR] Found action in workflow definition: {} (ID: {})",
+                info!(
+                    "[PROCESSOR_UTILS] Found action in workflow definition: {} (ID: {})",
                     action.label, action.action_id
                 );
 
-                let cache = ctx.state.flow_session_cache.read().await;
-                // Check if this task has already been processed
-                if let Some(session_data) = cache.get(&ctx.flow_session_id) {
-                    println!(
-                        "[PROCESSOR] Retrieved session data for flow session ID: {}",
-                        ctx.flow_session_id
-                    );
+                // Check if this action has already been processed using in-memory tracking
+                let processed_tasks = ctx.processed_tasks.lock().await;
+                let already_processed = processed_tasks
+                    .values()
+                    .any(|t| t.action_id == action.action_id);
 
-                    if !session_data
-                        .tasks
-                        .iter()
-                        .any(|(_, t)| t.action_id == action.action_id)
-                    {
-                        println!(
-                            "[PROCESSOR] Adding unprocessed action to next actions: {}",
-                            action.label
-                        );
-                        next_actions.push(action.clone());
-                    } else {
-                        println!(
-                            "[PROCESSOR] Skipping already processed action: {}",
-                            action.label
-                        );
-                    }
+                if !already_processed {
+                    info!(
+                        "[PROCESSOR_UTILS] Adding unprocessed action to next actions: {}",
+                        action.label
+                    );
+                    next_actions.push(action.clone());
                 } else {
-                    println!(
-                        "[PROCESSOR] Warning: No session data found for flow session ID: {}",
-                        ctx.flow_session_id
+                    info!(
+                        "[PROCESSOR_UTILS] Skipping already processed action: {}",
+                        action.label
                     );
                 }
             } else {
-                println!(
-                    "[PROCESSOR] No action found in workflow definition for neighbor ID: {}",
+                warn!(
+                    "[PROCESSOR_UTILS] No action found in workflow definition for neighbor ID: {}",
                     neighbor_id
                 );
             }
         }
     } else {
-        println!(
-            "[PROCESSOR] No next actions found in graph for task: {}",
+        info!(
+            "[PROCESSOR_UTILS] No next actions found in graph for task: {}",
             task.task_id
         );
     }
 
-    println!(
-        "[PROCESSOR] Found {} unprocessed next actions",
+    info!(
+        "[PROCESSOR_UTILS] Found {} unprocessed next actions",
         next_actions.len()
     );
     next_actions
 }
 
-/// Updates the task status in the database and cache
+/// Updates the task status in the database and in-memory tracking
 pub async fn update_completed_task_with_result(
     ctx: &ProcessingContext,
     task: &Task,
@@ -304,15 +269,15 @@ pub async fn update_completed_task_with_result(
     started_at: DateTime<Utc>,
     ended_at: DateTime<Utc>,
 ) {
-    // Update cache immediately
-    let mut cache = ctx.state.flow_session_cache.write().await;
+    // Update in-memory task tracking immediately
+    let mut processed_tasks = ctx.processed_tasks.lock().await;
     let mut task_copy = task.clone();
     task_copy.result = task_result.clone();
     task_copy.context = Some(bundled_context.clone());
     task_copy.task_status = TaskStatus::Completed;
     task_copy.ended_at = Some(Utc::now());
-    let _ = cache.update_task(&ctx.flow_session_id, task_copy);
-    drop(cache);
+    processed_tasks.insert(task.task_id, task_copy);
+    drop(processed_tasks);
 
     let task_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
@@ -339,15 +304,15 @@ pub async fn handle_task_error(
     started_at: DateTime<Utc>,
     ended_at: DateTime<Utc>,
 ) {
-    // Update cache immediately
-    let mut cache = ctx.state.flow_session_cache.write().await;
+    // Update in-memory task tracking immediately
+    let mut processed_tasks = ctx.processed_tasks.lock().await;
     let mut task_copy = task.clone();
     task_copy.result = Some(error.error.clone());
     task_copy.context = Some(error.context.clone());
     task_copy.task_status = TaskStatus::Failed;
     task_copy.ended_at = Some(Utc::now());
-    let _ = cache.update_task(&ctx.flow_session_id, task_copy);
-    drop(cache);
+    processed_tasks.insert(task.task_id, task_copy);
+    drop(processed_tasks);
 
     let error_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
@@ -385,8 +350,15 @@ pub async fn process_task(
 
     let started_at = Utc::now();
     let execution_start = Instant::now();
+
+    // Get a clone of in-memory tasks for bundling context
+    let in_memory_tasks = {
+        let processed_tasks = ctx.processed_tasks.lock().await;
+        processed_tasks.clone()
+    };
+
     let (task_result, bundled_context, _, ended_at) =
-        match execute_task(ctx.state.clone(), &ctx.client, task).await {
+        match execute_task(ctx.state.clone(), &ctx.client, task, Some(&in_memory_tasks)).await {
             Ok(success_value) => {
                 let execution_duration = execution_start.elapsed();
                 info!(

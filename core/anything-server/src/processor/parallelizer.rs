@@ -34,6 +34,8 @@ pub struct ProcessingContext {
     pub trigger_session_id: Uuid,
     pub workflow: Arc<DatabaseFlowVersion>,
     pub workflow_def: Arc<WorkflowVersionDefinition>,
+    pub workflow_graph: HashMap<String, Vec<String>>, // Pre-computed graph
+    pub processed_tasks: Arc<Mutex<HashMap<Uuid, Task>>>, // Track processed tasks in memory
     // Enhanced parallel processing fields
     pub branch_semaphore: Arc<Semaphore>,
     pub active_branches: Arc<Mutex<usize>>,
@@ -63,18 +65,23 @@ impl ProcessingContext {
             trigger_task_id: processor_message
                 .trigger_task
                 .as_ref()
-                .unwrap()
-                .trigger_id
-                .clone(),
+                .map(|t| t.task_id.to_string())
+                .unwrap_or_default(),
             trigger_session_id: processor_message.trigger_session_id,
             workflow: Arc::new(processor_message.workflow_version.clone()),
-            workflow_def: Arc::new(processor_message.workflow_version.flow_definition.clone()),
+            workflow_def: Arc::new(processor_message.workflow_definition.clone()),
+            workflow_graph: processor_message.workflow_graph.clone(),
+            processed_tasks: Arc::new(Mutex::new(processor_message.existing_tasks.clone())),
             branch_semaphore: Arc::new(Semaphore::new(MAX_CONCURRENT_BRANCHES)),
             active_branches: Arc::new(Mutex::new(0)),
             metrics_recorder: EnhancedMetricsRecorder::with_labels(vec![
                 ("service", service_name.clone()),
                 ("environment", environment.to_string()),
                 ("workflow_id", processor_message.workflow_id.to_string()),
+                (
+                    "flow_session_id",
+                    processor_message.flow_session_id.to_string(),
+                ),
             ]),
             span_factory: EnhancedSpanFactory::new(service_name, environment.to_string()),
         }
@@ -131,16 +138,6 @@ impl EnhancedParallelProcessor {
         self.context.metrics_recorder.record_workflow_started();
         let workflow_start = Instant::now();
 
-        // Initialize flow session cache
-        let cache_result = self.initialize_flow_session_cache().await;
-        if let Err(e) = cache_result {
-            error!(
-                "[PARALLELIZER] Failed to initialize flow session cache: {}",
-                e
-            );
-            return Err(ProcessorError::WorkflowExecutionError(e.to_string()));
-        }
-
         // Create the initial task in the database
         if let Err(e) = create_task(&self.context, &initial_task).await {
             error!("[PARALLELIZER] Failed to create initial task: {}", e);
@@ -166,31 +163,6 @@ impl EnhancedParallelProcessor {
 
         // Return the first error if any occurred
         processing_result.and(completion_result)
-    }
-
-    async fn initialize_flow_session_cache(
-        &self,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let cache_span = tracing::info_span!("init_flow_session_cache");
-        let _cache_guard = cache_span.enter();
-        let cache_start = Instant::now();
-
-        let flow_session_data = FlowSessionData {
-            tasks: HashMap::new(),
-        };
-
-        {
-            let mut cache = self.context.state.flow_session_cache.write().await;
-            cache.set(&self.context.flow_session_id, flow_session_data);
-        }
-
-        let cache_duration = cache_start.elapsed();
-        info!(
-            "[PARALLELIZER] Flow session cache initialized in {:?}",
-            cache_duration
-        );
-
-        Ok(())
     }
 
     #[instrument(skip(self, initial_task), fields(

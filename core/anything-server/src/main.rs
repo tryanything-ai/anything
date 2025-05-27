@@ -99,7 +99,6 @@ pub struct AppState {
     account_access_cache: Arc<RwLock<account_auth_middleware::AccountAccessCache>>,
     bundler_secrets_cache: RwLock<SecretsCache>,
     bundler_accounts_cache: RwLock<AccountsCache>,
-    flow_session_cache: Arc<RwLock<processor::flow_session_cache::FlowSessionCache>>,
     shutdown_signal: Arc<AtomicBool>,
     // WebSocket infrastructure
     websocket_connections: websocket::WebSocketConnections,
@@ -248,7 +247,6 @@ async fn main() {
         )),
         bundler_secrets_cache: RwLock::new(SecretsCache::new(Duration::from_secs(86400))), // 1 day TTL
         bundler_accounts_cache: RwLock::new(AccountsCache::new(Duration::from_secs(86400))), // 1 day TTL
-        flow_session_cache: Arc::new(RwLock::new(processor::flow_session_cache::FlowSessionCache::new(Duration::from_secs(3600)))),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
         task_updater_sender: task_updater_tx.clone(), // Store the sender in AppState
         // WebSocket infrastructure
@@ -490,34 +488,7 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
     
-    // Add flow session cache cleanup
-    tokio::spawn({
-        let state = state.clone();
-        async move {
-            loop {
-                // Run cleanup every 5 minutes
-                tokio::time::sleep(Duration::from_secs(300)).await;
-                
-                let mut cache = state.flow_session_cache.write().await;
-                let removed = cache.cleanup_expired();
-                let current_size = cache.size();
-                drop(cache);
-                
-                if removed > 0 || current_size > 100 {
-                    info!(
-                        "[CACHE CLEANUP] Flow session cache: removed {} expired entries, {} total entries",
-                        removed, current_size
-                    );
-                }
-                
-                // Check if we're shutting down
-                if state.shutdown_signal.load(std::sync::atomic::Ordering::SeqCst) {
-                    info!("[CACHE CLEANUP] Shutdown signal detected, stopping flow session cache cleanup");
-                    break;
-                }
-            }
-        }
-    });
+
 
     let state_clone = state.clone();
     tokio::spawn(async move {

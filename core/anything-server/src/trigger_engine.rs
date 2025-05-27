@@ -479,11 +479,16 @@ async fn create_trigger_task(
     // Send message to processor
     let processor_message = ProcessorMessage {
         workflow_id: Uuid::parse_str(&trigger.flow_id).unwrap(),
-        workflow_version: workflow_version,
+        workflow_version: workflow_version.clone(),
+        workflow_definition: workflow_version.flow_definition.clone(),
         flow_session_id: task.flow_session_id.clone(),
         trigger_session_id: task.trigger_session_id.clone(),
         trigger_task: Some(task.clone()),
-        task_id: Some(task.task_id), // Include task_id for tracing
+        task_id: Some(task.task_id),    // Include task_id for tracing
+        existing_tasks: HashMap::new(), // No existing tasks for new workflows
+        workflow_graph: crate::processor::utils::create_workflow_graph(
+            &workflow_version.flow_definition,
+        ),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

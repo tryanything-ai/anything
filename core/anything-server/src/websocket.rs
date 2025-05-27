@@ -165,22 +165,17 @@ async fn handle_websocket_connection(
     }
 
     // Send current session state if available
-    if let Ok(flow_session_uuid) = flow_session_id.parse::<Uuid>() {
-        if let Some(session_data) = state
-            .flow_session_cache
-            .read()
-            .await
-            .get(&flow_session_uuid)
-        {
-            let current_state = serde_json::json!({
-                "type": "session_state",
-                "flow_session_id": flow_session_id,
-                "tasks": session_data.tasks.values().collect::<Vec<_>>()
-            });
+    if let Ok(_flow_session_uuid) = flow_session_id.parse::<Uuid>() {
+        // Since we've removed the cache, we could fetch current tasks from database here if needed
+        // For now, we'll let the frontend handle the initial state fetch
+        let current_state = serde_json::json!({
+            "type": "session_state",
+            "flow_session_id": flow_session_id,
+            "tasks": []
+        });
 
-            if let Err(e) = sender.send(Message::Text(current_state.to_string())).await {
-                error!("[WEBSOCKET] Failed to send current state: {}", e);
-            }
+        if let Err(e) = sender.send(Message::Text(current_state.to_string())).await {
+            error!("[WEBSOCKET] Failed to send current state: {}", e);
         }
     }
 

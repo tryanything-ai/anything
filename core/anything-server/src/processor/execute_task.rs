@@ -1,9 +1,11 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
 use postgrest::Postgrest;
+use uuid::Uuid;
 
-use crate::bundler::bundle_tasks_cached_context;
+use crate::bundler::bundle_tasks_cached_context_with_tasks;
 use crate::processor::process_trigger_utils::process_trigger_task;
 use crate::system_plugins::formatter_actions::{
     date_formatter::process_date_task, text_formatter::process_text_task,
@@ -30,7 +32,12 @@ pub struct TaskError {
 pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
 // #[instrument(skip(state, client, task))]
-pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task) -> TaskResult {
+pub async fn execute_task(
+    state: Arc<AppState>,
+    client: &Postgrest,
+    task: &Task,
+    in_memory_tasks: Option<&HashMap<Uuid, Task>>, // Pass in-memory tasks from processor
+) -> TaskResult {
     let task_id = task.task_id;
     let flow_session_id = task.flow_session_id;
     let plugin_name = task.plugin_name.clone();
@@ -53,7 +60,7 @@ pub async fn execute_task(state: Arc<AppState>, client: &Postgrest, task: &Task)
 
     // Bundle context with results from cache
     let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
-        bundle_tasks_cached_context(state, client, task, true).await;
+        bundle_tasks_cached_context_with_tasks(state, client, task, true, in_memory_tasks).await;
 
     let http_client = state_clone.http_client.clone();
 
