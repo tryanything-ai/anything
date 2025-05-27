@@ -236,7 +236,7 @@ async fn main() {
         r2_client: r2_client.clone(),
         http_client: Arc::new(http_client),
         auth_states: DashMap::new(),
-        workflow_processor_semaphore: Arc::new(Semaphore::new(10)), //How many workflows we can run at once
+        workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
         trigger_engine_signal,
         processor_sender: processor_tx,
         flow_completions: DashMap::new(),
