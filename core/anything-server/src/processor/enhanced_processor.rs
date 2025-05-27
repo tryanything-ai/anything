@@ -128,12 +128,27 @@ impl EnhancedWorkflowProcessor {
     async fn acquire_workflow_permit(
         &self,
     ) -> Result<OwnedSemaphorePermit, Box<dyn std::error::Error + Send + Sync>> {
-        self.state
+        let available_permits = self.state.workflow_processor_semaphore.available_permits();
+        info!(
+            "[ENHANCED_PROCESSOR] 🔒 Acquiring permit - {} permits available",
+            available_permits
+        );
+
+        let permit = self
+            .state
             .workflow_processor_semaphore
             .clone()
             .acquire_owned()
             .await
-            .map_err(|e| format!("Failed to acquire semaphore: {}", e).into())
+            .map_err(|e| format!("Failed to acquire semaphore: {}", e))?;
+
+        let remaining_permits = self.state.workflow_processor_semaphore.available_permits();
+        info!(
+            "[ENHANCED_PROCESSOR] ✅ Permit acquired - {} permits remaining",
+            remaining_permits
+        );
+
+        Ok(permit)
     }
 
     async fn execute_workflow(

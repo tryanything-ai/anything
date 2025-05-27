@@ -357,6 +357,10 @@ pub async fn process_task(
         processed_tasks.clone()
     };
 
+    info!(
+        "[PROCESSOR_UTILS] About to call execute_task for {}",
+        task.task_id
+    );
     let (task_result, bundled_context, _, ended_at) =
         match execute_task(ctx.state.clone(), &ctx.client, task, Some(&in_memory_tasks)).await {
             Ok(success_value) => {
@@ -377,6 +381,10 @@ pub async fn process_task(
                 return Ok(Vec::new());
             }
         };
+    info!(
+        "[PROCESSOR_UTILS] execute_task completed for {}",
+        task.task_id
+    );
 
     let update_start = Instant::now();
     update_completed_task_with_result(
