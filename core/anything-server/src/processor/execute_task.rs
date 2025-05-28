@@ -21,7 +21,7 @@ use crate::types::task_types::Task;
 use crate::AppState;
 use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
-use tracing::{error, info, instrument, Span};
+use tracing::error;
 
 #[derive(Debug, Clone)]
 pub struct TaskError {
@@ -31,7 +31,6 @@ pub struct TaskError {
 
 pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
-// #[instrument(skip(state, client, task))]
 pub async fn execute_task(
     state: Arc<AppState>,
     client: &Postgrest,

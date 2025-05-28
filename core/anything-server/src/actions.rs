@@ -120,7 +120,7 @@ pub async fn get_actions(
 
     let marketplace_items: Value = match serde_json::from_str(&marketplace_body) {
         Ok(items) => {
-            println!("Successfully parsed marketplace JSON: {:?}", items);
+            // println!("Successfully parsed marketplace JSON: {:?}", items);
             items
         }
         Err(err) => {

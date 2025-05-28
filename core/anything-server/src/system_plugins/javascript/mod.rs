@@ -3,7 +3,7 @@ use serde_json::Value;
 use std::time::Duration;
 use tokio::task;
 use tokio::time::Instant;
-use tracing::{error, info, instrument, Span};
+use tracing::{error, info, instrument};
 use uuid::Uuid;
 
 #[instrument(skip(bundled_inputs, bundled_plugin_config))]
