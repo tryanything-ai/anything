@@ -21,7 +21,7 @@ use crate::types::task_types::Task;
 use crate::AppState;
 use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
-use tracing::error;
+use tracing::{error, info}  ;
 
 #[derive(Debug, Clone)]
 pub struct TaskError {

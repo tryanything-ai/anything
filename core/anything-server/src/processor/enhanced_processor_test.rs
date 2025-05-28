@@ -2,10 +2,8 @@
 mod enhanced_processor_tests {
     use crate::processor::enhanced_processor::*;
     use crate::processor::processor::ProcessorMessage;
-    use crate::types::action_types::ActionType;
     use crate::types::workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition};
     use dashmap::DashMap;
-    use serde_json::Value;
     use std::collections::HashMap;
     use tokio::sync::mpsc;
     use uuid::Uuid;
@@ -64,7 +62,7 @@ mod enhanced_processor_tests {
                 edges: vec![],
             },
             existing_tasks: HashMap::new(),
-            workflow_graph: None,
+            workflow_graph: HashMap::new(),
             flow_session_id: Uuid::new_v4(),
             trigger_session_id: Uuid::new_v4(),
             trigger_task: None,
@@ -114,11 +112,9 @@ mod enhanced_processor_tests {
             trigger_engine_signal: watch::channel("".to_string()).0,
             processor_sender: mpsc::channel::<ProcessorMessage>(100).0,
             task_updater_sender: mpsc::channel::<crate::status_updater::StatusUpdateMessage>(100).0,
-            account_access_cache: Arc::new(RwLock::new(
-                crate::account_auth_middleware::AccountAccessCache::new(
-                    std::time::Duration::from_secs(60),
-                ),
-            )),
+            account_access_cache: crate::account_auth_middleware::AccountAccessCache::new(
+                std::time::Duration::from_secs(60),
+            ),
             bundler_secrets_cache: DashMap::new(),
             bundler_accounts_cache: DashMap::new(),
             shutdown_signal: Arc::new(std::sync::atomic::AtomicBool::new(false)),
