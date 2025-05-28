@@ -15,6 +15,7 @@ pub struct MetricsRegistry {
     pub processor_messages_received: Counter<u64>,
     pub processor_active_workflows: UpDownCounter<i64>,
     pub processor_workflow_duration: Histogram<f64>,
+    pub processor_task_execution_duration: Histogram<f64>,
     pub processor_semaphore_wait_time: Histogram<f64>,
     pub processor_workflow_errors: Counter<u64>,
     pub processor_keepalive_heartbeats: Counter<u64>,
@@ -73,6 +74,11 @@ impl MetricsRegistry {
             processor_workflow_duration: meter
                 .f64_histogram("anything_workflow_processing_duration_seconds")
                 .with_description("Duration of workflow processing in seconds.")
+                .init(),
+
+            processor_task_execution_duration: meter
+                .f64_histogram("anything_task_execution_duration_seconds")
+                .with_description("Duration of individual task execution in seconds.")
                 .init(),
 
             processor_semaphore_wait_time: meter
@@ -245,6 +251,11 @@ impl MetricsRegistry {
         self.processor_workflow_duration
             .record(duration.as_secs_f64(), labels);
         self.processor_active_workflows.add(-1, labels);
+    }
+
+    pub fn record_task_execution_time(&self, duration: Duration, labels: &[KeyValue]) {
+        self.processor_task_execution_duration
+            .record(duration.as_secs_f64(), labels);
     }
 
     pub fn record_workflow_error(&self, error_type: &str) {

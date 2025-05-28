@@ -34,6 +34,7 @@ use auth::init::AuthState;
 mod system_plugins; 
 mod system_workflows;
 mod processor;
+mod actor_processor;
 mod system_variables;
 mod workflows; 
 mod actions; 
@@ -461,15 +462,15 @@ pub async fn root() -> impl IntoResponse {
    tokio::spawn(status_updater::task_database_status_processor(state.clone(), task_updater_rx));
 
 
-    // Spawn enhanced processor with better observability
-    // The keepalive system should prevent it from ever exiting, but if it does, log it
+    // Spawn actor-based processor with high parallelism and fault isolation
+    // The actor system provides better scalability and error handling
     let processor_state = state.clone();
     tokio::spawn(async move {
-        if let Err(e) = processor::enhanced_processor::enhanced_processor(processor_state, processor_rx).await {
-            error!("[MAIN] Enhanced processor failed: {}", e);
-            error!("[MAIN] This should not happen with the keepalive system - investigate!");
+        if let Err(e) = actor_processor::actor_processor(processor_state, processor_rx).await {
+            error!("[MAIN] Actor processor failed: {}", e);
+            error!("[MAIN] This indicates a critical system failure - investigate!");
         } else {
-            error!("[MAIN] Enhanced processor exited normally - this should not happen with keepalive!");
+            info!("[MAIN] Actor processor exited gracefully");
         }
     });
 
