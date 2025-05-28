@@ -105,7 +105,8 @@ pub struct AppState {
     workflow_broadcaster: websocket::WorkflowBroadcaster,
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 1)]
+// #[tokio::main(flavor = "multi_thread", worker_threads = 1)]
+#[tokio::main]
 async fn main() {
     // Initialize tracing with OpenTelemetry
     if let Err(e) = init_otel_grpc() {
