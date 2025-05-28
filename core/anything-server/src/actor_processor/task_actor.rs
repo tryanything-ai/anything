@@ -50,7 +50,18 @@ impl TaskActor {
                     respond_to,
                     context,
                 } => {
-                    let result = self.handle_execute_task(task, context).await;
+                    let result = self.handle_execute_task(task, context, None).await;
+                    let _ = respond_to.send(result);
+                }
+                ActorMessage::ExecuteTaskWithContext {
+                    task,
+                    respond_to,
+                    context,
+                    in_memory_tasks,
+                } => {
+                    let result = self
+                        .handle_execute_task(task, context, in_memory_tasks.as_ref())
+                        .await;
                     let _ = respond_to.send(result);
                 }
                 ActorMessage::Shutdown => {
@@ -75,6 +86,7 @@ impl TaskActor {
         &self,
         task: Task,
         context: WorkflowExecutionContext,
+        in_memory_tasks: Option<&std::collections::HashMap<uuid::Uuid, Task>>,
     ) -> TaskResult {
         let task_span = self.create_task_execution_span(
             task.task_id,
@@ -117,7 +129,7 @@ impl TaskActor {
         let task_timeout = Duration::from_secs(300); // 5 minutes timeout
         let result = timeout(
             task_timeout,
-            execute_task(self.state.clone(), &self.client, &task, None),
+            execute_task(self.state.clone(), &self.client, &task, in_memory_tasks),
         )
         .await;
 

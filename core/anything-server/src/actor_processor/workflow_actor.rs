@@ -1,4 +1,5 @@
 use crate::actor_processor::actor_pool::TaskActorPool;
+use crate::actor_processor::dependency_resolver::DependencyGraph;
 use crate::actor_processor::messages::ActorMessage;
 use crate::metrics::METRICS;
 use crate::processor::components::{EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext};
@@ -9,7 +10,7 @@ use crate::AppState;
 
 use opentelemetry::KeyValue;
 use postgrest::Postgrest;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::{mpsc, RwLock};
@@ -145,7 +146,7 @@ impl WorkflowActor {
         message: ProcessorMessage,
         context: &WorkflowExecutionContext,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // Extract actions from the workflow definition and convert them to tasks
+        // Extract actions from the workflow definition
         let actions = &message.workflow_definition.actions;
 
         if actions.is_empty() {
@@ -153,118 +154,259 @@ impl WorkflowActor {
             return Ok(());
         }
 
-        // Convert actions to tasks and create them in the database
-        let mut tasks = Vec::new();
-        for (index, action) in actions.iter().enumerate() {
-            let task = self
-                .convert_action_to_task(action, &message, index as i32)
-                .await?;
+        // Build dependency graph
+        let dependency_graph = DependencyGraph::new(&message.workflow_definition);
+        info!(
+            "[WORKFLOW_ACTOR_{}] Built dependency graph with execution order: {:?}",
+            self.id, dependency_graph.execution_order
+        );
 
-            // Create task in database via status updater
-            let create_task_message = crate::status_updater::StatusUpdateMessage {
-                operation: crate::status_updater::Operation::CreateTask {
-                    task_id: task.task_id,
-                    input: task.clone(),
-                },
+        // Track completed tasks (with their results for bundling)
+        let completed_tasks = Arc::new(RwLock::new(HashMap::<Uuid, Task>::new()));
+
+        // Track currently running tasks
+        let running_tasks = Arc::new(RwLock::new(HashSet::<String>::new()));
+
+        // Process tasks in dependency order
+        loop {
+            // Get ready actions that can be executed now
+            let ready_actions = {
+                let completed = completed_tasks.read().await;
+                let running = running_tasks.read().await;
+                dependency_graph.get_ready_actions(actions, &completed, &running)
             };
 
-            if let Err(e) = self
-                .state
-                .task_updater_sender
-                .send(create_task_message)
-                .await
-            {
-                error!(
-                    "[WORKFLOW_ACTOR_{}] Failed to send create task message for {}: {}",
-                    self.id, task.task_id, e
-                );
-                return Err(format!("Failed to create task in database: {}", e).into());
-            }
+            if ready_actions.is_empty() {
+                // Check if all tasks are completed
+                let completed = completed_tasks.read().await;
+                let total_completed = completed.len();
 
-            info!(
-                "[WORKFLOW_ACTOR_{}] Created task {} in database",
-                self.id, task.task_id
-            );
-
-            tasks.push(task);
-        }
-
-        // Track completed tasks and their results
-        let completed_tasks = Arc::new(RwLock::new(HashMap::<Uuid, TaskResult>::new()));
-
-        // For now, execute all tasks in parallel (simplified approach)
-        // In a more sophisticated implementation, you would implement proper dependency resolution
-        let mut pending_tasks = Vec::new();
-
-        for task in &tasks {
-            let task_context = WorkflowExecutionContext::new(
-                context.flow_session_id,
-                context.workflow_id,
-                Some(task.task_id),
-                context.span.clone(),
-            );
-
-            // Execute task using actor pool
-            let task_future = self
-                .task_actor_pool
-                .execute_task(task.clone(), task_context);
-            pending_tasks.push((task.task_id, task_future));
-        }
-
-        // Wait for all tasks to complete
-        let mut results = Vec::new();
-        for (task_id, task_future) in pending_tasks {
-            match task_future.await {
-                Ok(result) => {
-                    info!("[WORKFLOW_ACTOR_{}] Task {} completed", self.id, task_id);
-                    completed_tasks
-                        .write()
-                        .await
-                        .insert(task_id, result.clone());
-                    results.push(result);
-                }
-                Err(e) => {
-                    error!(
-                        "[WORKFLOW_ACTOR_{}] Task {} failed: {:?}",
-                        self.id, task_id, e
+                if total_completed == actions.len() {
+                    info!(
+                        "[WORKFLOW_ACTOR_{}] All {} tasks completed successfully",
+                        self.id, total_completed
                     );
+                    break;
+                } else {
+                    // Check if we have any running tasks
+                    let running = running_tasks.read().await;
+                    if running.is_empty() {
+                        // No ready actions and no running tasks - this indicates a problem
+                        let remaining_actions: Vec<String> = actions
+                            .iter()
+                            .filter(|action| {
+                                !completed
+                                    .values()
+                                    .any(|task| task.action_id == action.action_id)
+                            })
+                            .map(|action| action.action_id.clone())
+                            .collect();
 
-                    // Send workflow failure status
-                    let fail_workflow_message = crate::status_updater::StatusUpdateMessage {
-                        operation: crate::status_updater::Operation::CompleteWorkflow {
-                            flow_session_id: context.flow_session_id,
-                            status: crate::types::task_types::FlowSessionStatus::Failed,
-                            trigger_status: crate::types::task_types::TriggerSessionStatus::Failed,
-                        },
-                    };
-
-                    if let Err(send_err) = self
-                        .state
-                        .task_updater_sender
-                        .send(fail_workflow_message)
-                        .await
-                    {
-                        warn!(
-                            "[WORKFLOW_ACTOR_{}] Failed to send workflow failure status for {}: {}",
-                            self.id, context.flow_session_id, send_err
+                        error!(
+                            "[WORKFLOW_ACTOR_{}] Workflow stuck! No ready actions and no running tasks. Remaining: {:?}",
+                            self.id, remaining_actions
+                        );
+                        return Err(
+                            "Workflow execution stuck - possible circular dependency".into()
                         );
                     } else {
+                        // We have running tasks, wait a bit and check again
                         info!(
-                            "[WORKFLOW_ACTOR_{}] Workflow {} marked as failed due to task failure",
-                            self.id, context.flow_session_id
+                            "[WORKFLOW_ACTOR_{}] No ready actions, but {} tasks still running. Waiting...",
+                            self.id, running.len()
                         );
+                        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                        continue;
+                    }
+                }
+            }
+
+            // Execute ready actions in parallel
+            let mut task_futures = Vec::new();
+
+            for action in ready_actions {
+                // Mark as running
+                {
+                    let mut running = running_tasks.write().await;
+                    running.insert(action.action_id.clone());
+                }
+
+                // Convert action to task
+                let task = self
+                    .convert_action_to_task(&action, &message, 0) // processing_order not used in dependency-based execution
+                    .await?;
+
+                // Create task in database
+                let create_task_message = crate::status_updater::StatusUpdateMessage {
+                    operation: crate::status_updater::Operation::CreateTask {
+                        task_id: task.task_id,
+                        input: task.clone(),
+                    },
+                };
+
+                if let Err(e) = self
+                    .state
+                    .task_updater_sender
+                    .send(create_task_message)
+                    .await
+                {
+                    error!(
+                        "[WORKFLOW_ACTOR_{}] Failed to send create task message for {}: {}",
+                        self.id, task.task_id, e
+                    );
+                    return Err(format!("Failed to create task in database: {}", e).into());
+                }
+
+                info!(
+                    "[WORKFLOW_ACTOR_{}] Created and executing task {} for action {}",
+                    self.id, task.task_id, action.action_id
+                );
+
+                // Create task context
+                let task_context = WorkflowExecutionContext::new(
+                    context.flow_session_id,
+                    context.workflow_id,
+                    Some(task.task_id),
+                    context.span.clone(),
+                );
+
+                // Execute task using actor pool with in-memory tasks for bundling
+                let completed_tasks_clone = Arc::clone(&completed_tasks);
+                let running_tasks_clone = Arc::clone(&running_tasks);
+                let action_id = action.action_id.clone();
+                let task_id = task.task_id;
+                let task_actor_pool = self.task_actor_pool.clone();
+
+                let task_future = tokio::spawn(async move {
+                    // Get in-memory tasks for bundling
+                    let in_memory_tasks = {
+                        let completed = completed_tasks_clone.read().await;
+                        completed.clone()
+                    };
+
+                    // Execute task with bundled context from previous tasks
+                    let result = task_actor_pool
+                        .execute_task_with_context(task, task_context, Some(&in_memory_tasks))
+                        .await;
+
+                    // Remove from running tasks
+                    {
+                        let mut running = running_tasks_clone.write().await;
+                        running.remove(&action_id);
                     }
 
-                    return Err(format!("Task {} failed: {:?}", task_id, e).into());
+                    (task_id, action_id, result)
+                });
+
+                task_futures.push(task_future);
+            }
+
+            // Wait for this batch of tasks to complete
+            for task_future in task_futures {
+                match task_future.await {
+                    Ok((task_id, action_id, result)) => {
+                        match result {
+                            Ok(task_result) => {
+                                info!(
+                                    "[WORKFLOW_ACTOR_{}] Task {} (action {}) completed successfully",
+                                    self.id, task_id, action_id
+                                );
+
+                                // Store completed task with its result for future bundling
+                                // Create a minimal task for in-memory storage
+                                //TODO: this seems kinda dangerous since some of this data is false!
+                                let mut completed_task = Task {
+                                    task_id,
+                                    account_id: Uuid::new_v4(), // Placeholder
+                                    task_status: crate::types::task_types::TaskStatus::Completed,
+                                    flow_id: context.workflow_id,
+                                    flow_version_id: Uuid::new_v4(), // Placeholder
+                                    action_label: "".to_string(),    // Placeholder
+                                    trigger_id: "".to_string(),      // Placeholder
+                                    trigger_session_id: Uuid::new_v4(), // Placeholder
+                                    trigger_session_status:
+                                        crate::types::task_types::TriggerSessionStatus::Completed,
+                                    flow_session_id: context.flow_session_id,
+                                    flow_session_status:
+                                        crate::types::task_types::FlowSessionStatus::Running,
+                                    action_id: action_id.clone(),
+                                    r#type: crate::types::action_types::ActionType::Action,
+                                    plugin_name: None,
+                                    plugin_version: None,
+                                    stage: crate::types::task_types::Stage::Production,
+                                    test_config: None,
+                                    config: crate::types::task_types::TaskConfig {
+                                        inputs: None,
+                                        inputs_schema: None,
+                                        plugin_config: None,
+                                        plugin_config_schema: None,
+                                    },
+                                    context: None,
+                                    started_at: None,
+                                    ended_at: None,
+                                    debug_result: None,
+                                    result: None,
+                                    error: None,
+                                    archived: false,
+                                    updated_at: None,
+                                    created_at: None,
+                                    updated_by: None,
+                                    created_by: None,
+                                    processing_order: 0,
+                                };
+
+                                // Extract result from TaskResult tuple
+                                if let Ok((result_value, context_value, _, _)) = &task_result {
+                                    completed_task.result = result_value.clone();
+                                    completed_task.context = Some(context_value.clone());
+                                }
+
+                                {
+                                    let mut completed = completed_tasks.write().await;
+                                    completed.insert(task_id, completed_task);
+                                }
+                            }
+                            Err(e) => {
+                                error!(
+                                    "[WORKFLOW_ACTOR_{}] Task {} (action {}) failed: {:?}",
+                                    self.id, task_id, action_id, e
+                                );
+
+                                // Send workflow failure status
+                                let fail_workflow_message = crate::status_updater::StatusUpdateMessage {
+                                    operation: crate::status_updater::Operation::CompleteWorkflow {
+                                        flow_session_id: context.flow_session_id,
+                                        status: crate::types::task_types::FlowSessionStatus::Failed,
+                                        trigger_status: crate::types::task_types::TriggerSessionStatus::Failed,
+                                    },
+                                };
+
+                                if let Err(send_err) = self
+                                    .state
+                                    .task_updater_sender
+                                    .send(fail_workflow_message)
+                                    .await
+                                {
+                                    warn!(
+                                        "[WORKFLOW_ACTOR_{}] Failed to send workflow failure status for {}: {}",
+                                        self.id, context.flow_session_id, send_err
+                                    );
+                                }
+
+                                return Err(format!("Task {} failed: {:?}", task_id, e).into());
+                            }
+                        }
+                    }
+                    Err(join_error) => {
+                        error!(
+                            "[WORKFLOW_ACTOR_{}] Task future panicked: {}",
+                            self.id, join_error
+                        );
+                        return Err(format!("Task execution panicked: {}", join_error).into());
+                    }
                 }
             }
         }
-
-        info!(
-            "[WORKFLOW_ACTOR_{}] All {} tasks completed successfully",
-            self.id,
-            tasks.len()
-        );
 
         // Send workflow completion status
         let complete_workflow_message = crate::status_updater::StatusUpdateMessage {
