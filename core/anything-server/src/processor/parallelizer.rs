@@ -1,22 +1,22 @@
 use crate::AppState;
+use dashmap::DashMap;
 use opentelemetry::KeyValue;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
+use tokio::sync::{Mutex, Semaphore};
 use tokio::task::JoinSet;
-use tracing::{error, info, instrument, warn, Span};
+use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
 use crate::metrics::METRICS;
-use crate::processor::components::{EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext};
-use crate::processor::flow_session_cache::FlowSessionData;
+use crate::processor::components::{EnhancedSpanFactory, ProcessorError};
 use crate::processor::processor::ProcessorMessage;
 use crate::processor::processor_utils::create_task;
 
 use crate::processor::path_processor::process_task_and_branches;
 use crate::status_updater::{Operation, StatusUpdateMessage};
-use crate::types::action_types::Action;
 use crate::types::task_types::{FlowSessionStatus, Task, TriggerSessionStatus};
 use crate::types::workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition};
 
@@ -34,11 +34,11 @@ pub struct ProcessingContext {
     pub trigger_session_id: Uuid,
     pub workflow: Arc<DatabaseFlowVersion>,
     pub workflow_def: Arc<WorkflowVersionDefinition>,
-    pub workflow_graph: HashMap<String, Vec<String>>, // Pre-computed graph
-    pub processed_tasks: Arc<Mutex<HashMap<Uuid, Task>>>, // Track processed tasks in memory
+    // pub workflow_graph: HashMap<String, Vec<String>>, // Pre-computed graph
+    pub processed_tasks: Arc<DashMap<Uuid, Task>>, // Lock-free concurrent HashMap
     // Enhanced parallel processing fields
     pub branch_semaphore: Arc<Semaphore>,
-    pub active_branches: Arc<Mutex<usize>>,
+    pub active_branches: Arc<AtomicUsize>, // Lock-free atomic counter
     pub metrics_labels: Vec<KeyValue>,
     pub span_factory: EnhancedSpanFactory,
 }
@@ -67,6 +67,12 @@ impl ProcessingContext {
             ),
         ];
 
+        let processed_tasks = Arc::new(DashMap::new());
+        // Initialize with existing tasks
+        for (task_id, task) in processor_message.existing_tasks.iter() {
+            processed_tasks.insert(*task_id, task.clone());
+        }
+
         Self {
             state,
             client,
@@ -80,29 +86,23 @@ impl ProcessingContext {
             trigger_session_id: processor_message.trigger_session_id,
             workflow: Arc::new(processor_message.workflow_version.clone()),
             workflow_def: Arc::new(processor_message.workflow_definition.clone()),
-            workflow_graph: processor_message.workflow_graph.clone(),
-            processed_tasks: Arc::new(Mutex::new(processor_message.existing_tasks.clone())),
+            // workflow_graph: processor_message.workflow_graph.clone(),
+            processed_tasks,
             branch_semaphore: Arc::new(Semaphore::new(MAX_CONCURRENT_BRANCHES)),
-            active_branches: Arc::new(Mutex::new(0)),
+            active_branches: Arc::new(AtomicUsize::new(0)),
             metrics_labels,
             span_factory: EnhancedSpanFactory::new(service_name, environment.to_string()),
         }
     }
 
-    pub async fn increment_active_branches(&self) {
-        let mut count = self.active_branches.lock().await;
-        *count += 1;
-        info!("[PARALLELIZER] Active branches: {}", *count);
+    pub fn increment_active_branches(&self) {
+        let count = self.active_branches.fetch_add(1, Ordering::Relaxed) + 1;
+        info!("[PARALLELIZER] Active branches: {}", count);
     }
 
-    pub async fn decrement_active_branches(&self) {
-        let mut count = self.active_branches.lock().await;
-        *count = count.saturating_sub(1);
-        info!("[PARALLELIZER] Active branches: {}", *count);
-    }
-
-    pub async fn get_active_branches_count(&self) -> usize {
-        *self.active_branches.lock().await
+    pub fn decrement_active_branches(&self) {
+        let count = self.active_branches.fetch_sub(1, Ordering::Relaxed) - 1;
+        info!("[PARALLELIZER] Active branches: {}", count);
     }
 }
 
@@ -219,7 +219,7 @@ impl EnhancedParallelProcessor {
                 }
             }
 
-            self.context.decrement_active_branches().await;
+            self.context.decrement_active_branches();
         }
 
         info!(
@@ -255,7 +255,7 @@ impl EnhancedParallelProcessor {
         let permit_duration = permit_start.elapsed();
         METRICS.record_semaphore_wait_time(permit_duration, &self.context.metrics_labels);
 
-        self.context.increment_active_branches().await;
+        self.context.increment_active_branches();
 
         let context = self.context.clone();
         let task_id = task.task_id;

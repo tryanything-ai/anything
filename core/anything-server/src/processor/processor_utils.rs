@@ -1,7 +1,10 @@
+use crate::metrics::METRICS;
 use crate::processor::execute_task::execute_task;
 use crate::status_updater::{Operation, StatusUpdateMessage};
 
 use serde_json::Value;
+use std::sync::atomic::Ordering;
+use uuid::Uuid;
 
 use crate::processor::execute_task::TaskError;
 use chrono::{DateTime, Utc};
@@ -54,21 +57,23 @@ pub async fn create_task(
 
     // Update in-memory task tracking
     let cache_start = Instant::now();
-    {
-        let mut processed_tasks = ctx.processed_tasks.lock().await;
-        processed_tasks.insert(task.task_id, task.clone());
-        info!(
-            "[PROCESSOR_UTILS] Successfully updated in-memory task tracking: {} in {:?}",
-            task.task_id,
-            cache_start.elapsed()
-        );
-    }
+    ctx.processed_tasks.insert(task.task_id, task.clone());
+    info!(
+        "[PROCESSOR_UTILS] Successfully updated in-memory task tracking: {} in {:?}",
+        task.task_id,
+        cache_start.elapsed()
+    );
 
     let total_duration = create_start.elapsed();
     info!(
         "[PROCESSOR_UTILS] Task creation completed in {:?}",
         total_duration
     );
+
+    // Add to your metrics
+    METRICS.record_dashmap_size(ctx.processed_tasks.len());
+    METRICS.record_active_branches(ctx.active_branches.load(Ordering::Relaxed));
+    METRICS.record_semaphore_permits_available(ctx.branch_semaphore.available_permits());
 
     Ok(task.clone())
 }
@@ -159,21 +164,23 @@ pub async fn create_task_for_action(
 
     // Update in-memory task tracking
     let cache_start = Instant::now();
-    {
-        let mut processed_tasks = ctx.processed_tasks.lock().await;
-        processed_tasks.insert(task.task_id, task.clone());
-        info!(
-            "[PROCESSOR_UTILS] Successfully updated in-memory task tracking: {} in {:?}",
-            task.task_id,
-            cache_start.elapsed()
-        );
-    }
+    ctx.processed_tasks.insert(task.task_id, task.clone());
+    info!(
+        "[PROCESSOR_UTILS] Successfully updated in-memory task tracking: {} in {:?}",
+        task.task_id,
+        cache_start.elapsed()
+    );
 
     let total_duration = create_start.elapsed();
     info!(
         "[PROCESSOR_UTILS] Task for action creation completed in {:?}",
         total_duration
     );
+
+    // Add to your metrics
+    METRICS.record_dashmap_size(ctx.processed_tasks.len());
+    METRICS.record_active_branches(ctx.active_branches.load(Ordering::Relaxed));
+    METRICS.record_semaphore_permits_available(ctx.branch_semaphore.available_permits());
 
     Ok(task)
 }
@@ -222,10 +229,10 @@ pub async fn find_next_actions(
                 );
 
                 // Check if this action has already been processed using in-memory tracking
-                let processed_tasks = ctx.processed_tasks.lock().await;
-                let already_processed = processed_tasks
-                    .values()
-                    .any(|t| t.action_id == action.action_id);
+                let already_processed = ctx
+                    .processed_tasks
+                    .iter()
+                    .any(|entry| entry.value().action_id == action.action_id);
 
                 if !already_processed {
                     info!(
@@ -270,14 +277,12 @@ pub async fn update_completed_task_with_result(
     ended_at: DateTime<Utc>,
 ) {
     // Update in-memory task tracking immediately
-    let mut processed_tasks = ctx.processed_tasks.lock().await;
     let mut task_copy = task.clone();
     task_copy.result = task_result.clone();
     task_copy.context = Some(bundled_context.clone());
     task_copy.task_status = TaskStatus::Completed;
     task_copy.ended_at = Some(Utc::now());
-    processed_tasks.insert(task.task_id, task_copy);
-    drop(processed_tasks);
+    ctx.processed_tasks.insert(task.task_id, task_copy);
 
     let task_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
@@ -305,14 +310,12 @@ pub async fn handle_task_error(
     ended_at: DateTime<Utc>,
 ) {
     // Update in-memory task tracking immediately
-    let mut processed_tasks = ctx.processed_tasks.lock().await;
     let mut task_copy = task.clone();
     task_copy.result = Some(error.error.clone());
     task_copy.context = Some(error.context.clone());
     task_copy.task_status = TaskStatus::Failed;
     task_copy.ended_at = Some(Utc::now());
-    processed_tasks.insert(task.task_id, task_copy);
-    drop(processed_tasks);
+    ctx.processed_tasks.insert(task.task_id, task_copy);
 
     let error_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
@@ -352,10 +355,11 @@ pub async fn process_task(
     let execution_start = Instant::now();
 
     // Get a clone of in-memory tasks for bundling context
-    let in_memory_tasks = {
-        let processed_tasks = ctx.processed_tasks.lock().await;
-        processed_tasks.clone()
-    };
+    let in_memory_tasks: std::collections::HashMap<Uuid, Task> = ctx
+        .processed_tasks
+        .iter()
+        .map(|entry| (*entry.key(), entry.value().clone()))
+        .collect();
 
     info!(
         "[PROCESSOR_UTILS] About to call execute_task for {}",
@@ -434,6 +438,11 @@ pub async fn process_task(
         "[PROCESSOR_UTILS] Task {} processing completed in {:?}",
         task.task_id, total_duration
     );
+
+    // Add to your metrics
+    METRICS.record_dashmap_size(ctx.processed_tasks.len());
+    METRICS.record_active_branches(ctx.active_branches.load(Ordering::Relaxed));
+    METRICS.record_semaphore_permits_available(ctx.branch_semaphore.available_permits());
 
     Ok(next_actions)
 }

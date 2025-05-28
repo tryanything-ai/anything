@@ -10,7 +10,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::task::JoinSet;
-use tracing::{error, info, instrument, warn, Span};
+use tracing::{error, info, instrument};
 
 /// Enhanced parallel branch processor
 pub struct EnhancedBranchProcessor {
@@ -241,7 +241,7 @@ impl EnhancedBranchProcessor {
             let permit_duration = permit_start.elapsed();
             METRICS.record_semaphore_wait_time(permit_duration, &context.metrics_labels);
 
-            context.increment_active_branches().await;
+            context.increment_active_branches();
 
             let _permit_guard = permit;
             let branch_span = context
@@ -263,7 +263,7 @@ impl EnhancedBranchProcessor {
                 .await;
 
             // Decrement active branches count
-            context.decrement_active_branches().await;
+            context.decrement_active_branches();
 
             match &result {
                 Ok(_) => {
@@ -286,72 +286,72 @@ impl EnhancedBranchProcessor {
         Ok(())
     }
 
-    async fn spawn_parallel_branch(
-        &self,
-        join_set: &mut JoinSet<Result<(), ProcessorError>>,
-        task: Task,
-    ) -> Result<(), ProcessorError> {
-        // Acquire semaphore permit for branch processing
-        let permit_start = Instant::now();
-        let permit = self
-            .context
-            .branch_semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
+    // async fn spawn_parallel_branch(
+    //     &self,
+    //     join_set: &mut JoinSet<Result<(), ProcessorError>>,
+    //     task: Task,
+    // ) -> Result<(), ProcessorError> {
+    //     // Acquire semaphore permit for branch processing
+    //     let permit_start = Instant::now();
+    //     let permit = self
+    //         .context
+    //         .branch_semaphore
+    //         .clone()
+    //         .acquire_owned()
+    //         .await
+    //         .map_err(|e| ProcessorError::SemaphoreError(e.to_string()))?;
 
-        let permit_duration = permit_start.elapsed();
-        METRICS.record_semaphore_wait_time(permit_duration, &self.context.metrics_labels);
+    //     let permit_duration = permit_start.elapsed();
+    //     METRICS.record_semaphore_wait_time(permit_duration, &self.context.metrics_labels);
 
-        self.context.increment_active_branches().await;
+    //     self.context.increment_active_branches();
 
-        let context = self.context.clone();
-        let task_id = task.task_id;
+    //     let context = self.context.clone();
+    //     let task_id = task.task_id;
 
-        join_set.spawn(async move {
-            let _permit_guard = permit;
-            let branch_span = context
-                .span_factory
-                .create_task_processing_span(task_id, &task.action_label);
-            let _branch_guard = branch_span.enter();
+    //     join_set.spawn(async move {
+    //         let _permit_guard = permit;
+    //         let branch_span = context
+    //             .span_factory
+    //             .create_task_processing_span(task_id, &task.action_label);
+    //         let _branch_guard = branch_span.enter();
 
-            info!(
-                "[BRANCH_PROCESSOR] Starting parallel branch for task: {}",
-                task_id
-            );
+    //         info!(
+    //             "[BRANCH_PROCESSOR] Starting parallel branch for task: {}",
+    //             task_id
+    //         );
 
-            // Create a new branch processor for this parallel branch
-            let branch_processor = EnhancedBranchProcessor::new(context.clone());
+    //         // Create a new branch processor for this parallel branch
+    //         let branch_processor = EnhancedBranchProcessor::new(context.clone());
 
-            // Process this branch
-            let result = branch_processor
-                .process_task_and_branches_parallel(task)
-                .await;
+    //         // Process this branch
+    //         let result = branch_processor
+    //             .process_task_and_branches_parallel(task)
+    //             .await;
 
-            // Decrement active branches count
-            context.decrement_active_branches().await;
+    //         // Decrement active branches count
+    //         context.decrement_active_branches();
 
-            match &result {
-                Ok(_) => {
-                    info!(
-                        "[BRANCH_PROCESSOR] Parallel branch {} completed successfully",
-                        task_id
-                    );
-                }
-                Err(e) => {
-                    error!(
-                        "[BRANCH_PROCESSOR] Parallel branch {} failed: {}",
-                        task_id, e
-                    );
-                }
-            }
+    //         match &result {
+    //             Ok(_) => {
+    //                 info!(
+    //                     "[BRANCH_PROCESSOR] Parallel branch {} completed successfully",
+    //                     task_id
+    //                 );
+    //             }
+    //             Err(e) => {
+    //                 error!(
+    //                     "[BRANCH_PROCESSOR] Parallel branch {} failed: {}",
+    //                     task_id, e
+    //                 );
+    //             }
+    //         }
 
-            result
-        });
+    //         result
+    //     });
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     async fn update_task_status_failed(&self, task: &Task, error_message: &str) {
         let error_update = StatusUpdateMessage {
@@ -443,13 +443,13 @@ pub fn process_task_and_branches(
     })
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn test_enhanced_branch_processor_creation() {
-        // This would require setting up a mock ProcessingContext
-        // Implementation depends on your test infrastructure
-    }
-}
+//     #[test]
+//     fn test_enhanced_branch_processor_creation() {
+//         // This would require setting up a mock ProcessingContext
+//         // Implementation depends on your test infrastructure
+//     }
+// }

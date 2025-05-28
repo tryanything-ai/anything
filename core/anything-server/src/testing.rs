@@ -14,7 +14,7 @@ use crate::{
     supabase_jwt_middleware::User,
     types::{
         action_types::ActionType,
-        task_types::{Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus},
+        task_types::{Stage, Task, TaskConfig, TriggerSessionStatus},
         workflow_types::DatabaseFlowVersion,
     },
     AppState,
@@ -158,7 +158,7 @@ pub async fn test_workflow(
         trigger_task: Some(task.clone()),
         task_id: Some(task.task_id), // Include task_id for tracing
         existing_tasks: HashMap::new(), // No existing tasks for new workflows
-        workflow_graph: crate::processor::utils::create_workflow_graph(&workflow_version.flow_definition),
+        // workflow_graph: crate::processor::utils::create_workflow_graph(&workflow_version.flow_definition),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

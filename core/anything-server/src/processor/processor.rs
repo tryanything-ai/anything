@@ -13,5 +13,5 @@ pub struct ProcessorMessage {
     pub trigger_task: Option<Task>,
     pub task_id: Option<Uuid>,               // Add task_id for tracing
     pub existing_tasks: HashMap<Uuid, Task>, // Add any existing tasks from hydration
-    pub workflow_graph: HashMap<String, Vec<String>>, // Pre-computed workflow graph
+    // pub workflow_graph: HashMap<String, Vec<String>>, // Pre-computed workflow graph
 }

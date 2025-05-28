@@ -10,7 +10,7 @@ use dashmap::DashMap;
 use futures_util::{sink::SinkExt, stream::StreamExt};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc; 
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{broadcast};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 

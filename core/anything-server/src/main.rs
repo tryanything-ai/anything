@@ -17,7 +17,6 @@ use serde_json::Value;
 use std::time::Duration;
 use std::env;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tokio::sync::{watch, Semaphore, broadcast};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
@@ -105,7 +104,8 @@ pub struct AppState {
     workflow_broadcaster: websocket::WorkflowBroadcaster,
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
+// #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
+#[tokio::main]
 async fn main() {
     // Initialize tracing with OpenTelemetry
     if let Err(e) = init_otel_grpc() {

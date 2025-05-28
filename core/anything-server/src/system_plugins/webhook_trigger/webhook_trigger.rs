@@ -226,9 +226,6 @@ pub async fn run_workflow_and_respond(
         trigger_task: Some(task.clone()),
         task_id: Some(task.task_id),    // Include task_id for tracing
         existing_tasks: HashMap::new(), // No existing tasks for new workflows
-        workflow_graph: crate::processor::utils::create_workflow_graph(
-            &workflow_version.flow_definition,
-        ),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -462,9 +459,6 @@ pub async fn run_workflow_version_and_respond(
         trigger_task: Some(task.clone()),
         task_id: Some(task.task_id),    // Include task_id for tracing
         existing_tasks: HashMap::new(), // No existing tasks for new workflows
-        workflow_graph: crate::processor::utils::create_workflow_graph(
-            &workflow_version.flow_definition,
-        ),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -687,9 +681,6 @@ pub async fn run_workflow(
         trigger_task: Some(task.clone()),
         task_id: Some(task.task_id),    // Include task_id for tracing
         existing_tasks: HashMap::new(), // No existing tasks for new workflows
-        workflow_graph: crate::processor::utils::create_workflow_graph(
-            &workflow_version.flow_definition,
-        ),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
@@ -886,9 +877,6 @@ pub async fn run_workflow_version(
         trigger_task: Some(task.clone()),
         task_id: Some(task.task_id),    // Include task_id for tracing
         existing_tasks: HashMap::new(), // No existing tasks for new workflows
-        workflow_graph: crate::processor::utils::create_workflow_graph(
-            &workflow_version.flow_definition,
-        ),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {

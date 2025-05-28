@@ -19,6 +19,9 @@ pub struct MetricsRegistry {
     pub processor_workflow_errors: Counter<u64>,
     pub processor_keepalive_heartbeats: Counter<u64>,
     pub processor_idle_duration: Histogram<f64>,
+    pub processor_dashmap_size: UpDownCounter<i64>,
+    pub processor_active_branches: UpDownCounter<i64>,
+    pub processor_semaphore_permits_available: UpDownCounter<i64>,
 
     // Status updater metrics (adding the ones referenced in enhanced_processor.rs)
     pub status_updater_operations_total: Counter<u64>,
@@ -90,6 +93,21 @@ impl MetricsRegistry {
             processor_idle_duration: meter
                 .f64_histogram("anything_processor_idle_duration_seconds")
                 .with_description("Duration of processor idle time between messages in seconds.")
+                .init(),
+
+            processor_dashmap_size: meter
+                .i64_up_down_counter("anything_processor_dashmap_size")
+                .with_description("Current number of items in the processed tasks DashMap.")
+                .init(),
+
+            processor_active_branches: meter
+                .i64_up_down_counter("anything_processor_active_branches_current")
+                .with_description("Current number of active processing branches.")
+                .init(),
+
+            processor_semaphore_permits_available: meter
+                .i64_up_down_counter("anything_processor_semaphore_permits_available")
+                .with_description("Number of available semaphore permits for branch processing.")
                 .init(),
 
             // Status updater metrics
@@ -243,6 +261,22 @@ impl MetricsRegistry {
         self.processor_keepalive_heartbeats.add(1, labels);
         self.processor_idle_duration
             .record(idle_duration.as_secs_f64(), labels);
+    }
+
+    pub fn record_dashmap_size(&self, size: usize) {
+        // Set the absolute value rather than incrementing
+        self.processor_dashmap_size.add(size as i64, &[]);
+    }
+
+    pub fn record_active_branches(&self, count: usize) {
+        // Set the absolute value rather than incrementing
+        self.processor_active_branches.add(count as i64, &[]);
+    }
+
+    pub fn record_semaphore_permits_available(&self, permits: usize) {
+        // Set the absolute value rather than incrementing
+        self.processor_semaphore_permits_available
+            .add(permits as i64, &[]);
     }
 
     // ===== STATUS UPDATER METRICS METHODS =====

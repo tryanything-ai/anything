@@ -62,7 +62,7 @@ mod enhanced_processor_tests {
                 edges: vec![],
             },
             existing_tasks: HashMap::new(),
-            workflow_graph: HashMap::new(),
+            // workflow_graph: HashMap::new(),
             flow_session_id: Uuid::new_v4(),
             trigger_session_id: Uuid::new_v4(),
             trigger_task: None,
@@ -84,9 +84,8 @@ mod enhanced_processor_tests {
     }
 
     async fn create_test_app_state() -> std::sync::Arc<crate::AppState> {
-        use std::collections::HashMap;
         use std::sync::Arc;
-        use tokio::sync::{watch, Mutex, RwLock, Semaphore};
+        use tokio::sync::{watch, Semaphore};
 
         // Create a proper S3 config with behavior version
         let aws_config = aws_config::defaults(aws_config::BehaviorVersion::latest())
