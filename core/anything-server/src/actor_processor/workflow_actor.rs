@@ -286,7 +286,7 @@ impl WorkflowActor {
 
                     // Execute task with bundled context from previous tasks
                     let result = task_actor_pool
-                        .execute_task_with_context(task, task_context, Some(&in_memory_tasks))
+                        .execute_task(task, task_context, Some(&in_memory_tasks))
                         .await;
 
                     // Remove from running tasks
@@ -380,6 +380,7 @@ impl WorkflowActor {
                                         trigger_status: crate::types::task_types::TriggerSessionStatus::Failed,
                                     },
                                 };
+                                //TODO: we should probably send a failure status update for the task as well
 
                                 if let Err(send_err) = self
                                     .state

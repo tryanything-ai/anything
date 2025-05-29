@@ -106,8 +106,6 @@ mod enhanced_processor_tests {
             auth_states: DashMap::new(),
             flow_completions: DashMap::new(),
             api_key_cache: DashMap::new(),
-            websocket_connections: DashMap::new(),
-            workflow_broadcaster: crate::websocket::WorkflowBroadcaster::new(1000),
             trigger_engine_signal: watch::channel("".to_string()).0,
             processor_sender: mpsc::channel::<ProcessorMessage>(100).0,
             task_updater_sender: mpsc::channel::<crate::status_updater::StatusUpdateMessage>(100).0,

@@ -281,7 +281,7 @@ export const WorkflowTestingProvider = ({
         setWorkflowTestingSessionId(flow_session_id);
       }
       // Start WebSocket subscription for real-time updates
-      subscribeToWorkflowUpdates(flow_session_id);
+      // subscribeToWorkflowUpdates(flow_session_id);
     } catch (error) {
       console.error(error);
     } finally {

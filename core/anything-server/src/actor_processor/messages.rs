@@ -10,12 +10,12 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub enum ActorMessage {
     /// Execute a single task
+    // ExecuteTask {
+    //     task: Task,
+    //     respond_to: oneshot::Sender<TaskResult>,
+    //     context: WorkflowExecutionContext,
+    // },
     ExecuteTask {
-        task: Task,
-        respond_to: oneshot::Sender<TaskResult>,
-        context: WorkflowExecutionContext,
-    },
-    ExecuteTaskWithContext {
         task: Task,
         respond_to: oneshot::Sender<TaskResult>,
         context: WorkflowExecutionContext,

@@ -49,14 +49,6 @@ impl TaskActor {
                     task,
                     respond_to,
                     context,
-                } => {
-                    let result = self.handle_execute_task(task, context, None).await;
-                    let _ = respond_to.send(result);
-                }
-                ActorMessage::ExecuteTaskWithContext {
-                    task,
-                    respond_to,
-                    context,
                     in_memory_tasks,
                 } => {
                     let result = self

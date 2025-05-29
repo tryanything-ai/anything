@@ -62,33 +62,6 @@ impl TaskActorPool {
         &self,
         task: Task,
         context: WorkflowExecutionContext,
-    ) -> Result<TaskResult, Box<dyn std::error::Error + Send + Sync>> {
-        // Round-robin load balancing
-        let mut index = self.current_index.write().await;
-        let actor_index = *index;
-        *index = (*index + 1) % self.actors.len();
-        drop(index);
-
-        let actor = &self.actors[actor_index];
-        let (tx, rx) = oneshot::channel();
-
-        actor
-            .send(ActorMessage::ExecuteTask {
-                task,
-                respond_to: tx,
-                context,
-            })
-            .await
-            .map_err(|e| format!("Failed to send task to actor: {}", e))?;
-
-        rx.await
-            .map_err(|e| format!("Failed to receive task result: {}", e).into())
-    }
-
-    pub async fn execute_task_with_context(
-        &self,
-        task: Task,
-        context: WorkflowExecutionContext,
         in_memory_tasks: Option<&std::collections::HashMap<Uuid, Task>>,
     ) -> Result<TaskResult, Box<dyn std::error::Error + Send + Sync>> {
         // Round-robin load balancing
@@ -101,7 +74,7 @@ impl TaskActorPool {
         let (tx, rx) = oneshot::channel();
 
         actor
-            .send(ActorMessage::ExecuteTaskWithContext {
+            .send(ActorMessage::ExecuteTask {
                 task,
                 respond_to: tx,
                 context,

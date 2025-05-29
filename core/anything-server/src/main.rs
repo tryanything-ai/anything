@@ -17,7 +17,7 @@ use serde_json::Value;
 use std::time::Duration;
 use std::env;
 use std::sync::Arc;
-use tokio::sync::{watch, Semaphore, broadcast};
+use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
@@ -59,7 +59,6 @@ mod testing;
 mod trigger_engine;
 mod agents; 
 mod metrics;
-mod websocket;
 
 use tokio::sync::oneshot;
 use std::sync::atomic::AtomicBool;
@@ -101,8 +100,8 @@ pub struct AppState {
     bundler_accounts_cache: DashMap<String, AccountsCache>,
     shutdown_signal: Arc<AtomicBool>,
     // WebSocket infrastructure
-    websocket_connections: DashMap<String, websocket::WebSocketConnection>,
-    workflow_broadcaster: websocket::WorkflowBroadcaster,
+    // websocket_connections: DashMap<String, websocket::WebSocketConnection>,
+    // workflow_broadcaster: websocket::WorkflowBroadcaster,
 }
 
 // #[tokio::main(flavor = "multi_thread", worker_threads = 1)]
@@ -215,7 +214,7 @@ async fn main() {
    let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000);
 
    // Create WebSocket infrastructure
-   let (workflow_broadcaster, _) = broadcast::channel(1000); 
+//    let (workflow_broadcaster, _) = broadcast::channel(1000); 
 
    let default_http_timeout = Duration::from_secs(30); // Default 30-second timeout
    let http_client = Client::builder()
@@ -242,9 +241,6 @@ async fn main() {
         bundler_accounts_cache: DashMap::new(),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
         task_updater_sender: task_updater_tx.clone(), // Store the sender in AppState
-        // WebSocket infrastructure
-        websocket_connections: DashMap::new(),
-        workflow_broadcaster,
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -287,13 +283,8 @@ pub async fn root() -> impl IntoResponse {
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_plugins::webhook_trigger::run_workflow_version_and_respond))
 
     // API routes for running agent tools - very simliar to webhooks just shapped differnt to capture relationshipe between agent and workflow
-    .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond))
+    .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond));
     
-    // WebSocket for real-time workflow testing updates (public route with token-based auth)
-    .route(
-        "/account/:account_id/testing/workflow/session/:flow_session_id/ws",
-        get(websocket::websocket_handler),
-    );
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
