@@ -71,14 +71,6 @@ async fn execute_filter_condition(
 
     let execution_duration = execution_start.elapsed();
 
-    // Clean up module file
-    if let Err(e) = std::fs::remove_file(&module_name) {
-        warn!(
-            "[FILTER] Failed to clean up module file {}: {}",
-            module_name, e
-        );
-    }
-
     match execution_result {
         Ok(result) => {
             info!(
