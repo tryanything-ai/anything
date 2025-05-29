@@ -69,7 +69,7 @@ impl TaskActor {
         info!("[TASK_ACTOR_{}] Task actor shutdown complete", self.id);
     }
 
-    #[instrument(skip(self, task, context), fields(
+    #[instrument(skip(self, task, context, in_memory_tasks), fields(
         actor_id = %self.id,
         task_id = %task.task_id,
         plugin_name = ?task.plugin_name
