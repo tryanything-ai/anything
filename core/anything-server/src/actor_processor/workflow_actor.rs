@@ -236,26 +236,8 @@ impl WorkflowActor {
                     .convert_action_to_task(&action, &message, 0) // processing_order not used in dependency-based execution
                     .await?;
 
-                // Create task in database
-                let create_task_message = crate::status_updater::StatusUpdateMessage {
-                    operation: crate::status_updater::Operation::CreateTask {
-                        task_id: task.task_id,
-                        input: task.clone(),
-                    },
-                };
-
-                if let Err(e) = self
-                    .state
-                    .task_updater_sender
-                    .send(create_task_message)
-                    .await
-                {
-                    error!(
-                        "[WORKFLOW_ACTOR_{}] Failed to send create task message for {}: {}",
-                        self.id, task.task_id, e
-                    );
-                    return Err(format!("Failed to create task in database: {}", e).into());
-                }
+                // 📝 TASK CREATION - Would normally create task in database
+                info!("📝 TASK CREATION: Creating task {} for action {} (skipping database creation for debugging)", task.task_id, action.action_id);
 
                 info!(
                     "[WORKFLOW_ACTOR_{}] Created and executing task {} for action {}",
@@ -372,27 +354,9 @@ impl WorkflowActor {
                                     self.id, task_id, action_id, e
                                 );
 
-                                // Send workflow failure status
-                                let fail_workflow_message = crate::status_updater::StatusUpdateMessage {
-                                    operation: crate::status_updater::Operation::CompleteWorkflow {
-                                        flow_session_id: context.flow_session_id,
-                                        status: crate::types::task_types::FlowSessionStatus::Failed,
-                                        trigger_status: crate::types::task_types::TriggerSessionStatus::Failed,
-                                    },
-                                };
+                                // 💥 WORKFLOW FAILURE - Would normally send workflow failure status to database
+                                info!("💥 WORKFLOW FAILURE: Workflow {} failed due to task {} failure (skipping database update for debugging)", context.flow_session_id, task_id);
                                 //TODO: we should probably send a failure status update for the task as well
-
-                                if let Err(send_err) = self
-                                    .state
-                                    .task_updater_sender
-                                    .send(fail_workflow_message)
-                                    .await
-                                {
-                                    warn!(
-                                        "[WORKFLOW_ACTOR_{}] Failed to send workflow failure status for {}: {}",
-                                        self.id, context.flow_session_id, send_err
-                                    );
-                                }
 
                                 return Err(format!("Task {} failed: {:?}", task_id, e).into());
                             }
@@ -409,31 +373,8 @@ impl WorkflowActor {
             }
         }
 
-        // Send workflow completion status
-        let complete_workflow_message = crate::status_updater::StatusUpdateMessage {
-            operation: crate::status_updater::Operation::CompleteWorkflow {
-                flow_session_id: context.flow_session_id,
-                status: crate::types::task_types::FlowSessionStatus::Completed,
-                trigger_status: crate::types::task_types::TriggerSessionStatus::Completed,
-            },
-        };
-
-        if let Err(e) = self
-            .state
-            .task_updater_sender
-            .send(complete_workflow_message)
-            .await
-        {
-            warn!(
-                "[WORKFLOW_ACTOR_{}] Failed to send workflow completion status for {}: {}",
-                self.id, context.flow_session_id, e
-            );
-        } else {
-            info!(
-                "[WORKFLOW_ACTOR_{}] Workflow {} marked as completed",
-                self.id, context.flow_session_id
-            );
-        }
+        // 🎉 WORKFLOW COMPLETED - Would normally send workflow completion status to database
+        info!("🎉 WORKFLOW COMPLETED: Workflow {} finished successfully with all tasks completed (skipping database update for debugging)", context.flow_session_id);
 
         Ok(())
     }

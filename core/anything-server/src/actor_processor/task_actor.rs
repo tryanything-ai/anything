@@ -92,30 +92,11 @@ impl TaskActor {
         let start_time = Instant::now();
         info!("[TASK_ACTOR_{}] Executing task {}", self.id, task.task_id);
 
-        // Update task status to running
-        let update_running_message = crate::status_updater::StatusUpdateMessage {
-            operation: crate::status_updater::Operation::UpdateTask {
-                task_id: task.task_id,
-                started_at: Some(chrono::Utc::now()),
-                ended_at: None,
-                status: crate::types::task_types::TaskStatus::Running,
-                result: None,
-                context: None,
-                error: None,
-            },
-        };
-
-        if let Err(e) = self
-            .state
-            .task_updater_sender
-            .send(update_running_message)
-            .await
-        {
-            warn!(
-                "[TASK_ACTOR_{}] Failed to send running status update for task {}: {}",
-                self.id, task.task_id, e
-            );
-        }
+        // 🚀 TASK STARTING - Would normally update task status to running in database
+        info!(
+            "🚀 TASK STARTING: {} is now RUNNING (skipping database update for debugging)",
+            task.task_id
+        );
 
         // Execute the task with timeout
         let task_timeout = Duration::from_secs(300); // 5 minutes timeout
@@ -140,30 +121,8 @@ impl TaskActor {
                         );
                         context.record_success();
 
-                        // Update task status to completed
-                        let update_completed_message = crate::status_updater::StatusUpdateMessage {
-                            operation: crate::status_updater::Operation::UpdateTask {
-                                task_id: task.task_id,
-                                started_at: Some(*started_at),
-                                ended_at: Some(*ended_at),
-                                status: crate::types::task_types::TaskStatus::Completed,
-                                result: result_value.clone(),
-                                context: Some(context_value.clone()),
-                                error: None,
-                            },
-                        };
-
-                        if let Err(e) = self
-                            .state
-                            .task_updater_sender
-                            .send(update_completed_message)
-                            .await
-                        {
-                            warn!(
-                                "[TASK_ACTOR_{}] Failed to send completed status update for task {}: {}",
-                                self.id, task.task_id, e
-                            );
-                        }
+                        // ✅ TASK COMPLETED - Would normally update task status to completed in database
+                        info!("✅ TASK COMPLETED: {} finished successfully in {:?} (skipping database update for debugging)", task.task_id, execution_duration);
                     }
                     Err(e) => {
                         error!(
@@ -172,34 +131,8 @@ impl TaskActor {
                         );
                         context.record_error(&format!("Task execution failed: {:?}", e));
 
-                        // Update task status to failed
-                        let update_failed_message = crate::status_updater::StatusUpdateMessage {
-                            operation: crate::status_updater::Operation::UpdateTask {
-                                task_id: task.task_id,
-                                started_at: Some(
-                                    chrono::Utc::now()
-                                        - chrono::Duration::from_std(execution_duration)
-                                            .unwrap_or_default(),
-                                ),
-                                ended_at: Some(end_time),
-                                status: crate::types::task_types::TaskStatus::Failed,
-                                result: None,
-                                context: None,
-                                error: Some(e.error.clone()),
-                            },
-                        };
-
-                        if let Err(send_err) = self
-                            .state
-                            .task_updater_sender
-                            .send(update_failed_message)
-                            .await
-                        {
-                            warn!(
-                                "[TASK_ACTOR_{}] Failed to send failed status update for task {}: {}",
-                                self.id, task.task_id, send_err
-                            );
-                        }
+                        // ❌ TASK FAILED - Would normally update task status to failed in database
+                        info!("❌ TASK FAILED: {} encountered an error: {:?} (skipping database update for debugging)", task.task_id, e);
                     }
                 }
                 task_result
@@ -215,34 +148,8 @@ impl TaskActor {
                     "message": format!("Task {} timed out after {:?}", task.task_id, task_timeout)
                 });
 
-                // Update task status to failed due to timeout
-                let update_timeout_message = crate::status_updater::StatusUpdateMessage {
-                    operation: crate::status_updater::Operation::UpdateTask {
-                        task_id: task.task_id,
-                        started_at: Some(
-                            chrono::Utc::now()
-                                - chrono::Duration::from_std(execution_duration)
-                                    .unwrap_or_default(),
-                        ),
-                        ended_at: Some(end_time),
-                        status: crate::types::task_types::TaskStatus::Failed,
-                        result: None,
-                        context: None,
-                        error: Some(timeout_error.clone()),
-                    },
-                };
-
-                if let Err(e) = self
-                    .state
-                    .task_updater_sender
-                    .send(update_timeout_message)
-                    .await
-                {
-                    warn!(
-                        "[TASK_ACTOR_{}] Failed to send timeout status update for task {}: {}",
-                        self.id, task.task_id, e
-                    );
-                }
+                // ⏰ TASK TIMEOUT - Would normally update task status to failed due to timeout in database
+                info!("⏰ TASK TIMEOUT: {} timed out after {:?} (skipping database update for debugging)", task.task_id, task_timeout);
 
                 Err(crate::processor::execute_task::TaskError {
                     error: timeout_error,
