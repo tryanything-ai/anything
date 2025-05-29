@@ -189,10 +189,6 @@ async fn main() {
             move |origin: &HeaderValue, _request_parts: &RequestParts| {
                 let origin_str = origin.to_str().unwrap_or("");
                 let is_match = cors_origin_regex.is_match(origin_str);
-                println!(
-                    "[CORS] Checking origin: {} - Match: {}",
-                    origin_str, is_match
-                );
                 is_match
             },
         ))
