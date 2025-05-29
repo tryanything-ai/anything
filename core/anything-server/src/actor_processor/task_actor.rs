@@ -90,7 +90,24 @@ impl TaskActor {
         context.record_stage("executing_task");
 
         let start_time = Instant::now();
-        info!("[TASK_ACTOR_{}] Executing task {}", self.id, task.task_id);
+        let is_rustyscript_task = matches!(
+            task.plugin_name.as_ref().map(|s| s.as_str()),
+            Some("@anything/javascript") | Some("@anything/filter")
+        );
+
+        if is_rustyscript_task {
+            info!(
+                "[TASK_ACTOR_{}] Executing RustyScript task {} ({})",
+                self.id,
+                task.task_id,
+                task.plugin_name
+                    .as_ref()
+                    .map(|p| p.as_str())
+                    .unwrap_or("unknown")
+            );
+        } else {
+            info!("[TASK_ACTOR_{}] Executing task {}", self.id, task.task_id);
+        }
 
         // 🚀 TASK STARTING - Would normally update task status to running in database
         info!(
@@ -99,7 +116,7 @@ impl TaskActor {
         );
 
         // Execute the task with timeout
-        let task_timeout = Duration::from_secs(300); // 5 minutes timeout
+        let task_timeout = Duration::from_secs(300); // 5 minutes timeout - this is the outer timeout
         let result = timeout(
             task_timeout,
             execute_task(self.state.clone(), &self.client, &task, in_memory_tasks),
@@ -115,41 +132,103 @@ impl TaskActor {
             Ok(task_result) => {
                 match &task_result {
                     Ok((result_value, context_value, started_at, ended_at)) => {
-                        info!(
-                            "[TASK_ACTOR_{}] Task {} completed successfully in {:?}",
-                            self.id, task.task_id, execution_duration
-                        );
+                        if is_rustyscript_task {
+                            info!(
+                                "[TASK_ACTOR_{}] RustyScript task {} completed successfully in {:?}",
+                                self.id, task.task_id, execution_duration
+                            );
+                        } else {
+                            info!(
+                                "[TASK_ACTOR_{}] Task {} completed successfully in {:?}",
+                                self.id, task.task_id, execution_duration
+                            );
+                        }
                         context.record_success();
 
                         // ✅ TASK COMPLETED - Would normally update task status to completed in database
                         info!("✅ TASK COMPLETED: {} finished successfully in {:?} (skipping database update for debugging)", task.task_id, execution_duration);
                     }
                     Err(e) => {
-                        error!(
-                            "[TASK_ACTOR_{}] Task {} failed: {:?}",
-                            self.id, task.task_id, e
-                        );
-                        context.record_error(&format!("Task execution failed: {:?}", e));
+                        // Enhanced error logging with error type information
+                        let error_type = e
+                            .error
+                            .get("error_type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown_error");
+
+                        let execution_time = e
+                            .error
+                            .get("execution_time_ms")
+                            .and_then(|v| v.as_u64())
+                            .map(|ms| format!("{}ms", ms))
+                            .unwrap_or_else(|| format!("{:?}", execution_duration));
+
+                        if is_rustyscript_task {
+                            error!(
+                                "[TASK_ACTOR_{}] RustyScript task {} failed ({}): {} after {}",
+                                self.id,
+                                task.task_id,
+                                error_type,
+                                e.error
+                                    .get("message")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("Unknown error"),
+                                execution_time
+                            );
+                        } else {
+                            error!(
+                                "[TASK_ACTOR_{}] Task {} failed ({}): {} after {}",
+                                self.id,
+                                task.task_id,
+                                error_type,
+                                e.error
+                                    .get("message")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("Unknown error"),
+                                execution_time
+                            );
+                        }
+
+                        context.record_error(&format!(
+                            "Task execution failed ({}): {}",
+                            error_type,
+                            e.error
+                                .get("message")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("Unknown error")
+                        ));
 
                         // ❌ TASK FAILED - Would normally update task status to failed in database
-                        info!("❌ TASK FAILED: {} encountered an error: {:?} (skipping database update for debugging)", task.task_id, e);
+                        info!("❌ TASK FAILED: {} encountered an error ({}): {} (skipping database update for debugging)", 
+                            task.task_id, error_type,
+                            e.error.get("message").and_then(|v| v.as_str()).unwrap_or("Unknown error")
+                        );
                     }
                 }
                 task_result
             }
             Err(_) => {
-                error!(
-                    "[TASK_ACTOR_{}] Task {} timed out after {:?}",
-                    self.id, task.task_id, task_timeout
-                );
-                context.record_error("Task execution timeout");
+                if is_rustyscript_task {
+                    error!(
+                        "[TASK_ACTOR_{}] RustyScript task {} timed out after {:?} (actor-level timeout)",
+                        self.id, task.task_id, task_timeout
+                    );
+                } else {
+                    error!(
+                        "[TASK_ACTOR_{}] Task {} timed out after {:?} (actor-level timeout)",
+                        self.id, task.task_id, task_timeout
+                    );
+                }
+                context.record_error("Task execution timeout (actor-level)");
 
                 let timeout_error = serde_json::json!({
-                    "message": format!("Task {} timed out after {:?}", task.task_id, task_timeout)
+                    "message": format!("Task {} timed out after {:?} (actor-level timeout)", task.task_id, task_timeout),
+                    "error_type": "actor_timeout",
+                    "timeout_duration_ms": task_timeout.as_millis()
                 });
 
                 // ⏰ TASK TIMEOUT - Would normally update task status to failed due to timeout in database
-                info!("⏰ TASK TIMEOUT: {} timed out after {:?} (skipping database update for debugging)", task.task_id, task_timeout);
+                info!("⏰ TASK TIMEOUT: {} timed out after {:?} (actor-level timeout) (skipping database update for debugging)", task.task_id, task_timeout);
 
                 Err(crate::processor::execute_task::TaskError {
                     error: timeout_error,
