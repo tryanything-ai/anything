@@ -54,22 +54,42 @@ async fn execute_filter_condition(
     let module_name = format!("user_condition_{}.js", Uuid::new_v4());
 
     info!("[FILTER] Creating module: {}", module_name);
-    let module = Module::new(&module_name, &wrapped_code);
 
     // Execute with appropriate timeout for actor system
     let execution_start = Instant::now();
     info!("[FILTER] Starting condition execution with 15 second timeout");
 
-    let runtime_options = RuntimeOptions {
-        timeout: Duration::from_secs(15), // Increased from 1 second for complex conditions
-        default_entrypoint: Some("default".to_string()),
-        ..Default::default()
-    };
+    // Use spawn_blocking to avoid nested runtime issues
+    // RustyScript creates its own runtime, so we need to run it in a separate thread
+    let wrapped_code_clone = wrapped_code.clone();
+    let module_name_clone = module_name.clone();
 
-    let execution_result: Result<Value, rustyscript::Error> =
-        Runtime::execute_module(&module, vec![], runtime_options, json_args!());
+    let execution_result = tokio::task::spawn_blocking(move || {
+        let module = Module::new(&module_name_clone, &wrapped_code_clone);
+
+        let runtime_options = RuntimeOptions {
+            timeout: Duration::from_secs(15), // Increased from 1 second for complex conditions
+            default_entrypoint: Some("default".to_string()),
+            ..Default::default()
+        };
+
+        let result: Result<Value, rustyscript::Error> =
+            Runtime::execute_module(&module, vec![], runtime_options, json_args!());
+
+        result
+    })
+    .await;
 
     let execution_duration = execution_start.elapsed();
+
+    // Handle the spawn_blocking result
+    let execution_result = match execution_result {
+        Ok(result) => result,
+        Err(join_error) => {
+            error!("[FILTER] Thread execution failed: {}", join_error);
+            return Err(format!("Filter execution thread failed: {}", join_error).into());
+        }
+    };
 
     match execution_result {
         Ok(result) => {
