@@ -69,64 +69,118 @@ async fn execute_javascript_safe(
     let execution_start = Instant::now();
     info!("[RUSTYSCRIPT] Starting script execution with 30 second timeout");
 
-    // Use spawn_blocking to avoid nested runtime issues
-    // RustyScript creates its own runtime, so we need to run it in a separate thread
+    // Clone values for the blocking task
     let wrapped_code_clone = wrapped_code.clone();
     let module_name_clone = module_name.clone();
 
-    let execution_result = tokio::task::spawn_blocking(move || {
-        let module = Module::new(&module_name_clone, &wrapped_code_clone);
+    // Add retry logic and better error handling
+    let max_retries = 2;
+    let mut last_error = None;
 
-        let runtime_options = RuntimeOptions {
-            timeout: Duration::from_secs(30), // Increased from 1 second for complex operations
-            default_entrypoint: Some("default".to_string()),
-            ..Default::default()
-        };
-
-        let result: Result<Value, rustyscript::Error> =
-            Runtime::execute_module(&module, vec![], runtime_options, json_args!());
-
-        result
-    })
-    .await;
-
-    let execution_duration = execution_start.elapsed();
-
-    // Handle the spawn_blocking result
-    let execution_result = match execution_result {
-        Ok(result) => result,
-        Err(join_error) => {
-            error!("[RUSTYSCRIPT] Thread execution failed: {}", join_error);
-            return Err(format!("JavaScript execution thread failed: {}", join_error).into());
-        }
-    };
-
-    match execution_result {
-        Ok(result) => {
-            info!(
-                "[RUSTYSCRIPT] Script executed successfully in {:?}",
-                execution_duration
+    for attempt in 0..=max_retries {
+        if attempt > 0 {
+            warn!(
+                "[RUSTYSCRIPT] Retrying execution, attempt {}/{}",
+                attempt + 1,
+                max_retries + 1
             );
+            // Small delay between retries
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
 
-            // Check for internal error markers
-            if let Some(error) = result.get("internal_error") {
-                if let Some(error_msg) = error.as_str() {
-                    error!("[RUSTYSCRIPT] JavaScript internal error: {}", error_msg);
-                    return Err(error_msg.into());
+        let wrapped_code_for_attempt = wrapped_code_clone.clone();
+        let module_name_for_attempt = module_name_clone.clone();
+
+        let execution_result = tokio::task::spawn_blocking(move || {
+            // Create module inside the blocking task
+            let module = Module::new(&module_name_for_attempt, &wrapped_code_for_attempt);
+
+            // Configure runtime with more conservative settings
+            let runtime_options = RuntimeOptions {
+                timeout: Duration::from_secs(25), // Slightly less than outer timeout
+                default_entrypoint: Some("default".to_string()),
+                ..Default::default()
+            };
+
+            // Execute with panic catching
+            let result: Result<Result<Value, rustyscript::Error>, Box<dyn std::any::Any + Send>> =
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    Runtime::execute_module(&module, vec![], runtime_options, json_args!())
+                }));
+
+            match result {
+                Ok(Ok(value)) => Ok(value),
+                Ok(Err(e)) => Err(format!("RustyScript error: {}", e)),
+                Err(panic) => {
+                    let panic_msg = if let Some(s) = panic.downcast_ref::<String>() {
+                        s.clone()
+                    } else if let Some(s) = panic.downcast_ref::<&str>() {
+                        s.to_string()
+                    } else {
+                        "Unknown panic".to_string()
+                    };
+                    Err(format!("RustyScript panicked: {}", panic_msg))
                 }
             }
+        })
+        .await;
 
-            log_result_info(&result);
-            Ok(result)
-        }
-        Err(e) => {
-            error!(
-                "[RUSTYSCRIPT] Script execution failed after {:?}: {:?}",
-                execution_duration, e
-            );
-            Err(format!("JavaScript execution failed: {}", e).into())
+        match execution_result {
+            Ok(Ok(result)) => {
+                let execution_duration = execution_start.elapsed();
+                info!(
+                    "[RUSTYSCRIPT] Script executed successfully in {:?}",
+                    execution_duration
+                );
+
+                // Check for internal error markers
+                if let Some(error) = result.get("internal_error") {
+                    if let Some(error_msg) = error.as_str() {
+                        error!("[RUSTYSCRIPT] JavaScript internal error: {}", error_msg);
+                        last_error = Some(error_msg.to_string());
+                        continue; // Retry on internal errors
+                    }
+                }
+
+                log_result_info(&result);
+                return Ok(result);
+            }
+            Ok(Err(e)) => {
+                error!("[RUSTYSCRIPT] Execution error: {}", e);
+                last_error = Some(e);
+                continue; // Retry
+            }
+            Err(join_error) => {
+                error!("[RUSTYSCRIPT] Task join error: {}", join_error);
+
+                // Check if it's a panic
+                if join_error.is_panic() {
+                    let panic_info = join_error.into_panic();
+                    let panic_msg = if let Some(s) = panic_info.downcast_ref::<String>() {
+                        s.clone()
+                    } else if let Some(s) = panic_info.downcast_ref::<&str>() {
+                        s.to_string()
+                    } else {
+                        "Unknown panic".to_string()
+                    };
+                    error!("[RUSTYSCRIPT] Task panicked: {}", panic_msg);
+                    last_error = Some(format!("Task panicked: {}", panic_msg));
+                } else {
+                    last_error = Some("Task was cancelled".to_string());
+                }
+                continue; // Retry
+            }
         }
     }
+
+    // All retries failed
+    let final_error = last_error.unwrap_or_else(|| "Unknown error after retries".to_string());
+    error!(
+        "[RUSTYSCRIPT] All execution attempts failed after {:?}: {}",
+        execution_start.elapsed(),
+        final_error
+    );
+    Err(final_error.into())
 }
 
 /// Create properly wrapped JavaScript code with comprehensive error handling

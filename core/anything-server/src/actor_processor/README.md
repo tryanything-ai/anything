@@ -1,98 +1,98 @@
-# Actor-Based Workflow Processor
+# Actor-Based Processor System
 
-This module implements a highly parallel, asynchronous workflow processor using the actor model pattern. It replaces the enhanced processor with a more scalable and fault-tolerant design.
+This module implements an actor-based processing system for executing workflows and tasks in a scalable, fault-tolerant manner.
 
-## Architecture
+## Architecture Overview
 
-The actor processor consists of several key components:
+The system consists of three main components:
 
-### Core Components
-
-- **TaskActor** (`task_actor.rs`): Executes individual plugin tasks with timeout handling
-- **WorkflowActor** (`workflow_actor.rs`): Orchestrates workflow execution and coordinates task actors
-- **TaskActorPool** (`actor_pool.rs`): Manages a pool of task actors with round-robin load balancing
-- **ActorProcessor** (`actor_system.rs`): Main coordinator that manages workflow actors and the task pool
-- **ActorMessage** (`messages.rs`): Type-safe message definitions for actor communication
-
-### Message Flow
+1. **ActorProcessor** - The main coordinator that receives workflow execution requests
+2. **WorkflowActors** - Actors that orchestrate workflow execution
+3. **TaskActors** - Actors that execute individual tasks
 
 ```
-ProcessorMessage → ActorProcessor → WorkflowActor → TaskActorPool → TaskActor
-                                                                      ↓
-                                                                 execute_task()
-                                                                      ↓
-                                                                   Plugin
+┌─────────────────┐
+│ ActorProcessor  │
+└────────┬────────┘
+         │
+    ┌────▼────┐
+    │ Round   │
+    │ Robin   │
+    └────┬────┘
+         │
+┌────────▼─────────┬─────────────────┬─────────────────┐
+│ WorkflowActor 1  │ WorkflowActor 2 │ WorkflowActor N │
+└────────┬─────────┴────────┬────────┴────────┬────────┘
+         │                  │                  │
+         └──────────┬───────┴──────────────────┘
+                    │
+              ┌─────▼─────┐
+              │   Task    │
+              │   Pool    │
+              └─────┬─────┘
+                    │
+      ┌─────────────┼─────────────┐
+      │             │             │
+┌─────▼─────┬──────▼──────┬──────▼──────┐
+│TaskActor 1│ TaskActor 2 │ TaskActor M │
+└───────────┴─────────────┴─────────────┘
 ```
+
+## Key Features
+
+- **Load Balancing**: Round-robin distribution of workflows and tasks
+- **Scalability**: Configurable pool sizes for workflow and task actors
+- **Fault Isolation**: Errors in one task don't affect others
+- **Observability**: Integrated tracing and metrics
 
 ## Configuration
 
-The actor system can be configured via environment variables:
+Set these environment variables to configure the actor pools:
 
-- `TASK_ACTOR_POOL_SIZE`: Number of task actors (default: 50)
 - `WORKFLOW_ACTOR_POOL_SIZE`: Number of workflow actors (default: 10)
+- `TASK_ACTOR_POOL_SIZE`: Number of task actors (default: 50)
 
-## Benefits over Enhanced Processor
+## Implementation Details
 
-### Higher Parallelism
+### WorkflowActor
 
-- Independent actors can process tasks concurrently without blocking
-- Configurable pool sizes allow tuning for different workloads
-- Round-robin load balancing distributes work evenly
+Responsible for:
 
-### Better Fault Isolation
+- Managing workflow state
+- Orchestrating task execution
+- Handling task dependencies
+- Error recovery and retries
 
-- Actor failures don't affect other actors
-- Failed tasks don't crash the entire processor
-- Timeout handling prevents stuck tasks from blocking others
+### TaskActor
 
-### Enhanced Observability
+Responsible for:
 
-- Per-actor tracing with unique actor IDs
-- Detailed metrics for task execution times
-- Workflow-level and task-level span tracking
+- Executing individual tasks
+- Timeout management
+- Result reporting
+- Resource cleanup
 
-### Graceful Shutdown
+### Message Types
 
-- Coordinated shutdown of all actors
-- In-flight tasks are allowed to complete
-- Clean resource cleanup
+The system uses the following message types:
 
-## Usage
+- `ExecuteWorkflow`: Start workflow execution
+- `ExecuteTask`: Execute a single task
+- `Shutdown`: Gracefully shutdown an actor
 
-The actor processor is used as a drop-in replacement for the enhanced processor:
+## Performance Considerations
 
-```rust
-use crate::actor_processor::actor_processor;
+- Task actors use a larger pool size since tasks are the unit of work
+- Workflow actors use a smaller pool since they primarily orchestrate
+- Channel sizes are tuned to prevent backpressure
 
-// Spawn the actor processor
-tokio::spawn(async move {
-    if let Err(e) = actor_processor(state, processor_rx).await {
-        error!("Actor processor failed: {}", e);
-    }
-});
-```
+## RustyScript (JavaScript) Execution
 
-## Monitoring
+For details on JavaScript/TypeScript execution optimization and troubleshooting, see [RUSTYSCRIPT_OPTIMIZATION.md](./RUSTYSCRIPT_OPTIMIZATION.md).
 
-The actor processor provides several metrics:
+## Future Improvements
 
-- `anything_processor_messages_received_total`: Total messages processed
-- `anything_workflow_processing_duration_seconds`: Workflow execution time
-- `anything_task_execution_duration_seconds`: Individual task execution time
-- `anything_processor_workflow_errors_total`: Error count
-
-## Testing
-
-Basic tests are provided in `tests.rs`. To run them:
-
-```bash
-cargo test actor_processor
-```
-
-## Future Enhancements
-
-- **Dependency Resolution**: Implement proper task dependency graphs
-- **Backpressure**: Add flow control when actors are overloaded
-- **Dynamic Scaling**: Automatically adjust pool sizes based on load
-- **Persistence**: Add actor state persistence for crash recovery
-- **Circuit Breakers**: Implement circuit breaker pattern for failing plugins
+- [ ] Dynamic pool sizing based on load
+- [ ] Priority-based task scheduling
+- [ ] Task result caching
+- [ ] Distributed actor support
