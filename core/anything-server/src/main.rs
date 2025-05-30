@@ -30,6 +30,7 @@ use dashmap::DashMap;
 use regex::Regex;
 
 use auth::init::AuthState;
+use actor_processor::js_worker_pool::JsWorkerPool;
 
 mod system_plugins; 
 mod system_workflows;
@@ -88,6 +89,7 @@ pub struct AppState {
     public_client: Arc<Postgrest>,
     r2_client: Arc<S3Client>,
     http_client: Arc<Client>,
+    js_worker_pool: JsWorkerPool,
     workflow_processor_semaphore: Arc<Semaphore>,
     auth_states: DashMap<String, AuthState>,
     trigger_engine_signal: watch::Sender<String>,
@@ -224,12 +226,19 @@ async fn main() {
        .build()
        .expect("Failed to build HTTP client");
 
+    // Initialize JavaScript worker pool with 4 workers
+    info!("Initializing JavaScript worker pool...");
+    let js_worker_pool = JsWorkerPool::new(4)
+        .expect("Failed to create JavaScript worker pool");
+    info!("JavaScript worker pool initialized successfully");
+
     let state = Arc::new(AppState {
         anything_client: anything_client.clone(),
         marketplace_client: marketplace_client.clone(),
         public_client: public_client.clone(),
         r2_client: r2_client.clone(),
         http_client: Arc::new(http_client),
+        js_worker_pool,
         auth_states: DashMap::new(),
         workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
         trigger_engine_signal,
@@ -483,8 +492,14 @@ pub async fn root() -> impl IntoResponse {
         let mut sigterm = signal(SignalKind::terminate()).unwrap();
         sigterm.recv().await;
         info!("Received SIGTERM signal");
+        
         // Set the shutdown signal
         state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
+        
+        // Gracefully shutdown the JavaScript worker pool
+        info!("Shutting down JavaScript worker pool...");
+        state_clone.js_worker_pool.shutdown().await;
+        info!("JavaScript worker pool shutdown completed");
         
         // Give time for in-flight operations to complete
         sleep(Duration::from_secs(20)).await;

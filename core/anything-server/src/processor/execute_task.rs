@@ -13,9 +13,7 @@ use crate::system_plugins::formatter_actions::{
 use crate::system_plugins::webhook_response::process_webhook_response_task;
 
 use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
-use crate::system_plugins::filter::process_filter_task;
 use crate::system_plugins::http::http_plugin::process_http_task;
-use crate::system_plugins::javascript::process_js_task;
 use crate::types::action_types::{ActionType, PluginName};
 use crate::types::task_types::Task;
 use crate::AppState;
@@ -33,7 +31,7 @@ pub struct TaskError {
 pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>), TaskError>;
 
 /// Enhanced task execution designed for the actor system
-/// Provides better isolation, timeout handling, and RustyScript compatibility
+/// Uses RustyScript worker pools for safe JavaScript execution
 #[instrument(skip(state, client, task, in_memory_tasks), fields(
     task_id = %task.task_id,
     plugin_name = ?task.plugin_name,
@@ -45,14 +43,15 @@ pub async fn execute_task(
     task: &Task,
     in_memory_tasks: Option<&HashMap<Uuid, Task>>, // Pass in-memory tasks from processor
 ) -> TaskResult {
+    let started_at = Utc::now();
+
+    info!("[EXECUTE_TASK] Starting task execution: {}", task.task_id);
+
     let task_id = task.task_id;
     let flow_session_id = task.flow_session_id;
     let plugin_name = task.plugin_name.clone();
     let label = task.action_label.clone();
     let account_id = task.account_id;
-    let started_at = Utc::now();
-
-    info!("[EXECUTE_TASK] Starting task execution: {}", task.task_id);
 
     // Phase 1: Bundle context with timeout protection
     let bundle_result = timeout(
@@ -153,11 +152,11 @@ pub async fn execute_task(
 }
 
 /// Get appropriate timeout duration based on plugin type
-/// JavaScript and filter tasks get longer timeouts due to RustyScript
+/// JavaScript and filter tasks get longer timeouts due to worker communication
 fn get_plugin_timeout(plugin_name: &Option<PluginName>) -> Duration {
     match plugin_name.as_ref().map(|s| s.as_str()) {
-        Some("@anything/javascript") => Duration::from_secs(60), // 60s for JS - RustyScript needs time
-        Some("@anything/filter") => Duration::from_secs(30), // 30s for filter - also uses RustyScript
+        Some("@anything/javascript") => Duration::from_secs(60), // 60s for JS - includes worker overhead
+        Some("@anything/filter") => Duration::from_secs(30), // 30s for filter - also uses workers
         Some("@anything/http") => Duration::from_secs(45),   // 45s for HTTP - network operations
         Some("@anything/webhook_response") => Duration::from_secs(20), // 20s for webhook response
         Some("@anything/agent_tool_call_response") => Duration::from_secs(30), // 30s for agent tools
@@ -165,8 +164,8 @@ fn get_plugin_timeout(plugin_name: &Option<PluginName>) -> Duration {
     }
 }
 
-/// Safely execute plugin with proper error isolation
-/// This prevents plugin panics from crashing the actor
+/// Safely execute plugin using worker pools for JavaScript-based plugins
+/// This prevents plugin panics from crashing the actor system
 #[instrument(skip(state, task, bundled_inputs, bundled_plugin_config))]
 async fn execute_plugin_safe(
     state: Arc<AppState>,
@@ -174,56 +173,11 @@ async fn execute_plugin_safe(
     bundled_inputs: &Value,
     bundled_plugin_config: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    // Use a panic guard for RustyScript-based plugins
-    let needs_panic_protection = matches!(
-        task.plugin_name.as_ref().map(|s| s.as_str()),
-        Some("@anything/javascript") | Some("@anything/filter")
-    );
-
-    if needs_panic_protection {
-        info!("[EXECUTE_TASK] Using enhanced safety for RustyScript plugin");
-        // For RustyScript plugins, we add extra monitoring and recovery
-        execute_plugin_with_monitoring(state, task, bundled_inputs, bundled_plugin_config).await
-    } else {
-        execute_plugin_inner(state, task, bundled_inputs, bundled_plugin_config).await
-    }
+    // Workers provide isolation, so we can execute directly
+    execute_plugin_inner(state, task, bundled_inputs, bundled_plugin_config).await
 }
 
-/// Execute plugin with enhanced monitoring for RustyScript-based plugins
-async fn execute_plugin_with_monitoring(
-    state: Arc<AppState>,
-    task: &Task,
-    bundled_inputs: &Value,
-    bundled_plugin_config: &Value,
-) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    info!("[EXECUTE_TASK] Executing RustyScript plugin with enhanced monitoring");
-
-    // Add memory and resource monitoring for RustyScript
-    let start_memory = get_memory_usage();
-    let start_time = std::time::Instant::now();
-
-    let result = execute_plugin_inner(state, task, bundled_inputs, bundled_plugin_config).await;
-
-    let end_time = std::time::Instant::now();
-    let end_memory = get_memory_usage();
-    let duration = end_time.duration_since(start_time);
-
-    info!(
-        "[EXECUTE_TASK] RustyScript execution completed - Duration: {:?}, Memory delta: {} KB",
-        duration,
-        (end_memory as i64 - start_memory as i64) / 1024
-    );
-
-    result
-}
-
-/// Simple memory usage tracking (best effort)
-fn get_memory_usage() -> u64 {
-    // Simple memory tracking - in a real implementation you might use more sophisticated monitoring
-    std::process::id() as u64 * 1024 // Placeholder - replace with actual memory monitoring if needed
-}
-
-/// Inner plugin execution logic
+/// Inner plugin execution logic using worker pools for JavaScript tasks
 async fn execute_plugin_inner(
     state: Arc<AppState>,
     task: &Task,
@@ -245,12 +199,20 @@ async fn execute_plugin_inner(
                     process_http_task(&state.http_client, bundled_plugin_config).await
                 }
                 "@anything/filter" => {
-                    info!("[EXECUTE_TASK] Executing filter plugin with RustyScript");
-                    process_filter_task(bundled_inputs, bundled_plugin_config).await
+                    info!("[EXECUTE_TASK] Executing filter plugin with JS worker");
+                    // Use worker pool instead of direct RustyScript
+                    state
+                        .js_worker_pool
+                        .execute_filter(bundled_inputs, bundled_plugin_config)
+                        .await
                 }
                 "@anything/javascript" => {
-                    info!("[EXECUTE_TASK] Executing JavaScript plugin with RustyScript");
-                    process_js_task(bundled_inputs, bundled_plugin_config).await
+                    info!("[EXECUTE_TASK] Executing JavaScript plugin with JS worker");
+                    // Use worker pool instead of direct RustyScript
+                    state
+                        .js_worker_pool
+                        .execute_javascript(bundled_inputs, bundled_plugin_config)
+                        .await
                 }
                 "@anything/webhook_response" => {
                     info!("[EXECUTE_TASK] Executing webhook response plugin");
