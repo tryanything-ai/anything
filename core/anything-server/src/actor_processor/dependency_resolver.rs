@@ -115,7 +115,7 @@ impl DependencyGraph {
         result
     }
 
-    /// Gets the dependencies for a given action
+    /// Gets the dependencies f or a given action
     pub fn get_dependencies(&self, action_id: &str) -> Vec<String> {
         self.dependencies
             .get(action_id)
