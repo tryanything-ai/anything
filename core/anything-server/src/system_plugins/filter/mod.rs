@@ -1,4 +1,4 @@
-use rustyscript::{json_args, Module, Runtime, RuntimeOptions};
+use rustyscript::worker::{DefaultWorker, DefaultWorkerOptions};
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 use tracing::{error, info, instrument, warn};
@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 /// Enhanced filter task processor optimized for the actor system
 /// This is used for conditional logic and boolean expressions
-/// Removes unnecessary thread spawning since actors already provide isolation
+/// Uses RustyScript workers for safe JavaScript execution
 #[instrument(skip(bundled_inputs, bundled_plugin_config))]
 pub async fn process_filter_task(
     bundled_inputs: &Value,
@@ -37,7 +37,7 @@ pub async fn process_filter_task(
     Ok(Some(result))
 }
 
-/// Execute filter condition with proper error handling
+/// Execute filter condition with RustyScript workers and proper error handling
 async fn execute_filter_condition(
     js_code: &str,
     inputs: &Value,
@@ -50,18 +50,11 @@ async fn execute_filter_condition(
     // Create wrapped code appropriate for the expression type
     let wrapped_code = create_wrapped_filter_code(js_code, inputs, is_simple_expression)?;
 
-    // Generate unique module name
-    let module_name = format!("user_condition_{}.js", Uuid::new_v4());
-
-    info!("[FILTER] Creating module: {}", module_name);
+    info!("[FILTER] Creating RustyScript worker for filter execution");
 
     // Execute with appropriate timeout for actor system
     let execution_start = Instant::now();
     info!("[FILTER] Starting condition execution with 15 second timeout");
-
-    // Clone values for the blocking task
-    let wrapped_code_clone = wrapped_code.clone();
-    let module_name_clone = module_name.clone();
 
     // Add retry logic and better error handling
     let max_retries = 2;
@@ -78,18 +71,18 @@ async fn execute_filter_condition(
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
 
-        let wrapped_code_for_attempt = wrapped_code_clone.clone();
-        let module_name_for_attempt = module_name_clone.clone();
+        let wrapped_code_for_attempt = wrapped_code.clone();
 
         let execution_result = tokio::task::spawn_blocking(move || {
-            // Create module inside the blocking task
-            let module = Module::new(&module_name_for_attempt, &wrapped_code_for_attempt);
-
-            // Configure runtime with more conservative settings
-            let runtime_options = RuntimeOptions {
+            // Create worker inside the blocking task
+            let worker = match DefaultWorker::new(DefaultWorkerOptions {
+                default_entrypoint: None,
                 timeout: Duration::from_secs(12), // Slightly less than outer timeout
-                default_entrypoint: Some("default".to_string()),
-                ..Default::default()
+                startup_snapshot: None,
+                shared_array_buffer_store: None,
+            }) {
+                Ok(worker) => worker,
+                Err(e) => return Err(format!("Failed to create RustyScript worker: {}", e)),
             };
 
             // Execute with panic catching
@@ -97,7 +90,7 @@ async fn execute_filter_condition(
                 Result<Result<Value, rustyscript::Error>, Box<dyn std::any::Any + Send>>;
             let result: PanicResult =
                 std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    Runtime::execute_module(&module, vec![], runtime_options, json_args!())
+                    worker.eval::<Value>(wrapped_code_for_attempt)
                 }));
 
             match result {
@@ -189,7 +182,7 @@ fn create_wrapped_filter_code(
             // Enhanced filter wrapper for simple expressions
             Object.assign(globalThis, {{ inputs: {inputs_json} }});
 
-            export default () => {{
+            const executeFilterCondition = () => {{
                 try {{
                     const result = {js_code};
                     
@@ -221,7 +214,10 @@ fn create_wrapped_filter_code(
                         error_stack: error.stack || 'No stack trace available'
                     }};
                 }}
-            }}
+            }};
+
+            // Execute and return result
+            executeFilterCondition();
             "#
         )
     } else {
@@ -230,7 +226,7 @@ fn create_wrapped_filter_code(
             // Enhanced filter wrapper for function-style conditions
             Object.assign(globalThis, {{ inputs: {inputs_json} }});
 
-            export default () => {{
+            const executeFilterCondition = () => {{
                 try {{
                     const result = (() => {{
                         {js_code}
@@ -257,7 +253,10 @@ fn create_wrapped_filter_code(
                         error_stack: error.stack || 'No stack trace available'
                     }};
                 }}
-            }}
+            }};
+
+            // Execute and return result
+            executeFilterCondition();
             "#
         )
     };

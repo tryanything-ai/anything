@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use postgrest::Postgrest;
 use uuid::Uuid;
@@ -12,14 +12,17 @@ use crate::system_plugins::formatter_actions::{
 };
 use crate::system_plugins::webhook_response::process_webhook_response_task;
 
+// Use the plugin modules directly instead of inline RustyScript
 use crate::system_plugins::agent_tool_trigger_response::process_tool_call_result_task;
+use crate::system_plugins::filter::process_filter_task;
 use crate::system_plugins::http::http_plugin::process_http_task;
+use crate::system_plugins::javascript::process_js_task;
 use crate::types::action_types::{ActionType, PluginName};
 use crate::types::task_types::Task;
 use crate::AppState;
 use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
-use tokio::time::{timeout, Duration};
+use tokio::time::{timeout, Duration as TokioDuration};
 use tracing::{error, info, instrument, warn};
 
 #[derive(Debug, Clone)]
@@ -177,7 +180,7 @@ async fn execute_plugin_safe(
     execute_plugin_inner(state, task, bundled_inputs, bundled_plugin_config).await
 }
 
-/// Inner plugin execution logic using worker pools for JavaScript tasks
+/// Inner plugin execution logic using plugin modules for JavaScript and filter tasks
 async fn execute_plugin_inner(
     state: Arc<AppState>,
     task: &Task,
@@ -199,20 +202,12 @@ async fn execute_plugin_inner(
                     process_http_task(&state.http_client, bundled_plugin_config).await
                 }
                 "@anything/filter" => {
-                    info!("[EXECUTE_TASK] Executing filter plugin with JS worker");
-                    // Use worker pool instead of direct RustyScript
-                    state
-                        .js_worker_pool
-                        .execute_filter(bundled_inputs, bundled_plugin_config)
-                        .await
+                    info!("[EXECUTE_TASK] Executing filter plugin with RustyScript worker");
+                    process_filter_task(bundled_inputs, bundled_plugin_config).await
                 }
                 "@anything/javascript" => {
-                    info!("[EXECUTE_TASK] Executing JavaScript plugin with JS worker");
-                    // Use worker pool instead of direct RustyScript
-                    state
-                        .js_worker_pool
-                        .execute_javascript(bundled_inputs, bundled_plugin_config)
-                        .await
+                    info!("[EXECUTE_TASK] Executing JavaScript plugin with RustyScript worker");
+                    process_js_task(bundled_inputs, bundled_plugin_config).await
                 }
                 "@anything/webhook_response" => {
                     info!("[EXECUTE_TASK] Executing webhook response plugin");

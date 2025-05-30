@@ -1,7 +1,6 @@
 pub mod actor_pool;
 pub mod actor_system;
 pub mod dependency_resolver;
-pub mod js_worker_pool;
 pub mod messages;
 pub mod processor;
 pub mod task_actor;

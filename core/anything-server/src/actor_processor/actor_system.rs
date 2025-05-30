@@ -85,7 +85,7 @@ impl ActorProcessor {
         }
 
         info!(
-            "[ACTOR_PROCESSOR] Initialized with {} task actors and {} workflow actors",
+            "[ACTOR_PROCESSOR] Initialized with {} task actors, {} workflow actors",
             task_pool_size, workflow_pool_size
         );
 

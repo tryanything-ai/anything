@@ -1,4 +1,4 @@
-use rustyscript::{json_args, Module, Runtime, RuntimeOptions};
+use rustyscript::worker::{DefaultWorker, DefaultWorkerOptions};
 use serde_json::Value;
 use std::time::Duration;
 use tokio::time::Instant;
@@ -6,7 +6,7 @@ use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
 /// Enhanced JavaScript task processor optimized for the actor system
-/// Removes unnecessary thread spawning since actors already provide isolation
+/// Uses RustyScript workers for safe JavaScript execution
 #[instrument(skip(bundled_inputs, bundled_plugin_config))]
 pub async fn process_js_task(
     bundled_inputs: &Value,
@@ -37,8 +37,7 @@ pub async fn process_js_task(
 
     info!("[RUSTYSCRIPT] Input data size: {} bytes", input_size);
 
-    // Execute JavaScript in a controlled manner
-    // Since we're already in an actor, we don't need spawn_blocking
+    // Execute JavaScript in a controlled manner using RustyScript workers
     let result = execute_javascript_safe(js_code, bundled_inputs).await?;
 
     let total_duration = start.elapsed();
@@ -50,7 +49,7 @@ pub async fn process_js_task(
     Ok(Some(result))
 }
 
-/// Safe JavaScript execution with proper error handling and timeout
+/// Safe JavaScript execution with RustyScript workers and proper error handling
 async fn execute_javascript_safe(
     js_code: &str,
     inputs: &Value,
@@ -60,18 +59,11 @@ async fn execute_javascript_safe(
     // Create wrapped code with better error handling
     let wrapped_code = create_wrapped_javascript(js_code, inputs)?;
 
-    // Generate unique module name to avoid conflicts
-    let module_name = format!("user_code_{}.js", Uuid::new_v4());
-
-    info!("[RUSTYSCRIPT] Creating module: {}", module_name);
+    info!("[RUSTYSCRIPT] Creating RustyScript worker for JavaScript execution");
 
     // Execute with appropriate timeout for actor system
     let execution_start = Instant::now();
     info!("[RUSTYSCRIPT] Starting script execution with 30 second timeout");
-
-    // Clone values for the blocking task
-    let wrapped_code_clone = wrapped_code.clone();
-    let module_name_clone = module_name.clone();
 
     // Add retry logic and better error handling
     let max_retries = 2;
@@ -88,24 +80,24 @@ async fn execute_javascript_safe(
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
 
-        let wrapped_code_for_attempt = wrapped_code_clone.clone();
-        let module_name_for_attempt = module_name_clone.clone();
+        let wrapped_code_for_attempt = wrapped_code.clone();
 
         let execution_result = tokio::task::spawn_blocking(move || {
-            // Create module inside the blocking task
-            let module = Module::new(&module_name_for_attempt, &wrapped_code_for_attempt);
-
-            // Configure runtime with more conservative settings
-            let runtime_options = RuntimeOptions {
+            // Create worker inside the blocking task
+            let worker = match DefaultWorker::new(DefaultWorkerOptions {
+                default_entrypoint: None,
                 timeout: Duration::from_secs(25), // Slightly less than outer timeout
-                default_entrypoint: Some("default".to_string()),
-                ..Default::default()
+                startup_snapshot: None,
+                shared_array_buffer_store: None,
+            }) {
+                Ok(worker) => worker,
+                Err(e) => return Err(format!("Failed to create RustyScript worker: {}", e)),
             };
 
             // Execute with panic catching
             let result: Result<Result<Value, rustyscript::Error>, Box<dyn std::any::Any + Send>> =
                 std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    Runtime::execute_module(&module, vec![], runtime_options, json_args!())
+                    worker.eval::<Value>(wrapped_code_for_attempt)
                 }));
 
             match result {
@@ -197,7 +189,7 @@ fn create_wrapped_javascript(
         Object.assign(globalThis, {{ inputs: {inputs_json} }});
         
         // Create a safer execution environment
-        export default () => {{
+        const executeUserCode = () => {{
             try {{
                 // Execute user code in an IIFE to capture return value
                 const result = (() => {{
@@ -233,7 +225,10 @@ fn create_wrapped_javascript(
                     error_line: error.lineNumber || 'Unknown'
                 }};
             }}
-        }}
+        }};
+
+        // Execute and return result
+        executeUserCode();
         "#
     );
 
