@@ -202,7 +202,7 @@ async fn execute_plugin_inner(
                     process_http_task(&state.http_client, bundled_plugin_config).await
                 }
                 "@anything/filter" => {
-                    info!("[EXECUTE_TASK] Executing filter plugin with RustyScript worker");
+                    info!("[EXECUTE_TASK] Executing filter plugin with gRPC JavaScript executor");
                     process_filter_task(bundled_inputs, bundled_plugin_config).await
                 }
                 "@anything/javascript" => {

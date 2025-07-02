@@ -1,12 +1,13 @@
-use rustyscript::worker::{DefaultWorker, DefaultWorkerOptions};
 use serde_json::{json, Value};
-use std::time::{Duration, Instant};
-use tracing::{error, info, instrument, warn};
-use uuid::Uuid;
+use std::time::Instant;
+use tracing::{error, info, instrument};
 
-/// Enhanced filter task processor optimized for the actor system
+// Import the JavaScript executor functionality
+use crate::system_plugins::javascript::{execute_javascript_grpc, JsExecutorManager};
+
+/// Enhanced filter task processor using gRPC JavaScript executor
 /// This is used for conditional logic and boolean expressions
-/// Uses RustyScript workers for safe JavaScript execution
+/// Now uses the same gRPC JavaScript executor as the main JavaScript plugin
 #[instrument(skip(bundled_inputs, bundled_plugin_config))]
 pub async fn process_filter_task(
     bundled_inputs: &Value,
@@ -14,7 +15,6 @@ pub async fn process_filter_task(
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
     info!("[FILTER] Starting filter task processing");
-    info!("[FILTER] Input data: {:?}", bundled_inputs);
 
     // Extract condition code
     let js_code = match bundled_plugin_config["condition"].as_str() {
@@ -28,8 +28,8 @@ pub async fn process_filter_task(
         }
     };
 
-    // Execute filter condition
-    let result = execute_filter_condition(js_code, bundled_inputs).await?;
+    // Execute filter condition using the gRPC JavaScript executor
+    let result = execute_filter_condition_grpc(js_code, bundled_inputs).await?;
 
     let total_duration = start.elapsed();
     info!("[FILTER] Filter task completed in {:?}", total_duration);
@@ -37,135 +37,32 @@ pub async fn process_filter_task(
     Ok(Some(result))
 }
 
-/// Execute filter condition with RustyScript workers and proper error handling
-async fn execute_filter_condition(
+/// Execute filter condition using gRPC JavaScript executor
+async fn execute_filter_condition_grpc(
     js_code: &str,
     inputs: &Value,
 ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-    info!("[FILTER] Preparing filter condition execution");
+    info!("[FILTER] Executing filter condition via gRPC JavaScript executor");
 
-    // Determine if this is a simple expression or a function
-    let is_simple_expression = !js_code.contains("return");
+    // Determine if this is a simple expression or function-style condition
+    let is_simple_expression = !js_code.trim_start().starts_with("function")
+        && !js_code.contains("return")
+        && !js_code.contains("{");
 
-    // Create wrapped code appropriate for the expression type
+    // Create wrapped filter code that returns a proper result
     let wrapped_code = create_wrapped_filter_code(js_code, inputs, is_simple_expression)?;
 
-    info!("[FILTER] Creating RustyScript worker for filter execution");
+    // Create gRPC client connection
+    let mut js_manager = JsExecutorManager::new().await?;
+    let js_client = js_manager.get_client().await;
 
-    // Execute with appropriate timeout for actor system
-    let execution_start = Instant::now();
-    info!("[FILTER] Starting condition execution with 15 second timeout");
+    // Execute via gRPC using a simple inputs object since the code is already wrapped
+    let simple_inputs = json!({});
+    let result =
+        execute_javascript_grpc(js_client, &wrapped_code, &simple_inputs, "filter").await?;
 
-    // Add retry logic and better error handling
-    let max_retries = 2;
-    let mut last_error = None;
-
-    for attempt in 0..=max_retries {
-        if attempt > 0 {
-            warn!(
-                "[FILTER] Retrying execution, attempt {}/{}",
-                attempt + 1,
-                max_retries + 1
-            );
-            // Small delay between retries
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-
-        let wrapped_code_for_attempt = wrapped_code.clone();
-
-        let execution_result = tokio::task::spawn_blocking(move || {
-            // Create worker inside the blocking task
-            let worker = match DefaultWorker::new(DefaultWorkerOptions {
-                default_entrypoint: None,
-                timeout: Duration::from_secs(12), // Slightly less than outer timeout
-                startup_snapshot: None,
-                shared_array_buffer_store: None,
-            }) {
-                Ok(worker) => worker,
-                Err(e) => return Err(format!("Failed to create RustyScript worker: {}", e)),
-            };
-
-            // Execute with panic catching
-            type PanicResult =
-                Result<Result<Value, rustyscript::Error>, Box<dyn std::any::Any + Send>>;
-            let result: PanicResult =
-                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    worker.eval::<Value>(wrapped_code_for_attempt)
-                }));
-
-            match result {
-                Ok(Ok(value)) => Ok(value),
-                Ok(Err(e)) => Err(format!("RustyScript error: {}", e)),
-                Err(panic) => {
-                    let panic_msg = if let Some(s) = panic.downcast_ref::<String>() {
-                        s.clone()
-                    } else if let Some(s) = panic.downcast_ref::<&str>() {
-                        s.to_string()
-                    } else {
-                        "Unknown panic".to_string()
-                    };
-                    Err(format!("RustyScript panicked: {}", panic_msg))
-                }
-            }
-        })
-        .await;
-
-        match execution_result {
-            Ok(Ok(result)) => {
-                let execution_duration = execution_start.elapsed();
-                info!(
-                    "[FILTER] Condition executed successfully in {:?}",
-                    execution_duration
-                );
-
-                // Check for internal error markers
-                if let Some(error) = result.get("internal_error") {
-                    if let Some(error_msg) = error.as_str() {
-                        error!("[FILTER] Filter condition error: {}", error_msg);
-                        last_error = Some(error_msg.to_string());
-                        continue; // Retry on internal errors
-                    }
-                }
-
-                info!("[FILTER] Condition result: {:?}", result);
-                return Ok(result);
-            }
-            Ok(Err(e)) => {
-                error!("[FILTER] Execution error: {}", e);
-                last_error = Some(e);
-                continue; // Retry
-            }
-            Err(join_error) => {
-                error!("[FILTER] Task join error: {}", join_error);
-
-                // Check if it's a panic
-                if join_error.is_panic() {
-                    let panic_info = join_error.into_panic();
-                    let panic_msg = if let Some(s) = panic_info.downcast_ref::<String>() {
-                        s.clone()
-                    } else if let Some(s) = panic_info.downcast_ref::<&str>() {
-                        s.to_string()
-                    } else {
-                        "Unknown panic".to_string()
-                    };
-                    error!("[FILTER] Task panicked: {}", panic_msg);
-                    last_error = Some(format!("Task panicked: {}", panic_msg));
-                } else {
-                    last_error = Some("Task was cancelled".to_string());
-                }
-                continue; // Retry
-            }
-        }
-    }
-
-    // All retries failed
-    let final_error = last_error.unwrap_or_else(|| "Unknown error after retries".to_string());
-    error!(
-        "[FILTER] All execution attempts failed after {:?}: {}",
-        execution_start.elapsed(),
-        final_error
-    );
-    Err(final_error.into())
+    // Process the filter result
+    process_filter_result(result, inputs)
 }
 
 /// Create properly wrapped filter condition code
@@ -180,83 +77,76 @@ fn create_wrapped_filter_code(
         format!(
             r#"
             // Enhanced filter wrapper for simple expressions
-            Object.assign(globalThis, {{ inputs: {inputs_json} }});
+            const inputs = {inputs_json};
 
-            const executeFilterCondition = () => {{
-                try {{
-                    const result = {js_code};
-                    
-                    // Ensure we got a value
-                    if (result === undefined) {{
-                        return {{ 
-                            internal_error: 'Filter expression returned undefined. Please ensure your expression evaluates to a boolean value.',
-                            actual_value: 'undefined'
-                        }};
-                    }}
-
-                    // If result is a boolean, use it directly
-                    if (typeof result === 'boolean') {{
-                        return {{ result }};
-                    }}
-                    
-                    // If result is a string "true" or "false", convert it
-                    if (typeof result === 'string' && (result.toLowerCase() === 'true' || result.toLowerCase() === 'false')) {{
-                        return {{ result: result.toLowerCase() === 'true' }};
-                    }}
-                    
-                    // Truthy/falsy conversion for other types
-                    return {{ result: Boolean(result) }};
-                    
-                }} catch (error) {{
+            try {{
+                const result = {js_code};
+                
+                // Ensure we got a value
+                if (result === undefined) {{
                     return {{ 
-                        internal_error: `Filter expression error: ${{error.message}}`,
-                        error_type: error.name || 'Error',
-                        error_stack: error.stack || 'No stack trace available'
+                        error: 'Filter expression returned undefined. Please ensure your expression evaluates to a boolean value.',
+                        actual_value: 'undefined'
                     }};
                 }}
-            }};
 
-            // Execute and return result
-            executeFilterCondition();
+                // If result is a boolean, use it directly
+                if (typeof result === 'boolean') {{
+                    return {{ success: true, result, passed: result }};
+                }}
+                
+                // If result is a string "true" or "false", convert it
+                if (typeof result === 'string' && (result.toLowerCase() === 'true' || result.toLowerCase() === 'false')) {{
+                    const boolResult = result.toLowerCase() === 'true';
+                    return {{ success: true, result: boolResult, passed: boolResult }};
+                }}
+                
+                // Truthy/falsy conversion for other types
+                const boolResult = Boolean(result);
+                return {{ success: true, result: boolResult, passed: boolResult }};
+                
+            }} catch (error) {{
+                return {{ 
+                    error: `Filter expression error: ${{error.message}}`,
+                    error_type: error.name || 'Error',
+                    error_stack: error.stack || 'No stack trace available'
+                }};
+            }}
             "#
         )
     } else {
         format!(
             r#"
             // Enhanced filter wrapper for function-style conditions
-            Object.assign(globalThis, {{ inputs: {inputs_json} }});
+            const inputs = {inputs_json};
 
-            const executeFilterCondition = () => {{
-                try {{
-                    const result = (() => {{
-                        {js_code}
-                    }})();
-                    
-                    if (result === undefined) {{
-                        return {{ 
-                            internal_error: 'Filter function must return a value. Add a return statement to your condition.',
-                            actual_value: 'undefined'
-                        }};
-                    }}
-
-                    // Convert to boolean
-                    if (typeof result === 'boolean') {{
-                        return {{ result }};
-                    }}
-                    
-                    return {{ result: Boolean(result) }};
-                    
-                }} catch (error) {{
+            try {{
+                const result = (() => {{
+                    {js_code}
+                }})();
+                
+                if (result === undefined) {{
                     return {{ 
-                        internal_error: `Filter function error: ${{error.message}}`,
-                        error_type: error.name || 'Error',
-                        error_stack: error.stack || 'No stack trace available'
+                        error: 'Filter function must return a value. Add a return statement to your condition.',
+                        actual_value: 'undefined'
                     }};
                 }}
-            }};
 
-            // Execute and return result
-            executeFilterCondition();
+                // Convert to boolean
+                if (typeof result === 'boolean') {{
+                    return {{ success: true, result, passed: result }};
+                }}
+                
+                const boolResult = Boolean(result);
+                return {{ success: true, result: boolResult, passed: boolResult }};
+                
+            }} catch (error) {{
+                return {{ 
+                    error: `Filter function error: ${{error.message}}`,
+                    error_type: error.name || 'Error',
+                    error_stack: error.stack || 'No stack trace available'
+                }};
+            }}
             "#
         )
     };
@@ -267,4 +157,47 @@ fn create_wrapped_filter_code(
     );
 
     Ok(wrapped_code)
+}
+
+/// Process the filter result and return appropriate data
+fn process_filter_result(
+    result: Value,
+    original_inputs: &Value,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    // Check for errors first
+    if let Some(error) = result.get("error") {
+        if let Some(error_msg) = error.as_str() {
+            error!("[FILTER] Filter condition error: {}", error_msg);
+            return Err(error_msg.into());
+        }
+    }
+
+    // Check for success
+    if let Some(success) = result.get("success") {
+        if success.as_bool() == Some(true) {
+            if let Some(passed) = result.get("passed") {
+                if passed.as_bool() == Some(true) {
+                    info!("[FILTER] Condition passed, returning original inputs");
+                    return Ok(original_inputs.clone());
+                } else {
+                    info!("[FILTER] Condition failed, returning null");
+                    return Ok(Value::Null);
+                }
+            }
+        }
+    }
+
+    // Fallback: try to interpret the result directly
+    if let Some(passed) = result.as_bool() {
+        if passed {
+            info!("[FILTER] Direct boolean result: passed, returning original inputs");
+            Ok(original_inputs.clone())
+        } else {
+            info!("[FILTER] Direct boolean result: failed, returning null");
+            Ok(Value::Null)
+        }
+    } else {
+        error!("[FILTER] Unexpected filter result format: {:?}", result);
+        Err("Unexpected filter result format".into())
+    }
 }
