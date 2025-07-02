@@ -3,13 +3,16 @@ use crate::actor_processor::dependency_resolver::DependencyGraph;
 use crate::actor_processor::messages::ActorMessage;
 use crate::metrics::METRICS;
 use crate::processor::components::{EnhancedSpanFactory, ProcessorError, WorkflowExecutionContext};
-use crate::processor::execute_task::TaskResult;
+
 use crate::processor::processor::ProcessorMessage;
-use crate::types::task_types::Task;
+use crate::status_updater::{Operation, StatusUpdateMessage};
+use crate::types::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
 use crate::AppState;
 
+use chrono::Utc;
 use opentelemetry::KeyValue;
 use postgrest::Postgrest;
+use serde_json;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Instant;
@@ -236,8 +239,28 @@ impl WorkflowActor {
                     .convert_action_to_task(&action, &message, 0) // processing_order not used in dependency-based execution
                     .await?;
 
-                // 📝 TASK CREATION - Would normally create task in database
-                info!("📝 TASK CREATION: Creating task {} for action {} (skipping database creation for debugging)", task.task_id, action.action_id);
+                // Send task creation message to database
+                let create_task_message = StatusUpdateMessage {
+                    operation: Operation::CreateTask {
+                        task_id: task.task_id,
+                        account_id: message.workflow_version.account_id,
+                        flow_session_id: context.flow_session_id,
+                        input: task.clone(),
+                    },
+                };
+
+                if let Err(e) = self
+                    .state
+                    .task_updater_sender
+                    .send(create_task_message)
+                    .await
+                {
+                    error!(
+                        "[WORKFLOW_ACTOR_{}] Failed to send create task message for {}: {}",
+                        self.id, task.task_id, e
+                    );
+                    return Err(format!("Failed to send task creation message: {}", e).into());
+                }
 
                 info!(
                     "[WORKFLOW_ACTOR_{}] Created and executing task {} for action {}",
@@ -250,6 +273,29 @@ impl WorkflowActor {
                     context.workflow_id,
                     Some(task.task_id),
                     context.span.clone(),
+                );
+
+                // Capture data needed for task completion handling
+                let action_data = (
+                    action.label.clone(),
+                    action.r#type.clone(),
+                    action.plugin_name.clone(),
+                    action.plugin_version.clone(),
+                    action.inputs.clone().unwrap_or_default(),
+                    action.inputs_schema.clone(),
+                    action.plugin_config.clone(),
+                    action.plugin_config_schema.clone(),
+                );
+                let message_data = (
+                    message.workflow_version.account_id,
+                    message.workflow_version.flow_version_id,
+                    message
+                        .trigger_task
+                        .as_ref()
+                        .map(|t| t.task_id.to_string())
+                        .unwrap_or_default(),
+                    message.trigger_session_id,
+                    message.workflow_version.published,
                 );
 
                 // Execute task using actor pool with in-memory tasks for bundling
@@ -277,7 +323,7 @@ impl WorkflowActor {
                         running.remove(&action_id);
                     }
 
-                    (task_id, action_id, result)
+                    (task_id, action_id, result, action_data, message_data)
                 });
 
                 task_futures.push(task_future);
@@ -286,7 +332,7 @@ impl WorkflowActor {
             // Wait for this batch of tasks to complete
             for task_future in task_futures {
                 match task_future.await {
-                    Ok((task_id, action_id, result)) => {
+                    Ok((task_id, action_id, result, action_data, message_data)) => {
                         match result {
                             Ok(task_result) => {
                                 info!(
@@ -294,40 +340,98 @@ impl WorkflowActor {
                                     self.id, task_id, action_id
                                 );
 
+                                // Extract result and context from TaskResult tuple
+                                let (result_value, context_value, started_at, ended_at) =
+                                    match &task_result {
+                                        Ok((result, context, start, end)) => (
+                                            result.clone(),
+                                            Some(context.clone()),
+                                            Some(*start),
+                                            Some(*end),
+                                        ),
+                                        Err(_) => (None, None, None, None),
+                                    };
+
+                                // Send task completion update to database
+                                let task_update_message = StatusUpdateMessage {
+                                    operation: Operation::UpdateTask {
+                                        task_id,
+                                        account_id: message_data.0, // account_id from message_data
+                                        flow_session_id: context.flow_session_id,
+                                        status: TaskStatus::Completed,
+                                        result: result_value.clone(),
+                                        context: context_value.clone(),
+                                        error: None,
+                                        started_at,
+                                        ended_at,
+                                    },
+                                };
+
+                                if let Err(e) = self
+                                    .state
+                                    .task_updater_sender
+                                    .send(task_update_message)
+                                    .await
+                                {
+                                    error!(
+                                        "[WORKFLOW_ACTOR_{}] Failed to send task completion update for {}: {}",
+                                        self.id, task_id, e
+                                    );
+                                }
+
                                 // Store completed task with its result for future bundling
                                 // Create a minimal task for in-memory storage
-                                //TODO: this seems kinda dangerous since some of this data is false!
-                                let mut completed_task = Task {
+                                let (
+                                    action_label,
+                                    action_type,
+                                    plugin_name,
+                                    plugin_version,
+                                    inputs,
+                                    inputs_schema,
+                                    plugin_config,
+                                    plugin_config_schema,
+                                ) = action_data;
+                                let (
+                                    account_id,
+                                    flow_version_id,
+                                    trigger_id,
+                                    trigger_session_id,
+                                    published,
+                                ) = message_data;
+
+                                let completed_task = Task {
                                     task_id,
-                                    account_id: Uuid::new_v4(), // Placeholder
-                                    task_status: crate::types::task_types::TaskStatus::Completed,
+                                    account_id,
+                                    task_status: TaskStatus::Completed,
                                     flow_id: context.workflow_id,
-                                    flow_version_id: Uuid::new_v4(), // Placeholder
-                                    action_label: "".to_string(),    // Placeholder
-                                    trigger_id: "".to_string(),      // Placeholder
-                                    trigger_session_id: Uuid::new_v4(), // Placeholder
-                                    trigger_session_status:
-                                        crate::types::task_types::TriggerSessionStatus::Completed,
+                                    flow_version_id,
+                                    action_label,
+                                    trigger_id,
+                                    trigger_session_id,
+                                    trigger_session_status: TriggerSessionStatus::Completed,
                                     flow_session_id: context.flow_session_id,
-                                    flow_session_status:
-                                        crate::types::task_types::FlowSessionStatus::Running,
+                                    flow_session_status: FlowSessionStatus::Running,
                                     action_id: action_id.clone(),
-                                    r#type: crate::types::action_types::ActionType::Action,
-                                    plugin_name: None,
-                                    plugin_version: None,
-                                    stage: crate::types::task_types::Stage::Production,
+                                    r#type: action_type,
+                                    plugin_name: Some(plugin_name),
+                                    plugin_version: Some(plugin_version),
+                                    stage: if published {
+                                        crate::types::task_types::Stage::Production
+                                    } else {
+                                        crate::types::task_types::Stage::Testing
+                                    },
                                     test_config: None,
                                     config: crate::types::task_types::TaskConfig {
-                                        inputs: None,
-                                        inputs_schema: None,
-                                        plugin_config: None,
-                                        plugin_config_schema: None,
+                                        inputs: Some(inputs),
+                                        inputs_schema,
+                                        plugin_config: Some(plugin_config),
+                                        plugin_config_schema: Some(plugin_config_schema),
                                     },
-                                    context: None,
-                                    started_at: None,
-                                    ended_at: None,
+                                    context: context_value,
+                                    started_at,
+                                    ended_at,
                                     debug_result: None,
-                                    result: None,
+                                    result: result_value,
                                     error: None,
                                     archived: false,
                                     updated_at: None,
@@ -336,12 +440,6 @@ impl WorkflowActor {
                                     created_by: None,
                                     processing_order: 0,
                                 };
-
-                                // Extract result from TaskResult tuple
-                                if let Ok((result_value, context_value, _, _)) = &task_result {
-                                    completed_task.result = result_value.clone();
-                                    completed_task.context = Some(context_value.clone());
-                                }
 
                                 {
                                     let mut completed = completed_tasks.write().await;
@@ -354,9 +452,57 @@ impl WorkflowActor {
                                     self.id, task_id, action_id, e
                                 );
 
-                                // 💥 WORKFLOW FAILURE - Would normally send workflow failure status to database
-                                info!("💥 WORKFLOW FAILURE: Workflow {} failed due to task {} failure (skipping database update for debugging)", context.flow_session_id, task_id);
-                                //TODO: we should probably send a failure status update for the task as well
+                                // Send task failure update to database
+                                let task_error_message = StatusUpdateMessage {
+                                    operation: Operation::UpdateTask {
+                                        task_id,
+                                        account_id: message_data.0, // account_id from message_data
+                                        flow_session_id: context.flow_session_id,
+                                        status: TaskStatus::Failed,
+                                        result: None,
+                                        context: None,
+                                        error: Some(serde_json::json!({
+                                            "error": e.to_string(),
+                                            "error_type": "task_execution_error"
+                                        })),
+                                        started_at: None,
+                                        ended_at: Some(Utc::now()),
+                                    },
+                                };
+
+                                if let Err(send_err) = self
+                                    .state
+                                    .task_updater_sender
+                                    .send(task_error_message)
+                                    .await
+                                {
+                                    error!(
+                                        "[WORKFLOW_ACTOR_{}] Failed to send task error update for {}: {}",
+                                        self.id, task_id, send_err
+                                    );
+                                }
+
+                                // Send workflow failure status to database
+                                let workflow_failure_message = StatusUpdateMessage {
+                                    operation: Operation::CompleteWorkflow {
+                                        flow_session_id: context.flow_session_id,
+                                        account_id: message_data.0, // account_id from message_data
+                                        status: FlowSessionStatus::Failed,
+                                        trigger_status: TriggerSessionStatus::Failed,
+                                    },
+                                };
+
+                                if let Err(send_err) = self
+                                    .state
+                                    .task_updater_sender
+                                    .send(workflow_failure_message)
+                                    .await
+                                {
+                                    error!(
+                                        "[WORKFLOW_ACTOR_{}] Failed to send workflow failure update: {}",
+                                        self.id, send_err
+                                    );
+                                }
 
                                 return Err(format!("Task {} failed: {:?}", task_id, e).into());
                             }
@@ -373,8 +519,32 @@ impl WorkflowActor {
             }
         }
 
-        // 🎉 WORKFLOW COMPLETED - Would normally send workflow completion status to database
-        info!("🎉 WORKFLOW COMPLETED: Workflow {} finished successfully with all tasks completed (skipping database update for debugging)", context.flow_session_id);
+        // Send workflow completion status to database
+        let workflow_completion_message = StatusUpdateMessage {
+            operation: Operation::CompleteWorkflow {
+                flow_session_id: context.flow_session_id,
+                account_id: message.workflow_version.account_id,
+                status: FlowSessionStatus::Completed,
+                trigger_status: TriggerSessionStatus::Completed,
+            },
+        };
+
+        if let Err(e) = self
+            .state
+            .task_updater_sender
+            .send(workflow_completion_message)
+            .await
+        {
+            error!(
+                "[WORKFLOW_ACTOR_{}] Failed to send workflow completion update: {}",
+                self.id, e
+            );
+        }
+
+        info!(
+            "[WORKFLOW_ACTOR_{}] Workflow {} completed successfully with all tasks completed",
+            self.id, context.flow_session_id
+        );
 
         Ok(())
     }

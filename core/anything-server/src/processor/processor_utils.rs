@@ -35,6 +35,8 @@ pub async fn create_task(
     let create_task_message = StatusUpdateMessage {
         operation: Operation::CreateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             input: task.clone(),
         },
     };
@@ -137,6 +139,8 @@ pub async fn create_task_for_action(
     let create_task_message = StatusUpdateMessage {
         operation: Operation::CreateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             input: task.clone(),
         },
     };
@@ -287,6 +291,8 @@ pub async fn update_completed_task_with_result(
     let task_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             status: TaskStatus::Completed,
             result: task_result.clone(),
             error: None,
@@ -320,6 +326,8 @@ pub async fn handle_task_error(
     let error_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             status: TaskStatus::Failed,
             result: None,
             error: Some(error.error.clone()),

@@ -20,7 +20,19 @@
 
 ```bash
 git clone https://github.com/tryanything-ai/anything.git
-pnpm dev
+pnpm i
+```
+
+### Start Backend
+
+```
+./start-dev.sh
+```
+
+### Start Frontend
+
+```
+pnpm dev --filter=web
 ```
 
 ## Systems

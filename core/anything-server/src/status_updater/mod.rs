@@ -2,6 +2,7 @@ use crate::processor::db_calls::{create_task, update_flow_session_status, update
 use crate::types::task_types::{FlowSessionStatus, Task, TaskStatus, TriggerSessionStatus};
 use crate::AppState;
 use crate::metrics::METRICS;
+use crate::websocket::WorkflowTestingUpdate;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::sync::Arc;
@@ -15,6 +16,8 @@ use uuid::Uuid;
 pub enum Operation {
     UpdateTask {
         task_id: Uuid,
+        account_id: Uuid,
+        flow_session_id: Uuid,
         started_at: Option<DateTime<Utc>>,
         ended_at: Option<DateTime<Utc>>,
         status: TaskStatus,
@@ -24,10 +27,13 @@ pub enum Operation {
     },
     CreateTask {
         task_id: Uuid,
+        account_id: Uuid,
+        flow_session_id: Uuid,
         input: Task,
     },
     CompleteWorkflow {
         flow_session_id: Uuid,
+        account_id: Uuid,
         status: FlowSessionStatus,
         trigger_status: TriggerSessionStatus,
     },
@@ -106,6 +112,8 @@ pub async fn task_database_status_processor(
                     match &message.operation {
                         Operation::UpdateTask {
                             task_id,
+                            account_id, 
+                            flow_session_id,
                             started_at,
                             ended_at,
                             status,
@@ -127,13 +135,14 @@ pub async fn task_database_status_processor(
                             })
                             .await
                         }
-                        Operation::CreateTask { task_id, input } => {
+                        Operation::CreateTask { task_id, account_id, flow_session_id, input } => {
                             span!(Level::DEBUG, "create_task_db_call", task_id = %task_id).in_scope(|| {
                                 create_task(state.clone(), input)
                             }).await
                         }
                         Operation::CompleteWorkflow {
                             flow_session_id,
+                            account_id,
                             status,
                             trigger_status,
                         } => {
@@ -158,7 +167,9 @@ pub async fn task_database_status_processor(
                         METRICS.record_status_operation_success(operation_duration_ms, operation_type);
                         
                         info!("[TASK PROCESSOR] Successfully processed update in {}ms", operation_duration_ms);
-                        // Removed WebSocket broadcast logic after successful database operations
+                        
+                        // Broadcast WebSocket updates after successful database operations
+                        broadcast_websocket_update(&state, &message.operation).await;
                         break;
                     }
                     Err(e) => {
@@ -211,6 +222,117 @@ pub async fn task_database_status_processor(
     }
 
     info!("[TASK PROCESSOR] Status updater processor shutdown complete");
+}
+
+async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation) {
+    match operation {
+        Operation::UpdateTask {
+            task_id,
+            account_id,
+            flow_session_id,
+            status,
+            result,
+            error,
+            ..
+        } => {
+            let update_type = match status {
+                TaskStatus::Running => "task_updated",
+                TaskStatus::Completed => "task_completed", 
+                TaskStatus::Failed => "task_failed",
+                _ => "task_updated",
+            };
+
+            let update = WorkflowTestingUpdate {
+                r#type: "workflow_update".to_string(),
+                update_type: Some(update_type.to_string()),
+                flow_session_id: flow_session_id.to_string(),
+                data: Some(serde_json::json!({
+                    "task_id": task_id,
+                    "status": status,
+                    "result": result,
+                    "error": error,
+                    "needs_refresh": true
+                })),
+                tasks: None,
+                complete: None,
+            };
+
+            state.websocket_manager.broadcast_workflow_testing_update(
+                &account_id.to_string(),
+                &flow_session_id.to_string(),
+                update,
+            );
+
+            info!(
+                "[WEBSOCKET] Broadcasted task update for task {} in session {} to account {}",
+                task_id, flow_session_id, account_id
+            );
+        }
+        Operation::CreateTask {
+            task_id,
+            account_id,
+            flow_session_id,
+            ..
+        } => {
+            let update = WorkflowTestingUpdate {
+                r#type: "workflow_update".to_string(),
+                update_type: Some("task_created".to_string()),
+                flow_session_id: flow_session_id.to_string(),
+                data: Some(serde_json::json!({
+                    "task_id": task_id,
+                    "needs_refresh": true
+                })),
+                tasks: None,
+                complete: None,
+            };
+
+            state.websocket_manager.broadcast_workflow_testing_update(
+                &account_id.to_string(),
+                &flow_session_id.to_string(),
+                update,
+            );
+
+            info!(
+                "[WEBSOCKET] Broadcasted task creation for task {} in session {} to account {}",
+                task_id, flow_session_id, account_id
+            );
+        }
+        Operation::CompleteWorkflow {
+            flow_session_id,
+            account_id,
+            status,
+            trigger_status,
+        } => {
+            let update_type = match status {
+                FlowSessionStatus::Completed => "workflow_completed",
+                FlowSessionStatus::Failed => "workflow_failed",
+                _ => "workflow_updated",
+            };
+
+            let update = WorkflowTestingUpdate {
+                r#type: "workflow_update".to_string(),
+                update_type: Some(update_type.to_string()),
+                flow_session_id: flow_session_id.to_string(),
+                data: Some(serde_json::json!({
+                    "status": status,
+                    "needs_refresh": true
+                })),
+                tasks: None,
+                complete: Some(matches!(status, FlowSessionStatus::Completed | FlowSessionStatus::Failed)),
+            };
+
+            state.websocket_manager.broadcast_workflow_testing_update(
+                &account_id.to_string(),
+                &flow_session_id.to_string(),
+                update,
+            );
+
+            info!(
+                "[WEBSOCKET] Broadcasted workflow completion for session {} to account {}",
+                flow_session_id, account_id
+            );
+        }
+    }
 }
 
 

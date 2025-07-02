@@ -357,6 +357,8 @@ impl EnhancedBranchProcessor {
         let error_update = StatusUpdateMessage {
             operation: Operation::UpdateTask {
                 task_id: task.task_id,
+                flow_session_id: self.context.flow_session_id,
+                account_id: self.context.workflow.account_id,
                 started_at: None,
                 ended_at: Some(chrono::Utc::now()),
                 status: TaskStatus::Failed,
@@ -384,6 +386,7 @@ impl EnhancedBranchProcessor {
         let workflow_failure = StatusUpdateMessage {
             operation: Operation::CompleteWorkflow {
                 flow_session_id: self.context.flow_session_id,
+                account_id: self.context.workflow.account_id,
                 status: FlowSessionStatus::Failed,
                 trigger_status: TriggerSessionStatus::Failed,
             },
