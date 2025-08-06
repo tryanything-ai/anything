@@ -12,7 +12,7 @@ use crate::AppState;
 use chrono::Utc;
 use opentelemetry::KeyValue;
 use postgrest::Postgrest;
-use serde_json;
+use serde_json::{self, Value};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Instant;
@@ -24,6 +24,7 @@ use uuid::Uuid;
 pub struct WorkflowActor {
     id: Uuid,
     state: Arc<AppState>,
+    #[allow(dead_code)]
     client: Postgrest,
     task_actor_pool: TaskActorPool,
     span_factory: EnhancedSpanFactory,
@@ -49,7 +50,7 @@ impl WorkflowActor {
         }
     }
 
-    pub async fn run(mut self, mut receiver: mpsc::Receiver<ActorMessage>) {
+    pub async fn run(self, mut receiver: mpsc::Receiver<ActorMessage>) {
         info!("[WORKFLOW_ACTOR_{}] Starting workflow actor", self.id);
 
         while let Some(message) = receiver.recv().await {
@@ -80,11 +81,11 @@ impl WorkflowActor {
         );
     }
 
-    #[instrument(skip(self, message), fields(
-        actor_id = %self.id,
-        flow_session_id = %message.flow_session_id,
-        workflow_id = %message.workflow_id
-    ))]
+    // #[instrument(skip(self, message), fields(
+    //     actor_id = %self.id,
+    //     flow_session_id = %message.flow_session_id,
+    //     workflow_id = %message.workflow_id
+    // ))]
     async fn handle_execute_workflow(
         &self,
         message: ProcessorMessage,
@@ -170,24 +171,71 @@ impl WorkflowActor {
         // Track currently running tasks
         let running_tasks = Arc::new(RwLock::new(HashSet::<String>::new()));
 
+        // Track failed filter tasks that should stop dependent actions
+        let failed_filters = Arc::new(RwLock::new(HashSet::<String>::new()));
+
         // Process tasks in dependency order
         loop {
             // Get ready actions that can be executed now
             let ready_actions = {
                 let completed = completed_tasks.read().await;
                 let running = running_tasks.read().await;
-                dependency_graph.get_ready_actions(actions, &completed, &running)
+                let failed = failed_filters.read().await;
+                
+                let mut candidate_actions = dependency_graph.get_ready_actions(actions, &completed, &running);
+                
+                // Filter out actions that depend on failed filters
+                candidate_actions.retain(|action| {
+                    // Check if this action depends on any failed filters
+                    let depends_on_failed_filter = dependency_graph.dependencies
+                        .get(&action.action_id)
+                        .map(|deps| {
+                            deps.iter().any(|dep_action_id| failed.contains(dep_action_id))
+                        })
+                        .unwrap_or(false);
+                    
+                    if depends_on_failed_filter {
+                        info!(
+                            "[WORKFLOW_ACTOR_{}] Skipping action {} because it depends on a failed filter",
+                            self.id, action.action_id
+                        );
+                        false
+                    } else {
+                        true
+                    }
+                });
+                
+                candidate_actions
             };
 
             if ready_actions.is_empty() {
-                // Check if all tasks are completed
+                // Check if all runnable tasks are completed
                 let completed = completed_tasks.read().await;
+                let failed = failed_filters.read().await;
                 let total_completed = completed.len();
+                
+                // Count actions that are blocked by failed filters (will never run)
+                let blocked_actions = actions.iter().filter(|action| {
+                    // Skip if already completed
+                    if completed.values().any(|task| task.action_id == action.action_id) {
+                        return false;
+                    }
+                    
+                    // Check if this action depends on any failed filters
+                    dependency_graph.dependencies
+                        .get(&action.action_id)
+                        .map(|deps| {
+                            deps.iter().any(|dep_action_id| failed.contains(dep_action_id))
+                        })
+                        .unwrap_or(false)
+                }).count();
 
-                if total_completed == actions.len() {
+                let total_runnable = actions.len() - blocked_actions;
+                
+                if total_completed == total_runnable {
                     info!(
-                        "[WORKFLOW_ACTOR_{}] All {} tasks completed successfully",
-                        self.id, total_completed
+                        "[WORKFLOW_ACTOR_{}] All {} runnable tasks completed successfully ({} blocked by failed filters)",
+                        self.id, total_completed, blocked_actions
                     );
                     break;
                 } else {
@@ -399,6 +447,15 @@ impl WorkflowActor {
                                     published,
                                 ) = message_data;
 
+                                // Clone values before they get moved into the Task struct
+                                let plugin_name_for_filter_check = plugin_name.clone();
+                                let result_value_for_filter_check = result_value.clone();
+
+                                info!(
+                                    "[WORKFLOW_ACTOR_{}] Completed task {} (action {}) with result {:?}",
+                                    self.id, task_id, action_id, result_value
+                                );
+
                                 let completed_task = Task {
                                     task_id,
                                     account_id,
@@ -440,6 +497,44 @@ impl WorkflowActor {
                                     created_by: None,
                                     processing_order: 0,
                                 };
+
+                                // Check if this is a filter task that failed (returned null)
+                                // The filter plugin already handles truthiness evaluation and returns null for failed filters
+                                if plugin_name_for_filter_check.as_str() == "@anything/filter" {
+                                    let should_stop_path = match &result_value_for_filter_check {
+                                        Some(Value::Null) => {
+                                            info!(
+                                                "[WORKFLOW_ACTOR_{}] Filter task {} failed, stopping dependent actions",
+                                                self.id, task_id
+                                            );
+                                            true
+                                        }
+                                        Some(_) => {
+                                            info!(
+                                                "[WORKFLOW_ACTOR_{}] Filter task {} passed, continuing execution",
+                                                self.id, task_id
+                                            );
+                                            false
+                                        }
+                                        None => {
+                                            info!(
+                                                "[WORKFLOW_ACTOR_{}] Filter task {} returned no result, stopping dependent actions",
+                                                self.id, task_id
+                                            );
+                                            true
+                                        }
+                                    };
+
+                                    // If the filter failed, add it to the failed filters set
+                                    if should_stop_path {
+                                        let mut failed = failed_filters.write().await;
+                                        failed.insert(action_id.clone());
+                                        info!(
+                                            "[WORKFLOW_ACTOR_{}] Added failed filter {} to failed_filters set",
+                                            self.id, action_id
+                                        );
+                                    }
+                                }
 
                                 {
                                     let mut completed = completed_tasks.write().await;

@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::time::Duration;
 use tokio::time::Instant;
 use tonic::transport::Channel;
@@ -59,7 +59,12 @@ pub async fn process_js_task(
         total_duration
     );
 
-    Ok(Some(result))
+    // Format result in the standard structure expected by agent tool calls
+    let formatted_result = json!({
+        "result": result
+    });
+
+    Ok(Some(formatted_result))
 }
 
 /// Execute JavaScript via gRPC call to Rust Deno executor
