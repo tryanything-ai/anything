@@ -6,6 +6,46 @@ use uuid::Uuid;
 // Import the JavaScript executor functionality
 use crate::system_plugins::javascript::{execute_javascript_grpc, JsExecutorManager};
 
+/// Auto-inject return statement if the condition doesn't already have one
+/// This allows users to write simple conditions like "inputs.value > 10" instead of "return inputs.value > 10"
+fn auto_inject_return_statement(code: &str) -> String {
+    let trimmed = code.trim();
+
+    // If the code is empty, return it as-is
+    if trimmed.is_empty() {
+        return code.to_string();
+    }
+
+    // Check if code already contains a return statement
+    // We look for "return" as a word boundary to avoid matching it in strings or variable names
+    let has_return = trimmed
+        .split_whitespace()
+        .any(|word| word.starts_with("return"));
+
+    // If it already has a return statement, use the code as-is
+    if has_return {
+        info!("[FILTER] Condition already contains 'return', using as-is");
+        return code.to_string();
+    }
+
+    // Check if this looks like a multi-statement block (contains semicolons or newlines with non-trivial content)
+    let is_complex = trimmed.contains(';')
+        || trimmed.lines().count() > 1
+            && trimmed
+                .lines()
+                .any(|line| !line.trim().is_empty() && !line.trim().starts_with("//"));
+
+    if is_complex {
+        // For complex code, wrap it in a function that returns the last expression
+        info!("[FILTER] Complex condition detected, wrapping in function with return");
+        format!("(() => {{ {} }})()", trimmed)
+    } else {
+        // For simple expressions, just prepend return
+        info!("[FILTER] Simple condition detected, prepending 'return'");
+        format!("return ({})", trimmed)
+    }
+}
+
 /// Enhanced filter task processor using gRPC JavaScript executor
 /// This is used for conditional logic and boolean expressions
 /// Now uses the same gRPC JavaScript executor as the main JavaScript plugin
@@ -18,7 +58,7 @@ pub async fn process_filter_task(
     info!("[FILTER] Starting filter task processing");
 
     // Extract condition code
-    let js_code = match bundled_plugin_config["condition"].as_str() {
+    let raw_js_code = match bundled_plugin_config["condition"].as_str() {
         Some(code) => {
             info!("[FILTER] Extracted condition code: {:?}", code);
             code
@@ -29,8 +69,15 @@ pub async fn process_filter_task(
         }
     };
 
+    // Auto-inject return statement if the condition doesn't already have one
+    let js_code = auto_inject_return_statement(raw_js_code);
+    info!(
+        "[FILTER] Final condition code with return injection: {:?}",
+        js_code
+    );
+
     // Execute filter condition using the gRPC JavaScript executor
-    let result = match execute_filter_condition_grpc(js_code, bundled_inputs).await {
+    let result = match execute_filter_condition_grpc(&js_code, bundled_inputs).await {
         Ok(result) => result,
         Err(e) => {
             error!("[FILTER] Filter execution failed: {}", e);

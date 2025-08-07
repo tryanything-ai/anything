@@ -14,7 +14,41 @@ export JS_EXECUTOR_URL=http://localhost:50051
 # Function to cleanup background processes
 cleanup() {
     echo "🛑 Shutting down servers..."
-    kill $JS_PID $MAIN_PID 2>/dev/null || true
+    
+    # Kill the background processes if they exist
+    if [[ -n "$JS_PID" ]]; then
+        echo "🔄 Terminating JS Executor (PID: $JS_PID)..."
+        kill $JS_PID 2>/dev/null || true
+    fi
+    if [[ -n "$MAIN_PID" ]]; then
+        echo "🔄 Terminating Main Server (PID: $MAIN_PID)..."
+        kill $MAIN_PID 2>/dev/null || true
+    fi
+    
+    # Give processes a moment to shut down gracefully
+    sleep 1
+    
+    # Kill any remaining processes on port 3001 (main server)
+    echo "🔍 Checking for remaining processes on port 3001..."
+    PORT_3001_PIDS=$(lsof -ti:3001 2>/dev/null || true)
+    if [[ -n "$PORT_3001_PIDS" ]]; then
+        echo "🗡️  Force killing remaining processes on port 3001: $PORT_3001_PIDS"
+        echo "$PORT_3001_PIDS" | xargs kill -9 2>/dev/null || true
+    else
+        echo "✓ No remaining processes on port 3001"
+    fi
+    
+    # Kill any remaining processes on port 50051 (JS executor)
+    echo "🔍 Checking for remaining processes on port 50051..."
+    PORT_50051_PIDS=$(lsof -ti:50051 2>/dev/null || true)
+    if [[ -n "$PORT_50051_PIDS" ]]; then
+        echo "🗡️  Force killing remaining processes on port 50051: $PORT_50051_PIDS"
+        echo "$PORT_50051_PIDS" | xargs kill -9 2>/dev/null || true
+    else
+        echo "✓ No remaining processes on port 50051"
+    fi
+    
+    echo "✅ Cleanup completed"
     exit 0
 }
 
