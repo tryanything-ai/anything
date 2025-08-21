@@ -1,195 +1,162 @@
-use rustyscript::{json_args, Module, Runtime, RuntimeOptions};
-use serde_json::{json, Value};
-use std::time::{Duration, Instant};
-use tokio::task;
+use serde_json::Value;
+use std::time::Instant;
+use tracing::{error, info, instrument};
 use uuid::Uuid;
 
-//This is meant to be used for function calls if we do agents and voice call type thing
-//And to be how we do reusable flows or sublfows
-//TODO: maybe just make this expect JS, and we just let it always be JS for determining truth
+// Import the JavaScript executor functionality
+use crate::system_plugins::javascript::{execute_javascript_grpc, JsExecutorManager};
+
+/// Auto-inject return statement if the condition doesn't already have one
+/// This allows users to write simple conditions like "inputs.value > 10" instead of "return inputs.value > 10"
+fn auto_inject_return_statement(code: &str) -> String {
+    let trimmed = code.trim();
+
+    // If the code is empty, return it as-is
+    if trimmed.is_empty() {
+        return code.to_string();
+    }
+
+    // Check if code already contains a return statement
+    // We look for "return" as a word boundary to avoid matching it in strings or variable names
+    let has_return = trimmed
+        .split_whitespace()
+        .any(|word| word.starts_with("return"));
+
+    // If it already has a return statement, use the code as-is
+    if has_return {
+        info!("[FILTER] Condition already contains 'return', using as-is");
+        return code.to_string();
+    }
+
+    // Check if this looks like a multi-statement block (contains semicolons or newlines with non-trivial content)
+    let is_complex = trimmed.contains(';')
+        || trimmed.lines().count() > 1
+            && trimmed
+                .lines()
+                .any(|line| !line.trim().is_empty() && !line.trim().starts_with("//"));
+
+    if is_complex {
+        // For complex code, wrap it in a function that returns the last expression
+        info!("[FILTER] Complex condition detected, wrapping in function with return");
+        format!("(() => {{ {} }})()", trimmed)
+    } else {
+        // For simple expressions, just prepend return
+        info!("[FILTER] Simple condition detected, prepending 'return'");
+        format!("return ({})", trimmed)
+    }
+}
+
+/// Enhanced filter task processor using gRPC JavaScript executor
+/// This is used for conditional logic and boolean expressions
+/// Now uses the same gRPC JavaScript executor as the main JavaScript plugin
+#[instrument(skip(bundled_inputs, bundled_plugin_config))]
 pub async fn process_filter_task(
     bundled_inputs: &Value,
     bundled_plugin_config: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    println!("[FILTER] Processing filter task");
     let start = Instant::now();
-    println!("[FILTER] Starting process_filter_task");
-    println!("[FILTER] Bundled variables: {:?}", bundled_inputs);
+    info!("[FILTER] Starting filter task processing");
 
-    // Clone the context since we need to move it to the new thread
-    let bundled_plugin_config_clone = bundled_plugin_config.clone();
-    let bundled_inputs_clone = bundled_inputs.clone();
-
-    // Spawn blocking task in a separate thread
-    let result = task::spawn_blocking(move || {
-        // Move the JavaScript execution logic into this closure
-        let js_code = bundled_plugin_config_clone["condition"]
-            .as_str()
-            .ok_or("JS code not found in context")?;
-
-        println!("[FILTER] Extracted JS code: {:?}", js_code);
-        println!("[FILTER] Extracted inputs: {:?}", bundled_inputs_clone);
-
-        // Simple check - if it has 'return', treat as function, otherwise as expression
-        let is_simple_expression = !js_code.contains("return");
-
-        let wrapped_code = if is_simple_expression {
-            format!(
-                r#"
-                // Inject variables into globalThis.inputs
-                Object.assign(globalThis, {{ inputs: {} }});
-
-                export default () => {{
-                    try {{
-                        const result = {js_code};
-                        
-                        // Ensure we got a value
-                        if (result === undefined) {{
-                            return {{ 
-                                internal_error: 'Expression returned undefined. Please ensure your expression evaluates to a boolean value.',
-                                actual_value: 'undefined'
-                            }};
-                        }}
-
-                        // If result is a boolean, use it directly
-                        if (typeof result === 'boolean') {{
-                            return {{ result }};
-                        }}
-                        
-                        // If result is a string "true" or "false", convert it
-                        if (typeof result === 'string' && (result.toLowerCase() === 'true' || result.toLowerCase() === 'false')) {{
-                            return {{ result: result.toLowerCase() === 'true' }};
-                        }}
-                        
-                        // Invalid result type
-                        return {{ 
-                            internal_error: `Expression must evaluate to a boolean value or "true"/"false" string, got: ${{typeof result}}`,
-                            actual_value: JSON.stringify(result)
-                        }};
-                    }} catch (error) {{
-                        return {{ 
-                            internal_error: `JavaScript execution error: ${{error.message}}`,
-                            error_type: error.name,
-                            error_stack: error.stack
-                        }};
-                    }}
-                }}
-                "#,
-                serde_json::to_string(&bundled_inputs_clone)?
-            )
-        } else {
-            format!(
-                r#"
-                // Inject variables into globalThis.inputs
-                Object.assign(globalThis, {{ inputs: {} }});
-
-                export default () => {{
-                    try {{
-                        const result = (function() {{
-                            {js_code}
-                        }})();
-                        
-                        // Ensure the function returned a value
-                        if (result === undefined) {{
-                            return {{ 
-                                internal_error: 'Function did not return a value. Please add an explicit return statement that returns a boolean.',
-                                actual_value: 'undefined'
-                            }};
-                        }}
-
-                        // If result is a boolean, use it directly
-                        if (typeof result === 'boolean') {{
-                            return {{ result }};
-                        }}
-                        
-                        // If result is a string "true" or "false", convert it
-                        if (typeof result === 'string' && (result.toLowerCase() === 'true' || result.toLowerCase() === 'false')) {{
-                            return {{ result: result.toLowerCase() === 'true' }};
-                        }}
-                        
-                        // Invalid return type
-                        return {{ 
-                            internal_error: `Function must return a boolean value or "true"/"false" string, got: ${{typeof result}}`,
-                            actual_value: JSON.stringify(result)
-                        }};
-                    }} catch (error) {{
-                        return {{ 
-                            internal_error: `JavaScript execution error: ${{error.message}}`,
-                            error_type: error.name,
-                            error_stack: error.stack
-                        }};
-                    }}
-                }}
-                "#,
-                serde_json::to_string(&bundled_inputs_clone)?
-            )
-        };
-
-        println!("[FILTER] Generated wrapped code: {:?}", wrapped_code);
-
-        // Create the module with unique name
-        let module_name = format!("user_condition_{}.js", Uuid::new_v4());
-        let module = Module::new(&module_name, &wrapped_code);
-        println!("[FILTER] Created module: {}", module_name);
-
-        // Execute the module
-        let script_start = Instant::now();
-        println!("[FILTER] Starting script execution");
-
-        let result: Value = match Runtime::execute_module(
-            &module,
-            vec![], // No additional modules needed
-            RuntimeOptions {
-                timeout: Duration::from_secs(1),
-                ..Default::default()
-            },
-            json_args!(),
-        ) {
-            Ok(r) => {
-                println!("[FILTER] Script execution completed successfully");
-                // Clean up the module file
-                if let Err(e) = std::fs::remove_file(&module_name) {
-                    println!("[FILTER] Warning: Failed to clean up module file: {}", e);
-                }
-                r
-            },
-            Err(e) => {
-                // Clean up on error too
-                if let Err(e) = std::fs::remove_file(&module_name) {
-                    println!("[FILTER] Warning: Failed to clean up module file: {}", e);
-                }
-                println!("[FILTER] ERROR: Script execution failed: {:?}", e);
-                return Err(e.into());
-            }
-        };
-
-        // Check if the result is our error object and convert it to a Rust error
-        if let Some(error) = result.get("internal_error") {
-            if let Some(error_msg) = error.as_str() {
-                return Err(error_msg.into());
-            }
+    // Extract condition code
+    let raw_js_code = match bundled_plugin_config["condition"].as_str() {
+        Some(code) => {
+            info!("[FILTER] Extracted condition code: {:?}", code);
+            code
         }
+        None => {
+            error!("[FILTER] No condition code found in configuration");
+            return Err("Filter condition not found in task configuration".into());
+        }
+    };
 
-        println!(
-            "[FILTER] Script execution completed in {:?}",
-            script_start.elapsed()
-        );
-        println!("[FILTER] Execution result: {:?}", result);
+    // Auto-inject return statement if the condition doesn't already have one
+    let js_code = auto_inject_return_statement(raw_js_code);
+    info!(
+        "[FILTER] Final condition code with return injection: {:?}",
+        js_code
+    );
 
-        Ok::<Value, Box<dyn std::error::Error + Send + Sync>>(result)
-    })
-    .await??; // Note the double ?? to handle both the JoinError and the inner Result
+    // Execute filter condition using the gRPC JavaScript executor
+    let result = match execute_filter_condition_grpc(&js_code, bundled_inputs).await {
+        Ok(result) => result,
+        Err(e) => {
+            error!("[FILTER] Filter execution failed: {}", e);
+            // When filter execution fails, treat it as filter not passing (return null)
+            // This prevents the filter from "always passing" due to errors
+            let total_duration = start.elapsed();
+            info!(
+                "[FILTER] Filter task failed in {:?}, treating as filter not passed",
+                total_duration
+            );
+            return Ok(Some(Value::Null));
+        }
+    };
 
-    println!("[FILTER] Total task processing took {:?}", start.elapsed());
+    let total_duration = start.elapsed();
+    info!("[FILTER] Filter task completed in {:?}", total_duration);
 
-    // Extract the boolean result
-    let condition = result
-        .get("result")
-        .and_then(|v| v.as_bool())
-        .ok_or("Failed to get boolean result from filter")?;
+    Ok(Some(result))
+}
 
-    // Return a result with should_continue flag
-    Ok(Some(json!({
-            "should_continue": condition
-    })))
+/// Execute filter condition using gRPC JavaScript executor
+async fn execute_filter_condition_grpc(
+    js_code: &str,
+    inputs: &Value,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    info!("[FILTER] Executing filter condition via gRPC JavaScript executor");
+
+    // Create gRPC client connection
+    let mut js_manager = JsExecutorManager::new().await?;
+    let js_client = js_manager.get_client().await;
+
+    // Execute via gRPC - pass inputs as separate parameter, not embedded in code
+    let execution_id = Uuid::new_v4().to_string();
+    let result = execute_javascript_grpc(js_client, js_code, inputs, &execution_id).await?;
+
+    // Log the actual result returned from JavaScript execution
+    info!("[FILTER] JavaScript execution returned: {:?}", result);
+
+    // Process the boolean result from JavaScript service
+    process_filter_result(result, inputs)
+}
+
+/// Process the filter result (boolean) returned by the JavaScript service and return appropriate data
+fn process_filter_result(
+    result: Value,
+    original_inputs: &Value,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    info!("[FILTER] Processing filter result: {:?}", result);
+
+    // Filter should ONLY pass for explicit boolean true
+    // Any other value (including truthy values like "hello", 1, etc.) should fail
+    match result {
+        Value::Bool(true) => {
+            info!("[FILTER] Filter condition passed (returned true), returning original inputs");
+            Ok(original_inputs.clone())
+        }
+        _ => {
+            info!(
+                "[FILTER] Filter condition failed (did not return true: {:?}), returning null",
+                result
+            );
+            Ok(Value::Null)
+        }
+    }
+}
+
+/// Utility function to check if a JSON Value is truthy using JavaScript truthiness rules
+/// This is available for other parts of the system that may need JavaScript truthiness evaluation
+#[allow(unused)]
+pub fn is_value_truthy(value: &Value) -> bool {
+    match value {
+        Value::Bool(b) => *b,
+        Value::String(s) => !s.is_empty() && s != "false" && s != "0",
+        Value::Number(n) => {
+            let val = n.as_f64().unwrap_or(0.0);
+            val != 0.0 && !val.is_nan()
+        }
+        Value::Array(arr) => !arr.is_empty(),
+        Value::Object(obj) => !obj.is_empty(),
+        Value::Null => false,
+    }
 }

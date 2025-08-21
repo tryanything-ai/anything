@@ -17,13 +17,13 @@ use serde_json::Value;
 use std::time::Duration;
 use std::env;
 use std::sync::Arc;
-use tokio::sync::{watch, Semaphore, broadcast};
+use tokio::sync::{watch, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
 use aws_sdk_s3::Client as S3Client;
 use files::r2_client::get_r2_client;
-use tokio::signal::unix::{signal, SignalKind};
+use tokio::signal;
 use tokio::time::sleep;
 use dashmap::DashMap;
 
@@ -34,6 +34,7 @@ use auth::init::AuthState;
 mod system_plugins; 
 mod system_workflows;
 mod processor;
+mod actor_processor;
 mod system_variables;
 mod workflows; 
 mod actions; 
@@ -100,11 +101,11 @@ pub struct AppState {
     bundler_accounts_cache: DashMap<String, AccountsCache>,
     shutdown_signal: Arc<AtomicBool>,
     // WebSocket infrastructure
-    websocket_connections: DashMap<String, websocket::WebSocketConnection>,
-    workflow_broadcaster: websocket::WorkflowBroadcaster,
+    websocket_manager: Arc<websocket::WebSocketManager>,
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 1)]
+// #[tokio::main(flavor = "multi_thread", worker_threads = 1)]
+#[tokio::main]
 async fn main() {
     // Initialize tracing with OpenTelemetry
     if let Err(e) = init_otel_grpc() {
@@ -187,10 +188,6 @@ async fn main() {
             move |origin: &HeaderValue, _request_parts: &RequestParts| {
                 let origin_str = origin.to_str().unwrap_or("");
                 let is_match = cors_origin_regex.is_match(origin_str);
-                println!(
-                    "[CORS] Checking origin: {} - Match: {}",
-                    origin_str, is_match
-                );
                 is_match
             },
         ))
@@ -217,7 +214,7 @@ async fn main() {
    let (task_updater_tx, task_updater_rx) = mpsc::channel::<StatusUpdateMessage>(100000);
 
    // Create WebSocket infrastructure
-   let (workflow_broadcaster, _) = broadcast::channel(1000); 
+   let websocket_manager = Arc::new(websocket::WebSocketManager::new()); 
 
    let default_http_timeout = Duration::from_secs(30); // Default 30-second timeout
    let http_client = Client::builder()
@@ -233,8 +230,8 @@ async fn main() {
         public_client: public_client.clone(),
         r2_client: r2_client.clone(),
         http_client: Arc::new(http_client),
-        auth_states: DashMap::new(),
         workflow_processor_semaphore: Arc::new(Semaphore::new(100)), //How many workflows we can run at once
+        auth_states: DashMap::new(),
         trigger_engine_signal,
         processor_sender: processor_tx,
         flow_completions: DashMap::new(),
@@ -244,9 +241,7 @@ async fn main() {
         bundler_accounts_cache: DashMap::new(),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
         task_updater_sender: task_updater_tx.clone(), // Store the sender in AppState
-        // WebSocket infrastructure
-        websocket_connections: DashMap::new(),
-        workflow_broadcaster,
+        websocket_manager: websocket_manager.clone(),
     });
 
 pub async fn root() -> impl IntoResponse {
@@ -289,13 +284,8 @@ pub async fn root() -> impl IntoResponse {
     .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_plugins::webhook_trigger::run_workflow_version_and_respond))
 
     // API routes for running agent tools - very simliar to webhooks just shapped differnt to capture relationshipe between agent and workflow
-    .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond))
+    .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond));
     
-    // WebSocket for real-time workflow testing updates (public route with token-based auth)
-    .route(
-        "/account/:account_id/testing/workflow/session/:flow_session_id/ws",
-        get(websocket::websocket_handler),
-    );
 
     let protected_routes = Router::new()
         .route("/account/:account_id/workflows", get(workflows::get_workflows))
@@ -441,6 +431,12 @@ pub async fn root() -> impl IntoResponse {
         .route("/account/:account_id/file/:file_id", delete(files::routes::delete_file))
         .route("/account/:account_id/file/:file_id/download", get(files::routes::get_file_download_url))
 
+        // WebSocket connections
+        .route("/ws/:connection_id", get(websocket::websocket_handler))
+        
+        // Workflow testing WebSocket connections
+        .route("/account/:account_id/testing/workflow/session/:flow_session_id/ws", get(websocket::workflow_testing_websocket_handler))
+
         .layer(middleware::from_fn_with_state(
             state.clone(),
             account_auth_middleware::account_access_middleware,
@@ -461,15 +457,15 @@ pub async fn root() -> impl IntoResponse {
    tokio::spawn(status_updater::task_database_status_processor(state.clone(), task_updater_rx));
 
 
-    // Spawn enhanced processor with better observability
-    // The keepalive system should prevent it from ever exiting, but if it does, log it
+    // Spawn actor-based processor with high parallelism and fault isolation
+    // The actor system provides better scalability and error handling
     let processor_state = state.clone();
     tokio::spawn(async move {
-        if let Err(e) = processor::enhanced_processor::enhanced_processor(processor_state, processor_rx).await {
-            error!("[MAIN] Enhanced processor failed: {}", e);
-            error!("[MAIN] This should not happen with the keepalive system - investigate!");
+        if let Err(e) = actor_processor::actor_processor(processor_state, processor_rx).await {
+            error!("[MAIN] Actor processor failed: {}", e);
+            error!("[MAIN] This indicates a critical system failure - investigate!");
         } else {
-            error!("[MAIN] Enhanced processor exited normally - this should not happen with keepalive!");
+            info!("[MAIN] Actor processor exited gracefully");
         }
     });
 
@@ -491,19 +487,49 @@ pub async fn root() -> impl IntoResponse {
 
     let state_clone = state.clone();
     tokio::spawn(async move {
-        let mut sigterm = signal(SignalKind::terminate()).unwrap();
-        sigterm.recv().await;
-        info!("Received SIGTERM signal");
-        // Set the shutdown signal
-        state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
+        #[cfg(unix)]
+        {
+            use tokio::signal::unix::{signal, SignalKind};
+            if let Ok(mut sigterm) = signal(SignalKind::terminate()) {
+                sigterm.recv().await;
+                info!("Received SIGTERM signal");
+                
+                // Set the shutdown signal
+                state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
+                
+                // Give time for in-flight operations to complete
+                sleep(Duration::from_secs(20)).await;
+            }
+        }
         
-        // Give time for in-flight operations to complete
-        sleep(Duration::from_secs(20)).await;
+        #[cfg(not(unix))]
+        {
+            // For non-Unix systems, just wait for Ctrl+C
+            if let Ok(()) = signal::ctrl_c().await {
+                info!("Received Ctrl+C signal");
+                
+                // Set the shutdown signal
+                state_clone.shutdown_signal.store(true, std::sync::atomic::Ordering::SeqCst);
+                
+                // Give time for in-flight operations to complete
+                sleep(Duration::from_secs(20)).await;
+            }
+        }
     });
 
     // Run the API server
-    let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(&bind_address).await
+        .unwrap_or_else(|e| {
+            error!("[MAIN] Failed to bind to address {}: {}", bind_address, e);
+            panic!("Cannot bind to address {}. Check if port is already in use: {}", bind_address, e);
+        });
+    
+    info!("[MAIN] Server listening on {}", bind_address);
+    
+    if let Err(e) = axum::serve(listener, app).await {
+        error!("[MAIN] Server failed to run: {}", e);
+        panic!("Server error: {}", e);
+    }
 
     // Add this with your other spawned tasks:
     // tokio::spawn(periodic_thread_warmup(state.clone()));

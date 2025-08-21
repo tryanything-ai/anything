@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  anything-server:
+    build:
+      context: ./core/anything-server
+      dockerfile: Dockerfile
+    environment:
+      - JS_EXECUTOR_URL=http://js-executor:50051
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+    ports:
+      - "3001:3001"
+    depends_on:
+      js-executor:
+        condition: service_healthy
+    networks:
+      - anything-network
+    restart: unless-stopped
+
+  js-executor:
+    build:
+      context: ./core/js-server
+      dockerfile: Dockerfile
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+    expose:
+      - "50051"
+    networks:
+      - anything-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+          cpus: "0.5"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'health check'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  anything-network:
+    driver: bridge

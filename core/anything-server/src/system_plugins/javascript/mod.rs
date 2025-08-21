@@ -1,179 +1,182 @@
-use rustyscript::{json_args, Module, Runtime, RuntimeOptions};
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::time::Duration;
-use tokio::task;
 use tokio::time::Instant;
-use tracing::{error, info, instrument};
+use tonic::transport::Channel;
+use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
+// Generated gRPC client code
+pub mod js_executor {
+    tonic::include_proto!("js_executor");
+}
+
+use js_executor::{js_executor_client::JsExecutorClient, ExecuteRequest, HealthRequest};
+
+/// gRPC-based JavaScript task processor using Rust Deno executor
+/// This replaces RustyScript with a separate containerized service
 #[instrument(skip(bundled_inputs, bundled_plugin_config))]
 pub async fn process_js_task(
     bundled_inputs: &Value,
     bundled_plugin_config: &Value,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
-    info!("[RUSTYSCRIPT] Starting process_js_task");
-    // info!("[RUSTYSCRIPT] Bundled variables: {:?}", bundled_inputs);
-    // info!("[RUSTYSCRIPT] Plugin config: {:?}", bundled_plugin_config);
-
-    // Clone the context since we need to move it to the new thread
-    // let clone_span = tracing::info_span!("clone_inputs");
-    // let clone_start = Instant::now();
-    let bundled_plugin_config_clone = bundled_plugin_config.clone();
-    let bundled_inputs_clone = bundled_inputs.clone();
-    // let clone_duration = clone_start.elapsed();
-    // info!(
-    //     "[RUSTYSCRIPT] Created clones of input data for thread in {:?}",
-    //     clone_duration
-    // );
-
-    // Spawn blocking task in a separate thread
-    info!("[RUSTYSCRIPT] Spawning blocking task in separate thread");
-    let result = task::spawn_blocking(move || {
-        let res = std::panic::catch_unwind(|| {
-            info!("[RUSTYSCRIPT] Inside blocking task");
-            // Move the JavaScript execution logic into this closure
-            let js_code = match bundled_plugin_config_clone["code"].as_str() {
-                Some(code) => {
-                    info!("[RUSTYSCRIPT] Successfully extracted JS code, length: {} chars", code.len());
-                    code
-                },
-                None => {
-                    error!("[RUSTYSCRIPT] ERROR: JS code not found in context");
-                    return Err::<Value, Box<dyn std::error::Error + Send + Sync>>("JS code not found in context".into());
-                }
-            };
-
-            info!("[RUSTYSCRIPT] Preparing to wrap JS code with context");
-            info!("[RUSTYSCRIPT] Input data size: {} bytes", 
-                serde_json::to_string(&bundled_inputs_clone)
-                    .map(|s| s.len())
-                    .unwrap_or(0)
-            );
-
-            // Create a module that wraps the user's code with context and exports
-            // let wrap_span = tracing::info_span!("wrap_code");
-            // let wrap_start = Instant::now();
-            let wrapped_code = format!(
-                r#"
-                // Inject variables into globalThis.inputs to match autocomplete
-                Object.assign(globalThis, {{ inputs: {} }});
-
-                // Export the user's code as default function and let errors propagate
-                export default () => {{
-                    try {{
-                        const result = (() => {{
-                            {js_code}
-                        }})();
-                        
-                        // Ensure the user returned a value
-                        if (result === undefined) {{
-                            return {{ internal_error: 'Please explicitly return a value in your code' }};
-                        }}
-
-                        // If result is not an object, wrap it in an object
-                        if (result === null || typeof result !== 'object') {{
-                            return {{ result }};
-                        }}
-                        
-                        return result;
-                    }} catch (error) {{
-                        return {{ 
-                            internal_error: `JavaScript execution error: ${{error.message}}`,
-                            error_type: error.name,
-                            error_stack: error.stack
-                        }};
-                    }}
-                }}
-                "#,
-                serde_json::to_string(&bundled_inputs_clone)?
-            );
-            // let wrap_duration = wrap_start.elapsed();
-            // info!("[RUSTYSCRIPT] Generated wrapped code, length: {} chars, in {:?}", wrapped_code.len(), wrap_duration);
-
-            // Create the module with unique name
-            // let module_span = tracing::info_span!("create_module");
-            // let module_start = Instant::now();
-            info!("[RUSTYSCRIPT] Creating module from wrapped code");
-            let module_name = format!("user_code_{}.js", Uuid::new_v4());
-            let module = Module::new(&module_name, &wrapped_code);
-            info!("[RUSTYSCRIPT] Successfully created module: {}", module_name);
-            // let module_duration = module_start.elapsed();
-            // info!("[RUSTYSCRIPT] Module creation took {:?}", module_duration);
-
-            // Execute the module
-            let script_span = tracing::info_span!("javascript_execution");
-            let script_start = Instant::now();
-            info!("[RUSTYSCRIPT] Starting script execution with 1 second timeout");
-
-            let result: Value = match Runtime::execute_module(
-                &module,
-                vec![],
-                RuntimeOptions {
-                    timeout: Duration::from_secs(1),
-                    ..Default::default()
-                },
-                json_args!(),
-            ) {
-                Ok(r) => {
-                    info!("[RUSTYSCRIPT] Script execution completed successfully");
-                    // Clean up the module file
-                    if let Err(e) = std::fs::remove_file(&module_name) {
-                        info!("[RUSTYSCRIPT] Warning: Failed to clean up module file: {}", e);
-                    }
-                    r
-                },
-                Err(e) => {
-                    // Clean up on error too
-                    if let Err(e) = std::fs::remove_file(&module_name) {
-                        info!("[RUSTYSCRIPT] Warning: Failed to clean up module file: {}", e);
-                    }
-                    error!("[RUSTYSCRIPT] ERROR: Script execution failed: {:?}", e);
-                    return Err(e.into());
-                }
-            };
-
-            // Check if the result is our error object and convert it to a Rust error
-            if let Some(error) = result.get("internal_error") {
-                if let Some(error_msg) = error.as_str() {
-                    error!("[RUSTYSCRIPT] ERROR: Internal JavaScript error: {}", error_msg);
-                    return Err(error_msg.into());
-                }
-            }
-
-            let script_duration = script_start.elapsed();
-            info!("[RUSTYSCRIPT] Script execution completed in {:?}", script_duration);
-            info!("[RUSTYSCRIPT] Result type: {}", 
-                if result.is_object() { "object" }
-                else if result.is_array() { "array" }
-                else if result.is_string() { "string" }
-                else if result.is_number() { "number" }
-                else if result.is_boolean() { "boolean" }
-                else if result.is_null() { "null" }
-                else { "unknown" }
-            );
-            info!("[RUSTYSCRIPT] Result size: {} bytes", 
-                serde_json::to_string(&result)
-                    .map(|s| s.len())
-                    .unwrap_or(0)
-            );
-
-            Ok(result)
-        });
-        match res {
-            Ok(inner_result) => inner_result,
-            Err(e) => {
-                error!("[RUSTYSCRIPT] Panic caught in JS task: {:?}", e);
-                Err("Panic in JS task".into())
-            }
-        }
-    })
-    .await??; // Note the double ?? to handle both the JoinError and the inner Result
+    let execution_id = Uuid::new_v4().to_string();
 
     info!(
-        "[RUSTYSCRIPT] Total task processing completed in {:?}",
-        start.elapsed()
+        "[JS_GRPC] Starting JavaScript task execution: {}",
+        execution_id
     );
-    info!("[RUSTYSCRIPT] Successfully returning result");
-    Ok(Some(result))
+
+    // Extract JavaScript code
+    let js_code = match bundled_plugin_config["code"].as_str() {
+        Some(code) => {
+            info!("[JS_GRPC] Extracted JS code, length: {} chars", code.len());
+            code
+        }
+        None => {
+            error!("[JS_GRPC] No JavaScript code found in configuration");
+            return Err("JavaScript code not found in task configuration".into());
+        }
+    };
+
+    // Prepare execution context
+    let input_size = serde_json::to_string(bundled_inputs)
+        .map(|s| s.len())
+        .unwrap_or(0);
+
+    info!("[JS_GRPC] Input data size: {} bytes", input_size);
+
+    // Create gRPC client connection
+    let mut js_manager = JsExecutorManager::new().await?;
+    let js_client = js_manager.get_client().await;
+
+    // Execute JavaScript via gRPC
+    let result = execute_javascript_grpc(js_client, js_code, bundled_inputs, &execution_id).await?;
+
+    let total_duration = start.elapsed();
+    info!(
+        "[JS_GRPC] JavaScript task completed successfully in {:?}",
+        total_duration
+    );
+
+    // Format result in the standard structure expected by agent tool calls
+    let formatted_result = json!({
+        "result": result
+    });
+
+    Ok(Some(formatted_result))
+}
+
+/// Execute JavaScript via gRPC call to Rust Deno executor
+pub async fn execute_javascript_grpc(
+    client: &mut JsExecutorClient<Channel>,
+    js_code: &str,
+    inputs: &Value,
+    execution_id: &str,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    info!("[JS_GRPC] Sending gRPC request to Rust Deno executor");
+
+    let inputs_json = serde_json::to_string(inputs)?;
+
+    let request = tonic::Request::new(ExecuteRequest {
+        code: js_code.to_string(),
+        inputs_json,
+        timeout_ms: 30000, // 30 second timeout
+        execution_id: execution_id.to_string(),
+    });
+
+    let response = client.execute_java_script(request).await?;
+    let result = response.into_inner();
+
+    if result.success {
+        info!(
+            "[JS_GRPC] JavaScript executed successfully in {}ms",
+            result.execution_time_ms
+        );
+
+        // Parse the result JSON
+        let parsed_result: Value = serde_json::from_str(&result.result_json)?;
+        log_result_info(&parsed_result);
+        Ok(parsed_result)
+    } else {
+        error!(
+            "[JS_GRPC] JavaScript execution failed: {} ({})",
+            result.error_message, result.error_type
+        );
+        Err(format!("{}: {}", result.error_type, result.error_message).into())
+    }
+}
+
+/// JavaScript executor client manager
+pub struct JsExecutorManager {
+    client: JsExecutorClient<Channel>,
+}
+
+impl JsExecutorManager {
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let js_executor_url = std::env::var("JS_EXECUTOR_URL")
+            .unwrap_or_else(|_| "http://js-executor:50051".to_string());
+
+        info!(
+            "[JS_GRPC] Connecting to JavaScript executor at {}",
+            js_executor_url
+        );
+
+        let channel = Channel::from_shared(js_executor_url)?
+            .timeout(Duration::from_secs(60))
+            .connect()
+            .await?;
+
+        let client = JsExecutorClient::new(channel);
+
+        Ok(Self { client })
+    }
+
+    pub async fn get_client(&mut self) -> &mut JsExecutorClient<Channel> {
+        &mut self.client
+    }
+
+    pub async fn health_check(&mut self) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+        let request = tonic::Request::new(HealthRequest {});
+
+        match self.client.health_check(request).await {
+            Ok(response) => {
+                let health = response.into_inner();
+                info!(
+                    "[JS_GRPC] Health check successful - uptime: {}ms, active executions: {}",
+                    health.uptime_ms, health.active_executions
+                );
+                Ok(health.healthy)
+            }
+            Err(e) => {
+                warn!("[JS_GRPC] Health check failed: {}", e);
+                Ok(false)
+            }
+        }
+    }
+}
+
+/// Log detailed information about the execution result
+fn log_result_info(result: &Value) {
+    let result_type = match result {
+        Value::Object(_) => "object",
+        Value::Array(_) => "array",
+        Value::String(_) => "string",
+        Value::Number(_) => "number",
+        Value::Bool(_) => "boolean",
+        Value::Null => "null",
+    };
+
+    let result_size = serde_json::to_string(result).map(|s| s.len()).unwrap_or(0);
+
+    info!(
+        "[JS_GRPC] Result type: {}, size: {} bytes",
+        result_type, result_size
+    );
+
+    // Log object structure for debugging (but not the full content)
+    if let Value::Object(obj) = result {
+        let keys: Vec<&String> = obj.keys().collect();
+        info!("[JS_GRPC] Result object keys: {:?}", keys);
+    }
 }

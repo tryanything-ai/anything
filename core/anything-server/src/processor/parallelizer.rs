@@ -302,6 +302,7 @@ impl EnhancedParallelProcessor {
         let task_message = StatusUpdateMessage {
             operation: Operation::CompleteWorkflow {
                 flow_session_id: self.context.flow_session_id,
+                account_id: self.context.workflow.account_id,
                 status: FlowSessionStatus::Completed,
                 trigger_status: TriggerSessionStatus::Completed,
             },

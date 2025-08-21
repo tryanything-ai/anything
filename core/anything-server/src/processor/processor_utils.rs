@@ -35,6 +35,8 @@ pub async fn create_task(
     let create_task_message = StatusUpdateMessage {
         operation: Operation::CreateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             input: task.clone(),
         },
     };
@@ -137,6 +139,8 @@ pub async fn create_task_for_action(
     let create_task_message = StatusUpdateMessage {
         operation: Operation::CreateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             input: task.clone(),
         },
     };
@@ -287,6 +291,8 @@ pub async fn update_completed_task_with_result(
     let task_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             status: TaskStatus::Completed,
             result: task_result.clone(),
             error: None,
@@ -320,6 +326,8 @@ pub async fn handle_task_error(
     let error_message = StatusUpdateMessage {
         operation: Operation::UpdateTask {
             task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
             status: TaskStatus::Failed,
             result: None,
             error: Some(error.error.clone()),
@@ -352,6 +360,29 @@ pub async fn process_task(
     );
 
     let started_at = Utc::now();
+
+    // Send running status update for websocket
+    let running_message = StatusUpdateMessage {
+        operation: Operation::UpdateTask {
+            task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
+            status: TaskStatus::Running,
+            result: None,
+            error: None,
+            context: None,
+            started_at: Some(started_at),
+            ended_at: None,
+        },
+    };
+
+    if let Err(e) = ctx.state.task_updater_sender.send(running_message).await {
+        warn!(
+            "[PROCESSOR_UTILS] Failed to send running status update: {}",
+            e
+        );
+    }
+
     let execution_start = Instant::now();
 
     // Get a clone of in-memory tasks for bundling context
