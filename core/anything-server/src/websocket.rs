@@ -1,57 +1,25 @@
 use axum::{
     extract::{
-        ws::{Message, WebSocket, WebSocketUpgrade},
-        Path, Query, State,
+        ws::{Message, WebSocket},
+        Path, Query, State, WebSocketUpgrade,
     },
-    response::{IntoResponse, Response},
-    Extension,
+    response::Response,
 };
 use dashmap::DashMap;
 use futures_util::{sink::SinkExt, stream::StreamExt};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc; 
-use tokio::sync::{broadcast};
+use serde_json::Value;
+use std::env;
+use std::sync::Arc;
+use tokio::sync::broadcast;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
-use crate::{custom_auth::User, types::task_types::Task, AppState};
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
-use std::env;
+use crate::account_auth_middleware::verify_account_access;
+use crate::AppState;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkflowTestingUpdate {
-    pub flow_session_id: String,
-    pub account_id: String,
-    pub update_type: UpdateType,
-    pub data: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum UpdateType {
-    TaskCreated,
-    TaskUpdated,
-    TaskCompleted,
-    TaskFailed,
-    WorkflowCompleted,
-    WorkflowFailed,
-}
-
-#[derive(Debug, Clone)]
-pub struct WebSocketConnection {
-    pub account_id: String,
-    pub flow_session_id: String,
-    pub user_id: String,
-}
-
-pub type WebSocketConnections = DashMap<String, WebSocketConnection>;
-pub type WorkflowBroadcaster = broadcast::Sender<WorkflowTestingUpdate>;
-
-#[derive(Debug, Deserialize)]
-pub struct WebSocketQuery {
-    token: Option<String>,
-}
-
+// JWT claims structure for token validation
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     sub: String,
@@ -59,9 +27,7 @@ struct Claims {
     iss: String,
 }
 
-fn decode_jwt_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "your-very-secret-jwt-key-change-this-in-production".to_string());
+fn decode_jwt(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
     let key = DecodingKey::from_secret(secret.as_ref());
     let mut validation = Validation::new(Algorithm::HS256);
     validation.set_audience(&["authenticated"]);
@@ -69,307 +35,519 @@ fn decode_jwt_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> 
     Ok(token_data.claims)
 }
 
-/// WebSocket handler for workflow testing updates
-pub async fn websocket_handler(
-    ws: WebSocketUpgrade,
-    Path((account_id, flow_session_id)): Path<(String, String)>,
-    Query(query): Query<WebSocketQuery>,
-    State(state): State<Arc<AppState>>,
-    user: Option<Extension<User>>,
-) -> Response {
-    info!(
-        "[WEBSOCKET] New WebSocket connection request for account: {}, session: {}, has_user: {}, has_token: {}",
-        account_id, flow_session_id, user.is_some(), query.token.is_some()
-    );
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketMessage {
+    pub r#type: String,
+    pub data: Value,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+}
 
-    // Try to get user from middleware first, then from query token
-    let authenticated_user = if let Some(Extension(user)) = user {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowStatusUpdate {
+    pub flow_session_id: Uuid,
+    pub status: String,
+    pub task_id: Option<Uuid>,
+    pub task_status: Option<String>,
+    pub result: Option<Value>,
+    pub error: Option<Value>,
+}
+
+// Workflow testing specific message types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowTestingUpdate {
+    pub r#type: String, // "workflow_update", "connection_established", "session_state"
+    pub update_type: Option<String>, // "task_created", "task_updated", "task_completed", "task_failed", "workflow_completed", "workflow_failed"
+    pub flow_session_id: String,
+    pub data: Option<Value>,
+    pub tasks: Option<Value>, // For session_state messages
+    pub complete: Option<bool>,
+}
+
+pub type WebSocketSender = broadcast::Sender<WebSocketMessage>;
+pub type WebSocketReceiver = broadcast::Receiver<WebSocketMessage>;
+
+#[derive(Debug)]
+pub struct WebSocketConnection {
+    pub account_id: String,
+    pub connection_id: String,
+    pub sender: tokio::sync::mpsc::UnboundedSender<Message>,
+    pub flow_session_id: Option<String>, // For workflow testing connections
+}
+
+pub struct WebSocketManager {
+    pub connections: DashMap<String, WebSocketConnection>,
+    pub broadcaster: WebSocketSender,
+}
+
+impl WebSocketManager {
+    pub fn new() -> Self {
+        let (broadcaster, _) = broadcast::channel(1000);
+        Self {
+            connections: DashMap::new(),
+            broadcaster,
+        }
+    }
+
+    pub fn add_connection(
+        &self,
+        account_id: String,
+        connection_id: String,
+        sender: tokio::sync::mpsc::UnboundedSender<Message>,
+    ) {
+        let connection = WebSocketConnection {
+            account_id: account_id.clone(),
+            connection_id: connection_id.clone(),
+            sender,
+            flow_session_id: None,
+        };
+
+        self.connections.insert(connection_id.clone(), connection);
         info!(
-            "[WEBSOCKET] Using user from middleware: {}",
-            user.account_id
+            "[WEBSOCKET] Added connection {} for account {}",
+            connection_id, account_id
         );
-        user
-    } else if let Some(token) = query.token {
-        info!("[WEBSOCKET] Attempting to validate token from query parameter");
-        // Validate token from query parameter
-        match decode_jwt_token(&token) {
-            Ok(claims) => {
-                info!(
-                    "[WEBSOCKET] Token validated successfully for user: {}",
-                    claims.sub
-                );
-                User {
-                    id: uuid::Uuid::parse_str(&claims.sub).unwrap_or_default(),
-                    email: "websocket@user.local".to_string(), // Placeholder for websocket auth
-                    username: "websocket_user".to_string(), // Placeholder for websocket auth
-                    account_id: claims.sub,
-                    jwt: token,
-                }
-            }
-            Err(e) => {
-                error!("[WEBSOCKET] Invalid token in query parameter: {}", e);
-                return (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
-            }
-        }
-    } else {
-        error!("[WEBSOCKET] No authentication provided - no user from middleware and no token in query");
-        return (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
-    };
-
-    ws.on_upgrade(move |socket| {
-        handle_websocket_connection(
-            socket,
-            account_id,
-            flow_session_id,
-            authenticated_user,
-            state,
-        )
-    })
-}
-
-async fn handle_websocket_connection(
-    socket: WebSocket,
-    account_id: String,
-    flow_session_id: String,
-    user: User,
-    state: Arc<AppState>,
-) {
-    let connection_id = Uuid::new_v4().to_string();
-    info!(
-        "[WEBSOCKET] Handling WebSocket connection {} for account: {}, session: {}",
-        connection_id, account_id, flow_session_id
-    );
-
-    // Store connection info
-    let connection = WebSocketConnection {
-        account_id: account_id.clone(),
-        flow_session_id: flow_session_id.clone(),
-        user_id: user.account_id.clone(),
-    };
-
-    state
-        .websocket_connections
-        .insert(connection_id.clone(), connection);
-
-    // Subscribe to workflow updates
-    let mut receiver = state.workflow_broadcaster.subscribe();
-
-    let (mut sender, mut receiver_ws) = socket.split();
-
-    // Send initial connection confirmation
-    let confirmation = serde_json::json!({
-        "type": "connection_established",
-        "flow_session_id": flow_session_id,
-        "account_id": account_id
-    });
-
-    if let Err(e) = sender.send(Message::Text(confirmation.to_string())).await {
-        error!("[WEBSOCKET] Failed to send confirmation: {}", e);
-        return;
     }
 
-    // Send current session state if available
-    if let Ok(_flow_session_uuid) = flow_session_id.parse::<Uuid>() {
-        // Since we've removed the cache, we could fetch current tasks from database here if needed
-        // For now, we'll let the frontend handle the initial state fetch
-        let current_state = serde_json::json!({
-            "type": "session_state",
-            "flow_session_id": flow_session_id,
-            "tasks": []
-        });
+    pub fn add_workflow_testing_connection(
+        &self,
+        account_id: String,
+        connection_id: String,
+        flow_session_id: String,
+        sender: tokio::sync::mpsc::UnboundedSender<Message>,
+    ) {
+        let connection = WebSocketConnection {
+            account_id: account_id.clone(),
+            connection_id: connection_id.clone(),
+            sender,
+            flow_session_id: Some(flow_session_id.clone()),
+        };
 
-        if let Err(e) = sender.send(Message::Text(current_state.to_string())).await {
-            error!("[WEBSOCKET] Failed to send current state: {}", e);
-        }
+        self.connections.insert(connection_id.clone(), connection);
+        info!(
+            "[WEBSOCKET] Added workflow testing connection {} for account {} and session {}",
+            connection_id, account_id, flow_session_id
+        );
     }
 
-    // Handle incoming messages and broadcast updates
-    tokio::select! {
-        // Handle incoming WebSocket messages
-        _ = async {
-            while let Some(msg) = receiver_ws.next().await {
-                match msg {
-                    Ok(Message::Text(_)) => {
-                        // Handle ping/pong or other client messages if needed
-                    }
-                    Ok(Message::Close(_)) => {
-                        info!("[WEBSOCKET] Client closed connection {}", connection_id);
-                        break;
-                    }
-                    Err(e) => {
-                        warn!("[WEBSOCKET] WebSocket error for connection {}: {}", connection_id, e);
-                        break;
-                    }
-                    _ => {}
-                }
-            }
-        } => {},
-
-        // Handle broadcast messages
-        _ = async {
-            while let Ok(update) = receiver.recv().await {
-                // Send updates for this specific session and account, or global updates (empty session/account)
-                let should_send = (update.flow_session_id == flow_session_id && update.account_id == account_id) ||
-                                  (update.flow_session_id.is_empty() && update.account_id.is_empty()) ||
-                                  (update.flow_session_id == flow_session_id && update.account_id.is_empty());
-
-                if should_send {
-                    let message = serde_json::json!({
-                        "type": "workflow_update",
-                        "update_type": update.update_type,
-                        "flow_session_id": flow_session_id, // Use the connection's session ID
-                        "data": update.data
-                    });
-
-                    if let Err(e) = sender.send(Message::Text(message.to_string())).await {
-                        error!("[WEBSOCKET] Failed to send update to connection {}: {}", connection_id, e);
-                        break;
-                    }
-                }
-            }
-        } => {}
-    }
-
-    // Clean up connection
-    state.websocket_connections.remove(&connection_id);
-
-    info!("[WEBSOCKET] Connection {} closed", connection_id);
-}
-
-/// Broadcast a task update to all relevant WebSocket connections
-pub async fn broadcast_task_update(
-    broadcaster: &WorkflowBroadcaster,
-    account_id: &str,
-    flow_session_id: &str,
-    update_type: UpdateType,
-    task: &Task,
-) {
-    let update = WorkflowTestingUpdate {
-        flow_session_id: flow_session_id.to_string(),
-        account_id: account_id.to_string(),
-        update_type,
-        data: serde_json::to_value(task).unwrap_or_default(),
-    };
-
-    if let Err(e) = broadcaster.send(update) {
-        // This is expected when no one is listening
-        if broadcaster.receiver_count() > 0 {
-            warn!("[WEBSOCKET] Failed to broadcast task update: {}", e);
-        }
-    }
-}
-
-/// Broadcast a workflow completion update
-pub async fn broadcast_workflow_completion(
-    broadcaster: &WorkflowBroadcaster,
-    account_id: &str,
-    flow_session_id: &str,
-    success: bool,
-    tasks: Vec<Task>,
-) {
-    let update_type = if success {
-        UpdateType::WorkflowCompleted
-    } else {
-        UpdateType::WorkflowFailed
-    };
-
-    let update = WorkflowTestingUpdate {
-        flow_session_id: flow_session_id.to_string(),
-        account_id: account_id.to_string(),
-        update_type,
-        data: serde_json::json!({
-            "complete": true,
-            "success": success,
-            "tasks": tasks
-        }),
-    };
-
-    if let Err(e) = broadcaster.send(update) {
-        if broadcaster.receiver_count() > 0 {
-            warn!("[WEBSOCKET] Failed to broadcast workflow completion: {}", e);
-        }
-    }
-}
-
-/// Broadcast a simple task update (just task_id and update type)
-pub async fn broadcast_task_update_simple(
-    broadcaster: &WorkflowBroadcaster,
-    task_id: &Uuid,
-    update_type: UpdateType,
-) {
-    let update = WorkflowTestingUpdate {
-        flow_session_id: "".to_string(), // Will be filtered by frontend
-        account_id: "".to_string(),      // Will be filtered by frontend
-        update_type,
-        data: serde_json::json!({
-            "task_id": task_id,
-            "needs_refresh": true
-        }),
-    };
-
-    if let Err(e) = broadcaster.send(update) {
-        if broadcaster.receiver_count() > 0 {
-            warn!("[WEBSOCKET] Failed to broadcast simple task update: {}", e);
-        }
-    }
-}
-
-/// Broadcast a simple workflow completion update
-pub async fn broadcast_workflow_completion_simple(
-    broadcaster: &WorkflowBroadcaster,
-    flow_session_id: &Uuid,
-    success: bool,
-) {
-    let update_type = if success {
-        UpdateType::WorkflowCompleted
-    } else {
-        UpdateType::WorkflowFailed
-    };
-
-    let update = WorkflowTestingUpdate {
-        flow_session_id: flow_session_id.to_string(),
-        account_id: "".to_string(), // Will be filtered by frontend
-        update_type,
-        data: serde_json::json!({
-            "complete": true,
-            "success": success,
-            "needs_refresh": true
-        }),
-    };
-
-    if let Err(e) = broadcaster.send(update) {
-        if broadcaster.receiver_count() > 0 {
-            warn!(
-                "[WEBSOCKET] Failed to broadcast simple workflow completion: {}",
-                e
+    pub fn remove_connection(&self, connection_id: &str) {
+        if let Some((_, connection)) = self.connections.remove(connection_id) {
+            info!(
+                "[WEBSOCKET] Removed connection {} for account {}",
+                connection_id, connection.account_id
             );
         }
     }
+
+    pub fn broadcast_to_account(&self, account_id: &str, message: WebSocketMessage) {
+        let connections_to_send: Vec<_> = self
+            .connections
+            .iter()
+            .filter(|entry| entry.value().account_id == account_id)
+            .map(|entry| (entry.key().clone(), entry.value().sender.clone()))
+            .collect();
+
+        for (connection_id, sender) in connections_to_send {
+            let json_message = match serde_json::to_string(&message) {
+                Ok(json) => json,
+                Err(e) => {
+                    error!("[WEBSOCKET] Failed to serialize message: {}", e);
+                    continue;
+                }
+            };
+
+            if let Err(e) = sender.send(Message::Text(json_message)) {
+                warn!(
+                    "[WEBSOCKET] Failed to send message to connection {}: {}",
+                    connection_id, e
+                );
+                // Remove the connection if sending fails
+                self.remove_connection(&connection_id);
+            }
+        }
+    }
+
+    pub fn broadcast_workflow_status(&self, account_id: &str, status_update: WorkflowStatusUpdate) {
+        let message = WebSocketMessage {
+            r#type: "workflow_status".to_string(),
+            data: serde_json::to_value(status_update).unwrap_or_default(),
+            timestamp: chrono::Utc::now(),
+        };
+
+        self.broadcast_to_account(account_id, message);
+    }
+
+    // Broadcast workflow testing updates to specific session connections
+    pub fn broadcast_workflow_testing_update(
+        &self,
+        account_id: &str,
+        flow_session_id: &str,
+        update: WorkflowTestingUpdate,
+    ) {
+        let connections_to_send: Vec<_> = self
+            .connections
+            .iter()
+            .filter(|entry| {
+                entry.value().account_id == account_id
+                    && entry.value().flow_session_id.as_deref() == Some(flow_session_id)
+            })
+            .map(|entry| (entry.key().clone(), entry.value().sender.clone()))
+            .collect();
+
+        for (connection_id, sender) in connections_to_send {
+            let json_message = match serde_json::to_string(&update) {
+                Ok(json) => json,
+                Err(e) => {
+                    error!(
+                        "[WEBSOCKET] Failed to serialize workflow testing update: {}",
+                        e
+                    );
+                    continue;
+                }
+            };
+
+            if let Err(e) = sender.send(Message::Text(json_message)) {
+                warn!(
+                    "[WEBSOCKET] Failed to send workflow testing update to connection {}: {}",
+                    connection_id, e
+                );
+                // Remove the connection if sending fails
+                self.remove_connection(&connection_id);
+            } else {
+                info!(
+                    "[WEBSOCKET] Sent workflow testing update to connection {} for session {}",
+                    connection_id, flow_session_id
+                );
+            }
+        }
+    }
 }
 
-/// Broadcast a task update with session information (for CreateTask operations)
-pub async fn broadcast_task_update_with_session(
-    broadcaster: &WorkflowBroadcaster,
-    account_id: &str,
-    flow_session_id: &str,
-    task_id: &Uuid,
-    update_type: UpdateType,
-) {
-    let update = WorkflowTestingUpdate {
-        flow_session_id: flow_session_id.to_string(),
-        account_id: account_id.to_string(),
-        update_type,
-        data: serde_json::json!({
-            "task_id": task_id,
-            "needs_refresh": true
-        }),
+#[derive(Deserialize)]
+pub struct WebSocketQuery {
+    account_id: String,
+}
+
+#[derive(Deserialize)]
+pub struct WorkflowTestingWebSocketQuery {
+    token: String,
+}
+
+pub async fn websocket_handler(
+    ws: WebSocketUpgrade,
+    Path(connection_id): Path<String>,
+    Query(query): Query<WebSocketQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Response {
+    ws.on_upgrade(move |socket| handle_websocket(socket, connection_id, query.account_id, state))
+}
+
+pub async fn workflow_testing_websocket_handler(
+    ws: WebSocketUpgrade,
+    Path((account_id, flow_session_id)): Path<(String, String)>,
+    Query(query): Query<WorkflowTestingWebSocketQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Response {
+    // Validate the JWT token
+    let secret = match env::var("SUPABASE_JWT_SECRET") {
+        Ok(secret) => secret,
+        Err(_) => {
+            error!("[WEBSOCKET] SUPABASE_JWT_SECRET not set");
+            return axum::http::Response::builder()
+                .status(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                .body("Server configuration error".into())
+                .unwrap();
+        }
     };
 
-    if let Err(e) = broadcaster.send(update) {
-        if broadcaster.receiver_count() > 0 {
-            warn!(
-                "[WEBSOCKET] Failed to broadcast task update with session: {}",
+    let claims = match decode_jwt(&query.token, &secret) {
+        Ok(claims) => claims,
+        Err(e) => {
+            error!("[WEBSOCKET] Invalid JWT token: {}", e);
+            return axum::http::Response::builder()
+                .status(axum::http::StatusCode::UNAUTHORIZED)
+                .body("Invalid token".into())
+                .unwrap();
+        }
+    };
+
+    // Verify the user has access to the account_id
+    let user_id = &claims.sub;
+    let has_access =
+        match verify_account_access(&state.public_client, &query.token, user_id, &account_id).await
+        {
+            Ok(access) => access,
+            Err(e) => {
+                error!(
+                    "[WEBSOCKET] Failed to verify account access for user {} to account {}: {}",
+                    user_id, account_id, e
+                );
+                return axum::http::Response::builder()
+                    .status(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .body("Failed to verify access".into())
+                    .unwrap();
+            }
+        };
+
+    if !has_access {
+        error!(
+            "[WEBSOCKET] User {} does not have access to account {}",
+            user_id, account_id
+        );
+        return axum::http::Response::builder()
+            .status(axum::http::StatusCode::FORBIDDEN)
+            .body("Access denied".into())
+            .unwrap();
+    }
+
+    let connection_id = format!("testing_{}_{}", account_id, flow_session_id);
+
+    ws.on_upgrade(move |socket| {
+        handle_workflow_testing_websocket(socket, connection_id, account_id, flow_session_id, state)
+    })
+}
+
+async fn handle_websocket(
+    socket: WebSocket,
+    connection_id: String,
+    account_id: String,
+    state: Arc<AppState>,
+) {
+    let (mut sender, mut receiver) = socket.split();
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+    // Add connection to manager
+    state
+        .websocket_manager
+        .add_connection(account_id.clone(), connection_id.clone(), tx);
+
+    // Spawn task to handle outgoing messages
+    let connection_id_clone = connection_id.clone();
+    let websocket_manager_clone = state.websocket_manager.clone();
+    let outgoing_task = tokio::spawn(async move {
+        while let Some(message) = rx.recv().await {
+            if sender.send(message).await.is_err() {
+                break;
+            }
+        }
+        // Clean up connection when task ends
+        websocket_manager_clone.remove_connection(&connection_id_clone);
+    });
+
+    // Handle incoming messages (mostly for keepalive)
+    let connection_id_clone = connection_id.clone();
+    let websocket_manager_clone = state.websocket_manager.clone();
+    let incoming_task = tokio::spawn(async move {
+        while let Some(msg) = receiver.next().await {
+            match msg {
+                Ok(Message::Text(text)) => {
+                    // Handle ping/pong or other client messages
+                    if text == "ping" {
+                        // Connection is alive, no action needed
+                        continue;
+                    }
+                }
+                Ok(Message::Close(_)) => {
+                    info!(
+                        "[WEBSOCKET] Connection {} closed by client",
+                        connection_id_clone
+                    );
+                    break;
+                }
+                Err(e) => {
+                    error!(
+                        "[WEBSOCKET] WebSocket error for connection {}: {}",
+                        connection_id_clone, e
+                    );
+                    break;
+                }
+                _ => {
+                    // Ignore other message types
+                }
+            }
+        }
+        // Clean up connection when task ends
+        websocket_manager_clone.remove_connection(&connection_id_clone);
+    });
+
+    // Wait for either task to complete
+    tokio::select! {
+        _ = outgoing_task => {},
+        _ = incoming_task => {},
+    }
+
+    info!("[WEBSOCKET] WebSocket connection {} closed", connection_id);
+}
+
+async fn handle_workflow_testing_websocket(
+    socket: WebSocket,
+    connection_id: String,
+    account_id: String,
+    flow_session_id: String,
+    state: Arc<AppState>,
+) {
+    let (mut sender, mut receiver) = socket.split();
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+    // Add workflow testing connection to manager
+    state.websocket_manager.add_workflow_testing_connection(
+        account_id.clone(),
+        connection_id.clone(),
+        flow_session_id.clone(),
+        tx,
+    );
+
+    // Send connection established message
+    let connection_msg = WorkflowTestingUpdate {
+        r#type: "connection_established".to_string(),
+        update_type: None,
+        flow_session_id: flow_session_id.clone(),
+        data: Some(serde_json::json!({"message": "Connected to workflow testing session"})),
+        tasks: None,
+        complete: None,
+    };
+
+    if let Ok(json_msg) = serde_json::to_string(&connection_msg) {
+        if let Err(e) = sender.send(Message::Text(json_msg)).await {
+            error!(
+                "[WEBSOCKET] Failed to send connection established message: {}",
                 e
+            );
+            return;
+        }
+    }
+
+    // Send initial session state with current tasks
+    send_initial_session_state(&state, &account_id, &flow_session_id, &mut sender).await;
+
+    // Spawn task to handle outgoing messages
+    let connection_id_clone = connection_id.clone();
+    let websocket_manager_clone = state.websocket_manager.clone();
+    let outgoing_task = tokio::spawn(async move {
+        while let Some(message) = rx.recv().await {
+            if sender.send(message).await.is_err() {
+                break;
+            }
+        }
+        // Clean up connection when task ends
+        websocket_manager_clone.remove_connection(&connection_id_clone);
+    });
+
+    // Handle incoming messages (mostly for keepalive)
+    let connection_id_clone = connection_id.clone();
+    let websocket_manager_clone = state.websocket_manager.clone();
+    let incoming_task = tokio::spawn(async move {
+        while let Some(msg) = receiver.next().await {
+            match msg {
+                Ok(Message::Text(text)) => {
+                    // Handle ping/pong or other client messages
+                    if text == "ping" {
+                        // Connection is alive, no action needed
+                        continue;
+                    }
+                }
+                Ok(Message::Close(_)) => {
+                    info!(
+                        "[WEBSOCKET] Workflow testing connection {} closed by client",
+                        connection_id_clone
+                    );
+                    break;
+                }
+                Err(e) => {
+                    error!(
+                        "[WEBSOCKET] WebSocket error for workflow testing connection {}: {}",
+                        connection_id_clone, e
+                    );
+                    break;
+                }
+                _ => {
+                    // Ignore other message types
+                }
+            }
+        }
+        // Clean up connection when task ends
+        websocket_manager_clone.remove_connection(&connection_id_clone);
+    });
+
+    // Wait for either task to complete
+    tokio::select! {
+        _ = outgoing_task => {},
+        _ = incoming_task => {},
+    }
+
+    info!(
+        "[WEBSOCKET] Workflow testing WebSocket connection {} closed",
+        connection_id
+    );
+}
+
+async fn send_initial_session_state(
+    state: &Arc<AppState>,
+    account_id: &str,
+    flow_session_id: &str,
+    sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
+) {
+    // Query for existing tasks for this flow session
+    let tasks_query = state
+        .anything_client
+        .from("tasks")
+        .select("task_id,action_label,task_status,result,error,created_at,started_at,ended_at")
+        .eq("flow_session_id", flow_session_id)
+        .order("created_at.asc")
+        .execute()
+        .await;
+
+    // Query for flow session status
+    let flow_query = state
+        .anything_client
+        .from("flow_sessions")
+        .select("status")
+        .eq("flow_session_id", flow_session_id)
+        .single()
+        .execute()
+        .await;
+
+    let mut tasks_data = None;
+    let mut is_complete = false;
+
+    // Process tasks query
+    if let Ok(response) = tasks_query {
+        if let Ok(tasks_json) = response.text().await {
+            tasks_data = serde_json::from_str(&tasks_json).ok();
+        }
+    }
+
+    // Process flow session query
+    if let Ok(response) = flow_query {
+        if let Ok(flow_json) = response.text().await {
+            match serde_json::from_str::<serde_json::Value>(&flow_json) {
+                Ok(flow_data) => {
+                    if let Some(status) = flow_data.get("status").and_then(|s| s.as_str()) {
+                        is_complete = matches!(status, "completed" | "failed");
+                    }
+                }
+                Err(_) => {
+                    // Failed to parse flow session data
+                }
+            }
+        }
+    }
+
+    let session_state_msg = WorkflowTestingUpdate {
+        r#type: "session_state".to_string(),
+        update_type: None,
+        flow_session_id: flow_session_id.to_string(),
+        data: None,
+        tasks: tasks_data,
+        complete: Some(is_complete),
+    };
+
+    if let Ok(json_msg) = serde_json::to_string(&session_state_msg) {
+        if let Err(e) = sender.send(Message::Text(json_msg)).await {
+            error!("[WEBSOCKET] Failed to send initial session state: {}", e);
+        } else {
+            info!(
+                "[WEBSOCKET] Sent initial session state for flow session {} (complete: {})",
+                flow_session_id, is_complete
             );
         }
     }

@@ -180,13 +180,13 @@ export function TaskTable({
                     onClick={() => toggleExpand(task.task_id)}
                   >
                     <TableCell className="w-4">
-                      {task.result ? (
-                        expandedTaskIds.has(task.task_id) ? (
+                      {/* {task.result ? ( */}
+                        {expandedTaskIds.has(task.task_id) ? (
                           <ChevronDown className="h-4 w-4 text-gray-500" />
                         ) : (
                           <ChevronRight className="h-4 w-4 text-gray-500" />
-                        )
-                      ) : null}
+                        )}
+                      {/* ) : null} */}
                     </TableCell>
                     <TableCell>
                       <TriggerBadge

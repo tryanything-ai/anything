@@ -64,12 +64,13 @@ impl EnhancedSpanFactory {
 }
 
 /// Workflow execution context for better tracking
+#[derive(Debug, Clone)]
 pub struct WorkflowExecutionContext {
     pub flow_session_id: Uuid,
     pub workflow_id: Uuid,
     pub task_id: Option<Uuid>,
     pub start_time: Instant,
-    span: Span,
+    pub span: Span,
 }
 
 impl WorkflowExecutionContext {
