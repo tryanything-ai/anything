@@ -78,7 +78,7 @@ impl AccountAccessCache {
     }
 }
 
-async fn verify_account_access(
+pub async fn verify_account_access(
     client: &postgrest::Postgrest,
     jwt: &str,
     user_id: &str,
@@ -106,9 +106,10 @@ pub async fn account_access_middleware(
     next: Next,
 ) -> Result<Response, StatusCode> {
     // Extract user_id from the existing auth middleware
-    let user = request.extensions().get::<User>().ok_or_else(|| {
-        StatusCode::UNAUTHORIZED
-    })?;
+    let user = request
+        .extensions()
+        .get::<User>()
+        .ok_or_else(|| StatusCode::UNAUTHORIZED)?;
     let user_id = &user.account_id;
 
     // Extract account_id from path parameters

@@ -8,7 +8,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::mpsc::Receiver;
-use tracing::{info, span, warn, Instrument, Level};
+use tracing::{info, span, Instrument, Level};
 use uuid::Uuid;
 
 // Define the type of task operation
@@ -112,8 +112,8 @@ pub async fn task_database_status_processor(
                     match &message.operation {
                         Operation::UpdateTask {
                             task_id,
-                            account_id, 
-                            flow_session_id,
+                            account_id: _, 
+                            flow_session_id: _,
                             started_at,
                             ended_at,
                             status,
@@ -135,14 +135,14 @@ pub async fn task_database_status_processor(
                             })
                             .await
                         }
-                        Operation::CreateTask { task_id, account_id, flow_session_id, input } => {
+                        Operation::CreateTask { task_id, account_id: _, flow_session_id: _, input } => {
                             span!(Level::DEBUG, "create_task_db_call", task_id = %task_id).in_scope(|| {
                                 create_task(state.clone(), input)
                             }).await
                         }
                         Operation::CompleteWorkflow {
                             flow_session_id,
-                            account_id,
+                            account_id: _,
                             status,
                             trigger_status,
                         } => {
@@ -224,6 +224,24 @@ pub async fn task_database_status_processor(
     info!("[TASK PROCESSOR] Status updater processor shutdown complete");
 }
 
+async fn get_current_tasks_for_session(state: &Arc<AppState>, flow_session_id: &Uuid) -> Option<serde_json::Value> {
+    let tasks_query = state
+        .anything_client
+        .from("tasks")
+        .select("task_id,action_label,task_status,result,error,created_at,started_at,ended_at")
+        .eq("flow_session_id", flow_session_id.to_string())
+        .order("created_at.asc")
+        .execute()
+        .await;
+
+    if let Ok(response) = tasks_query {
+        if let Ok(tasks_json) = response.text().await {
+            return serde_json::from_str(&tasks_json).ok();
+        }
+    }
+    None
+}
+
 async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation) {
     match operation {
         Operation::UpdateTask {
@@ -242,6 +260,9 @@ async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation
                 _ => "task_updated",
             };
 
+            // Fetch all current tasks for this flow session
+            let tasks_data = get_current_tasks_for_session(state, flow_session_id).await;
+
             let update = WorkflowTestingUpdate {
                 r#type: "workflow_update".to_string(),
                 update_type: Some(update_type.to_string()),
@@ -250,10 +271,9 @@ async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation
                     "task_id": task_id,
                     "status": status,
                     "result": result,
-                    "error": error,
-                    "needs_refresh": true
+                    "error": error
                 })),
-                tasks: None,
+                tasks: tasks_data,
                 complete: None,
             };
 
@@ -274,15 +294,17 @@ async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation
             flow_session_id,
             ..
         } => {
+            // Fetch all current tasks for this flow session
+            let tasks_data = get_current_tasks_for_session(state, flow_session_id).await;
+
             let update = WorkflowTestingUpdate {
                 r#type: "workflow_update".to_string(),
                 update_type: Some("task_created".to_string()),
                 flow_session_id: flow_session_id.to_string(),
                 data: Some(serde_json::json!({
-                    "task_id": task_id,
-                    "needs_refresh": true
+                    "task_id": task_id
                 })),
-                tasks: None,
+                tasks: tasks_data,
                 complete: None,
             };
 
@@ -301,7 +323,7 @@ async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation
             flow_session_id,
             account_id,
             status,
-            trigger_status,
+            trigger_status: _,
         } => {
             let update_type = match status {
                 FlowSessionStatus::Completed => "workflow_completed",
@@ -309,15 +331,17 @@ async fn broadcast_websocket_update(state: &Arc<AppState>, operation: &Operation
                 _ => "workflow_updated",
             };
 
+            // Fetch final tasks for this flow session
+            let tasks_data = get_current_tasks_for_session(state, flow_session_id).await;
+
             let update = WorkflowTestingUpdate {
                 r#type: "workflow_update".to_string(),
                 update_type: Some(update_type.to_string()),
                 flow_session_id: flow_session_id.to_string(),
                 data: Some(serde_json::json!({
-                    "status": status,
-                    "needs_refresh": true
+                    "status": status
                 })),
-                tasks: None,
+                tasks: tasks_data,
                 complete: Some(matches!(status, FlowSessionStatus::Completed | FlowSessionStatus::Failed)),
             };
 

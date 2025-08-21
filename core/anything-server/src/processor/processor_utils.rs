@@ -360,6 +360,29 @@ pub async fn process_task(
     );
 
     let started_at = Utc::now();
+
+    // Send running status update for websocket
+    let running_message = StatusUpdateMessage {
+        operation: Operation::UpdateTask {
+            task_id: task.task_id.clone(),
+            account_id: ctx.workflow.account_id,
+            flow_session_id: ctx.flow_session_id,
+            status: TaskStatus::Running,
+            result: None,
+            error: None,
+            context: None,
+            started_at: Some(started_at),
+            ended_at: None,
+        },
+    };
+
+    if let Err(e) = ctx.state.task_updater_sender.send(running_message).await {
+        warn!(
+            "[PROCESSOR_UTILS] Failed to send running status update: {}",
+            e
+        );
+    }
+
     let execution_start = Instant::now();
 
     // Get a clone of in-memory tasks for bundling context

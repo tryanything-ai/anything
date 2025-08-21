@@ -174,37 +174,19 @@ export const WorkflowTestingProvider = ({
               break;
 
             case "workflow_update":
-              switch (update.update_type) {
-                case "task_created":
-                case "task_updated":
-                case "task_completed":
-                case "task_failed":
-                  // Simple update - refresh task data from API
-                  if (
-                    update.data?.needs_refresh &&
-                    db_flow_id &&
-                    db_flow_version_id &&
-                    workflowTestingSessionId
-                  ) {
-                    console.log(
-                      "[WEBSOCKET] Task update received, refreshing data from API",
-                    );
-                    refreshTaskData();
-                  }
-                  break;
+              // Update tasks directly from WebSocket data
+              if (update.tasks) {
+                console.log(
+                  "[WEBSOCKET] Updating tasks from WebSocket:",
+                  update.tasks.length,
+                );
+                setWorkflowTestingSessionTasks(update.tasks);
+              }
 
+              switch (update.update_type) {
                 case "workflow_completed":
                 case "workflow_failed":
-                  // Workflow finished - do final refresh
                   console.log("[WEBSOCKET] Workflow completed");
-                  if (
-                    update.data?.needs_refresh &&
-                    db_flow_id &&
-                    db_flow_version_id &&
-                    workflowTestingSessionId
-                  ) {
-                    refreshTaskData();
-                  }
                   setTestingWorkflow(false);
                   setTestFinishedTime(new Date().toISOString());
 
@@ -281,10 +263,9 @@ export const WorkflowTestingProvider = ({
         setWorkflowTestingSessionId(flow_session_id);
       }
       // Start WebSocket subscription for real-time updates
-      // subscribeToWorkflowUpdates(flow_session_id);
+      subscribeToWorkflowUpdates(flow_session_id);
     } catch (error) {
       console.error(error);
-    } finally {
       setTestingWorkflow(false);
     }
   };

@@ -16,6 +16,7 @@ use tokio::sync::broadcast;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
+use crate::account_auth_middleware::verify_account_access;
 use crate::AppState;
 
 // JWT claims structure for token validation
@@ -269,15 +270,32 @@ pub async fn workflow_testing_websocket_handler(
         }
     };
 
-    // Verify the account_id matches the token's subject
-    if claims.sub != account_id {
+    // Verify the user has access to the account_id
+    let user_id = &claims.sub;
+    let has_access =
+        match verify_account_access(&state.public_client, &query.token, user_id, &account_id).await
+        {
+            Ok(access) => access,
+            Err(e) => {
+                error!(
+                    "[WEBSOCKET] Failed to verify account access for user {} to account {}: {}",
+                    user_id, account_id, e
+                );
+                return axum::http::Response::builder()
+                    .status(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .body("Failed to verify access".into())
+                    .unwrap();
+            }
+        };
+
+    if !has_access {
         error!(
-            "[WEBSOCKET] Account ID mismatch: token={}, path={}",
-            claims.sub, account_id
+            "[WEBSOCKET] User {} does not have access to account {}",
+            user_id, account_id
         );
         return axum::http::Response::builder()
             .status(axum::http::StatusCode::FORBIDDEN)
-            .body("Account mismatch".into())
+            .body("Access denied".into())
             .unwrap();
     }
 
@@ -398,8 +416,8 @@ async fn handle_workflow_testing_websocket(
         }
     }
 
-    // TODO: Send initial session state with current tasks
-    // This would require querying the database for existing tasks for this flow_session_id
+    // Send initial session state with current tasks
+    send_initial_session_state(&state, &account_id, &flow_session_id, &mut sender).await;
 
     // Spawn task to handle outgoing messages
     let connection_id_clone = connection_id.clone();
@@ -460,4 +478,77 @@ async fn handle_workflow_testing_websocket(
         "[WEBSOCKET] Workflow testing WebSocket connection {} closed",
         connection_id
     );
+}
+
+async fn send_initial_session_state(
+    state: &Arc<AppState>,
+    account_id: &str,
+    flow_session_id: &str,
+    sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
+) {
+    // Query for existing tasks for this flow session
+    let tasks_query = state
+        .anything_client
+        .from("tasks")
+        .select("task_id,action_label,task_status,result,error,created_at,started_at,ended_at")
+        .eq("flow_session_id", flow_session_id)
+        .order("created_at.asc")
+        .execute()
+        .await;
+
+    // Query for flow session status
+    let flow_query = state
+        .anything_client
+        .from("flow_sessions")
+        .select("status")
+        .eq("flow_session_id", flow_session_id)
+        .single()
+        .execute()
+        .await;
+
+    let mut tasks_data = None;
+    let mut is_complete = false;
+
+    // Process tasks query
+    if let Ok(response) = tasks_query {
+        if let Ok(tasks_json) = response.text().await {
+            tasks_data = serde_json::from_str(&tasks_json).ok();
+        }
+    }
+
+    // Process flow session query
+    if let Ok(response) = flow_query {
+        if let Ok(flow_json) = response.text().await {
+            match serde_json::from_str::<serde_json::Value>(&flow_json) {
+                Ok(flow_data) => {
+                    if let Some(status) = flow_data.get("status").and_then(|s| s.as_str()) {
+                        is_complete = matches!(status, "completed" | "failed");
+                    }
+                }
+                Err(_) => {
+                    // Failed to parse flow session data
+                }
+            }
+        }
+    }
+
+    let session_state_msg = WorkflowTestingUpdate {
+        r#type: "session_state".to_string(),
+        update_type: None,
+        flow_session_id: flow_session_id.to_string(),
+        data: None,
+        tasks: tasks_data,
+        complete: Some(is_complete),
+    };
+
+    if let Ok(json_msg) = serde_json::to_string(&session_state_msg) {
+        if let Err(e) = sender.send(Message::Text(json_msg)).await {
+            error!("[WEBSOCKET] Failed to send initial session state: {}", e);
+        } else {
+            info!(
+                "[WEBSOCKET] Sent initial session state for flow session {} (complete: {})",
+                flow_session_id, is_complete
+            );
+        }
+    }
 }
