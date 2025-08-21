@@ -47,6 +47,12 @@ impl TaskStatus {
     }
 }
 
+impl ToString for TaskStatus {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
+    }
+}
+
 //Used to determine if whole workflow is completed or what happened
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -74,6 +80,12 @@ impl FlowSessionStatus {
     }
 }
 
+impl ToString for FlowSessionStatus {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum TriggerSessionStatus {
@@ -95,6 +107,12 @@ impl TriggerSessionStatus {
             TriggerSessionStatus::Failed => "failed",
             TriggerSessionStatus::Canceled => "canceled",
         }
+    }
+}
+
+impl ToString for TriggerSessionStatus {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
     }
 }
 

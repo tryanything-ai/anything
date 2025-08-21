@@ -10,7 +10,7 @@ use serde_json::json;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
-use crate::{supabase_jwt_middleware::User, AppState};
+use crate::{custom_auth::User, AppState};
 
 // Cache entry with expiration
 #[derive(Clone, Debug, Serialize, Deserialize)]

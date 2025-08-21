@@ -1,9 +1,11 @@
 pub mod components;
 pub mod db_calls;
+pub mod db_calls_seaorm;
 pub mod enhanced_processor;
+pub mod enhanced_processor_seaorm;
 pub mod execute_task;
 pub mod flow_session_cache;
-pub mod hydrate_processor;
+pub mod hydrate_processor_seaorm;
 pub mod parallelizer;
 pub mod path_processor;
 pub mod process_trigger_utils;

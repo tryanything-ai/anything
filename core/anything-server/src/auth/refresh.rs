@@ -1,17 +1,14 @@
 use axum::http::StatusCode;
-use postgrest::Postgrest;
 use serde_json::Value;
 
 use chrono::{DateTime, Utc};
-use dotenv::dotenv;
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::env;
+use std::sync::Arc;
 
-use crate::auth::init::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken};
-
-use crate::vault::update_secret_in_vault;
+use crate::auth::init_seaorm::{AccountAuthProviderAccount, AuthProvider, ErrorResponse, OAuthToken};
+use crate::AppState;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateAccountAuthProviderAccount {
@@ -20,13 +17,9 @@ pub struct UpdateAccountAuthProviderAccount {
 }
 
 pub async fn refresh_accounts(
-    client: &Postgrest,
+    state: Arc<AppState>,
     accounts: Vec<AccountAuthProviderAccount>,
 ) -> Result<Vec<AccountAuthProviderAccount>, Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
     let mut accounts = accounts;
 
     println!("[AUTH REFRESH] Parsed accounts: {:?}", accounts);
@@ -54,40 +47,19 @@ pub async fn refresh_accounts(
                     account.auth_provider_id
                 );
 
-                let failed_updates = json!({
-                    "failed": true,
-                    "failed_at": if account.failure_retries == 0 { Some(chrono::Utc::now()) } else { account.failed_at },
-                    "failed_reason": "Service not supported",
-                    "failure_retries": account.failure_retries + 1,
-                    "last_failure_retry": chrono::Utc::now(),
-                });
-
-                let failed_response = client
-                    .from("account_auth_provider_accounts")
-                    .auth(supabase_service_role_api_key.clone())
-                    .update(failed_updates.to_string())
-                    .eq(
-                        "account_auth_provider_account_id",
-                        account.account_auth_provider_account_id.to_string(),
-                    )
-                    .execute()
-                    .await;
-
-                if let Err(e) = failed_response {
-                    println!("[AUTH REFRESH] Failed to mark account as failed: {:?}", e);
+                // TODO: Update account as failed using SeaORM
+                println!("[AUTH REFRESH] TODO: Mark account as failed in database");
+                
+                // Update the in-memory account with failure info
+                account.failed = true;
+                account.failed_at = if account.failure_retries == 0 {
+                    Some(Utc::now())
                 } else {
-                    println!("[AUTH REFRESH] Successfully marked account as failed");
-                    // Update the in-memory account with failure info
-                    account.failed = true;
-                    account.failed_at = if account.failure_retries == 0 {
-                        Some(Utc::now())
-                    } else {
-                        account.failed_at
-                    };
-                    account.failed_reason = Some("Service no supported".to_string());
-                    account.failure_retries += 1;
-                    account.last_failure_retry = Some(Utc::now());
-                }
+                    account.failed_at
+                };
+                account.failed_reason = Some("Service not supported".to_string());
+                account.failure_retries += 1;
+                account.last_failure_retry = Some(Utc::now());
 
                 continue;
             }
@@ -150,37 +122,16 @@ pub async fn refresh_accounts(
                             );
                         }
 
-                        // Only update tokens that have changed
-                        let mut update_tasks = Vec::new();
-
-                        // Always update access token as it's guaranteed to be new
-                        update_tasks.push(update_secret_in_vault(
-                            client,
-                            &account.access_token_vault_id,
-                            &new_token.access_token,
-                        ));
-
-                        // Only update refresh token if we got a new one
-                        if let Some(new_refresh_token) = &new_token.refresh_token {
-                            update_tasks.push(update_secret_in_vault(
-                                client,
-                                &account.refresh_token_vault_id,
-                                new_refresh_token,
-                            ));
+                        // TODO: Update tokens in pgsodium secrets using SeaORM
+                        println!("[AUTH REFRESH] TODO: Update access token in pgsodium secrets");
+                        
+                        if let Some(_new_refresh_token) = &new_token.refresh_token {
+                            println!("[AUTH REFRESH] TODO: Update refresh token in pgsodium secrets");
                             // Update refresh token expiry only if we got a new refresh token
                             refresh_token_expires_at = refresh_token_expires_at;
                         } else {
                             // Keep existing refresh token expiry if no new refresh token
                             refresh_token_expires_at = account.refresh_token_expires_at;
-                        }
-
-                        // Execute all updates in parallel
-                        let results = futures::future::join_all(update_tasks).await;
-                        for result in results {
-                            if let Err(e) = result {
-                                println!("[AUTH REFRESH] Failed to update token in vault: {:?}", e);
-                                return Err(e);
-                            }
                         }
 
                         let account_updates = UpdateAccountAuthProviderAccount {
@@ -193,72 +144,34 @@ pub async fn refresh_accounts(
                             account_updates
                         );
 
-                        // Update the account in the database
-                        let update_response = client
-                            .from("account_auth_provider_accounts")
-                            .auth(supabase_service_role_api_key.clone())
-                            .update(serde_json::to_string(&account_updates).unwrap())
-                            .eq(
-                                "account_auth_provider_account_id",
-                                account.account_auth_provider_account_id.to_string(),
-                            )
-                            .execute()
-                            .await;
-
-                        if let Err(e) = update_response {
-                            println!(
-                                "[AUTH REFRESH] Failed to update account with new token: {:?}",
-                                e
-                            );
-                        } else {
-                            println!("[AUTH REFRESH] Successfully updated account with new token");
-                            // Update the in-memory account with new values
-                            account.access_token = new_token.access_token;
-                            if let Some(new_refresh_token) = new_token.refresh_token {
-                                account.refresh_token = Some(new_refresh_token);
-                            }
-                            account.access_token_expires_at = access_token_expires_at;
-                            account.refresh_token_expires_at = refresh_token_expires_at;
+                        // TODO: Update the account in the database using SeaORM
+                        println!("[AUTH REFRESH] TODO: Update account auth provider account in database");
+                        
+                        // Update the in-memory account with new values
+                        account.access_token = new_token.access_token;
+                        if let Some(new_refresh_token) = new_token.refresh_token {
+                            account.refresh_token = Some(new_refresh_token);
                         }
+                        account.access_token_expires_at = access_token_expires_at;
+                        account.refresh_token_expires_at = refresh_token_expires_at;
                     }
                     Err((status, msg)) => {
-                        let failed_updates = json!({
-                            "failed": true,
-                            "failed_at": if account.failure_retries == 0 { Some(chrono::Utc::now()) } else { account.failed_at },
-                            "failed_reason": format!("Failed to refresh token: Status: {}, Message: {}", status, msg),
-                            "failure_retries": account.failure_retries + 1,
-                            "last_failure_retry": chrono::Utc::now(),
-                        });
-
-                        let failed_response = client
-                            .from("account_auth_provider_accounts")
-                            .auth(supabase_service_role_api_key.clone())
-                            .update(failed_updates.to_string())
-                            .eq(
-                                "account_auth_provider_account_id",
-                                account.account_auth_provider_account_id.to_string(),
-                            )
-                            .execute()
-                            .await;
-
-                        if let Err(e) = failed_response {
-                            println!("[AUTH REFRESH] Failed to mark account as failed: {:?}", e);
+                        // TODO: Update account as failed using SeaORM
+                        println!("[AUTH REFRESH] TODO: Mark account as failed in database");
+                        
+                        // Update the in-memory account with failure info
+                        account.failed = true;
+                        account.failed_at = if account.failure_retries == 0 {
+                            Some(Utc::now())
                         } else {
-                            println!("[AUTH REFRESH] Successfully marked account as failed");
-                            // Update the in-memory account with failure info
-                            account.failed = true;
-                            account.failed_at = if account.failure_retries == 0 {
-                                Some(Utc::now())
-                            } else {
-                                account.failed_at
-                            };
-                            account.failed_reason = Some(format!(
-                                "Failed to refresh token: Status: {}, Message: {}",
-                                status, msg
-                            ));
-                            account.failure_retries += 1;
-                            account.last_failure_retry = Some(Utc::now());
-                        }
+                            account.failed_at
+                        };
+                        account.failed_reason = Some(format!(
+                            "Failed to refresh token: Status: {}, Message: {}",
+                            status, msg
+                        ));
+                        account.failure_retries += 1;
+                        account.last_failure_retry = Some(Utc::now());
                         println!(
                             "[AUTH REFRESH] Failed to refresh access token: Status: {:?}, Message: {:?}",
                             status, msg

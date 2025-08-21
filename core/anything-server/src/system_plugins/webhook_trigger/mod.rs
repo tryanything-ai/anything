@@ -1,3 +1,3 @@
-pub mod webhook_trigger;
-pub use webhook_trigger::*;
+pub mod webhook_trigger_seaorm;
+pub use webhook_trigger_seaorm::*;
 pub mod webhook_trigger_utils;

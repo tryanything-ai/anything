@@ -1,13 +1,12 @@
-use crate::files::routes::FileMetadata;
+use crate::files::routes_seaorm::FileMetadata;
 use crate::templater::utils::FileRequirement;
 use crate::AppState;
-use dotenv::dotenv;
-use postgrest::Postgrest;
+use crate::entities::files;
+use sea_orm::{EntityTrait, ColumnTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::env;
 use std::error::Error;
 use std::sync::Arc;
 
@@ -20,7 +19,6 @@ pub struct FileData {
 
 pub async fn get_files(
     state: Arc<AppState>,
-    client: &Postgrest,
     account_id: &str,
     file_requirements: Vec<FileRequirement>,
 ) -> Result<Vec<FileData>, Box<dyn Error + Send + Sync>> {
@@ -34,21 +32,30 @@ pub async fn get_files(
     let bucket = std::env::var("R2_BUCKET").expect("R2_BUCKET must be set");
     let mut files_data = Vec::new();
 
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-
-    // Get all files for this account in one query
-    let response = client
-        .from("files")
-        .auth(supabase_service_role_api_key.clone())
-        .select("*")
-        .eq("account_id", account_id)
-        .execute()
+    // Get all files for this account using SeaORM
+    let account_uuid = uuid::Uuid::parse_str(account_id)
+        .map_err(|e| format!("Invalid account_id: {}", e))?;
+    
+    let file_models = files::Entity::find()
+        .filter(files::Column::AccountId.eq(account_uuid))
+        .all(&*state.db)
         .await?;
 
-    let files: Vec<FileMetadata> = response.json().await?;
+    // Convert SeaORM models to FileMetadata format
+    let files: Vec<FileMetadata> = file_models.iter().map(|model| FileMetadata {
+        file_id: model.file_id,
+        account_id: model.account_id,
+        file_name: model.file_name.clone(),
+        file_size: model.file_size,
+        file_type: model.file_type.clone(),
+        path: model.path.clone(),
+        public_url: model.public_url.clone(),
+        access_level: model.access_level.clone(),
+        created_at: model.created_at,
+        updated_at: model.updated_at,
+    }).collect();
 
-    println!("[FILES] Files from Supabase: {:?}", files);
+    println!("[FILES] Files from database: {:?}", files);
 
     // Create a map of filename to metadata for quick lookup
     let file_metadata_map: HashMap<String, &FileMetadata> = files

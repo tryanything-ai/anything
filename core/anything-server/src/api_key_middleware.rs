@@ -7,7 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::secrets;
+use crate::pgsodium_secrets;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ApiKeyUser {
@@ -31,22 +31,8 @@ pub async fn api_key_middleware(
         .get::<Arc<crate::AppState>>()
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Check if the API key exists and is valid in the database
-    let secret = match secrets::get_secret_by_secret_value(state.clone(), api_key).await {
-        Ok(secret) => secret,
-        Err(_) => return Err(StatusCode::UNAUTHORIZED),
-    };
-
-    // Verify this is an API key secret
-    if !secret.anything_api_key {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
-
-    // Add the user info to request extensions
-    let api_key_user = ApiKeyUser {
-        account_id: secret.account_id,
-    };
-    request.extensions_mut().insert(api_key_user);
-
-    Ok(next.run(request).await)
+    // TODO: Implement API key validation with pgsodium_secrets
+    // For now, reject all API key requests until the secret validation is implemented
+    println!("API key validation not implemented yet - rejecting request");
+    Err(StatusCode::UNAUTHORIZED)
 }

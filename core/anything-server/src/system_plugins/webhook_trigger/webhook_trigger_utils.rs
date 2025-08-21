@@ -12,7 +12,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::{
-    secrets::get_secret_by_secret_value,
+    // TODO: Replace with pgsodium_secrets function
+    // secrets::get_secret_by_secret_value,
     types::action_types::{Action, ActionType, PluginName},
     types::workflow_types::WorkflowVersionDefinition,
     AppState, CachedApiKey,
@@ -92,38 +93,9 @@ pub async fn validate_api_key(state: Arc<AppState>, api_key: String) -> Result<S
         return Ok(account_id);
     }
 
-    // Not in cache, check database
-    println!("[VALIDATE API KEY] Checking database for API key");
-    let secret = match get_secret_by_secret_value(state.clone(), api_key.clone()).await {
-        Ok(secret) => {
-            println!("[VALIDATE API KEY] Found secret in database");
-            secret
-        }
-        Err(_) => {
-            println!("[VALIDATE API KEY] Secret not found in database");
-            return Err(StatusCode::UNAUTHORIZED);
-        }
-    };
-
-    // Verify this is an API key secret
-    if !secret.anything_api_key {
-        println!("[VALIDATE API KEY] Secret is not an API key");
-        return Err(StatusCode::UNAUTHORIZED);
-    }
-
-    // Update cache with new value
-    println!("[VALIDATE API KEY] Updating cache with new API key");
-    state.api_key_cache.insert(
-        api_key,
-        CachedApiKey {
-            account_id: secret.account_id.clone(),
-            secret_id: uuid::Uuid::parse_str(&secret.secret_id).unwrap(),
-            secret_name: secret.secret_name.clone(),
-        },
-    );
-
-    println!("[VALIDATE API KEY] API key validation successful");
-    Ok(secret.account_id)
+    // TODO: Implement proper API key validation with pgsodium_secrets
+    println!("[VALIDATE API KEY] API key validation not implemented yet");
+    Err(StatusCode::UNAUTHORIZED)
 }
 
 pub async fn validate_security_model(

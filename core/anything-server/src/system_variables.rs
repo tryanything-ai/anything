@@ -3,7 +3,7 @@ use chrono::Utc;
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::supabase_jwt_middleware::User;
+use crate::custom_auth::User;
 
 pub fn get_system_variables() -> HashMap<String, Value> {
     let mut system_vars = HashMap::new();

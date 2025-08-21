@@ -10,7 +10,7 @@ use axum::{
 use bundler::{accounts::accounts_cache::AccountsCache, secrets::secrets_cache::SecretsCache};
 use dotenv::dotenv;
 use processor::processor::ProcessorMessage;
-use postgrest::Postgrest;
+
 use reqwest::Client;
 use status_updater::StatusUpdateMessage;
 use serde_json::Value;
@@ -23,21 +23,22 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
 use aws_sdk_s3::Client as S3Client;
 use files::r2_client::get_r2_client;
+use sea_orm::DatabaseConnection;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::sleep;
 use dashmap::DashMap;
 
 use regex::Regex;
 
-use auth::init::AuthState;
+use auth::init_seaorm::AuthState;
 
 mod system_plugins; 
 mod system_workflows;
 mod processor;
 mod system_variables;
-mod workflows; 
-mod actions; 
-mod tasks; 
+mod workflows_seaorm; 
+mod actions_seaorm; 
+mod tasks_seaorm; 
 mod auth;
 mod vault;
 mod billing;
@@ -45,20 +46,26 @@ mod email;
 mod bundler;
 mod status_updater;
 mod files;
-mod variables; 
-mod charts;
+mod variables_seaorm; 
+mod charts_seaorm;
 mod marketplace;
-mod secrets;
-mod supabase_jwt_middleware;
+mod secrets_seaorm;
+
 mod api_key_middleware;
-mod account_auth_middleware;    
+mod account_auth_middleware_seaorm;    
 mod types;
 mod templater;
-mod testing; 
+mod testing_seaorm; 
 mod trigger_engine;
+mod trigger_engine_seaorm;
 mod agents; 
 mod metrics;
 mod websocket;
+mod database;
+mod entities;
+mod test_seaorm;
+mod custom_auth;
+mod pgsodium_secrets;
 
 use tokio::sync::oneshot;
 use std::sync::atomic::AtomicBool;
@@ -83,9 +90,7 @@ pub struct CachedApiKey {
 }
 
 pub struct AppState {
-    anything_client: Arc<Postgrest>,
-    marketplace_client: Arc<Postgrest>,
-    public_client: Arc<Postgrest>,
+    db: Arc<DatabaseConnection>,
     r2_client: Arc<S3Client>,
     http_client: Arc<Client>,
     workflow_processor_semaphore: Arc<Semaphore>,
@@ -95,7 +100,7 @@ pub struct AppState {
     task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
     flow_completions: DashMap<String, FlowCompletion>,
     api_key_cache: DashMap<String, CachedApiKey>,
-    account_access_cache: account_auth_middleware::AccountAccessCache,
+    account_access_cache: account_auth_middleware_seaorm::AccountAccessCache,
     bundler_secrets_cache: DashMap<String, SecretsCache>,
     bundler_accounts_cache: DashMap<String, AccountsCache>,
     shutdown_signal: Arc<AtomicBool>,
@@ -128,33 +133,21 @@ async fn main() {
     // }));
 
     dotenv().ok();
-    let supabase_url = env::var("SUPABASE_URL").expect("SUPABASE_URL must be set");
-    let supabase_api_key = env::var("SUPABASE_API_KEY").expect("SUPABASE_API_KEY must be set");
+    
+    // For backward compatibility during migration, we'll keep the database URL but use it for direct connections
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
+        format!("postgresql://postgres:postgres@localhost:54322/postgres")
+    });
+    
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
     let bind_address = "0.0.0.0:3001".to_string();
 
-    //Anything Schema for Application
-    let anything_client = Arc::new(
-        Postgrest::new(supabase_url.clone())
-            .schema("anything")
-            .insert_header("apikey", supabase_api_key.clone()),
-    );
+    // Using SeaORM for all database operations - no more Postgrest needed!
 
-    let r2_client = Arc::new(get_r2_client().await);    
+    let r2_client = Arc::new(get_r2_client().await);
 
-    //Marketplace Schema for Managing Templates etc
-    let marketplace_client = Arc::new(
-        Postgrest::new(supabase_url.clone())
-            .schema("marketplace")
-            .insert_header("apikey", supabase_api_key.clone()),
-    );
-    
-    //Marketplace Schema for Managing Templates etc
-    let public_client = Arc::new(
-        Postgrest::new(supabase_url.clone())
-            .schema("public")
-            .insert_header("apikey", supabase_api_key.clone()),
-    );
+    // Initialize SeaORM database connection (reuse same database_url)
+    let db = Arc::new(database::create_connection_with_url(&database_url).await.expect("Failed to connect to database"));
 
     let cors_origin = Arc::new(cors_origin);
     info!("[CORS] CORS origin: {:?}", cors_origin);
@@ -228,9 +221,7 @@ async fn main() {
        .expect("Failed to build HTTP client");
 
     let state = Arc::new(AppState {
-        anything_client: anything_client.clone(),
-        marketplace_client: marketplace_client.clone(),
-        public_client: public_client.clone(),
+        db: db.clone(),
         r2_client: r2_client.clone(),
         http_client: Arc::new(http_client),
         auth_states: DashMap::new(),
@@ -239,7 +230,7 @@ async fn main() {
         processor_sender: processor_tx,
         flow_completions: DashMap::new(),
         api_key_cache: DashMap::new(),
-        account_access_cache: account_auth_middleware::AccountAccessCache::new(Duration::from_secs(86400)),
+        account_access_cache: account_auth_middleware_seaorm::AccountAccessCache::new(Duration::from_secs(86400)),
         bundler_secrets_cache: DashMap::new(),
         bundler_accounts_cache: DashMap::new(),
         shutdown_signal: Arc::new(AtomicBool::new(false)),
@@ -258,35 +249,39 @@ pub async fn root() -> impl IntoResponse {
     .route("/", get(root))
     .route(
         "/auth/:provider_name/callback",
-        get(auth::init::handle_provider_callback),
+        get(auth::init_seaorm::oauth_callback),
     )
     .route(
         "/billing/webhooks/new_account_webhook",
-        post(billing::accounts::handle_new_account_webhook),
+        post(billing::accounts_seaorm::accounts_webhook_handler),
     )
     .route("/webhooks/create_user_in_external_email_system", post(email::handle_new_account_webhook))
-    .route("/billing/webhooks/stripe", post(billing::stripe_webhooks::handle_webhook))
+    .route("/billing/webhooks/stripe", post(billing::stripe_webhooks_seaorm::handle_webhook))
     .route("/auth/providers/:provider_name/client_id/set",
-        post(auth::providers::set_auth_provider_client_id),
+        post(auth::providers_seaorm::set_auth_provider_client_id),
     )
     .route("/auth/providers/:provider_name/client_id/update",
-    post(auth::providers::update_auth_provider_client_id),
+    post(auth::providers_seaorm::update_auth_provider_client_id),
     )
         .route("/auth/providers/:provider_name/client_secret_id/set",
-        post(auth::providers::set_auth_provider_client_secret_id),
+        post(auth::providers_seaorm::set_auth_provider_client_secret),
     )
-    //marketplace
-    .route("/marketplace/actions", get(marketplace::actions::get_actions_from_marketplace))
-    .route("/marketplace/workflows", get(marketplace::workflows::get_marketplace_workflows))
-    .route("/marketplace/workflow/:slug", get(marketplace::workflows::get_marketplace_workflow_by_slug))
-    .route("/marketplace/profiles", get(marketplace::profiles::get_profiles_from_marketplace))
-    .route("/marketplace/profile/:username", get(marketplace::profiles::get_marketplace_profile_by_username))
+    
+    // Custom authentication routes (public)
+    .route("/auth/register", post(custom_auth::register))
+    .route("/auth/login", post(custom_auth::login))
+    //marketplace (SeaORM version)
+    .route("/marketplace/actions", get(marketplace::actions_seaorm::get_actions_from_marketplace))
+    .route("/marketplace/workflows", get(marketplace::workflows_seaorm::get_marketplace_workflows))
+    .route("/marketplace/workflow/:slug", get(marketplace::workflows_seaorm::get_marketplace_workflow_by_slug))
+    .route("/marketplace/profiles", get(marketplace::profiles_seaorm::get_profiles_from_marketplace))
+    .route("/marketplace/profile/:username", get(marketplace::profiles_seaorm::get_marketplace_profile_by_username))
 
     // API Routes for running workflows - some protection done at api.rs vs route level
-    .route("/api/v1/workflow/:workflow_id/start", any(system_plugins::webhook_trigger::run_workflow))
-    .route("/api/v1/workflow/:workflow_id/start/respond", any(system_plugins::webhook_trigger::run_workflow_and_respond))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", any(system_plugins::webhook_trigger::run_workflow_version))
-    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_plugins::webhook_trigger::run_workflow_version_and_respond))
+    .route("/api/v1/workflow/:workflow_id/start", any(system_plugins::webhook_trigger::webhook_trigger_seaorm::run_workflow))
+    .route("/api/v1/workflow/:workflow_id/start/respond", any(system_plugins::webhook_trigger::webhook_trigger_seaorm::run_workflow_and_respond))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start", any(system_plugins::webhook_trigger::webhook_trigger_seaorm::run_workflow_version))
+    .route("/api/v1/workflow/:workflow_id/version/:workflow_version_id/start/respond", any(system_plugins::webhook_trigger::webhook_trigger_seaorm::run_workflow_version_and_respond))
 
     // API routes for running agent tools - very simliar to webhooks just shapped differnt to capture relationshipe between agent and workflow
     .route("/api/v1/agent/:agent_id/tool/:tool_id/start/respond", post(system_plugins::agent_tool_trigger::run_workflow_as_tool_call_and_respond))
@@ -298,100 +293,110 @@ pub async fn root() -> impl IntoResponse {
     );
 
     let protected_routes = Router::new()
-        .route("/account/:account_id/workflows", get(workflows::get_workflows))
-        .route("/account/:account_id/workflow/:id", get(workflows::get_workflow))
-        .route("/account/:account_id/workflow/:id/versions", get(workflows::get_flow_versions))
+        .route("/test/seaorm/connection", get(test_seaorm::test_seaorm_connection))
+        .route("/test/seaorm/query", get(test_seaorm::test_seaorm_query))
+        .route("/account/:account_id/workflows", get(workflows_seaorm::get_workflows))
+        .route("/account/:account_id/workflow/:id", get(workflows_seaorm::get_workflow))
+        .route("/account/:account_id/workflow/:id/versions", get(workflows_seaorm::get_flow_versions))
         .route(
             "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
-            get(workflows::get_flow_version),
+            get(workflows_seaorm::get_flow_version),
         )
         .route(
             "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id",
-            put(workflows::update_workflow_version),
+            put(workflows_seaorm::update_workflow_version),
         )
         .route(
             "/account/:account_id/workflow/:workflow_id/version/:workflow_version_id/publish",
-            put(workflows::publish_workflow_version),
+            put(workflows_seaorm::publish_workflow_version),
         )
-        .route("/account/:account_id/workflow", post(workflows::create_workflow))
-        .route("/account/:account_id/workflow/json", post(workflows::create_workflow_from_json))
-        .route("/account/:account_id/workflow/:id", delete(workflows::delete_workflow))
-        .route("/account/:account_id/workflow/:id", put(workflows::update_workflow))
-        .route("/account/:account_id/actions", get(actions::get_actions))
-        .route("/account/:account_id/triggers", get(actions::get_triggers))
-        .route("/account/:account_id/other", get(actions::get_other_actions))
-        .route("/account/:account_id/responses", get(actions::get_responses))
+        .route("/account/:account_id/workflow", post(workflows_seaorm::create_workflow))
+        .route("/account/:account_id/workflow/json", post(workflows_seaorm::create_workflow_from_json))
+        .route("/account/:account_id/workflow/:id", delete(workflows_seaorm::delete_workflow))
+        .route("/account/:account_id/workflow/:id", put(workflows_seaorm::update_workflow))
+        .route("/account/:account_id/actions", get(actions_seaorm::get_actions))
+        .route("/account/:account_id/triggers", get(actions_seaorm::get_triggers))
+        .route("/account/:account_id/other", get(actions_seaorm::get_other_actions))
+        .route("/account/:account_id/responses", get(actions_seaorm::get_responses))
 
-        //Marketplace && Templates
+        //Marketplace && Templates (SeaORM version)
         .route(
             "/account/:account_id/marketplace/workflow/:workflow_id/version/:workflow_version_id/publish",
-            post(marketplace::workflows::publish_workflow_to_marketplace), 
+            post(marketplace::workflows_seaorm::publish_workflow_to_marketplace), 
         )
-        .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions::publish_action_template))
-        .route("/account/:account_id/marketplace/workflow/:template_id/clone", get(marketplace::workflows::clone_marketplace_workflow_template))
+        .route("/account/:account_id/marketplace/action/publish", post(marketplace::actions_seaorm::publish_action_template))
+        .route("/account/:account_id/marketplace/workflow/:template_id/clone", get(marketplace::workflows_seaorm::clone_marketplace_workflow_template))
 
-        //Account Management
-        .route("/account/:account_id/slug/:slug", get(auth::accounts::get_account_by_slug))
+        //Account Management (SeaORM version)
+        .route("/account/:account_id/slug/:slug", get(auth::accounts_seaorm::get_account_by_slug))
 
-        //Billing
-        .route("/account/:account_id/billing/status", get(billing::usage::get_account_billing_status))
-        .route("/account/:account_id/billing/checkout", post(billing::create_links::get_checkout_link))
-        .route("/account/:account_id/billing/portal", post(billing::create_links::get_billing_portal_link))
+        //Billing (SeaORM version)
+        .route("/account/:account_id/billing/status", get(billing::usage_seaorm::get_account_billing_status))
+        .route("/account/:account_id/billing/checkout", post(billing::create_links_seaorm::get_checkout_link))
+        .route("/account/:account_id/billing/portal", post(billing::create_links_seaorm::get_billing_portal_link))
         
-        //Tasks
-        .route("/account/:account_id/tasks", get(tasks::get_tasks))
-        .route("/account/:account_id/tasks/:workflow_id", get(tasks::get_task_by_workflow_id))
+        //Tasks (SeaORM version)
+        .route("/account/:account_id/tasks", get(tasks_seaorm::get_tasks))
+        .route("/account/:account_id/tasks/:workflow_id", get(tasks_seaorm::get_workflow_tasks))
 
-        //Charts
+        //Charts (SeaORM version)
         .route(
             "/account/:account_id/charts/:workflow_id/tasks/:start_date/:end_date/:time_unit/:timezone",
-            get(charts::get_workflow_tasks_chart),
+            get(charts_seaorm::get_workflow_tasks_chart),
         )
-        .route("/account/:account_id/charts/tasks/:start_date/:end_date/:time_unit/:timezone", get(charts::get_account_tasks_chart))
+        .route("/account/:account_id/charts/tasks/:start_date/:end_date/:time_unit/:timezone", get(charts_seaorm::get_account_tasks_chart))
 
-        // Secrets
-        .route("/account/:account_id/secrets", get(secrets::get_decrypted_secrets))
-        .route("/account/:account_id/secret", post(secrets::create_secret))
-        .route("/account/:account_id/secret/:id", delete(secrets::delete_secret))
+        // Secrets (using new pgsodium encryption)
+        .route("/account/:account_id/secrets", get(pgsodium_secrets::get_secrets))
+        .route("/account/:account_id/secret", post(pgsodium_secrets::create_secret))
+        .route("/account/:account_id/secret/:id", get(pgsodium_secrets::get_secret))
+        .route("/account/:account_id/secret/:id", put(pgsodium_secrets::update_secret))
+        .route("/account/:account_id/secret/:id", delete(pgsodium_secrets::delete_secret))
         
-        // User Facing API
-        .route("/account/:account_id/keys", get(secrets::get_decrypted_anything_api_keys)) //read
-        .route("/account/:account_id/key", post(secrets::create_anything_api_key)) //create
-        .route("/account/:account_id/key/:id", delete(secrets::delete_api_key)) //delete from db, vault, and cache
+        // User Facing API (using new pgsodium encryption)
+        .route("/account/:account_id/keys", get(pgsodium_secrets::get_secrets)) // List API keys
+        .route("/account/:account_id/key", post(pgsodium_secrets::create_secret)) // Create API key
+        .route("/account/:account_id/key/:id", get(pgsodium_secrets::get_secret)) // Get API key
+        .route("/account/:account_id/key/:id", put(pgsodium_secrets::update_secret)) // Update API key
+        .route("/account/:account_id/key/:id", delete(pgsodium_secrets::delete_secret)) // Delete API key
       
         //Auth Providrs
         .route(
             "/account/:account_id/auth/providers/:provider_name",
-            get(auth::providers::get_auth_provider_by_name),
+            get(auth::providers_seaorm::get_auth_provider_by_name),
         )
-        .route("/account/:account_id/auth/accounts", get(auth::accounts::get_auth_accounts))
+        .route("/account/:account_id/auth/accounts", get(auth::accounts_seaorm::get_auth_accounts))
         .route(
             "/account/:account_id/auth/accounts/:provider_name",
-            get(auth::accounts::get_auth_accounts_for_provider_name),
+            get(auth::accounts_seaorm::get_auth_accounts_for_provider_name),
         )
-        .route("/account/:account_id/auth/providers", get(auth::providers::get_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
+        .route("/account/:account_id/auth/providers", get(auth::providers_seaorm::get_all_auth_providers)) //No reason to really havea account_id here but maybe in future we have account specific auth providers so leaving it
         .route(
             "/account/:account_id/auth/:provider_name/initiate",
-            get(auth::init::generate_oauth_init_url_for_client),
+            get(auth::init_seaorm::init_oauth),
         )
-        //Test Workflows
+        .route(
+            "/auth/oauth/callback/:provider_name",
+            get(auth::init_seaorm::oauth_callback),
+        )
+        //Test Workflows (SeaORM version)
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id",
-            post(testing::test_workflow),
+            post(testing_seaorm::test_workflow),
         )
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/session/:session_id",
-            get(testing::get_test_session_results),
+            get(testing_seaorm::get_test_session_results),
         )
 
-        //Variables Explorer for Testing
+        //Variables Explorer for Testing (SeaORM version)
         //TODO: we need to protect this for parallel running. You should not be able to select a result that isnt guranteed to be there
         .route(
             "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/results",
-            get(variables::get_flow_version_results)
+            get(variables_seaorm::get_flow_version_results)
         )
         .route( "/account/:account_id/testing/workflow/:workflow_id/version/:workflow_version_id/action/:action_id/variables",
-        get(variables::get_flow_version_inputs))
+        get(variables_seaorm::get_flow_version_inputs))
         .route(
             "/account/:account_id/testing/system_variables",
             get(system_variables::get_system_variables_handler))
@@ -402,55 +407,66 @@ pub async fn root() -> impl IntoResponse {
         //     get(testing::test_action),
         // )
 
-        //Agents
-        .route("/account/:account_id/agent", post(agents::create::create_agent))
-        .route("/account/:account_id/agents", get(agents::get::get_agents))
-        .route("/account/:account_id/agent/:agent_id", get(agents::get::get_agent))
-        .route("/account/:account_id/agent/:agent_id", put(agents::update::update_agent))
-        .route("/account/:account_id/agent/:agent_id", delete(agents::delete::delete_agent))
+        //Agents (SeaORM version)
+        .route("/account/:account_id/agent", post(agents::create_seaorm::create_agent))
+        .route("/account/:account_id/agents", get(agents::get_seaorm::get_agents))
+        .route("/account/:account_id/agent/:agent_id", get(agents::get_seaorm::get_agent))
+        .route("/account/:account_id/agent/:agent_id", put(agents::update_seaorm::update_agent))
+        .route("/account/:account_id/agent/:agent_id", delete(agents::delete_seaorm::delete_agent))
 
-        //Agent Tools
-        .route("/account/:account_id/agent/:agent_id/tool", post(agents::tools::add_tool))
-        .route("/account/:account_id/agent/:agent_id/tool/:tool_id", delete(agents::tools::remove_tool))
-        .route("/account/:account_id/agent/:agent_id/tools", get(agents::tools::get_agent_tools))
+        //Agent Tools (SeaORM version)
+        .route("/account/:account_id/agent/:agent_id/tool", post(agents::tools_seaorm::add_tool))
+        .route("/account/:account_id/agent/:agent_id/tool/:tool_id", delete(agents::tools_seaorm::remove_tool))
+        .route("/account/:account_id/agent/:agent_id/tools", get(agents::tools_seaorm::get_agent_tools))
         
-        //Fetch Workflows that are tools
-        .route("/account/:account_id/tools", get(workflows::get_agent_tool_workflows))
+        //Fetch Workflows that are tools (SeaORM version)
+        .route("/account/:account_id/tools", get(workflows_seaorm::get_agent_tool_workflows))
 
-        //Phone Numbers
-        .route("/account/:account_id/phone_numbers/:country/:area_code", get(agents::twilio::search_available_phone_numbers_on_twilio))
-        .route("/account/:account_id/phone_numbers", get(agents::twilio::get_account_phone_numbers))
-        .route("/account/:account_id/phone_number", post(agents::twilio::purchase_phone_number))
+        //Phone Numbers (SeaORM version)
+        .route("/account/:account_id/phone_numbers/:country/:area_code", get(agents::twilio_seaorm::search_available_phone_numbers_on_twilio))
+        .route("/account/:account_id/phone_numbers", get(agents::twilio_seaorm::get_account_phone_numbers))
+        .route("/account/:account_id/phone_number", post(agents::twilio_seaorm::purchase_phone_number))
 
-        //Agent Communication Channels
-        .route("/account/:account_id/agent/:agent_id/phone_number", post(agents::channels::connect_phone_number_to_agent))
-        .route("/account/:account_id/agent/:agent_id/phone_number/:phone_number_id", delete(agents::channels::remove_phone_number_from_agent))
+        //Agent Communication Channels (SeaORM version)
+        .route("/account/:account_id/agent/:agent_id/phone_number", post(agents::channels_seaorm::connect_phone_number_to_agent))
+        .route("/account/:account_id/agent/:agent_id/phone_number/:phone_number_id", delete(agents::channels_seaorm::remove_phone_number_from_agent))
 
-        //Calls
-        .route("/account/:account_id/calls", get(agents::vapi::get_vapi_calls))
+        //Calls (SeaORM version)
+        .route("/account/:account_id/calls", get(agents::vapi_seaorm::get_vapi_calls))
 
-        // Invitations
-        .route("/account/:account_id/invitations", get(auth::accounts::get_account_invitations))
+        // Invitations (SeaORM version)
+        .route("/account/:account_id/invitations", get(auth::accounts_seaorm::get_account_invitations))
 
-        // Members
-        .route("/account/:account_id/members", get(auth::accounts::get_account_members))
+        // Members (SeaORM version)
+        .route("/account/:account_id/members", get(auth::accounts_seaorm::get_account_members))
 
-        // File Management
-        .route("/account/:account_id/files", get(files::routes::get_files))
-        .route("/account/:account_id/file/upload/:access", post(files::routes::upload_file))
-        .route("/account/:account_id/file/:file_id", delete(files::routes::delete_file))
-        .route("/account/:account_id/file/:file_id/download", get(files::routes::get_file_download_url))
+        // File Management (SeaORM version)
+        .route("/account/:account_id/files", get(files::routes_seaorm::get_files))
+        .route("/account/:account_id/file/upload/:access", post(files::routes_seaorm::upload_file))
+        .route("/account/:account_id/file/:file_id", delete(files::routes_seaorm::delete_file))
+        .route("/account/:account_id/file/:file_id/download", get(files::routes_seaorm::get_file_download_url))
 
         .layer(middleware::from_fn_with_state(
             state.clone(),
-            account_auth_middleware::account_access_middleware,
-        ))
-        .layer(middleware::from_fn(supabase_jwt_middleware::middleware));
+            custom_auth::jwt_auth_middleware,
+        ));
+
+    // Additional JWT-based protected routes
+    let additional_jwt_routes = Router::new()
+        // Auth info
+        .route("/auth/me", get(custom_auth::me))
+        .route("/auth/logout", post(custom_auth::logout))
+        
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            custom_auth::jwt_auth_middleware,
+        ));
    
 
     let app = Router::new()
         .merge(public_routes) // Public routes
-        .merge(protected_routes) // Protected routes
+        .merge(protected_routes) // Protected routes (now using custom JWT auth)
+        .merge(additional_jwt_routes) // Additional JWT protected routes
         .layer(cors)
         .layer(preflightlayer)
         .layer(CompressionLayer::new())
@@ -474,17 +490,17 @@ pub async fn root() -> impl IntoResponse {
     });
 
 
-    // // Spawn cron job loop
-    // // Initiates work to be done on schedule tasks
-    // tokio::spawn(trigger_engine::cron_job_loop(state.clone()));
+    // Spawn cron job loop
+    // Initiates work to be done on schedule tasks (SeaORM version)
+    tokio::spawn(trigger_engine_seaorm::cron_job_loop(state.clone()));
 
-    //Spawn task billing processing loop
-    // tokio::spawn(billing::billing_usage_engine::billing_processing_loop(
-    //     state.clone(),
-    // ));
+    // Spawn task billing processing loop
+    tokio::spawn(billing::billing_usage_engine_seaorm::billing_processing_loop(
+        state.clone(),
+    ));
 
     // Add the cache cleanup task here
-    tokio::spawn(account_auth_middleware::cleanup_account_access_cache(state.clone()));
+    tokio::spawn(account_auth_middleware_seaorm::cleanup_account_access_cache(state.clone()));
     tokio::spawn(bundler::cleanup_bundler_caches(state.clone()));
     
 

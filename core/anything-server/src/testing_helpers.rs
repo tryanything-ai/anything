@@ -1,8 +1,8 @@
 use crate::auth;
-use crate::auth::init::AccountAuthProviderAccount;
+use crate::auth::init_seaorm::AccountAuthProviderAccount;
 use crate::workflow_types::Task;
 use dotenv::dotenv;
-use postgrest::Postgrest;
+// use postgrest::Postgrest; // Removed - using SeaORM instead
 use serde_json::Value;
 use std::collections::HashMap;
 use std::env;

@@ -1,4 +1,4 @@
-use crate::auth::init::AccountAuthProviderAccount;
+use crate::auth::init_seaorm::AccountAuthProviderAccount;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

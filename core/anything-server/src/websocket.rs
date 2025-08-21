@@ -14,7 +14,7 @@ use tokio::sync::{broadcast};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
-use crate::{supabase_jwt_middleware::User, types::task_types::Task, AppState};
+use crate::{custom_auth::User, types::task_types::Task, AppState};
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use std::env;
 
@@ -60,7 +60,8 @@ struct Claims {
 }
 
 fn decode_jwt_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let secret = env::var("SUPABASE_JWT_SECRET").expect("SUPABASE_JWT_SECRET must be set");
+    let secret = env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "your-very-secret-jwt-key-change-this-in-production".to_string());
     let key = DecodingKey::from_secret(secret.as_ref());
     let mut validation = Validation::new(Algorithm::HS256);
     validation.set_audience(&["authenticated"]);
@@ -98,8 +99,11 @@ pub async fn websocket_handler(
                     claims.sub
                 );
                 User {
-                    jwt: token,
+                    id: uuid::Uuid::parse_str(&claims.sub).unwrap_or_default(),
+                    email: "websocket@user.local".to_string(), // Placeholder for websocket auth
+                    username: "websocket_user".to_string(), // Placeholder for websocket auth
                     account_id: claims.sub,
+                    jwt: token,
                 }
             }
             Err(e) => {

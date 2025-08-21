@@ -9,19 +9,19 @@ mod utils;
 
 use std::time::Duration;
 
-use dotenv::dotenv;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::env;
 use std::sync::Arc;
 use uuid::Uuid;
+use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, QueryOrder, Order};
 
-use crate::{processor::processor::ProcessorMessage, types::workflow_types::DatabaseFlowVersion};
+use crate::{processor::processor::ProcessorMessage, types::workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition}};
 use crate::{
     types::{
         action_types::ActionType,
         task_types::{Stage, Task, TaskConfig},
     },
+    entities::flow_versions,
     AppState, FlowCompletion,
 };
 use tracing::error;
@@ -40,34 +40,36 @@ pub async fn run_workflow_as_tool_call_and_respond(
     headers: HeaderMap,
     body: Json<Value>,
 ) -> impl IntoResponse {
-    println!("[TOOL_CALL_API] Handling run workflow and respond");
+    println!("[TOOL_CALL_API SEAORM] Handling run workflow and respond");
 
-    println!("[TOOL_CALL_API] Call Body: {:?}", body);
+    println!("[TOOL_CALL_API SEAORM] Call Body: {:?}", body);
+    println!("[TOOL_CALL_API SEAORM] Workflow ID: {}: ", workflow_id);
 
-    println!("[TOOL_CALL_API] Workflow ID: {}: ", workflow_id);
+    let workflow_uuid = match Uuid::parse_str(&workflow_id) {
+        Ok(uuid) => uuid,
+        Err(_) => return (StatusCode::BAD_REQUEST, "Invalid workflow ID").into_response(),
+    };
 
-    //TODO:add tool calls to apent_tool_calls or something that allows us to trace this data
-    //Super User Access
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
-
-    // Get flow version from database
-    println!("[TOOL_CALL_API] Fetching flow version from database");
-    let response = match state
-        .anything_client
-        .from("flow_versions")
-        .eq("flow_id", workflow_id.clone())
-        .eq("published", "true")
-        .auth(supabase_service_role_api_key.clone())
-        .select("*")
-        .single()
-        .execute()
+    // Get flow version from database using SeaORM
+    println!("[TOOL_CALL_API SEAORM] Fetching flow version from database");
+    let flow_version = match flow_versions::Entity::find()
+        .filter(flow_versions::Column::FlowId.eq(workflow_uuid))
+        .filter(flow_versions::Column::Published.eq(true))
+        .order_by(flow_versions::Column::CreatedAt, Order::Desc)
+        .one(&*state.db)
         .await
     {
-        Ok(response) => response,
+        Ok(Some(version)) => version,
+        Ok(None) => {
+            println!("[TOOL_CALL_API SEAORM] No published workflow found");
+            return (
+                StatusCode::BAD_REQUEST,
+                "Unpublished Workflow. To use this endpoint you must publish your workflow.",
+            )
+                .into_response();
+        }
         Err(err) => {
-            println!("[TOOL_CALL_API] Failed to execute request: {:?}", err);
+            println!("[TOOL_CALL_API SEAORM] Failed to execute request: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to execute request",
@@ -76,40 +78,36 @@ pub async fn run_workflow_as_tool_call_and_respond(
         }
     };
 
-    let response_body = match response.text().await {
-        Ok(body) => {
-            println!("[TOOL_CALL_API] Response body: {}", body);
-            body
-        }
+    // Convert to the expected DatabaseFlowVersion format
+    let workflow_definition: WorkflowVersionDefinition = match serde_json::from_value(flow_version.flow_definition) {
+        Ok(def) => def,
         Err(err) => {
-            println!("[TOOL_CALL_API] Failed to read response body: {:?}", err);
+            println!("[TOOL_CALL_API SEAORM] Failed to parse workflow definition: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
+                "Invalid workflow definition",
             )
                 .into_response();
         }
     };
 
-    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
-        Ok(version) => version,
-        Err(_) => {
-            println!("[TOOL_CALL_API] No published workflow found");
-            return (
-                StatusCode::BAD_REQUEST,
-                "Unpublished Workflow. To use this endpoint you must publish your workflow.",
-            )
-                .into_response();
-        }
+    let workflow_version = DatabaseFlowVersion {
+        flow_version_id: flow_version.flow_version_id,
+        flow_id: flow_version.flow_id,
+        flow: None,
+        published: flow_version.published,
+        account_id: flow_version.account_id,
+        flow_definition: workflow_definition.clone(),
     };
 
     // Get account_id from workflow_version
-    let account_id = workflow_version.account_id.clone();
+    let account_id = workflow_version.account_id;
 
-    println!("[TOOL_CALL_API] Workflow version: {:?}", workflow_version);
+    println!("[TOOL_CALL_API SEAORM] Workflow version: {:?}", workflow_version);
     // Parse the flow definition into a Workflow
-    println!("[TOOL_CALL_API] Parsing workflow definition");
-    // Validate the tool is has correct input and oupt nodes. Does not gurantee correct inputs ie rigth arguments
+    println!("[TOOL_CALL_API SEAORM] Parsing workflow definition");
+    
+    // Validate the tool has correct input and output nodes
     let (trigger_node, _output_node) = match validate_required_input_and_response_plugins(
         &workflow_version.flow_definition,
         "@anything/agent_tool_call".to_string(),
@@ -120,7 +118,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
         Err(response) => return response.into_response(),
     };
 
-    println!("[TOOL_CALL_API] Trigger node: {:?}", trigger_node);
+    println!("[TOOL_CALL_API SEAORM] Trigger node: {:?}", trigger_node);
 
     let task_config: TaskConfig = TaskConfig {
         inputs: Some(trigger_node.inputs.clone().unwrap()),
@@ -129,16 +127,15 @@ pub async fn run_workflow_as_tool_call_and_respond(
         plugin_config_schema: Some(trigger_node.plugin_config_schema.clone()),
     };
 
-    //TODO: take the input style from here https://docs.vapi.ai/server-url/events
-    //And convert and simplify it to create the correct "result";
+    // Parse the tool call request
     let (parsed_and_formatted_body, tool_call_id) = utils::parse_tool_call_request_to_result(body);
 
     // Create a task to initiate the flow
-    println!("[TOOL_CALL_API] Creating task for workflow execution");
+    println!("[TOOL_CALL_API SEAORM] Creating task for workflow execution");
 
     let task = match Task::builder()
         .account_id(account_id)
-        .flow_id(Uuid::parse_str(&workflow_id).unwrap())
+        .flow_id(workflow_uuid)
         .flow_version_id(workflow_version.flow_version_id)
         .action_label(trigger_node.label.clone())
         .trigger_id(trigger_node.action_id.clone())
@@ -159,9 +156,8 @@ pub async fn run_workflow_as_tool_call_and_respond(
         Err(e) => panic!("Failed to build task: {}", e),
     };
 
-    println!("[TOOL_CALL_API] Task to be created: {:?}", task);
-
-    println!("[TOOL_CALL_API] Creating processor message");
+    println!("[TOOL_CALL_API SEAORM] Task to be created: {:?}", task);
+    println!("[TOOL_CALL_API SEAORM] Creating processor message");
 
     // Create a channel for receiving the completion result
     let (tx, rx) = oneshot::channel();
@@ -177,18 +173,18 @@ pub async fn run_workflow_as_tool_call_and_respond(
 
     // Send message to processor to start the workflow
     let processor_message = ProcessorMessage {
-        workflow_id: Uuid::parse_str(&workflow_id).unwrap(),
+        workflow_id: workflow_uuid,
         workflow_version: workflow_version.clone(),
         workflow_definition: workflow_version.flow_definition.clone(),
-        flow_session_id: task.flow_session_id.clone(),
-        trigger_session_id: task.trigger_session_id.clone(),
+        flow_session_id: task.flow_session_id,
+        trigger_session_id: task.trigger_session_id,
         trigger_task: Some(task.clone()),
-        task_id: Some(task.task_id),    // Include task_id for tracing
-        existing_tasks: HashMap::new(), // No existing tasks for new workflows
+        task_id: Some(task.task_id),
+        existing_tasks: HashMap::new(),
     };
 
     if let Err(e) = state.processor_sender.send(processor_message).await {
-        println!("[TEST WORKFLOW] Failed to send message to processor: {}", e);
+        println!("[TOOL_CALL_API SEAORM] Failed to send message to processor: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to send message to processor: {}", e),
@@ -196,21 +192,20 @@ pub async fn run_workflow_as_tool_call_and_respond(
             .into_response();
     }
 
-    println!("[TOOL_CALL_API] Waiting for workflow completion");
+    println!("[TOOL_CALL_API SEAORM] Waiting for workflow completion");
 
     // Wait for the result with a timeout
     match timeout(Duration::from_secs(WEBHOOK_TIMEOUT), rx).await {
         Ok(Ok(flow_result)) => {
             println!(
-                "[TOOL_CALL_API] Received workflow result: {:?}",
+                "[TOOL_CALL_API SEAORM] Received workflow result: {:?}",
                 flow_result
             );
-            //TODO: take this response and turn it into the correct tool_call_response needed for
             utils::parse_tool_response_into_api_response(tool_call_id, Some(flow_result), None)
                 .into_response()
         }
         Ok(Err(_)) => {
-            println!("[TOOL_CALL_API] Workflow channel closed unexpectedly");
+            println!("[TOOL_CALL_API SEAORM] Workflow channel closed unexpectedly");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({
@@ -221,7 +216,7 @@ pub async fn run_workflow_as_tool_call_and_respond(
                 .into_response()
         }
         Err(_) => {
-            println!("[TOOL_CALL_API] Workflow timed out after 30 seconds");
+            println!("[TOOL_CALL_API SEAORM] Workflow timed out after 60 seconds");
             // Remove the completion channel on timeout
             state
                 .flow_completions

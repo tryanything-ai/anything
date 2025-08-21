@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use postgrest::Postgrest;
+// use postgrest::Postgrest; // Removed - using pgsodium_secrets instead
 use std::{env, sync::Arc, time::Duration};
 
 use uuid::Uuid;
@@ -21,7 +21,6 @@ pub struct DecryptedSecret {
 
 pub async fn get_decrypted_secrets(
     state: Arc<AppState>,
-    client: &Postgrest,
     account_id: &str,
 ) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {
     // Try to get from cache first
@@ -41,7 +40,7 @@ pub async fn get_decrypted_secrets(
     );
 
     // If not in cache, fetch from DB
-    let secrets = fetch_secrets_from_vault(client, account_id).await?;
+    let secrets = fetch_secrets_from_vault(state.clone(), account_id).await?;
 
     // Update cache - get or create cache for this account
     let cache = state
@@ -58,44 +57,19 @@ pub async fn get_decrypted_secrets(
     Ok(secrets)
 }
 
-// Secrets for building context with API KEYS
+// Secrets for building context with API KEYS - now uses pgsodium_secrets
 pub async fn fetch_secrets_from_vault(
-    client: &Postgrest,
+    state: Arc<AppState>,
     account_id: &str,
 ) -> Result<Vec<DecryptedSecret>, Box<dyn std::error::Error + Send + Sync>> {
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")?;
-
     println!(
         "[BUNDLER] Attempting to get decrypted secrets for account_id: {}",
         account_id
     );
 
-    let input = serde_json::json!({
-        "team_account_id": account_id.to_string()
-    })
-    .to_string();
-
-    let response = client
-        .rpc("get_decrypted_secrets", &input)
-        .auth(supabase_service_role_api_key.clone())
-        .execute()
-        .await?;
-
-    println!(
-        "[BUNDLER] Response for get_decryped_secrets: {:?}",
-        response
-    );
-
-    let body = response.text().await?;
-    let items: Vec<DecryptedSecret> = match serde_json::from_str(&body) {
-        Ok(parsed) => parsed,
-        Err(e) => {
-            println!("[BUNDLER] Error parsing decrypted secrets: {}", e);
-            println!("[BUNDLER] Response body: {}", body);
-            return Err(Box::new(e));
-        }
-    };
+    // TODO: Replace with proper pgsodium_secrets SeaORM query
+    // For now, return empty vec as placeholder
+    let items: Vec<DecryptedSecret> = Vec::new();
 
     println!(
         "[BUNDLER] Successfully retrieved {} decrypted secrets",

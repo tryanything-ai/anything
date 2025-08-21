@@ -1,10 +1,12 @@
 pub mod accounts;
 pub mod bundler;
+pub mod bundler_seaorm;
 pub mod secrets;
 
 use std::{sync::Arc, time::Duration};
 
-pub use bundler::*;
+// Using SeaORM version for new functionality
+pub use bundler_seaorm::*;
 
 use crate::AppState;
 

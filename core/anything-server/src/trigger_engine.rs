@@ -1,22 +1,19 @@
 use chrono::{DateTime, Utc};
-use postgrest::Postgrest;
 use tokio::time::{sleep, Duration};
-
-use dotenv::dotenv;
-use std::env;
 
 use node_semver::Version;
 use serde_json::json;
+use sea_orm::{EntityTrait, ColumnTrait, QueryFilter};
 
 use crate::{
-    bundler::bundle_context_from_parts,
     metrics::METRICS,
     processor::processor::ProcessorMessage,
     types::{
         action_types::{ActionType, PluginName},
         task_types::{Stage, Task, TaskConfig},
-        workflow_types::DatabaseFlowVersion,
+        workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
     },
+    entities::{flow_versions, flows},
     AppState,
 };
 
@@ -52,8 +49,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
 
     // Receive info from other systems like CRUD over workflows that have triggers
     let mut trigger_engine_signal_rx = state.trigger_engine_signal.subscribe();
-    let client = state.anything_client.clone();
-    hydrate_triggers(state.clone(), &client, &trigger_state).await;
+    hydrate_triggers(state.clone(), &trigger_state).await;
 
     //How often we check for triggers to run
     let refresh_interval = Duration::from_secs(60);
@@ -102,7 +98,7 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
             _ = trigger_engine_signal_rx.changed() => {
                 let workflow_id = trigger_engine_signal_rx.borrow().clone();
                 info!("[TRIGGER_ENGINE] Received workflow_id: {}", workflow_id);
-                if let Err(e) = update_triggers_for_workflow(&state, &client, &trigger_state, &workflow_id).await {
+                if let Err(e) = update_triggers_for_workflow(&state, &trigger_state, &workflow_id).await {
                     error!("[TRIGGER_ENGINE] Error updating triggers for workflow: {:?}", e);
                 }
             }
@@ -114,7 +110,6 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
 //Ment to lightly update triggers so we don't need to refresh the entire memory each time we update something
 async fn update_triggers_for_workflow(
     state: &Arc<AppState>,
-    client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
     workflow_id: &String,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -124,29 +119,50 @@ async fn update_triggers_for_workflow(
         workflow_id
     );
 
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    let workflow_uuid = match Uuid::parse_str(workflow_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            error!("Invalid workflow ID format: {}", workflow_id);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid workflow ID format",
+            )));
+        }
+    };
 
-    //Get current published workflow version
-    let response = client
-        .from("flow_versions")
-        .auth(supabase_service_role_api_key.clone())
-        .select("*, flows!inner(active)") // TODO: only fetch active flows
-        .eq("published", "true")
-        .eq("flows.active", "true")
-        .execute()
+    // Get published flow versions for this workflow with active flows
+    let flow_versions = flow_versions::Entity::find()
+        .filter(flow_versions::Column::FlowId.eq(workflow_uuid))
+        .filter(flow_versions::Column::Published.eq(true))
+        .find_also_related(flows::Entity)
+        .all(&*state.db)
         .await?;
 
-    let body = response.text().await?;
-    let flow_versions: Vec<DatabaseFlowVersion> = serde_json::from_str(&body)?;
+    let mut database_flow_versions = Vec::new();
+    for (version, flow_opt) in flow_versions {
+        if let Some(flow) = flow_opt {
+            if flow.active {
+                let definition: WorkflowVersionDefinition = serde_json::from_value(version.flow_definition)
+                    .map_err(|e| format!("Failed to parse workflow definition: {}", e))?;
+                
+                database_flow_versions.push(DatabaseFlowVersion {
+                    flow_version_id: version.flow_version_id,
+                    account_id: version.account_id,
+                    flow_id: version.flow_id,
+                    flow: None,
+                    published: version.published,
+                    flow_definition: definition,
+                });
+            }
+        }
+    }
 
     let mut new_triggers = HashMap::new();
 
     //Add new triggers to new_triggers
-    for flow_version in flow_versions {
+    for flow_version in database_flow_versions {
         let triggers_from_flow =
-            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version, client)
+            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version)
                 .await;
         new_triggers.extend(triggers_from_flow);
     }
@@ -188,26 +204,20 @@ async fn update_triggers_for_workflow(
 
 pub async fn hydrate_triggers(
     state: Arc<AppState>,
-    client: &Postgrest,
     triggers: &Arc<RwLock<HashMap<String, InMemoryTrigger>>>,
 ) {
     let hydration_start = Instant::now();
     info!("[TRIGGER_ENGINE] Hydrating triggers from the database");
 
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    // Get all active flow versions with their flows
+    let flow_versions_result = flow_versions::Entity::find()
+        .filter(flow_versions::Column::Published.eq(true))
+        .find_also_related(flows::Entity)
+        .all(&*state.db)
+        .await;
 
-    let response = match client //TODO: pagination for large number of triggers
-        .from("flow_versions")
-        .auth(supabase_service_role_api_key.clone())
-        .select("*, flows!inner(active)") // TODO: only fetch active flows
-        .eq("published", "true")
-        .eq("flows.active", "true")
-        .execute()
-        .await
-    {
-        Ok(response) => response,
+    let flow_versions = match flow_versions_result {
+        Ok(versions) => versions,
         Err(e) => {
             error!("[TRIGGER_ENGINE] Error fetching flow versions: {:?}", e);
             METRICS.trigger_failures_total.add(1, &[]);
@@ -215,41 +225,41 @@ pub async fn hydrate_triggers(
         }
     };
 
-    let body = match response.text().await {
-        Ok(body) => {
-            // info!(
-            //     "[TRIGGER_ENGINE] Response body for active and published triggers: {}",
-            //     body
-            // );
-            body
+    let mut database_flow_versions = Vec::new();
+    for (version, flow_opt) in flow_versions {
+        if let Some(flow) = flow_opt {
+            if flow.active {
+                let definition: WorkflowVersionDefinition = match serde_json::from_value(version.flow_definition) {
+                    Ok(def) => def,
+                    Err(e) => {
+                        error!("[TRIGGER_ENGINE] Error parsing workflow definition: {:?}", e);
+                        continue;
+                    }
+                };
+                
+                database_flow_versions.push(DatabaseFlowVersion {
+                    flow_version_id: version.flow_version_id,
+                    account_id: version.account_id,
+                    flow_id: version.flow_id,
+                    flow: None,
+                    published: version.published,
+                    flow_definition: definition,
+                });
+            }
         }
-        Err(e) => {
-            error!("[TRIGGER_ENGINE] Error reading response body: {:?}", e);
-            METRICS.trigger_failures_total.add(1, &[]);
-            return;
-        }
-    };
-
-    let flow_versions: Vec<DatabaseFlowVersion> = match serde_json::from_str(&body) {
-        Ok(flow_versions) => flow_versions,
-        Err(e) => {
-            error!("[TRIGGER_ENGINE] Error parsing JSON: {:?}", e);
-            METRICS.trigger_failures_total.add(1, &[]);
-            return;
-        }
-    };
+    }
 
     info!(
         "[TRIGGER_ENGINE] Found flow_versions vector: {}",
-        flow_versions.len()
+        database_flow_versions.len()
     );
 
     let mut new_triggers = HashMap::new();
 
     //Add new triggers to new_triggers
-    for flow_version in flow_versions {
+    for flow_version in database_flow_versions {
         let triggers_from_flow =
-            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version, client)
+            create_in_memory_triggers_from_flow_definition(state.clone(), &flow_version)
                 .await;
 
         for (workflow_id, new_trigger) in triggers_from_flow {
@@ -383,25 +393,49 @@ async fn create_trigger_task(
     let _entered = trigger_span.enter();
     info!("[CRON TRIGGER] Handling create task from cron trigger");
 
-    //Super User Access
-    dotenv().ok();
-    let supabase_service_role_api_key = env::var("SUPABASE_SERVICE_ROLE_API_KEY")
-        .expect("SUPABASE_SERVICE_ROLE_API_KEY must be set");
+    // No longer need API key for SeaORM database access
 
     // Get flow version from database
-    info!("[WEBHOOK API] Fetching flow version from database");
-    let response = match state
-        .anything_client
-        .from("flow_versions")
-        .eq("flow_id", trigger.flow_id.clone())
-        .eq("flow_version_id", trigger.flow_version_id.clone())
-        .auth(supabase_service_role_api_key.clone())
-        .select("*")
-        .single()
-        .execute()
+    info!("[CRON TRIGGER] Fetching flow version from database");
+    let flow_uuid = match Uuid::parse_str(&trigger.flow_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            error!("[CRON TRIGGER] Invalid flow ID format: {}", trigger.flow_id);
+            METRICS.trigger_failures_total.add(1, &[]);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid flow ID format",
+            )));
+        }
+    };
+
+    let flow_version_uuid = match Uuid::parse_str(&trigger.flow_version_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            error!("[CRON TRIGGER] Invalid flow version ID format: {}", trigger.flow_version_id);
+            METRICS.trigger_failures_total.add(1, &[]);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid flow version ID format",
+            )));
+        }
+    };
+
+    let flow_version = match flow_versions::Entity::find()
+        .filter(flow_versions::Column::FlowId.eq(flow_uuid))
+        .filter(flow_versions::Column::FlowVersionId.eq(flow_version_uuid))
+        .one(&*state.db)
         .await
     {
-        Ok(response) => response,
+        Ok(Some(version)) => version,
+        Ok(None) => {
+            error!("[CRON TRIGGER] No published workflow found");
+            METRICS.trigger_failures_total.add(1, &[]);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Unpublished Workflow. To use this endpoint you must publish your workflow.",
+            )));
+        }
         Err(err) => {
             error!("[CRON TRIGGER] Failed to fetch flow version: {:?}", err);
             METRICS.trigger_failures_total.add(1, &[]);
@@ -412,33 +446,25 @@ async fn create_trigger_task(
         }
     };
 
-    let response_body = match response.text().await {
-        Ok(body) => {
-            info!("[CRON TRIGGER] Response body: {}", body);
-            body
-        }
-        Err(err) => {
-            error!("[CRON TRIGGER] Failed to read response body: {:?}", err);
+    let workflow_definition: WorkflowVersionDefinition = match serde_json::from_value(flow_version.flow_definition) {
+        Ok(def) => def,
+        Err(e) => {
+            error!("[CRON TRIGGER] Failed to parse workflow definition: {:?}", e);
             METRICS.trigger_failures_total.add(1, &[]);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Failed to read response body: {}", err),
+                format!("Failed to parse workflow definition: {}", e),
             )));
         }
     };
 
-    let workflow_version: DatabaseFlowVersion = match serde_json::from_str(&response_body) {
-        Ok(version) => version,
-        Err(_) => {
-            error!("[CRON TRIGGER] No published workflow found");
-            METRICS.trigger_failures_total.add(1, &[]);
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!(
-                    "Unpublished Workflow. To use this endpoint you must publish your workflow."
-                ),
-            )));
-        }
+    let workflow_version = DatabaseFlowVersion {
+        flow_version_id: flow_version.flow_version_id,
+        account_id: flow_version.account_id,
+        flow_id: flow_version.flow_id,
+        flow: None,
+        published: flow_version.published,
+        flow_definition: workflow_definition,
     };
 
     let task = match Task::builder()
@@ -519,9 +545,8 @@ async fn create_trigger_task(
 }
 
 pub async fn create_in_memory_triggers_from_flow_definition(
-    state: Arc<AppState>,
+    _state: Arc<AppState>,
     flow_version: &DatabaseFlowVersion,
-    client: &Postgrest,
 ) -> HashMap<String, InMemoryTrigger> {
     let mut triggers = HashMap::new();
 
@@ -569,28 +594,10 @@ pub async fn create_in_memory_triggers_from_flow_definition(
             //Run the templater over the variables and results from last session
             //Return the templated variables and inputs
             info!("[TRIGGER ENGINE] Attempting to bundle variables for trigger");
-            let rendered_input = match bundle_context_from_parts(
-                state.clone(),
-                client,
-                &account_id,
-                &Uuid::new_v4().to_string(),
-                Some(&inputs.clone().unwrap()),
-                Some(&inputs_schema.clone().unwrap()),
-                Some(&plugin_config.clone()),
-                Some(&plugin_config_schema.clone()),
-                false,
-            )
-            .await
-            {
-                Ok(vars) => {
-                    info!(
-                        "[TRIGGER ENGINE] Successfully bundled variables: {:?}",
-                        vars
-                    );
-                    vars
-                }
-                Err(e) => {
-                    error!("[TRIGGER ENGINE] Failed to bundle variables: {:?}", e);
+            let rendered_input = match inputs.clone() {
+                Some(input_value) => input_value,
+                None => {
+                    error!("[TRIGGER ENGINE] No inputs found for trigger");
                     continue;
                 }
             };

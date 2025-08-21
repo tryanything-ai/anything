@@ -1,4 +1,7 @@
-pub mod actions;
 pub mod profiles;
 pub mod scanning;
-pub mod workflows;
+
+// SeaORM versions (migrated from Postgrest)
+pub mod actions_seaorm;
+pub mod profiles_seaorm;
+pub mod workflows_seaorm;

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use postgrest::Postgrest;
+// use postgrest::Postgrest; // Removed - using SeaORM instead
 use uuid::Uuid;
 
 use crate::bundler::bundle_tasks_cached_context_with_tasks;
@@ -33,7 +33,6 @@ pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>
 
 pub async fn execute_task(
     state: Arc<AppState>,
-    client: &Postgrest,
     task: &Task,
     in_memory_tasks: Option<&HashMap<Uuid, Task>>, // Pass in-memory tasks from processor
 ) -> TaskResult {
@@ -59,7 +58,7 @@ pub async fn execute_task(
 
     // Bundle context with results from cache
     let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
-        bundle_tasks_cached_context_with_tasks(state, client, task, true, in_memory_tasks).await;
+        bundle_tasks_cached_context_with_tasks(state, task, true, in_memory_tasks).await;
 
     let http_client = state_clone.http_client.clone();
 
