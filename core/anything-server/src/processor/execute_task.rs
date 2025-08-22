@@ -42,6 +42,7 @@ pub type TaskResult = Result<(Option<Value>, Value, DateTime<Utc>, DateTime<Utc>
 ))]
 pub async fn execute_task(
     state: Arc<AppState>,
+    client: &Arc<sea_orm::DatabaseConnection>,
     task: &Task,
     in_memory_tasks: Option<&HashMap<Uuid, Task>>, // Pass in-memory tasks from processor
 ) -> TaskResult {

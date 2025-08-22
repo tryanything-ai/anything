@@ -6,7 +6,7 @@ use crate::types::task_types::Task;
 use crate::AppState;
 
 use opentelemetry::KeyValue;
-use postgrest::Postgrest;
+use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
@@ -18,7 +18,7 @@ use uuid::Uuid;
 pub struct TaskActor {
     id: Uuid,
     state: Arc<AppState>,
-    client: Postgrest,
+    client: Arc<DatabaseConnection>,
     span_factory: EnhancedSpanFactory,
     metrics_labels: Vec<KeyValue>,
 }
@@ -27,7 +27,7 @@ impl TaskActor {
     pub fn new(
         id: Uuid,
         state: Arc<AppState>,
-        client: Postgrest,
+        client: Arc<DatabaseConnection>,
         span_factory: EnhancedSpanFactory,
         metrics_labels: Vec<KeyValue>,
     ) -> Self {

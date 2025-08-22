@@ -6,7 +6,7 @@ use crate::types::task_types::Task;
 use crate::AppState;
 
 use opentelemetry::KeyValue;
-use postgrest::Postgrest;
+use sea_orm::DatabaseConnection;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, RwLock};
@@ -23,7 +23,7 @@ impl TaskActorPool {
     pub fn new(
         pool_size: usize,
         state: Arc<AppState>,
-        client: Postgrest,
+        client: Arc<DatabaseConnection>,
         span_factory: EnhancedSpanFactory,
         metrics_labels: Vec<KeyValue>,
     ) -> Self {

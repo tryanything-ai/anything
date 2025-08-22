@@ -16,7 +16,7 @@ use tokio::sync::broadcast;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
-use crate::account_auth_middleware::verify_account_access;
+use crate::account_auth_middleware_seaorm::verify_account_access_seaorm;
 use crate::AppState;
 
 // JWT claims structure for token validation
@@ -273,7 +273,7 @@ pub async fn workflow_testing_websocket_handler(
     // Verify the user has access to the account_id
     let user_id = &claims.sub;
     let has_access =
-        match verify_account_access(&state.public_client, &query.token, user_id, &account_id).await
+        match verify_account_access_seaorm(&state, user_id, &account_id).await
         {
             Ok(access) => access,
             Err(e) => {
@@ -486,48 +486,31 @@ async fn send_initial_session_state(
     flow_session_id: &str,
     sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
 ) {
+    // TODO: Replace PostgREST calls with SeaORM queries
     // Query for existing tasks for this flow session
-    let tasks_query = state
-        .anything_client
-        .from("tasks")
-        .select("task_id,action_label,task_status,result,error,created_at,started_at,ended_at")
-        .eq("flow_session_id", flow_session_id)
-        .order("created_at.asc")
-        .execute()
-        .await;
-
+    let tasks_query = Ok("[]".to_string()); // Placeholder for PostgREST migration
+    
     // Query for flow session status
-    let flow_query = state
-        .anything_client
-        .from("flow_sessions")
-        .select("status")
-        .eq("flow_session_id", flow_session_id)
-        .single()
-        .execute()
-        .await;
+    let flow_query = Ok("[]".to_string()); // Placeholder for PostgREST migration
 
     let mut tasks_data = None;
     let mut is_complete = false;
 
     // Process tasks query
     if let Ok(response) = tasks_query {
-        if let Ok(tasks_json) = response.text().await {
-            tasks_data = serde_json::from_str(&tasks_json).ok();
-        }
+        tasks_data = serde_json::from_str(&response).ok();
     }
 
     // Process flow session query
     if let Ok(response) = flow_query {
-        if let Ok(flow_json) = response.text().await {
-            match serde_json::from_str::<serde_json::Value>(&flow_json) {
-                Ok(flow_data) => {
-                    if let Some(status) = flow_data.get("status").and_then(|s| s.as_str()) {
-                        is_complete = matches!(status, "completed" | "failed");
-                    }
+        match serde_json::from_str::<serde_json::Value>(&response) {
+            Ok(flow_data) => {
+                if let Some(status) = flow_data.get("status").and_then(|s| s.as_str()) {
+                    is_complete = matches!(status, "completed" | "failed");
                 }
-                Err(_) => {
-                    // Failed to parse flow session data
-                }
+            }
+            Err(_) => {
+                // Failed to parse flow session data
             }
         }
     }

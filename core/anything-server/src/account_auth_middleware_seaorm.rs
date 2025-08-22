@@ -106,7 +106,7 @@ impl AccountAccessCache {
 }
 
 // Verify account access using SeaORM
-async fn verify_account_access_seaorm(
+pub async fn verify_account_access_seaorm(
     state: &AppState,
     user_id: &str,
     account_id: &str,

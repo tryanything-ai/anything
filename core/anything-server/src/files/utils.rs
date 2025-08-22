@@ -1,4 +1,4 @@
-use crate::files::routes_seaorm::FileMetadata;
+use crate::files::routes_seaorm::{FileMetadata, FileAccessType};
 use crate::templater::utils::FileRequirement;
 use crate::AppState;
 use crate::entities::files;
@@ -43,16 +43,18 @@ pub async fn get_files(
 
     // Convert SeaORM models to FileMetadata format
     let files: Vec<FileMetadata> = file_models.iter().map(|model| FileMetadata {
-        file_id: model.file_id,
-        account_id: model.account_id,
+        file_id: model.file_id.to_string(),
+        account_id: model.account_id.to_string(),
         file_name: model.file_name.clone(),
-        file_size: model.file_size,
-        file_type: model.file_type.clone(),
-        path: model.path.clone(),
-        public_url: model.public_url.clone(),
-        access_level: model.access_level.clone(),
-        created_at: model.created_at,
-        updated_at: model.updated_at,
+        file_size: model.file_size.unwrap_or(0),
+        content_type: model.file_type.clone().unwrap_or_default(),
+        path: model.file_key.clone(),
+        public_url: model.file_url.clone(),
+        access_type: if model.file_url.is_some() { 
+            FileAccessType::Public 
+        } else { 
+            FileAccessType::Private 
+        },
     }).collect();
 
     println!("[FILES] Files from database: {:?}", files);

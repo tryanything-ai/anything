@@ -11,7 +11,7 @@ use crate::AppState;
 
 use chrono::Utc;
 use opentelemetry::KeyValue;
-use postgrest::Postgrest;
+use sea_orm::DatabaseConnection;
 use serde_json::{self, Value};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -25,7 +25,7 @@ pub struct WorkflowActor {
     id: Uuid,
     state: Arc<AppState>,
     #[allow(dead_code)]
-    client: Postgrest,
+    client: Arc<DatabaseConnection>,
     task_actor_pool: TaskActorPool,
     span_factory: EnhancedSpanFactory,
     metrics_labels: Vec<KeyValue>,
@@ -35,7 +35,7 @@ impl WorkflowActor {
     pub fn new(
         id: Uuid,
         state: Arc<AppState>,
-        client: Postgrest,
+        client: Arc<DatabaseConnection>,
         task_actor_pool: TaskActorPool,
         span_factory: EnhancedSpanFactory,
         metrics_labels: Vec<KeyValue>,

@@ -95,11 +95,11 @@ pub async fn get_files(
                 "file_id": file.file_id,
                 "file_name": file.file_name,
                 "file_size": file.file_size,
-                "content_type": file.content_type,
+                "content_type": file.file_type,
                 "account_id": file.account_id,
-                "path": file.file_path,
-                "public_url": file.public_url,
-                "access_level": file.access_level,
+                "path": file.file_key,
+                "public_url": file.file_url,
+                "access_level": if file.file_url.is_some() { "public" } else { "private" },
                 "created_at": file.created_at,
                 "updated_at": file.updated_at
             })
@@ -177,19 +177,15 @@ pub async fn upload_file(
                     file_id: Set(file_id),
                     account_id: Set(account_uuid),
                     file_name: Set(safe_filename.clone()),
-                    file_size: Set(data.len() as i64),
-                    content_type: Set(content_type),
-                    file_path: Set(Some(r2_key.clone())),
-                    public_url: Set(if !is_private {
+                    file_size: Set(Some(data.len() as i64)),
+                    file_type: Set(Some(content_type)),
+                    file_key: Set(Some(r2_key.clone())),
+                    file_url: Set(if !is_private {
                         Some(format!("{}/{}", cdn_domain, r2_key))
                     } else {
                         None
                     }),
-                    access_level: Set(if is_private {
-                        "private".to_string()
-                    } else {
-                        "public".to_string()
-                    }),
+                    archived: Set(false),
                     ..Default::default()
                 };
 
@@ -276,7 +272,7 @@ pub async fn delete_file(
     };
 
     // Delete from R2
-    let r2_key = file.file_path.clone().unwrap_or_else(|| format!("{}_{}", file_id, file.file_name));
+    let r2_key = file.file_key.clone().unwrap_or_else(|| format!("{}_{}", file_id, file.file_name));
     println!("[FILES] Deleting file from R2: {}", r2_key);
 
     match r2_client
@@ -357,7 +353,7 @@ pub async fn get_file_download_url(
     };
 
     // If public, return CDN URL
-    if let Some(public_url) = file.public_url {
+    if let Some(public_url) = file.file_url {
         println!("[FILES] Returning public CDN URL for file");
         return Json(json!({
             "download_url": public_url
@@ -366,7 +362,7 @@ pub async fn get_file_download_url(
     }
 
     // If private, generate presigned URL
-    let r2_key = file.file_path.clone().unwrap_or_else(|| format!("{}_{}", file_id, file.file_name));
+    let r2_key = file.file_key.clone().unwrap_or_else(|| format!("{}_{}", file_id, file.file_name));
     
     println!("[FILES] Generating presigned URL for private file");
     let presigned_request = match r2_client

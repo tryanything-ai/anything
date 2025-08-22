@@ -47,7 +47,7 @@ impl ActorProcessor {
         let task_actor_pool = TaskActorPool::new(
             task_pool_size,
             state.clone(),
-            (*state.anything_client).clone(),
+            (*state.http_client).clone(),
             span_factory.clone(),
             metrics_labels.clone(),
         );
@@ -67,7 +67,7 @@ impl ActorProcessor {
             let actor = WorkflowActor::new(
                 actor_id,
                 state.clone(),
-                (*state.anything_client).clone(),
+                (*state.http_client).clone(),
                 task_actor_pool.clone(),
                 span_factory.clone(),
                 metrics_labels.clone(),

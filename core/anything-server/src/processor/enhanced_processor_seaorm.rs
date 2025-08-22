@@ -55,7 +55,7 @@ impl EnhancedWorkflowProcessor {
             metrics_labels,
             span_factory: EnhancedSpanFactory::new(service_name.clone(), environment.to_string()),
             service_name,
-            environment,
+            environment: environment.to_string(),
         }
     }
 

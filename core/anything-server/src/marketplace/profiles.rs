@@ -10,109 +10,32 @@ use std::sync::Arc;
 
 use crate::AppState;
 
-// Profiles
+// Profiles - placeholder implementation (use profiles_seaorm.rs for SeaORM version)
 pub async fn get_profiles_from_marketplace(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    let client = &state.marketplace_client;
+    println!("[PROFILES] Fetching profiles (placeholder - migrating to SeaORM)");
 
-    println!("[PROFILES] Fetching profiles");
+    let placeholder_response = serde_json::json!({
+        "message": "Marketplace profiles endpoint migrating to SeaORM - use profiles_seaorm.rs",
+        "status": "placeholder",
+        "data": []
+    });
 
-    let response = match client
-        .from("profiles")
-        .select("*")
-        .order("username.asc")
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(e) => {
-            println!("[PROFILES] Failed to execute request: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response();
-        }
-    };
-
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(e) => {
-            println!("[PROFILES] Failed to read response body: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response();
-        }
-    };
-
-    let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
-        Err(e) => {
-            println!("[PROFILES] Failed to parse JSON: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
-        }
-    };
-
-    println!("[PROFILES] Query result: {:?}", items);
-
-    Json(items).into_response()
+    Json(placeholder_response).into_response()
 }
 
 pub async fn get_marketplace_profile_by_username(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(username): Path<String>,
 ) -> impl IntoResponse {
-    let client = &state.marketplace_client;
+    println!("[MARKETPLACE] Fetching profile by username: {} (placeholder - migrating to SeaORM)", username);
 
-    println!("[MARKETPLACE] Fetching profile by slug: {}", username);
+    let placeholder_response = serde_json::json!({
+        "message": "Marketplace profile lookup migrating to SeaORM - use profiles_seaorm.rs",
+        "username": username,
+        "status": "placeholder"
+    });
 
-    let response = match client
-        .from("profiles")
-        .select("*")
-        .eq("username", &username)
-        .limit(1)
-        .execute()
-        .await
-    {
-        Ok(response) => response,
-        Err(e) => {
-            println!("[MARKETPLACE] Failed to execute request: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to execute request",
-            )
-                .into_response();
-        }
-    };
-
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(e) => {
-            println!("[MARKETPLACE] Failed to read response body: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to read response body",
-            )
-                .into_response();
-        }
-    };
-
-    let items: Value = match serde_json::from_str(&body) {
-        Ok(items) => items,
-        Err(e) => {
-            println!("[MARKETPLACE] Failed to parse JSON: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse JSON").into_response();
-        }
-    };
-
-    if let Some(profile) = items.as_array().and_then(|arr| arr.first()) {
-        println!("[MARKETPLACE] Found profile: {:?}", profile);
-        Json(profile.clone()).into_response()
-    } else {
-        println!("[MARKETPLACE] No profile found for slug: {}", username);
-        (StatusCode::NOT_FOUND, "Profile not found").into_response()
-    }
+    Json(placeholder_response).into_response()
 }

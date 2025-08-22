@@ -17,7 +17,7 @@ use serde_json::Value;
 use std::time::Duration;
 use std::env;
 use std::sync::Arc;
-use tokio::sync::{watch, Semaphore};
+use tokio::sync::{broadcast, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tokio::sync::mpsc; 
@@ -97,7 +97,7 @@ pub struct AppState {
     http_client: Arc<Client>,
     workflow_processor_semaphore: Arc<Semaphore>,
     auth_states: DashMap<String, AuthState>,
-    trigger_engine_signal: watch::Sender<String>,
+    trigger_engine_signal: broadcast::Sender<String>,
     processor_sender: mpsc::Sender<ProcessorMessage>,
     task_updater_sender: mpsc::Sender<StatusUpdateMessage>,
     flow_completions: DashMap<String, FlowCompletion>,
@@ -201,7 +201,7 @@ async fn main() {
         HeaderValue::from_static("*"),
     );
 
-    let (trigger_engine_signal, _) = watch::channel("".to_string());
+    let (trigger_engine_signal, _) = broadcast::channel::<String>(100);
     let (processor_tx, processor_rx) = mpsc::channel::<ProcessorMessage>(100000); 
 
     // Create the task updater channel  

@@ -95,11 +95,17 @@ pub async fn cron_job_loop(state: Arc<AppState>) {
                     info!("[TRIGGER_ENGINE] Finished trigger check loop - no triggers to execute");
                 }
             }
-            _ = trigger_engine_signal_rx.changed() => {
-                let workflow_id = trigger_engine_signal_rx.borrow().clone();
-                info!("[TRIGGER_ENGINE] Received workflow_id: {}", workflow_id);
-                if let Err(e) = update_triggers_for_workflow(&state, &trigger_state, &workflow_id).await {
-                    error!("[TRIGGER_ENGINE] Error updating triggers for workflow: {:?}", e);
+            result = trigger_engine_signal_rx.recv() => {
+                match result {
+                    Ok(workflow_id) => {
+                        info!("[TRIGGER_ENGINE] Received workflow_id: {}", workflow_id);
+                        if let Err(e) = update_triggers_for_workflow(&state, &trigger_state, &workflow_id).await {
+                            error!("[TRIGGER_ENGINE] Error updating triggers for workflow: {:?}", e);
+                        }
+                    }
+                    Err(e) => {
+                        error!("[TRIGGER_ENGINE] Error receiving trigger signal: {:?}", e);
+                    }
                 }
             }
         }

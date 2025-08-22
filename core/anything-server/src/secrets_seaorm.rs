@@ -63,11 +63,20 @@ pub async fn create_secret(
         is_api_key: Some(false),
     };
 
-    // Redirect to pgsodium implementation
+    // Redirect to pgsodium implementation - extract Claims from Extension
+    let claims = crate::custom_auth::jwt::Claims {
+        sub: user.account_id.clone(),
+        username: user.username.clone(),
+        session_id: uuid::Uuid::new_v4().to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+    let auth_claims = crate::custom_auth::extractors::AuthClaims(claims);
+    
     crate::pgsodium_secrets::handlers::create_secret(
-        Path(account_id),
         State(state),
-        Extension(user),
+        Path(account_id),
+        auth_claims,
         Json(pgsodium_payload),
     ).await
 }
@@ -92,11 +101,20 @@ pub async fn create_anything_api_key(
         is_api_key: Some(true),
     };
 
-    // Redirect to pgsodium implementation
+    // Redirect to pgsodium implementation - extract Claims from Extension
+    let claims = crate::custom_auth::jwt::Claims {
+        sub: user.account_id.clone(),
+        username: user.username.clone(),
+        session_id: uuid::Uuid::new_v4().to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+    let auth_claims = crate::custom_auth::extractors::AuthClaims(claims);
+    
     crate::pgsodium_secrets::handlers::create_secret(
-        Path(account_id),
         State(state),
-        Extension(user),
+        Path(account_id),
+        auth_claims,
         Json(pgsodium_payload),
     ).await
 }
@@ -117,11 +135,20 @@ pub async fn get_decrypted_secrets(
         jwt: "system".to_string(),
     };
 
-    // Redirect to pgsodium implementation
+    // Redirect to pgsodium implementation - create AuthClaims from dummy user
+    let claims = crate::custom_auth::jwt::Claims {
+        sub: dummy_user.account_id.clone(),
+        username: dummy_user.username.clone(),
+        session_id: uuid::Uuid::new_v4().to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+    let auth_claims = crate::custom_auth::extractors::AuthClaims(claims);
+    
     crate::pgsodium_secrets::handlers::get_secrets(
-        Path(account_id),
         State(state),
-        Extension(dummy_user),
+        Path(account_id),
+        auth_claims,
     ).await
 }
 
@@ -144,11 +171,20 @@ pub async fn get_decrypted_anything_api_keys(
         jwt: "system".to_string(),
     };
 
-    // Redirect to pgsodium implementation
+    // Redirect to pgsodium implementation - create AuthClaims from dummy user
+    let claims = crate::custom_auth::jwt::Claims {
+        sub: dummy_user.account_id.clone(),
+        username: dummy_user.username.clone(),
+        session_id: uuid::Uuid::new_v4().to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+    let auth_claims = crate::custom_auth::extractors::AuthClaims(claims);
+    
     crate::pgsodium_secrets::handlers::get_secrets(
-        Path(account_id),
         State(state),
-        Extension(dummy_user),
+        Path(account_id),
+        auth_claims,
     ).await
 }
 
@@ -165,11 +201,20 @@ pub async fn delete_secret(
         cache_entry.invalidate(&account_id);
     }
 
-    // Redirect to pgsodium implementation
+    // Redirect to pgsodium implementation - extract Claims from Extension
+    let claims = crate::custom_auth::jwt::Claims {
+        sub: user.account_id.clone(),
+        username: user.username.clone(),
+        session_id: uuid::Uuid::new_v4().to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+    let auth_claims = crate::custom_auth::extractors::AuthClaims(claims);
+    
     crate::pgsodium_secrets::handlers::delete_secret(
-        Path((account_id, secret_id)),
         State(state),
-        Extension(user),
+        Path((account_id, secret_id)),
+        auth_claims,
     ).await
 }
 
@@ -221,11 +266,20 @@ pub async fn update_secret(
         description: Some(payload.secret_description),
     };
 
-    // Redirect to pgsodium implementation
+    // Redirect to pgsodium implementation - extract Claims from Extension
+    let claims = crate::custom_auth::jwt::Claims {
+        sub: user.account_id.clone(),
+        username: user.username.clone(),
+        session_id: uuid::Uuid::new_v4().to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
+        iat: chrono::Utc::now().timestamp(),
+    };
+    let auth_claims = crate::custom_auth::extractors::AuthClaims(claims);
+    
     crate::pgsodium_secrets::handlers::update_secret(
-        Path((account_id, secret_id)),
         State(state),
-        Extension(user),
+        Path((account_id, secret_id)),
+        auth_claims,
         Json(pgsodium_payload),
     ).await
 }

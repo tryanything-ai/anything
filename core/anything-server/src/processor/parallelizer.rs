@@ -27,7 +27,7 @@ pub const BRANCH_PROCESSING_TIMEOUT_SECS: u64 = 300; // 5 minutes
 #[derive(Clone)]
 pub struct ProcessingContext {
     pub state: Arc<AppState>,
-    pub client: postgrest::Postgrest,
+    pub client: Arc<sea_orm::DatabaseConnection>,
     pub flow_session_id: Uuid,
     pub workflow_id: Uuid,
     pub trigger_task_id: String,
@@ -46,7 +46,7 @@ pub struct ProcessingContext {
 impl ProcessingContext {
     pub fn new(
         state: Arc<AppState>,
-        client: postgrest::Postgrest,
+        client: Arc<sea_orm::DatabaseConnection>,
         processor_message: &ProcessorMessage,
     ) -> Self {
         let environment = if cfg!(debug_assertions) {
@@ -382,7 +382,7 @@ impl EnhancedParallelProcessor {
 #[instrument(skip(state, client, processor_message))]
 pub async fn process_workflow(
     state: Arc<AppState>,
-    client: postgrest::Postgrest,
+    client: Arc<sea_orm::DatabaseConnection>,
     processor_message: ProcessorMessage,
 ) {
     let flow_session_id = processor_message.flow_session_id;

@@ -14,7 +14,7 @@ use crate::{
     processor::processor::ProcessorMessage,
     types::{
         action_types::{ActionType, PluginName},
-        task_types::{Stage, Task, TaskConfig},
+        task_types::{Stage, Task, TaskConfig, TaskStatus, TriggerSessionStatus, FlowSessionStatus},
         workflow_types::{DatabaseFlowVersion, WorkflowVersionDefinition},
     },
     entities::{flow_versions, flows},
@@ -311,60 +311,93 @@ async fn create_trigger_task(
     let flow_session_id = Uuid::new_v4();
     let trigger_session_id = Uuid::new_v4();
 
-    let context = bundle_context_from_parts(
-        trigger.action_id.clone(),
-        trigger.config.clone(),
-        json!({}),
-        &definition,
-    );
+    let (bundled_inputs, bundled_secrets) = match bundle_context_from_parts(
+        state.clone(),
+        &trigger.account_id.to_string(),
+        &flow_session_id.to_string(),
+        Some(&json!({})),
+        None,
+        None, // plugin_config
+        None, // plugin_config_schema
+        false, // refresh_auth
+    ).await {
+        Ok((inputs, secrets)) => (inputs, secrets),
+        Err(e) => {
+            error!("Failed to bundle context: {}", e);
+            return Err(e);
+        }
+    };
 
-    let trigger_plugin_name = match &trigger.plugin_name {
-        PluginName::CronTrigger => "cron_trigger",
-        _ => "unknown_trigger",
+    let trigger_plugin_name = if trigger.plugin_name.as_str().contains("cron") {
+        "cron_trigger"
+    } else {
+        "unknown_trigger"
     };
 
     let now = Utc::now();
     let task_id = Uuid::new_v4();
 
+    let task_config = TaskConfig {
+        inputs: None,
+        inputs_schema: None,
+        plugin_config: Some(serde_json::to_value(&trigger.config)?),
+        plugin_config_schema: None,
+    };
+
     let task = Task {
         task_id,
         account_id: Uuid::parse_str(&trigger.account_id)?,
+        task_status: TaskStatus::Running,
         flow_id: flow_uuid,
         flow_version_id: version_uuid,
-        flow_session_id,
-        action_id: trigger.action_id.clone(),
         action_label: trigger.action_label.clone(),
-        r#type: ActionType::Trigger,
-        plugin_name: trigger.plugin_name.clone(),
-        plugin_version: trigger.plugin_version.clone(),
-        stage: Stage::Processing,
-        config: trigger.config.clone(),
-        output: None,
-        context,
-        error_message: None,
-        retry_count: 0,
-        max_retries: 0,
-        trigger_session_id,
-        trigger_session_status: "completed".to_string(),
         trigger_id: trigger.action_id.clone(),
-        flow_session_status: "processing".to_string(),
-        task_status: "processing".to_string(),
-        parent_task_id: None,
-        assigned_worker_id: None,
+        trigger_session_id,
+        trigger_session_status: TriggerSessionStatus::Completed,
+        flow_session_id,
+        flow_session_status: FlowSessionStatus::Running,
+        action_id: trigger.action_id.clone(),
+        r#type: ActionType::Trigger,
+        plugin_name: Some(trigger.plugin_name.clone()),
+        plugin_version: Some(trigger.plugin_version.clone()),
+        stage: Stage::Production,
+        test_config: None,
+        config: task_config,
+        context: Some(bundled_inputs),
         started_at: Some(now),
-        completed_at: None,
-        created_at: now,
-        updated_at: now,
-        created_by: Some(Uuid::parse_str(&trigger.account_id)?),
+        ended_at: None,
+        debug_result: None,
+        result: None,
+        error: None,
+        archived: false,
+        updated_at: Some(now),
+        created_at: Some(now),
         updated_by: Some(Uuid::parse_str(&trigger.account_id)?),
-        execution_time_ms: None,
-        current_step: Some(1),
-        total_steps: Some(1),
-        progress_percentage: Some(0.0),
+        created_by: Some(Uuid::parse_str(&trigger.account_id)?),
+        processing_order: 0,
     };
 
     // Send task to processor
-    let processor_message = ProcessorMessage::ProcessTask(task);
+    let processor_message = ProcessorMessage {
+        workflow_id: flow_uuid,
+        workflow_version: DatabaseFlowVersion {
+            flow_version_id: flow_version.flow_version_id,
+            flow_id: flow_version.flow_id,
+            flow: None,
+            account_id: flow_version.account_id,
+            created_at: flow_version.created_at,
+            updated_at: flow_version.updated_at,
+            is_published: flow_version.is_published.unwrap_or(false),
+            version_description: flow_version.version_description,
+            creator_id: flow_version.creator_id,
+        },
+        workflow_definition: definition,
+        flow_session_id,
+        trigger_session_id,
+        trigger_task: Some(task),
+        task_id: Some(task_id),
+        existing_tasks: HashMap::new(),
+    };
     state
         .processor_sender
         .send(processor_message)
@@ -385,8 +418,8 @@ pub async fn create_in_memory_triggers_from_flow_definition(
 
     for action in &workflow_definition.actions {
         if let ActionType::Trigger = action.r#type {
-            if action.plugin_name == PluginName::CronTrigger {
-                if let Some(cron_expression) = action.config.get("cron_expression") {
+            if action.plugin_name.as_str().contains("cron") {
+                if let Some(cron_expression) = action.plugin_config.get("cron_expression") {
                     if let Some(cron_str) = cron_expression.as_str() {
                         // Validate cron expression
                         if Schedule::from_str(cron_str).is_ok() {
@@ -396,9 +429,14 @@ pub async fn create_in_memory_triggers_from_flow_definition(
                                 plugin_name: action.plugin_name.clone(),
                                 plugin_version: action.plugin_version.clone(),
                                 flow_id: flow_id.to_string(),
-                                action_label: action.action_label.clone(),
+                                action_label: action.label.clone(),
                                 flow_version_id: flow_version_id.to_string(),
-                                config: action.config.clone(),
+                                config: TaskConfig {
+                                    inputs: None,
+                                    inputs_schema: None,
+                                    plugin_config: Some(action.plugin_config.clone()),
+                                    plugin_config_schema: None,
+                                },
                                 last_fired: None,
                                 next_fire: None,
                                 cron_expression: cron_str.to_string(),
