@@ -2,7 +2,10 @@
 name = "anything-server"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.83.0" 
+rust-version = "1.83.0"
+
+[workspace]
+members = [".", "migration"] 
 
 [dependencies]
 axum = { version = "0.7.5", features = ["multipart", "macros", "ws"] }

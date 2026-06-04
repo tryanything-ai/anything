@@ -34,25 +34,6 @@ impl Templater {
         }
     }
 
-    pub fn add_context(&mut self, name: &str, context: Value) {
-        // For compatibility, we'll store this as a template
-        // This is a compatibility method for the bundler
-        self.templates.insert(name.to_string(), context);
-    }
-
-    pub fn render_json_schema(
-        &self,
-        schema: Value,
-        config: Option<Value>,
-    ) -> Result<Value, TemplateError> {
-        // Simple implementation for compatibility
-        // This method should render a schema with optional config
-        let context = config.unwrap_or(Value::Object(serde_json::Map::new()));
-        
-        // For now, just return the schema as-is since we don't have proper templating logic for schemas
-        // This is a placeholder implementation
-        Ok(schema)
-    }
 
     pub fn add_template(&mut self, name: &str, template: Value) {
         self.templates.insert(name.to_string(), template);

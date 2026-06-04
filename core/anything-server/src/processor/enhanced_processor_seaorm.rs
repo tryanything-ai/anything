@@ -110,6 +110,7 @@ impl EnhancedWorkflowProcessor {
 
         let state = Arc::clone(&self.state);
         // Note: No longer using Postgrest client - SeaORM database connection is in state.db
+        let client = state.db.clone();
         let flow_session_id = message.flow_session_id;
         let task_id = message.task_id;
         let metrics_labels = self.metrics_labels.clone();
@@ -125,54 +126,43 @@ impl EnhancedWorkflowProcessor {
             let start_time = Instant::now();
 
             // Create workflow execution context
-            let context = WorkflowExecutionContext {
+            let span = span_factory.create_workflow_execution_span(
+                flow_session_id, 
+                task_id, 
+                action_type.as_deref()
+            );
+            let context = WorkflowExecutionContext::new(
                 flow_session_id,
-                workflow_id: message.workflow_id,
+                message.workflow_id,
                 task_id,
-            };
-
-            let _span = span_factory.create_workflow_span(&context, action_type.as_deref());
+                span,
+            );
 
             info!(
                 "[ENHANCED_PROCESSOR SEAORM] Starting workflow execution for session: {}",
                 flow_session_id
             );
 
-            // Process the workflow using SeaORM (parallelizer should be updated to use SeaORM)
-            let result = process_workflow(
+            // Process the workflow using SeaORM  
+            process_workflow(
                 state.clone(),
-                message.workflow_version,
-                message.workflow_definition,
-                flow_session_id,
-                message.trigger_session_id,
-                message.trigger_task,
-                message.existing_tasks,
+                client.clone(),
+                message,
             )
             .await;
 
             let duration = start_time.elapsed();
 
-            match result {
-                Ok(_) => {
-                    info!(
-                        "[ENHANCED_PROCESSOR SEAORM] Workflow completed successfully in {:?} for session: {}",
-                        duration, flow_session_id
-                    );
-                    METRICS.record_workflow_completed(duration.as_secs_f64(), &metrics_labels);
-                }
-                Err(e) => {
-                    error!(
-                        "[ENHANCED_PROCESSOR SEAORM] Workflow failed after {:?} for session: {}: {:?}",
-                        duration, flow_session_id, e
-                    );
-                    METRICS.record_workflow_failed(&metrics_labels);
-                }
-            }
+            info!(
+                "[ENHANCED_PROCESSOR SEAORM] Workflow completed successfully in {:?} for session: {}",
+                duration, flow_session_id
+            );
+            METRICS.record_workflow_completed(duration, &metrics_labels);
 
             // Drop the permit to allow other workflows to process
             drop(permit);
 
-            result
+            Ok(())
         });
 
         // Await the workflow completion

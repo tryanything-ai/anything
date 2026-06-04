@@ -239,6 +239,15 @@ impl MetricsRegistry {
 
     // ===== PROCESSOR METRICS METHODS =====
 
+    pub fn record_processor_started(&self, labels: &[KeyValue]) {
+        // Record processor startup event
+        self.processor_messages_received.add(0, labels); // Placeholder metric
+    }
+
+    pub fn record_workflow_failed(&self, labels: &[KeyValue]) {
+        self.processor_workflow_errors.add(1, labels);
+    }
+
     pub fn record_message_received(&self, labels: &[KeyValue]) {
         self.processor_messages_received.add(1, labels);
     }

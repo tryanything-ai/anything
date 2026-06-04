@@ -138,7 +138,7 @@ async fn main() {
     
     // For backward compatibility during migration, we'll keep the database URL but use it for direct connections
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
-        format!("postgresql://postgres:postgres@localhost:54322/postgres")
+        format!("postgresql://postgres:postgres@localhost:5432/anything")
     });
     
     let cors_origin = env::var("ANYTHING_BASE_URL").expect("ANYTHING_BASE_URL must be set");
@@ -492,9 +492,9 @@ pub async fn root() -> impl IntoResponse {
     tokio::spawn(trigger_engine_seaorm::cron_job_loop(state.clone()));
 
     // Spawn task billing processing loop
-    tokio::spawn(billing::billing_usage_engine_seaorm::billing_processing_loop(
-        state.clone(),
-    ));
+    // tokio::spawn(billing::billing_usage_engine_seaorm::billing_processing_loop(
+    //     state.clone(),
+    // ));
 
     // Add the cache cleanup task here
     tokio::spawn(account_auth_middleware_seaorm::cleanup_account_access_cache(state.clone()));

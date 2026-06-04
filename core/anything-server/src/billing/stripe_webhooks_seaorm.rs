@@ -69,7 +69,7 @@ pub async fn handle_webhook(
                 // Update the accounts_billing table using SeaORM
                 match update_billing_status_seaorm(
                     &state,
-                    customer.id(),
+                    &customer.id().to_string(),
                     true,
                     "active",
                 ).await {
@@ -96,7 +96,7 @@ pub async fn handle_webhook(
                 // Update the accounts_billing table using SeaORM
                 match update_billing_status_seaorm(
                     &state,
-                    customer.id(),
+                    &customer.id().to_string(),
                     is_active,
                     &status,
                 ).await {
@@ -121,7 +121,7 @@ pub async fn handle_webhook(
                 // Update the accounts_billing table using SeaORM
                 match update_billing_status_seaorm(
                     &state,
-                    customer.id(),
+                    &customer.id().to_string(),
                     false,
                     "canceled",
                 ).await {

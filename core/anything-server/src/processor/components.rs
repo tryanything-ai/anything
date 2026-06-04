@@ -123,6 +123,7 @@ pub enum ProcessorError {
     SemaphoreError(String),
     WorkflowExecutionError(String),
     MessageProcessingError(String),
+    DatabaseError(String),
     ChannelClosed,
 }
 
@@ -137,6 +138,9 @@ impl std::fmt::Display for ProcessorError {
             }
             ProcessorError::MessageProcessingError(msg) => {
                 write!(f, "Message processing failed: {}", msg)
+            }
+            ProcessorError::DatabaseError(msg) => {
+                write!(f, "Database error: {}", msg)
             }
             ProcessorError::ChannelClosed => write!(f, "Channel closed unexpectedly"),
         }

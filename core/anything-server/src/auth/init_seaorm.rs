@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sea_orm::{EntityTrait, ColumnTrait, QueryFilter};
+use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, PaginatorTrait};
 use slugify::slugify;
 use std::sync::Arc;
 use urlencoding;
@@ -141,7 +141,7 @@ pub async fn init_oauth(
     // Generate OAuth parameters
     let state_param = generate_random_string(32);
     let code_verifier = generate_code_verifier();
-    let code_challenge = generate_code_challenge(&code_verifier);
+    let code_challenge = generate_code_challenge(&code_verifier).await;
 
     // Build OAuth authorization URL
     let auth_url = auth_provider.auth_url.unwrap_or_default();

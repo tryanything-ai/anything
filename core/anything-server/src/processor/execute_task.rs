@@ -61,7 +61,6 @@ pub async fn execute_task(
         Duration::from_secs(30), // 30 second timeout for bundling
         bundle_tasks_cached_context_with_tasks(
             Arc::clone(&state),
-            client,
             task,
             true,
             in_memory_tasks,
@@ -108,12 +107,12 @@ pub async fn execute_task(
 
     let task_execution_result = timeout(
         plugin_timeout,
-        execute_plugin_safe(state, task, &bundled_inputs, &bundled_plugin_config),
+        execute_plugin_safe(state.clone(), task, &bundled_inputs, &bundled_plugin_config),
     )
     .await;
 
     // Bundle context with results from cache
-    let bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
+    let _bundled_context_result: Result<(Value, Value), Box<dyn std::error::Error + Send + Sync>> =
         bundle_tasks_cached_context_with_tasks(state, task, true, in_memory_tasks).await;
     let plugin_duration = plugin_start.elapsed();
     let ended_at = Utc::now();

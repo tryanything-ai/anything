@@ -212,7 +212,7 @@ pub async fn upsert_customer_subscription(
             active_model.active = Set(Some(input.active));
             active_model.updated_at = Set(Some(chrono::Utc::now()));
             
-            active_model.update(&*state.db).await
+            active_model.update(&*state.db).await.map(|_| ())
         }
         None => {
             // Create new record

@@ -1,6 +1,9 @@
 -- Enable pgsodium extension for encryption
 CREATE EXTENSION IF NOT EXISTS pgsodium;
 
+-- Create the anything schema first
+CREATE SCHEMA IF NOT EXISTS anything;
+
 -- Create users table for custom authentication
 CREATE TABLE IF NOT EXISTS anything.users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

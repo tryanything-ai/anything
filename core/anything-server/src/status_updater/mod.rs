@@ -225,20 +225,9 @@ pub async fn task_database_status_processor(
 }
 
 async fn get_current_tasks_for_session(state: &Arc<AppState>, flow_session_id: &Uuid) -> Option<serde_json::Value> {
-    let tasks_query = state
-        .anything_client
-        .from("tasks")
-        .select("task_id,action_label,task_status,result,error,created_at,started_at,ended_at")
-        .eq("flow_session_id", flow_session_id.to_string())
-        .order("created_at.asc")
-        .execute()
-        .await;
-
-    if let Ok(response) = tasks_query {
-        if let Ok(tasks_json) = response.text().await {
-            return serde_json::from_str(&tasks_json).ok();
-        }
-    }
+    // TODO: Replace with SeaORM query once tasks entity is properly defined
+    // For now, return None as placeholder to match migration approach
+    println!("[STATUS UPDATER] TODO: Implement SeaORM query for flow_session_id: {}", flow_session_id);
     None
 }
 

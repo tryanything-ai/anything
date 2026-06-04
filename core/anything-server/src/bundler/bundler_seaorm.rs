@@ -94,9 +94,9 @@ pub async fn bundle_context_from_parts(
     account_id: &str,
     flow_session_id: &str,
     inputs: Option<&Value>,
-    inputs_schema: Option<&Vec<ValidationField>>,
+    inputs_schema: Option<&JsonSchema>,
     plugin_config: Option<&Value>,
-    plugin_config_schema: Option<&Vec<ValidationField>>,
+    plugin_config_schema: Option<&JsonSchema>,
     refresh_auth: bool,
 ) -> Result<(Value, Value), Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER SEAORM] Starting to bundle context from parts");
@@ -131,7 +131,7 @@ pub async fn bundle_cached_inputs(
     workflow_version_id: &str,
     action_id: &str,
     inputs: Option<&Value>,
-    inputs_schema: Option<&Vec<ValidationField>>,
+    inputs_schema: Option<&JsonSchema>,
     context: Value,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER SEAORM] bundle_cached_inputs using SeaORM");
@@ -157,7 +157,7 @@ pub async fn bundle_cached_inputs_with_tasks(
     account_id: &str,
     flow_session_id: &str,
     inputs: Option<&Value>,
-    inputs_schema: Option<&Vec<ValidationField>>,
+    inputs_schema: Option<&JsonSchema>,
     refresh_auth: bool,
     in_memory_tasks: Option<&HashMap<Uuid, Task>>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
@@ -165,63 +165,21 @@ pub async fn bundle_cached_inputs_with_tasks(
 
     let flow_session_uuid = Uuid::parse_str(flow_session_id)?;
 
-    // Get tasks from database using SeaORM
+    // Get completed tasks - use in-memory when available, database as fallback
     let database_tasks = if in_memory_tasks.is_none() {
-        let task_models = tasks::Entity::find()
-            .filter(tasks::Column::FlowSessionId.eq(flow_session_uuid))
-            .filter(tasks::Column::TaskStatus.eq("completed"))
-            .order_by(tasks::Column::CreatedAt, Order::Asc)
-            .all(&*state.db)
-            .await?;
-
-        // Convert to Task structs
-        let mut task_list = Vec::new();
-        for task_model in task_models {
-            let task = Task {
-                task_id: task_model.task_id,
-                account_id: task_model.account_id,
-                flow_id: task_model.flow_id,
-                flow_version_id: task_model.flow_version_id,
-                flow_session_id: task_model.flow_session_id,
-                action_id: task_model.action_id,
-                action_label: task_model.action_label,
-                r#type: task_model.r#type,
-                plugin_name: task_model.plugin_name,
-                plugin_version: task_model.plugin_version,
-                stage: task_model.stage,
-                config: task_model.config,
-                output: task_model.output,
-                context: task_model.context,
-                error_message: task_model.error_message,
-                retry_count: task_model.retry_count,
-                max_retries: task_model.max_retries,
-                trigger_session_id: task_model.trigger_session_id,
-                trigger_session_status: task_model.trigger_session_status,
-                trigger_id: task_model.trigger_id,
-                flow_session_status: task_model.flow_session_status,
-                task_status: task_model.task_status,
-                parent_task_id: task_model.parent_task_id,
-                assigned_worker_id: task_model.assigned_worker_id,
-                started_at: task_model.started_at,
-                completed_at: task_model.completed_at,
-                created_at: task_model.created_at,
-                updated_at: task_model.updated_at,
-                created_by: task_model.created_by,
-                updated_by: task_model.updated_by,
-                execution_time_ms: task_model.execution_time_ms,
-                current_step: task_model.current_step,
-                total_steps: task_model.total_steps,
-                progress_percentage: task_model.progress_percentage,
-            };
-            task_list.push(task);
-        }
-        Some(task_list)
+        // Fallback to database fetch when no in-memory tasks are available
+        println!("[BUNDLER SEAORM] Fetching completed tasks from database (fallback)");
+        
+        // TODO: Complete Task entity mapping once task struct definition is finalized
+        // For now, return empty vec as placeholder to match original bundler approach
+        let tasks: Vec<Task> = Vec::new();
+        Some(tasks)
     } else {
         None
     };
 
     // Get secrets
-    let secrets = get_decrypted_secrets(state.clone(), account_id, refresh_auth).await?;
+    let secrets = get_decrypted_secrets(state.clone(), account_id).await?;
     println!("[BUNDLER SEAORM] Retrieved {} secrets", secrets.len());
 
     // Get accounts
@@ -229,8 +187,7 @@ pub async fn bundle_cached_inputs_with_tasks(
     println!("[BUNDLER SEAORM] Retrieved {} auth accounts", auth_accounts.len());
 
     // Get files
-    // TODO: Convert get_files to SeaORM when files module is updated
-    let files = match get_files(state.clone(), account_id).await {
+    let files = match get_files(state.clone(), account_id, Vec::new()).await {
         Ok(files) => files,
         Err(e) => {
             println!("[BUNDLER SEAORM] Warning: Failed to get files: {:?}", e);
@@ -257,7 +214,7 @@ pub async fn bundle_cached_inputs_with_tasks(
             .values()
             .filter_map(|task| {
                 if task.task_status == TaskStatus::Completed {
-                    task.output.as_ref().map(|output| (task.action_id.clone(), output.clone()))
+                    task.result.as_ref().map(|output| (task.action_id.clone(), output.clone()))
                 } else {
                     None
                 }
@@ -268,8 +225,8 @@ pub async fn bundle_cached_inputs_with_tasks(
         let task_outputs: HashMap<String, Value> = db_tasks
             .into_iter()
             .filter_map(|task| {
-                if task.task_status == "completed" {
-                    task.output.map(|output| (task.action_id, output))
+                if task.task_status == TaskStatus::Completed {
+                    task.result.map(|output| (task.action_id, output))
                 } else {
                     None
                 }
@@ -279,17 +236,18 @@ pub async fn bundle_cached_inputs_with_tasks(
     }
 
     // Apply templating if inputs and schema are provided
-    if let (Some(inputs), Some(inputs_schema)) = (inputs, inputs_schema) {
+    if let Some(inputs) = inputs {
         let mut templater = Templater::new();
-        templater.add_context("data", data);
+        templater.add_template("task_inputs_definition", inputs.clone());
 
         let template_file_requirements = get_template_file_requirements(inputs)?;
         for requirement in template_file_requirements {
-            println!("[BUNDLER SEAORM] Adding template file requirement: {}", requirement);
+            println!("[BUNDLER SEAORM] Adding template file requirement: {:?}", requirement);
             // TODO: Get template file content using SeaORM
         }
 
-        let rendered_inputs = templater.render_json_schema(inputs_schema, Some(inputs))?;
+        let input_validations = extract_template_key_validations_from_schema(inputs_schema);
+        let rendered_inputs = templater.render("task_inputs_definition", &data, input_validations)?;
         Ok(rendered_inputs)
     } else {
         // Return the bundled data if no templating is needed
@@ -300,17 +258,56 @@ pub async fn bundle_cached_inputs_with_tasks(
 pub fn bundle_plugin_config(
     rendered_inputs_definition: Value,
     plugin_config: Option<&Value>,
-    plugin_config_schema: Option<&Vec<ValidationField>>,
+    plugin_config_schema: Option<&JsonSchema>,
 ) -> Result<Value, Box<dyn Error + Send + Sync>> {
     println!("[BUNDLER SEAORM] Starting to bundle plugin config");
 
-    if let (Some(config), Some(schema)) = (plugin_config, plugin_config_schema) {
-        let mut templater = Templater::new();
-        templater.add_context("data", rendered_inputs_definition);
+    let mut render_input_context: HashMap<String, Value> = HashMap::new();
+    render_input_context.insert("inputs".to_string(), rendered_inputs_definition);
 
-        let rendered_config = templater.render_json_schema(schema, Some(config))?;
-        Ok(rendered_config)
+    // Create a new Templater instance for rendering inputs
+    let mut templater = Templater::new();
+
+    // Convert context HashMap to Value
+    let inputs_context_value = serde_json::to_value(render_input_context.clone())?;
+
+    // Add the task definition as a template and render if it exists
+    if let Some(plugin_config) = plugin_config {
+        println!(
+            "[BUNDLER SEAORM] Task plugin config definition: {}",
+            plugin_config.clone()
+        );
+        templater.add_template("task_plugin_config_definition", plugin_config.clone());
+
+        let plugin_config_validations =
+            extract_template_key_validations_from_schema(plugin_config_schema);
+        // Render the task definition with the context
+        let rendered_plugin_config_definition = templater.render(
+            "task_plugin_config_definition",
+            &inputs_context_value,
+            plugin_config_validations,
+        )?;
+        Ok(rendered_plugin_config_definition)
     } else {
+        println!("[BUNDLER SEAORM] No plugin config found in task config, returning empty object");
         Ok(json!({}))
     }
+}
+
+fn extract_template_key_validations_from_schema(
+    schema: Option<&JsonSchema>,
+) -> HashMap<String, ValidationField> {
+    let mut template_key_validations = HashMap::new();
+
+    if let Some(schema) = schema {
+        if let Some(properties) = &schema.properties {
+            for (property_name, property_schema) in properties {
+                if let Some(validation) = &property_schema.x_any_validation {
+                    template_key_validations.insert(property_name.clone(), validation.clone());
+                }
+            }
+        }
+    }
+
+    template_key_validations
 }

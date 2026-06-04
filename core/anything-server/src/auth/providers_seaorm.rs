@@ -125,8 +125,8 @@ pub async fn set_auth_provider_client_id(
     };
 
     let mut active_model: auth_providers::ActiveModel = provider_record.into();
-    active_model.client_id_vault_id = Set(Some(client_id_vault_id));
-    active_model.updated_at = Set(Some(chrono::Utc::now()));
+    active_model.client_id_vault_id = Set(Some(client_id_vault_id.clone()));
+    active_model.updated_at = Set(Some(chrono::Utc::now().into()));
 
     match active_model.update(&*state.db).await {
         Ok(_) => {
@@ -191,8 +191,8 @@ pub async fn set_auth_provider_client_secret(
     };
 
     let mut active_model: auth_providers::ActiveModel = provider_record.into();
-    active_model.client_secret_vault_id = Set(Some(client_secret_vault_id));
-    active_model.updated_at = Set(Some(chrono::Utc::now()));
+    active_model.client_secret_vault_id = Set(Some(client_secret_vault_id.clone()));
+    active_model.updated_at = Set(Some(chrono::Utc::now().into()));
 
     match active_model.update(&*state.db).await {
         Ok(_) => {

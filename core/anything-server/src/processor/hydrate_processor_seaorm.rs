@@ -20,6 +20,7 @@ use std::{
 };
 use uuid::Uuid;
 use sea_orm::{EntityTrait, ColumnTrait, QueryFilter};
+use tracing::error;
 
 pub async fn hydrate_processor(state: Arc<AppState>) {
     println!("[HYDRATE PROCESSOR SEAORM] Starting processor hydration");
@@ -48,8 +49,15 @@ pub async fn hydrate_processor(state: Arc<AppState>) {
     // Group tasks by flow_session_id
     let mut flow_sessions: HashMap<Uuid, Vec<tasks::Model>> = HashMap::new();
     for task in running_tasks {
+        let flow_session_uuid = match Uuid::parse_str(&task.flow_session_id) {
+            Ok(uuid) => uuid,
+            Err(e) => {
+                error!("Invalid flow_session_id UUID: {} - {}", task.flow_session_id, e);
+                continue;
+            }
+        };
         flow_sessions
-            .entry(task.flow_session_id)
+            .entry(flow_session_uuid)
             .or_insert_with(Vec::new)
             .push(task);
     }

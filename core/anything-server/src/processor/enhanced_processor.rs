@@ -174,7 +174,7 @@ impl EnhancedWorkflowProcessor {
         METRICS.record_workflow_started(&self.metrics_labels);
 
         let state = Arc::clone(&self.state);
-        let client = state.anything_client.clone();
+        let client = state.db.clone();
         let flow_session_id = message.flow_session_id;
         let task_id = message.task_id;
         let metrics_labels = self.metrics_labels.clone();
@@ -202,7 +202,7 @@ impl EnhancedWorkflowProcessor {
             );
 
             // Process workflow
-            process_workflow(state, (*client).clone(), message).await;
+            process_workflow(state, client, message).await;
 
             let exec_duration = exec_start.elapsed();
             execution_span.record("execution_duration_ms", exec_duration.as_millis() as i64);

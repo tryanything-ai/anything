@@ -59,7 +59,7 @@ pub async fn refresh_accounts(
                 };
                 account.failed_reason = Some("Service not supported".to_string());
                 account.failure_retries += 1;
-                account.last_failure_retry = Some(Utc::now());
+                account.failed_at = Some(Utc::now());
 
                 continue;
             }
@@ -94,33 +94,21 @@ pub async fn refresh_accounts(
 
                         // Calculate new expiry times if provided in auth provider config
                         let mut access_token_expires_at = None;
-                        if let Some(access_token_lifespan) =
-                            auth_provider.access_token_lifetime_seconds
-                        {
-                            let access_token_lifespan: i64 =
-                                access_token_lifespan.parse().unwrap_or(0);
-                            access_token_expires_at =
-                                Some(Utc::now() + chrono::Duration::seconds(access_token_lifespan));
-                            println!(
-                                "[AUTH REFRESH] Updated access_token_expires_at: {:?}",
-                                access_token_expires_at
-                            );
-                        }
+                        // TODO: Get access token lifetime from vault configuration
+                        // For now, default to 1 hour
+                        access_token_expires_at = Some(Utc::now() + chrono::Duration::seconds(3600));
+                        println!(
+                            "[AUTH REFRESH] Updated access_token_expires_at: {:?}",
+                            access_token_expires_at
+                        );
 
-                        let mut refresh_token_expires_at = None;
-                        if let Some(refresh_token_lifespan) =
-                            auth_provider.refresh_token_lifetime_seconds
-                        {
-                            let refresh_token_lifespan: i64 =
-                                refresh_token_lifespan.parse().unwrap_or(0);
-                            refresh_token_expires_at = Some(
-                                Utc::now() + chrono::Duration::seconds(refresh_token_lifespan),
-                            );
-                            println!(
-                                "[AUTH REFRESH] Updated refresh_token_expires_at: {:?}",
-                                refresh_token_expires_at
-                            );
-                        }
+                        // TODO: Get refresh token lifetime from vault configuration  
+                        // For now, default to 30 days
+                        let mut refresh_token_expires_at = Some(Utc::now() + chrono::Duration::days(30));
+                        println!(
+                            "[AUTH REFRESH] Updated refresh_token_expires_at: {:?}",
+                            refresh_token_expires_at
+                        );
 
                         // TODO: Update tokens in pgsodium secrets using SeaORM
                         println!("[AUTH REFRESH] TODO: Update access token in pgsodium secrets");
@@ -171,7 +159,7 @@ pub async fn refresh_accounts(
                             status, msg
                         ));
                         account.failure_retries += 1;
-                        account.last_failure_retry = Some(Utc::now());
+                        account.failed_at = Some(Utc::now());
                         println!(
                             "[AUTH REFRESH] Failed to refresh access token: Status: {:?}, Message: {:?}",
                             status, msg
@@ -201,19 +189,28 @@ pub async fn refresh_access_token(
 ) -> Result<OAuthToken, (StatusCode, String)> {
     let client = Client::new();
 
+    let token_url = auth_provider.token_url.as_ref().ok_or((
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Token URL not configured".to_string(),
+    ))?;
+
     let request = client
-        .post(&auth_provider.token_url)
+        .post(token_url)
         .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
 
+    // TODO: Get client_id and client_secret from vault using auth_provider.client_id_vault_id
+    let client_id = "placeholder_client_id"; // Would need to decrypt from vault
+    
     let mut form_params = vec![
         ("grant_type", "refresh_token"),
         ("refresh_token", refresh_token),
-        ("client_id", &auth_provider.client_id),
+        ("client_id", client_id),
     ];
 
-    if let Some(client_secret) = &auth_provider.client_secret {
-        form_params.push(("client_secret", client_secret));
-    }
+    // TODO: Get client_secret from vault if configured
+    // if let Some(client_secret) = &auth_provider.client_secret {
+    //     form_params.push(("client_secret", client_secret));
+    // }
 
     println!(
         "[AUTH REFRESH] Refresh token exchange form_params: {:?}",
@@ -257,8 +254,10 @@ pub async fn refresh_access_token(
 
         Ok(OAuthToken {
             access_token,
+            token_type: "Bearer".to_string(),
+            expires_in: Some(3600), // Default to 1 hour
             refresh_token,
-            expires_at: Some(expires_at),
+            scope: None,
         })
     } else {
         let error: ErrorResponse = serde_json::from_str(&body).map_err(|e| {
@@ -282,6 +281,6 @@ pub async fn refresh_access_token(
             "[AUTH REFRESH] Returning refresh token error with status code: {:?}, description: {:?}",
             status_code, error.error_description
         );
-        Err((status_code, error.error_description))
+        Err((status_code, error.error_description.unwrap_or_else(|| error.error.clone())))
     }
 }

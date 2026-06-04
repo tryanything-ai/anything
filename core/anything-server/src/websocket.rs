@@ -488,10 +488,10 @@ async fn send_initial_session_state(
 ) {
     // TODO: Replace PostgREST calls with SeaORM queries
     // Query for existing tasks for this flow session
-    let tasks_query = Ok("[]".to_string()); // Placeholder for PostgREST migration
+    let tasks_query: Result<String, Box<dyn std::error::Error + Send + Sync>> = Ok("[]".to_string()); // Placeholder for PostgREST migration
     
     // Query for flow session status
-    let flow_query = Ok("[]".to_string()); // Placeholder for PostgREST migration
+    let flow_query: Result<String, Box<dyn std::error::Error + Send + Sync>> = Ok("[]".to_string()); // Placeholder for PostgREST migration
 
     let mut tasks_data = None;
     let mut is_complete = false;

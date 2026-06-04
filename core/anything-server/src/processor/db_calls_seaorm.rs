@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::{sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
-use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, ActiveModelTrait, Set, QueryOrder, Order};
+use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, ActiveModelTrait, Set, QueryOrder, Order, PaginatorTrait};
 
 use crate::system_plugins::http::http_plugin::parse_headers;
 use crate::types::{
@@ -160,14 +160,14 @@ pub async fn update_task(
     let mut task_update: tasks::ActiveModel = existing_task.into();
     
     task_update.task_status = Set(update_input.task_status);
-    task_update.updated_at = Set(Utc::now());
+    task_update.updated_at = Set(Some(Utc::now().with_timezone(&chrono::FixedOffset::east_opt(0).unwrap())));
 
     if let Some(started_at) = update_input.started_at {
-        task_update.started_at = Set(Some(started_at));
+        task_update.started_at = Set(Some(started_at.with_timezone(&chrono::FixedOffset::east_opt(0).unwrap())));
     }
 
     if let Some(ended_at) = update_input.ended_at {
-        task_update.completed_at = Set(Some(ended_at));
+        task_update.completed_at = Set(Some(ended_at.with_timezone(&chrono::FixedOffset::east_opt(0).unwrap())));
     }
 
     if let Some(result) = update_input.result {
@@ -208,7 +208,7 @@ pub async fn update_session_status(
         let mut task_update: tasks::ActiveModel = task_model.into();
         task_update.flow_session_status = Set(session_input.flow_session_status.clone());
         task_update.trigger_session_status = Set(session_input.trigger_session_status.clone());
-        task_update.updated_at = Set(Utc::now());
+        task_update.updated_at = Set(Some(Utc::now().with_timezone(&chrono::FixedOffset::east_opt(0).unwrap())));
         
         task_update.update(&*state.db).await?;
     }
@@ -248,7 +248,7 @@ pub async fn test_database_connection(
     println!("[PROCESSOR DB CALLS SEAORM] Testing database connection");
     
     // Try a simple query to test the connection
-    let _count = tasks::Entity::find().count(&*state.db).await?;
+    let _count = tasks::Entity::find().paginate(&*state.db, 1).num_items().await?;
     
     println!("[PROCESSOR DB CALLS SEAORM] Database connection test successful");
     Ok(())
@@ -265,7 +265,8 @@ pub async fn get_task_count_by_account(
 
     let count = tasks::Entity::find()
         .filter(tasks::Column::AccountId.eq(*account_id))
-        .count(&*state.db)
+        .paginate(&*state.db, 1)
+        .num_items()
         .await?;
 
     println!(

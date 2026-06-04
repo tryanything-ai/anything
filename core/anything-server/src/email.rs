@@ -32,8 +32,8 @@ pub async fn handle_new_account_webhook(
 
     let client = Client::new();
 
-    let user = match payload {
-        WebhookPayload::Insert { record, .. } => {
+    let user = match payload.event_type {
+        crate::billing::accounts_seaorm::WebhookEventType::Insert { record, .. } => {
             println!("[EXTERNAL EMAIL SYSTEM] Processing INSERT payload");
             record
         }
@@ -49,7 +49,7 @@ pub async fn handle_new_account_webhook(
     println!("[EXTERNAL EMAIL SYSTEM] Creating LoopsUser struct");
     let loops_user = LoopsUser {
         user_id: user.id,
-        email: user.email.clone().unwrap_or_default(),
+        email: user.email.clone(),
         first_name: None,
         last_name: None,
     };
